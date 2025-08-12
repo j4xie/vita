@@ -1,0 +1,172 @@
+# VitaGlobal 开发环境 Docker Compose 配置
+# 用于本地开发的PostgreSQL和Redis服务
+
+version: '3.8'
+
+services:
+  # PostgreSQL 数据库服务
+  postgres:
+    image: postgres:15-alpine
+    container_name: vitaglobal_postgres
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: vitaglobal_db
+      POSTGRES_USER: vitaglobal
+      POSTGRES_PASSWORD: vitaglobal_password
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=C"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+      - ./database/seed.sql:/docker-entrypoint-initdb.d/02-seed.sql:ro
+    networks:
+      - vitaglobal_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U vitaglobal -d vitaglobal_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis 缓存和会话存储
+  redis:
+    image: redis:7-alpine
+    container_name: vitaglobal_redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes --replica-read-only no
+    volumes:
+      - redis_data:/data
+      - ./redis/redis.conf:/usr/local/etc/redis/redis.conf:ro
+    networks:
+      - vitaglobal_network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  # PostgreSQL 管理界面 (可选，用于开发调试)
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: vitaglobal_pgadmin
+    restart: unless-stopped
+    ports:
+      - "5050:80"
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@vitaglobal.dev
+      PGADMIN_DEFAULT_PASSWORD: admin123
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    networks:
+      - vitaglobal_network
+    depends_on:
+      - postgres
+    profiles:
+      - tools # 使用 docker-compose --profile tools up 启动
+
+  # Redis 管理界面 (可选，用于开发调试)
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    container_name: vitaglobal_redis_commander
+    restart: unless-stopped
+    ports:
+      - "8081:8081"
+    environment:
+      REDIS_HOSTS: local:redis:6379
+      HTTP_USER: admin
+      HTTP_PASSWORD: admin123
+    networks:
+      - vitaglobal_network
+    depends_on:
+      - redis
+    profiles:
+      - tools # 使用 docker-compose --profile tools up 启动
+
+  # Nginx 反向代理 (可选，用于生产环境测试)
+  nginx:
+    image: nginx:alpine
+    container_name: vitaglobal_nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+      - ./nginx/logs:/var/log/nginx
+    networks:
+      - vitaglobal_network
+    profiles:
+      - production # 使用 docker-compose --profile production up 启动
+
+# 数据卷定义
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  pgadmin_data:
+    driver: local
+
+# 网络定义
+networks:
+  vitaglobal_network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
+
+# ========================================
+# 使用说明
+# ========================================
+#
+# 🚀 快速启动 (仅启动数据库服务):
+# docker-compose up -d postgres redis
+#
+# 🛠 开发模式 (包含管理工具):
+# docker-compose --profile tools up -d
+#
+# 🏭 生产测试模式 (包含Nginx):
+# docker-compose --profile production up -d
+#
+# 📊 查看服务状态:
+# docker-compose ps
+#
+# 📝 查看日志:
+# docker-compose logs -f postgres
+# docker-compose logs -f redis
+#
+# 🗄️ 数据库连接信息:
+# Host: localhost
+# Port: 5432
+# Database: vitaglobal_db
+# Username: vitaglobal
+# Password: vitaglobal_password
+#
+# 🔧 Redis连接信息:
+# Host: localhost
+# Port: 6379
+# DB: 0 (默认)
+#
+# 🌐 管理界面访问 (需要--profile tools):
+# PgAdmin: http://localhost:5050 (admin@vitaglobal.dev / admin123)
+# Redis Commander: http://localhost:8081 (admin / admin123)
+#
+# 🧹 清理数据:
+# docker-compose down -v  # 删除所有数据卷
+#
+# 🔄 重建服务:
+# docker-compose down
+# docker-compose up --build -d
+#
+# ========================================
+# 生产环境注意事项
+# ========================================
+# 1. 修改所有默认密码
+# 2. 配置SSL证书
+# 3. 设置防火墙规则
+# 4. 配置数据备份策略
+# 5. 监控服务健康状态
