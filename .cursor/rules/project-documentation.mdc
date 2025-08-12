@@ -1,0 +1,47 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# VitaGlobal 项目文档规范
+
+## 文档体系结构
+
+项目采用分层文档体系，每个文档都有明确的职责和受众：
+
+### 核心文档
+- [README.md](mdc:README.md) - 项目概览和快速开始指南
+- [MRD.md](mdc:MRD.md) - 市场需求文档，面向产品和运营团队
+- [PRD.md](mdc:PRD.md) - 产品需求文档，面向开发团队
+- [API_DOC.md](mdc:API_DOC.md) - 接口文档，前后端开发必读
+- [DB_SCHEMA.md](mdc:DB_SCHEMA.md) - 数据库设计，后端开发必读
+- [vitaglobal.md](mdc:vitaglobal.md) - 原始项目规划文档
+
+## 文档阅读顺序
+
+### 新团队成员入职
+1. 先阅读 [README.md](mdc:README.md) 了解项目整体情况
+2. 根据角色选择对应文档深入学习
+
+### 产品/运营人员
+1. [MRD.md](mdc:MRD.md) - 理解市场背景和商业逻辑
+2. [PRD.md](mdc:PRD.md) - 掌握产品功能和版本规划
+
+### 开发人员
+1. [PRD.md](mdc:PRD.md) - 理解产品需求和技术要求
+2. [API_DOC.md](mdc:API_DOC.md) - 前后端接口规范
+3. [DB_SCHEMA.md](mdc:DB_SCHEMA.md) - 数据库设计（后端必读）
+
+## 文档创建规范
+
+### 新功能开发
+当需要新增功能时，按以下顺序更新文档：
+1. 更新 [PRD.md](mdc:PRD.md) 中的功能需求
+2. 设计并更新 [API_DOC.md](mdc:API_DOC.md) 中的相关接口
+3. 更新 [DB_SCHEMA.md](mdc:DB_SCHEMA.md) 中的数据表结构
+
+### 文档维护原则
+- 代码变更必须同步更新相关文档
+- 重大功能变更需要更新多个文档保持一致性
+- 所有文档使用中文编写，专业术语可保留英文
+- 使用 Markdown 格式，图表使用 Mermaid 语法
