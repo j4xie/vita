@@ -12,6 +12,8 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 
 import { theme } from '../../theme';
+import { LIQUID_GLASS_LAYERS, BRAND_GLASS } from '../../theme/core';
+import { usePerformanceDegradation } from '../../hooks/usePerformanceDegradation';
 
 interface PersonalInfoCardProps {
   name: string;
@@ -31,6 +33,10 @@ export const PersonalInfoCard: React.FC<PersonalInfoCardProps> = ({
   const colorScheme = useColorScheme();
   const isDarkMode = colorScheme === 'dark';
   const scaleValue = useRef(new Animated.Value(1)).current;
+  
+  // V2.0 获取分层配置
+  const { getLayerConfig } = usePerformanceDegradation();
+  const L2Config = getLayerConfig('L2', isDarkMode);
 
   const handlePress = () => {
     // Haptic feedback
@@ -105,12 +111,23 @@ export const PersonalInfoCard: React.FC<PersonalInfoCardProps> = ({
     chevron: {
       marginLeft: 8,
     },
+    
+    // V2.0 L2品牌玻璃个人信息卡
+    containerGlass: {
+      backgroundColor: LIQUID_GLASS_LAYERS.L2.background.light, // L2品牌玻璃背景
+      borderWidth: LIQUID_GLASS_LAYERS.L2.border.width,
+      borderColor: LIQUID_GLASS_LAYERS.L2.border.color.light,
+      // 移除阴影，由外层容器处理
+      shadowColor: 'transparent',
+      shadowOpacity: 0,
+      elevation: 0,
+    },
   });
 
   return (
     <Animated.View style={{ transform: [{ scale: scaleValue }] }}>
       <TouchableOpacity
-        style={styles.container}
+        style={[styles.container, styles.containerGlass]}
         onPress={handlePress}
         activeOpacity={0.8}
         accessibilityRole="button"

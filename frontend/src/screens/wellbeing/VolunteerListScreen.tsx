@@ -20,6 +20,8 @@ import * as Haptics from 'expo-haptics';
 import { Ionicons } from '@expo/vector-icons';
 
 import { theme } from '../../theme';
+import { LIQUID_GLASS_LAYERS, BRAND_GLASS, BRAND_GRADIENT } from '../../theme/core';
+import { usePerformanceDegradation } from '../../hooks/usePerformanceDegradation';
 import { VolunteerCard, VolunteerRecord } from './components/VolunteerCard';
 import { SearchBar } from './components/SearchBar';
 import { SignOutBottomSheet } from './components/SignOutBottomSheet';
@@ -134,6 +136,10 @@ export const VolunteerListScreen: React.FC<VolunteerListScreenProps> = ({
   const isDarkMode = colorScheme === 'dark';
   const insets = useSafeAreaInsets();
   const tabBarHeight = useBottomTabBarHeight();
+  
+  // V2.0 获取分层配置
+  const { getLayerConfig } = usePerformanceDegradation();
+  const L1Config = getLayerConfig('L1', isDarkMode);
   
   // 状态管理
   const [searchPhone, setSearchPhone] = useState('');

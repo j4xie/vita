@@ -225,6 +225,14 @@ export const ProfileHomeScreen: React.FC = () => {
         },
       }),
     },
+    
+    // V2.0 双层个人信息卡结构
+    personalInfoShadowContainer: {
+      backgroundColor: '#FFFFFF', // 外层solid背景用于阴影
+      borderRadius: LIQUID_GLASS_LAYERS.L2.borderRadius.surface, // 20pt圆角
+      ...theme.shadows.md, // 中等阴影
+      overflow: 'hidden',
+    },
   });
 
   return (
@@ -239,11 +247,14 @@ export const ProfileHomeScreen: React.FC = () => {
         >
           {/* 用户信息卡片 */}
           <View style={styles.userSection}>
-            <PersonalInfoCard
-              name={t('userInfo.user')}
-              email="user@example.com"
-              onPress={() => navigation.navigate('EditProfile')}
-            />
+            {/* V2.0 双层结构：外层solid背景用于阴影，内层L2品牌玻璃 */}
+            <View style={styles.personalInfoShadowContainer}>
+              <PersonalInfoCard
+                name={t('userInfo.user')}
+                email="user@example.com"
+                onPress={() => navigation.navigate('EditProfile')}
+              />
+            </View>
           </View>
 
           {/* 设置列表 */}

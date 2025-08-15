@@ -16,6 +16,8 @@ import { useTranslation } from 'react-i18next';
 import * as Haptics from 'expo-haptics';
 
 import { theme } from '../../../theme';
+import { LIQUID_GLASS_LAYERS, BRAND_GLASS } from '../../../theme/core';
+import { usePerformanceDegradation } from '../../../hooks/usePerformanceDegradation';
 
 interface SearchBarProps {
   value: string;
@@ -39,6 +41,10 @@ export const SearchBar: React.FC<SearchBarProps> = ({
   const { t } = useTranslation();
   const colorScheme = useColorScheme();
   const isDarkMode = colorScheme === 'dark';
+  
+  // V2.0 获取分层配置
+  const { getLayerConfig } = usePerformanceDegradation();
+  const L1Config = getLayerConfig('L1', isDarkMode);
   
   const inputRef = useRef<TextInput>(null);
   const errorOpacity = useRef(new Animated.Value(0)).current;

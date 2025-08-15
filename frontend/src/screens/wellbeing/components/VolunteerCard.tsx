@@ -14,6 +14,8 @@ import { useTranslation } from 'react-i18next';
 import * as Haptics from 'expo-haptics';
 
 import { theme } from '../../../theme';
+import { LIQUID_GLASS_LAYERS, BRAND_GLASS, BRAND_INTERACTIONS } from '../../../theme/core';
+import { usePerformanceDegradation } from '../../../hooks/usePerformanceDegradation';
 import { formatTime, formatDuration, formatHours } from '../utils/timeFormatter';
 import { i18n } from '../../../utils/i18n';
 import { mockSchools } from '../../../data/mockData';
@@ -58,6 +60,10 @@ export const VolunteerCard: React.FC<VolunteerCardProps> = ({
   const { t } = useTranslation();
   const colorScheme = useColorScheme();
   const isDarkMode = colorScheme === 'dark';
+  
+  // V2.0 获取分层配置
+  const { getLayerConfig } = usePerformanceDegradation();
+  const L1Config = getLayerConfig('L1', isDarkMode);
   
   // 获取本地化学校名称
   const getLocalizedSchoolName = (schoolName: string) => {
@@ -200,7 +206,7 @@ export const VolunteerCard: React.FC<VolunteerCardProps> = ({
       <TouchableOpacity
         style={[
           styles.card,
-          { backgroundColor: isDarkMode ? theme.colors.background.secondary : theme.colors.background.primary },
+          styles.cardGlass, // 应用L1玻璃样式
           isExpanded && styles.cardExpanded,
         ]}
         onPress={handleCardPress}
@@ -442,6 +448,15 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: 'white',
     marginLeft: 8,
+  },
+  
+  // V2.0 L1玻璃志愿者卡片样式
+  cardGlass: {
+    backgroundColor: LIQUID_GLASS_LAYERS.L1.background.light,
+    borderWidth: LIQUID_GLASS_LAYERS.L1.border.width,
+    borderColor: LIQUID_GLASS_LAYERS.L1.border.color.light,
+    borderRadius: LIQUID_GLASS_LAYERS.L1.borderRadius.card, // 16pt圆角
+    ...theme.shadows[LIQUID_GLASS_LAYERS.L1.shadow],
   },
 });
 

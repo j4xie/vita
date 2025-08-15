@@ -18,6 +18,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 
 import { theme } from '../../theme';
+import { LIQUID_GLASS_LAYERS, BRAND_GLASS } from '../../theme/core';
+import { usePerformanceDegradation } from '../../hooks/usePerformanceDegradation';
 import { mockSchools, School } from '../../data/mockData';
 
 interface SchoolSelectionScreenProps {
@@ -29,6 +31,10 @@ export const SchoolSelectionScreen: React.FC<SchoolSelectionScreenProps> = ({ on
   const colorScheme = useColorScheme();
   const isDarkMode = colorScheme === 'dark';
   const insets = useSafeAreaInsets();
+  
+  // V2.0 获取分层配置
+  const { getLayerConfig } = usePerformanceDegradation();
+  const L1Config = getLayerConfig('L1', isDarkMode);
 
   const [searchText, setSearchText] = useState('');
   const [filteredSchools, setFilteredSchools] = useState<School[]>(mockSchools);
@@ -78,7 +84,7 @@ export const SchoolSelectionScreen: React.FC<SchoolSelectionScreenProps> = ({ on
     return (
       <Animated.View style={{ transform: [{ scale: animatedValue }] }}>
         <TouchableOpacity
-          style={[styles.schoolCard, { backgroundColor: isDarkMode ? '#1c1c1e' : '#ffffff' }]}
+          style={[styles.schoolCard, styles.schoolCardGlass]}
           onPress={() => handleSchoolPress(item)}
           onPressIn={handlePressIn}
           onPressOut={handlePressOut}
@@ -341,6 +347,15 @@ const styles = StyleSheet.create({
   },
   emptySubtext: {
     fontSize: 14,
+  },
+  
+  // V2.0 L1玻璃学校卡片样式
+  schoolCardGlass: {
+    backgroundColor: LIQUID_GLASS_LAYERS.L1.background.light,
+    borderWidth: LIQUID_GLASS_LAYERS.L1.border.width,
+    borderColor: LIQUID_GLASS_LAYERS.L1.border.color.light,
+    borderRadius: LIQUID_GLASS_LAYERS.L1.borderRadius.surface, // 20pt圆角
+    ...theme.shadows[LIQUID_GLASS_LAYERS.L1.shadow],
   },
 });
 

@@ -71,6 +71,10 @@ export const ConsultingScreen: React.FC = () => {
   const navigation = useNavigation<any>();
   const insets = useSafeAreaInsets();
   
+  // V2.0 获取分层配置
+  const { getLayerConfig } = usePerformanceDegradation();
+  const L1Config = getLayerConfig('L1', false);
+  
   // Modal state
   const [showModal, setShowModal] = useState(false);
   const [selectedSchool, setSelectedSchool] = useState<SchoolInfo | null>(null);
@@ -184,7 +188,7 @@ export const ConsultingScreen: React.FC = () => {
               <Text style={styles.overviewTitle}>{t('consulting.serviceOverview')}</Text>
               
               {/* 服务统计 */}
-              <View style={styles.statsContainer}>
+              <View style={[styles.statsContainer, styles.statsContainerGlass]}>
                 <View style={styles.statItem}>
                   <Text style={styles.statNumber}>10+</Text>
                   <Text style={styles.statLabel}>{t('consulting.supportedSchools')}</Text>
@@ -403,4 +407,16 @@ const styles = StyleSheet.create({
   },
 
   // 移除不再需要的样式
+  
+  // V2.0 L1玻璃统计容器
+  statsContainerGlass: {
+    backgroundColor: LIQUID_GLASS_LAYERS.L1.background.light,
+    borderWidth: LIQUID_GLASS_LAYERS.L1.border.width,
+    borderColor: LIQUID_GLASS_LAYERS.L1.border.color.light,
+    borderRadius: LIQUID_GLASS_LAYERS.L1.borderRadius.surface, // 20pt圆角
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    marginVertical: 8,
+    ...theme.shadows[LIQUID_GLASS_LAYERS.L1.shadow],
+  },
 });
