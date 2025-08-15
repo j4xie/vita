@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="description" content="西柚移动端技术支持 - 快速获取帮助和解决方案">
+    <meta name="robots" content="index, follow">
+    
+    <title>技术支持 - 西柚移动端</title>
+    <link rel="canonical" href="https://pomelo.app/mobile/support.html">
+    
+    <link rel="alternate" media="only screen and (min-width: 769px)" href="https://pomelo.app/support.html">
+    <link rel="alternate" hreflang="zh-CN" href="https://pomelo.app/mobile/support.html">
+    <link rel="alternate" hreflang="en-US" href="https://pomelo.app/mobile/en/support.html">
+    
+    <meta name="apple-mobile-web-app-title" content="西柚支持">
+    <meta name="theme-color" content="#FF6B35">
+    
+    <link rel="stylesheet" href="../assets/css/mobile.css?v=1.0">
+    <link rel="icon" type="image/png" href="../assets/images/pomelo-logo.png">
+</head>
+<body class="mobile-page">
+    <!-- 移动端导航 -->
+    <header class="mobile-navbar safe-area-top">
+        <div class="mobile-navbar-back" onclick="window.history.back()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="m15 18-6-6 6-6"/>
+            </svg>
+        </div>
+        
+        <div class="mobile-navbar-title">技术支持</div>
+        
+        <div class="mobile-navbar-menu" onclick="MobileApp.toggleMenu()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="3" y1="6" x2="21" y2="6"/>
+                <line x1="3" y1="12" x2="21" y2="12"/>
+                <line x1="3" y1="18" x2="21" y2="18"/>
+            </svg>
+        </div>
+    </header>
+
+    <!-- 侧滑菜单 -->
+    <nav class="mobile-nav-menu" id="mobile-menu" style="position: fixed; top: 0; left: -100%; width: 280px; height: 100vh; background: white; z-index: 1500; transition: left 0.3s ease; box-shadow: 2px 0 8px rgba(0,0,0,0.1); padding-top: 56px;">
+        <div style="padding: 24px 20px;">
+            <div class="mobile-lang-switcher mobile-mb-lg">
+                <button class="mobile-lang-btn active" data-lang="zh">中文</button>
+                <button class="mobile-lang-btn" data-lang="en">English</button>
+            </div>
+            
+            <div class="mobile-list">
+                <a href="index.html" class="mobile-list-item">
+                    <div class="mobile-list-icon">🏠</div>
+                    <div class="mobile-list-content">
+                        <div class="mobile-list-title">返回首页</div>
+                    </div>
+                </a>
+                <a href="privacy.html" class="mobile-list-item">
+                    <div class="mobile-list-icon">🔒</div>
+                    <div class="mobile-list-content">
+                        <div class="mobile-list-title">隐私政策</div>
+                    </div>
+                </a>
+                <a href="terms.html" class="mobile-list-item">
+                    <div class="mobile-list-icon">📄</div>
+                    <div class="mobile-list-content">
+                        <div class="mobile-list-title">服务条款</div>
+                    </div>
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="mobile-menu-mask" onclick="MobileApp.toggleMenu()" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1400; opacity: 0; visibility: hidden; transition: all 0.3s ease;"></div>
+
+    <!-- 主要内容 -->
+    <main class="mobile-content">
+        
+        <!-- 支持中心Hero -->
+        <section class="mobile-hero" style="padding: 40px 16px;">
+            <h1 class="mobile-hero-title">技术支持中心</h1>
+            <p class="mobile-hero-subtitle">我们随时为您提供帮助</p>
+        </section>
+
+        <!-- 快速帮助 -->
+        <section class="mobile-section-sm">
+            <div class="mobile-container">
+                <h2 class="mobile-title-2">快速获取帮助</h2>
+                
+                <div class="mobile-list">
+                    <a href="tel:+1-xxx-xxx-xxxx" class="mobile-list-item" data-analytics="support:phone">
+                        <div class="mobile-list-icon">📞</div>
+                        <div class="mobile-list-content">
+                            <div class="mobile-list-title">电话支持</div>
+                            <div class="mobile-list-desc">立即拨打获取即时帮助</div>
+                        </div>
+                        <div class="mobile-list-arrow">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="m9 18 6-6-6-6"/>
+                            </svg>
+                        </div>
+                    </a>
+                    
+                    <a href="mailto:info@americanpromotioncompany.com?subject=技术支持请求" class="mobile-list-item" data-analytics="support:email">
+                        <div class="mobile-list-icon">📧</div>
+                        <div class="mobile-list-content">
+                            <div class="mobile-list-title">邮件支持</div>
+                            <div class="mobile-list-desc">发送详细问题描述</div>
+                        </div>
+                        <div class="mobile-list-arrow">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="m9 18 6-6-6-6"/>
+                            </svg>
+                        </div>
+                    </a>
+                    
+                    <div class="mobile-list-item" style="opacity: 0.6; cursor: not-allowed;">
+                        <div class="mobile-list-icon">💬</div>
+                        <div class="mobile-list-content">
+                            <div class="mobile-list-title">在线客服</div>
+                            <div class="mobile-list-desc">即将上线</div>
+                        </div>
+                        <div class="mobile-badge" style="font-size: 10px; padding: 2px 6px;">敬请期待</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 常见问题 -->
+        <section class="mobile-section-sm">
+            <div class="mobile-container">
+                <h2 class="mobile-title-2">常见问题</h2>
+                
+                <!-- 账户问题 -->
+                <div class="mobile-card mobile-mb-md">
+                    <div class="mobile-card-header">
+                        <div class="mobile-card-title">账户与注册</div>
+                        <div class="mobile-badge">3个问题</div>
+                    </div>
+                    <div class="mobile-card-body">
+                        <details style="margin-bottom: 12px;">
+                            <summary style="font-weight: 500; cursor: pointer; padding: 8px 0;">如何注册账户？</summary>
+                            <div style="padding: 8px 0; color: var(--text-secondary); font-size: 14px; line-height: 1.5;">
+                                需要推荐码注册。通过组织管理员获取推荐码，扫描二维码完成注册。
+                            </div>
+                        </details>
+                        
+                        <details style="margin-bottom: 12px;">
+                            <summary style="font-weight: 500; cursor: pointer; padding: 8px 0;">为什么需要推荐码？</summary>
+                            <div style="padding: 8px 0; color: var(--text-secondary); font-size: 14px; line-height: 1.5;">
+                                确保只有真正的留学生组织成员使用，维护社区安全性。
+                            </div>
+                        </details>
+                        
+                        <details>
+                            <summary style="font-weight: 500; cursor: pointer; padding: 8px 0;">忘记密码怎么办？</summary>
+                            <div style="padding: 8px 0; color: var(--text-secondary); font-size: 14px; line-height: 1.5;">
+                                请联系技术支持重置密码，或发邮件说明情况。
+                            </div>
+                        </details>
+                    </div>
+                </div>
+                
+                <!-- 技术问题 -->
+                <div class="mobile-card mobile-mb-md">
+                    <div class="mobile-card-header">
+                        <div class="mobile-card-title">技术问题</div>
+                        <div class="mobile-badge">2个问题</div>
+                    </div>
+                    <div class="mobile-card-body">
+                        <details style="margin-bottom: 12px;">
+                            <summary style="font-weight: 500; cursor: pointer; padding: 8px 0;">应用无法加载？</summary>
+                            <div style="padding: 8px 0; color: var(--text-secondary); font-size: 14px; line-height: 1.5;">
+                                1. 检查网络连接<br>
+                                2. 重启应用<br>
+                                3. 更新到最新版本<br>
+                                4. 重启设备
+                            </div>
+                        </details>
+                        
+                        <details>
+                            <summary style="font-weight: 500; cursor: pointer; padding: 8px 0;">支持哪些设备？</summary>
+                            <div style="padding: 8px 0; color: var(--text-secondary); font-size: 14px; line-height: 1.5;">
+                                iOS 13.0+，Android 8.0+，建议使用最新系统版本。
+                            </div>
+                        </details>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 联系技术支持 -->
+        <section class="mobile-section">
+            <div class="mobile-container">
+                <div class="mobile-card" style="text-align: center; background: linear-gradient(135deg, var(--primary-color), var(--primary-light)); color: white;">
+                    <div class="mobile-card-body">
+                        <div style="font-size: 48px; margin-bottom: 16px;">🛠️</div>
+                        <h3 style="color: white; margin-bottom: 8px;">需要更多帮助？</h3>
+                        <p style="opacity: 0.9; margin-bottom: 20px; font-size: 14px;">我们的技术团队随时为您服务</p>
+                        
+                        <div class="mobile-flex-column mobile-gap-md">
+                            <a href="mailto:dev@americanpromotioncompany.com?subject=移动端技术支持" class="mobile-btn mobile-btn-outline mobile-btn-block" style="border-color: white; color: white;" data-analytics="support:tech-email">
+                                发送技术邮件
+                            </a>
+                            <a href="index.html#contact" class="mobile-btn mobile-btn-ghost mobile-btn-block" style="background: rgba(255,255,255,0.2); border-color: rgba(255,255,255,0.3); color: white;" data-analytics="support:contact-form">
+                                填写反馈表单
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 访问完整版 -->
+        <section class="mobile-section-sm" style="background: var(--bg-gray); text-align: center;">
+            <div class="mobile-container">
+                <p style="color: var(--text-secondary); font-size: 14px; margin-bottom: 12px;">需要查看详细的技术文档？</p>
+                <a href="../support.html?desktop=true" class="mobile-btn mobile-btn-ghost" data-analytics="cta:support:desktop">
+                    访问电脑端完整版 →
+                </a>
+            </div>
+        </section>
+    </main>
+
+    <!-- 底部导航 -->
+    <nav class="mobile-tabbar safe-area-bottom">
+        <a href="index.html" class="mobile-tabbar-item">
+            <div class="mobile-tabbar-icon">🏠</div>
+            <div class="mobile-tabbar-text">首页</div>
+        </a>
+        <a href="support.html" class="mobile-tabbar-item active">
+            <div class="mobile-tabbar-icon">🛠️</div>
+            <div class="mobile-tabbar-text">支持</div>
+        </a>
+        <a href="privacy.html" class="mobile-tabbar-item">
+            <div class="mobile-tabbar-icon">🔒</div>
+            <div class="mobile-tabbar-text">隐私</div>
+        </a>
+        <a href="index.html#contact" class="mobile-tabbar-item">
+            <div class="mobile-tabbar-icon">📞</div>
+            <div class="mobile-tabbar-text">联系</div>
+        </a>
+    </nav>
+
+    <!-- JavaScript -->
+    <script src="../assets/js/mobile.js"></script>
+    <script>
+        window.MobileApp.toggleMenu = function() {
+            const menu = document.getElementById('mobile-menu');
+            const mask = document.querySelector('.mobile-menu-mask');
+            const isOpen = menu.style.left === '0px';
+            
+            if (isOpen) {
+                menu.style.left = '-100%';
+                mask.style.opacity = '0';
+                mask.style.visibility = 'hidden';
+                document.body.style.overflow = '';
+            } else {
+                menu.style.left = '0px';
+                mask.style.opacity = '1';
+                mask.style.visibility = 'visible';
+                document.body.style.overflow = 'hidden';
+            }
+        };
+    </script>
+</body>
+</html>

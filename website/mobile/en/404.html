@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en-US">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="description" content="Page Not Found - Pomelo Mobile">
+    <meta name="robots" content="noindex, nofollow">
+    <title>Page Not Found - Pomelo Mobile</title>
+    <link rel="canonical" href="https://pomelo.app/mobile/en/404.html">
+    <meta name="theme-color" content="#FF6B35">
+    <link rel="stylesheet" href="../../assets/css/mobile.css?v=1.0">
+    <link rel="icon" type="image/png" href="../../assets/images/pomelo-logo.png">
+</head>
+<body class="mobile-page">
+    <header class="mobile-navbar safe-area-top">
+        <div class="mobile-navbar-back" onclick="window.history.back()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m15 18-6-6 6-6"/></svg>
+        </div>
+        <div class="mobile-navbar-title">Page Not Found</div>
+        <div class="mobile-navbar-menu" onclick="MobileApp.toggleMenu()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+        </div>
+    </header>
+
+    <main class="mobile-content">
+        <section class="mobile-section" style="min-height: 70vh; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center;">
+            <div style="font-size: 6rem; color: var(--primary-color); margin-bottom: 20px;">404</div>
+            <h1 class="mobile-title-1">Page Not Found</h1>
+            <p class="mobile-subtitle">The page you're looking for doesn't exist or has been moved</p>
+            
+            <div class="mobile-flex-column mobile-gap-md" style="width: 100%; max-width: 300px;">
+                <a href="index.html" class="mobile-btn mobile-btn-primary mobile-btn-block">Go to Homepage</a>
+                <a href="../index.html" class="mobile-btn mobile-btn-outline mobile-btn-block">中文首页</a>
+                <a href="support.html" class="mobile-btn mobile-btn-ghost mobile-btn-block">Contact Support</a>
+            </div>
+        </section>
+    </main>
+
+    <script src="../../assets/js/mobile.js"></script>
+    <script>window.MobileApp.toggleMenu = function() { const menu = document.getElementById('mobile-menu'); const isOpen = menu.style.left === '0px'; menu.style.left = isOpen ? '-100%' : '0px'; };</script>
+</body>
+</html>

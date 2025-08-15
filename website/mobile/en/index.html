@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="en-US">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="description" content="Pomelo - Mobile-optimized platform for international students. From pre-departure to local life, access study abroad services anytime.">
+    <meta name="keywords" content="international students,mobile,safety plan,airport pickup,student safety,AI support,mobile version">
+    <meta name="author" content="Pomelo Team">
+    <meta name="format-detection" content="telephone=yes,email=yes">
+    
+    <!-- SEO optimization -->
+    <title>Pomelo - Mobile Platform for International Students</title>
+    <link rel="canonical" href="https://pomelo.app/mobile/en/">
+    
+    <!-- Mobile-specific SEO tags -->
+    <link rel="alternate" media="only screen and (min-width: 769px)" href="https://pomelo.app/en/">
+    <link rel="alternate" hreflang="zh-CN" href="https://pomelo.app/mobile/">
+    <link rel="alternate" hreflang="en-US" href="https://pomelo.app/mobile/en/">
+    <link rel="alternate" hreflang="x-default" href="https://pomelo.app">
+    
+    <!-- Open Graph for Mobile -->
+    <meta property="og:title" content="Pomelo - Mobile Platform for International Students">
+    <meta property="og:description" content="Mobile-optimized platform, access study abroad services anytime">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://pomelo.app/mobile/en/">
+    <meta property="og:image" content="../../assets/images/pomelo-logo.png">
+    
+    <!-- Mobile-specific -->
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Pomelo">
+    <meta name="theme-color" content="#FF6B35">
+    
+    <!-- Favicon -->
+    <link rel="apple-touch-icon" href="../../assets/images/pomelo-logo.png">
+    <link rel="icon" type="image/png" href="../../assets/images/pomelo-logo.png">
+    
+    <!-- Styles -->
+    <link rel="stylesheet" href="../../assets/css/mobile.css?v=1.0">
+    
+    <!-- PWA support -->
+    <link rel="manifest" href="../../assets/manifest.json">
+</head>
+<body class="mobile-page">
+    <!-- Mobile top navigation -->
+    <header class="mobile-navbar safe-area-top">
+        <!-- Left: Hamburger + Logo -->
+        <div style="display: flex; align-items: center; gap: 12px;">
+            <div class="mobile-navbar-menu" onclick="MobileApp.toggleMenu()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="3" y1="6" x2="21" y2="6"/>
+                    <line x1="3" y1="12" x2="21" y2="12"/>
+                    <line x1="3" y1="18" x2="21" y2="18"/>
+                </svg>
+            </div>
+            
+            <div class="mobile-navbar-title">
+                <img src="../../assets/images/pomelo-logo.png" alt="Pomelo logo" width="28" height="28" style="vertical-align: middle; margin-right: 8px;">
+                Pomelo
+            </div>
+        </div>
+        
+        <!-- Right: Language switcher -->
+        <div class="mobile-language-switcher" style="display: flex; align-items: center; background: rgba(255,255,255,0.9); border-radius: 6px; padding: 2px;">
+            <button class="mobile-lang-btn" data-lang="zh" style="padding: 4px 8px; border: none; background: transparent; color: var(--text-secondary); border-radius: 4px; font-size: 11px; font-weight: 600; cursor: pointer;">中文</button>
+            <button class="mobile-lang-btn active" data-lang="en" style="padding: 4px 8px; border: none; background: var(--primary-color); color: white; border-radius: 4px; font-size: 11px; font-weight: 600; cursor: pointer;">EN</button>
+        </div>
+    </header>
+
+    <!-- Mobile slide menu -->
+    <nav class="mobile-nav-menu" id="mobile-menu" style="position: fixed; top: 0; left: -100%; width: 280px; height: 100vh; background: white; z-index: 1500; transition: left 0.3s ease; box-shadow: 2px 0 8px rgba(0,0,0,0.1); padding-top: 56px;">
+        <div style="padding: 24px 20px;">
+            <!-- Navigation links -->
+            <div class="mobile-list">
+                <a href="#hero" class="mobile-list-item mobile-nav-link">
+                    <div class="mobile-list-icon">🏠</div>
+                    <div class="mobile-list-content">
+                        <div class="mobile-list-title">Home</div>
+                    </div>
+                    <div class="mobile-list-arrow">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="m9 18 6-6-6-6"/>
+                        </svg>
+                    </div>
+                </a>
+                
+                <a href="#features" class="mobile-list-item mobile-nav-link">
+                    <div class="mobile-list-icon">⚡</div>
+                    <div class="mobile-list-content">
+                        <div class="mobile-list-title">Features</div>
+                    </div>
+                    <div class="mobile-list-arrow">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="m9 18 6-6-6-6"/>
+                        </svg>
+                    </div>
+                </a>
+                
+                <a href="#pricing" class="mobile-list-item mobile-nav-link">
+                    <div class="mobile-list-icon">💰</div>
+                    <div class="mobile-list-content">
+                        <div class="mobile-list-title">Plans</div>
+                    </div>
+                    <div class="mobile-list-arrow">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="m9 18 6-6-6-6"/>
+                        </svg>
+                    </div>
+                </a>
+                
+                <a href="#contact" class="mobile-list-item mobile-nav-link">
+                    <div class="mobile-list-icon">📞</div>
+                    <div class="mobile-list-content">
+                        <div class="mobile-list-title">Contact</div>
+                    </div>
+                    <div class="mobile-list-arrow">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="m9 18 6-6-6-6"/>
+                        </svg>
+                    </div>
+                </a>
+            </div>
+            
+            <!-- Legal links -->
+            <div class="mobile-mt-lg" style="padding: 16px 0; border-top: 1px solid var(--border-light);">
+                <a href="privacy.html" style="display: block; color: var(--text-secondary); font-size: 14px; margin-bottom: 12px; text-decoration: none;">Privacy Policy</a>
+                <a href="terms.html" style="display: block; color: var(--text-secondary); font-size: 14px; margin-bottom: 12px; text-decoration: none;">Terms of Service</a>
+                <a href="support.html" style="display: block; color: var(--text-secondary); font-size: 14px; text-decoration: none;">Technical Support</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Mask layer -->
+    <div class="mobile-menu-mask" onclick="MobileApp.toggleMenu()" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1400; opacity: 0; visibility: hidden; transition: all 0.3s ease;"></div>
+
+    <!-- Main content -->
+    <main class="mobile-content">
+        
+        <!-- Hero section -->
+        <section id="hero" class="mobile-hero">
+            <h1 class="mobile-hero-title">International Students &<br>Parents Service Platform</h1>
+            <p class="mobile-hero-subtitle">Mobile-first experience, access study abroad services anytime</p>
+            
+            <div class="mobile-flex-column mobile-gap-md">
+                <a href="#contact" class="mobile-btn mobile-btn-primary mobile-btn-lg mobile-btn-block" data-analytics="cta:mobile-hero:primary">
+                    Get Started
+                </a>
+                <a href="#features" class="mobile-btn mobile-btn-outline mobile-btn-lg mobile-btn-block" data-analytics="cta:mobile-hero:secondary" style="background: rgba(255,255,255,0.2); border-color: rgba(255,255,255,0.5); color: white;">
+                    Learn More
+                </a>
+            </div>
+        </section>
+
+        <!-- Core features -->
+        <section id="features" class="mobile-section">
+            <div class="mobile-container">
+                <h2 class="mobile-title-2 mobile-text-center">Core Services</h2>
+                <p class="mobile-subtitle mobile-text-center">Comprehensive support for international student life</p>
+                
+                <div class="mobile-grid mobile-grid-2 mobile-gap-md">
+                    <div class="mobile-feature-card" data-analytics="feature:ai-qa">
+                        <div class="mobile-feature-icon">🤖</div>
+                        <div class="mobile-feature-title">AI Smart Q&A</div>
+                        <div class="mobile-feature-desc">24/7 study abroad guidance</div>
+                    </div>
+                    
+                    <div class="mobile-feature-card" data-analytics="feature:safety-plan">
+                        <div class="mobile-feature-icon">🛡️</div>
+                        <div class="mobile-feature-title">Peace of Mind Plan</div>
+                        <div class="mobile-feature-desc">Exclusive safety for parents</div>
+                    </div>
+                    
+                    <div class="mobile-feature-card" data-analytics="feature:pickup">
+                        <div class="mobile-feature-icon">✈️</div>
+                        <div class="mobile-feature-title">Airport Pickup</div>
+                        <div class="mobile-feature-desc">Complete arrival assistance</div>
+                    </div>
+                    
+                    <div class="mobile-feature-card" data-analytics="feature:discounts">
+                        <div class="mobile-feature-icon">💰</div>
+                        <div class="mobile-feature-title">Local Discounts</div>
+                        <div class="mobile-feature-desc">Exclusive campus deals</div>
+                    </div>
+                    
+                    <div class="mobile-feature-card" data-analytics="feature:marketplace">
+                        <div class="mobile-feature-icon">🔄</div>
+                        <div class="mobile-feature-title">Second-hand Trading</div>
+                        <div class="mobile-feature-desc">Safe student marketplace</div>
+                    </div>
+                    
+                    <div class="mobile-feature-card" data-analytics="feature:alumni">
+                        <div class="mobile-feature-icon">🎓</div>
+                        <div class="mobile-feature-title">Alumni Network</div>
+                        <div class="mobile-feature-desc">High-quality job referrals</div>
+                    </div>
+                    
+                    <div class="mobile-feature-card" data-analytics="feature:activities">
+                        <div class="mobile-feature-icon">📋</div>
+                        <div class="mobile-feature-title">Activity Management</div>
+                        <div class="mobile-feature-desc">Professional tools for orgs</div>
+                    </div>
+                    
+                    <div class="mobile-feature-card" data-analytics="feature:volunteer">
+                        <div class="mobile-feature-icon">⏱️</div>
+                        <div class="mobile-feature-title">Volunteer Hours</div>
+                        <div class="mobile-feature-desc">Precise time tracking</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Service plans -->
+        <section id="pricing" class="mobile-section" style="background: var(--bg-gray);">
+            <div class="mobile-container">
+                <h2 class="mobile-title-2 mobile-text-center">Service Plans</h2>
+                <p class="mobile-subtitle mobile-text-center">Free for students, optional Peace of Mind Plan for parents</p>
+                
+                <div class="mobile-grid mobile-gap-lg">
+                    <!-- Free Version -->
+                    <div class="mobile-card" style="border: 2px solid var(--primary-color); position: relative;">
+                        <div style="position: absolute; top: -12px; left: 20px; background: var(--primary-color); color: white; padding: 4px 12px; border-radius: 12px; font-size: 12px; font-weight: 600;">Recommended</div>
+                        <div class="mobile-card-header">
+                            <div class="mobile-card-title" style="font-size: 18px;">Free Version</div>
+                            <div style="font-size: 24px; font-weight: 700; color: var(--primary-color);">$0<span style="font-size: 14px; font-weight: 400; color: var(--text-secondary);">/forever</span></div>
+                        </div>
+                        <div class="mobile-card-body">
+                            <div class="mobile-mb-lg">
+                                <div class="mobile-flex mobile-gap-sm mobile-mb-sm">
+                                    <span style="color: var(--success-color);">✓</span>
+                                    <span>AI Q&A</span>
+                                </div>
+                                <div class="mobile-flex mobile-gap-sm mobile-mb-sm">
+                                    <span style="color: var(--success-color);">✓</span>
+                                    <span>Activity Registration</span>
+                                </div>
+                                <div class="mobile-flex mobile-gap-sm mobile-mb-sm">
+                                    <span style="color: var(--success-color);">✓</span>
+                                    <span>Basic Messaging</span>
+                                </div>
+                                <div class="mobile-flex mobile-gap-sm">
+                                    <span style="color: var(--success-color);">✓</span>
+                                    <span>Select Discounts</span>
+                                </div>
+                            </div>
+                            <a href="#contact" class="mobile-btn mobile-btn-primary mobile-btn-block" data-analytics="cta:pricing:free">
+                                Start Free
+                            </a>
+                        </div>
+                    </div>
+                    
+                    <!-- Peace of Mind Plan -->
+                    <div class="mobile-card">
+                        <div class="mobile-card-header">
+                            <div class="mobile-card-title" style="font-size: 18px;">Peace of Mind Plan</div>
+                            <div style="font-size: 24px; font-weight: 700; color: var(--text-primary);">¥365<span style="font-size: 14px; font-weight: 400; color: var(--text-secondary);">/year</span></div>
+                        </div>
+                        <div class="mobile-card-body">
+                            <div class="mobile-mb-lg">
+                                <div class="mobile-flex mobile-gap-sm mobile-mb-sm">
+                                    <span style="color: var(--primary-color);">✓</span>
+                                    <span>Emergency Response ≤15min</span>
+                                </div>
+                                <div class="mobile-flex mobile-gap-sm mobile-mb-sm">
+                                    <span style="color: var(--primary-color);">✓</span>
+                                    <span>24/7 Customer Support</span>
+                                </div>
+                                <div class="mobile-flex mobile-gap-sm mobile-mb-sm">
+                                    <span style="color: var(--primary-color);">✓</span>
+                                    <span>Parent Safety Check</span>
+                                </div>
+                                <div class="mobile-flex mobile-gap-sm">
+                                    <span style="color: var(--primary-color);">✓</span>
+                                    <span>Progress Tracking</span>
+                                </div>
+                            </div>
+                            <a href="#contact" class="mobile-btn mobile-btn-outline mobile-btn-block" data-analytics="cta:pricing:safety">
+                                Learn More
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Contact us -->
+        <section id="contact" class="mobile-section">
+            <div class="mobile-container">
+                <h2 class="mobile-title-2 mobile-text-center">Contact Us</h2>
+                <p class="mobile-subtitle mobile-text-center">Professional service support available anytime</p>
+                
+                <!-- Quick contact methods -->
+                <div class="mobile-list mobile-mb-lg">
+                    <a href="tel:+1-xxx-xxx-xxxx" class="mobile-list-item mobile-contact-tel" data-analytics="contact:phone">
+                        <div class="mobile-list-icon">📞</div>
+                        <div class="mobile-list-content">
+                            <div class="mobile-list-title">Phone Consultation</div>
+                            <div class="mobile-list-desc">+1-xxx-xxx-xxxx</div>
+                        </div>
+                        <div class="mobile-list-arrow">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="m9 18 6-6-6-6"/>
+                            </svg>
+                        </div>
+                    </a>
+                    
+                    <a href="mailto:info@americanpromotioncompany.com" class="mobile-list-item mobile-contact-email" data-analytics="contact:email">
+                        <div class="mobile-list-icon">📧</div>
+                        <div class="mobile-list-content">
+                            <div class="mobile-list-title">Email Consultation</div>
+                            <div class="mobile-list-desc">info@americanpromotioncompany.com</div>
+                        </div>
+                        <div class="mobile-list-arrow">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="m9 18 6-6-6-6"/>
+                            </svg>
+                        </div>
+                    </a>
+                </div>
+                
+                <!-- Mobile-optimized form -->
+                <form class="mobile-form" data-analytics="form:contact">
+                    <div class="mobile-form-item">
+                        <label for="mobile-name" class="mobile-form-label">Name *</label>
+                        <input type="text" id="mobile-name" name="name" class="mobile-form-input" required placeholder="Enter your name">
+                    </div>
+                    
+                    <div class="mobile-form-item">
+                        <label for="mobile-email" class="mobile-form-label">Email *</label>
+                        <input type="email" id="mobile-email" name="email" class="mobile-form-input" required placeholder="Enter email address" inputmode="email">
+                    </div>
+                    
+                    <div class="mobile-form-item">
+                        <label for="mobile-phone" class="mobile-form-label">Phone</label>
+                        <input type="tel" id="mobile-phone" name="phone" class="mobile-form-input" placeholder="Enter phone number" inputmode="tel">
+                    </div>
+                    
+                    <div class="mobile-form-item">
+                        <label for="mobile-type" class="mobile-form-label">Inquiry Type *</label>
+                        <select id="mobile-type" name="type" class="mobile-form-select" required>
+                            <option value="">Select inquiry type</option>
+                            <option value="beta">Beta Access</option>
+                            <option value="merchant">Merchant Partnership</option>
+                            <option value="organization">Organization Partnership</option>
+                            <option value="other">Other Inquiry</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mobile-form-item">
+                        <label for="mobile-message" class="mobile-form-label">Message</label>
+                        <textarea id="mobile-message" name="message" class="mobile-form-textarea" rows="4" placeholder="Describe your needs..."></textarea>
+                    </div>
+                    
+                    <div class="mobile-form-item">
+                        <label style="display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--text-secondary);">
+                            <input type="checkbox" name="privacy-agree" required style="width: 16px; height: 16px;">
+                            I have read and agree to <a href="privacy.html" style="color: var(--primary-color);">Privacy Policy</a> and <a href="terms.html" style="color: var(--primary-color);">Terms of Service</a>
+                        </label>
+                    </div>
+                    
+                    <button type="submit" class="mobile-btn mobile-btn-primary mobile-btn-lg mobile-btn-block" data-analytics="cta:contact:submit">
+                        Submit Application
+                    </button>
+                </form>
+            </div>
+        </section>
+
+        <!-- Desktop version link -->
+        <section class="mobile-section-sm" style="background: var(--bg-gray); text-align: center;">
+            <div class="mobile-container">
+                <p style="color: var(--text-secondary); font-size: 14px; margin-bottom: 12px;">Need more detailed information?</p>
+                <a href="../../en/index.html" class="mobile-btn mobile-btn-ghost" data-analytics="cta:switch:desktop">
+                    Visit Desktop Full Version →
+                </a>
+            </div>
+        </section>
+    </main>
+
+    <!-- Bottom navigation bar -->
+    <nav class="mobile-tabbar safe-area-bottom">
+        <a href="#hero" class="mobile-tabbar-item active" data-tab="home">
+            <div class="mobile-tabbar-icon">🏠</div>
+            <div class="mobile-tabbar-text">Home</div>
+        </a>
+        <a href="#features" class="mobile-tabbar-item" data-tab="features">
+            <div class="mobile-tabbar-icon">⚡</div>
+            <div class="mobile-tabbar-text">Features</div>
+        </a>
+        <a href="#pricing" class="mobile-tabbar-item" data-tab="pricing">
+            <div class="mobile-tabbar-icon">🛡️</div>
+            <div class="mobile-tabbar-text">Safety</div>
+        </a>
+        <a href="#contact" class="mobile-tabbar-item" data-tab="contact">
+            <div class="mobile-tabbar-icon">📞</div>
+            <div class="mobile-tabbar-text">Contact</div>
+        </a>
+    </nav>
+
+    <!-- JavaScript -->
+    <script src="../../assets/js/mobile.js"></script>
+    <script>
+        // Mobile-specific functionality extension
+        window.MobileApp.toggleMenu = function() {
+            const menu = document.getElementById('mobile-menu');
+            const mask = document.querySelector('.mobile-menu-mask');
+            const isOpen = menu.style.left === '0px';
+            
+            if (isOpen) {
+                menu.style.left = '-100%';
+                mask.style.opacity = '0';
+                mask.style.visibility = 'hidden';
+                document.body.style.overflow = '';
+            } else {
+                menu.style.left = '0px';
+                mask.style.opacity = '1';
+                mask.style.visibility = 'visible';
+                document.body.style.overflow = 'hidden';
+            }
+        };
+
+        // Bottom navigation switching
+        document.addEventListener('DOMContentLoaded', function() {
+            const tabItems = document.querySelectorAll('.mobile-tabbar-item');
+            tabItems.forEach(item => {
+                item.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    
+                    // Update active state
+                    tabItems.forEach(tab => tab.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    // Smooth scroll
+                    const href = this.getAttribute('href');
+                    if (href.startsWith('#')) {
+                        const target = document.querySelector(href);
+                        if (target) {
+                            const headerHeight = 56;
+                            const targetPosition = target.offsetTop - headerHeight;
+                            
+                            window.scrollTo({
+                                top: targetPosition,
+                                behavior: 'smooth'
+                            });
+                        }
+                    }
+                    
+                    // Haptic feedback
+                    if ('vibrate' in navigator) {
+                        navigator.vibrate(50);
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>

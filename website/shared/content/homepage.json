@@ -1,0 +1,224 @@
+{
+  "zh": {
+    "meta": {
+      "title": "西柚 - 海外全体留学生 & 家长的一站式服务与安全平台",
+      "description": "专为移动端优化的留学生服务平台。从行前准备到在地生活，从活动报名到紧急协同，用一个App覆盖留学全周期。",
+      "keywords": "留学生,移动端,安心计划,接机服务,留学生安全,家长服务,AI问答"
+    },
+    "navbar": {
+      "title": "西柚 Pomelo",
+      "menu": "菜单"
+    },
+    "hero": {
+      "title": "海外留学生 & 家长\n一站式服务平台",
+      "subtitle": "移动端专属体验，随时随地获取留学服务",
+      "cta_primary": "立即体验",
+      "cta_secondary": "了解更多"
+    },
+    "features": {
+      "title": "核心服务",
+      "subtitle": "为留学生活提供全方位支持",
+      "items": [
+        {
+          "icon": "🤖",
+          "title": "AI智能问答",
+          "desc": "24/7留学攻略咨询"
+        },
+        {
+          "icon": "🛡️",
+          "title": "安心计划",
+          "desc": "家长专属安全保障"
+        },
+        {
+          "icon": "✈️",
+          "title": "接机服务",
+          "desc": "新生落地全程协助"
+        },
+        {
+          "icon": "💰",
+          "title": "本地优惠",
+          "desc": "校园周边独家折扣"
+        },
+        {
+          "icon": "🔄",
+          "title": "二手交易",
+          "desc": "安全的学生交易平台"
+        },
+        {
+          "icon": "🎓",
+          "title": "校友网络",
+          "desc": "高质量职业内推"
+        },
+        {
+          "icon": "📋",
+          "title": "活动管理",
+          "desc": "学联组织专业工具"
+        },
+        {
+          "icon": "⏱️",
+          "title": "志愿时长",
+          "desc": "精确工时统计认证"
+        }
+      ]
+    },
+    "pricing": {
+      "title": "服务方案",
+      "subtitle": "学生端免费，家长安心计划可选",
+      "plans": [
+        {
+          "name": "免费版",
+          "price": "¥0",
+          "period": "永久",
+          "features": ["AI问答", "活动报名", "基础消息", "部分优惠"],
+          "cta": "立即使用",
+          "popular": true
+        },
+        {
+          "name": "安心计划",
+          "price": "¥365", 
+          "period": "年",
+          "features": ["应急响应≤15分钟", "客服7×12小时", "家长报平安", "进度可视化"],
+          "cta": "了解详情",
+          "popular": false
+        }
+      ]
+    },
+    "contact": {
+      "title": "联系我们",
+      "subtitle": "随时为您提供专业服务支持",
+      "phone": "+1-xxx-xxx-xxxx",
+      "email": "info@americanpromotioncompany.com",
+      "form": {
+        "name_label": "姓名",
+        "email_label": "邮箱",
+        "phone_label": "电话",
+        "type_label": "咨询类型",
+        "message_label": "详细说明",
+        "submit": "提交申请",
+        "types": [
+          {"value": "beta", "label": "内测申请"},
+          {"value": "merchant", "label": "商家合作"},
+          {"value": "organization", "label": "学联合作"},
+          {"value": "other", "label": "其他咨询"}
+        ]
+      }
+    },
+    "tabbar": [
+      {"key": "home", "title": "首页", "icon": "🏠"},
+      {"key": "features", "title": "功能", "icon": "⚡"},
+      {"key": "safety", "title": "安心", "icon": "🛡️"},
+      {"key": "contact", "title": "联系", "icon": "📞"}
+    ]
+  },
+  "en": {
+    "meta": {
+      "title": "Pomelo - Comprehensive Service & Safety Platform for International Students",
+      "description": "Mobile-optimized platform for international students. From pre-departure to local life, from activities to emergency coordination.",
+      "keywords": "international students,mobile,safety plan,airport pickup,student safety,AI support"
+    },
+    "navbar": {
+      "title": "Pomelo",
+      "menu": "Menu"
+    },
+    "hero": {
+      "title": "International Students &\nParents Service Platform",
+      "subtitle": "Mobile-first experience, access study abroad services anytime",
+      "cta_primary": "Get Started",
+      "cta_secondary": "Learn More"
+    },
+    "features": {
+      "title": "Core Services",
+      "subtitle": "Comprehensive support for international student life",
+      "items": [
+        {
+          "icon": "🤖",
+          "title": "AI Smart Q&A",
+          "desc": "24/7 study abroad guidance"
+        },
+        {
+          "icon": "🛡️",
+          "title": "Peace of Mind Plan",
+          "desc": "Exclusive safety for parents"
+        },
+        {
+          "icon": "✈️",
+          "title": "Airport Pickup",
+          "desc": "Complete arrival assistance"
+        },
+        {
+          "icon": "💰",
+          "title": "Local Discounts",
+          "desc": "Exclusive campus deals"
+        },
+        {
+          "icon": "🔄",
+          "title": "Second-hand Trading",
+          "desc": "Safe student marketplace"
+        },
+        {
+          "icon": "🎓",
+          "title": "Alumni Network",
+          "desc": "High-quality job referrals"
+        },
+        {
+          "icon": "📋",
+          "title": "Activity Management",
+          "desc": "Professional tools for orgs"
+        },
+        {
+          "icon": "⏱️",
+          "title": "Volunteer Hours",
+          "desc": "Precise time tracking"
+        }
+      ]
+    },
+    "pricing": {
+      "title": "Service Plans",
+      "subtitle": "Free for students, optional Peace of Mind Plan for parents",
+      "plans": [
+        {
+          "name": "Free Version",
+          "price": "$0",
+          "period": "forever",
+          "features": ["AI Q&A", "Activity Registration", "Basic Messaging", "Select Discounts"],
+          "cta": "Start Free",
+          "popular": true
+        },
+        {
+          "name": "Peace of Mind Plan",
+          "price": "¥365",
+          "period": "year",
+          "features": ["Emergency Response ≤15min", "24/7 Support", "Parent Check-in", "Progress Tracking"],
+          "cta": "Learn More",
+          "popular": false
+        }
+      ]
+    },
+    "contact": {
+      "title": "Contact Us",
+      "subtitle": "Professional service support available anytime",
+      "phone": "+1-xxx-xxx-xxxx",
+      "email": "info@americanpromotioncompany.com",
+      "form": {
+        "name_label": "Name",
+        "email_label": "Email",
+        "phone_label": "Phone",
+        "type_label": "Inquiry Type",
+        "message_label": "Message",
+        "submit": "Submit",
+        "types": [
+          {"value": "beta", "label": "Beta Access"},
+          {"value": "merchant", "label": "Merchant Partnership"},
+          {"value": "organization", "label": "Organization Partnership"},
+          {"value": "other", "label": "Other Inquiry"}
+        ]
+      }
+    },
+    "tabbar": [
+      {"key": "home", "title": "Home", "icon": "🏠"},
+      {"key": "features", "title": "Features", "icon": "⚡"},
+      {"key": "safety", "title": "Safety", "icon": "🛡️"},
+      {"key": "contact", "title": "Contact", "icon": "📞"}
+    ]
+  }
+}

@@ -40,7 +40,7 @@
     <meta http-equiv="Expires" content="0">
     
     <!-- Styles -->
-    <link rel="stylesheet" href="../assets/css/style.css?v=1.1">
+    <link rel="stylesheet" href="../assets/css/style.css?v=1.3">
     
     <!-- Structured data JSON-LD -->
     <script type="application/ld+json">
@@ -63,6 +63,66 @@
         "description": "Comprehensive service and safety platform for international students and parents studying abroad"
     }
     </script>
+    
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "Product",
+        "name": "Peace of Mind Plan",
+        "description": "Safety assurance and emergency coordination services for parents; optional add-on that doesn't affect free student app usage",
+        "brand": {
+            "@type": "Brand",
+            "name": "Pomelo"
+        },
+        "offers": {
+            "@type": "Offer",
+            "price": "365",
+            "priceCurrency": "CNY",
+            "priceValidUntil": "2025-12-31",
+            "availability": "https://schema.org/InStock",
+            "description": "Annual subscription including unlimited emergency response services for the entire year"
+        },
+        "category": "Safety & Emergency Services",
+        "aggregateRating": {
+            "@type": "AggregateRating",
+            "ratingValue": "4.8",
+            "reviewCount": "156"
+        }
+    }
+    </script>
+    
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        "mainEntity": [
+            {
+                "@type": "Question",
+                "name": "What changes for students after activating the Peace of Mind Plan?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "No changes; students can unbind anytime."
+                }
+            },
+            {
+                "@type": "Question", 
+                "name": "How to initiate coordination? How is ≤15min response calculated?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "Timing starts from ticket creation, platform facilitates volunteer and customer service coordination."
+                }
+            },
+            {
+                "@type": "Question",
+                "name": "Does Pomelo create advertising profiles or sell personal data?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "No; we don't create profiles or resell data."
+                }
+            }
+        ]
+    }
+    </script>
 </head>
 <body>
     <!-- Skip to content link -->
@@ -72,51 +132,50 @@
     <header class="header" id="header" style="background: rgba(255,255,255,0.85); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-bottom: 1px solid rgba(0,0,0,0.12); box-shadow: 0 2px 12px rgba(0,0,0,0.04); position: fixed; top: 0; left: 0; right: 0; z-index: 1000; height: 64px;">
         <div class="container" style="max-width: 1200px; margin: 0 auto; padding: 0 24px;">
             <nav class="nav" role="navigation" aria-label="Main navigation" style="display: flex; align-items: center; justify-content: space-between; height: 64px;">
-                <!-- Left: LOGO -->
-                <div class="logo" style="display: flex; align-items: center; min-width: 132px;">
-                    <img src="../assets/images/pomelo-logo.png" alt="Pomelo logo" width="40" height="40" loading="eager" style="margin-right: 12px;">
-                    <span style="font-size: 18px; font-weight: 600; color: var(--text-primary);">Pomelo</span>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <!-- Hamburger Menu Button (English version only) -->
+                    <button class="hamburger-menu" id="hamburger-menu" aria-label="Toggle navigation menu" aria-expanded="false">
+                        <span class="hamburger-line"></span>
+                        <span class="hamburger-line"></span>
+                        <span class="hamburger-line"></span>
+                    </button>
+                    
+                    <div class="logo" style="display: flex; align-items: center;">
+                        <img src="../assets/images/pomelo-logo.png" alt="Pomelo logo" width="40" height="40" loading="eager" style="margin-right: 12px;">
+                        <span style="font-size: 18px; font-weight: 600; color: var(--text-primary);">Pomelo</span>
+                    </div>
                 </div>
                 
-                <!-- Center: Navigation menu -->
-                <div class="nav-center" style="flex: 1; display: flex; justify-content: center; margin: 0 32px;">
-                    <ul class="nav-links" id="nav-links" style="display: flex; align-items: center; gap: 32px; list-style: none; margin: 0; padding: 0;">
-                        <li><a href="#audience" style="font-size: 15px; font-weight: 500; color: var(--text-primary); text-decoration: none; padding: 8px 0; border-bottom: 2px solid transparent; transition: all 0.3s ease;">Who We Serve</a></li>
-                        <li><a href="#features" style="font-size: 15px; font-weight: 500; color: var(--text-primary); text-decoration: none; padding: 8px 0; border-bottom: 2px solid transparent; transition: all 0.3s ease;">Core Features</a></li>
-                        <li><a href="#pricing" style="font-size: 15px; font-weight: 500; color: var(--text-primary); text-decoration: none; padding: 8px 0; border-bottom: 2px solid transparent; transition: all 0.3s ease;">Solutions</a></li>
-                        <li><a href="#faq" style="font-size: 15px; font-weight: 500; color: var(--text-primary); text-decoration: none; padding: 8px 0; border-bottom: 2px solid transparent; transition: all 0.3s ease;">FAQ</a></li>
-                        <li><a href="#contact" style="font-size: 15px; font-weight: 500; color: var(--text-primary); text-decoration: none; padding: 8px 0; border-bottom: 2px solid transparent; transition: all 0.3s ease;">Contact</a></li>
-                    </ul>
+                <!-- Mobile Navigation Overlay -->
+                <div class="mobile-nav-overlay" id="mobile-nav-overlay">
+                    <nav class="mobile-nav" role="navigation" aria-label="Mobile navigation">
+                        <ul class="mobile-nav-links">
+                            <li><a href="#audience" class="mobile-nav-link">Who We Serve</a></li>
+                            <li><a href="#features" class="mobile-nav-link">Core Features</a></li>
+                            <li><a href="#organizer-tools" class="mobile-nav-link">Organizer Tools</a></li>
+                            <li><a href="#safety" class="mobile-nav-link">Peace of Mind Plan</a></li>
+                            <li><a href="#pricing" class="mobile-nav-link">Pricing & Solutions</a></li>
+                            <li><a href="#faq" class="mobile-nav-link">FAQ</a></li>
+                        </ul>
+                        
+                        <!-- Mobile CTA buttons -->
+                        <div class="mobile-nav-cta">
+                            <a href="#contact" class="btn btn-primary btn-lg mobile-cta-btn">Beta Access</a>
+                            <a href="#contact" class="btn btn-outline btn-lg mobile-cta-btn">Partnership Contact</a>
+                        </div>
+                    </nav>
                 </div>
                 
-                <!-- Right: Language switcher + CTA -->
-                <div class="nav-right" style="display: flex; align-items: center; gap: 16px;">
+                <!-- Right: Language switcher only -->
+                <div class="nav-right" style="display: flex; align-items: center;">
                     <!-- Language switcher -->
                     <div class="language-switcher" style="display: flex; align-items: center; background: rgba(255,255,255,0.6); border-radius: 8px; padding: 4px;">
                         <button class="lang-btn" data-lang="zh" style="padding: 6px 12px; border: none; background: transparent; color: var(--text-secondary); border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer;">中文</button>
                         <button class="lang-btn active" data-lang="en" style="padding: 6px 12px; border: none; background: var(--primary-color); color: white; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer;">EN</button>
                     </div>
-                    
-                    <!-- CTA buttons -->
-                    <div class="nav-cta" style="display: flex; align-items: center; gap: 8px;">
-                        <a href="#contact" class="btn btn-primary btn-sm" data-analytics="cta:nav:start" style="padding: 10px 16px; font-size: 14px; font-weight: 600; border-radius: 12px; background: var(--primary-color); color: white; text-decoration: none; transition: all 0.3s ease;">
-                            Beta Access
-                        </a>
-                        <a href="#contact" class="btn btn-outline btn-sm" data-analytics="cta:nav:contact" style="padding: 10px 14px; font-size: 13px; font-weight: 500; border-radius: 12px; border: 1px solid rgba(255,107,53,0.3); color: var(--primary-color); text-decoration: none; background: rgba(255,255,255,0.8); display: flex; align-items: center; gap: 6px; transition: all 0.3s ease;">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-                            </svg>
-                            Partnership Contact
-                        </a>
-                    </div>
                 </div>
                 
-                <!-- Mobile navigation button -->
-                <button class="nav-toggle" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="nav-links">
-                    <span></span>
-                    <span></span>
-                    <span></span>
-                </button>
+                </div>
             </nav>
         </div>
     </header>
@@ -130,7 +189,8 @@
                 <div class="hero-content">
                     <h1 class="hero-title">Comprehensive Service & Safety Platform for International Students & Parents</h1>
                     <p class="hero-subtitle">
-                        From pre-departure preparation to local life, from activity registration to emergency coordination, covering the entire study abroad journey with one App.
+                        From pre-departure preparation to local life, from activity registration to emergency coordination, covering the entire study abroad journey with one App.<br>
+                        <strong style="color: white; font-weight: 600;">Pomelo student and volunteer apps are free to use; Peace of Mind Plan for parents is an optional add-on.</strong>
                     </p>
                     <div class="hero-buttons">
                         <!-- CTA: Hero primary action - Beta Access -->
@@ -314,7 +374,8 @@
             <div class="container" style="max-width: 1400px; padding: 0 24px;">
                 <h2 class="section-title" style="font-size: 32px; font-weight: 700; line-height: 1.25; margin-bottom: 8px;">Schools We Serve</h2>
                 <p class="section-subtitle" style="font-size: 14px; color: var(--text-light); text-align: center; margin-bottom: 24px;">
-                    We currently provide services to international students at the following institutions (continuously expanding)
+                    We currently provide services to international students at the following institutions (continuously expanding)<br>
+                    <small style="font-size: 12px; color: var(--text-light);">School logos are used for identification purposes only</small>
                 </p>
                 
                 <div class="schools-grid" style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 24px; margin-bottom: 32px;">
@@ -472,7 +533,7 @@
                             <div class="feature-number" style="background: linear-gradient(135deg, #FF6B35, #FF8E53);">02</div>
                             <h3 class="feature-title">Peace of Mind Plan - Exclusive Safety Assurance for Parents</h3>
                             <p>
-                                Professional safety assurance service at ¥365/year, giving parents true peace of mind. When parents cannot contact their child, 
+                                Professional safety assurance and emergency coordination service, giving parents true peace of mind. When parents cannot contact their child, 
                                 the platform immediately activates emergency response mechanisms, providing assistance through volunteer networks and professional security forces.
                             </p>
                             <div class="feature-detail">
@@ -667,19 +728,19 @@
             </div>
         </section>
 
-        <!-- Student Organization Management Introduction -->
-        <section class="content-section">
+        <!-- Organizer Tools -->
+        <section id="organizer-tools" class="content-section">
             <div class="container">
                 <div style="text-align: center; max-width: 1000px; margin: 0 auto;">
-                    <h2 class="section-title">Free for Student Organizations and Clubs</h2>
+                    <h2 class="section-title">Organizer Tools</h2>
                     <p class="section-subtitle">
-                        If you are a manager of student union, club, or any student organization, we provide professional internal member management tools for free
+                        If you are a manager of student union, club, or any student organization, we provide professional internal member management tools <strong style="color: var(--primary-color);">completely free</strong>
                     </p>
                     
                     <div style="background: linear-gradient(135deg, rgba(255,107,53,0.05), rgba(255,142,83,0.03)); padding: 4rem 3rem; border-radius: var(--border-radius-xl); margin: 2rem 0; position: relative; overflow: hidden;">
                         <!-- Modern title design -->
                         <div class="management-header" style="text-align: center; margin-bottom: 3rem;">
-                            <div class="section-badge" style="display: inline-block; background: var(--bg-gradient); color: white; padding: 0.5rem 1.5rem; border-radius: 25px; font-size: 0.9rem; font-weight: 600; margin-bottom: 1rem; box-shadow: var(--shadow-md);">For Student Organizations</div>
+                            <div class="section-badge" style="display: inline-block; background: var(--success-color); color: white; padding: 0.5rem 1.5rem; border-radius: 25px; font-size: 0.9rem; font-weight: 600; margin-bottom: 1rem; box-shadow: var(--shadow-md);">💚 Forever Free</div>
                             <h2 style="color: var(--primary-color); font-size: 2rem; font-weight: 700; margin-bottom: 0.5rem;">Student Organization Management System</h2>
                             <p style="color: var(--text-secondary); font-size: 1.1rem; max-width: 720px; margin: 0 auto;">For student governments, clubs, college/grade associations, volunteer service teams, helping organizations collaborate efficiently and operate professionally.</p>
                             <div style="display: flex; justify-content: center; gap: 8px; margin-top: 12px;">
@@ -1142,7 +1203,7 @@
         <!-- Solutions -->
         <section id="pricing" class="content-section" style="background: var(--bg-light);">
             <div class="container" style="max-width: 1200px; padding: 0 24px;">
-                <h2 class="section-title" style="font-size: 32px; font-weight: 700; margin-bottom: 8px;">Solutions</h2>
+                <h2 class="section-title" style="font-size: 32px; font-weight: 700; margin-bottom: 8px;">Pricing & Solutions</h2>
                 
                 <!-- Simple info bar -->
                 <p style="font-size: 16px; color: var(--text-secondary); text-align: center; margin-bottom: 32px; line-height: 1.6;">
@@ -1516,11 +1577,11 @@
                 </ul>
                 
                 <h4>Fee Description</h4>
-                <p>¥365/year (approximately ¥1/day), includes unlimited emergency response services for the entire year. Fees are used to maintain volunteer networks, platform operations, and partnership fees with professional security agencies.</p>
+                <p>The Peace of Mind Plan for parents is an optional add-on service. Please see pricing plans for detailed pricing and subscription methods. Fees are used to maintain volunteer networks, platform operations, and partnership fees with professional security agencies.</p>
                 
                 <div style="text-align: center; margin-top: 2rem;">
-                    <a href="#contact" class="btn btn-primary" onclick="closeSafetyModal()">
-                        I Understand, Subscribe Now
+                    <a href="#pricing" class="btn btn-primary" onclick="closeSafetyModal()">
+                        View Pricing Plans
                     </a>
                 </div>
             </div>
@@ -1532,8 +1593,8 @@
         <div style="background: white; padding: 12px 16px; box-shadow: 0 -2px 20px rgba(0,0,0,0.1); border-top: 1px solid rgba(255,107,53,0.2);">
             <div style="display: flex; justify-content: space-between; align-items: center;">
                 <div>
-                    <div style="font-size: 16px; font-weight: 600; color: var(--text-primary);">Peace of Mind Plan ¥365/year</div>
-                    <div style="font-size: 11px; color: var(--text-light);">7-day refund available</div>
+                    <div style="font-size: 16px; font-weight: 600; color: var(--text-primary);">Peace of Mind Plan</div>
+                    <div style="font-size: 11px; color: var(--text-light);">Optional add-on service</div>
                 </div>
                 <a href="#safety" class="btn btn-outline" style="padding: 10px 16px; font-size: 13px;" data-analytics="cta:mobile-sticky:learn">
                     Learn More

@@ -1,0 +1,1092 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="description" content="西柚 - 专为移动端优化的留学生服务平台。从行前准备到在地生活，随时随地获取留学服务支持。">
+    <meta name="keywords" content="留学生,移动端,安心计划,接机服务,留学生安全,AI问答,手机版">
+    <meta name="author" content="西柚团队">
+    <meta name="format-detection" content="telephone=yes,email=yes">
+    
+    <!-- SEO优化 -->
+    <title>西柚 - 留学生移动端服务平台</title>
+    <link rel="canonical" href="https://pomelo.app/mobile/">
+    
+    <!-- 移动端专用SEO标签 -->
+    <link rel="alternate" media="only screen and (min-width: 769px)" href="https://pomelo.app">
+    <link rel="alternate" hreflang="zh-CN" href="https://pomelo.app/mobile/">
+    <link rel="alternate" hreflang="en-US" href="https://pomelo.app/mobile/en/">
+    <link rel="alternate" hreflang="x-default" href="https://pomelo.app">
+    
+    <!-- Open Graph for Mobile -->
+    <meta property="og:title" content="西柚 - 留学生移动端服务平台">
+    <meta property="og:description" content="专为移动端优化，随时随地获取留学服务支持">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://pomelo.app/mobile/">
+    <meta property="og:image" content="../assets/images/pomelo-logo.png">
+    
+    <!-- 移动端专用 -->
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="西柚 Pomelo">
+    <meta name="theme-color" content="#FF6B35">
+    
+    <!-- Favicon -->
+    <link rel="apple-touch-icon" href="../assets/images/pomelo-logo.png">
+    <link rel="icon" type="image/png" href="../assets/images/pomelo-logo.png">
+    
+    <!-- Styles -->
+    <link rel="stylesheet" href="../assets/css/mobile.css?v=1.0">
+    
+    <!-- PWA支持 -->
+    <link rel="manifest" href="../assets/manifest.json">
+</head>
+<body class="mobile-page">
+    <!-- 移动端顶部导航 -->
+    <header class="mobile-navbar safe-area-top">
+        <!-- Left: Hamburger + Logo -->
+        <div style="display: flex; align-items: center; gap: 12px;">
+            <div class="mobile-navbar-menu" onclick="MobileApp.toggleMenu()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="3" y1="6" x2="21" y2="6"/>
+                    <line x1="3" y1="12" x2="21" y2="12"/>
+                    <line x1="3" y1="18" x2="21" y2="18"/>
+                </svg>
+            </div>
+            
+            <div class="mobile-navbar-title">
+                <img src="../assets/images/pomelo-logo.png" alt="西柚logo" width="28" height="28" style="vertical-align: middle; margin-right: 8px;">
+                西柚 Pomelo
+            </div>
+        </div>
+        
+        <!-- Right: Language switcher -->
+        <div class="mobile-language-switcher" style="display: flex; align-items: center; background: rgba(255,255,255,0.9); border-radius: 6px; padding: 2px;">
+            <button class="mobile-lang-btn active" data-lang="zh" style="padding: 4px 8px; border: none; background: var(--primary-color); color: white; border-radius: 4px; font-size: 11px; font-weight: 600; cursor: pointer;">中文</button>
+            <button class="mobile-lang-btn" data-lang="en" style="padding: 4px 8px; border: none; background: transparent; color: var(--text-secondary); border-radius: 4px; font-size: 11px; font-weight: 600; cursor: pointer;">EN</button>
+        </div>
+    </header>
+
+    <!-- 移动端侧滑菜单 -->
+    <nav class="mobile-nav-menu" id="mobile-menu">
+        <div class="mobile-p-lg">
+            
+            <!-- 导航链接 -->
+            <div class="mobile-list">
+                <a href="#hero" class="mobile-list-item mobile-nav-link">
+                    <div class="mobile-list-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                        </svg>
+                    </div>
+                    <div class="mobile-list-content">
+                        <div class="mobile-list-title">首页</div>
+                    </div>
+                    <div class="mobile-list-arrow">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="m9 18 6-6-6-6"/>
+                        </svg>
+                    </div>
+                </a>
+                
+                <a href="#audience" class="mobile-list-item mobile-nav-link">
+                    <div class="mobile-list-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                            <circle cx="9" cy="7" r="4"/>
+                        </svg>
+                    </div>
+                    <div class="mobile-list-content">
+                        <div class="mobile-list-title">我们为谁</div>
+                    </div>
+                </a>
+                
+                <a href="#schools" class="mobile-list-item mobile-nav-link">
+                    <div class="mobile-list-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="m22 10-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 10"/>
+                            <path d="M22 10 12 5 2 10l10 5 10-5z"/>
+                        </svg>
+                    </div>
+                    <div class="mobile-list-content">
+                        <div class="mobile-list-title">覆盖院校</div>
+                    </div>
+                </a>
+                
+                <a href="#features" class="mobile-list-item mobile-nav-link">
+                    <div class="mobile-list-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                            <rect x="9" y="9" width="6" height="6"/>
+                        </svg>
+                    </div>
+                    <div class="mobile-list-content">
+                        <div class="mobile-list-title">核心功能</div>
+                    </div>
+                </a>
+                
+                <a href="#organizer-tools" class="mobile-list-item mobile-nav-link">
+                    <div class="mobile-list-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                        </svg>
+                    </div>
+                    <div class="mobile-list-content">
+                        <div class="mobile-list-title">组织者工具</div>
+                    </div>
+                </a>
+                
+                <a href="#safety" class="mobile-list-item mobile-nav-link">
+                    <div class="mobile-list-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                        </svg>
+                    </div>
+                    <div class="mobile-list-content">
+                        <div class="mobile-list-title">安心计划</div>
+                    </div>
+                </a>
+                
+                <a href="#pricing" class="mobile-list-item mobile-nav-link">
+                    <div class="mobile-list-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"/>
+                            <path d="m9 12 2 2 4-4"/>
+                        </svg>
+                    </div>
+                    <div class="mobile-list-content">
+                        <div class="mobile-list-title">服务方案</div>
+                    </div>
+                </a>
+                
+                <a href="#contact" class="mobile-list-item mobile-nav-link">
+                    <div class="mobile-list-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                        </svg>
+                    </div>
+                    <div class="mobile-list-content">
+                        <div class="mobile-list-title">联系我们</div>
+                    </div>
+                </a>
+            </div>
+            
+            <!-- 法律链接 -->
+            <div class="mobile-mt-lg" style="padding: 16px 0; border-top: 1px solid var(--border-light);">
+                <a href="privacy.html" class="mobile-text-link">隐私政策</a>
+                <a href="terms.html" class="mobile-text-link">服务条款</a>
+                <a href="support.html" class="mobile-text-link">技术支持</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 遮罩层 -->
+    <div class="mobile-menu-mask" onclick="MobileApp.toggleMenu()"></div>
+
+    <!-- 主要内容 -->
+    <main class="mobile-content">
+        
+        <!-- Hero区域 -->
+        <section id="hero" class="mobile-hero">
+            <h1 class="mobile-hero-title">海外留学生 & 家长<br>一站式服务平台</h1>
+            <p class="mobile-hero-subtitle">移动端专属体验，随时随地获取留学服务</p>
+            
+            <div class="mobile-flex mobile-gap-md">
+                <a href="#contact" class="mobile-btn mobile-btn-primary" data-analytics="cta:mobile-hero:primary">
+                    立即体验
+                </a>
+                <a href="#features" class="mobile-btn mobile-btn-outline mobile-btn-outline-on-dark" data-analytics="cta:mobile-hero:secondary">
+                    了解更多
+                </a>
+            </div>
+        </section>
+
+        <!-- 我们为谁 -->
+        <section id="audience" class="mobile-section">
+            <div class="mobile-container">
+                <h2 class="mobile-title-2 mobile-text-center">我们为谁</h2>
+                <p class="mobile-subtitle mobile-text-center">针对留学全周期的不同用户群体，提供精准化的服务解决方案</p>
+                
+                <div class="mobile-grid mobile-gap-md">
+                    <div class="mobile-feature-card" data-analytics="audience:freshmen">
+                        <div class="mobile-feature-icon icon-bg-coral">
+                            <!-- 新生: 学位帽图标 -->
+                            <svg fill="none" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 14l9-5-9-5-9 5 9 5z"></path>
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 14l6.16-3.422A12.083 12.083 0 0124 12c0 6.627-5.373 12-12 12S0 18.627 0 12a12.083 12.083 0 015.84-8.422L12 14z"></path>
+                            </svg>
+                        </div>
+                        <div class="mobile-feature-title">新生（大一/研一）</div>
+                        <div class="mobile-feature-desc">快速融入校园，落地无忧</div>
+                    </div>
+                    
+                    <div class="mobile-feature-card" data-analytics="audience:parents">
+                        <div class="mobile-feature-icon icon-bg-mint">
+                            <!-- 家长: 盾牌图标 -->
+                            <svg fill="none" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+                            </svg>
+                        </div>
+                        <div class="mobile-feature-title">家长</div>
+                        <div class="mobile-feature-desc">跨洋守护更安心，沟通更顺畅</div>
+                    </div>
+                    
+                    <div class="mobile-feature-card" data-analytics="audience:current-students">
+                        <div class="mobile-feature-icon icon-bg-sky">
+                            <!-- 在读生: 用户组图标 -->
+                            <svg fill="none" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                            </svg>
+                        </div>
+                        <div class="mobile-feature-title">在读生（大二-大四）</div>
+                        <div class="mobile-feature-desc">生活更便利，发展更顺利</div>
+                    </div>
+                    
+                    <div class="mobile-feature-card" data-analytics="audience:organizers">
+                        <div class="mobile-feature-icon icon-bg-gold">
+                            <!-- 组织者: 剪贴板图标 -->
+                            <svg fill="none" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path>
+                            </svg>
+                        </div>
+                        <div class="mobile-feature-title">组织者</div>
+                        <div class="mobile-feature-desc">管理更专业，数据更精准</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 核心功能 -->
+        <section id="features" class="mobile-section">
+            <div class="mobile-container">
+                <h2 class="mobile-title-2 mobile-text-center">核心服务</h2>
+                <p class="mobile-subtitle mobile-text-center">为留学生活提供全方位支持</p>
+                
+                <!-- 功能详细介绍卡片 -->
+                <div class="mobile-card mobile-mb-lg">
+                    <div class="mobile-card-header">
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <div class="mobile-numbered-icon icon-bg-sky">01</div>
+                            <div class="mobile-card-title" style="color: var(--soft-dawn-sky);">咨询 & AI智能问答</div>
+                        </div>
+                    </div>
+                    <div class="mobile-card-body">
+                        <p style="margin-bottom: 12px; font-size: 14px; line-height: 1.5;">基于海量留学生真实经验构建的智能问答系统。收集整理数万条微信群聊记录、公众号推文和学长学姐实用攻略。</p>
+                        <div class="mobile-grid mobile-gap-xs">
+                            <div class="mobile-colored-tag tag-sky">学校选课策略</div>
+                            <div class="mobile-colored-tag tag-sky">签证办理经验</div>
+                            <div class="mobile-colored-tag tag-sky">租房防坑指南</div>
+                            <div class="mobile-colored-tag tag-sky">24/7智能问答</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mobile-card mobile-mb-lg">
+                    <div class="mobile-card-header">
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <div class="mobile-numbered-icon icon-bg-mint">02</div>
+                            <div class="mobile-card-title" style="color: var(--soft-dawn-mint);">安心计划 - 家长专属安全保障</div>
+                        </div>
+                    </div>
+                    <div class="mobile-card-body">
+                        <p style="margin-bottom: 12px; font-size: 14px; line-height: 1.5;">¥365/年的专业安全保障服务，让家长真正安心。当家长联系不上孩子时，平台立即启动应急响应机制。</p>
+                        <div class="mobile-grid mobile-gap-xs">
+                            <div class="mobile-colored-tag tag-mint">家长发起失联报告</div>
+                            <div class="mobile-colored-tag tag-mint">全网广播通知</div>
+                            <div class="mobile-colored-tag tag-mint">志愿者网络激活</div>
+                            <div class="mobile-colored-tag tag-mint">专业安保对接</div>
+                        </div>
+                        <div class="mobile-info-box">
+                            * 平台为信息协调方，非医疗/法律/紧急救援机构
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mobile-card mobile-mb-lg">
+                    <div class="mobile-card-header">
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <div class="mobile-numbered-icon icon-bg-coral">03</div>
+                            <div class="mobile-card-title" style="color: var(--soft-dawn-coral);">本地生活折扣</div>
+                        </div>
+                    </div>
+                    <div class="mobile-card-body">
+                        <p style="margin-bottom: 12px; font-size: 14px; line-height: 1.5;">为新生提供从机场到校园的全程接机服务，以及入学必需的各类办理指引。</p>
+                        <div class="mobile-grid mobile-gap-xs">
+                            <div class="mobile-colored-tag tag-coral">免费大巴预约</div>
+                            <div class="mobile-colored-tag tag-coral">付费专车接送</div>
+                            <div class="mobile-colored-tag tag-coral">电话卡银行卡指引</div>
+                            <div class="mobile-colored-tag tag-coral">新生群聊接入</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mobile-card mobile-mb-lg">
+                    <div class="mobile-card-header">
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <div class="mobile-numbered-icon icon-bg-gold">04</div>
+                            <div class="mobile-card-title" style="color: var(--soft-dawn-gold);">活动管理 & 报名CRM系统</div>
+                        </div>
+                    </div>
+                    <div class="mobile-card-body">
+                        <p style="margin-bottom: 12px; font-size: 14px; line-height: 1.5;">为学联和组织者提供完整的活动管理解决方案。从活动发布到现场核销，一站式解决组织活动的各个环节。</p>
+                        <div class="mobile-grid mobile-gap-xs">
+                            <div class="mobile-colored-tag tag-gold">动态表单</div>
+                            <div class="mobile-colored-tag tag-gold">名额控制</div>
+                            <div class="mobile-colored-tag tag-gold">二维码核销</div>
+                            <div class="mobile-colored-tag tag-gold">数据导出</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mobile-card mobile-mb-lg">
+                    <div class="mobile-card-header">
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <div class="mobile-numbered-icon">05</div>
+                            <div class="mobile-card-title">志愿者工时统计系统</div>
+                        </div>
+                    </div>
+                    <div class="mobile-card-body">
+                        <p style="margin-bottom: 12px; font-size: 14px; line-height: 1.5;">精确到分钟级的志愿服务时长记录系统，为申请各类奖学金和荣誉提供官方数据支持。</p>
+                        <div class="mobile-grid mobile-gap-xs">
+                            <div class="mobile-tag-primary">精确计时</div>
+                            <div class="mobile-tag-primary">自动累计</div>
+                            <div class="mobile-tag-primary">分类统计</div>
+                            <div class="mobile-tag-primary">官方报告</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 功能快速浏览 -->
+                <div class="mobile-grid mobile-grid-2 mobile-gap-md">
+                    <div class="mobile-feature-card" data-analytics="feature:discounts">
+                        <div class="mobile-feature-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="8" cy="8" r="6"/>
+                                <path d="m13 13 5 5"/>
+                                <path d="m21 21-5-5"/>
+                            </svg>
+                        </div>
+                        <div class="mobile-feature-title">本地生活折扣</div>
+                        <div class="mobile-feature-desc">校园周边独家折扣与积分体系</div>
+                    </div>
+                    
+                    <div class="mobile-feature-card" data-analytics="feature:marketplace">
+                        <div class="mobile-feature-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M3 7v10a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2z"/>
+                                <path d="m8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                            </svg>
+                        </div>
+                        <div class="mobile-feature-title">二手交易 & 求职信息</div>
+                        <div class="mobile-feature-desc">贴吧形式的信息发布平台</div>
+                    </div>
+                    
+                    <div class="mobile-feature-card" data-analytics="feature:alumni">
+                        <div class="mobile-feature-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="m22 10-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 10"/>
+                                <path d="M22 10 12 5 2 10l10 5 10-5z"/>
+                            </svg>
+                        </div>
+                        <div class="mobile-feature-title">校友圈 - 高信用网络</div>
+                        <div class="mobile-feature-desc">邮箱验证的高质量职业网络</div>
+                    </div>
+                    
+                    <div class="mobile-feature-card" data-analytics="feature:appliances">
+                        <div class="mobile-feature-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                                <path d="M9 9h6v6H9z"/>
+                                <path d="m9 1 3 3 3-3"/>
+                            </svg>
+                        </div>
+                        <div class="mobile-feature-title">家电生活服务</div>
+                        <div class="mobile-feature-desc">从入住前采购到日常维修保养</div>
+                    </div>
+                </div>
+                    
+                    <div class="mobile-feature-card" data-analytics="feature:safety-plan">
+                        <div class="mobile-feature-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                            </svg>
+                        </div>
+                        <div class="mobile-feature-title">安心计划</div>
+                        <div class="mobile-feature-desc">家长专属安全保障</div>
+                    </div>
+                    
+                    <div class="mobile-feature-card" data-analytics="feature:pickup">
+                        <div class="mobile-feature-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/>
+                                <rect x="8" y="2" width="8" height="4" rx="1" ry="1"/>
+                                <path d="M12 11l2 2 4-4"/>
+                            </svg>
+                        </div>
+                        <div class="mobile-feature-title">接机服务</div>
+                        <div class="mobile-feature-desc">新生落地全程协助</div>
+                    </div>
+                    
+                    <div class="mobile-feature-card" data-analytics="feature:discounts">
+                        <div class="mobile-feature-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="8" cy="8" r="6"/>
+                                <path d="m13 13 5 5"/>
+                                <path d="m21 21-5-5"/>
+                                <path d="m7 8 2-2 1.5 1.5L13 5"/>
+                            </svg>
+                        </div>
+                        <div class="mobile-feature-title">本地优惠</div>
+                        <div class="mobile-feature-desc">校园周边独家折扣</div>
+                    </div>
+                    
+                    <div class="mobile-feature-card" data-analytics="feature:marketplace">
+                        <div class="mobile-feature-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M3 7v10a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2z"/>
+                                <path d="m8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                                <path d="M14 11V9"/>
+                                <path d="M10 11V9"/>
+                            </svg>
+                        </div>
+                        <div class="mobile-feature-title">二手交易</div>
+                        <div class="mobile-feature-desc">安全的学生交易平台</div>
+                    </div>
+                    
+                    <div class="mobile-feature-card" data-analytics="feature:alumni">
+                        <div class="mobile-feature-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="m22 10-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 10"/>
+                                <path d="M22 10 12 5 2 10l10 5 10-5z"/>
+                                <path d="m7 13.5 5 3.18 5-3.18"/>
+                            </svg>
+                        </div>
+                        <div class="mobile-feature-title">校友网络</div>
+                        <div class="mobile-feature-desc">高质量职业内推</div>
+                    </div>
+                    
+                    <div class="mobile-feature-card" data-analytics="feature:activities">
+                        <div class="mobile-feature-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                                <line x1="16" y1="2" x2="16" y2="6"/>
+                                <line x1="8" y1="2" x2="8" y2="6"/>
+                                <line x1="3" y1="10" x2="21" y2="10"/>
+                            </svg>
+                        </div>
+                        <div class="mobile-feature-title">活动管理</div>
+                        <div class="mobile-feature-desc">学联组织专业工具</div>
+                    </div>
+                    
+                    <div class="mobile-feature-card" data-analytics="feature:volunteer">
+                        <div class="mobile-feature-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="10"/>
+                                <polyline points="12,6 12,12 16,14"/>
+                            </svg>
+                        </div>
+                        <div class="mobile-feature-title">志愿时长</div>
+                        <div class="mobile-feature-desc">精确工时统计认证</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 安心计划详情 -->
+        <section id="safety" class="mobile-section">
+            <div class="mobile-container">
+                <h2 class="mobile-title-2 mobile-text-center">家长安心计划</h2>
+                <p class="mobile-subtitle mobile-text-center">面向家长的安全保障与应急协同服务</p>
+                
+                <div class="mobile-card" style="border: 2px solid var(--soft-dawn-mint);">
+                    <div class="mobile-card-header">
+                        <div class="mobile-card-title" style="color: var(--soft-dawn-mint);">我们做什么</div>
+                        <div class="mobile-badge" style="background: var(--soft-dawn-mint);">核心服务</div>
+                    </div>
+                    <div class="mobile-card-body">
+                        <div class="mobile-list">
+                            <div class="mobile-list-item">
+                                <div class="mobile-icon-circle icon-bg-mint">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
+                                    </svg>
+                                </div>
+                                <div class="mobile-list-content">
+                                    <div class="mobile-list-title">应急响应≤15分钟</div>
+                                    <div class="mobile-list-desc">全国志愿者网络联动</div>
+                                </div>
+                            </div>
+                            
+                            <div class="mobile-list-item">
+                                <div class="mobile-icon-circle icon-bg-mint">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                                        <circle cx="9" cy="7" r="4"/>
+                                        <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                                        <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                                    </svg>
+                                </div>
+                                <div class="mobile-list-content">
+                                    <div class="mobile-list-title">协作可追溯</div>
+                                    <div class="mobile-list-desc">陪同记录与留痕</div>
+                                </div>
+                            </div>
+                            
+                            <div class="mobile-list-item">
+                                <div class="mobile-icon-circle icon-bg-mint">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M9 11H1v12h8z"/>
+                                        <path d="M23 11h-8v12h8z"/>
+                                        <path d="M11 11h2v12h-2z"/>
+                                    </svg>
+                                </div>
+                                <div class="mobile-list-content">
+                                    <div class="mobile-list-title">办理进度可视</div>
+                                    <div class="mobile-list-desc">节点状态与更新时间线</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 服务覆盖院校 -->
+        <section id="schools" class="mobile-section">
+            <div class="mobile-container">
+                <h2 class="mobile-title-2 mobile-text-center">服务覆盖院校</h2>
+                <p class="mobile-subtitle mobile-text-center">我们已在以下院校为在校留学生提供服务</p>
+                
+                <div class="mobile-grid mobile-grid-2 mobile-gap-sm">
+                    <div class="mobile-card mobile-text-center" style="padding: 12px;">
+                        <img src="../assets/images/schools/uw-logo.png" alt="华盛顿大学" width="48" height="48" style="margin-bottom: 8px;">
+                        <div style="font-size: 14px; font-weight: 600; color: var(--text-primary);">华盛顿大学</div>
+                        <div style="font-size: 12px; color: var(--text-secondary);">University of Washington</div>
+                    </div>
+                    
+                    <div class="mobile-card mobile-text-center" style="padding: 12px;">
+                        <img src="../assets/images/schools/ucb-logo.png" alt="加州大学伯克利分校" width="48" height="48" style="margin-bottom: 8px;">
+                        <div style="font-size: 14px; font-weight: 600; color: var(--text-primary);">加州大学伯克利分校</div>
+                        <div style="font-size: 12px; color: var(--text-secondary);">UC Berkeley</div>
+                    </div>
+                    
+                    <div class="mobile-card mobile-text-center" style="padding: 12px;">
+                        <img src="../assets/images/schools/ucla-logo.png" alt="加州大学洛杉矶分校" width="48" height="48" style="margin-bottom: 8px;">
+                        <div style="font-size: 14px; font-weight: 600; color: var(--text-primary);">加州大学洛杉矶分校</div>
+                        <div style="font-size: 12px; color: var(--text-secondary);">UCLA</div>
+                    </div>
+                    
+                    <div class="mobile-card mobile-text-center" style="padding: 12px;">
+                        <img src="../assets/images/schools/usc-logo.png" alt="南加州大学" width="48" height="48" style="margin-bottom: 8px;">
+                        <div style="font-size: 14px; font-weight: 600; color: var(--text-primary);">南加州大学</div>
+                        <div style="font-size: 12px; color: var(--text-secondary);">USC</div>
+                    </div>
+                    
+                    <div class="mobile-card mobile-text-center" style="padding: 12px;">
+                        <img src="../assets/images/schools/ucsd-logo.png" alt="加州大学圣地亚哥分校" width="48" height="48" style="margin-bottom: 8px;">
+                        <div style="font-size: 14px; font-weight: 600; color: var(--text-primary);">加州大学圣地亚哥分校</div>
+                        <div style="font-size: 12px; color: var(--text-secondary);">UC San Diego</div>
+                    </div>
+                    
+                    <div class="mobile-card mobile-text-center" style="padding: 12px;">
+                        <img src="../assets/images/schools/ucd-logo.png" alt="加州大学戴维斯分校" width="48" height="48" style="margin-bottom: 8px;">
+                        <div style="font-size: 14px; font-weight: 600; color: var(--text-primary);">加州大学戴维斯分校</div>
+                        <div style="font-size: 12px; color: var(--text-secondary);">UC Davis</div>
+                    </div>
+                    
+                    <div class="mobile-card mobile-text-center" style="padding: 12px;">
+                        <img src="../assets/images/schools/uci-logo.png" alt="加州大学尔湾分校" width="48" height="48" style="margin-bottom: 8px;">
+                        <div style="font-size: 14px; font-weight: 600; color: var(--text-primary);">加州大学尔湾分校</div>
+                        <div style="font-size: 12px; color: var(--text-secondary);">UC Irvine</div>
+                    </div>
+                    
+                    <div class="mobile-card mobile-text-center" style="padding: 12px;">
+                        <img src="../assets/images/schools/ucsb-logo.png" alt="加州大学圣芭芭拉分校" width="48" height="48" style="margin-bottom: 8px;">
+                        <div style="font-size: 14px; font-weight: 600; color: var(--text-primary);">加州大学圣芭芭拉分校</div>
+                        <div style="font-size: 12px; color: var(--text-secondary);">UC Santa Barbara</div>
+                    </div>
+                    
+                    <div class="mobile-card mobile-text-center" style="padding: 12px;">
+                        <img src="../assets/images/schools/ucsc-logo.png" alt="加州大学圣克鲁兹分校" width="48" height="48" style="margin-bottom: 8px;">
+                        <div style="font-size: 14px; font-weight: 600; color: var(--text-primary);">加州大学圣克鲁兹分校</div>
+                        <div style="font-size: 12px; color: var(--text-secondary);">UC Santa Cruz</div>
+                    </div>
+                    
+                    <div class="mobile-card mobile-text-center" style="padding: 12px;">
+                        <img src="../assets/images/schools/umn-logo.png" alt="明尼苏达大学" width="48" height="48" style="margin-bottom: 8px;">
+                        <div style="font-size: 14px; font-weight: 600; color: var(--text-primary);">明尼苏达大学</div>
+                        <div style="font-size: 12px; color: var(--text-secondary);">University of Minnesota</div>
+                    </div>
+                </div>
+                
+                <div class="mobile-text-center mobile-mt-lg">
+                    <p style="font-size: 14px; color: var(--text-secondary); margin-bottom: 12px;">
+                        累计服务 <strong style="color: var(--primary-color);">5,000+</strong> 名留学生
+                    </p>
+                    <a href="#contact" class="mobile-btn mobile-btn-outline">申请为贵校开通服务</a>
+                </div>
+            </div>
+        </section>
+
+        <!-- 组织者工具 -->
+        <section id="organizer-tools" class="mobile-section">
+            <div class="mobile-container">
+                <h2 class="mobile-title-2 mobile-text-center">组织者工具</h2>
+                <p class="mobile-subtitle mobile-text-center">学联、社团管理者专业工具，完全免费</p>
+                
+                <div class="mobile-card mobile-card-organizer" style="border-color: var(--soft-dawn-gold);">
+                    <div class="mobile-card-header">
+                        <div class="mobile-card-title" style="color: var(--soft-dawn-gold);">学生组织运营管理系统</div>
+                        <div class="mobile-badge" style="background: var(--soft-dawn-gold);">永久免费</div>
+                    </div>
+                    <div class="mobile-card-body">
+                        <div class="mobile-grid mobile-grid-2 mobile-gap-sm mobile-mb-md">
+                            <div class="mobile-organizer-feature">
+                                <div class="mobile-organizer-feature-title organizer-title-gold">组织与成员</div>
+                                <div class="mobile-organizer-feature-desc">统一管理、权限控制</div>
+                            </div>
+                            
+                            <div class="mobile-organizer-feature">
+                                <div class="mobile-organizer-feature-title organizer-title-sky">任务与活动</div>
+                                <div class="mobile-organizer-feature-desc">发布报名、签到核销</div>
+                            </div>
+                            
+                            <div class="mobile-organizer-feature">
+                                <div class="mobile-organizer-feature-title organizer-title-mint">时长与积分</div>
+                                <div class="mobile-organizer-feature-desc">志愿统计、证书导出</div>
+                            </div>
+                            
+                            <div class="mobile-organizer-feature">
+                                <div class="mobile-organizer-feature-title organizer-title-coral">数据与报告</div>
+                                <div class="mobile-organizer-feature-desc">趋势分析、年度报告</div>
+                            </div>
+                        </div>
+                        
+                        <a href="#contact" class="mobile-btn mobile-btn-primary mobile-btn-block" style="background: var(--soft-dawn-gold);">申请开通组织管理</a>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 完整生态服务 -->
+        <section id="ecosystem" class="mobile-section">
+            <div class="mobile-container">
+                <h2 class="mobile-title-2 mobile-text-center">完整生态服务</h2>
+                <p class="mobile-subtitle mobile-text-center">围绕留学生活的多元化服务体系</p>
+                
+                <div class="mobile-list">
+                    <div class="mobile-list-item">
+                        <div class="mobile-icon-circle icon-bg-gold">折</div>
+                        <div class="mobile-list-content">
+                            <div class="mobile-list-title">本地折扣与商家合作</div>
+                            <div class="mobile-list-desc">独家优惠和积分体系，让留学生活更经济实惠</div>
+                        </div>
+                    </div>
+                    
+                    <div class="mobile-list-item">
+                        <div class="mobile-icon-circle icon-bg-coral">职</div>
+                        <div class="mobile-list-content">
+                            <div class="mobile-list-title">二手求职与信息撮合</div>
+                            <div class="mobile-list-desc">安全交易平台和求职信息分享</div>
+                        </div>
+                    </div>
+                    
+                    <div class="mobile-list-item">
+                        <div class="mobile-icon-circle icon-bg-sky">友</div>
+                        <div class="mobile-list-content">
+                            <div class="mobile-list-title">校友圈与高信用网络</div>
+                            <div class="mobile-list-desc">邮箱验证的高质量职业网络</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 安全与隐私 -->
+        <section id="privacy" class="mobile-section">
+            <div class="mobile-container">
+                <h2 class="mobile-title-2 mobile-text-center">安全与隐私</h2>
+                
+                <div class="mobile-grid mobile-gap-md">
+                    <div class="mobile-card">
+                        <div class="mobile-card-header">
+                            <div class="mobile-icon-circle icon-bg-mint">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                </svg>
+                            </div>
+                            <div class="mobile-card-title">最小化采集</div>
+                        </div>
+                        <div class="mobile-card-body">
+                            <p style="font-size: 14px; line-height: 1.5;">只收完成服务所必需信息，到期即删除</p>
+                            <div class="mobile-tag-privacy">不做广告画像与数据转售</div>
+                        </div>
+                    </div>
+                    
+                    <div class="mobile-card">
+                        <div class="mobile-card-header">
+                            <div class="mobile-icon-circle icon-bg-mint">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/>
+                                    <circle cx="9" cy="7" r="4"/>
+                                    <path d="M23 21v-2a4 4 0 00-3-3.87m-4-12a4 4 0 010 7.75"/>
+                                </svg>
+                            </div>
+                            <div class="mobile-card-title">双向同意</div>
+                        </div>
+                        <div class="mobile-card-body">
+                            <p style="font-size: 14px; line-height: 1.5;">家长-子女信息绑定需双方确认</p>
+                            <div class="mobile-tag-privacy">撤回后相关访问立即失效</div>
+                        </div>
+                    </div>
+                    
+                    <div class="mobile-card">
+                        <div class="mobile-card-header">
+                            <div class="mobile-icon-circle icon-bg-mint">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                                    <path d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                </svg>
+                            </div>
+                            <div class="mobile-card-title">位置仅应急且可选</div>
+                        </div>
+                        <div class="mobile-card-body">
+                            <p style="font-size: 14px; line-height: 1.5;">默认关闭，仅在应急联动中使用</p>
+                            <div class="mobile-tag-privacy">需显式授权并留痕</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+
+        <!-- 服务方案 -->
+        <section id="pricing" class="mobile-section">
+            <div class="mobile-container">
+                <h2 class="mobile-title-2 mobile-text-center">服务方案</h2>
+                <p class="mobile-subtitle mobile-text-center">学生端免费，家长安心计划可选</p>
+                
+                <div class="mobile-grid mobile-gap-lg">
+                    <!-- 免费版 -->
+                    <div class="mobile-card" style="border: 2px solid var(--primary-color); position: relative;">
+                        <div class="mobile-pricing-recommend-badge">推荐</div>
+                        <div class="mobile-card-header">
+                            <div class="mobile-card-title" style="font-size: 18px;">免费版</div>
+                            <div style="font-size: 24px; font-weight: 700; color: var(--primary-color);">¥0<span style="font-size: 14px; font-weight: 400; color: var(--text-secondary);">/永久</span></div>
+                        </div>
+                        <div class="mobile-card-body">
+                            <div class="mobile-mb-lg">
+                                <div class="mobile-flex mobile-gap-sm mobile-mb-sm">
+                                    <span class="mobile-pricing-checkmark">✓</span>
+                                    <span>AI问答</span>
+                                </div>
+                                <div class="mobile-flex mobile-gap-sm mobile-mb-sm">
+                                    <span class="mobile-pricing-checkmark">✓</span>
+                                    <span>活动报名</span>
+                                </div>
+                                <div class="mobile-flex mobile-gap-sm mobile-mb-sm">
+                                    <span class="mobile-pricing-checkmark">✓</span>
+                                    <span>基础消息</span>
+                                </div>
+                                <div class="mobile-flex mobile-gap-sm">
+                                    <span class="mobile-pricing-checkmark">✓</span>
+                                    <span>部分优惠</span>
+                                </div>
+                            </div>
+                            <a href="#contact" class="mobile-btn mobile-btn-primary mobile-btn-block" data-analytics="cta:pricing:free">
+                                立即使用
+                            </a>
+                        </div>
+                    </div>
+                    
+                    <!-- 安心计划 -->
+                    <div class="mobile-card">
+                        <div class="mobile-card-header">
+                            <div class="mobile-card-title" style="font-size: 18px;">安心计划</div>
+                            <div style="font-size: 24px; font-weight: 700; color: var(--text-primary);">¥365<span style="font-size: 14px; font-weight: 400; color: var(--text-secondary);">/年</span></div>
+                        </div>
+                        <div class="mobile-card-body">
+                            <div class="mobile-mb-lg">
+                                <div class="mobile-flex mobile-gap-sm mobile-mb-sm">
+                                    <span class="mobile-pricing-checkmark">✓</span>
+                                    <span>应急响应≤15分钟</span>
+                                </div>
+                                <div class="mobile-flex mobile-gap-sm mobile-mb-sm">
+                                    <span class="mobile-pricing-checkmark">✓</span>
+                                    <span>客服7×12小时</span>
+                                </div>
+                                <div class="mobile-flex mobile-gap-sm mobile-mb-sm">
+                                    <span class="mobile-pricing-checkmark">✓</span>
+                                    <span>家长报平安</span>
+                                </div>
+                                <div class="mobile-flex mobile-gap-sm">
+                                    <span class="mobile-pricing-checkmark">✓</span>
+                                    <span>进度可视化</span>
+                                </div>
+                            </div>
+                            <a href="#contact" class="mobile-btn mobile-btn-outline mobile-btn-block" data-analytics="cta:pricing:safety">
+                                了解详情
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 常见问题 -->
+        <section id="faq" class="mobile-section">
+            <div class="mobile-container">
+                <h2 class="mobile-title-2 mobile-text-center">常见问题</h2>
+                
+                <div class="mobile-card mobile-mb-md">
+                    <div class="mobile-card-header">
+                        <div class="mobile-card-title">开通与使用</div>
+                    </div>
+                    <div class="mobile-card-body">
+                        <details class="faq-item">
+                            <summary class="faq-question">开通安心计划后学生端有什么变化？</summary>
+                            <div class="faq-answer">
+                                无变化；学生可随时解绑。安心计划不影响学生端的任何功能使用。
+                            </div>
+                        </details>
+                        
+                        <details class="faq-item">
+                            <summary class="faq-question">如何发起协同？"≤15分钟响应"怎么算？</summary>
+                            <div class="faq-answer">
+                                自工单创建起计时，平台推动志愿者与客服联动。
+                            </div>
+                        </details>
+                        
+                        <details class="faq-item">
+                            <summary class="faq-question">家长与学生如何解绑？</summary>
+                            <div class="faq-answer">
+                                任一方在"绑定管理"撤销后立即生效。
+                            </div>
+                        </details>
+                        
+                        <details class="faq-item no-border">
+                            <summary class="faq-question">西柚会做广告画像或出售个人数据吗？</summary>
+                            <div class="faq-answer">
+                                不会；不做画像、不转售数据。详情请查看隐私政策。
+                            </div>
+                        </details>
+                    </div>
+                </div>
+                
+                <div class="mobile-card">
+                    <div class="mobile-card-header">
+                        <div class="mobile-card-title">费用与售后</div>
+                    </div>
+                    <div class="mobile-card-body">
+                        <details class="faq-item">
+                            <summary class="faq-question">如何支付？支持微信/银行卡吗？</summary>
+                            <div class="faq-answer">
+                                支持，支付成功后即刻生效。
+                            </div>
+                        </details>
+                        
+                        <details class="faq-item no-border">
+                            <summary class="faq-question">7天不满意如何退款？</summary>
+                            <div class="faq-answer">
+                                在"订单"提交退款申请，1-3个工作日原路退回。
+                            </div>
+                        </details>
+                    </div>
+                </div>
+                
+                <div class="mobile-text-center mobile-mt-lg">
+                    <a href="support.html" class="mobile-btn mobile-btn-outline">查看更多问题</a>
+                </div>
+            </div>
+        </section>
+
+        <!-- 联系我们 -->
+        <section id="contact" class="mobile-section">
+            <div class="mobile-container">
+                <h2 class="mobile-title-2 mobile-text-center">联系我们</h2>
+                <p class="mobile-subtitle mobile-text-center">随时为您提供专业服务支持</p>
+                
+                <!-- 快速联系方式 -->
+                <div class="mobile-list mobile-mb-lg">
+                    <a href="tel:+1-xxx-xxx-xxxx" class="mobile-list-item mobile-contact-tel" data-analytics="contact:phone">
+                        <div class="mobile-list-icon">📞</div>
+                        <div class="mobile-list-content">
+                            <div class="mobile-list-title">电话咨询</div>
+                            <div class="mobile-list-desc">+1-xxx-xxx-xxxx</div>
+                        </div>
+                        <div class="mobile-list-arrow">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="m9 18 6-6-6-6"/>
+                            </svg>
+                        </div>
+                    </a>
+                    
+                    <a href="mailto:info@americanpromotioncompany.com" class="mobile-list-item mobile-contact-email" data-analytics="contact:email">
+                        <div class="mobile-list-icon">📧</div>
+                        <div class="mobile-list-content">
+                            <div class="mobile-list-title">邮件咨询</div>
+                            <div class="mobile-list-desc">info@americanpromotioncompany.com</div>
+                        </div>
+                        <div class="mobile-list-arrow">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="m9 18 6-6-6-6"/>
+                            </svg>
+                        </div>
+                    </a>
+                </div>
+                
+                <!-- 移动端优化表单 -->
+                <form class="mobile-form" data-analytics="form:contact">
+                    <div class="mobile-form-item">
+                        <label for="mobile-name" class="mobile-form-label">姓名 *</label>
+                        <input type="text" id="mobile-name" name="name" class="mobile-form-input" required placeholder="请输入您的姓名">
+                    </div>
+                    
+                    <div class="mobile-form-item">
+                        <label for="mobile-email" class="mobile-form-label">邮箱 *</label>
+                        <input type="email" id="mobile-email" name="email" class="mobile-form-input" required placeholder="请输入邮箱地址" inputmode="email">
+                    </div>
+                    
+                    <div class="mobile-form-item">
+                        <label for="mobile-phone" class="mobile-form-label">电话</label>
+                        <input type="tel" id="mobile-phone" name="phone" class="mobile-form-input" placeholder="请输入电话号码" inputmode="tel">
+                    </div>
+                    
+                    <div class="mobile-form-item">
+                        <label for="mobile-type" class="mobile-form-label">咨询类型 *</label>
+                        <select id="mobile-type" name="type" class="mobile-form-select" required>
+                            <option value="">请选择咨询类型</option>
+                            <option value="beta">内测申请</option>
+                            <option value="merchant">商家合作</option>
+                            <option value="organization">学联合作</option>
+                            <option value="other">其他咨询</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mobile-form-item">
+                        <label for="mobile-message" class="mobile-form-label">详细说明</label>
+                        <textarea id="mobile-message" name="message" class="mobile-form-textarea" rows="4" placeholder="请描述您的需求..."></textarea>
+                    </div>
+                    
+                    <div class="mobile-form-item">
+                        <label style="display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--text-secondary);">
+                            <input type="checkbox" name="privacy-agree" required style="width: 16px; height: 16px;">
+                            我已阅读并同意 <a href="privacy.html" style="color: var(--primary-color);">隐私政策</a> 和 <a href="terms.html" style="color: var(--primary-color);">服务条款</a>
+                        </label>
+                    </div>
+                    
+                    <button type="submit" class="mobile-btn mobile-btn-primary mobile-btn-lg mobile-btn-block" data-analytics="cta:contact:submit">
+                        提交申请
+                    </button>
+                </form>
+            </div>
+        </section>
+
+        <!-- 访问桌面端提示 -->
+        <section class="mobile-section-sm" style="background: var(--bg-gray); text-align: center;">
+            <div class="mobile-container">
+                <p style="color: var(--text-secondary); font-size: 14px; margin-bottom: 12px;">需要更详细的信息？</p>
+                <a href="../index.html" class="mobile-btn mobile-btn-ghost" data-analytics="cta:switch:desktop">
+                    访问电脑端完整版 →
+                </a>
+            </div>
+        </section>
+    </main>
+
+    <!-- 底部导航栏 -->
+    <nav class="mobile-tabbar safe-area-bottom">
+        <a href="#hero" class="mobile-tabbar-item active" data-tab="home">
+            <div class="mobile-tabbar-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 20px; height: 20px;">
+                    <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                </svg>
+            </div>
+            <div class="mobile-tabbar-text">首页</div>
+        </a>
+        <a href="#features" class="mobile-tabbar-item" data-tab="features">
+            <div class="mobile-tabbar-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 20px; height: 20px;">
+                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                    <rect x="9" y="9" width="6" height="6"/>
+                </svg>
+            </div>
+            <div class="mobile-tabbar-text">功能</div>
+        </a>
+        <a href="#safety" class="mobile-tabbar-item" data-tab="safety">
+            <div class="mobile-tabbar-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 20px; height: 20px;">
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                </svg>
+            </div>
+            <div class="mobile-tabbar-text">安心</div>
+        </a>
+        <a href="#contact" class="mobile-tabbar-item" data-tab="contact">
+            <div class="mobile-tabbar-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 20px; height: 20px;">
+                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                </svg>
+            </div>
+            <div class="mobile-tabbar-text">联系</div>
+        </a>
+    </nav>
+
+    <!-- JavaScript -->
+    <script src="../assets/js/mobile.js"></script>
+    <script>
+        // 移动端专用功能扩展
+        window.MobileApp.toggleMenu = function() {
+            const menu = document.getElementById('mobile-menu');
+            const mask = document.querySelector('.mobile-menu-mask');
+            const isOpen = menu.style.left === '0px';
+            
+            if (isOpen) {
+                menu.style.left = '-100%';
+                mask.style.opacity = '0';
+                mask.style.visibility = 'hidden';
+                document.body.style.overflow = '';
+            } else {
+                menu.style.left = '0px';
+                mask.style.opacity = '1';
+                mask.style.visibility = 'visible';
+                document.body.style.overflow = 'hidden';
+            }
+        };
+
+        // 底部导航切换
+        document.addEventListener('DOMContentLoaded', function() {
+            const tabItems = document.querySelectorAll('.mobile-tabbar-item');
+            tabItems.forEach(item => {
+                item.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    
+                    // 更新active状态
+                    tabItems.forEach(tab => tab.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    // 平滑滚动
+                    const href = this.getAttribute('href');
+                    if (href.startsWith('#')) {
+                        const target = document.querySelector(href);
+                        if (target) {
+                            const headerHeight = 56;
+                            const tabbarHeight = 56;
+                            const targetPosition = target.offsetTop - headerHeight;
+                            
+                            window.scrollTo({
+                                top: targetPosition,
+                                behavior: 'smooth'
+                            });
+                        }
+                    }
+                    
+                    // 振动反馈
+                    if ('vibrate' in navigator) {
+                        navigator.vibrate(50);
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>

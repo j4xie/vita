@@ -11,7 +11,9 @@
         navToggle: null,
         navLinks: null,
         faqItems: null,
-        form: null
+        form: null,
+        hamburgerMenu: null,
+        mobileNavOverlay: null
     };
 
     /**
@@ -32,6 +34,7 @@
         try {
             cacheElements();
             initMobileNavigation();
+            initHamburgerMenu();
             initSmoothScrolling();
             initFAQ();
             initFormValidation();
@@ -50,6 +53,8 @@
         elements.navLinks = document.getElementById('nav-links');
         elements.faqItems = document.querySelectorAll('.faq-item');
         elements.form = document.querySelector('.form');
+        elements.hamburgerMenu = document.getElementById('hamburger-menu');
+        elements.mobileNavOverlay = document.getElementById('mobile-nav-overlay');
     }
 
     /**
@@ -114,6 +119,105 @@
      */
     function isMenuOpen() {
         return elements.navToggle.getAttribute('aria-expanded') === 'true';
+    }
+
+    /**
+     * 汉堡菜单功能 (英文版专用)
+     */
+    function initHamburgerMenu() {
+        if (!elements.hamburgerMenu || !elements.mobileNavOverlay) return;
+
+        // 汉堡菜单按钮点击事件
+        elements.hamburgerMenu.addEventListener('click', toggleHamburgerMenu);
+        
+        // 点击覆盖层关闭菜单
+        elements.mobileNavOverlay.addEventListener('click', function(e) {
+            if (e.target === elements.mobileNavOverlay) {
+                closeHamburgerMenu();
+            }
+        });
+
+        // 点击导航链接后关闭菜单
+        const mobileNavLinks = elements.mobileNavOverlay.querySelectorAll('.mobile-nav-link');
+        mobileNavLinks.forEach(link => {
+            link.addEventListener('click', function(e) {
+                // 平滑滚动到目标部分
+                const href = this.getAttribute('href');
+                if (href && href.startsWith('#')) {
+                    e.preventDefault();
+                    const target = document.querySelector(href);
+                    if (target) {
+                        const headerHeight = document.querySelector('.header')?.offsetHeight || 80;
+                        const targetPosition = target.offsetTop - headerHeight - 20;
+                        
+                        window.scrollTo({
+                            top: targetPosition,
+                            behavior: 'smooth'
+                        });
+                    }
+                }
+                closeHamburgerMenu();
+            });
+        });
+
+        // ESC键关闭菜单
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' && isHamburgerMenuOpen()) {
+                closeHamburgerMenu();
+            }
+        });
+    }
+
+    /**
+     * 切换汉堡菜单状态
+     */
+    function toggleHamburgerMenu() {
+        const isOpen = isHamburgerMenuOpen();
+        
+        if (isOpen) {
+            closeHamburgerMenu();
+        } else {
+            openHamburgerMenu();
+        }
+    }
+
+    /**
+     * 打开汉堡菜单
+     */
+    function openHamburgerMenu() {
+        elements.hamburgerMenu.classList.add('active');
+        elements.hamburgerMenu.setAttribute('aria-expanded', 'true');
+        elements.mobileNavOverlay.classList.add('active');
+        
+        // 防止背景滚动
+        document.body.style.overflow = 'hidden';
+        
+        // 聚焦到第一个导航链接
+        setTimeout(() => {
+            const firstLink = elements.mobileNavOverlay.querySelector('.mobile-nav-link');
+            if (firstLink) {
+                firstLink.focus();
+            }
+        }, 300);
+    }
+
+    /**
+     * 关闭汉堡菜单
+     */
+    function closeHamburgerMenu() {
+        elements.hamburgerMenu.classList.remove('active');
+        elements.hamburgerMenu.setAttribute('aria-expanded', 'false');
+        elements.mobileNavOverlay.classList.remove('active');
+        
+        // 恢复背景滚动
+        document.body.style.overflow = '';
+    }
+
+    /**
+     * 检查汉堡菜单是否打开
+     */
+    function isHamburgerMenuOpen() {
+        return elements.hamburgerMenu.classList.contains('active');
     }
 
     /**
@@ -623,7 +727,7 @@
                 
                 if (targetLang === 'en') {
                     // 切换到英文版本
-                    targetUrl = `en/${currentPage}`;
+                    targetUrl = `/en/${currentPage}`;
                 } else {
                     // 切换到中文版本 - 使用绝对路径避免相对路径问题
                     targetUrl = `/${currentPage}`;
@@ -644,7 +748,13 @@
                 });
                 
                 // 执行跳转
-                window.location.href = targetUrl;
+                try {
+                    window.location.href = targetUrl;
+                } catch (error) {
+                    console.error('Language switch error:', error);
+                    // 备用方案：直接刷新到目标URL
+                    window.location.replace(targetUrl);
+                }
             });
         });
     }
@@ -786,7 +896,61 @@
         }
     };
 
+    // 自动设备检测（桌面端）
+    function autoMobileRedirect() {
+        // 检测移动设备
+        const isMobile = /Mobile|Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || 
+                         window.innerWidth <= 768;
+        
+        // 如果是移动设备且不在移动端目录，则重定向
+        if (isMobile && !window.location.pathname.includes('/mobile/')) {
+            const currentPath = window.location.pathname;
+            const currentLang = currentPath.includes('/en/') ? 'en' : 'zh';
+            const currentPage = getCurrentPageName(currentPath);
+            const currentHash = window.location.hash;
+            
+            let mobileUrl = '/mobile/';
+            if (currentLang === 'en') {
+                mobileUrl += 'en/';
+            }
+            mobileUrl += currentPage;
+            
+            // 添加来源参数
+            const params = new URLSearchParams();
+            params.set('from', 'desktop');
+            params.set('lang', currentLang);
+            mobileUrl += '?' + params.toString() + currentHash;
+            
+            console.log('Auto redirect to mobile:', {
+                from: currentPath,
+                to: mobileUrl,
+                device: 'mobile'
+            });
+            
+            // 延迟跳转，避免影响页面加载
+            setTimeout(() => {
+                window.location.href = mobileUrl;
+            }, 500);
+        }
+    }
+    
+    function getCurrentPageName(path) {
+        if (path.includes('privacy.html')) return 'privacy.html';
+        if (path.includes('support.html')) return 'support.html';
+        if (path.includes('terms.html')) return 'terms.html';
+        if (path.includes('404.html')) return '404.html';
+        return 'index.html';
+    }
+
     // 启动应用
     init();
+    
+    // 执行移动端检测（可选，通过URL参数控制）
+    const urlParams = new URLSearchParams(window.location.search);
+    const skipMobileRedirect = urlParams.get('desktop') === 'true';
+    
+    if (!skipMobileRedirect) {
+        autoMobileRedirect();
+    }
 
 })();

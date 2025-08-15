@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="description" content="西柚移动端隐私政策 - 了解我们如何保护您的个人信息">
+    <meta name="robots" content="index, follow">
+    
+    <title>隐私政策 - 西柚移动端</title>
+    <link rel="canonical" href="https://pomelo.app/mobile/privacy.html">
+    
+    <!-- 语言和设备标签 -->
+    <link rel="alternate" media="only screen and (min-width: 769px)" href="https://pomelo.app/privacy.html">
+    <link rel="alternate" hreflang="zh-CN" href="https://pomelo.app/mobile/privacy.html">
+    <link rel="alternate" hreflang="en-US" href="https://pomelo.app/mobile/en/privacy.html">
+    
+    <!-- 移动端专用 -->
+    <meta name="apple-mobile-web-app-title" content="西柚隐私">
+    <meta name="theme-color" content="#FF6B35">
+    
+    <!-- Styles -->
+    <link rel="stylesheet" href="../assets/css/mobile.css?v=1.0">
+    <link rel="icon" type="image/png" href="../assets/images/pomelo-logo.png">
+</head>
+<body class="mobile-page">
+    <!-- 移动端导航 -->
+    <header class="mobile-navbar safe-area-top">
+        <div class="mobile-navbar-back" onclick="window.history.back()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="m15 18-6-6 6-6"/>
+            </svg>
+        </div>
+        
+        <div class="mobile-navbar-title">隐私政策</div>
+        
+        <div class="mobile-navbar-menu" onclick="MobileApp.toggleMenu()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="3" y1="6" x2="21" y2="6"/>
+                <line x1="3" y1="12" x2="21" y2="12"/>
+                <line x1="3" y1="18" x2="21" y2="18"/>
+            </svg>
+        </div>
+    </header>
+
+    <!-- 侧滑菜单 -->
+    <nav class="mobile-nav-menu" id="mobile-menu" style="position: fixed; top: 0; left: -100%; width: 280px; height: 100vh; background: white; z-index: 1500; transition: left 0.3s ease; box-shadow: 2px 0 8px rgba(0,0,0,0.1); padding-top: 56px;">
+        <div style="padding: 24px 20px;">
+            <div class="mobile-lang-switcher mobile-mb-lg">
+                <button class="mobile-lang-btn active" data-lang="zh">中文</button>
+                <button class="mobile-lang-btn" data-lang="en">English</button>
+            </div>
+            
+            <div class="mobile-list">
+                <a href="index.html" class="mobile-list-item">
+                    <div class="mobile-list-icon">🏠</div>
+                    <div class="mobile-list-content">
+                        <div class="mobile-list-title">返回首页</div>
+                    </div>
+                </a>
+                <a href="terms.html" class="mobile-list-item">
+                    <div class="mobile-list-icon">📄</div>
+                    <div class="mobile-list-content">
+                        <div class="mobile-list-title">服务条款</div>
+                    </div>
+                </a>
+                <a href="support.html" class="mobile-list-item">
+                    <div class="mobile-list-icon">🛠️</div>
+                    <div class="mobile-list-content">
+                        <div class="mobile-list-title">技术支持</div>
+                    </div>
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="mobile-menu-mask" onclick="MobileApp.toggleMenu()" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1400; opacity: 0; visibility: hidden; transition: all 0.3s ease;"></div>
+
+    <!-- 主要内容 -->
+    <main class="mobile-content">
+        
+        <!-- 文档头部 -->
+        <section class="mobile-section-sm">
+            <div class="mobile-container">
+                <div class="mobile-text-center mobile-mb-lg">
+                    <h1 class="mobile-title-1">西柚隐私政策</h1>
+                    <div class="mobile-card" style="background: var(--bg-gray); padding: 12px;">
+                        <div style="font-size: 14px; color: var(--text-secondary);">
+                            <p><strong>生效日期：</strong>2025年8月15日</p>
+                            <p><strong>版本：</strong>v1.0</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 政策概述 -->
+        <section class="mobile-section-sm">
+            <div class="mobile-container">
+                <div class="mobile-card">
+                    <div class="mobile-card-header">
+                        <div class="mobile-card-title">政策概述</div>
+                    </div>
+                    <div class="mobile-card-body">
+                        <p>西柚是专为海外留学生和家长打造的一站式服务与安全平台。我们深知个人信息保护的重要性，承诺严格遵守相关法律法规。</p>
+                        <div class="mobile-mt-md" style="background: rgba(255,107,53,0.1); padding: 12px; border-radius: 8px; border-left: 3px solid var(--primary-color);">
+                            <strong style="color: var(--primary-color);">重要提示：</strong>
+                            <span style="font-size: 14px;">请仔细阅读本政策。继续使用即表示同意。</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 信息收集 -->
+        <section class="mobile-section-sm">
+            <div class="mobile-container">
+                <h2 class="mobile-title-2">信息收集</h2>
+                
+                <div class="mobile-card">
+                    <div class="mobile-card-header">
+                        <div class="mobile-card-title">您主动提供的信息</div>
+                    </div>
+                    <div class="mobile-card-body">
+                        <div class="mobile-grid mobile-gap-sm">
+                            <div class="mobile-tag-primary">注册信息</div>
+                            <div class="mobile-tag-primary">联系信息</div>
+                            <div class="mobile-tag-primary">身份验证</div>
+                            <div class="mobile-tag-primary">活动相关</div>
+                            <div class="mobile-tag-primary">志愿服务</div>
+                            <div class="mobile-tag-primary">安心计划</div>
+                        </div>
+                        <p class="mobile-mt-md" style="font-size: 14px;">包括法定姓名、学校邮箱、电话号码、活动报名等必要信息。</p>
+                    </div>
+                </div>
+                
+                <div class="mobile-card">
+                    <div class="mobile-card-header">
+                        <div class="mobile-card-title">自动收集的信息</div>
+                    </div>
+                    <div class="mobile-card-body">
+                        <div class="mobile-grid mobile-gap-sm">
+                            <div class="mobile-tag">设备信息</div>
+                            <div class="mobile-tag">使用数据</div>
+                            <div class="mobile-tag">网络信息</div>
+                            <div class="mobile-tag">推送信息</div>
+                        </div>
+                        <p class="mobile-mt-md" style="font-size: 14px;">为提供更好服务体验，我们会收集基础技术信息。</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 用户权利 -->
+        <section class="mobile-section-sm">
+            <div class="mobile-container">
+                <h2 class="mobile-title-2">您的权利</h2>
+                
+                <div class="mobile-list">
+                    <div class="mobile-list-item">
+                        <div class="mobile-list-icon" style="background: var(--success-color); color: white; border-radius: 50%; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; font-size: 14px;">知</div>
+                        <div class="mobile-list-content">
+                            <div class="mobile-list-title">知情权</div>
+                            <div class="mobile-list-desc">了解我们收集和使用信息的情况</div>
+                        </div>
+                    </div>
+                    
+                    <div class="mobile-list-item">
+                        <div class="mobile-list-icon" style="background: var(--primary-color); color: white; border-radius: 50%; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; font-size: 14px;">查</div>
+                        <div class="mobile-list-content">
+                            <div class="mobile-list-title">访问权</div>
+                            <div class="mobile-list-desc">查看我们收集的关于您的信息</div>
+                        </div>
+                    </div>
+                    
+                    <div class="mobile-list-item">
+                        <div class="mobile-list-icon" style="background: var(--warning-color); color: white; border-radius: 50%; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; font-size: 14px;">改</div>
+                        <div class="mobile-list-content">
+                            <div class="mobile-list-title">更正权</div>
+                            <div class="mobile-list-desc">更正不准确或不完整的信息</div>
+                        </div>
+                    </div>
+                    
+                    <div class="mobile-list-item">
+                        <div class="mobile-list-icon" style="background: var(--danger-color); color: white; border-radius: 50%; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; font-size: 14px;">删</div>
+                        <div class="mobile-list-content">
+                            <div class="mobile-list-title">删除权</div>
+                            <div class="mobile-list-desc">要求删除不再需要的个人信息</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 联系我们 -->
+        <section class="mobile-section">
+            <div class="mobile-container">
+                <h2 class="mobile-title-2">联系我们</h2>
+                
+                <div class="mobile-list">
+                    <a href="mailto:info@americanpromotioncompany.com?subject=隐私政策咨询" class="mobile-list-item mobile-contact-email" data-analytics="privacy:contact:email">
+                        <div class="mobile-list-icon">📧</div>
+                        <div class="mobile-list-content">
+                            <div class="mobile-list-title">隐私问题咨询</div>
+                            <div class="mobile-list-desc">info@americanpromotioncompany.com</div>
+                        </div>
+                        <div class="mobile-list-arrow">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="m9 18 6-6-6-6"/>
+                            </svg>
+                        </div>
+                    </a>
+                    
+                    <a href="mailto:dev@americanpromotioncompany.com?subject=数据保护请求" class="mobile-list-item mobile-contact-email" data-analytics="privacy:contact:dpo">
+                        <div class="mobile-list-icon">🛡️</div>
+                        <div class="mobile-list-content">
+                            <div class="mobile-list-title">数据保护负责人</div>
+                            <div class="mobile-list-desc">dev@americanpromotioncompany.com</div>
+                        </div>
+                        <div class="mobile-list-arrow">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="m9 18 6-6-6-6"/>
+                            </svg>
+                        </div>
+                    </a>
+                </div>
+                
+                <!-- CTA按钮 -->
+                <div class="mobile-mt-lg">
+                    <a href="index.html#contact" class="mobile-btn mobile-btn-primary mobile-btn-block" data-analytics="cta:privacy:agree">
+                        我已阅读并同意
+                    </a>
+                    <a href="../privacy.html?desktop=true" class="mobile-btn mobile-btn-ghost mobile-btn-block mobile-mt-md" data-analytics="cta:privacy:desktop">
+                        查看完整版政策
+                    </a>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- 底部导航 -->
+    <nav class="mobile-tabbar safe-area-bottom">
+        <a href="index.html" class="mobile-tabbar-item">
+            <div class="mobile-tabbar-icon">🏠</div>
+            <div class="mobile-tabbar-text">首页</div>
+        </a>
+        <a href="support.html" class="mobile-tabbar-item">
+            <div class="mobile-tabbar-icon">🛠️</div>
+            <div class="mobile-tabbar-text">支持</div>
+        </a>
+        <a href="terms.html" class="mobile-tabbar-item">
+            <div class="mobile-tabbar-icon">📄</div>
+            <div class="mobile-tabbar-text">条款</div>
+        </a>
+        <a href="index.html#contact" class="mobile-tabbar-item">
+            <div class="mobile-tabbar-icon">📞</div>
+            <div class="mobile-tabbar-text">联系</div>
+        </a>
+    </nav>
+
+    <!-- JavaScript -->
+    <script src="../assets/js/mobile.js"></script>
+    <script>
+        window.MobileApp.toggleMenu = function() {
+            const menu = document.getElementById('mobile-menu');
+            const mask = document.querySelector('.mobile-menu-mask');
+            const isOpen = menu.style.left === '0px';
+            
+            if (isOpen) {
+                menu.style.left = '-100%';
+                mask.style.opacity = '0';
+                mask.style.visibility = 'hidden';
+                document.body.style.overflow = '';
+            } else {
+                menu.style.left = '0px';
+                mask.style.opacity = '1';
+                mask.style.visibility = 'visible';
+                document.body.style.overflow = 'hidden';
+            }
+        };
+    </script>
+</body>
+</html>

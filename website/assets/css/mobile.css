@@ -1,0 +1,1210 @@
+/* 西柚 Pomelo 移动端专用样式 */
+/* 基于 Ant Design Mobile 设计语言 */
+
+/* ===== CSS Variables - 移动端朝霞主题 ===== */
+:root {
+  /* 朝霞色彩系统 - Sky (天光) - 饱和度降低 */
+  --sky-700: #5C8DFF;
+  --sky-500: #89B1FF;
+  --sky-300: #BEDAFF;
+  
+  /* 朝霞色彩系统 - Sun (日晕) - 全面柔和化 */
+  --sun-700: #F78A64;           /* 深邃柔和橙 */
+  --sun-600: #F9A889;           /* 标准柔和橙 (新主色) */
+  --sun-500: #FBCAB8;           /* 浅淡柔和橙 */
+  --sun-300: #FDEAE0;           /* 极浅柔和橙 */
+  
+  /* 朝霞色彩系统 - Mist (晨雾) - 调整为匹配色调 */
+  --mist: #FDF1E9;
+  --mist-light: #FEF8F3;
+  
+  /* 西柚品牌色系 (向后兼容) */
+  --primary-color: var(--sun-600);     /* 主色 -> 柔和橙 */
+  --primary-light: var(--sun-500);
+  --primary-dark: var(--sun-700);
+  
+  /* 功能色系 - 全面柔和化 */
+  --success-color: #48CFAE;     /* 柔和绿 */
+  --warning-color: #FFC979;     /* 柔和黄 */
+  --danger-color: #FF6B6B;      /* 柔和红 */
+  
+  /* 文字颜色 - 柔和的色调 */
+  --text-primary: #2D3748;      /* 主文字：深灰而不是纯黑 */
+  --text-secondary: #718096;    /* 次要文字：中灰 */
+  --text-tertiary: #A0AEC0;    /* 辅助文字：浅灰 */
+  --text-disabled: #CBD5E0;     /* 禁用文字：更浅的灰 */
+  
+  /* 背景色系（冷白基调，避免暖橙感） */
+  --bg-white: #FFFFFF;
+  --bg-gray: #F1F3F8;      /* 冷灰分隔带 */
+  --bg-canvas: #F5F7FB;    /* 页面底色：Sky Surface */
+  --bg-light: var(--bg-canvas);
+  --bg-mask: rgba(0, 0, 0, 0.55);
+  
+  /* 边框色系 - 柔和的线条 */
+  --border-light: rgba(226, 232, 240, 0.8);    /* 浅色边框：半透明白 */
+  --border-medium: rgba(203, 213, 224, 0.6);   /* 中色边框：更透明 */
+  --border-dark: rgba(160, 174, 192, 0.4);     /* 深色边框：最透明 */
+  
+  /* 移动端朝霞渐变 - 单色系 (已废弃，保留兼容) */
+  --chaoxia-mobile-sky: linear-gradient(135deg, var(--sky-500) 0%, var(--sky-300) 100%);
+}
+
+/* ===== 移动端导航栏优化 ===== */
+.mobile-navbar {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  padding: 0 16px !important;
+}
+
+.mobile-language-switcher {
+  flex-shrink: 0;
+}
+
+.mobile-language-switcher .mobile-lang-btn {
+  transition: all 0.3s ease;
+}
+
+.mobile-language-switcher .mobile-lang-btn:hover {
+  background: rgba(255, 107, 53, 0.1) !important;
+  color: var(--primary-color) !important;
+}
+  --chaoxia-mobile-sun: linear-gradient(135deg, var(--sun-600) 0%, var(--sun-500) 100%);
+
+  /* 统一 225° 渐变（Sky / Dawn / Horizon）- 柔和化 */
+  --gradient-sky-cool: linear-gradient(225deg, rgba(238, 243, 248, 0.95) 0%, rgba(221, 234, 246, 0.9) 30%, rgba(191, 216, 255, 0.85) 60%, rgba(92, 141, 255, 0.8) 100%);
+  --gradient-dawn-warm: linear-gradient(225deg, rgba(251, 202, 184, 0.9) 0%, rgba(249, 168, 137, 0.85) 50%, rgba(247, 138, 100, 0.8) 100%);
+  --gradient-horizon-blend: linear-gradient(225deg, rgba(238, 243, 248, 0.92) 0%, rgba(221, 234, 246, 0.88) 12%, rgba(251, 202, 184, 0.8) 40%, rgba(249, 168, 137, 0.7) 100%);
+  
+  /* 间距系统 (4px倍数) */
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 12px;
+  --space-lg: 16px;
+  --space-xl: 20px;
+  --space-xxl: 24px;
+  
+  /* 圆角系统 */
+  --radius-xs: 4px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+  --radius-pill: 24px;
+  
+  /* 阴影系统 */
+  --shadow-sm: 0 1px 4px rgba(0, 0, 0, 0.06);
+  --shadow-md: 0 2px 8px rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 8px 16px rgba(0, 0, 0, 0.12);
+  /* 玻璃边缘高光（rim） */
+  --rim-highlight-weak: inset 0 1px 0 rgba(255,255,255,0.06), inset 1px 0 0 rgba(255,255,255,0.04);
+  
+  /* 阴影 - 更轻柔 */
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-sm: 0 1px 4px rgba(0, 0, 0, 0.06);
+  --shadow-md: 0 2px 8px rgba(0, 0, 0, 0.08);
+  
+  /* Safe Area */
+  --safe-area-top: env(safe-area-inset-top);
+  --safe-area-bottom: env(safe-area-inset-bottom);
+  --safe-area-left: env(safe-area-inset-left);
+  --safe-area-right: env(safe-area-inset-right);
+}
+
+/* ====================================== */
+/* ===== CSS Variables - 柔和化色彩系统 ===== */
+/* ====================================== */
+:root {
+  /* 新增：淡彩朝霞辅助色板 */
+  --soft-dawn-coral: #F9A889; /* 柔和珊瑚粉 (主色) */
+  --soft-dawn-sky:   #89B1FF; /* 宁静天空蓝 */
+  --soft-dawn-mint:  #48CFAE; /* 安心薄- [ ] 荷绿 */
+  --soft-dawn-gold:  #FFC979; /* 成就柔金 */
+  
+  /* 新增：卡片质感增强变量 */
+  --rim-highlight-strong: inset 0 1px 1px rgba(255, 255, 255, 0.4);
+  --card-bg-gradient: linear-gradient(160deg, rgba(255, 255, 255, 0.92) 0%, rgba(255, 255, 255, 0.8) 100%);
+}
+
+/* ===== 基础重置 ===== */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html {
+  font-size: 16px;
+  -webkit-text-size-adjust: 100%;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', '微软雅黑', Helvetica, Arial, sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
+  color: var(--text-primary);
+  /* 全局底色使用冷白画布，避免暖橙压头 */
+  background-color: var(--bg-canvas);
+  overflow-x: hidden;
+}
+
+/* ===== Safe Area适配 ===== */
+.safe-area-top {
+  padding-top: var(--safe-area-top);
+}
+
+.safe-area-bottom {
+  padding-bottom: var(--safe-area-bottom);
+}
+
+.safe-area-inset {
+  padding-top: var(--safe-area-top);
+  padding-bottom: var(--safe-area-bottom);
+  padding-left: var(--safe-area-left);
+  padding-right: var(--safe-area-right);
+}
+
+/* ====================================== */
+/* ===== 移动端通用布局与间距 ===== */
+/* ====================================== */
+
+/* 容器 - 统一左右内边距 */
+.mobile-container {
+  padding: 0 var(--space-lg); /* 统一为 16px */
+}
+
+/* 段落 - 统一垂直外边距 */
+.mobile-section {
+  padding: var(--space-xl) 0; /* 上下 24px */
+}
+
+/* 卡片 - 统一内边距和外边距 */
+.mobile-card {
+  padding: var(--space-lg); /* 内边距 16px */
+  margin-bottom: var(--space-lg); /* 下外边距 16px */
+}
+
+.mobile-card-header {
+  padding-bottom: var(--space-md); /* 头部下方留出 12px */
+  margin-bottom: var(--space-md); /* 与内容区隔开 12px */
+  border-bottom: 1px solid var(--border-light);
+}
+
+/* 列表项 - 优化垂直内边距 */
+.mobile-list-item {
+  padding: 14px var(--space-lg); /* 垂直 14px，水平 16px */
+}
+
+/* 栅格 - 统一间距 */
+.mobile-grid {
+  gap: var(--space-md); /* 统一为 12px */
+}
+
+/* 弹性布局 - 统一间距 */
+.mobile-flex-column {
+  gap: var(--space-md); /* 垂直间距 12px */
+}
+
+/* 标题 - 优化外边距 */
+.mobile-title-2 {
+  margin-bottom: var(--space-sm); /* 8px，让副标题更贴近 */
+}
+
+.mobile-subtitle {
+  margin-bottom: var(--space-xl); /* 24px，与下方内容拉开距离 */
+}
+
+/* ====================================== */
+/* ===== Navbar & Hero 位置微调 ===== */
+/* ====================================== */
+
+/* 顶部导航 - 优化内边距和对齐 */
+.mobile-navbar {
+  padding: 0 var(--space-md); /* 左右内边距 12px */
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.mobile-navbar-title {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+/* Hero区域 - 优化内容间距 */
+.mobile-hero {
+  padding: var(--space-xl) var(--space-lg); /* 上下 24px，左右 16px */
+}
+
+.mobile-hero-title {
+  margin-bottom: var(--space-sm); /* 8px */
+}
+
+.mobile-hero-subtitle {
+  margin-bottom: var(--space-lg); /* 16px */
+}
+
+/* ===== 移动端导航栏 ===== */
+.mobile-navbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 56px;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border-light);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 var(--space-lg);
+  box-shadow: var(--rim-highlight-weak);
+}
+
+.mobile-nav-menu {
+  position: fixed;
+  top: 0;
+  left: -100%;
+  width: 280px;
+  height: 100vh;
+  background: rgba(255, 255, 255, 0.9); /* L3 Glass */
+  backdrop-filter: blur(30px);
+  -webkit-backdrop-filter: blur(30px);
+  z-index: 1500;
+  transition: left 0.3s ease;
+  box-shadow: 2px 0 8px rgba(0,0,0,0.1);
+  padding-top: 56px;
+  overflow-y: auto;
+}
+
+.mobile-menu-mask {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--bg-mask);
+  z-index: 1400;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s ease;
+}
+
+.mobile-navbar-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.mobile-navbar-back {
+  width: 24px;
+  height: 24px;
+  color: var(--text-primary);
+  cursor: pointer;
+}
+
+.mobile-navbar-menu {
+  width: 24px;
+  height: 24px;
+  color: var(--text-primary);
+  cursor: pointer;
+}
+
+/* ===== 移动端按钮系统 ===== */
+.mobile-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
+  padding: 0 var(--space-lg);
+  border: none;
+  border-radius: var(--radius-lg);
+  font-size: 16px;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  gap: var(--space-sm);
+  box-sizing: border-box;
+  outline: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* 主要按钮 - 温和的朝霞渐变 */
+.mobile-btn-primary {
+  background: linear-gradient(225deg, rgba(255, 107, 53, 0.9), rgba(255, 142, 83, 0.8));
+  color: white;
+  border: none;
+  border-radius: 16px;
+  padding: 12px 24px;
+  font-size: 16px;
+  font-weight: 600;
+  text-decoration: none;
+  text-align: center;
+  display: inline-block;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 8px rgba(255, 107, 53, 0.2);
+}
+
+.mobile-btn-primary:active {
+  filter: brightness(0.92);
+  transform: scale(0.98);
+}
+
+/* 轮廓按钮 - 淡雅的品牌色 */
+.mobile-btn-outline {
+  background: rgba(255, 107, 53, 0.1);
+  color: var(--primary-color);
+  border: 1px solid rgba(255, 107, 53, 0.3);
+  border-radius: 16px;
+  padding: 12px 24px;
+  font-size: 16px;
+  font-weight: 600;
+  text-decoration: none;
+  text-align: center;
+  display: inline-block;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.mobile-btn-outline:active {
+  background: rgba(255, 107, 53, 0.08);
+  transform: scale(0.98);
+}
+
+/* Hero区域的次要按钮 */
+.mobile-btn-outline-on-dark {
+  background: rgba(255,255,255,0.2);
+  border: 1px solid rgba(255,255,255,0.5);
+  color: white;
+}
+.mobile-btn-outline-on-dark:active {
+  background: rgba(255,255,255,0.3);
+}
+
+.mobile-btn-ghost {
+  background: transparent;
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+}
+
+.mobile-btn-ghost:active {
+  background: var(--bg-gray);
+  transform: scale(0.98);
+}
+
+.mobile-btn-lg {
+  min-height: 52px;
+  font-size: 18px;
+  padding: 0 var(--space-xxl);
+}
+
+.mobile-btn-sm {
+  min-height: 40px;
+  font-size: 14px;
+  padding: 0 var(--space-md);
+}
+
+.mobile-btn-block {
+  width: 100%;
+}
+
+/* ===== 移动端卡片系统 - 质感升级 ===== */
+.mobile-card {
+  background: var(--card-bg-gradient);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--rim-highlight-strong), var(--shadow-sm);
+  padding: var(--space-lg);
+  margin-bottom: var(--space-lg);
+  border: 1px solid rgba(255,255,255,0.40);
+}
+
+.mobile-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-md);
+}
+
+/* 卡片标题 - 温和的主色 */
+.mobile-card-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--primary-color);
+  margin-bottom: var(--space-sm);
+}
+
+.mobile-card-extra {
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+.mobile-card-body {
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+/* 特殊卡片：组织者工具 */
+.mobile-card-organizer {
+  background: linear-gradient(135deg, rgba(255,107,53,0.05), rgba(255,142,83,0.03));
+  border: 1px solid rgba(255,107,53,0.1);
+}
+
+/* ===== 移动端网格系统 ===== */
+.mobile-grid {
+  display: grid;
+  gap: var(--space-lg);
+}
+
+.mobile-grid-2 {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+.mobile-grid-3 {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.mobile-grid-4 {
+  grid-template-columns: repeat(4, 1fr);
+}
+
+/* 小屏设备单列 */
+@media (max-width: 480px) {
+  .mobile-grid-2,
+  .mobile-grid-3,
+  .mobile-grid-4 {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ===== 移动端列表系统 - 质感升级 ===== */
+.mobile-list {
+  background: var(--card-bg-gradient);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+  margin-bottom: var(--space-lg);
+  border: 1px solid rgba(255,255,255,0.40);
+  box-shadow: var(--rim-highlight-strong), var(--shadow-sm);
+}
+
+/* 列表项 - 柔和的边框和文字 */
+.mobile-list-item {
+  padding: var(--space-md);
+  border-bottom: 1px solid var(--border-light);
+  color: var(--text-primary);
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  transition: background-color 0.2s ease;
+}
+
+.mobile-list-item:last-child {
+  border-bottom: none;
+}
+
+.mobile-list-item:active {
+  background: var(--bg-light);
+}
+
+.mobile-list-item:hover {
+  background-color: rgba(255, 107, 53, 0.03);
+}
+
+.mobile-list-icon {
+  width: 24px;
+  height: 24px;
+  margin-right: var(--space-md);
+  color: var(--primary-color);
+}
+
+.mobile-list-content {
+  flex: 1;
+}
+
+.mobile-list-title {
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--text-primary);
+  margin-bottom: 2px;
+}
+
+.mobile-list-desc {
+  font-size: 14px;
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
+
+.mobile-list-arrow {
+  width: 16px;
+  height: 16px;
+  color: var(--text-tertiary);
+}
+
+/* 图标颜色 - 柔和的色调 */
+.mobile-list-icon svg,
+.mobile-list-arrow svg {
+  stroke: var(--text-tertiary);
+  transition: stroke 0.2s ease;
+}
+
+.mobile-list-item:hover .mobile-list-icon svg,
+.mobile-list-item:hover .mobile-list-arrow svg {
+  stroke: var(--primary-color);
+}
+
+/* ===== 移动端表单系统 - 质感升级 ===== */
+.mobile-form {
+  background: var(--card-bg-gradient);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border-radius: var(--radius-xl);
+  padding: var(--space-lg);
+  border: 1px solid rgba(255,255,255,0.40);
+  box-shadow: var(--rim-highlight-strong), var(--shadow-sm);
+}
+
+.mobile-form-item {
+  margin-bottom: var(--space-lg);
+}
+
+.mobile-form-label {
+  display: block;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-primary);
+  margin-bottom: var(--space-sm);
+}
+
+/* 表单输入框 - 柔和的边框和焦点 */
+.mobile-form-input,
+.mobile-form-textarea {
+  width: 100%;
+  padding: 12px 16px;
+  border: 1.5px solid var(--border-medium);
+  border-radius: var(--radius-md);
+  font-size: 16px;
+  background: rgba(255, 255, 255, 0.5);
+  color: var(--text-primary);
+  transition: all 0.2s ease;
+}
+
+.mobile-form-input:focus,
+.mobile-form-textarea:focus {
+  outline: none;
+  border-color: rgba(255, 107, 53, 0.4);
+  box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.1);
+}
+
+.mobile-form-select {
+  width: 100%;
+  height: 48px;
+  padding: 0 var(--space-md);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  font-size: 16px;
+  background: var(--bg-white);
+  cursor: pointer;
+}
+
+/* ===== 移动端标题系统 ===== */
+/* 标题颜色 - 更柔和 */
+.mobile-title-1 {
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1.2;
+  margin-bottom: var(--space-md);
+  color: var(--text-primary);
+}
+
+.mobile-title-2 {
+  font-size: 24px;
+  font-weight: 600;
+  line-height: 1.3;
+  margin-bottom: var(--space-md);
+  color: var(--text-primary);
+}
+
+.mobile-title-3 {
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 1.4;
+  margin-bottom: var(--space-sm);
+  color: var(--text-primary);
+}
+
+/* 副标题 - 柔和的次要色 */
+.mobile-subtitle {
+  font-size: 16px;
+  line-height: 1.6;
+  color: var(--text-secondary);
+  margin-bottom: var(--space-lg);
+}
+
+/* 页面背景 - 柔和的朝霞天光 */
+.mobile-page {
+  min-height: 100vh;
+  background: var(--bg-canvas);
+  padding-top: 56px; /* 为顶部导航预留空间 */
+  padding-bottom: var(--safe-area-bottom);
+}
+
+/* Hero 区域 - 结构与布局优化 */
+.mobile-hero {
+  height: 320px; /* 增加高度，提供更多空间 */
+  padding: var(--space-xl) var(--space-lg); /* 调整内边距 */
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end; /* 内容沉底，更具设计感 */
+  align-items: flex-start; /* 内容左对齐 */
+  text-align: left;
+  color: white;
+  background-image: 
+    linear-gradient(to top, rgba(0, 0, 0, 0.6) 0%, rgba(0, 0, 0, 0) 50%), /* 底部增加黑色蒙层，增强可读性 */
+    url('../images/hero/campus-hero.png');
+  background-size: cover;
+  background-position: center center;
+  background-repeat: no-repeat;
+}
+
+/* 移除之前错误的样式 */
+.mobile-hero::before { display: none; }
+.mobile-hero > * { z-index: 2; }
+
+.mobile-hero-title {
+  font-size: 28px; /* 增大标题字号 */
+  font-weight: 700;
+  line-height: 1.3;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.5); /* 增加文字阴影 */
+}
+
+.mobile-hero-subtitle {
+  font-size: 16px; /* 增大副标题字号 */
+  opacity: 0.9;
+  margin-bottom: var(--space-xl); /* 增大与按钮的间距 */
+  text-shadow: 0 1px 3px rgba(0,0,0,0.5); /* 增加文字阴影 */
+}
+
+/* ===== 移动端底部导航 ===== */
+.mobile-tabbar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 56px;
+  background: rgba(255,255,255,0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-top: 1px solid rgba(255,255,255,0.30);
+  display: flex;
+  align-items: center;
+  z-index: 1000;
+  padding-bottom: var(--safe-area-bottom);
+  box-shadow: var(--rim-highlight-weak);
+}
+
+.mobile-tabbar-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-sm) 0;
+  text-decoration: none;
+  cursor: pointer;
+  transition: color 0.3s ease;
+}
+
+.mobile-tabbar-item.active {
+  color: var(--primary-color);
+}
+
+.mobile-tabbar-item:not(.active) {
+  color: var(--text-tertiary);
+}
+
+.mobile-tabbar-icon {
+  width: 20px;
+  height: 20px;
+  margin-bottom: 2px;
+}
+
+.mobile-tabbar-text {
+  font-size: 10px;
+  font-weight: 500;
+}
+
+/* ===== 移动端工具类 ===== */
+.mobile-text-center {
+  text-align: center;
+}
+
+.mobile-text-left {
+  text-align: left;
+}
+
+.mobile-text-right {
+  text-align: right;
+}
+
+.mobile-flex {
+  display: flex;
+}
+
+.mobile-flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mobile-flex-between {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.mobile-flex-column {
+  display: flex;
+  flex-direction: column;
+}
+
+.mobile-gap-xs { gap: var(--space-xs); }
+.mobile-gap-sm { gap: var(--space-sm); }
+.mobile-gap-md { gap: var(--space-md); }
+.mobile-gap-lg { gap: var(--space-lg); }
+
+.mobile-mt-xs { margin-top: var(--space-xs); }
+.mobile-mt-sm { margin-top: var(--space-sm); }
+.mobile-mt-md { margin-top: var(--space-md); }
+.mobile-mt-lg { margin-top: var(--space-lg); }
+.mobile-mt-xl { margin-top: var(--space-xl); }
+
+.mobile-mb-xs { margin-bottom: var(--space-xs); }
+.mobile-mb-sm { margin-bottom: var(--space-sm); }
+.mobile-mb-md { margin-bottom: var(--space-md); }
+.mobile-mb-lg { margin-bottom: var(--space-lg); }
+.mobile-mb-xl { margin-bottom: var(--space-xl); }
+
+.mobile-p-xs { padding: var(--space-xs); }
+.mobile-p-sm { padding: var(--space-sm); }
+.mobile-p-md { padding: var(--space-md); }
+.mobile-p-lg { padding: var(--space-lg); }
+
+/* ===== 移动端图片优化 ===== */
+.mobile-image {
+  max-width: 100%;
+  height: auto;
+  border-radius: var(--radius-md);
+}
+
+.mobile-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.mobile-icon {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+}
+
+.mobile-icon-lg {
+  width: 24px;
+  height: 24px;
+}
+
+/* ===== 移动端动画系统 ===== */
+.mobile-fade-in {
+  animation: mobilePageEnter 0.3s ease-out;
+}
+
+.mobile-slide-up {
+  animation: mobileSlideUp 0.3s ease-out;
+}
+
+@keyframes mobilePageEnter {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes mobileSlideUp {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+/* ===== 移动端响应式图片 ===== */
+.mobile-responsive-image {
+  width: 100%;
+  height: 200px;
+  object-fit: cover;
+  border-radius: var(--radius-lg);
+}
+
+/* ===== 移动端特色组件 - 质感升级 ===== */
+.mobile-feature-card {
+  background: var(--card-bg-gradient);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border-radius: var(--radius-xl);
+  padding: var(--space-lg);
+  box-shadow: var(--rim-highlight-strong), var(--shadow-sm);
+  border: 1px solid rgba(255,255,255,0.40);
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.mobile-feature-card:active {
+  transform: scale(0.98);
+  box-shadow: var(--shadow-md);
+}
+
+/* 功能卡片图标 - 柔和的渐变 */
+.mobile-feature-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-lg); /* 圆角矩形 */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--shadow-sm);
+  transition: all 0.2s ease;
+}
+
+.mobile-feature-icon svg {
+  width: 28px;
+  height: 28px;
+  stroke: white;
+  stroke-width: 1.5; /* 更纤细的线条，更精致 */
+}
+
+.mobile-feature-card:hover .mobile-feature-icon {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+/* “核心服务”数字图标 - 统一使用朝霞渐变 */
+.mobile-numbered-icon {
+  width: 40px;
+  height: 40px;
+  background: var(--gradient-dawn-warm);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 16px;
+  font-weight: 600;
+  flex-shrink: 0; /* 防止被压缩 */
+}
+
+.mobile-feature-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: var(--space-sm);
+}
+
+/* 功能卡片描述 - 柔和的文字 */
+.mobile-feature-desc {
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--text-secondary);
+  text-align: center;
+}
+
+/* ===== 移动端语言切换 ===== */
+.mobile-lang-switcher {
+  display: flex;
+  background: var(--bg-gray);
+  border-radius: var(--radius-md);
+  padding: 2px;
+  gap: 2px;
+}
+
+.mobile-lang-btn {
+  flex: 1;
+  height: 32px;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  background: transparent;
+}
+
+/* 语言切换按钮 - 更柔和的激活状态 */
+.mobile-lang-btn.active {
+  background: linear-gradient(225deg, rgba(255, 107, 53, 0.8), rgba(255, 142, 83, 0.7));
+  color: white;
+  box-shadow: 0 2px 4px rgba(255, 107, 53, 0.15);
+}
+
+.mobile-lang-btn:not(.active) {
+  background: rgba(255, 255, 255, 0.5);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-medium);
+  box-shadow: var(--shadow-xs);
+}
+
+/* ===== 移动端加载和状态 ===== */
+.mobile-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-xl);
+  color: var(--text-secondary);
+}
+
+.mobile-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-xxl);
+  color: var(--text-secondary);
+}
+
+.mobile-empty-icon {
+  width: 64px;
+  height: 64px;
+  margin-bottom: var(--space-md);
+  opacity: 0.5;
+}
+
+/* ===== 移动端联系链接优化 ===== */
+.mobile-contact-tel {
+  color: var(--primary-color);
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.mobile-contact-email {
+  color: var(--primary-color);
+  text-decoration: none;
+  word-break: break-all;
+}
+
+/* ===== 移动端辅助样式 ===== */
+/* 分隔线 - 更柔和的颜色 */
+.mobile-divider {
+  height: 1px;
+  background: var(--border-light);
+  margin: var(--space-lg) 0;
+}
+
+.mobile-divider-thick {
+  height: 8px;
+  background: var(--bg-gray);
+  margin: var(--space-lg) 0;
+}
+
+.mobile-badge {
+  display: inline-block;
+  padding: 2px var(--space-sm);
+  background: var(--primary-color);
+  color: white;
+  font-size: 12px;
+  font-weight: 500;
+  border-radius: var(--radius-xs);
+}
+
+/* 标签 - 淡雅的品牌色 */
+.mobile-tag {
+  display: inline-block;
+  padding: 4px var(--space-sm);
+  background: var(--bg-gray);
+  color: var(--text-secondary);
+  font-size: 12px;
+  border-radius: var(--radius-sm);
+  margin-right: var(--space-xs);
+  margin-bottom: var(--space-xs);
+}
+
+/* 废弃旧的 .mobile-tag-primary, 采用全新的多彩胶囊标签系统 */
+.mobile-colored-tag {
+  border: none;
+  border-radius: var(--radius-pill); /* 胶囊形状 */
+  padding: 6px 14px; /* 增加呼吸感 */
+  font-size: 13px;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1.2;
+  margin: 3px; /* 增加外边距，防止换行时挤在一起 */
+}
+
+/* 标签颜色主题 */
+.mobile-colored-tag.tag-sky {
+  background: #EBF4FF; /* 极浅天空蓝 */
+  color: #5C8DFF;     /* 饱和度较低的天空蓝文字 */
+}
+
+.mobile-colored-tag.tag-mint {
+  background: #E6FAF5; /* 极浅薄荷绿 */
+  color: #27A888;     /* 饱和度较低的薄荷绿文字 */
+}
+
+.mobile-colored-tag.tag-coral {
+  background: var(--sun-300); /* 极浅柔和橙 #FDEAE0 */
+  color: #D48F71;     /* 柔和的珊瑚色文字 */
+}
+
+.mobile-colored-tag.tag-gold {
+  background: #FFF8E9; /* 极浅柔金 */
+  color: #C79842;     /* 饱和度较低的柔金文字 */
+}
+
+/* 移除旧的、丑陋的样式 */
+.mobile-tag-primary {
+  display: none; /* 直接隐藏，确保它不再出现 */
+}
+
+/* 隐私标签，统一为柔和的品牌色 */
+.mobile-tag-privacy {
+  background: rgba(255, 107, 53, 0.12);
+  color: var(--primary-color);
+  display: inline-block;
+  font-size: 12px;
+  padding: 2px 8px;
+  border-radius: var(--radius-sm);
+}
+
+/* ===== 移动端性能优化 ===== */
+.mobile-lazy-load {
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.mobile-lazy-load.loaded {
+  opacity: 1;
+}
+
+/* ===== 移动端暗色模式支持 ===== */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --text-primary: #FFFFFF;
+    --text-secondary: #CCCCCC;
+    --text-tertiary: #999999;
+    --bg-white: #1A1A1A;
+    --bg-gray: #2A2A2A;
+    --bg-light: #151515;
+    --border-color: #3A3A3A;
+    --border-light: #2A2A2A;
+  }
+}
+
+/* ====================================== */
+/* ===== 组件变体与特殊模块样式 ===== */
+/* ====================================== */
+
+/* 信息提示框 */
+.mobile-info-box {
+  margin-top: 12px;
+  padding: 8px;
+  background: rgba(255,107,53,0.1);
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+/* 圆形图标（基础样式） */
+.mobile-icon-circle {
+  color: white;
+  border-radius: var(--radius-md); /* 从圆形改为圆角矩形 */
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.mobile-icon-circle svg {
+  width: 16px;
+  height: 16px;
+  stroke: white;
+}
+
+/* 新增：圆形图标背景色 */
+.icon-bg-coral { background: var(--soft-dawn-coral); }
+.icon-bg-sky   { background: var(--soft-dawn-sky); }
+.icon-bg-mint  { background: var(--soft-dawn-mint); }
+.icon-bg-gold  { background: var(--soft-dawn-gold); }
+
+
+/* 组织者工具内的功能区块 */
+.mobile-organizer-feature {
+  text-align: center;
+  padding: 12px;
+  background: var(--bg-white);
+  border-radius: var(--radius-md);
+}
+.mobile-organizer-feature-title {
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+/* 新增：组织者工具功能区块标题颜色 */
+.organizer-title-coral { color: var(--soft-dawn-coral); }
+.organizer-title-sky   { color: var(--soft-dawn-sky); }
+.organizer-title-mint  { color: var(--soft-dawn-mint); }
+.organizer-title-gold  { color: var(--soft-dawn-gold); }
+
+/* 组织者工具功能区块描述 */
+.mobile-organizer-feature-desc {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+/* 定价卡片 */
+.mobile-pricing-recommend-badge {
+  position: absolute;
+  top: -12px;
+  left: 20px;
+  background: var(--primary-color);
+  color: white;
+  padding: 4px 12px;
+  border-radius: var(--radius-pill);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.mobile-pricing-checkmark {
+  color: var(--primary-color); /* 统一勾选颜色 */
+}
+
+.mobile-badge.mobile-badge-primary,
+.mobile-badge.mobile-badge-success {
+  background: var(--primary-color);
+  color: white;
+}

@@ -27,3 +27,39 @@
 /en/404.html
   Cache-Control: no-store
   X-Robots-Tag: noindex
+
+# 移动端页面配置
+/mobile/*
+  Cache-Control: public, max-age=600
+  Vary: User-Agent
+  X-Mobile-Optimized: true
+
+/mobile/en/*
+  Cache-Control: public, max-age=600
+  Vary: User-Agent
+  X-Mobile-Optimized: true
+
+# 移动端404页面
+/mobile/404.html
+  Cache-Control: no-store
+  X-Robots-Tag: noindex
+  X-Mobile-Optimized: true
+
+/mobile/en/404.html
+  Cache-Control: no-store
+  X-Robots-Tag: noindex
+  X-Mobile-Optimized: true
+
+# 移动端CSS和JS
+/assets/css/mobile.css
+  Cache-Control: public, max-age=31536000, immutable
+  Content-Type: text/css
+
+/assets/js/mobile.js
+  Cache-Control: public, max-age=31536000, immutable
+  Content-Type: application/javascript
+
+# 共享资源
+/shared/*
+  Cache-Control: public, max-age=3600
+  Access-Control-Allow-Origin: *
