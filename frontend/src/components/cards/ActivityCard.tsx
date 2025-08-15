@@ -13,6 +13,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTranslation } from 'react-i18next';
 import { theme } from '../../theme';
+import { BRAND_GLASS, BRAND_INTERACTIONS, BRAND_GRADIENT } from '../../theme/core';
 import { scaleIn, scaleOut, bounce } from '../../utils/animations';
 import { usePerformanceDegradation } from '../../hooks/usePerformanceDegradation';
 import { analytics, Events } from '../../analytics/EventTracker';
@@ -146,7 +147,7 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({
       case 'ongoing':
         return { text: t('activityCard.status.ongoing'), color: theme.colors.success };
       case 'upcoming':
-        return { text: t('activityCard.status.upcoming'), color: theme.colors.primary };
+        return { text: t('activityCard.status.upcoming'), color: BRAND_INTERACTIONS.navigation.active.text };
       case 'almost_full':
         return { text: t('activityCard.status.full'), color: theme.colors.warning };
       case 'full':
@@ -154,7 +155,7 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({
       case 'ended':
         return { text: t('activityCard.status.ended'), color: theme.colors.text.disabled };
       default:
-        return { text: t('activityCard.status.available'), color: theme.colors.primary };
+        return { text: t('activityCard.status.available'), color: BRAND_INTERACTIONS.navigation.active.text };
     }
   };
 
@@ -404,11 +405,11 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({
           resizeMode="cover"
         />
         
-        {/* VitaGlobal 对比度增强渐变遮罩 */}
+        {/* 西柚 对比度增强渐变遮罩 */}
         <LinearGradient
           colors={[
-            'rgba(255, 107, 53, 0.05)',   // VitaGlobal 橙色轻微遮罩
-            'rgba(255, 71, 87, 0.15)',    // VitaGlobal 珊瑚红深度
+            'rgba(255, 107, 53, 0.05)',   // 西柚 橙色轻微遮罩
+            'rgba(255, 71, 87, 0.15)',    // 西柚 珊瑚红深度
             'rgba(26, 26, 26, 0.75)'      // 底部暗层确保文字对比度
           ]}
           style={styles.gradientOverlay}
@@ -448,7 +449,7 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({
                   {safeActivity.organizer.name}
                 </Text>
                 {safeActivity.organizer.verified && (
-                  <Ionicons name="checkmark-circle" size={16} color={theme.colors.primary} />
+                  <Ionicons name="checkmark-circle" size={16} color={BRAND_INTERACTIONS.navigation.active.text} />
                 )}
               </View>
             )}
@@ -532,7 +533,7 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({
             availableSpots === 0 && styles.disabledButtonWrapper
           ]}>
             <LinearGradient
-              colors={availableSpots > 0 ? [theme.colors.primary, theme.colors.primaryPressed] : [theme.colors.text.disabled, theme.colors.text.tertiary]}
+              colors={availableSpots > 0 ? BRAND_GRADIENT : [theme.colors.text.disabled, theme.colors.text.tertiary]}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
               style={styles.registerButtonGradient}
@@ -750,7 +751,7 @@ const styles = StyleSheet.create({
   priceText: {
     fontSize: theme.typography.fontSize.base,
     fontWeight: theme.typography.fontWeight.bold,
-    color: theme.colors.primary,
+    color: BRAND_INTERACTIONS.navigation.active.text,
   },
   availableText: {
     fontSize: theme.typography.fontSize.sm,
@@ -862,12 +863,12 @@ const styles = StyleSheet.create({
     ...theme.shadows.sm,
   },
   shareButton: {
-    backgroundColor: theme.colors.primary,
+    backgroundColor: BRAND_INTERACTIONS.navigation.active.text,
   },
   bookmarkButton: {
     backgroundColor: theme.colors.warning,
   },
   notifyButton: {
-    backgroundColor: theme.colors.primary,
+    backgroundColor: BRAND_INTERACTIONS.navigation.active.text,
   },
 });

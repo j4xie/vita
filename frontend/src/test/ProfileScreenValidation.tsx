@@ -239,7 +239,7 @@ const styles = StyleSheet.create({
   summary: {
     fontSize: 16,
     marginBottom: 20,
-    color: '#FF6B35', // VitaGlobal 橙色
+    color: '#FF6B35', // 西柚 橙色
     fontWeight: '600',
   },
   categorySection: {
@@ -299,7 +299,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#e7f3ff',
     borderRadius: 12,
     borderLeftWidth: 4,
-    borderLeftColor: '#FF6B35', // VitaGlobal 橙色
+    borderLeftColor: '#FF6B35', // 西柚 橙色
   },
   footerTitle: {
     fontSize: 16,

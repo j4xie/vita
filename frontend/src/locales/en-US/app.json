@@ -1,22 +1,22 @@
 {
   "expo": {
-    "name": "VitaGlobal - Student Activities",
+    "name": "Pomelo - Student Activities",
     "description": "Activity management and registration platform for Chinese international students overseas",
     "splash": {
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "displayName": "VitaGlobal",
+      "displayName": "Pomelo",
       "localizedResources": {
-        "CFBundleDisplayName": "VitaGlobal",
-        "CFBundleName": "VitaGlobal",
+        "CFBundleDisplayName": "Pomelo",
+        "CFBundleName": "Pomelo",
         "NSCameraUsageDescription": "This app needs access to camera to scan QR codes",
         "NSMicrophoneUsageDescription": "This app needs access to microphone to record audio",
         "NSPhotoLibraryUsageDescription": "This app needs access to photo library to upload images"
       }
     },
     "android": {
-      "displayName": "VitaGlobal",
+      "displayName": "Pomelo",
       "permissions": [
         "android.permission.CAMERA",
         "android.permission.RECORD_AUDIO",

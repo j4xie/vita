@@ -21,6 +21,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useTranslation } from 'react-i18next';
 import { theme } from '../../theme';
+import { BRAND_INTERACTIONS } from '../../theme/core';
 import { fadeIn, slideInFromBottom } from '../../utils/animations';
 
 const { width, height } = Dimensions.get('window');
@@ -154,14 +155,12 @@ export const LoginScreen: React.FC = () => {
               {/* Logo Section */}
               <View style={styles.logoSection}>
                 {/* Shadow容器 - 使用solid background优化阴影渲染 */}
-                <View style={styles.logoShadowContainer}>
-                  <View style={styles.logoContainer}>
-                    <Image 
-                      source={require('../../../assets/logos/vitaglobal-logo.png')}
-                      style={styles.logoImage}
-                      resizeMode="contain"
-                    />
-                  </View>
+                <View style={styles.logoContainer}>
+                  <Image 
+                    source={require('../../../assets/logos/pomelo-logo.png')}
+                    style={styles.logoImage}
+                    resizeMode="contain"
+                  />
                 </View>
                 <Text style={styles.welcomeText}>{t('auth.login.welcome')}</Text>
                 <Text style={styles.subtitleText}>{t('auth.login.subtitle')}</Text>
@@ -347,12 +346,9 @@ const styles = StyleSheet.create({
   },
   
   logoContainer: {
-    width: '100%',
-    height: '100%',
-    borderRadius: theme.borderRadius['4xl'],
     alignItems: 'center',
     justifyContent: 'center',
-    // 移除阴影，由logoShadowContainer处理
+    marginBottom: theme.spacing.lg,
   },
   logoText: {
     fontSize: theme.typography.fontSize['4xl'],
@@ -360,8 +356,8 @@ const styles = StyleSheet.create({
     color: theme.colors.text.inverse,
   },
   logoImage: {
-    width: 60,
-    height: 60,
+    width: 80,
+    height: 80,
     // 移除tintColor，保持VitaGlobal logo原色
   },
   welcomeText: {
@@ -452,7 +448,7 @@ const styles = StyleSheet.create({
   },
   forgotText: {
     fontSize: theme.typography.fontSize.base,
-    color: theme.colors.primary,
+    color: BRAND_INTERACTIONS.navigation.active.text,
     fontWeight: theme.typography.fontWeight.semibold,
   },
   
@@ -498,7 +494,7 @@ const styles = StyleSheet.create({
   },
   registerLink: {
     fontSize: theme.typography.fontSize.base,
-    color: theme.colors.primary,
+    color: BRAND_INTERACTIONS.navigation.active.text,
     fontWeight: theme.typography.fontWeight.bold,
     marginLeft: theme.spacing.xs,
   },

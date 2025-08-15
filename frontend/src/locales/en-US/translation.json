@@ -1,5 +1,8 @@
 {
   "common": {
+    "brand": {
+      "name": "Pomelo"
+    },
     "loading": "Loading...",
     "error": "Error",
     "success": "Success",
@@ -12,6 +15,7 @@
     "done": "Done",
     "retry": "Retry",
     "close": "Close",
+    "brand_name": "Pomelo",
     "filter": "Filter, {{count}} selected",
     "filterHint": "Tap to open filter panel",
     "all": "All"
@@ -117,17 +121,80 @@
     },
     "register": {
       "choice_title": "Choose Registration Type",
+      "join_pomelo": "Join Pomelo",
+      "choose_registration_method": "Choose your registration method",
+      "referral_registration": "Referral Registration",
+      "referral_description": "Scan referral code for quick registration",
+      "referral_badge": "Recommended",
+      "normal_registration": "Normal Registration",
+      "normal_description": "Fill out information directly", 
+      "benefits_title": "After registration, you can:",
+      "benefits": {
+        "join_activities": "Join various exciting activities",
+        "get_qr_codes": "Get activity check-in QR codes",
+        "manage_registrations": "Manage your registration records", 
+        "receive_notifications": "Receive activity updates"
+      },
       "student_option": "Student Registration",
-      "organization_option": "Organization Registration",
+      "organization_option": "Organization Registration", 
       "form_title": "Create Account",
       "already_have_account": "Already have an account?",
-      "login_link": "Sign In Now"
+      "login_link": "Sign In Now",
+      "terms_agreement": "By registering, you agree to our",
+      "terms_of_service": "Terms of Service",
+      "and": "and", 
+      "privacy_policy": "Privacy Policy",
+      "form": {
+        "progress": "Step {{current}} of {{total}}",
+        "basic_info": "Basic Information",
+        "basic_info_desc": "Please fill in your basic information",
+        "account_setup": "Account Setup",
+        "account_setup_desc": "Set up your login account and password",
+        "contact_info": "Contact Information", 
+        "contact_info_desc": "Please choose and fill in your phone number",
+        "referral_code": "Referral Code: {{code}}",
+        "legal_name_label": "Legal Name *",
+        "legal_name_placeholder": "Enter your legal full name",
+        "english_nickname_label": "English Nickname *",
+        "english_nickname_placeholder": "Enter your English nickname",
+        "university_label": "University *",
+        "university_placeholder": "Enter your school name",
+        "email_label": "School Email * (Login Account)",
+        "email_placeholder": "Enter your school email",
+        "password_label": "Set Password *",
+        "password_placeholder": "Set your password",
+        "confirm_password_label": "Confirm Password *",
+        "confirm_password_placeholder": "Re-enter password to confirm",
+        "phone_china": "🇨🇳 China Number",
+        "phone_usa": "🇺🇸 USA Number", 
+        "phone_label": "Phone Number *",
+        "phone_placeholder": "Enter your phone number",
+        "terms_checkbox": "I have read and agree to",
+        "send_code": "Send Code",
+        "next_step": "Next Step",
+        "register": "Register"
+      },
+      "sms": {
+        "code_sent_title": "Verification Code Sent",
+        "code_sent_message": "Verification code sent to your phone number +{{countryCode}} {{phoneNumber}}",
+        "send_failed_title": "Send Failed",
+        "send_failed_message": "Failed to send verification code, please try again later"
+      }
     },
     "validation": {
       "email_required": "Please enter school email",
       "email_invalid": "Please enter a valid email address",
+      "email_school_invalid": "Please enter a valid school email",
       "password_required": "Please enter password",
-      "password_min_length": "Password must be at least 6 characters"
+      "password_min_length": "Password must be at least 6 characters",
+      "password_min_length_8": "Password must be at least 8 characters",
+      "password_mismatch": "Passwords do not match",
+      "legal_name_required": "Please enter legal name",
+      "english_nickname_required": "Please enter English nickname",
+      "university_required": "Please enter university",
+      "phone_required": "Please enter phone number",
+      "phone_china_invalid": "Please enter a valid Chinese phone number",
+      "phone_usa_invalid": "Please enter a valid US phone number"
     },
     "errors": {
       "login_failed": "Login Failed",
@@ -296,7 +363,7 @@
       "pushPermissions": "Push Notification Permissions",
       "pushPermissionsSubtitle": "Manage push permissions in system settings",
       "openSystemSettings": "Unable to open settings",
-      "openSystemSettingsMessage": "Please manually go to Settings > Apps > VitaGlobal > Notifications to manage notification permissions",
+      "openSystemSettingsMessage": "Please manually go to Settings > Apps > Pomelo > Notifications to manage notification permissions",
       "activityUpdates": "Activity Updates",
       "activityUpdatesSubtitle": "Important notifications about activity changes, cancellations, etc.",
       "registrationSuccess": "Registration Success",
@@ -312,14 +379,14 @@
       "notificationSummaryMessage": "Notification summary settings feature coming soon",
       "pushPermissions": "Push Notification Permission",
       "cannotOpenSettings": "Cannot Open Settings",
-      "cannotOpenSettingsMessage": "Please manually go to System Settings > Apps > VitaGlobal > Notifications to manage notification permissions",
+      "cannotOpenSettingsMessage": "Please manually go to System Settings > Apps > Pomelo > Notifications to manage notification permissions",
       "sectionPushPermissions": "Push Permissions",
       "sectionNotificationTypes": "Notification Types",
       "sectionAdvancedSettings": "Advanced Settings"
     }
   },
   "ai": {
-    "title": "VitaGlobal AI Assistant",
+    "title": "Pomelo AI Assistant",
     "status": "In Development",
     "mainMessage": "AI Assistant Coming Soon",
     "description": "We are training our AI assistant to better understand and help Chinese international students.",
@@ -331,7 +398,8 @@
       "academic": "Academic Support",
       "suggestions": "Personalized Suggestions"
     },
-    "gotIt": "Got it"
+    "gotIt": "Got it",
+    "coachMark": "Long press to try"
   },
   "explore": {
     "title": "Explore",
@@ -426,30 +494,129 @@
       "noRecords": "No volunteer records",
       "checkInTime": "Check-in Time",
       "workDuration": "Work Duration", 
-      "totalHours": "Total Hours"
+      "totalHours": "Total Hours",
+      "lastCheckInTime": "Last Check-in Time",
+      "lastCheckOutTime": "Last Check-out Time",
+      "hours": "h"
+    }
+  },
+  "explore": {
+    "title": "Explore Activities",
+    "subtitle": "Discover exciting activities around you",
+    "choose_school": "Choose School",
+    "activity_categories": "Activity Categories", 
+    "recommended_activities": "Recommended Activities",
+    "view_more": "View More",
+    "activities_count": "{{count}} activities",
+    "schools": {
+      "all": "All Schools",
+      "all_short": "All"
+    },
+    "categories": {
+      "academic": "Academic Lectures",
+      "social": "Social Gatherings",
+      "career": "Career Development", 
+      "culture": "Cultural Activities",
+      "sports": "Sports & Fitness"
+    },
+    "features": {
+      "category_developing": "{{categoryName}} feature is under development and will support browsing activities by category.",
+      "recommendations_developing": "More recommendation features are under development and will provide personalized activity suggestions."
+    }
+  },
+  "language": {
+    "chinese": "中文",
+    "simplified_chinese": "简体中文",
+    "chinese_description": "适合中文用户使用",
+    "english": "English",
+    "english_description": "For English speakers", 
+    "recommended": "Recommended",
+    "selection": {
+      "title": "选择语言",
+      "title_en": "Choose Language",
+      "description": "请选择您偏好的语言",
+      "description_en": "Please choose your preferred language",
+      "confirm": "确认选择", 
+      "confirm_en": "Confirm Selection"
+    }
+  },
+  "qr": {
+    "scanning": {
+      "title": "Scan Referral Code",
+      "instruction": "Place the referral QR code within the frame for automatic scanning",
+      "manual_input": "Manual Input Referral Code",
+      "manual_input_title": "Manual Input Referral Code",
+      "manual_input_desc": "Enter your referral code",
+      "input_placeholder": "Enter your referral code",
+      "referral_code_label": "Referral Code", 
+      "confirm": "Confirm",
+      "cancel": "Cancel",
+      "manual_input_button": "Manual Input"
+    },
+    "results": {
+      "referral_success_title": "Referral Code Scanned Successfully",
+      "referral_success_message": "Referral Code: {{referralCode}}",
+      "continue_register": "Continue Registration",
+      "invalid_referral_title": "Invalid Referral Code",
+      "invalid_referral_message": "Please scan a valid referral QR code",
+      "rescan": "Scan Again",
+      "back": "Back",
+      "checkin_success_title": "Check-in Successful",
+      "checkin_success_message": "Activity check-in completed!",
+      "confirm": "OK",
+      "invalid_qr_title": "Invalid QR Code",
+      "invalid_qr_message": "Please scan a valid activity QR code",
+      "scan_result": "Scan Result"
     }
   },
   "volunteer": {
     "title": "Volunteer Check-in Management",
     "subtitle": "Manage volunteer check-in/out and work hour records"
   },
-  "alerts": {
-    "feature_not_implemented": "Feature not yet implemented",
-    "logout_confirm": "Confirm Logout",
-    "logout_message": "Are you sure you want to logout?"
-  },
-  "ai": {
-    "title": "AI Assistant",
-    "subtitle": "AI assistant is under development and will provide:",
-    "features": {
-      "chat": "Smart Q&A",
-      "study": "Study Support",
-      "life": "Life Guide",
-      "support": "Emotional Support"
+  "mockData": {
+    "schools": {
+      "berkeley": "University of California, Berkeley",
+      "ucla": "University of California, Los Angeles", 
+      "usc": "University of Southern California",
+      "washington": "University of Washington"
     },
-    "comingSoon": "Coming Soon!",
-    "understood": "Got it",
-    "coachMark": "Long press to try"
+    "activities": {
+      "springConcert": {
+        "title": "NYU Spring Concert",
+        "subtitle": "Classical Music Appreciation"
+      },
+      "careerLecture": {
+        "title": "Fordham Career Development Lecture",
+        "subtitle": "Tech Industry Job Search Guide"
+      },
+      "chineseNewYear": {
+        "title": "Chinese New Year Celebration",
+        "subtitle": "Traditional Culture Celebration"
+      },
+      "taxWorkshop": {
+        "title": "International Student Tax Workshop",
+        "subtitle": "US Tax Basics for Students"
+      }
+    },
+    "organizers": {
+      "chineseStudentAssociation": "NYU Chinese Students and Scholars Association",
+      "businessCareerCenter": "Fordham Business School Chinese Student Association",
+      "careerCenter": "Career Development Center",
+      "internationalServices": "International Student Services",
+      "cssa": {
+        "description": "Providing academic and cultural support for Chinese students"
+      },
+      "careerCenter": {
+        "description": "Professional career development guidance services"
+      }
+    },
+    "volunteers": {
+      "chen": "Zhihao Chen",
+      "li": "Siyu Li",
+      "wang": "Jianhua Wang", 
+      "zhang": "Student Zhang",
+      "liu": "Student Liu"
+    }
   },
   "userInfo": {
     "roles": {
@@ -507,7 +674,7 @@
       "checkOutTime": "Check-out Time",
       "worked": "Worked",
       "totalHours": "Total Hours",
-      "hours": "hours",
+      "hours": "h",
       "confirmSignOut": "Confirm Sign Out",
       "thisVolunteerService": "This Volunteer Service",
       "timeRange": "Time Range",
@@ -515,7 +682,7 @@
       "signOutNote": "Sign out will automatically record this volunteer service duration",
       "cancelSignOut": "Cancel Sign Out",
       "signingOut": "Signing Out...",
-      "minutes": "minutes"
+      "minutes": "min"
     },
     "alerts": {
       "hint": "Hint",

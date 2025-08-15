@@ -15,6 +15,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { BlurView } from 'expo-blur';
 import { theme } from '../../theme';
+import { BRAND_GLASS, BRAND_INTERACTIONS } from '../../theme/core';
 
 interface LiquidGlassTabProps {
   label: string;
@@ -212,7 +213,7 @@ const styles = StyleSheet.create({
   
   // 激活状态 - 实色但保留玻璃质感
   active: {
-    backgroundColor: theme.colors.primary, // VitaGlobal #FF6B35
+    backgroundColor: BRAND_INTERACTIONS.navigation.active.text, // 西柚 #FF6B35
     borderWidth: 1,
     borderColor: theme.liquidGlass.primaryGlass.border,
     ...theme.shadows.xs,
@@ -220,13 +221,13 @@ const styles = StyleSheet.create({
     transform: [{ scale: 1.02 }],
     // 增强阴影但符合性能要求
     ...(Platform.OS === 'ios' && {
-      shadowColor: theme.colors.primary,
+      shadowColor: BRAND_INTERACTIONS.navigation.active.text,
     }),
   },
   
   // 禁用状态
   disabled: {
-    backgroundColor: theme.colors.primaryDisabled, // #9CCEFB
+    backgroundColor: theme.colors.primaryDisabled, // #FFB399
     opacity: 0.6,
   },
   

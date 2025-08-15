@@ -6,7 +6,7 @@ import {
   Platform,
   DeviceEventEmitter,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+// import { Ionicons } from '@expo/vector-icons'; // 替换为可爱西柚图标
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
@@ -24,6 +24,7 @@ import Animated, {
   Easing,
 } from 'react-native-reanimated';
 import { usePerformanceDegradation } from '../../hooks/usePerformanceDegradation';
+import { GrapefruitIcon } from './icons/GrapefruitIcon';
 
 interface FloatingAIButtonProps {
   isThinking?: boolean;
@@ -35,6 +36,7 @@ export const FloatingAIButton: React.FC<FloatingAIButtonProps> = ({
   const insets = useSafeAreaInsets();
   const [showAIModal, setShowAIModal] = useState(false);
   const [isAnyModalOpen, setIsAnyModalOpen] = useState(false);
+  const [isPressed, setIsPressed] = useState(false);
   const { metrics, getOptimizedStyles } = usePerformanceDegradation();
   const isPerformanceDegraded = metrics.shouldDegrade;
   const optimizedStyles = getOptimizedStyles();
@@ -76,36 +78,24 @@ export const FloatingAIButton: React.FC<FloatingAIButtonProps> = ({
       return;
     }
 
-    // Breathing animation - smooth scale
+    // Breathing animation - smooth seamless loop
     breathingScale.value = withRepeat(
-      withSequence(
-        withTiming(isPerformanceDegraded ? 1.04 : 1.08, { 
-          duration: isPerformanceDegraded ? 3000 : 2000, 
-          easing: Easing.inOut(Easing.ease) 
-        }),
-        withTiming(1, { 
-          duration: isPerformanceDegraded ? 3000 : 2000, 
-          easing: Easing.inOut(Easing.ease) 
-        })
-      ),
+      withTiming(isPerformanceDegraded ? 1.04 : 1.08, { 
+        duration: isPerformanceDegraded ? 3000 : 2000, 
+        easing: Easing.bezier(0.4, 0, 0.6, 1) // 平滑缓动曲线
+      }),
       -1,
-      false
+      true // reverse = true 确保完全无缝循环
     );
 
-    // Glow pulsing effect
+    // Glow pulsing effect - seamless loop
     glowOpacity.value = withRepeat(
-      withSequence(
-        withTiming(isPerformanceDegraded ? 0.9 : 1, { 
-          duration: isPerformanceDegraded ? 2000 : 1500, 
-          easing: Easing.inOut(Easing.ease) 
-        }),
-        withTiming(0.8, { 
-          duration: isPerformanceDegraded ? 2000 : 1500, 
-          easing: Easing.inOut(Easing.ease) 
-        })
-      ),
+      withTiming(isPerformanceDegraded ? 0.9 : 1, { 
+        duration: isPerformanceDegraded ? 2000 : 1500, 
+        easing: Easing.bezier(0.4, 0, 0.6, 1) // 平滑缓动曲线
+      }),
       -1,
-      false
+      true // reverse = true 确保完全无缝循环
     );
 
     // Icon rotation (disabled on performance-degraded devices)
@@ -161,44 +151,44 @@ export const FloatingAIButton: React.FC<FloatingAIButtonProps> = ({
   // Enhanced animations for thinking state
   useEffect(() => {
     if (isThinking) {
-      // Faster breathing when thinking
+      // Faster breathing when thinking - seamless loop
       breathingScale.value = withRepeat(
-        withSequence(
-          withTiming(1.12, { duration: 800, easing: Easing.inOut(Easing.ease) }),
-          withTiming(1, { duration: 800, easing: Easing.inOut(Easing.ease) })
-        ),
+        withTiming(1.12, { 
+          duration: 800, 
+          easing: Easing.bezier(0.4, 0, 0.6, 1) // 平滑缓动曲线
+        }),
         -1,
-        false
+        true // reverse = true 确保完全无缝循环
       );
       
-      // Faster glow pulsing
+      // Faster glow pulsing - seamless loop
       glowOpacity.value = withRepeat(
-        withSequence(
-          withTiming(1.2, { duration: 600, easing: Easing.inOut(Easing.ease) }),
-          withTiming(0.6, { duration: 600, easing: Easing.inOut(Easing.ease) })
-        ),
+        withTiming(1.2, { 
+          duration: 600, 
+          easing: Easing.bezier(0.4, 0, 0.6, 1) // 平滑缓动曲线
+        }),
         -1,
-        false
+        true // reverse = true 确保完全无缝循环
       );
     } else {
-      // Return to normal breathing
+      // Return to normal breathing - seamless loop
       breathingScale.value = withRepeat(
-        withSequence(
-          withTiming(1.08, { duration: 2000, easing: Easing.inOut(Easing.ease) }),
-          withTiming(1, { duration: 2000, easing: Easing.inOut(Easing.ease) })
-        ),
+        withTiming(1.08, { 
+          duration: 2000, 
+          easing: Easing.bezier(0.4, 0, 0.6, 1) // 平滑缓动曲线
+        }),
         -1,
-        false
+        true // reverse = true 确保完全无缝循环
       );
       
-      // Return to normal glow
+      // Return to normal glow - seamless loop
       glowOpacity.value = withRepeat(
-        withSequence(
-          withTiming(1, { duration: 1500, easing: Easing.inOut(Easing.ease) }),
-          withTiming(0.8, { duration: 1500, easing: Easing.inOut(Easing.ease) })
-        ),
+        withTiming(1, { 
+          duration: 1500, 
+          easing: Easing.bezier(0.4, 0, 0.6, 1) // 平滑缓动曲线
+        }),
         -1,
-        false
+        true // reverse = true 确保完全无缝循环
       );
     }
   }, [isThinking]);
@@ -311,8 +301,8 @@ export const FloatingAIButton: React.FC<FloatingAIButtonProps> = ({
   // Auto-hide animation functions
   const hideButton = () => {
     // Calculate hide distance to show a visible portion for easy re-access
-    const buttonSize = 56; // 56px 直径
-    const hideDistance = buttonSize * 0.65; // Hide 65% (36px), show 35% (20px) for better visibility
+    const buttonSize = 66; // 66px 宽度 (自适应尺寸)
+    const hideDistance = buttonSize * 0.65; // Hide 65% (43px), show 35% (23px) for better visibility
     
     if (isPerformanceDegraded) {
       // Simplified animation for low-end devices
@@ -359,6 +349,7 @@ export const FloatingAIButton: React.FC<FloatingAIButtonProps> = ({
 
   // Enhanced press handlers with multi-layer feedback
   const handlePressIn = () => {
+    setIsPressed(true);
     if (Platform.OS === 'ios') {
       Haptics.selectionAsync(); // Immediate tactile feedback
     }
@@ -378,6 +369,7 @@ export const FloatingAIButton: React.FC<FloatingAIButtonProps> = ({
   };
 
   const handlePressOut = () => {
+    setIsPressed(false);
     if (Platform.OS === 'ios') {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy); // Strong impact feedback
     }
@@ -419,7 +411,7 @@ export const FloatingAIButton: React.FC<FloatingAIButtonProps> = ({
 
   const buttonAnimatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: breathingScale.value * pressScale.value }],
-    borderColor: 'rgba(255, 107, 53, 0.3)', // VitaGlobal 橙色边框
+    borderColor: 'rgba(255, 107, 53, 0.3)', // 西柚 橙色边框
   }));
 
   const shimmerAnimatedStyle = useAnimatedStyle(() => ({
@@ -449,12 +441,22 @@ export const FloatingAIButton: React.FC<FloatingAIButtonProps> = ({
 
   return (
     <>
-      <Animated.View style={[styles.container, { bottom: insets.bottom + 80 }, containerAnimatedStyle]}>
-        {/* Glow layer - animated shadow */}
-        <Animated.View
-          style={[styles.glowLayer, glowAnimatedStyle]}
-          pointerEvents="none"
-        />
+      <Animated.View style={[styles.container, { bottom: insets.bottom + 70 }, containerAnimatedStyle]}>
+        {/* 多层发光效果 - 更自然的光晕 */}
+        {!isPerformanceDegraded && (
+          <>
+            {/* 外层柔和发光 */}
+            <Animated.View
+              style={[styles.glowLayerOuter, glowAnimatedStyle]}
+              pointerEvents="none"
+            />
+            {/* 内层强化发光 */}
+            <Animated.View
+              style={[styles.glowLayer, glowAnimatedStyle]}
+              pointerEvents="none"
+            />
+          </>
+        )}
         
         {/* Particle effects - only on high-performance devices */}
         {!isPerformanceDegraded && !optimizedStyles.simplifiedAnimations && [0, 1, 2].map((index) => (
@@ -501,12 +503,12 @@ export const FloatingAIButton: React.FC<FloatingAIButtonProps> = ({
                 style={styles.blurContainer} 
                 tint="light"
               >
-              {/* VitaGlobal Background gradient */}
+              {/* 西柚 Background gradient */}
               <LinearGradient
                 colors={[
-                  'rgba(255, 107, 53, 0.85)',  // VitaGlobal 活力橙
-                  'rgba(255, 71, 87, 0.85)',    // VitaGlobal 珊瑚红
-                  'rgba(255, 107, 53, 0.85)',  // VitaGlobal 活力橙
+                  'rgba(255, 107, 53, 0.85)',  // 西柚 活力橙
+                  'rgba(255, 71, 87, 0.85)',    // 西柚 珊瑚红
+                  'rgba(255, 107, 53, 0.85)',  // 西柚 活力橙
                 ]}
                 style={styles.gradientBackground}
                 start={{ x: 0, y: 0 }}
@@ -520,14 +522,14 @@ export const FloatingAIButton: React.FC<FloatingAIButtonProps> = ({
                   />
                 )}
                 
-                {/* Icon container with rotation */}
+                {/* 可爱西柚图标 */}
                 <Animated.View
                   style={[styles.iconContainer, iconAnimatedStyle]}
                 >
-                  <Ionicons 
-                    name={isThinking ? "sync" : "sparkles"} 
-                    size={30} 
-                    color="#FFFFFF" 
+                  <GrapefruitIcon 
+                    size={56} 
+                    isThinking={isThinking}
+                    isPressed={isPressed}
                   />
                 </Animated.View>
                 
@@ -552,26 +554,28 @@ export const FloatingAIButton: React.FC<FloatingAIButtonProps> = ({
 const styles = StyleSheet.create({
   container: {
     position: 'absolute',
-    right: 16, // 16px 边距
-    width: 56 + 20, // 56px 直径 + 发光空间
-    height: 56 + 20,
+    right: 8.5, // 8.5px 右边距 (向右移动15px)
+    width: 70, // 自适应西柚+AI组合 (52+14+4 padding)
+    height: 68, // 自适应西柚+AI组合 (52+12+4 padding)
     zIndex: 9999,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: 'flex-start', // 改为左上对齐
+    justifyContent: 'flex-start',
+    paddingTop: 2, // 顶部安全边距
+    paddingLeft: 2, // 左侧安全边距
   },
   touchable: {
-    width: 56, // 56px 直径
-    height: 56,
+    width: 66, // 西柚+AI的实际宽度
+    height: 64, // 西柚+AI的实际高度
   },
   button: {
-    width: 56, // 56px 直径
-    height: 56,
-    borderRadius: 28, // 56/2
+    width: 66, // 西柚+AI的实际宽度
+    height: 64, // 西柚+AI的实际高度
+    borderRadius: 26, // 自适应圆角
     overflow: 'hidden',
     backgroundColor: 'rgba(255, 255, 255, 0.1)',
     ...Platform.select({
       ios: {
-        shadowColor: '#FF6B35', // VitaGlobal 橙色阴影
+        shadowColor: '#FF6B35', // 西柚 橙色阴影
         shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.3,
         shadowRadius: 12,
@@ -587,12 +591,12 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    borderRadius: 28, // 56/2
+    borderRadius: 26, // 自适应圆角
   },
   blurContainer: {
     width: '100%',
     height: '100%',
-    borderRadius: 28, // 56/2
+    borderRadius: 26, // 自适应圆角
     overflow: 'hidden',
   },
   gradientBackground: {
@@ -605,21 +609,43 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     zIndex: 2,
   },
-  glowLayer: {
+  glowLayerOuter: {
     position: 'absolute',
-    width: 66, // 56 + 10
-    height: 66, // 56 + 10
-    borderRadius: 33, // (56 + 10) / 2
-    backgroundColor: 'rgba(255, 107, 53, 0.4)', // VitaGlobal 橙色发光
+    top: -9, // 精确居中计算
+    left: -9, // 精确居中计算
+    width: 84, // 外层发光
+    height: 82,
+    borderRadius: 28,
+    backgroundColor: 'rgba(255, 107, 53, 0.08)', // 更淡的外围发光
     ...Platform.select({
       ios: {
-        shadowColor: '#FF6B35', // VitaGlobal 橙色阴影
-        shadowOffset: { width: 0, height: 0 },
-        shadowOpacity: 0.6,
-        shadowRadius: 20,
+        shadowColor: '#FF6B35',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.15,
+        shadowRadius: 28,
       },
       android: {
-        elevation: 0, // Glow effect handled via backgroundColor on Android
+        elevation: 5,
+      },
+    }),
+  },
+  glowLayer: {
+    position: 'absolute',
+    top: -5, // 精确居中计算
+    left: -5, // 精确居中计算
+    width: 72, // 内层发光
+    height: 70,
+    borderRadius: 24,
+    backgroundColor: 'rgba(255, 107, 53, 0.18)', // 适中的内层发光
+    ...Platform.select({
+      ios: {
+        shadowColor: '#FF6B35',
+        shadowOffset: { width: 0, height: 3 },
+        shadowOpacity: 0.25,
+        shadowRadius: 18,
+      },
+      android: {
+        elevation: 10,
       },
     }),
   },

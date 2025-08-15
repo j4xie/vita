@@ -24,6 +24,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import { theme } from '../../theme';
+import { BRAND_GLASS, BRAND_INTERACTIONS } from '../../theme/core';
 import { TouchTargetValidator } from '../../utils/accessibilityChecker';
 import { useFilter } from '../../context/FilterContext';
 
@@ -209,52 +210,58 @@ export const CustomTabBar: React.FC<CustomTabBarProps> = ({
 
           // 统一的Tab按钮样式，所有Tab都启用
 
-          // 统一Tab按钮设计
+          // TikTok/小红书式精确点击区域设计
           return (
-            <TouchableOpacity
+            <View
               key={route.key}
-              accessibilityRole="tab"
-              accessibilityState={isFocused ? { selected: true } : {}}
-              accessibilityLabel={options.tabBarAccessibilityLabel || `${label}${isFocused ? ', selected' : ''}`}
-              accessibilityHint={
-                isScreenReaderEnabled 
-                  ? (isFocused ? `Current tab: ${label}` : `Navigate to ${label} section`)
-                  : (isFocused ? `${label} tab is selected` : `Double tap to open ${label}`)
-              }
-              accessibilityValue={isScreenReaderEnabled ? { text: `Tab ${index + 1} of ${state.routes.length}` } : undefined}
-              testID={options.tabBarTestID}
-              onPress={onPress}
-              onLongPress={onLongPress}
-              style={styles.tabButton}
-              activeOpacity={0.7}
-              hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }}
+              style={styles.tabContainer}
             >
-              
-              <View style={styles.iconContainer}>
-                <Ionicons
-                  name={iconName}
-                  size={23} // 22-24pt 范围内
-                  color={
-                    isFocused 
-                      ? theme.colors.primary 
-                      : theme.colors.text.tertiary
-                  }
-                />
-              </View>
-              
-              <Text 
+              <TouchableOpacity
+                accessibilityRole="tab"
+                accessibilityState={isFocused ? { selected: true } : {}}
+                accessibilityLabel={options.tabBarAccessibilityLabel || `${label}${isFocused ? ', selected' : ''}`}
+                accessibilityHint={
+                  isScreenReaderEnabled 
+                    ? (isFocused ? `Current tab: ${label}` : `Navigate to ${label} section`)
+                    : (isFocused ? `${label} tab is selected` : `Double tap to open ${label}`)
+                }
+                accessibilityValue={isScreenReaderEnabled ? { text: `Tab ${index + 1} of ${state.routes.length}` } : undefined}
+                testID={options.tabBarTestID}
+                onPress={onPress}
+                onLongPress={onLongPress}
                 style={[
-                  styles.tabLabel,
-                  isFocused && styles.activeTabLabel
+                  styles.tabContentButton,
+                  isFocused && styles.tabContentActive
                 ]}
-                numberOfLines={1}
-                adjustsFontSizeToFit={true}
-                minimumFontScale={0.8}
-                allowFontScaling={true} // 支持动态字体
+                activeOpacity={0.7}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
               >
-                {label}
-              </Text>
-            </TouchableOpacity>
+                <View style={styles.iconContainer}>
+                  <Ionicons
+                    name={iconName}
+                    size={23} // 22-24pt 范围内
+                    color={
+                      isFocused 
+                        ? BRAND_INTERACTIONS.navigation.active.text
+                        : BRAND_INTERACTIONS.navigation.inactive.text
+                    }
+                  />
+                </View>
+                
+                <Text 
+                  style={[
+                    styles.tabLabel,
+                    isFocused && styles.activeTabLabel
+                  ]}
+                  numberOfLines={1}
+                  adjustsFontSizeToFit={true}
+                  minimumFontScale={0.8}
+                  allowFontScaling={true} // 支持动态字体
+                >
+                  {label}
+                </Text>
+              </TouchableOpacity>
+            </View>
           );
         })}
         </View>
@@ -291,7 +298,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-around',
     backgroundColor: 'rgba(255, 255, 255, 0.98)',
-    paddingTop: 8,
+    paddingTop: 10.5, // 往下降低2.5px (8 + 2.5)
     paddingBottom: 8,
     paddingHorizontal: 12.5,
     minHeight: 49,
@@ -322,8 +329,8 @@ const styles = StyleSheet.create({
   },
   */
   
-  // Tab按钮 - 紧凑设计
-  tabButton: {
+  // Tab容器 - 负责布局和间距
+  tabContainer: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
@@ -334,13 +341,30 @@ const styles = StyleSheet.create({
     minHeight: 49, // 与TabBar高度一致
   },
   
+  // Tab内容按钮 - 只包裹图标和文字的精确点击区域
+  tabContentButton: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+    borderRadius: 12, // 圆角供选中态使用
+    minWidth: 48, // 确保最小触摸目标
+    minHeight: 40, // 确保足够的点击区域
+  },
+  
+  // Tab内容选中态 - TikTok/小红书风格，无背景
+  tabContentActive: {
+    // 完全透明背景，只通过图标和文字颜色变化表示选中
+    backgroundColor: 'transparent',
+  },
+  
   
   iconContainer: {
     width: 26, // 23pt icon + 3pt padding
     height: 26,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 2, // 2pt 图标与文字间距（2-4pt 范围）
+    marginBottom: 1, // 减少图标与文字间距，因为按钮有padding
   },
   
   tabLabel: {
@@ -355,7 +379,7 @@ const styles = StyleSheet.create({
   },
   
   activeTabLabel: {
-    color: theme.colors.primary,
+    color: BRAND_INTERACTIONS.navigation.active.text,
     fontWeight: theme.typography.fontWeight.semibold,
   },
   

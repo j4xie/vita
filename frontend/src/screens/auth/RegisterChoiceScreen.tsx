@@ -50,13 +50,13 @@ export const RegisterChoiceScreen: React.FC = () => {
         <View style={styles.logoSection}>
           <View style={styles.logoContainer}>
             <Image 
-              source={require('../../../assets/logos/vitaglobal-logo.png')}
+              source={require('../../../assets/logos/pomelo-logo.png')}
               style={styles.logoImage}
               resizeMode="contain"
             />
           </View>
-          <Text style={styles.title}>加入 VitaGlobal</Text>
-          <Text style={styles.subtitle}>选择您的注册方式</Text>
+          <Text style={styles.title}>{t('auth.register.join_pomelo')}</Text>
+          <Text style={styles.subtitle}>{t('auth.register.choose_registration_method')}</Text>
         </View>
 
         {/* Registration Options */}
@@ -72,12 +72,12 @@ export const RegisterChoiceScreen: React.FC = () => {
                 <Ionicons name="qr-code" size={48} color={theme.colors.text.inverse} />
               </View>
               <View style={styles.textContainer}>
-                <Text style={styles.cardTitle}>推荐码注册</Text>
+                <Text style={styles.cardTitle}>{t('auth.register.referral_registration')}</Text>
                 <Text style={styles.cardDescription}>
-                  扫描推荐码快速注册
+                  {t('auth.register.referral_description')}
                 </Text>
                 <View style={styles.badge}>
-                  <Text style={styles.badgeText}>推荐使用</Text>
+                  <Text style={styles.badgeText}>{t('auth.register.referral_badge')}</Text>
                 </View>
               </View>
               <Ionicons name="chevron-forward" size={24} color={theme.colors.text.inverse} />
@@ -96,10 +96,10 @@ export const RegisterChoiceScreen: React.FC = () => {
               </View>
               <View style={styles.textContainer}>
                 <Text style={[styles.cardTitle, styles.secondaryCardTitle]}>
-                  普通注册
+                  {t('auth.register.normal_registration')}
                 </Text>
                 <Text style={[styles.cardDescription, styles.secondaryCardDescription]}>
-                  直接填写信息注册
+                  {t('auth.register.normal_description')}
                 </Text>
               </View>
               <Ionicons name="chevron-forward" size={24} color={theme.colors.text.disabled} />
@@ -109,31 +109,31 @@ export const RegisterChoiceScreen: React.FC = () => {
 
         {/* Benefits Section */}
         <View style={styles.benefitsSection}>
-          <Text style={styles.benefitsTitle}>注册后您可以：</Text>
+          <Text style={styles.benefitsTitle}>{t('auth.register.benefits_title')}</Text>
           <View style={styles.benefitItem}>
             <Ionicons name="checkmark-circle" size={20} color={theme.colors.success} />
-            <Text style={styles.benefitText}>报名参加各类精彩活动</Text>
+            <Text style={styles.benefitText}>{t('auth.register.benefits.join_activities')}</Text>
           </View>
           <View style={styles.benefitItem}>
             <Ionicons name="checkmark-circle" size={20} color={theme.colors.success} />
-            <Text style={styles.benefitText}>获取活动核销二维码</Text>
+            <Text style={styles.benefitText}>{t('auth.register.benefits.get_qr_codes')}</Text>
           </View>
           <View style={styles.benefitItem}>
             <Ionicons name="checkmark-circle" size={20} color={theme.colors.success} />
-            <Text style={styles.benefitText}>管理您的报名记录</Text>
+            <Text style={styles.benefitText}>{t('auth.register.benefits.manage_registrations')}</Text>
           </View>
           <View style={styles.benefitItem}>
             <Ionicons name="checkmark-circle" size={20} color={theme.colors.success} />
-            <Text style={styles.benefitText}>接收活动更新通知</Text>
+            <Text style={styles.benefitText}>{t('auth.register.benefits.receive_notifications')}</Text>
           </View>
         </View>
 
         {/* Terms */}
         <Text style={styles.terms}>
-          注册即表示您同意我们的
-          <Text style={styles.termsLink}> 服务条款 </Text>
-          和
-          <Text style={styles.termsLink}> 隐私政策</Text>
+          {t('auth.register.terms_agreement')}
+          <Text style={styles.termsLink}> {t('auth.register.terms_of_service')} </Text>
+          {t('auth.register.and')}
+          <Text style={styles.termsLink}> {t('auth.register.privacy_policy')}</Text>
         </Text>
       </View>
     </SafeAreaView>
@@ -185,10 +185,6 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing[8],
   },
   logoContainer: {
-    width: 72,
-    height: 72,
-    borderRadius: theme.borderRadius.xl,
-    backgroundColor: theme.colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: theme.spacing[4],
@@ -199,9 +195,9 @@ const styles = StyleSheet.create({
     color: theme.colors.text.inverse,
   },
   logoImage: {
-    width: 48,
-    height: 48,
-    tintColor: theme.colors.text.inverse,
+    width: 72,
+    height: 72,
+    // 移除tintColor，保持VitaGlobal logo原色
   },
   title: {
     fontSize: theme.typography.fontSize['2xl'],

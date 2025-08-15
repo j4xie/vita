@@ -129,8 +129,8 @@ export const ExploreScreen: React.FC = () => {
           style={styles.header}
         >
           <View style={styles.headerContent}>
-            <Text style={styles.headerTitle}>探索活动</Text>
-            <Text style={styles.headerSubtitle}>发现周围精彩活动</Text>
+            <Text style={styles.headerTitle}>{t('explore.title')}</Text>
+            <Text style={styles.headerSubtitle}>{t('explore.subtitle')}</Text>
           </View>
           
           {/* Search Bar */}
@@ -153,7 +153,7 @@ export const ExploreScreen: React.FC = () => {
 
         {/* School Selection */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>选择学校</Text>
+          <Text style={styles.sectionTitle}>{t('explore.choose_school')}</Text>
           <ScrollView 
             horizontal 
             showsHorizontalScrollIndicator={false}
@@ -200,7 +200,7 @@ export const ExploreScreen: React.FC = () => {
                     styles.schoolActivities,
                     { color: selectedSchool === school.id ? 'rgba(255,255,255,0.9)' : theme.colors.text.secondary }
                   ]}>
-                    {school.activities}个活动
+                    {t('explore.activities_count', { count: school.activities })}
                   </Text>
                   </LinearGradient>
                 </TouchableOpacity>
@@ -211,7 +211,7 @@ export const ExploreScreen: React.FC = () => {
 
         {/* Activity Categories */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>活动分类</Text>
+          <Text style={styles.sectionTitle}>{t('explore.activity_categories')}</Text>
           <View style={styles.categoriesGrid}>
             {mockCategories.map((category) => (
               // Shadow容器 - 使用solid background优化阴影渲染
@@ -235,7 +235,7 @@ export const ExploreScreen: React.FC = () => {
                     />
                   </View>
                   <Text style={styles.categoryName}>{category.name}</Text>
-                  <Text style={styles.categoryCount}>{category.count}个活动</Text>
+                  <Text style={styles.categoryCount}>{t('explore.activities_count', { count: category.count })}</Text>
                   </LinearGradient>
                 </TouchableOpacity>
               </View>
@@ -246,9 +246,9 @@ export const ExploreScreen: React.FC = () => {
         {/* Featured Activities */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>推荐活动</Text>
-            <TouchableOpacity onPress={() => showFeature('推荐活动', '更多推荐活动功能正在开发中，将提供个性化活动推荐。')}>
-              <Text style={styles.seeMoreText}>查看更多</Text>
+            <Text style={styles.sectionTitle}>{t('explore.recommended_activities')}</Text>
+            <TouchableOpacity onPress={() => showFeature(t('explore.recommended_activities'), t('explore.features.recommendations_developing'))}>
+              <Text style={styles.seeMoreText}>{t('explore.view_more')}</Text>
             </TouchableOpacity>
           </View>
           

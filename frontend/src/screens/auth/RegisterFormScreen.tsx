@@ -71,15 +71,15 @@ export const RegisterFormScreen: React.FC = () => {
     const newErrors: Partial<FormData> = {};
     
     if (!formData.legalName) {
-      newErrors.legalName = '请输入法定名';
+      newErrors.legalName = t('validation.legal_name_required');
     }
     
     if (!formData.englishNickname) {
-      newErrors.englishNickname = '请输入英文昵称';
+      newErrors.englishNickname = t('validation.english_nickname_required');
     }
     
     if (!formData.university) {
-      newErrors.university = '请输入所属学校';
+      newErrors.university = t('validation.university_required');
     }
     
     setErrors(newErrors);
@@ -90,19 +90,19 @@ export const RegisterFormScreen: React.FC = () => {
     const newErrors: Partial<FormData> = {};
     
     if (!formData.email) {
-      newErrors.email = '请输入学校邮箱';
+      newErrors.email = t('validation.email_required');
     } else if (!formData.email.includes('@') || !formData.email.includes('.edu')) {
-      newErrors.email = '请输入有效的学校邮箱';
+      newErrors.email = t('validation.email_school_invalid');
     }
     
     if (!formData.password) {
-      newErrors.password = '请输入密码';
+      newErrors.password = t('validation.password_required');
     } else if (formData.password.length < 8) {
-      newErrors.password = '密码长度至少8位';
+      newErrors.password = t('validation.password_min_length_8');
     }
     
     if (formData.password !== formData.confirmPassword) {
-      newErrors.confirmPassword = '两次密码输入不一致';
+      newErrors.confirmPassword = t('validation.password_mismatch');
     }
     
     setErrors(newErrors);
@@ -113,7 +113,7 @@ export const RegisterFormScreen: React.FC = () => {
     const newErrors: Partial<FormData> = {};
     
     if (!formData.phoneNumber) {
-      newErrors.phoneNumber = '请输入电话号码';
+      newErrors.phoneNumber = t('validation.phone_required');
     } else {
       const phoneRegex = formData.phoneType === 'CN' 
         ? /^1[3-9]\d{9}$/
@@ -121,8 +121,8 @@ export const RegisterFormScreen: React.FC = () => {
       
       if (!phoneRegex.test(formData.phoneNumber)) {
         newErrors.phoneNumber = formData.phoneType === 'CN' 
-          ? '请输入有效的中国手机号'
-          : '请输入有效的美国电话号码';
+          ? t('validation.phone_china_invalid')
+          : t('validation.phone_usa_invalid');
       }
     }
     
@@ -168,8 +168,11 @@ export const RegisterFormScreen: React.FC = () => {
       await new Promise(resolve => setTimeout(resolve, 1000));
       
       Alert.alert(
-        '验证码已发送',
-        `验证码已发送到您的手机号码 +${formData.phoneType === 'CN' ? '86' : '1'} ${formData.phoneNumber}`
+        t('auth.register.sms.code_sent_title'),
+        t('auth.register.sms.code_sent_message', {
+          countryCode: formData.phoneType === 'CN' ? '86' : '1',
+          phoneNumber: formData.phoneNumber
+        })
       );
       
       // 开始倒计时
@@ -190,7 +193,7 @@ export const RegisterFormScreen: React.FC = () => {
         phoneType: formData.phoneType 
       });
     } catch (error) {
-      Alert.alert('发送失败', '验证码发送失败，请稍后重试');
+      Alert.alert(t('auth.register.sms.send_failed_title'), t('auth.register.sms.send_failed_message'));
     } finally {
       setLoading(false);
     }
@@ -208,27 +211,27 @@ export const RegisterFormScreen: React.FC = () => {
       <View style={styles.progressBar}>
         <View style={[styles.progressFill, { width: `${(currentStep / 3) * 100}%` }]} />
       </View>
-      <Text style={styles.progressText}>第 {currentStep} 步，共 3 步</Text>
+      <Text style={styles.progressText}>{t('auth.register.form.progress', { current: currentStep, total: 3 })}</Text>
     </View>
   );
 
   const renderStep1 = () => (
     <View style={styles.stepContainer}>
-      <Text style={styles.stepTitle}>基本信息</Text>
-      <Text style={styles.stepSubtitle}>请填写您的基本信息</Text>
+      <Text style={styles.stepTitle}>{t('auth.register.form.basic_info')}</Text>
+      <Text style={styles.stepSubtitle}>{t('auth.register.form.basic_info_desc')}</Text>
 
       {hasReferralCode && (
         <View style={styles.referralBadge}>
           <Ionicons name="gift" size={20} color={theme.colors.primary} />
-          <Text style={styles.referralText}>推荐码：{formData.referralCode}</Text>
+          <Text style={styles.referralText}>{t('auth.register.form.referral_code', { code: formData.referralCode })}</Text>
         </View>
       )}
 
       <View style={styles.inputContainer}>
-        <Text style={styles.label}>法定名 *</Text>
+        <Text style={styles.label}>{t('auth.register.form.legal_name_label')}</Text>
         <TextInput
           style={[styles.input, errors.legalName && styles.inputError]}
-          placeholder="请输入您的法定姓名"
+          placeholder={t('auth.register.form.legal_name_placeholder')}
           value={formData.legalName}
           onChangeText={(text) => updateFormData('legalName', text)}
           placeholderTextColor={theme.colors.text.disabled}
@@ -237,10 +240,10 @@ export const RegisterFormScreen: React.FC = () => {
       </View>
 
       <View style={styles.inputContainer}>
-        <Text style={styles.label}>英文昵称 *</Text>
+        <Text style={styles.label}>{t('auth.register.form.english_nickname_label')}</Text>
         <TextInput
           style={[styles.input, errors.englishNickname && styles.inputError]}
-          placeholder="请输入您的英文昵称"
+          placeholder={t('auth.register.form.english_nickname_placeholder')}
           value={formData.englishNickname}
           onChangeText={(text) => updateFormData('englishNickname', text)}
           placeholderTextColor={theme.colors.text.disabled}
@@ -249,10 +252,10 @@ export const RegisterFormScreen: React.FC = () => {
       </View>
 
       <View style={styles.inputContainer}>
-        <Text style={styles.label}>所属学校 *</Text>
+        <Text style={styles.label}>{t('auth.register.form.university_label')}</Text>
         <TextInput
           style={[styles.input, errors.university && styles.inputError]}
-          placeholder="请输入您的学校名称"
+          placeholder={t('auth.register.form.university_placeholder')}
           value={formData.university}
           onChangeText={(text) => updateFormData('university', text)}
           placeholderTextColor={theme.colors.text.disabled}
@@ -264,11 +267,11 @@ export const RegisterFormScreen: React.FC = () => {
 
   const renderStep2 = () => (
     <View style={styles.stepContainer}>
-      <Text style={styles.stepTitle}>账号设置</Text>
+      <Text style={styles.stepTitle}>{t('auth.register.form.account_setup')}</Text>
       <Text style={styles.stepSubtitle}>设置您的登录账号和密码</Text>
 
       <View style={styles.inputContainer}>
-        <Text style={styles.label}>学校邮箱 * (作为登录账号)</Text>
+        <Text style={styles.label}>{t('auth.register.form.email_label')}</Text>
         <TextInput
           style={[styles.input, errors.email && styles.inputError]}
           placeholder="example@university.edu"
@@ -283,10 +286,10 @@ export const RegisterFormScreen: React.FC = () => {
       </View>
 
       <View style={styles.inputContainer}>
-        <Text style={styles.label}>设置密码 *</Text>
+        <Text style={styles.label}>{t('auth.register.form.password_label')}</Text>
         <TextInput
           style={[styles.input, errors.password && styles.inputError]}
-          placeholder="请设置您的密码"
+          placeholder={t('auth.register.form.password_placeholder')}
           value={formData.password}
           onChangeText={(text) => updateFormData('password', text)}
           secureTextEntry
@@ -296,10 +299,10 @@ export const RegisterFormScreen: React.FC = () => {
       </View>
 
       <View style={styles.inputContainer}>
-        <Text style={styles.label}>确认密码 *</Text>
+        <Text style={styles.label}>{t('auth.register.form.confirm_password_label')}</Text>
         <TextInput
           style={[styles.input, errors.confirmPassword && styles.inputError]}
-          placeholder="请再次输入密码确认"
+          placeholder={t('auth.register.form.confirm_password_placeholder')}
           value={formData.confirmPassword}
           onChangeText={(text) => updateFormData('confirmPassword', text)}
           secureTextEntry
@@ -312,8 +315,8 @@ export const RegisterFormScreen: React.FC = () => {
 
   const renderStep3 = () => (
     <View style={styles.stepContainer}>
-      <Text style={styles.stepTitle}>联系方式</Text>
-      <Text style={styles.stepSubtitle}>请选择并填写您的电话号码</Text>
+      <Text style={styles.stepTitle}>{t('auth.register.form.contact_info')}</Text>
+      <Text style={styles.stepSubtitle}>{t('auth.register.form.contact_info_desc')}</Text>
 
       <View style={styles.phoneTypeContainer}>
         <TouchableOpacity
@@ -321,7 +324,7 @@ export const RegisterFormScreen: React.FC = () => {
           onPress={() => updateFormData('phoneType', 'CN')}
         >
           <Text style={[styles.phoneTypeText, formData.phoneType === 'CN' && styles.phoneTypeTextActive]}>
-            🇨🇳 中国号码
+            {t('auth.register.form.phone_china')}
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
@@ -329,13 +332,13 @@ export const RegisterFormScreen: React.FC = () => {
           onPress={() => updateFormData('phoneType', 'US')}
         >
           <Text style={[styles.phoneTypeText, formData.phoneType === 'US' && styles.phoneTypeTextActive]}>
-            🇺🇸 美国号码
+            {t('auth.register.form.phone_usa')}
           </Text>
         </TouchableOpacity>
       </View>
 
       <View style={styles.inputContainer}>
-        <Text style={styles.label}>电话号码 *</Text>
+        <Text style={styles.label}>{t('auth.register.form.phone_label')}</Text>
         <View style={styles.phoneInputWrapper}>
           <Text style={styles.phonePrefix}>
             +{formData.phoneType === 'CN' ? '86' : '1'}
@@ -362,7 +365,7 @@ export const RegisterFormScreen: React.FC = () => {
           )}
         </View>
         <Text style={styles.termsText}>
-          我已阅读并同意
+          {t('auth.register.form.terms_checkbox')}
           <Text style={styles.termsLink}> 服务条款 </Text>
           和
           <Text style={styles.termsLink}> 隐私政策</Text>
@@ -382,7 +385,7 @@ export const RegisterFormScreen: React.FC = () => {
           <TouchableOpacity onPress={handleBack} style={styles.backButton}>
             <Ionicons name="arrow-back" size={24} color={theme.colors.text.primary} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>注册</Text>
+          <Text style={styles.headerTitle}>{t('auth.register.form.register')}</Text>
           <TouchableOpacity onPress={handleSkip} style={styles.skipButton}>
             <Text style={styles.skipText}>{t('auth.login.skip')}</Text>
           </TouchableOpacity>
@@ -416,7 +419,7 @@ export const RegisterFormScreen: React.FC = () => {
               <ActivityIndicator color={theme.colors.text.inverse} />
             ) : (
               <Text style={styles.nextButtonText}>
-                {currentStep === 3 ? '发送验证码' : '下一步'}
+                {currentStep === 3 ? t('auth.register.form.send_code') : t('auth.register.form.next_step')}
               </Text>
             )}
           </TouchableOpacity>

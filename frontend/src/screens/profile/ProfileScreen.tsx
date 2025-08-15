@@ -392,7 +392,7 @@ export const ProfileScreen: React.FC = () => {
           allowFontScaling={true}
           maxFontSizeMultiplier={1.2}
           >
-            VitaGlobal v1.0.0
+            西柚 v1.0.0
           </Text>
         </View>
         </ScrollView>

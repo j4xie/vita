@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-VitaGlobal is a Phase 0 MVP platform for Chinese international students overseas, focusing on activity management and registration. The project has a critical 5-week development timeline targeting September 2025 launch.
+西柚/Pomelo is a Phase 0 MVP platform for Chinese international students overseas, focusing on activity management and registration. The project has a critical 5-week development timeline targeting September 2025 launch.
 
 **Current Status:** Third-party services configured (85% complete), ready for code implementation.
 
@@ -120,7 +120,7 @@ All services are pre-configured and ready for development:
 
 #### Visual Language
 - **Primary Design Pattern:** Liquid Glass with blur effects and translucency
-- **Color System:** VitaGlobal brand colors with warm gradient palette
+- **Color System:** 西柚/Pomelo brand colors with warm gradient palette
   - Primary: #FF6B35 (Vibrant Orange) - Used for CTAs and active states
   - Secondary: #FF4757 (Coral Red) - Used for secondary actions and gradients
   - Accent: #FF8A65 (Light Orange) - Used for highlights and hover states
@@ -283,6 +283,70 @@ const listConfig = {
 - **Maps:** Standard map interactions
 
 ### Accessibility & Internationalization
+
+## 🌍 国际化开发规范 (强制执行)
+
+### **🚫 严格禁止事项**
+- ❌ **硬编码中文文本**: 任何用户可见的中文字符串必须使用 `t()` 翻译函数
+- ❌ **单语言开发**: 新增中文翻译时必须同时添加对应的英文翻译
+- ❌ **无意义键名**: 禁止使用 `text1`, `label2` 等无语义的翻译键名
+
+### **✅ 强制要求**
+- ✅ **双语同步**: 每个翻译键必须在 `zh-CN` 和 `en-US` 文件中都存在
+- ✅ **语义化键名**: 使用描述性的翻译键名，如 `auth.login.welcome`
+- ✅ **插值支持**: 动态内容使用 `{{variable}}` 语法
+
+### **📋 翻译键命名规范**
+```typescript
+// ✅ 正确示例
+t('auth.register.form.legal_name_label')
+t('validation.errors.email_required') 
+t('common.buttons.next_step')
+t('activities.status.available_spots', { count: 5 })
+
+// ❌ 错误示例  
+"基本信息"  // 硬编码中文
+t('text1')  // 无意义键名
+t('button')  // 过于简单
+```
+
+### **🔧 开发工作流**
+1. **新增UI文本时**:
+   - 先在 `zh-CN/translation.json` 添加中文翻译
+   - 立即在 `en-US/translation.json` 添加英文翻译
+   - 代码中使用 `t('键名')` 而非硬编码文本
+
+2. **翻译键组织结构**:
+   ```json
+   {
+     "auth": {
+       "login": { "welcome": "...", "subtitle": "..." },
+       "register": { "form": {...}, "validation": {...} }
+     },
+     "activities": { "status": {...}, "actions": {...} },
+     "validation": { "errors": {...} },
+     "common": { "buttons": {...}, "labels": {...} }
+   }
+   ```
+
+3. **动态内容处理**:
+   ```typescript
+   // ✅ 正确 - 使用插值
+   t('welcome.message', { userName: user.name })
+   t('progress.step', { current: 2, total: 5 })
+   
+   // ❌ 错误 - 字符串拼接
+   `欢迎 ${user.name}`
+   `第 ${step} 步`
+   ```
+
+### **🧪 代码审查检查点**
+在每次提交前必须检查：
+- [ ] 是否有新的硬编码中文字符串？
+- [ ] 翻译键名是否语义化且易理解？
+- [ ] 英文翻译是否准确自然？
+- [ ] 动态内容是否正确使用插值语法？
+- [ ] JSON格式是否正确无语法错误？
 
 #### Touch Targets
 - **Minimum Size:** 44x44 points (iOS), 48x48dp (Android)

@@ -265,7 +265,7 @@ export const VolunteerCard: React.FC<VolunteerCardProps> = ({
               <View style={styles.timeRow}>
                 <Ionicons name="log-in" size={16} color={theme.colors.primary} />
                 <Text style={[styles.timeLabel, { color: theme.colors.text.secondary }]}>
-                  上次签到时间
+                  {t('wellbeing.volunteer.lastCheckInTime')}
                 </Text>
                 <Text style={[styles.timeValue, { color: theme.colors.text.primary }]}>
                   {formatTime(volunteer.lastCheckInTime)}
@@ -278,7 +278,7 @@ export const VolunteerCard: React.FC<VolunteerCardProps> = ({
               <View style={styles.timeRow}>
                 <Ionicons name="log-out" size={16} color={theme.colors.secondary} />
                 <Text style={[styles.timeLabel, { color: theme.colors.text.secondary }]}>
-                  上次签出时间
+                  {t('wellbeing.volunteer.lastCheckOutTime')}
                 </Text>
                 <Text style={[styles.timeValue, { color: theme.colors.text.primary }]}>
                   {formatTime(volunteer.lastCheckOutTime)}
@@ -395,8 +395,8 @@ const styles = StyleSheet.create({
   timeRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 0, // 从3px再减少到0，额外减少7.5px间距（实际减少3px，配合margin调整）
-    marginVertical: -2.25, // 负margin进一步减少间距，达到7.5px的效果
+    paddingVertical: 0, // 保持0
+    marginVertical: -4.75, // 从-2.25px减少到-4.75px，再减少2.5px间距
     minHeight: 44, // 确保触达区域
   },
   timeLabel: {

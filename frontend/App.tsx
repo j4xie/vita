@@ -21,7 +21,7 @@ export default function App() {
   useEffect(() => {
     const initializeI18n = async () => {
       try {
-        console.log('🚀 初始化VitaGlobal应用...');
+        console.log('🚀 初始化西柚应用...');
         console.log('🌐 初始化i18n系统...');
         await initI18next();
         console.log('✅ i18n初始化完成，当前语言:', i18n.language);

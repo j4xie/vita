@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { theme } from '../../theme';
+import { BRAND_GLASS, BRAND_INTERACTIONS, BRAND_GRADIENT } from '../../theme/core';
 import { scaleIn, scaleOut, bounce } from '../../utils/animations';
 
 interface AnimatedButtonProps extends TouchableOpacityProps {
@@ -83,18 +84,19 @@ export const AnimatedButton: React.FC<AnimatedButtonProps> = ({
       primary: {
         backgroundColor: theme.colors.primary,
         textColor: theme.colors.text.inverse,
-        gradient: gradient || [theme.colors.primary, theme.colors.primaryPressed],
+        gradient: gradient || BRAND_GRADIENT,
       },
       secondary: {
-        backgroundColor: theme.colors.secondary,
-        textColor: theme.colors.text.inverse,
-        gradient: gradient || [theme.colors.secondary, theme.colors.secondaryPressed],
+        backgroundColor: BRAND_GLASS.tint.primary,
+        textColor: BRAND_INTERACTIONS.navigation.active.text,
+        borderWidth: 1,
+        borderColor: BRAND_GLASS.border.primary,
       },
       outline: {
         backgroundColor: 'transparent',
-        textColor: theme.colors.primary,
+        textColor: BRAND_INTERACTIONS.navigation.active.text,
         borderWidth: 2,
-        borderColor: theme.colors.primary,
+        borderColor: BRAND_GLASS.border.primary,
       },
     };
     return configs[variant];

@@ -34,6 +34,7 @@ import { BlurView } from 'expo-blur';
 import { Platform } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { theme } from '../../theme';
+import { BRAND_GLASS, BRAND_INTERACTIONS, BRAND_GRADIENT } from '../../theme/core';
 import { SimpleActivityCard } from '../../components/cards/SimpleActivityCard';
 import { LiquidGlassTab } from '../../components/ui/LiquidGlassTab';
 import { FilterBottomSheet } from '../../components/ui/FilterBottomSheet';
@@ -398,13 +399,13 @@ export const ActivityListScreen: React.FC = () => {
           style={styles.header}
         >
           <View style={styles.headerLeft}>
-            <Text style={styles.headerTitle}>VitaGlobal</Text>
+            <Text style={styles.headerTitle}>{t('common.brand_name')}</Text>
             <Text style={styles.headerSubtitle}>{t('activities.discover')}</Text>
           </View>
           {/* Scan Button - Shadow优化 - 向上提高12.5px */}
           <View style={[styles.scanButtonShadowContainer, { marginTop: -12.5 }]}>
             <LinearGradient
-              colors={[theme.colors.secondary, theme.colors.secondaryPressed]}
+              colors={BRAND_GRADIENT}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
               style={styles.scanButton}

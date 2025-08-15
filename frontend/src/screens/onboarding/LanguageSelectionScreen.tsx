@@ -51,17 +51,17 @@ export const LanguageSelectionScreen: React.FC = () => {
   const languageOptions: LanguageOption[] = [
     {
       code: 'zh-CN',
-      displayName: '中文',
-      nativeName: '简体中文',
+      displayName: t('language.chinese'),
+      nativeName: t('language.simplified_chinese'),
       flag: '🇨🇳',
-      description: '适合中文用户使用',
+      description: t('language.chinese_description'),
     },
     {
       code: 'en-US',
       displayName: 'English',
       nativeName: 'English',
       flag: '🇺🇸',
-      description: 'For international users',
+      description: t('language.english_description'),
     },
   ];
 
@@ -132,7 +132,7 @@ export const LanguageSelectionScreen: React.FC = () => {
         {isRecommended && (
           <View style={styles.recommendedBadge}>
             <Text style={styles.recommendedText}>
-              {currentLanguage === 'zh-CN' ? '推荐' : 'Recommended'}
+              {t('language.recommended')}
             </Text>
           </View>
         )}
@@ -194,24 +194,17 @@ export const LanguageSelectionScreen: React.FC = () => {
           {/* 头部 */}
           <View style={styles.header}>
             {/* Logo - Shadow优化 */}
-            <View style={styles.logoShadowContainer}>
-              <LinearGradient
-                colors={[theme.colors.secondary, theme.colors.secondaryPressed]}
-                style={styles.logoContainer}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-              >
-                <Image 
-                  source={require('../../../assets/logos/vitaglobal-logo.png')}
-                  style={styles.logoImage}
-                  resizeMode="contain"
-                />
-              </LinearGradient>
+            <View style={styles.logoContainer}>
+              <Image 
+                source={require('../../../assets/logos/pomelo-logo.png')}
+                style={styles.logoImage}
+                resizeMode="contain"
+              />
             </View>
             
             {/* 标题 */}
             <Text style={styles.title}>
-              {currentLanguage === 'zh-CN' ? '选择语言' : 'Choose Language'}
+              {currentLanguage === 'zh-CN' ? t('language.selection.title') : t('language.selection.title_en')}
             </Text>
             <Text style={styles.subtitle}>
               {currentLanguage === 'zh-CN' 
@@ -249,7 +242,7 @@ export const LanguageSelectionScreen: React.FC = () => {
               ) : (
                 <>
                   <Text style={styles.confirmButtonText}>
-                    {currentLanguage === 'zh-CN' ? '确认选择' : 'Confirm Selection'}
+                    {currentLanguage === 'zh-CN' ? t('language.selection.confirm') : t('language.selection.confirm_en')}
                   </Text>
                   <Ionicons 
                     name="arrow-forward" 
@@ -297,12 +290,9 @@ const styles = StyleSheet.create({
   },
   
   logoContainer: {
-    width: '100%',
-    height: '100%',
-    borderRadius: theme.borderRadius['4xl'],
     alignItems: 'center',
     justifyContent: 'center',
-    // 移除阴影，由logoShadowContainer处理
+    marginBottom: theme.spacing.lg,
   },
   logoText: {
     fontSize: theme.typography.fontSize['3xl'],
@@ -310,9 +300,9 @@ const styles = StyleSheet.create({
     color: theme.colors.text.inverse,
   },
   logoImage: {
-    width: 56,
-    height: 56,
-    tintColor: theme.colors.text.inverse,
+    width: 80,
+    height: 80,
+    // 移除tintColor，保持VitaGlobal logo原色
   },
   title: {
     fontSize: theme.typography.fontSize['3xl'],

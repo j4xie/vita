@@ -1,5 +1,8 @@
 {
   "common": {
+    "brand": {
+      "name": "西柚"
+    },
     "loading": "加载中...",
     "error": "错误",
     "success": "成功",
@@ -12,6 +15,7 @@
     "done": "完成",
     "retry": "重试",
     "close": "关闭",
+    "brand_name": "西柚",
     "filter": "筛选，已选 {{count}} 项",
     "filterHint": "可点按打开筛选面板",
     "all": "全部"
@@ -117,17 +121,80 @@
     },
     "register": {
       "choice_title": "选择注册方式",
+      "join_pomelo": "加入 西柚",
+      "choose_registration_method": "选择您的注册方式",
+      "referral_registration": "推荐码注册",
+      "referral_description": "扫描推荐码快速注册",
+      "referral_badge": "推荐使用",
+      "normal_registration": "普通注册", 
+      "normal_description": "直接填写信息注册",
+      "benefits_title": "注册后您可以：",
+      "benefits": {
+        "join_activities": "报名参加各类精彩活动",
+        "get_qr_codes": "获取活动核销二维码", 
+        "manage_registrations": "管理您的报名记录",
+        "receive_notifications": "接收活动更新通知"
+      },
       "student_option": "学生注册",
       "organization_option": "组织注册",
-      "form_title": "注册账户",
+      "form_title": "注册账户", 
       "already_have_account": "已有账号？",
-      "login_link": "立即登录"
+      "login_link": "立即登录",
+      "terms_agreement": "注册即表示您同意我们的",
+      "terms_of_service": "服务条款", 
+      "and": "和",
+      "privacy_policy": "隐私政策",
+      "form": {
+        "progress": "第 {{current}} 步，共 {{total}} 步",
+        "basic_info": "基本信息",
+        "basic_info_desc": "请填写您的基本信息",
+        "account_setup": "账号设置",
+        "account_setup_desc": "设置您的登录账号和密码",
+        "contact_info": "联系方式",
+        "contact_info_desc": "请选择并填写您的电话号码",
+        "referral_code": "推荐码：{{code}}",
+        "legal_name_label": "法定名 *",
+        "legal_name_placeholder": "请输入您的法定姓名",
+        "english_nickname_label": "英文昵称 *", 
+        "english_nickname_placeholder": "请输入您的英文昵称",
+        "university_label": "所属学校 *",
+        "university_placeholder": "请输入您的学校名称",
+        "email_label": "学校邮箱 * (作为登录账号)",
+        "email_placeholder": "请输入您的学校邮箱",
+        "password_label": "设置密码 *",
+        "password_placeholder": "请设置您的密码",
+        "confirm_password_label": "确认密码 *",
+        "confirm_password_placeholder": "请再次输入密码确认",
+        "phone_china": "🇨🇳 中国号码",
+        "phone_usa": "🇺🇸 美国号码",
+        "phone_label": "电话号码 *",
+        "phone_placeholder": "请输入您的电话号码",
+        "terms_checkbox": "我已阅读并同意",
+        "send_code": "发送验证码",
+        "next_step": "下一步",
+        "register": "注册"
+      },
+      "sms": {
+        "code_sent_title": "验证码已发送",
+        "code_sent_message": "验证码已发送到您的手机号码 +{{countryCode}} {{phoneNumber}}",
+        "send_failed_title": "发送失败",
+        "send_failed_message": "验证码发送失败，请稍后重试"
+      }
     },
     "validation": {
       "email_required": "请输入学校邮箱",
       "email_invalid": "请输入有效的邮箱地址",
+      "email_school_invalid": "请输入有效的学校邮箱",
       "password_required": "请输入密码",
-      "password_min_length": "密码长度至少6位"
+      "password_min_length": "密码长度至少6位",
+      "password_min_length_8": "密码长度至少8位",
+      "password_mismatch": "两次密码输入不一致",
+      "legal_name_required": "请输入法定名",
+      "english_nickname_required": "请输入英文昵称", 
+      "university_required": "请输入所属学校",
+      "phone_required": "请输入电话号码",
+      "phone_china_invalid": "请输入有效的中国手机号",
+      "phone_usa_invalid": "请输入有效的美国电话号码"
     },
     "errors": {
       "login_failed": "登录失败",
@@ -296,7 +363,7 @@
       "pushPermissions": "推送通知权限",
       "pushPermissionsSubtitle": "在系统设置中管理推送权限",
       "openSystemSettings": "无法打开设置",
-      "openSystemSettingsMessage": "请手动前往 设置 > 应用 > VitaGlobal > 通知 来管理通知权限",
+      "openSystemSettingsMessage": "请手动前往 设置 > 应用 > 西柚 > 通知 来管理通知权限",
       "activityUpdates": "活动更新",
       "activityUpdatesSubtitle": "活动时间变更、取消等重要通知",
       "registrationSuccess": "报名成功",
@@ -312,26 +379,27 @@
       "notificationSummaryMessage": "通知摘要设置功能即将推出",
       "pushPermissions": "推送通知权限",
       "cannotOpenSettings": "无法打开设置",
-      "cannotOpenSettingsMessage": "请手动前往系统设置 > 应用 > VitaGlobal > 通知来管理通知权限",
+      "cannotOpenSettingsMessage": "请手动前往系统设置 > 应用 > 西柚 > 通知来管理通知权限",
       "sectionPushPermissions": "推送权限",
       "sectionNotificationTypes": "通知类型",
       "sectionAdvancedSettings": "高级设置"
     }
   },
   "ai": {
-    "title": "VitaGlobal AI 助手",
+    "title": "西柚 AI 助手",
     "status": "正在开发中",
     "mainMessage": "AI智能助手即将上线",
     "description": "我们正在训练AI助手，让它能够更好地理解并帮助海外中国留学生。",
     "comingFeatures": "即将推出的功能",
     "features": {
       "chat": "智能对话咨询",
-      "calendar": "活动推荐与规划",
+      "calendar": "活动推荐与规划", 
       "translation": "多语言翻译助手",
       "academic": "学业问题解答",
       "suggestions": "个性化建议"
     },
-    "gotIt": "我知道了"
+    "gotIt": "我知道了",
+    "coachMark": "长按试试"
   },
   "explore": {
     "title": "发现页面",
@@ -433,12 +501,128 @@
       "checkInTime": "签到时间",
       "workDuration": "工作时长", 
       "totalHours": "累计时长",
+      "lastCheckInTime": "上次签到时间",
+      "lastCheckOutTime": "上次签出时间",
       "hours": "小时"
+    }
+  },
+  "explore": {
+    "title": "探索活动",
+    "subtitle": "发现周围精彩活动",
+    "choose_school": "选择学校",
+    "activity_categories": "活动分类",
+    "recommended_activities": "推荐活动",
+    "view_more": "查看更多",
+    "activities_count": "{{count}}个活动",
+    "schools": {
+      "all": "全部学校",
+      "all_short": "全部"
+    },
+    "categories": {
+      "academic": "学术讲座",
+      "social": "社交聚会", 
+      "career": "职业发展",
+      "culture": "文化活动",
+      "sports": "体育运动"
+    },
+    "features": {
+      "category_developing": "{{categoryName}}功能正在开发中，将支持按分类浏览活动。",
+      "recommendations_developing": "更多推荐活动功能正在开发中，将提供个性化活动推荐。"
+    }
+  },
+  "language": {
+    "chinese": "中文",
+    "simplified_chinese": "简体中文",
+    "chinese_description": "适合中文用户使用",
+    "english": "English", 
+    "english_description": "For English speakers",
+    "recommended": "推荐",
+    "selection": {
+      "title": "选择语言",
+      "title_en": "Choose Language",
+      "description": "请选择您偏好的语言",
+      "description_en": "Please choose your preferred language",
+      "confirm": "确认选择",
+      "confirm_en": "Confirm Selection"
+    }
+  },
+  "qr": {
+    "scanning": {
+      "title": "扫描推荐码",
+      "instruction": "将推荐二维码放入框内，即可自动扫描",
+      "manual_input": "手动输入推荐码",
+      "manual_input_title": "手动输入推荐码", 
+      "manual_input_desc": "请输入您的推荐码",
+      "input_placeholder": "请输入您的推荐码",
+      "referral_code_label": "推荐码",
+      "confirm": "确认",
+      "cancel": "取消",
+      "manual_input_button": "手动输入"
+    },
+    "results": {
+      "referral_success_title": "推荐码扫描成功",
+      "referral_success_message": "推荐码：{{referralCode}}",
+      "continue_register": "继续注册",
+      "invalid_referral_title": "无效的推荐码",
+      "invalid_referral_message": "请扫描正确的推荐码二维码",
+      "rescan": "重新扫描",
+      "back": "返回",
+      "checkin_success_title": "核销成功",
+      "checkin_success_message": "活动签到成功！",
+      "confirm": "确定",
+      "invalid_qr_title": "无效的二维码",
+      "invalid_qr_message": "请扫描正确的活动二维码",
+      "scan_result": "扫描结果"
     }
   },
   "volunteer": {
     "title": "志愿者签到管理",
     "subtitle": "管理志愿者签到签出和工时记录"
+  },
+  "mockData": {
+    "schools": {
+      "berkeley": "加州大学伯克利分校",
+      "ucla": "加州大学洛杉矶分校",
+      "usc": "南加州大学",
+      "washington": "华盛顿大学"
+    },
+    "activities": {
+      "springConcert": {
+        "title": "NYU春季音乐会", 
+        "subtitle": "古典音乐欣赏会"
+      },
+      "careerLecture": {
+        "title": "Fordham职业发展讲座",
+        "subtitle": "Tech行业求职指南"
+      },
+      "chineseNewYear": {
+        "title": "中国新年庆祝晚会",
+        "subtitle": "传统文化庆祝活动"
+      },
+      "taxWorkshop": {
+        "title": "留学生税务讲座", 
+        "subtitle": "美国税务基础知识"
+      }
+    },
+    "organizers": {
+      "chineseStudentAssociation": "NYU中国学生学者联合会",
+      "businessCareerCenter": "Fordham商学院中国学生会",
+      "careerCenter": "职业发展中心",
+      "internationalServices": "国际学生服务中心",
+      "cssa": {
+        "description": "为中国学生提供学术和文化支持"
+      },
+      "careerCenter": {
+        "description": "专业的职业发展指导服务"
+      }
+    },
+    "volunteers": {
+      "chen": "陈志豪",
+      "li": "李思雨", 
+      "wang": "王建华",
+      "zhang": "张同学",
+      "liu": "刘同学"
+    }
   },
   "alerts": {
     "feature_not_implemented": "功能尚未实现",
@@ -453,19 +637,6 @@
     "languageSwitched": "语言已切换为中文",
     "reportGenerationFailed": "无法生成验收报告",
     "reportExportFailed": "导出报告失败"
-  },
-  "ai": {
-    "title": "AI助手",
-    "subtitle": "智能助手正在开发中，即将为您提供：",
-    "features": {
-      "chat": "智能问答",
-      "study": "学习辅导", 
-      "life": "生活指南",
-      "support": "情感支持"
-    },
-    "comingSoon": "敬请期待！",
-    "understood": "了解了",
-    "coachMark": "长按试试"
   },
   "userInfo": {
     "roles": {

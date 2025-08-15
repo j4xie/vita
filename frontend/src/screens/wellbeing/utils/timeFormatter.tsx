@@ -1,7 +1,9 @@
 /**
  * 时间格式化工具函数
- * 统一时长显示格式：X小时X分钟
+ * 统一时长显示格式：支持国际化
  */
+
+import { i18n } from '../../../utils/i18n';
 
 // 格式化分钟为小时分钟显示
 export const formatDuration = (minutes: number): string => {
@@ -9,11 +11,11 @@ export const formatDuration = (minutes: number): string => {
   const mins = minutes % 60;
   
   if (hours === 0) {
-    return `${mins}分钟`;
+    return `${mins} ${i18n.t('volunteerCheckIn.time.minutes')}`;
   } else if (mins === 0) {
-    return `${hours}小时`;
+    return `${hours} ${i18n.t('volunteerCheckIn.time.hours')}`;
   } else {
-    return `${hours}小时${mins}分钟`;
+    return `${hours} ${i18n.t('volunteerCheckIn.time.hours')} ${mins} ${i18n.t('volunteerCheckIn.time.minutes')}`;
   }
 };
 
@@ -23,11 +25,11 @@ export const formatHours = (hours: number): string => {
   const minutes = Math.round((hours - wholeHours) * 60);
   
   if (wholeHours === 0) {
-    return `${minutes}分钟`;
+    return `${minutes} ${i18n.t('volunteerCheckIn.time.minutes')}`;
   } else if (minutes === 0) {
-    return `${wholeHours}小时`;
+    return `${wholeHours} ${i18n.t('volunteerCheckIn.time.hours')}`;
   } else {
-    return `${wholeHours}小时${minutes}分钟`;
+    return `${wholeHours} ${i18n.t('volunteerCheckIn.time.hours')} ${minutes} ${i18n.t('volunteerCheckIn.time.minutes')}`;
   }
 };
 

@@ -154,7 +154,7 @@ export const AboutSupportScreen: React.FC = () => {
 
   const handleAppInfo = () => {
     Alert.alert(
-      'VitaGlobal',
+      '西柚',
       t('profile.about.appInfoDetails'),
       [{ text: t('profile.about.confirmAppInfo'), style: 'default' }]
     );
@@ -403,10 +403,10 @@ export const AboutSupportScreen: React.FC = () => {
           {/* Version Footer */}
           <View style={styles.versionFooter}>
             <Text style={styles.versionText}>
-              VitaGlobal v1.0.0 Build 1
+              西柚 v1.0.0 Build 1
             </Text>
             <Text style={styles.copyrightText}>
-              © 2025 VitaGlobal. All rights reserved.
+              © 2025 西柚. All rights reserved.
             </Text>
           </View>
         </ScrollView>

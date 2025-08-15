@@ -3,18 +3,18 @@
  * 充分利用 Hermes 引擎的性能优势，采用高效的数据结构和内存布局
  */
 
-// VitaGlobal 颜色系统 - 核心常量
+// 西柚 颜色系统 - 核心常量
 export const CORE_COLORS = {
-  // VitaGlobal 主色系 - 橙红品牌色
+  // 西柚 主色系 - 橙红品牌色
   primary: '#FF6B35',
   primaryPressed: '#E85A2F',
   primaryDisabled: '#FFB399',
   
-  // VitaGlobal 辅色系 - 珊瑚红
+  // 西柚 辅色系 - 珊瑚红
   secondary: '#FF4757',
   secondaryPressed: '#E83E4F',
   
-  // VitaGlobal 状态色
+  // 西柚 状态色
   success: '#2ED573',
   warning: '#FFA726',
   danger: '#EF4444',
@@ -139,7 +139,7 @@ export const CORE_LIQUID_GLASS = {
       card: 'rgba(255, 255, 255, 0.85)',
       modal: 'rgba(255, 255, 255, 0.90)', 
       floating: 'rgba(255, 255, 255, 0.75)',
-      primaryGlass: 'rgba(255, 107, 53, 0.15)', // VitaGlobal 橙色玻璃
+      primaryGlass: 'rgba(255, 107, 53, 0.15)', // 西柚 橙色玻璃
     },
   },
   
@@ -168,12 +168,12 @@ export const CORE_LIQUID_GLASS = {
     border: 'rgba(255, 255, 255, 0.30)',
   },
   
-  // VitaGlobal 主色玻璃 - 橙红品牌风格
+  // 西柚 主色玻璃 - 橙红品牌风格
   primaryGlass: {
-    background: 'rgba(255, 107, 53, 0.15)', // VitaGlobal 橙色玻璃
+    background: 'rgba(255, 107, 53, 0.15)', // 西柚 橙色玻璃
     backgroundShadowOptimized: 'rgba(255, 107, 53, 0.25)', // 阴影优化版本
     backgroundSolid: '#FFF2EE', // 淡橙色solid版本（用于shadow容器）
-    border: 'rgba(255, 107, 53, 0.30)', // VitaGlobal 橙色边框
+    border: 'rgba(255, 107, 53, 0.30)', // 西柚 橙色边框
   },
 } as const;
 
@@ -328,6 +328,78 @@ export const CORE_PLATFORM_OPTIMIZATIONS = {
   }
 } as const;
 
+// 西柚 品牌渐变系统
+export const BRAND_GRADIENT = ['#FF6B35', '#FF4D5E'] as const;
+
+// 西柚 品牌玻璃系统
+export const BRAND_GLASS = {
+  // 玻璃染色层 - 用于选中态/高亮的玻璃背景
+  tint: {
+    primary: 'rgba(255, 107, 53, 0.14)',     // 主品牌色玻璃染色
+    secondary: 'rgba(255, 77, 94, 0.12)',    // 次品牌色玻璃染色
+    light: 'rgba(255, 107, 53, 0.08)',       // 轻微品牌色染色
+  },
+  
+  // 玻璃描边系统
+  border: {
+    primary: 'rgba(255, 107, 53, 0.22)',     // 主品牌色描边
+    secondary: 'rgba(255, 77, 94, 0.18)',    // 次品牌色描边
+    light: 'rgba(255, 107, 53, 0.12)',       // 轻微品牌色描边
+  },
+  
+  // 玻璃背景 - 用于卡片和面板
+  background: {
+    primary: 'rgba(255, 255, 255, 0.95)',   // 主玻璃背景
+    brand: 'rgba(255, 107, 53, 0.06)',       // 品牌色玻璃背景
+    overlay: 'rgba(255, 255, 255, 0.85)',    // 覆盖层玻璃
+  },
+  
+  // 可读性增强 - 深色背景上的品牌色overlay
+  readability: {
+    darkOverlay: 'rgba(0, 0, 0, 0.05)',      // 轻微暗层
+    mediumOverlay: 'rgba(0, 0, 0, 0.08)',    // 中等暗层
+    strongOverlay: 'rgba(0, 0, 0, 0.12)',    // 强暗层
+  },
+} as const;
+
+// 西柚 品牌交互系统
+export const BRAND_INTERACTIONS = {
+  // 按钮状态
+  button: {
+    primary: {
+      default: BRAND_GRADIENT,
+      pressed: ['#E85A2F', '#E8434C'] as const,
+      disabled: ['#FFB399', '#FFA3A8'] as const,
+    },
+    secondary: {
+      default: BRAND_GLASS.tint.primary,
+      pressed: BRAND_GLASS.tint.secondary,
+      border: BRAND_GLASS.border.primary,
+    },
+  },
+  
+  // Tab和导航状态
+  navigation: {
+    active: {
+      background: BRAND_GLASS.tint.primary,
+      border: BRAND_GLASS.border.primary,
+      text: '#FF6B35',
+    },
+    inactive: {
+      background: 'transparent',
+      border: 'transparent',
+      text: '#9CA3AF',
+    },
+  },
+  
+  // 状态徽章和Pills
+  badge: {
+    primary: BRAND_GRADIENT,
+    text: '#FFFFFF',
+    overlay: BRAND_GLASS.readability.lightOverlay,
+  },
+} as const;
+
 // 导出类型定义
 export type CoreColors = typeof CORE_COLORS;
 export type CoreSpacing = typeof CORE_SPACING;
@@ -339,3 +411,6 @@ export type CoreShadows = typeof CORE_SHADOWS;
 export type CoreAnimations = typeof CORE_ANIMATIONS;
 export type CoreGestures = typeof CORE_GESTURES;
 export type CoreLayout = typeof CORE_LAYOUT;
+export type BrandGradient = typeof BRAND_GRADIENT;
+export type BrandGlass = typeof BRAND_GLASS;
+export type BrandInteractions = typeof BRAND_INTERACTIONS;

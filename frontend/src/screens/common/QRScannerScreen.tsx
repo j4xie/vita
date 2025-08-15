@@ -11,12 +11,14 @@ import {
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 import { theme } from '../../theme';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 const scanAreaSize = screenWidth * 0.7;
 
 export const QRScannerScreen: React.FC = () => {
+  const { t } = useTranslation();
   const navigation = useNavigation<any>();
   const route = useRoute<any>();
   const purpose = route.params?.purpose || 'scan'; // 'register' | 'verify' | 'scan'
@@ -48,11 +50,11 @@ export const QRScannerScreen: React.FC = () => {
     if (code.startsWith('VG_REF_')) {
       const referralCode = code.replace('VG_REF_', '');
       Alert.alert(
-        '推荐码扫描成功',
+        t('qr.results.referral_success_title'),
         `推荐码：${referralCode}`,
         [
           {
-            text: '继续注册',
+            text: t('qr.results.continue_register'),
             onPress: () => {
               navigation.navigate('RegisterForm', { 
                 referralCode,
@@ -64,7 +66,7 @@ export const QRScannerScreen: React.FC = () => {
       );
     } else {
       Alert.alert(
-        '无效的推荐码',
+        t('qr.results.invalid_referral_title'),
         '请扫描正确的推荐码二维码',
         [
           {
@@ -84,8 +86,8 @@ export const QRScannerScreen: React.FC = () => {
     // 处理活动核销二维码
     if (code.startsWith('VG_EVENT_')) {
       Alert.alert(
-        '核销成功',
-        '活动签到成功！',
+        t('qr.results.checkin_success_title'),
+        t('qr.results.checkin_success_message'),
         [
           {
             text: '确定',
@@ -131,15 +133,15 @@ export const QRScannerScreen: React.FC = () => {
   const handleManualInput = () => {
     if (purpose === 'register') {
       Alert.prompt(
-        '手动输入推荐码',
+        t('qr.scanning.manual_input_title'),
         '请输入您的推荐码',
         [
           {
-            text: '取消',
+            text: t('qr.scanning.cancel'),
             style: 'cancel',
           },
           {
-            text: '确认',
+            text: t('qr.scanning.confirm'),
             onPress: (text) => {
               if (text) {
                 navigation.navigate('RegisterForm', { 
@@ -199,7 +201,7 @@ export const QRScannerScreen: React.FC = () => {
             <Ionicons name="close" size={28} color={theme.colors.text.inverse} />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>
-            {purpose === 'register' ? '扫描推荐码' : '扫描二维码'}
+            {purpose === 'register' ? t('qr.scanning.title') : t('qr.scanning.title')}
           </Text>
           <TouchableOpacity onPress={toggleTorch} style={styles.headerButton}>
             <Ionicons 
@@ -225,7 +227,7 @@ export const QRScannerScreen: React.FC = () => {
           
           <Text style={styles.tip}>
             {purpose === 'register' 
-              ? '将推荐码二维码放入框内，即可自动扫描'
+              ? t('qr.scanning.instruction')
               : '将二维码放入框内，即可自动扫描'}
           </Text>
         </View>
@@ -235,7 +237,7 @@ export const QRScannerScreen: React.FC = () => {
           {purpose === 'register' && (
             <TouchableOpacity style={styles.manualButton} onPress={handleManualInput}>
               <Ionicons name="keypad-outline" size={24} color={theme.colors.text.inverse} />
-              <Text style={styles.manualButtonText}>手动输入</Text>
+              <Text style={styles.manualButtonText}>{t('qr.scanning.manual_input_button')}</Text>
             </TouchableOpacity>
           )}
         </View>

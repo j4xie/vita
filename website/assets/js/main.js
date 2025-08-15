@@ -29,13 +29,17 @@
      * 设置应用功能
      */
     function setup() {
-        cacheElements();
-        initMobileNavigation();
-        initSmoothScrolling();
-        initFAQ();
-        initFormValidation();
-        initAnalytics();
-        console.log('西柚网站初始化完成');
+        try {
+            cacheElements();
+            initMobileNavigation();
+            initSmoothScrolling();
+            initFAQ();
+            initFormValidation();
+            initAnalytics();
+            console.log('西柚网站初始化完成');
+        } catch (error) {
+            console.error('网站初始化错误:', error);
+        }
     }
 
     /**
@@ -149,6 +153,7 @@
         elements.faqItems.forEach(item => {
             const question = item.querySelector('.faq-question');
             const answer = item.querySelector('.faq-answer');
+            const toggle = item.querySelector('.faq-toggle');
             
             if (!question || !answer) return;
             
@@ -160,8 +165,12 @@
                     if (otherItem !== item) {
                         otherItem.classList.remove('active');
                         const otherAnswer = otherItem.querySelector('.faq-answer');
+                        const otherToggle = otherItem.querySelector('.faq-toggle');
                         if (otherAnswer) {
                             otherAnswer.style.maxHeight = '0';
+                        }
+                        if (otherToggle) {
+                            otherToggle.textContent = '+';
                         }
                     }
                 });
@@ -171,8 +180,10 @@
                 
                 if (!isActive) {
                     answer.style.maxHeight = answer.scrollHeight + 'px';
+                    if (toggle) toggle.textContent = '×';
                 } else {
                     answer.style.maxHeight = '0';
+                    if (toggle) toggle.textContent = '+';
                 }
             });
         });
@@ -434,44 +445,55 @@
     }
 
     /**
-     * 创建固定CTA按钮（滚动时显示）
+     * 创建移动端粘性CTA
      */
-    function createFixedCTA() {
-        // 只在首页显示
-        if (!window.location.pathname.includes('index.html') && window.location.pathname !== '/') {
-            return;
+    function createMobileStickyCTA() {
+        try {
+            // 只在移动端显示
+            if (window.innerWidth > 768) return;
+            
+            const stickyCTA = document.getElementById('mobile-sticky-cta');
+            if (!stickyCTA) return;
+
+            // 滚动显示/隐藏逻辑
+            const scrollHandler = throttle(() => {
+                try {
+                    const safetySection = document.getElementById('safety');
+                    if (!safetySection) return;
+
+                    const safetyTop = safetySection.offsetTop;
+                    const safetyBottom = safetyTop + safetySection.offsetHeight;
+                    const currentScroll = window.pageYOffset;
+                    const windowHeight = window.innerHeight;
+
+                    // 在安心计划section可见时显示粘性CTA
+                    if (currentScroll + windowHeight > safetyTop + 200 && currentScroll < safetyBottom) {
+                        stickyCTA.style.display = 'block';
+                        stickyCTA.classList.add('visible');
+                    } else {
+                        stickyCTA.classList.remove('visible');
+                        setTimeout(() => {
+                            if (!stickyCTA.classList.contains('visible')) {
+                                stickyCTA.style.display = 'none';
+                            }
+                        }, 300);
+                    }
+                } catch (error) {
+                    console.error('Sticky CTA scroll error:', error);
+                }
+            }, 100);
+
+            window.addEventListener('scroll', scrollHandler, { passive: true });
+            
+            // 窗口大小变化时重新检查
+            window.addEventListener('resize', () => {
+                if (window.innerWidth > 768) {
+                    stickyCTA.style.display = 'none';
+                }
+            });
+        } catch (error) {
+            console.error('Mobile sticky CTA initialization error:', error);
         }
-
-        const fixedCTA = document.createElement('a');
-        fixedCTA.href = '#contact';
-        fixedCTA.className = 'fixed-cta btn btn-primary btn-sm';
-        fixedCTA.setAttribute('data-analytics', 'cta:fixed:beta');
-        fixedCTA.setAttribute('aria-label', '预约内测 - 固定按钮');
-        fixedCTA.innerHTML = `
-            <svg class="icon" aria-hidden="true">
-                <use href="assets/icons/sprite.svg#external"></use>
-            </svg>
-            预约内测
-        `;
-
-        document.body.appendChild(fixedCTA);
-
-        // 滚动显示/隐藏逻辑
-        const scrollHandler = throttle(() => {
-            const heroSection = document.getElementById('hero');
-            if (!heroSection) return;
-
-            const heroBottom = heroSection.offsetTop + heroSection.offsetHeight;
-            const currentScroll = window.pageYOffset;
-
-            if (currentScroll > heroBottom - 100) {
-                fixedCTA.classList.add('visible');
-            } else {
-                fixedCTA.classList.remove('visible');
-            }
-        }, 100);
-
-        window.addEventListener('scroll', scrollHandler, { passive: true });
     }
 
     /**
@@ -542,22 +564,186 @@
         });
     }
 
+    /**
+     * 安心计划模态框功能
+     */
+    function initSafetyModal() {
+        // 添加全局函数
+        window.openSafetyModal = function() {
+            const modal = document.getElementById('safety-modal');
+            if (modal) {
+                modal.classList.add('active');
+                modal.setAttribute('aria-hidden', 'false');
+                document.body.style.overflow = 'hidden';
+                
+                // 聚焦到模态框
+                setTimeout(() => {
+                    modal.querySelector('.modal-close').focus();
+                }, 100);
+            }
+        };
+
+        window.closeSafetyModal = function() {
+            const modal = document.getElementById('safety-modal');
+            if (modal) {
+                modal.classList.remove('active');
+                modal.setAttribute('aria-hidden', 'true');
+                document.body.style.overflow = '';
+            }
+        };
+
+        // ESC键关闭模态框
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                window.closeSafetyModal();
+            }
+        });
+    }
+
+    /**
+     * 语言切换功能
+     */
+    function initLanguageSwitcher() {
+        const langButtons = document.querySelectorAll('.lang-btn');
+        
+        langButtons.forEach(btn => {
+            btn.addEventListener('click', function() {
+                const targetLang = this.getAttribute('data-lang');
+                
+                // 更新按钮状态
+                langButtons.forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                
+                // 切换页面语言
+                if (targetLang === 'en') {
+                    // 显示提示，避免跳转到不存在的页面
+                    showMessage('英文版本即将上线，敬请期待！', 'info');
+                    // 恢复中文按钮状态
+                    langButtons.forEach(b => b.classList.remove('active'));
+                    document.querySelector('.lang-btn[data-lang="zh"]').classList.add('active');
+                    return;
+                }
+                
+                // 记录语言切换事件
+                console.log('Language switched to:', targetLang);
+            });
+        });
+    }
+
+    /**
+     * 价格切换功能
+     */
+    function initPricingSwitcher() {
+        // 周期切换 (月付/年付)
+        const periodButtons = document.querySelectorAll('.period-btn');
+        const priceAmount = document.querySelector('.price-amount');
+        const pricePeriod = document.querySelector('.price-period');
+        const priceSubtitle = document.querySelector('.price-subtitle');
+        
+        const pricingData = {
+            year: { 
+                cny: '¥365', 
+                usd: '$52', 
+                period: '/年', 
+                subtitle: '≈ ¥30.4/月（按年付折算）',
+                savings: '较月付节省 ¥103/年 (22%)'
+            },
+            month: { 
+                cny: '¥39', 
+                usd: '$5.5', 
+                period: '/月', 
+                subtitle: '随时可取消，灵活订阅',
+                savings: ''
+            }
+        };
+        
+        periodButtons.forEach(btn => {
+            btn.addEventListener('click', function() {
+                const period = this.getAttribute('data-period');
+                const currency = document.querySelector('.currency-btn.active').getAttribute('data-currency');
+                
+                // 更新按钮状态
+                periodButtons.forEach(b => {
+                    b.classList.remove('active');
+                    b.style.background = 'transparent';
+                    b.style.color = 'var(--text-secondary)';
+                });
+                
+                this.classList.add('active');
+                this.style.background = 'var(--bg-gradient)';
+                this.style.color = 'white';
+                
+                // 更新价格显示
+                const currentCurrency = currency === 'cny' ? 'cny' : 'usd';
+                if (priceAmount) priceAmount.textContent = pricingData[period][currentCurrency];
+                if (pricePeriod) pricePeriod.textContent = pricingData[period].period;
+                if (priceSubtitle) priceSubtitle.textContent = pricingData[period].subtitle;
+                
+                // 更新省钱显示
+                const priceSavings = document.querySelector('.price-savings');
+                if (priceSavings) {
+                    if (pricingData[period].savings) {
+                        priceSavings.textContent = pricingData[period].savings;
+                        priceSavings.style.display = 'block';
+                    } else {
+                        priceSavings.style.display = 'none';
+                    }
+                }
+            });
+        });
+        
+        // 币种切换 (¥/$)
+        const currencyButtons = document.querySelectorAll('.currency-btn');
+        
+        currencyButtons.forEach(btn => {
+            btn.addEventListener('click', function() {
+                const currency = this.getAttribute('data-currency');
+                const period = document.querySelector('.period-btn.active').getAttribute('data-period');
+                
+                // 更新按钮状态
+                currencyButtons.forEach(b => {
+                    b.classList.remove('active');
+                    b.style.background = 'transparent';
+                    b.style.borderColor = 'var(--text-light)';
+                    b.style.color = 'var(--text-light)';
+                });
+                
+                this.classList.add('active');
+                this.style.background = 'var(--primary-color)';
+                this.style.borderColor = 'var(--primary-color)';
+                this.style.color = 'white';
+                
+                // 更新价格显示
+                if (priceAmount) priceAmount.textContent = pricingData[period][currency];
+            });
+        });
+    }
+
     // 页面加载完成后的初始化
     document.addEventListener('DOMContentLoaded', function() {
-        createBackToTopButton();
-        createFixedCTA();
-        enhanceAccessibility();
-        enhanceFormAccessibility();
-        initAnalytics();
-        initKeyboardShortcuts();
-        initABTesting();
+        try {
+            createBackToTopButton();
+            // createMobileStickyCTA(); // 暂时禁用，可能导致刷新问题
+            enhanceAccessibility();
+            enhanceFormAccessibility();
+            initAnalytics();
+            initKeyboardShortcuts();
+            initABTesting();
+            initSafetyModal();
+            initLanguageSwitcher();
+            initPricingSwitcher();
+        } catch (error) {
+            console.error('页面初始化错误:', error);
+        }
     });
 
     // 导出部分函数供外部使用
-    window.GrapefruitApp = {
+    window.PomeloApp = {
         toggleMobileMenu: toggleMobileMenu,
         scrollToTop: scrollToTop,
         showMessage: showMessage,
+        openSafetyModal: function() { window.openSafetyModal(); },
+        closeSafetyModal: function() { window.closeSafetyModal(); },
         // Analytics预留接口
         trackEvent: function(action, data) {
             console.log('Manual Analytics Event:', action, data);
