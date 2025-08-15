@@ -6,6 +6,8 @@ import * as Haptics from 'expo-haptics';
 import { useTranslation } from 'react-i18next';
 
 import { useTheme } from '../../theme';
+import { LIQUID_GLASS_LAYERS, BRAND_GLASS } from '../../theme/core';
+import { usePerformanceDegradation } from '../../hooks/usePerformanceDegradation';
 import { SegmentedControl } from './SegmentedControl';
 
 interface CategoryBarProps {
@@ -29,6 +31,10 @@ const CategoryBar: React.FC<CategoryBarProps> = ({
   const colorScheme = useColorScheme();
   const isDarkMode = colorScheme === 'dark';
   const filterButtonScale = useRef(new Animated.Value(1)).current;
+  
+  // V2.0 获取L1分层配置
+  const { getLayerConfig } = usePerformanceDegradation();
+  const L1Config = getLayerConfig('L1', isDarkMode);
 
   const segments = [
     t('activities.filters.all'),

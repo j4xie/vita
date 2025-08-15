@@ -1,9 +1,11 @@
 /**
- * v1.2 性能降级策略Hook
+ * V2.0 性能降级策略Hook
  * 智能检测滚动速度和FPS，自动切换Liquid-Glass效果
+ * 新增L1/L2/L3分层系统支持和跨平台模糊降级
  */
 
 import { useEffect, useRef, useState } from 'react';
+import { Platform } from 'react-native';
 import { useSharedValue } from 'react-native-reanimated';
 // 稳健的主题获取，避免循环依赖
 let _themeCache: any = null;
@@ -112,6 +114,150 @@ export const usePerformanceDegradation = () => {
       // 清理工作
     };
   }, []);
+
+  /**
+   * V2.0 获取分层系统配置
+   * 支持L1/L2/L3分层架构和跨平台模糊降级
+   */
+  const getLayerConfig = (layer: 'L1' | 'L2' | 'L3', isDarkMode: boolean = false, forceBlur: boolean = false) => {
+    try {
+      const theme = getTheme();
+      const layerData = theme.layers?.[layer] || theme.LIQUID_GLASS_LAYERS?.[layer];
+      const blurStrategies = theme.blur || theme.BLUR_STRATEGIES;
+      
+      if (!layerData) {
+        console.warn(`Layer ${layer} not found, using fallback`);
+        return getFallbackLayerConfig(layer, isDarkMode);
+      }
+
+      // 获取当前性能等级
+      const performanceLevel = metrics.shouldDegrade ? 'low' : 'high';
+      const platformConfig = blurStrategies?.platform?.[Platform.OS] || blurStrategies?.platform?.ios || {};
+      const performanceConfig = blurStrategies?.performance?.[performanceLevel] || { enableBlur: false };
+
+      // 背景配置
+      const colorScheme = isDarkMode ? 'dark' : 'light';
+      let backgroundConfig;
+      
+      if (layer === 'L2' && layerData.background) {
+        backgroundConfig = layerData.background[colorScheme] || layerData.background.light;
+      } else {
+        backgroundConfig = layerData.background?.[colorScheme] || layerData.background?.light || layerData.background;
+      }
+
+      // 模糊配置
+      let blurConfig = 0;
+      if (performanceConfig.enableBlur && !metrics.shouldDegrade) {
+        if (Platform.OS === 'ios') {
+          blurConfig = layerData.blur?.ios || 20;
+        } else if (Platform.OS === 'android') {
+          blurConfig = layerData.blur?.android || 12;
+        }
+        
+        // 限制最大模糊强度
+        const maxIntensity = platformConfig.maxIntensity || 100;
+        blurConfig = Math.min(blurConfig, maxIntensity);
+      } else {
+        blurConfig = layerData.blur?.fallback || 0;
+      }
+
+      // 强制模糊模式(忽略性能限制)
+      if (forceBlur) {
+        blurConfig = layerData.blur?.ios || 20;
+      }
+
+      // 边框配置
+      const borderConfig = layerData.border?.color?.[colorScheme] || layerData.border?.color?.light || layerData.border?.color;
+
+      return {
+        background: backgroundConfig,
+        blur: blurConfig,
+        border: {
+          color: borderConfig,
+          width: layerData.border?.width || 1,
+        },
+        borderRadius: layerData.borderRadius,
+        shadow: layerData.shadow,
+        layer,
+        performanceLevel,
+        shouldUseBlur: (performanceConfig.enableBlur && !metrics.shouldDegrade) || forceBlur,
+      };
+    } catch (error) {
+      console.warn(`Failed to get layer ${layer} config:`, error);
+      return getFallbackLayerConfig(layer, isDarkMode);
+    }
+  };
+
+  /**
+   * 获取跨平台模糊降级配置
+   */
+  const getBlurFallbackConfig = (layer: 'L1' | 'L2' | 'L3', isDarkMode: boolean = false) => {
+    try {
+      const theme = getTheme();
+      const blurStrategies = theme.blur || theme.BLUR_STRATEGIES;
+      const fallbackGradients = blurStrategies?.fallbackGradients;
+      
+      if (!fallbackGradients) {
+        return {
+          useGradient: false,
+          gradientColors: ['rgba(255, 255, 255, 0.85)', 'rgba(255, 255, 255, 0.85)'],
+          backgroundFallback: 'rgba(255, 255, 255, 0.85)',
+        };
+      }
+
+      const colorScheme = isDarkMode ? 'dark' : 'light';
+      const gradientColors = fallbackGradients[layer]?.[colorScheme] || fallbackGradients.L1.light;
+
+      return {
+        useGradient: true,
+        gradientColors,
+        backgroundFallback: gradientColors[0] || 'rgba(255, 255, 255, 0.85)',
+      };
+    } catch (error) {
+      console.warn('Failed to get blur fallback config:', error);
+      return {
+        useGradient: false,
+        gradientColors: ['rgba(255, 255, 255, 0.85)', 'rgba(255, 255, 255, 0.85)'],
+        backgroundFallback: 'rgba(255, 255, 255, 0.85)',
+      };
+    }
+  };
+
+  /**
+   * 降级配置
+   */
+  const getFallbackLayerConfig = (layer: 'L1' | 'L2' | 'L3', isDarkMode: boolean) => {
+    const baseConfigs = {
+      L1: {
+        background: isDarkMode ? 'rgba(28, 28, 30, 0.85)' : 'rgba(255, 255, 255, 0.85)',
+        border: { color: isDarkMode ? 'rgba(255, 255, 255, 0.15)' : 'rgba(255, 255, 255, 0.30)', width: 1 },
+        borderRadius: { card: 16, surface: 20, compact: 12 },
+        blur: 0,
+        shadow: 'xs' as const,
+      },
+      L2: {
+        background: isDarkMode ? 'rgba(255, 107, 53, 0.12)' : 'rgba(255, 107, 53, 0.14)',
+        border: { color: isDarkMode ? 'rgba(255, 107, 53, 0.18)' : 'rgba(255, 107, 53, 0.22)', width: 1 },
+        borderRadius: { card: 16, surface: 20, compact: 12, pill: 24 },
+        blur: 0,
+        shadow: 'xs' as const,
+      },
+      L3: {
+        background: isDarkMode ? 'rgba(28, 28, 30, 0.90)' : 'rgba(255, 255, 255, 0.90)',
+        border: { color: isDarkMode ? 'rgba(255, 255, 255, 0.20)' : 'rgba(255, 255, 255, 0.30)', width: 1 },
+        borderRadius: { modal: 24, tooltip: 16, fab: 28 },
+        blur: 0,
+        shadow: 'sm' as const,
+      },
+    };
+
+    return {
+      ...baseConfigs[layer],
+      layer,
+      performanceLevel: 'fallback',
+      shouldUseBlur: false,
+    };
+  };
 
   /**
    * 获取当前应使用的Liquid-Glass配置
@@ -238,6 +384,10 @@ export const usePerformanceDegradation = () => {
     
     // 事件处理
     handleScrollEvent,
+    
+    // V2.0 新增分层系统配置获取
+    getLayerConfig,
+    getBlurFallbackConfig,
     
     // 配置获取
     getLiquidGlassConfig,

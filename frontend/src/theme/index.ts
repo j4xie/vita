@@ -20,6 +20,10 @@ export const theme = {
   layout: core.CORE_LAYOUT,
   platformOptimizations: core.CORE_PLATFORM_OPTIMIZATIONS,
   
+  // V2.0 新增分层系统
+  layers: core.LIQUID_GLASS_LAYERS,
+  blur: core.BLUR_STRATEGIES,
+  
   // 性能配置 - v1.1 简化版本
   performance: {
     flatList: {

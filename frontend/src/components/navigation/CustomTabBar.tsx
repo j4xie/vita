@@ -24,7 +24,8 @@ import Animated, {
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import { theme } from '../../theme';
-import { BRAND_GLASS, BRAND_INTERACTIONS } from '../../theme/core';
+import { BRAND_GLASS, BRAND_INTERACTIONS, LIQUID_GLASS_LAYERS } from '../../theme/core';
+import { usePerformanceDegradation } from '../../hooks/usePerformanceDegradation';
 import { TouchTargetValidator } from '../../utils/accessibilityChecker';
 import { useFilter } from '../../context/FilterContext';
 
@@ -42,6 +43,16 @@ export const CustomTabBar: React.FC<CustomTabBarProps> = ({
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const { isFilterOpen } = useFilter();
+  
+  // V2.0 新增分层系统配置
+  const { getLayerConfig, getBlurFallbackConfig } = usePerformanceDegradation();
+  const isDarkMode = false; // 可后续接入系统主题检测
+  
+  // 获取L1玻璃面板配置(用于容器)
+  const L1Config = getLayerConfig('L1', isDarkMode);
+  
+  // 获取L2品牌玻璃配置(用于选中项)
+  const L2Config = getLayerConfig('L2', isDarkMode);
   
   // Accessibility and motion preferences
   const [isReduceMotionEnabled, setIsReduceMotionEnabled] = useState(false);
@@ -208,9 +219,7 @@ export const CustomTabBar: React.FC<CustomTabBarProps> = ({
           const iconName = getIconName(route.name, isFocused);
           const label = getTabLabel(route.name);
 
-          // 统一的Tab按钮样式，所有Tab都启用
-
-          // TikTok/小红书式精确点击区域设计
+          // V2.0 L1/L2分层Tab设计
           return (
             <View
               key={route.key}
@@ -231,19 +240,19 @@ export const CustomTabBar: React.FC<CustomTabBarProps> = ({
                 onLongPress={onLongPress}
                 style={[
                   styles.tabContentButton,
-                  isFocused && styles.tabContentActive
+                  isFocused ? styles.tabContentActiveL2 : styles.tabContentInactiveL1
                 ]}
-                activeOpacity={0.7}
+                activeOpacity={0.8}
                 hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
               >
                 <View style={styles.iconContainer}>
                   <Ionicons
                     name={iconName}
-                    size={23} // 22-24pt 范围内
+                    size={24} // 统一为24pt
                     color={
                       isFocused 
-                        ? BRAND_INTERACTIONS.navigation.active.text
-                        : BRAND_INTERACTIONS.navigation.inactive.text
+                        ? '#FFFFFF' // L2品牌玻璃上使用白色图标
+                        : '#6B7280' // L1玻璃上使用深灰色图标
                     }
                   />
                 </View>
@@ -251,7 +260,7 @@ export const CustomTabBar: React.FC<CustomTabBarProps> = ({
                 <Text 
                   style={[
                     styles.tabLabel,
-                    isFocused && styles.activeTabLabel
+                    isFocused ? styles.activeTabLabelL2 : styles.inactiveTabLabelL1
                   ]}
                   numberOfLines={1}
                   adjustsFontSizeToFit={true}
@@ -281,27 +290,32 @@ const styles = StyleSheet.create({
     paddingTop: 0,
   },
   
-  // 标准TabBar包装器
+  // V2.0 L1玻璃面板包装器
   tabBarWrapper: {
-    backgroundColor: 'rgba(255, 255, 255, 0.98)',
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: -1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 2,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: 'rgba(0, 0, 0, 0.06)',
+    backgroundColor: LIQUID_GLASS_LAYERS.L1.background.light,
+    borderWidth: LIQUID_GLASS_LAYERS.L1.border.width,
+    borderColor: LIQUID_GLASS_LAYERS.L1.border.color.light,
+    borderRadius: LIQUID_GLASS_LAYERS.L1.borderRadius.surface, // 20pt圆角
+    marginHorizontal: theme.spacing.md, // 16pt水平边距
+    marginBottom: theme.spacing.sm, // 8pt底部边距
+    ...theme.shadows[LIQUID_GLASS_LAYERS.L1.shadow],
+    // iOS特有的模糊背景支持
+    ...(Platform.OS === 'ios' && {
+      shadowColor: BRAND_GLASS.glow.primary.color,
+      shadowOpacity: 0.1,
+    }),
   },
   
   tabBarContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-around',
-    backgroundColor: 'rgba(255, 255, 255, 0.98)',
-    paddingTop: 10.5, // 往下降低2.5px (8 + 2.5)
-    paddingBottom: 8,
-    paddingHorizontal: 12.5,
-    minHeight: 49,
+    backgroundColor: 'transparent', // 透明背景，依靠外层wrapper提供背景
+    paddingTop: 12, // 增加顶部padding适配圆角设计
+    paddingBottom: 12,
+    paddingHorizontal: 16, // 增加水平padding
+    minHeight: 54, // 略增高度适配新设计
+    borderRadius: LIQUID_GLASS_LAYERS.L1.borderRadius.surface, // 与wrapper保持一致
   },
   
   /* 贴底系统风样式 - 已注释用于对比
@@ -341,21 +355,36 @@ const styles = StyleSheet.create({
     minHeight: 49, // 与TabBar高度一致
   },
   
-  // Tab内容按钮 - 只包裹图标和文字的精确点击区域
+  // V2.0 Tab内容按钮基础样式
   tabContentButton: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 4,
-    paddingHorizontal: 8,
-    borderRadius: 12, // 圆角供选中态使用
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: LIQUID_GLASS_LAYERS.L2.borderRadius.compact, // 12pt圆角
     minWidth: 48, // 确保最小触摸目标
-    minHeight: 40, // 确保足够的点击区域
+    minHeight: 44, // 确保足够的点击区域
+    borderWidth: 1,
   },
   
-  // Tab内容选中态 - TikTok/小红书风格，无背景
-  tabContentActive: {
-    // 完全透明背景，只通过图标和文字颜色变化表示选中
-    backgroundColor: 'transparent',
+  // V2.0 L1玻璃样式 - 未选中Tab
+  tabContentInactiveL1: {
+    backgroundColor: 'rgba(255, 255, 255, 0.3)', // 轻微半透明背景
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+    ...theme.shadows.none, // 无阴影
+  },
+  
+  // V2.0 L2品牌玻璃样式 - 选中Tab
+  tabContentActiveL2: {
+    backgroundColor: LIQUID_GLASS_LAYERS.L2.background.light, // 西柚橙色轻染
+    borderColor: LIQUID_GLASS_LAYERS.L2.border.color.light, // 西柚橙色描边
+    ...theme.shadows[LIQUID_GLASS_LAYERS.L2.shadow],
+    // iOS品牌色发光效果
+    ...(Platform.OS === 'ios' && {
+      shadowColor: LIQUID_GLASS_LAYERS.L2.glow.color,
+      shadowOpacity: 0.2,
+      shadowRadius: LIQUID_GLASS_LAYERS.L2.glow.radius,
+    }),
   },
   
   
@@ -378,9 +407,20 @@ const styles = StyleSheet.create({
     maxFontSizeMultiplier: 1.3, // 限制最大放大倍数
   },
   
-  activeTabLabel: {
-    color: BRAND_INTERACTIONS.navigation.active.text,
+  // V2.0 L1玻璃未选中标签样式
+  inactiveTabLabelL1: {
+    color: '#6B7280', // 深灰色文字
+    fontWeight: theme.typography.fontWeight.medium,
+  },
+  
+  // V2.0 L2品牌玻璃选中标签样式
+  activeTabLabelL2: {
+    color: '#FFFFFF', // 白色文字
     fontWeight: theme.typography.fontWeight.semibold,
+    // 添加文字阴影增强可读性
+    textShadowColor: 'rgba(0, 0, 0, 0.15)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
   },
   
   // 禁用状态样式
