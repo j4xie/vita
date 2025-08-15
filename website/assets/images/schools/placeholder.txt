@@ -1,0 +1,19 @@
+请下载以下学校的官方logo并重命名后放入此目录：
+
+1. uw-logo.png - 华盛顿大学 (University of Washington)
+2. ucb-logo.png - 加州大学伯克利分校 (UC Berkeley)  
+3. ucla-logo.png - 加州大学洛杉矶分校 (UCLA)
+4. usc-logo.png - 南加州大学 (University of Southern California)
+5. ucsd-logo.png - 加州大学圣地亚哥分校 (UC San Diego)
+6. ucd-logo.png - 加州大学戴维斯分校 (UC Davis)
+7. uci-logo.png - 加州大学尔湾分校 (UC Irvine)
+8. ucsb-logo.png - 加州大学圣芭芭拉分校 (UC Santa Barbara)
+9. ucsc-logo.png - 加州大学圣克鲁兹分校 (UC Santa Cruz)
+10. umn-logo.png - 明尼苏达大学 (University of Minnesota)
+
+所有logo要求：
+- PNG透明背景格式
+- 统一尺寸 120x120px
+- 下载各学校官网brand guidelines页面的官方版本
+
+详细下载链接请参考根目录的 image-download-guide.md 文件

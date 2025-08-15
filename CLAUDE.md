@@ -23,6 +23,7 @@ VitaGlobal is a Phase 0 MVP platform for Chinese international students overseas
 - **Language:** TypeScript
 - **Internationalization:** i18next (zh-CN, en-US)
 - **State Management:** TBD based on frontend-requirements.md
+- **Animation:** React Native Reanimated 3
 
 ## Key Commands
 
@@ -119,11 +120,12 @@ All services are pre-configured and ready for development:
 
 #### Visual Language
 - **Primary Design Pattern:** Liquid Glass with blur effects and translucency
-- **Color System:** Modern light theme with academic-friendly palette
-  - Primary: #4FACFE (Ocean Blue) - Used for CTAs and active states
-  - Secondary: #667EEA (Lavender) - Used for secondary actions
-  - Success: #34D399 (Mint Green) - Confirmations and positive states
-  - Warning: #FBBF24 (Amber) - Alerts and urgency indicators
+- **Color System:** VitaGlobal brand colors with warm gradient palette
+  - Primary: #FF6B35 (Vibrant Orange) - Used for CTAs and active states
+  - Secondary: #FF4757 (Coral Red) - Used for secondary actions and gradients
+  - Accent: #FF8A65 (Light Orange) - Used for highlights and hover states
+  - Success: #2ED573 (Fresh Green) - Confirmations and positive states
+  - Warning: #FFA726 (Warm Amber) - Alerts and urgency indicators
 - **Shadow System:** Multi-level elevation (xs, sm, base, md, lg, xl)
   - Cards: 4dp elevation with colored shadows
   - Floating elements: 12dp elevation with glow effects
@@ -401,3 +403,93 @@ All third-party services are configured with development credentials. Production
 - SSL certificate configuration
 - Production database setup
 - App store submissions
+
+## 🚨 Critical Development Rules
+
+### React Native Reanimated Scroll Handler Issue
+
+**⚠️ NEVER use `useAnimatedScrollHandler` with FlatList, SectionList, or ScrollView in this project!**
+
+**Problem:** React Native Reanimated's `useAnimatedScrollHandler` returns an animated object, but React Native's VirtualizedList (which powers FlatList/SectionList) expects `onScroll` to be a function. This causes the error:
+```
+TypeError: _this.props.onScroll is not a function (it is Object)
+```
+
+**❌ WRONG - Never Do This:**
+```typescript
+const scrollHandler = useAnimatedScrollHandler({
+  onScroll: (event) => {
+    'worklet';
+    // Animation logic here
+  },
+});
+
+<SectionList onScroll={scrollHandler} />
+```
+
+**✅ CORRECT - Always Do This:**
+```typescript
+const handleScroll = useCallback((event: any) => {
+  const scrollY = event.nativeEvent.contentOffset.y;
+  // Update shared values for animations
+  animatedValue.value = scrollY;
+  // Animation logic using withTiming, etc.
+}, [animatedValue]);
+
+<SectionList onScroll={handleScroll} />
+```
+
+**Key Points:**
+1. Use `useCallback` instead of `useAnimatedScrollHandler`
+2. Access scroll position via `event.nativeEvent.contentOffset.y`
+3. Update Reanimated shared values manually in the callback
+4. Keep `withTiming`, `useSharedValue`, and `useAnimatedStyle` for animations
+5. Always add explicit `onScroll={() => {}}` to ScrollView components to prevent propagation issues
+
+**Files that have been affected by this issue:**
+- `src/screens/activities/ActivityListScreen.tsx` (Fixed multiple times)
+- `src/screens/profile/ProfileHomeScreen.tsx` (Added preventive handler)
+- `src/screens/profile/ProfileScreen.tsx` (Added preventive handler)
+- `src/screens/wellbeing/VolunteerListScreen.tsx` (Added preventive handler)
+
+**Why this keeps happening:**
+- Linters or auto-formatters may "correct" the code back to useAnimatedScrollHandler
+- Copy-pasting code from Reanimated documentation
+- Not understanding the VirtualizedList vs Reanimated compatibility issue
+
+**Prevention:**
+- Always test navigation between tabs after scroll-related changes
+- Check console for onScroll errors before committing
+- Prefer standard React Native scroll handling over Reanimated for list components
+
+**Enhanced Safety Measures (Added 2025-08-13):**
+All scroll handlers should include safety checks and error handling:
+```typescript
+const handleScroll = useCallback((event: any) => {
+  try {
+    // Always validate event object first
+    if (!event || !event.nativeEvent || typeof event.nativeEvent.contentOffset?.y !== 'number') {
+      return;
+    }
+    
+    const currentScrollY = event.nativeEvent.contentOffset.y;
+    
+    // Safe Reanimated value updates with existence checks
+    if (scrollY && typeof scrollY.value !== 'undefined') {
+      scrollY.value = currentScrollY;
+    }
+    
+    // Safe animation calls
+    if (headerTranslateY && typeof headerTranslateY.value !== 'undefined') {
+      headerTranslateY.value = withTiming(targetValue, animationConfig);
+    }
+  } catch (error) {
+    console.warn('Scroll handler error:', error);
+    // Silent failure to prevent breaking scroll functionality
+  }
+}, [dependencies]);
+```
+
+**Recent Enhanced Files:**
+- `ActivityListScreen.tsx`: Enhanced with safety checks and error handling
+- `usePerformanceDegradation.ts`: Added validation and error boundaries

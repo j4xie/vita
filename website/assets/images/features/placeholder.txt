@@ -1,0 +1,12 @@
+请下载以下图片并重命名后放入此目录：
+
+1. ai-consulting.webp - 学生使用手机查询学习资料的场景
+2. safety-plan.webp - 家长关爱孩子，温馨的家庭保护场景  
+3. pickup-service.webp - 机场接机服务，新生抵达校园的温馨场景
+4. local-discount.webp - 学生在校园周边餐厅商店消费使用优惠
+5. job-exchange.webp - 学生求职面试场景，专业着装展现自信
+6. alumni-network.webp - 校友聚会职业交流，毕业典礼温馨场景
+7. activity-crm.webp - 学生组织活动现场，二维码扫描签到管理
+8. volunteer-time.webp - 学生参与志愿服务活动，温馨的社区帮助场景
+
+详细下载链接请参考根目录的 image-download-guide.md 文件

@@ -1,0 +1,8 @@
+请下载Hero区背景图片：
+
+文件名: campus-hero.webp
+建议图片: 多元化的大学生在校园环境中的温馨场景
+尺寸要求: 1920x1080px
+推荐来源: Unsplash搜索 "diverse college students campus"
+
+具体下载链接请参考根目录的 image-download-guide.md 文件
