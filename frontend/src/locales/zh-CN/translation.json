@@ -503,6 +503,7 @@
       "totalHours": "累计时长",
       "lastCheckInTime": "上次签到时间",
       "lastCheckOutTime": "上次签出时间",
+      "volunteersCount": "位志愿者",
       "hours": "小时"
     }
   },

@@ -13,6 +13,7 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
+import { i18n } from '../../utils/i18n';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import * as Haptics from 'expo-haptics';
@@ -414,10 +415,10 @@ export const VolunteerListScreen: React.FC<VolunteerListScreenProps> = ({
           </TouchableOpacity>
           <View style={styles.schoolInfo}>
             <Text style={[styles.schoolName, { color: isDarkMode ? '#ffffff' : '#000000' }]}>
-              {selectedSchool.name}
+              {i18n.language.startsWith('zh') ? selectedSchool.name : selectedSchool.englishName}
             </Text>
             <Text style={[styles.schoolSubtitle, { color: isDarkMode ? '#a1a1aa' : '#6b7280' }]}>
-              {schoolFilteredVolunteers.length} 位志愿者
+              {schoolFilteredVolunteers.length}{t('wellbeing.volunteer.volunteersCount')}
             </Text>
           </View>
         </View>

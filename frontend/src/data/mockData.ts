@@ -403,7 +403,7 @@ export const mockSchools: School[] = [
   {
     id: 'ucla',
     name: '加州大学洛杉矶分校',
-    englishName: 'UCLA',
+    englishName: 'UC Los Angeles',
     location: 'Los Angeles, CA',
     logo: 'https://images.unsplash.com/photo-1571260899304-425eee4c7efc?w=200&h=200&fit=crop',
     color: '#2774AE',
@@ -448,7 +448,7 @@ export const mockSchools: School[] = [
   {
     id: 'usc',
     name: '南加州大学',
-    englishName: 'USC',
+    englishName: 'University of Southern California',
     location: 'Los Angeles, CA',
     logo: 'https://images.unsplash.com/photo-1502780402662-acc01917238e?w=200&h=200&fit=crop',
     color: '#990000',

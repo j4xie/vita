@@ -497,6 +497,7 @@
       "totalHours": "Total Hours",
       "lastCheckInTime": "Last Check-in Time",
       "lastCheckOutTime": "Last Check-out Time",
+      "volunteersCount": " volunteers",
       "hours": "h"
     }
   },
@@ -575,8 +576,8 @@
   },
   "mockData": {
     "schools": {
-      "berkeley": "University of California, Berkeley",
-      "ucla": "University of California, Los Angeles", 
+      "berkeley": "UC Berkeley",
+      "ucla": "UC Los Angeles", 
       "usc": "University of Southern California",
       "washington": "University of Washington"
     },

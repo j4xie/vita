@@ -15,6 +15,8 @@ import * as Haptics from 'expo-haptics';
 
 import { theme } from '../../../theme';
 import { formatTime, formatDuration, formatHours } from '../utils/timeFormatter';
+import { i18n } from '../../../utils/i18n';
+import { mockSchools } from '../../../data/mockData';
 
 export interface VolunteerRecord {
   id: string;
@@ -56,6 +58,16 @@ export const VolunteerCard: React.FC<VolunteerCardProps> = ({
   const { t } = useTranslation();
   const colorScheme = useColorScheme();
   const isDarkMode = colorScheme === 'dark';
+  
+  // 获取本地化学校名称
+  const getLocalizedSchoolName = (schoolName: string) => {
+    const school = mockSchools.find(s => 
+      s.englishName === schoolName || s.name === schoolName
+    );
+    if (!school) return schoolName;
+    
+    return i18n.language.startsWith('zh') ? school.name : school.englishName;
+  };
   
   // 动画值
   const heightAnim = useRef(new Animated.Value(COLLAPSED_HEIGHT)).current;
@@ -208,7 +220,7 @@ export const VolunteerCard: React.FC<VolunteerCardProps> = ({
               {volunteer.phone}
             </Text>
             <Text style={[styles.school, { color: theme.colors.text.secondary }]}>
-              {volunteer.school}
+              {getLocalizedSchoolName(volunteer.school)}
             </Text>
           </View>
           
@@ -310,7 +322,7 @@ export const VolunteerCard: React.FC<VolunteerCardProps> = ({
 const styles = StyleSheet.create({
   container: {
     marginHorizontal: 16,
-    marginBottom: 12, // 遵循8-12-16-24间距节律
+    marginBottom: 12, // 从2px增加到12px，增加每个卡片间距10px
     borderRadius: 16, // 将圆角移到容器级别
     overflow: 'hidden', // 确保内容被裁剪成圆角
   },
@@ -388,6 +400,7 @@ const styles = StyleSheet.create({
   // 展开内容
   expandedContent: {
     marginTop: 16,
+    marginBottom: 2, // 从12px减少到2px，缩短10px间距
   },
   timeDetails: {
     marginBottom: 16,
