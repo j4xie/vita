@@ -1,0 +1,101 @@
+import React, { useEffect, useState, useMemo } from 'react';
+import { StatusBar } from 'expo-status-bar';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
+import { AppNavigator } from './src/navigation/AppNavigator';
+import initI18next from './src/utils/i18n';
+import { UserProvider } from './src/context/UserContext';
+import { PerformanceModeProvider } from './src/context/PerformanceContext';
+
+export default function App() {
+  const [isI18nInitialized, setIsI18nInitialized] = useState(false);
+  const [initializationError, setInitializationError] = useState<string | null>(null);
+  const [isThemeReady, setIsThemeReady] = useState(false);
+
+  // 安全加载主题的 Hook
+  const theme = useMemo(() => {
+    try {
+      const { theme: themeObj } = require('./src/theme');
+      if (themeObj && typeof themeObj === 'object' && themeObj.colors) {
+        setIsThemeReady(true);
+        return themeObj;
+      }
+    } catch (error) {
+      console.warn('Theme loading error:', error);
+    }
+    
+    // 降级主题配置
+    return {
+      colors: {
+        primary: '#4FACFE',
+        text: { primary: '#111827' },
+        background: { primary: '#FFFFFF' }
+      },
+      typography: {
+        fontSize: { base: 14 },
+        fontWeight: { medium: '500' }
+      },
+      spacing: { md: 16 }
+    };
+  }, []);
+
+  // 动态样式创建，确保主题已加载
+  const styles = useMemo(() => StyleSheet.create({
+    loadingContainer: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      backgroundColor: theme?.colors?.background?.primary || '#FFFFFF',
+    },
+    loadingText: {
+      fontSize: theme?.typography?.fontSize?.base || 14,
+      color: theme?.colors?.text?.primary || '#111827',
+      fontWeight: theme?.typography?.fontWeight?.medium || '500',
+      marginTop: theme?.spacing?.md || 16,
+    },
+  }), [theme]);
+
+  useEffect(() => {
+    const initializeApp = async () => {
+      try {
+        // 初始化i18next
+        await initI18next();
+        setIsI18nInitialized(true);
+      } catch (error) {
+        console.error('Failed to initialize app:', error);
+        setInitializationError('Failed to load application');
+        // 即使出错也要设置为已初始化，使用默认设置
+        setIsI18nInitialized(true);
+      }
+    };
+
+    initializeApp();
+  }, []);
+
+  // 显示加载屏幕
+  if (!isI18nInitialized) {
+    return (
+      <SafeAreaProvider>
+        <StatusBar style="auto" />
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={theme?.colors?.primary || '#4FACFE'} />
+          <Text style={styles.loadingText}>
+            {initializationError || 'Loading...'}
+          </Text>
+        </View>
+      </SafeAreaProvider>
+    );
+  }
+
+  // 显示主应用
+  return (
+    <SafeAreaProvider>
+      <StatusBar style="auto" />
+      <PerformanceModeProvider>
+        <UserProvider>
+          <AppNavigator />
+        </UserProvider>
+      </PerformanceModeProvider>
+    </SafeAreaProvider>
+  );
+}

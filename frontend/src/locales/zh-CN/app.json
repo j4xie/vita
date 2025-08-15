@@ -1,0 +1,28 @@
+{
+  "expo": {
+    "name": "VitaGlobal - 海外学生活动平台",
+    "description": "为海外中国留学生提供活动管理和注册服务的平台",
+    "splash": {
+      "backgroundColor": "#ffffff"
+    },
+    "ios": {
+      "displayName": "VitaGlobal",
+      "localizedResources": {
+        "CFBundleDisplayName": "VitaGlobal",
+        "CFBundleName": "VitaGlobal",
+        "NSCameraUsageDescription": "此应用需要访问摄像头来扫描二维码",
+        "NSMicrophoneUsageDescription": "此应用需要访问麦克风来录制音频",
+        "NSPhotoLibraryUsageDescription": "此应用需要访问相册来上传照片"
+      }
+    },
+    "android": {
+      "displayName": "VitaGlobal",
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE"
+      ]
+    }
+  }
+}
