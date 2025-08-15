@@ -35,6 +35,9 @@ const CategoryBar: React.FC<CategoryBarProps> = ({
   // V2.0 获取L1分层配置
   const { getLayerConfig } = usePerformanceDegradation();
   const L1Config = getLayerConfig('L1', isDarkMode);
+  
+  // 调试：验证L1Config是否正确
+  console.log('CategoryBar L1Config:', L1Config);
 
   const segments = [
     t('activities.filters.all'),
@@ -64,17 +67,22 @@ const CategoryBar: React.FC<CategoryBarProps> = ({
 
   const styles = StyleSheet.create({
     container: {
-      height: 56,
-      paddingHorizontal: 16, // 与底部导航栏保持一致的内边距
-      backgroundColor: isDarkMode 
-        ? 'rgba(28, 28, 30, 0.95)' // 系统深色次级背景
-        : 'rgba(242, 242, 247, 0.95)', // 系统浅色次级背景
-      borderRadius: 18,
-      marginHorizontal: 0, // 移除外边距，与卡片/导航栏宽度完全对齐
-      marginVertical: 0, // 移除垂直边距消除白块
+      height: 60, // 略增高度适配新设计
+      paddingHorizontal: 12, // 减少内边距适配窄容器
+      backgroundColor: 'rgba(255, 255, 255, 0.85)', // 直接使用L1玻璃背景
+      borderWidth: 1,
+      borderColor: 'rgba(255, 255, 255, 0.30)', // 直接使用L1边框色
+      borderRadius: 20, // 20pt圆角
+      marginHorizontal: -10, // 增加2px，从-8改为-10
+      marginVertical: 4, // 4pt垂直边距
       justifyContent: 'center',
-      // 添加边框裁剪防止模糊边缘溢出
       overflow: 'hidden',
+      // 直接使用xs阴影
+      shadowColor: '#000000',
+      shadowOffset: { width: 0, height: 1 },
+      shadowOpacity: 0.06,
+      shadowRadius: 3,
+      elevation: 1,
     },
     contentContainer: {
       flexDirection: 'row',
@@ -84,7 +92,7 @@ const CategoryBar: React.FC<CategoryBarProps> = ({
     },
     segmentedControlWrapper: {
       flex: 1,
-      marginRight: 12, // 12pt间距
+      marginRight: 8, // 减少右边距适配更窄容器
       justifyContent: 'center', // 确保垂直居中
       height: 38, // 与筛选按钮保持一致高度
     },
@@ -92,20 +100,23 @@ const CategoryBar: React.FC<CategoryBarProps> = ({
       alignItems: 'center',
       justifyContent: 'center',
       height: 38, // 确保容器高度与按钮一致
-      marginRight: -2, // 微调右边距，与底部导航栏"安心"按钮对齐
+      marginRight: 0, // 移除负边距，给分段控制器更多空间
     },
     filterButton: {
-      width: 38,
-      height: 38, // 确保与SegmentedControl相同高度
-      borderRadius: 19,
-      backgroundColor: isDarkMode 
-        ? 'rgba(118, 118, 128, 0.24)'
-        : 'rgba(118, 118, 128, 0.12)',
+      width: 40, // 略增大适配新设计
+      height: 40,
+      borderRadius: 20,
+      backgroundColor: 'rgba(118, 118, 128, 0.12)', // 非激活状态
+      borderWidth: 1,
+      borderColor: 'rgba(118, 118, 128, 0.2)',
       alignItems: 'center',
       justifyContent: 'center',
+      ...theme.shadows.xs,
     },
     filterButtonActive: {
-      backgroundColor: theme.colors.primary,
+      backgroundColor: BRAND_GLASS.tint.primary, // L2品牌玻璃背景
+      borderColor: BRAND_GLASS.border.primary, // 品牌色描边
+      ...theme.shadows.sm, // 增强阴影
     },
     filterBadge: {
       position: 'absolute',
@@ -151,12 +162,10 @@ const CategoryBar: React.FC<CategoryBarProps> = ({
             >
               <Ionicons
                 name="options"
-                size={20}
+                size={22} // 略增大图标
                 color={
                   hasActiveFilters
-                    ? theme.colors.text.inverse
-                    : isDarkMode
-                    ? 'rgba(235, 235, 245, 0.6)'
+                    ? '#FFFFFF' // 品牌玻璃上使用白色图标
                     : theme.colors.text.secondary
                 }
               />

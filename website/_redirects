@@ -1,0 +1,18 @@
+# 统一 www 到不带 www（SEO 建议）
+https://www.americanpromotioncompany.com/* https://americanpromotioncompany.com/:splat 301
+
+# 英文页面目录无斜杠自动加斜杠
+/en   /en/   301
+
+# 去掉中文主页 index.html
+/index.html   /   301
+
+# 去掉英文主页 index.html
+/en/index.html   /en/   301
+
+# 404 错误页面处理
+# 中文404页面 (默认语言)
+/*   /404.html   404
+
+# 英文404页面 (子目录)
+/en/*   /en/404.html   404

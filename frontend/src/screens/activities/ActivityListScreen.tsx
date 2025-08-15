@@ -34,7 +34,7 @@ import { BlurView } from 'expo-blur';
 import { Platform } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { theme } from '../../theme';
-import { BRAND_GLASS, BRAND_INTERACTIONS, BRAND_GRADIENT } from '../../theme/core';
+import { BRAND_GLASS, BRAND_INTERACTIONS, BRAND_GRADIENT, LIQUID_GLASS_LAYERS } from '../../theme/core';
 import { SimpleActivityCard } from '../../components/cards/SimpleActivityCard';
 import { LiquidGlassTab } from '../../components/ui/LiquidGlassTab';
 import { FilterBottomSheet } from '../../components/ui/FilterBottomSheet';
@@ -51,8 +51,9 @@ export const ActivityListScreen: React.FC = () => {
   const navigation = useNavigation<any>();
   const insets = useSafeAreaInsets();
   const { setIsFilterOpen } = useFilter();
-  // v1.2 性能降级策略
-  const { handleScrollEvent: performanceScrollHandler, isPerformanceDegraded } = usePerformanceDegradation();
+  // V2.0 性能降级策略和分层配置
+  const { handleScrollEvent: performanceScrollHandler, isPerformanceDegraded, getLayerConfig } = usePerformanceDegradation();
+  const L1Config = getLayerConfig('L1', false); // 假设浅色模式
   const [activities, setActivities] = useState(mockActivities);
   const [refreshing, setRefreshing] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -392,12 +393,7 @@ export const ActivityListScreen: React.FC = () => {
     <SafeAreaView style={styles.container}>
       {/* Absolute Header */}
       <Reanimated.View style={[styles.absoluteHeader, { top: insets.top }]}>
-        <LinearGradient
-          colors={['rgba(248, 250, 255, 0.95)', 'rgba(240, 247, 255, 0.85)']}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.header}
-        >
+        <View style={[styles.header, styles.headerGlass]}>
           <View style={styles.headerLeft}>
             <Text style={styles.headerTitle}>{t('common.brand_name')}</Text>
             <Text style={styles.headerSubtitle}>{t('activities.discover')}</Text>
@@ -415,7 +411,7 @@ export const ActivityListScreen: React.FC = () => {
               </TouchableOpacity>
             </LinearGradient>
           </View>
-        </LinearGradient>
+        </View>
       </Reanimated.View>
 
 
@@ -538,10 +534,21 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: theme.spacing[4],
-    paddingTop: theme.spacing[3], // 保持上边距
-    paddingBottom: 0, // 彻底移除底部间距
+    paddingTop: theme.spacing[3],
+    paddingBottom: theme.spacing[2], // 增加底部间距
     borderBottomWidth: 0,
-    borderBottomColor: 'rgba(248, 250, 255, 0.5)',
+  },
+  
+  // V2.0 L1玻璃面板样式
+  headerGlass: {
+    backgroundColor: LIQUID_GLASS_LAYERS.L1.background.light,
+    borderWidth: LIQUID_GLASS_LAYERS.L1.border.width,
+    borderColor: LIQUID_GLASS_LAYERS.L1.border.color.light,
+    borderRadius: LIQUID_GLASS_LAYERS.L1.borderRadius.surface,
+    marginHorizontal: theme.spacing.md,
+    marginVertical: theme.spacing.xs,
+    ...theme.shadows[LIQUID_GLASS_LAYERS.L1.shadow],
+    overflow: 'hidden',
   },
   // CategoryBar 容器
   categoryBarContainer: {
@@ -549,6 +556,7 @@ const styles = StyleSheet.create({
     paddingTop: 0, // 进一步减少上Header间距，从4改为0
     paddingBottom: 3, // 从8px减少到3px，缩短与卡片的距离5px
     backgroundColor: theme.colors.background.secondary, // 确保背景一致
+    paddingHorizontal: 0, // 移除padding，让CategoryBar自己控制边距
   },
   headerLeft: {
     flex: 1,

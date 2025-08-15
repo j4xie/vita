@@ -17,6 +17,8 @@ import Animated, {
   Easing,
 } from 'react-native-reanimated';
 import { theme } from '../../theme';
+import { LIQUID_GLASS_LAYERS, BRAND_GLASS } from '../../theme/core';
+import { usePerformanceDegradation } from '../../hooks/usePerformanceDegradation';
 
 interface SegmentedControlProps {
   segments: string[];
@@ -36,6 +38,10 @@ export const SegmentedControl: React.FC<SegmentedControlProps> = ({
   const colorScheme = useColorScheme();
   const isDarkMode = colorScheme === 'dark';
   const [isReduceMotionEnabled, setIsReduceMotionEnabled] = React.useState(false);
+  
+  // V2.0 获取分层配置
+  const { getLayerConfig } = usePerformanceDegradation();
+  const L2Config = getLayerConfig('L2', isDarkMode);
   
   // 动画值
   const animatedIndex = useSharedValue(selectedIndex);
@@ -180,21 +186,28 @@ const styles = StyleSheet.create({
   },
   
   selectedIndicatorLight: {
-    backgroundColor: theme.colors.primary, // 实心主色
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
-    elevation: 2,
+    backgroundColor: LIQUID_GLASS_LAYERS.L2.background.light, // L2品牌玻璃背景
+    borderWidth: LIQUID_GLASS_LAYERS.L2.border.width,
+    borderColor: LIQUID_GLASS_LAYERS.L2.border.color.light,
+    ...theme.shadows[LIQUID_GLASS_LAYERS.L2.shadow],
+    // iOS品牌色发光效果
+    ...(Platform.OS === 'ios' && {
+      shadowColor: LIQUID_GLASS_LAYERS.L2.glow.color,
+      shadowOpacity: 0.2,
+      shadowRadius: LIQUID_GLASS_LAYERS.L2.glow.radius,
+    }),
   },
   
   selectedIndicatorDark: {
-    backgroundColor: theme.colors.primary,
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.2,
-    shadowRadius: 3,
-    elevation: 2,
+    backgroundColor: LIQUID_GLASS_LAYERS.L2.background.dark,
+    borderWidth: LIQUID_GLASS_LAYERS.L2.border.width,
+    borderColor: LIQUID_GLASS_LAYERS.L2.border.color.dark,
+    ...theme.shadows[LIQUID_GLASS_LAYERS.L2.shadow],
+    ...(Platform.OS === 'ios' && {
+      shadowColor: LIQUID_GLASS_LAYERS.L2.glow.color,
+      shadowOpacity: 0.15,
+      shadowRadius: LIQUID_GLASS_LAYERS.L2.glow.radius,
+    }),
   },
   
   // 分段按钮

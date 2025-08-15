@@ -16,6 +16,8 @@ import { useTranslation } from 'react-i18next';
 import * as Haptics from 'expo-haptics';
 
 import { theme } from '../../theme';
+import { LIQUID_GLASS_LAYERS, BRAND_GLASS, BRAND_INTERACTIONS } from '../../theme/core';
+import { usePerformanceDegradation } from '../../hooks/usePerformanceDegradation';
 import { PersonalInfoCard } from '../../components/profile/PersonalInfoCard';
 
 interface SettingRowProps {
@@ -155,6 +157,10 @@ export const ProfileHomeScreen: React.FC = () => {
   const colorScheme = useColorScheme();
   const isDarkMode = colorScheme === 'dark';
   const insets = useSafeAreaInsets();
+  
+  // V2.0 获取分层配置
+  const { getLayerConfig } = usePerformanceDegradation();
+  const L1Config = getLayerConfig('L1', isDarkMode);
 
   const settingItems = [
     {

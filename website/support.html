@@ -7,6 +7,12 @@
     <meta name="robots" content="index, follow">
     
     <title>技术支持 - 西柚-pomelo-pomel</title>
+    <link rel="canonical" href="https://pomelo.app/support.html">
+    
+    <!-- 语言标签 -->
+    <link rel="alternate" hreflang="zh-CN" href="https://pomelo.app/support.html">
+    <link rel="alternate" hreflang="en-US" href="https://pomelo.app/en/support.html">
+    <link rel="alternate" hreflang="x-default" href="https://pomelo.app/support.html">
     
     <!-- Styles -->
     <link rel="stylesheet" href="assets/css/style.css">
@@ -19,24 +25,26 @@
             <nav class="nav" role="navigation" aria-label="主导航">
                 <div class="logo">
                     <a href="index.html" style="text-decoration: none; color: inherit;">
-                        <img src="assets/images/pomelo-logo.png" alt="西柚-pomelologo" width="32" height="32" style="margin-right: 0.5rem;">
-                        西柚-pomelo
+                        <img src="assets/images/pomelo-logo.png" alt="西柚logo" width="32" height="32" style="margin-right: 0.5rem;">
+                        西柚 Pomelo
                     </a>
                 </div>
-                <ul class="nav-links">
-                    <li><a href="index.html">首页</a></li>
-                    <li><a href="privacy.html">隐私政策</a></li>
-                    <li><a href="terms.html">服务条款</a></li>
-                    <!-- CTA: 导航区CTA按钮 -->
-                    <li class="nav-cta">
-                        <a href="index.html" class="btn btn-outline btn-sm" data-analytics="cta:nav:home">
-                            <svg class="icon" aria-hidden="true">
-                                <use href="assets/icons/sprite.svg#arrow-right"></use>
-                            </svg>
-                            返回首页
-                        </a>
-                    </li>
+                <ul class="nav-links" style="display: flex; align-items: center; gap: 32px; list-style: none; margin: 0; padding: 0;">
+                    <li><a href="index.html" style="font-size: 16px; font-weight: 500; color: var(--text-primary); text-decoration: none; padding: 16px 0; border-bottom: 2px solid transparent; transition: all 0.3s ease;">首页</a></li>
+                    <li><a href="terms.html" style="font-size: 16px; font-weight: 500; color: var(--text-primary); text-decoration: none; padding: 16px 0; border-bottom: 2px solid transparent; transition: all 0.3s ease;">服务条款</a></li>
+                    <li><a href="#" style="font-size: 16px; font-weight: 600; color: var(--text-primary); text-decoration: none; padding: 16px 0; border-bottom: 2px solid var(--primary-color); transition: all 0.3s ease;">技术支持</a></li>
+                    <li><a href="privacy.html" style="font-size: 16px; font-weight: 500; color: var(--text-primary); text-decoration: none; padding: 16px 0; border-bottom: 2px solid transparent; transition: all 0.3s ease;">隐私政策</a></li>
                 </ul>
+                
+                <!-- 右侧动作区 -->
+                <div class="nav-actions" style="display: flex; align-items: center; gap: 12px; margin-left: 24px;">
+                    <a href="index.html#contact" class="btn btn-outline btn-sm" data-analytics="cta:nav:contact" style="padding: 10px 16px; font-size: 14px; font-weight: 500; border-radius: 12px; border: 1px solid rgba(255,107,53,0.3); color: var(--primary-color); text-decoration: none; background: rgba(255,255,255,0.8); display: flex; align-items: center; gap: 8px; height: 40px;">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <path d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                        </svg>
+                        联系我们
+                    </a>
+                </div>
             </nav>
         </div>
     </header>
@@ -44,13 +52,12 @@
     <!-- 主要内容 -->
     <main class="main" role="main">
         <!-- 支持页面头部 -->
-        <section class="hero" style="padding: 3rem 0;">
+        <section class="content-section" style="padding: 2rem 0 1rem;">
             <div class="container">
-                <div class="hero-content">
-                    <h1 class="hero-title" style="font-size: 2.5rem;">西柚-pomelo技术支持中心</h1>
-                    <p class="hero-subtitle">
-                        我们致力于为您提供最好的服务体验<br>
-                        无论您遇到任何问题，我们都在这里帮助您
+                <div style="text-align: center;">
+                    <h1 style="font-size: 2rem; font-weight: 700; color: var(--text-primary); margin-bottom: 0.5rem;">西柚-pomelo技术支持中心</h1>
+                    <p style="font-size: 1rem; color: var(--text-secondary); max-width: 600px; margin: 0 auto;">
+                        我们致力于为您提供最好的服务体验，无论您遇到任何问题，我们都在这里帮助您
                     </p>
                 </div>
             </div>
@@ -208,9 +215,6 @@
                     
                     <div style="margin: 1.5rem 0; padding: 1.5rem; background: var(--bg-light); border-radius: var(--border-radius);">
                         <h4 style="color: var(--text-primary); margin-bottom: 0.5rem;">
-                            <svg class="icon" style="vertical-align: -0.2em; margin-right: 0.5rem;">
-                                <use href="assets/icons/sprite.svg#info"></use>
-                            </svg>
                             如何注册西柚-pomelo账户？
                         </h4>
                         <p>
@@ -224,9 +228,7 @@
                     </div>
 
                     <div style="margin: 1.5rem 0; padding: 1.5rem; background: var(--bg-light); border-radius: var(--border-radius);">
-                        <h4 style="color: var(--text-primary); margin-bottom: 0.5rem;"><svg class="icon" style="vertical-align: -0.2em; margin-right: 0.5rem;">
-                                <use href="assets/icons/sprite.svg#info"></use>
-                            </svg> 为什么需要推荐码才能注册？</h4>
+                        <h4 style="color: var(--text-primary); margin-bottom: 0.5rem;">为什么需要推荐码才能注册？</h4>
                         <p>
                             推荐码系统确保只有真正的海外中国学生组织成员可以使用我们的服务，
                             这有助于维护社区的安全性和真实性，也方便组织管理员更好地管理成员。
@@ -234,9 +236,7 @@
                     </div>
 
                     <div style="margin: 1.5rem 0; padding: 1.5rem; background: var(--bg-light); border-radius: var(--border-radius);">
-                        <h4 style="color: var(--text-primary); margin-bottom: 0.5rem;"><svg class="icon" style="vertical-align: -0.2em; margin-right: 0.5rem;">
-                                <use href="assets/icons/sprite.svg#info"></use>
-                            </svg> 忘记密码怎么办？</h4>
+                        <h4 style="color: var(--text-primary); margin-bottom: 0.5rem;"> 忘记密码怎么办？</h4>
                         <p>
                             目前密码重置功能正在开发中。如果您忘记密码，请发邮件至 
                             <a href="mailto:info@americanpromotioncompany.com" style="color: var(--primary-color);">info@americanpromotioncompany.com</a>，
@@ -247,9 +247,7 @@
                     <h3 style="color: var(--primary-color); border-bottom: 2px solid var(--primary-color); margin-top: 3rem;">活动与报名</h3>
 
                     <div style="margin: 1.5rem 0; padding: 1.5rem; background: var(--bg-light); border-radius: var(--border-radius);">
-                        <h4 style="color: var(--text-primary); margin-bottom: 0.5rem;"><svg class="icon" style="vertical-align: -0.2em; margin-right: 0.5rem;">
-                                <use href="assets/icons/sprite.svg#info"></use>
-                            </svg> 如何报名参加活动？</h4>
+                        <h4 style="color: var(--text-primary); margin-bottom: 0.5rem;"> 如何报名参加活动？</h4>
                         <p>
                             1. 在活动列表中浏览感兴趣的活动<br>
                             2. 点击活动卡片查看详细信息<br>
@@ -260,9 +258,7 @@
                     </div>
 
                     <div style="margin: 1.5rem 0; padding: 1.5rem; background: var(--bg-light); border-radius: var(--border-radius);">
-                        <h4 style="color: var(--text-primary); margin-bottom: 0.5rem;"><svg class="icon" style="vertical-align: -0.2em; margin-right: 0.5rem;">
-                                <use href="assets/icons/sprite.svg#info"></use>
-                            </svg> 报名成功后如何参加活动？</h4>
+                        <h4 style="color: var(--text-primary); margin-bottom: 0.5rem;"> 报名成功后如何参加活动？</h4>
                         <p>
                             报名成功后，您会收到一个唯一的二维码。在活动现场，
                             组织方会扫描您的二维码进行核销确认。请保存好这个二维码，
@@ -271,9 +267,7 @@
                     </div>
 
                     <div style="margin: 1.5rem 0; padding: 1.5rem; background: var(--bg-light); border-radius: var(--border-radius);">
-                        <h4 style="color: var(--text-primary); margin-bottom: 0.5rem;"><svg class="icon" style="vertical-align: -0.2em; margin-right: 0.5rem;">
-                                <use href="assets/icons/sprite.svg#info"></use>
-                            </svg> 可以取消报名吗？</h4>
+                        <h4 style="color: var(--text-primary); margin-bottom: 0.5rem;"> 可以取消报名吗？</h4>
                         <p>
                             目前报名取消功能正在开发中。如果您需要取消报名，
                             请联系活动组织方或发邮件给我们的支持团队。
@@ -283,9 +277,7 @@
                     <h3 style="color: var(--primary-color); border-bottom: 2px solid var(--primary-color); margin-top: 3rem;">志愿者服务</h3>
 
                     <div style="margin: 1.5rem 0; padding: 1.5rem; background: var(--bg-light); border-radius: var(--border-radius);">
-                        <h4 style="color: var(--text-primary); margin-bottom: 0.5rem;"><svg class="icon" style="vertical-align: -0.2em; margin-right: 0.5rem;">
-                                <use href="assets/icons/sprite.svg#info"></use>
-                            </svg> 如何记录志愿服务时长？</h4>
+                        <h4 style="color: var(--text-primary); margin-bottom: 0.5rem;"> 如何记录志愿服务时长？</h4>
                         <p>
                             志愿服务时长由组织管理员通过专用的签到系统记录：<br>
                             1. 到达志愿服务地点后，向管理员提供您的手机号<br>
@@ -296,9 +288,7 @@
                     </div>
 
                     <div style="margin: 1.5rem 0; padding: 1.5rem; background: var(--bg-light); border-radius: var(--border-radius);">
-                        <h4 style="color: var(--text-primary); margin-bottom: 0.5rem;"><svg class="icon" style="vertical-align: -0.2em; margin-right: 0.5rem;">
-                                <use href="assets/icons/sprite.svg#info"></use>
-                            </svg> 志愿时长数据可以用于申请总统奖吗？</h4>
+                        <h4 style="color: var(--text-primary); margin-bottom: 0.5rem;"> 志愿时长数据可以用于申请总统奖吗？</h4>
                         <p>
                             是的！我们的志愿时长记录系统严格按照官方要求设计，
                             记录的数据可以作为总统志愿服务奖等荣誉申请的支持材料。
@@ -309,9 +299,7 @@
                     <h3 style="color: var(--primary-color); border-bottom: 2px solid var(--primary-color); margin-top: 3rem;">技术问题</h3>
 
                     <div style="margin: 1.5rem 0; padding: 1.5rem; background: var(--bg-light); border-radius: var(--border-radius);">
-                        <h4 style="color: var(--text-primary); margin-bottom: 0.5rem;"><svg class="icon" style="vertical-align: -0.2em; margin-right: 0.5rem;">
-                                <use href="assets/icons/sprite.svg#info"></use>
-                            </svg> 应用无法正常加载怎么办？</h4>
+                        <h4 style="color: var(--text-primary); margin-bottom: 0.5rem;"> 应用无法正常加载怎么办？</h4>
                         <p>
                             请尝试以下解决方法：<br>
                             1. 检查网络连接是否正常<br>
@@ -323,9 +311,7 @@
                     </div>
 
                     <div style="margin: 1.5rem 0; padding: 1.5rem; background: var(--bg-light); border-radius: var(--border-radius);">
-                        <h4 style="color: var(--text-primary); margin-bottom: 0.5rem;"><svg class="icon" style="vertical-align: -0.2em; margin-right: 0.5rem;">
-                                <use href="assets/icons/sprite.svg#info"></use>
-                            </svg> 二维码扫描不成功怎么办？</h4>
+                        <h4 style="color: var(--text-primary); margin-bottom: 0.5rem;"> 二维码扫描不成功怎么办？</h4>
                         <p>
                             1. 确保手机摄像头权限已开启<br>
                             2. 在光线充足的环境下扫描<br>
@@ -336,9 +322,7 @@
                     </div>
 
                     <div style="margin: 1.5rem 0; padding: 1.5rem; background: var(--bg-light); border-radius: var(--border-radius);">
-                        <h4 style="color: var(--text-primary); margin-bottom: 0.5rem;"><svg class="icon" style="vertical-align: -0.2em; margin-right: 0.5rem;">
-                                <use href="assets/icons/sprite.svg#info"></use>
-                            </svg> 支持哪些设备和系统版本？</h4>
+                        <h4 style="color: var(--text-primary); margin-bottom: 0.5rem;"> 支持哪些设备和系统版本？</h4>
                         <p>
                             西柚-pomelo 支持：<br>
                             • <strong>iOS：</strong>iOS 13.0 及以上版本<br>
@@ -350,9 +334,7 @@
                     <h3 style="color: var(--primary-color); border-bottom: 2px solid var(--primary-color); margin-top: 3rem;">数据与隐私</h3>
 
                     <div style="margin: 1.5rem 0; padding: 1.5rem; background: var(--bg-light); border-radius: var(--border-radius);">
-                        <h4 style="color: var(--text-primary); margin-bottom: 0.5rem;"><svg class="icon" style="vertical-align: -0.2em; margin-right: 0.5rem;">
-                                <use href="assets/icons/sprite.svg#info"></use>
-                            </svg> 如何删除我的个人数据？</h4>
+                        <h4 style="color: var(--text-primary); margin-bottom: 0.5rem;"> 如何删除我的个人数据？</h4>
                         <p>
                             根据《个人信息保护法》，您有权要求删除个人数据。
                             请发邮件至 <a href="mailto:info@americanpromotioncompany.com" style="color: var(--primary-color);">info@americanpromotioncompany.com</a>，
@@ -361,9 +343,7 @@
                     </div>
 
                     <div style="margin: 1.5rem 0; padding: 1.5rem; background: var(--bg-light); border-radius: var(--border-radius);">
-                        <h4 style="color: var(--text-primary); margin-bottom: 0.5rem;"><svg class="icon" style="vertical-align: -0.2em; margin-right: 0.5rem;">
-                                <use href="assets/icons/sprite.svg#info"></use>
-                            </svg> 我的数据安全吗？</h4>
+                        <h4 style="color: var(--text-primary); margin-bottom: 0.5rem;"> 我的数据安全吗？</h4>
                         <p>
                             我们采用业界标准的安全措施保护您的数据：<br>
                             • AES-256加密存储<br>
@@ -434,7 +414,7 @@
                         
                         <div>
                             <svg class="icon" style="font-size: 2rem; margin-bottom: 0.5rem; color: white;">
-                                <use href="assets/icons/sprite.svg#ai"></use>
+                                <use href="assets/icons/sprite.svg#support"></use>
                             </svg>
                             <h3 style="color: white; margin-bottom: 0.5rem;">专业解答</h3>
                             <p style="opacity: 0.9;">专业团队提供准确帮助</p>

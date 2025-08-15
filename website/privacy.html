@@ -7,6 +7,12 @@
     <meta name="robots" content="index, follow">
     
     <title>隐私政策 - 西柚-pomelo</title>
+    <link rel="canonical" href="https://pomelo.app/privacy.html">
+    
+    <!-- 语言标签 -->
+    <link rel="alternate" hreflang="zh-CN" href="https://pomelo.app/privacy.html">
+    <link rel="alternate" hreflang="en-US" href="https://pomelo.app/en/privacy.html">
+    <link rel="alternate" hreflang="x-default" href="https://pomelo.app/privacy.html">
     
     <!-- Styles -->
     <link rel="stylesheet" href="assets/css/style.css">
@@ -20,31 +26,25 @@
                 <div class="logo">
                     <a href="index.html" style="text-decoration: none; color: inherit;">
                         <img src="assets/images/pomelo-logo.png" alt="西柚logo" width="32" height="32" style="margin-right: 0.5rem;">
-                        西柚
+                        西柚 Pomelo
                     </a>
                 </div>
-                <ul class="nav-links">
-                    <li><a href="index.html">首页</a></li>
-                    <li><a href="terms.html">服务条款</a></li>
-                    <li><a href="support.html">技术支持</a></li>
-                    <!-- CTA: 隐私政策导航区CTA -->
-                    <li class="nav-cta">
-                        <a href="index.html" class="btn btn-outline btn-sm" data-analytics="cta:nav:home">
-                            <svg class="icon" aria-hidden="true">
-                                <use href="assets/icons/sprite.svg#arrow-right"></use>
-                            </svg>
-                            返回首页
-                        </a>
-                    </li>
-                    <li class="nav-cta">
-                        <a href="support.html" class="btn btn-link btn-sm" data-analytics="cta:nav:support">
-                            <svg class="icon" aria-hidden="true">
-                                <use href="assets/icons/sprite.svg#support"></use>
-                            </svg>
-                            联系支持
-                        </a>
-                    </li>
+                <ul class="nav-links" style="display: flex; align-items: center; gap: 32px; list-style: none; margin: 0; padding: 0;">
+                    <li><a href="index.html" style="font-size: 16px; font-weight: 500; color: var(--text-primary); text-decoration: none; padding: 16px 0; border-bottom: 2px solid transparent; transition: all 0.3s ease;">首页</a></li>
+                    <li><a href="terms.html" style="font-size: 16px; font-weight: 500; color: var(--text-primary); text-decoration: none; padding: 16px 0; border-bottom: 2px solid transparent; transition: all 0.3s ease;">服务条款</a></li>
+                    <li><a href="support.html" style="font-size: 16px; font-weight: 500; color: var(--text-primary); text-decoration: none; padding: 16px 0; border-bottom: 2px solid transparent; transition: all 0.3s ease;">技术支持</a></li>
+                    <li><a href="#" style="font-size: 16px; font-weight: 600; color: var(--text-primary); text-decoration: none; padding: 16px 0; border-bottom: 2px solid var(--primary-color); transition: all 0.3s ease;">隐私政策</a></li>
                 </ul>
+                
+                <!-- 右侧动作区 -->
+                <div class="nav-actions" style="display: flex; align-items: center; gap: 12px; margin-left: 24px;">
+                    <a href="index.html#contact" class="btn btn-outline btn-sm" data-analytics="cta:nav:contact" style="padding: 10px 16px; font-size: 14px; font-weight: 500; border-radius: 12px; border: 1px solid rgba(255,107,53,0.3); color: var(--primary-color); text-decoration: none; background: rgba(255,255,255,0.8); display: flex; align-items: center; gap: 8px; height: 40px;">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <path d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                        </svg>
+                        联系我们
+                    </a>
+                </div>
             </nav>
         </div>
     </header>
@@ -364,7 +364,7 @@
 
                     <div class="contact-info">
                         <div class="contact-item">
-                            <span class="contact-icon">📧</span>
+                            <div class="contact-icon" style="width: 40px; height: 40px; background: var(--bg-gradient); border-radius: 8px; display: flex; align-items: center; justify-content: center;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.5"><path d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg></div>
                             <div>
                                 <strong>邮件联系：</strong>info@americanpromotioncompany.com<br>
                                 <small>我们将在1-3个工作日内回复您的邮件</small>
@@ -372,7 +372,7 @@
                         </div>
                         
                         <div class="contact-item">
-                            <span class="contact-icon">📱</span>
+                            <div class="contact-icon" style="width: 40px; height: 40px; background: var(--bg-gradient); border-radius: 8px; display: flex; align-items: center; justify-content: center;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.5"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><path d="m12 18h.01"/></svg></div>
                             <div>
                                 <strong>应用内反馈：</strong>通过西柚应用的"设置"→"隐私设置"联系我们<br>
                                 <small>可直接管理您的隐私偏好</small>
@@ -380,7 +380,7 @@
                         </div>
                         
                         <div class="contact-item">
-                            <span class="contact-icon">🌐</span>
+                            <div class="contact-icon" style="width: 40px; height: 40px; background: var(--bg-gradient); border-radius: 8px; display: flex; align-items: center; justify-content: center;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="m12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></div>
                             <div>
                                 <strong>官方网站：</strong>grapefruit.app<br>
                                 <small>查看最新政策更新和公告</small>
@@ -425,22 +425,6 @@
                             保护您的隐私是我们的责任，也是我们与您建立信任关系的基础。
                             如果您有任何建议或意见，我们非常欢迎您的反馈。
                         </p>
-                    </div>
-
-                    <hr style="margin: 3rem 0; border: 1px solid var(--bg-light);">
-                    
-                    <!-- CTA: 隐私政策同意行动 -->
-                    <div style="text-align: center; margin: 3rem 0; padding: 2rem; background: var(--bg-light); border-radius: var(--border-radius-lg);">
-                        <h3 style="color: var(--primary-color); margin-bottom: 1rem;">开始使用西柚</h3>
-                        <p style="margin-bottom: 2rem; color: var(--text-secondary);">
-                            如果您同意本隐私政策，可以开始使用我们的服务
-                        </p>
-                        <a href="index.html#contact" class="btn btn-primary" data-analytics="cta:privacy:agree">
-                            <svg class="icon" aria-hidden="true">
-                                <use href="assets/icons/sprite.svg#check"></use>
-                            </svg>
-                            我已阅读并同意
-                        </a>
                     </div>
 
                     <hr style="margin: 3rem 0; border: 1px solid var(--bg-light);">

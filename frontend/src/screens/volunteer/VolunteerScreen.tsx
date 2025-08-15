@@ -14,18 +14,20 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTranslation } from 'react-i18next';
 import { theme } from '../../theme';
+import { LIQUID_GLASS_LAYERS, BRAND_GLASS, BRAND_GRADIENT } from '../../theme/core';
+import { usePerformanceDegradation } from '../../hooks/usePerformanceDegradation';
 import { useUser } from '../../context/UserContext';
 
 const { width: screenWidth } = Dimensions.get('window');
 
-// Mock data for volunteer features
+// V2.0 Mock data for volunteer features - 使用主题色派生色
 const volunteerFeatures = [
   {
     id: 'activities',
     title: '活动管理',
     description: '创建、编辑和管理活动',
     icon: 'calendar-outline',
-    color: theme.colors.primary,
+    color: theme.colors.primary, // 主品牌色
     count: 8,
   },
   {
@@ -33,7 +35,7 @@ const volunteerFeatures = [
     title: '参与者管理',
     description: '查看和管理活动报名',
     icon: 'people-outline',
-    color: '#8E24AA',
+    color: theme.colors.secondary, // 次品牌色
     count: 156,
   },
   {
@@ -41,7 +43,7 @@ const volunteerFeatures = [
     title: '数据分析',
     description: '活动数据和统计报告',
     icon: 'analytics-outline',
-    color: '#26A69A',
+    color: theme.colors.success, // 成功色
     count: 12,
   },
   {
@@ -49,7 +51,7 @@ const volunteerFeatures = [
     title: '通知管理',
     description: '发送活动通知和提醒',
     icon: 'notifications-outline',
-    color: '#FF7043',
+    color: theme.colors.warning, // 警告色
     count: 24,
   },
 ];
@@ -80,6 +82,11 @@ export const VolunteerScreen: React.FC = () => {
   const navigation = useNavigation<any>();
   const { user } = useUser();
   const [selectedPeriod, setSelectedPeriod] = useState('week');
+  
+  // V2.0 获取分层配置
+  const { getLayerConfig } = usePerformanceDegradation();
+  const L1Config = getLayerConfig('L1', false);
+  const L2Config = getLayerConfig('L2', false);
 
   const handleFeaturePress = (feature: any) => {
     // Navigate to specific feature screen
@@ -127,7 +134,7 @@ export const VolunteerScreen: React.FC = () => {
                 onPress={handleCreateActivity}
               >
                 <LinearGradient
-                  colors={[theme.colors.primary, theme.colors.primaryPressed]}
+                  colors={BRAND_GRADIENT} // 使用V2.0品牌渐变
                   style={styles.createButtonGradient}
                 >
                   <Ionicons name="add" size={24} color="white" />

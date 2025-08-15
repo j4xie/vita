@@ -609,25 +609,61 @@
         langButtons.forEach(btn => {
             btn.addEventListener('click', function() {
                 const targetLang = this.getAttribute('data-lang');
+                const currentPath = window.location.pathname;
+                const currentHash = window.location.hash;
                 
-                // 更新按钮状态
-                langButtons.forEach(b => b.classList.remove('active'));
-                this.classList.add('active');
+                // 检查是否已经在目标语言版本
+                const isCurrentlyEnglish = currentPath.includes('/en/');
+                if ((targetLang === 'en' && isCurrentlyEnglish) || (targetLang === 'zh' && !isCurrentlyEnglish)) {
+                    return; // 已经在目标语言版本
+                }
                 
-                // 切换页面语言
+                let targetUrl = '';
+                const currentPage = getCurrentPageName(currentPath);
+                
                 if (targetLang === 'en') {
-                    // 显示提示，避免跳转到不存在的页面
-                    showMessage('英文版本即将上线，敬请期待！', 'info');
-                    // 恢复中文按钮状态
-                    langButtons.forEach(b => b.classList.remove('active'));
-                    document.querySelector('.lang-btn[data-lang="zh"]').classList.add('active');
-                    return;
+                    // 切换到英文版本
+                    targetUrl = `en/${currentPage}`;
+                } else {
+                    // 切换到中文版本 - 使用绝对路径避免相对路径问题
+                    targetUrl = `/${currentPage}`;
+                }
+                
+                // 保持锚点（如果存在）
+                if (currentHash) {
+                    targetUrl += currentHash;
                 }
                 
                 // 记录语言切换事件
-                console.log('Language switched to:', targetLang);
+                console.log('Language switching:', {
+                    from: isCurrentlyEnglish ? 'en' : 'zh',
+                    to: targetLang,
+                    currentPath: currentPath,
+                    targetUrl: targetUrl,
+                    preservedHash: currentHash
+                });
+                
+                // 执行跳转
+                window.location.href = targetUrl;
             });
         });
+    }
+    
+    /**
+     * 获取当前页面名称
+     */
+    function getCurrentPageName(path) {
+        if (path.includes('privacy.html')) {
+            return 'privacy.html';
+        } else if (path.includes('support.html')) {
+            return 'support.html';
+        } else if (path.includes('terms.html')) {
+            return 'terms.html';
+        } else if (path.includes('404.html')) {
+            return '404.html';
+        } else {
+            return 'index.html';
+        }
     }
 
     /**

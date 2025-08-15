@@ -187,7 +187,7 @@ export const CustomTabBar: React.FC<CustomTabBarProps> = ({
     ]}>
       {/* 美团风格容器 - 直接渲染无圆角 */}
       <View style={styles.tabBarWrapper}>
-        <View style={[styles.tabBarContainer, { paddingBottom: insets.bottom + 8 }]}>
+        <View style={styles.tabBarContainer}>
         {state.routes.map((route, index) => {
           const { options } = descriptors[route.key];
           const isFocused = state.index === index;
@@ -240,6 +240,7 @@ export const CustomTabBar: React.FC<CustomTabBarProps> = ({
                 onLongPress={onLongPress}
                 style={[
                   styles.tabContentButton,
+                  styles.noShadowForce, // 强制移除阴影
                   isFocused ? styles.tabContentActiveL2 : styles.tabContentInactiveL1
                 ]}
                 activeOpacity={0.8}
@@ -251,7 +252,7 @@ export const CustomTabBar: React.FC<CustomTabBarProps> = ({
                     size={24} // 统一为24pt
                     color={
                       isFocused 
-                        ? '#FFFFFF' // L2品牌玻璃上使用白色图标
+                        ? '#1F2937' // L2品牌玻璃上使用深灰色图标，与文字保持一致
                         : '#6B7280' // L1玻璃上使用深灰色图标
                     }
                   />
@@ -283,26 +284,32 @@ const styles = StyleSheet.create({
   // 美团风格贴底样式
   container: {
     position: 'absolute',
-    bottom: -20, // 向上移动5px，总计向下20px
+    bottom: 27.5, // 继续向下移动20px，从47.5改为27.5
     left: 0,
     right: 0,
     paddingHorizontal: 0, // 移除水平内边距，完全贴边
     paddingTop: 0,
   },
   
-  // V2.0 L1玻璃面板包装器
+  // V2.0 L1玻璃面板包装器 - 在纯白背景上的明显层次感
   tabBarWrapper: {
     backgroundColor: LIQUID_GLASS_LAYERS.L1.background.light,
-    borderWidth: LIQUID_GLASS_LAYERS.L1.border.width,
-    borderColor: LIQUID_GLASS_LAYERS.L1.border.color.light,
+    borderWidth: 1, 
+    borderColor: 'rgba(0, 0, 0, 0.08)', // 使用淡黑色边框在白背景上更明显
     borderRadius: LIQUID_GLASS_LAYERS.L1.borderRadius.surface, // 20pt圆角
-    marginHorizontal: theme.spacing.md, // 16pt水平边距
-    marginBottom: theme.spacing.sm, // 8pt底部边距
-    ...theme.shadows[LIQUID_GLASS_LAYERS.L1.shadow],
-    // iOS特有的模糊背景支持
+    marginHorizontal: theme.spacing.sm,
+    marginBottom: 0,
+    paddingBottom: 0,
+    // 在纯白背景上的明显阴影
+    shadowColor: 'rgba(0, 0, 0, 0.15)',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.2,
+    shadowRadius: 16,
+    elevation: 8,
+    // iOS增强阴影
     ...(Platform.OS === 'ios' && {
-      shadowColor: BRAND_GLASS.glow.primary.color,
-      shadowOpacity: 0.1,
+      shadowColor: 'rgba(0, 0, 0, 0.12)',
+      shadowOpacity: 0.18,
     }),
   },
   
@@ -311,10 +318,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-around',
     backgroundColor: 'transparent', // 透明背景，依靠外层wrapper提供背景
-    paddingTop: 12, // 增加顶部padding适配圆角设计
-    paddingBottom: 12,
-    paddingHorizontal: 16, // 增加水平padding
-    minHeight: 54, // 略增高度适配新设计
+    paddingTop: 8, // 增加顶部padding适配60px高度
+    paddingBottom: 8, // 增加底部padding
+    paddingHorizontal: 4, // 最小水平padding
+    height: 60, // 缩短10px，从70px减少到60px
     borderRadius: LIQUID_GLASS_LAYERS.L1.borderRadius.surface, // 与wrapper保持一致
   },
   
@@ -348,42 +355,76 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingTop: 5.5, // 顶部padding减少2.5px
-    paddingBottom: 4, // 底部padding
-    paddingHorizontal: 2, // 最小水平内边距
+    paddingVertical: 0, // 移除所有垂直padding
+    paddingHorizontal: 1, // 减少水平内边距给文字更多空间
     position: 'relative',
-    minHeight: 49, // 与TabBar高度一致
+    height: 52, // 调整为52px高度适配60px容器
   },
   
-  // V2.0 Tab内容按钮基础样式
+  // V2.0 Tab内容按钮基础样式 (无阴影)
   tabContentButton: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    borderRadius: LIQUID_GLASS_LAYERS.L2.borderRadius.compact, // 12pt圆角
-    minWidth: 48, // 确保最小触摸目标
-    minHeight: 44, // 确保足够的点击区域
+    paddingVertical: 4, // 恢复适当的垂直padding
+    paddingHorizontal: 6, // 增加水平padding
+    borderRadius: LIQUID_GLASS_LAYERS.L2.borderRadius.compact, // 恢复12pt圆角
+    minWidth: 56, // 增加最小宽度
+    height: 42, // 调整为42px适配60px总高度
     borderWidth: 1,
+    flex: 1, // 平均分配空间
+    // 确保所有Tab按钮都无阴影
+    shadowColor: 'transparent',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0,
+    shadowRadius: 0,
+    elevation: 0,
   },
   
-  // V2.0 L1玻璃样式 - 未选中Tab
+  // V2.0 L1玻璃样式 - 未选中Tab (强制无阴影)
   tabContentInactiveL1: {
     backgroundColor: 'rgba(255, 255, 255, 0.3)', // 轻微半透明背景
     borderColor: 'rgba(255, 255, 255, 0.2)',
-    ...theme.shadows.none, // 无阴影
+    // 强制移除所有可能的阴影来源
+    shadowColor: 'transparent',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0,
+    shadowRadius: 0,
+    elevation: 0,
+    // 覆盖任何主题默认阴影
+    ...Platform.select({
+      ios: {
+        shadowColor: 'transparent',
+        shadowOpacity: 0,
+        shadowRadius: 0,
+        shadowOffset: { width: 0, height: 0 },
+      },
+      android: {
+        elevation: 0,
+      },
+    }),
   },
   
-  // V2.0 L2品牌玻璃样式 - 选中Tab
+  // V2.0 L2品牌玻璃样式 - 选中Tab (强制无阴影)
   tabContentActiveL2: {
     backgroundColor: LIQUID_GLASS_LAYERS.L2.background.light, // 西柚橙色轻染
     borderColor: LIQUID_GLASS_LAYERS.L2.border.color.light, // 西柚橙色描边
-    ...theme.shadows[LIQUID_GLASS_LAYERS.L2.shadow],
-    // iOS品牌色发光效果
-    ...(Platform.OS === 'ios' && {
-      shadowColor: LIQUID_GLASS_LAYERS.L2.glow.color,
-      shadowOpacity: 0.2,
-      shadowRadius: LIQUID_GLASS_LAYERS.L2.glow.radius,
+    // 强制移除所有可能的阴影来源
+    shadowColor: 'transparent',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0,
+    shadowRadius: 0,
+    elevation: 0,
+    // 覆盖任何主题默认阴影
+    ...Platform.select({
+      ios: {
+        shadowColor: 'transparent',
+        shadowOpacity: 0,
+        shadowRadius: 0,
+        shadowOffset: { width: 0, height: 0 },
+      },
+      android: {
+        elevation: 0,
+      },
     }),
   },
   
@@ -397,14 +438,14 @@ const styles = StyleSheet.create({
   },
   
   tabLabel: {
-    fontSize: 12, // 11-12pt 文字大小
+    fontSize: 12, // 恢复原始字体大小
     fontWeight: theme.typography.fontWeight.medium,
     color: theme.colors.text.tertiary,
     textAlign: 'center',
-    lineHeight: 16, // 增加到16pt，提高可读性（≥1.4倍）
+    lineHeight: 16, // 恢复原始行高
     includeFontPadding: false, // Android 优化
     // 动态字体支持
-    maxFontSizeMultiplier: 1.3, // 限制最大放大倍数
+    maxFontSizeMultiplier: 1.3, // 恢复原始放大倍数
   },
   
   // V2.0 L1玻璃未选中标签样式
@@ -415,12 +456,8 @@ const styles = StyleSheet.create({
   
   // V2.0 L2品牌玻璃选中标签样式
   activeTabLabelL2: {
-    color: '#FFFFFF', // 白色文字
-    fontWeight: theme.typography.fontWeight.semibold,
-    // 添加文字阴影增强可读性
-    textShadowColor: 'rgba(0, 0, 0, 0.15)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
+    color: '#1F2937', // 使用深灰色确保在浅色背景上有足够对比度
+    fontWeight: theme.typography.fontWeight.bold, // 使用更粗的字体增强视觉突出
   },
   
   // 禁用状态样式
@@ -430,6 +467,23 @@ const styles = StyleSheet.create({
   
   disabledTabLabel: {
     color: theme.colors.text.disabled,
+  },
+  
+  // 强制移除阴影样式
+  noShadowForce: {
+    shadowColor: 'transparent',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0,
+    shadowRadius: 0,
+    elevation: 0,
+    // 确保在所有平台都无阴影
+    ...(Platform.OS === 'android' && {
+      elevation: 0,
+    }),
+    ...(Platform.OS === 'ios' && {
+      shadowColor: 'transparent',
+      shadowOpacity: 0,
+    }),
   },
   
   // 完全隐藏样式 - 避免Hooks违例

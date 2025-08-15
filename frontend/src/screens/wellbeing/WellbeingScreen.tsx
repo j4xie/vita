@@ -13,6 +13,8 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useTranslation } from 'react-i18next';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { theme } from '../../theme';
+import { LIQUID_GLASS_LAYERS, BRAND_GLASS, BRAND_INTERACTIONS } from '../../theme/core';
+import { usePerformanceDegradation } from '../../hooks/usePerformanceDegradation';
 import { VolunteerListScreen } from './VolunteerListScreen';
 import { SchoolSelectionScreen } from './SchoolSelectionScreen';
 import { School } from '../../data/mockData';
@@ -35,6 +37,11 @@ export const WellbeingScreen: React.FC = () => {
   const [activeTab, setActiveTab] = useState('volunteer'); // 默认选中启用的tab
   const [selectedSchool, setSelectedSchool] = useState<School | null>(null);
   const [showSchoolSelection, setShowSchoolSelection] = useState(false);
+  
+  // V2.0 获取分层配置
+  const { getLayerConfig } = usePerformanceDegradation();
+  const L1Config = getLayerConfig('L1', false);
+  const L2Config = getLayerConfig('L2', false);
 
   // 处理从其他页面传入的参数
   useEffect(() => {
@@ -62,7 +69,7 @@ export const WellbeingScreen: React.FC = () => {
       id: 'wellbeing-plan',
       title: t('wellbeing.tabs.plan'),
       icon: 'shield-outline',
-      enabled: false,
+      enabled: true, // 启用Wellbeing Plan按钮
     },
     {
       id: 'volunteer',
@@ -251,7 +258,10 @@ const styles = StyleSheet.create({
   },
   tabsWrapper: {
     flexDirection: 'row',
-    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    backgroundColor: LIQUID_GLASS_LAYERS.L1.background.light, // L1玻璃背景
+    borderWidth: LIQUID_GLASS_LAYERS.L1.border.width,
+    borderColor: LIQUID_GLASS_LAYERS.L1.border.color.light,
+    borderRadius: LIQUID_GLASS_LAYERS.L1.borderRadius.card, // 16pt圆角
     borderRadius: 12,
     padding: 4,
     borderWidth: 1,
@@ -264,9 +274,11 @@ const styles = StyleSheet.create({
     overflow: 'visible',
   },
   tabActive: {
-    backgroundColor: 'rgba(255, 255, 255, 0.95)',
-    borderRadius: theme.borderRadius.md,
-    ...theme.shadows.xs,
+    backgroundColor: LIQUID_GLASS_LAYERS.L2.background.light, // L2品牌玻璃背景
+    borderWidth: LIQUID_GLASS_LAYERS.L2.border.width,
+    borderColor: LIQUID_GLASS_LAYERS.L2.border.color.light,
+    borderRadius: LIQUID_GLASS_LAYERS.L2.borderRadius.compact, // 12pt圆角
+    ...theme.shadows[LIQUID_GLASS_LAYERS.L2.shadow],
   },
   tabDisabled: {
     opacity: 0.6,
