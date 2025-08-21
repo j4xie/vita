@@ -83,7 +83,7 @@ const mockVolunteers: VolunteerRecord[] = [
 export const VolunteerCheckInScreen: React.FC = () => {
   const { t } = useTranslation();
   const navigation = useNavigation<any>();
-  const { user } = useUser();
+  const { user, hasPermission } = useUser();
   
   const [searchPhone, setSearchPhone] = useState('');
   const [currentUser, setCurrentUser] = useState<VolunteerRecord | null>(null);
@@ -264,6 +264,26 @@ export const VolunteerCheckInScreen: React.FC = () => {
     );
   };
 
+  // 权限检查 - 只有管理员可以访问志愿者管理功能
+  if (!hasPermission('canManageVolunteers')) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.noPermissionContainer}>
+          <Ionicons name="lock-closed" size={64} color={theme.colors.text.tertiary} />
+          <Text style={styles.noPermissionText}>
+            {t('volunteerCheckIn.noPermission')}
+          </Text>
+          <TouchableOpacity 
+            style={styles.backButton}
+            onPress={() => navigation.goBack()}
+          >
+            <Text style={styles.backButtonText}>{t('common.back')}</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
@@ -330,7 +350,7 @@ export const VolunteerCheckInScreen: React.FC = () => {
               style={styles.scanButton}
               onPress={handleScanQR}
             >
-              <Ionicons name="qr-code-outline" size={24} color={theme.colors.primary} />
+              <Ionicons name="qr-code-outline" size={24} color="#000000" />
             </TouchableOpacity>
           </View>
         </View>
@@ -469,6 +489,30 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: theme.colors.background.secondary,
   },
+  noPermissionContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: theme.spacing[6],
+  },
+  noPermissionText: {
+    fontSize: theme.typography.fontSize.lg,
+    color: theme.colors.text.secondary,
+    textAlign: 'center',
+    marginTop: theme.spacing[4],
+    marginBottom: theme.spacing[6],
+  },
+  backButton: {
+    backgroundColor: theme.colors.primary,
+    paddingHorizontal: theme.spacing[6],
+    paddingVertical: theme.spacing[3],
+    borderRadius: theme.borderRadius.lg,
+  },
+  backButtonText: {
+    color: theme.colors.text.inverse,
+    fontSize: theme.typography.fontSize.base,
+    fontWeight: theme.typography.fontWeight.semibold,
+  },
   scrollView: {
     flex: 1,
   },
@@ -563,11 +607,11 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: theme.borderRadius.lg,
-    backgroundColor: theme.liquidGlass.card.background,
+    backgroundColor: '#E5E7EB', // 灰色背景
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: theme.liquidGlass.card.border,
+    borderColor: '#D1D5DB', // 灰色边框
     ...theme.shadows.xs,
   },
 

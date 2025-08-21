@@ -9,9 +9,9 @@
 
 ### 登录请求
 - `loginType` - 登录方式 (email/phone/oauth)
-- `email` - 邮箱地址（用于登录）
-- `phone` - 手机号码（用于登录）
-- `password` - 密码
+- `email` - 邮箱地址（用于登录）✅
+- `phone` - 手机号码（用于登录）✅
+- `password` - 密码✅
 - `deviceId` - 设备ID
 - `deviceType` - 设备类型 (ios/android/web)
 - `fcmToken` - Firebase推送令牌
@@ -27,18 +27,18 @@
 
 ### 注册请求
 - `registrationType` - 注册类型 (regular/invited)
-- `legalName` - 法定姓名
-- `englishNickname` - 英文昵称
-- `email` - 学校邮箱 (.edu结尾)
-- `password` - 密码
-- `confirmPassword` - 确认密码
+- `legalName` - 法定姓名✅
+- `englishNickname` - ✅
+- `email` - 学校邮箱 (.edu结尾)✅
+- `password` - 密码✅
+- `confirmPassword` - 确认密码✅
 - `phoneCountryCode` - 手机国家码 (+86/+1)
-- `phoneNumber` - 手机号码
-- `university` - 所属学校
+- `phoneNumber` - 手机号码✅
+- `university` - 所属学校（使用学校id）✅
 - `referralCode` - 推荐码（可选）
 - `verificationCode` - 验证码
-- `agreedToTerms` - 是否同意服务条款
-- `agreedToPrivacy` - 是否同意隐私政策
+- `agreedToTerms` - 是否同意服务条款（前端）
+- `agreedToPrivacy` - 是否同意隐私政策（前端）
 
 ### 验证相关
 - `verificationType` - 验证类型 (email/phone)
@@ -544,7 +544,92 @@
 
 ---
 
-## 15. 系统配置相关字段
+## 15. 定位服务相关字段 (Location)
+
+### 定位权限管理
+- `locationPermissionStatus` - 定位权限状态 (denied/granted_foreground/granted_always/not_determined)
+- `permissionRequestTime` - 权限请求时间
+- `permissionGrantedTime` - 权限授予时间
+- `permissionDeniedCount` - 权限拒绝次数
+- `locationServicesEnabled` - 设备定位服务是否开启
+- `preciseLocationEnabled` - 是否启用精确定位
+
+### 位置数据
+- `latitude` - 纬度（度）
+- `longitude` - 经度（度）
+- `accuracy` - 精度（米）
+- `altitude` - 海拔高度（米）
+- `speed` - 移动速度（米/秒）
+- `heading` - 移动方向（度）
+- `timestamp` - 定位时间戳
+- `locationSource` - 定位来源 (gps/network/passive/fused)
+
+### 地址信息
+- `country` - 国家
+- `countryCode` - 国家代码 (US/CA)
+- `state` - 州/省
+- `city` - 城市
+- `district` - 区域
+- `street` - 街道
+- `streetNumber` - 门牌号
+- `postalCode` - 邮政编码
+- `formattedAddress` - 格式化地址
+
+### 地理围栏
+- `geofenceId` - 地理围栏ID
+- `geofenceIdentifier` - 围栏标识符
+- `centerLatitude` - 围栏中心纬度
+- `centerLongitude` - 围栏中心经度
+- `radius` - 围栏半径（米）
+- `geofenceType` - 围栏类型 (activity/campus/safety/volunteer)
+- `isActive` - 是否激活
+- `createdBy` - 创建者ID
+- `monitoringStartTime` - 监控开始时间
+- `monitoringEndTime` - 监控结束时间
+
+### 地理围栏事件
+- `geofenceEventId` - 围栏事件ID
+- `eventType` - 事件类型 (enter/exit/dwell)
+- `userId` - 触发用户ID
+- `geofenceId` - 围栏ID
+- `triggerTime` - 触发时间
+- `userLatitude` - 用户触发位置纬度
+- `userLongitude` - 用户触发位置经度
+- `distanceFromCenter` - 距离围栏中心距离（米）
+- `dwellTime` - 停留时长（秒）
+- `isManualTrigger` - 是否手动触发
+
+### 签到定位验证
+- `checkInLatitude` - 签到位置纬度
+- `checkInLongitude` - 签到位置经度
+- `checkInAccuracy` - 签到位置精度
+- `distanceFromVenue` - 距离活动场地距离（米）
+- `isWithinRange` - 是否在有效范围内
+- `maxAllowedDistance` - 最大允许距离（米）
+- `locationVerified` - 位置验证是否通过
+- `spoofingDetected` - 是否检测到位置伪造
+- `checkInMethod` - 签到方式 (location/qr/manual)
+
+### 附近活动筛选
+- `nearbyRadius` - 附近筛选半径（米）
+- `distanceToActivity` - 距离活动距离（米）
+- `isNearby` - 是否在附近范围内
+- `travelTime` - 预估到达时间（分钟）
+- `transportMode` - 交通方式 (walking/driving/transit)
+
+### 位置缓存与优化
+- `cacheKey` - 位置缓存键
+- `cacheExpireTime` - 缓存过期时间
+- `lastLocationUpdateTime` - 最后定位更新时间
+- `locationUpdateInterval` - 定位更新间隔（毫秒）
+- `batteryOptimized` - 是否使用省电模式
+- `lowPowerModeEnabled` - 低功耗模式是否启用
+- `backgroundLocationEnabled` - 后台定位是否启用
+- `significantLocationChangeOnly` - 是否仅显著位置变化时更新
+
+---
+
+## 16. 系统配置相关字段
 
 ### 应用配置
 - `appVersion` - 应用版本
@@ -562,6 +647,67 @@
 - `features` - 功能开关对象
 - `permissions` - 权限配置对象
 - `limits` - 限制配置对象
+
+---
+
+## 17. AI助手相关字段 (AI Assistant)
+
+### AI服务状态
+- `aiServiceStatus` - AI服务状态 (developing/active/maintenance/disabled)
+- `aiServiceMessage` - AI服务状态说明
+- `aiFeatures` - 可用AI功能列表 (chat/calendar/translation/academic/suggestions)
+- `aiVersion` - AI模型版本
+- `aiResponseTime` - AI响应时间（毫秒）
+- `aiConfidence` - AI回答置信度（0-1）
+
+### AI对话
+- `conversationId` - 对话会话ID
+- `messageId` - 消息ID
+- `messageType` - 消息类型 (user/assistant/system)
+- `messageContent` - 消息内容
+- `messageTimestamp` - 消息时间戳
+- `messageLanguage` - 消息语言
+- `aiModel` - 使用的AI模型
+- `promptTokens` - 输入token数
+- `completionTokens` - 输出token数
+
+### AI功能使用
+- `featureType` - AI功能类型 (smart_chat/activity_recommendation/translation/academic_help/personalization)
+- `featureUsageCount` - 功能使用次数
+- `featureLastUsed` - 功能最后使用时间
+- `featureEnabled` - 功能是否启用
+- `featureConfig` - 功能配置参数
+
+---
+
+## 18. 国际化相关字段 (Internationalization)
+
+### 语言设置
+- `currentLanguage` - 当前语言 (zh-CN/en-US)
+- `defaultLanguage` - 默认语言
+- `supportedLanguages` - 支持的语言列表
+- `languageChangedAt` - 语言切换时间
+- `autoDetectLanguage` - 是否自动检测语言
+- `systemLanguage` - 系统语言
+
+### 翻译数据
+- `translationKey` - 翻译键名
+- `translationValue` - 翻译值
+- `translationCategory` - 翻译分类 (navigation/activities/auth/profile/common)
+- `translationVariables` - 翻译变量对象
+- `pluralizationRules` - 复数规则
+- `dateTimeFormat` - 日期时间格式
+- `numberFormat` - 数字格式
+- `currencyFormat` - 货币格式
+
+### 本地化内容
+- `localizedTitle` - 本地化标题
+- `localizedDescription` - 本地化描述
+- `localizedTags` - 本地化标签数组
+- `contentLanguage` - 内容语言
+- `translatedBy` - 翻译者ID
+- `translatedAt` - 翻译时间
+- `translationQuality` - 翻译质量 (human/machine/hybrid)
 
 ---
 
@@ -589,13 +735,422 @@
    - 包含 errorCode, errorMessage, errorDetails
    - HTTP状态码遵循RESTful规范
 
+5. **VitaGlobal特殊规范**：
+   - 定位数据不保留连续轨迹，仅传输必要坐标
+   - AI助手功能状态采用 developing/active 状态管理
+   - 多语言内容优先中文，英文为备选
+   - 所有时间字段使用UTC时间
+   - 用户权限采用角色+权限双重验证机制
+
+---
+
+## 实际后端API接口信息 (2025-08-21 更新)
+
+### 🚀 后端基础信息
+- **Base URL**: http://106.14.165.234:8085
+- **框架**: RuoYi v3.9.0 (Spring Boot)
+- **认证方式**: JWT Token (Bearer Token)
+- **响应格式**: JSON
+
+### 📋 实际可用接口列表
+
+#### 1. 认证相关接口
+
+##### 1.1 获取验证码
+- **URL**: `/captchaImage`
+- **方法**: GET
+- **认证**: 无需认证
+- **返回字段**:
+  ```json
+  {
+    "msg": "操作成功",
+    "img": "base64图片数据",
+    "code": 200,
+    "captchaEnabled": true,
+    "uuid": "验证码UUID"
+  }
+  ```
+
+##### 1.2 管理员登录
+- **URL**: `/login`
+- **方法**: POST
+- **认证**: 无需认证
+- **请求参数**: `username`, `password`, `code`, `uuid`
+- **说明**: 需要验证码，用于管理员后台登录
+
+##### 1.3 用户注册
+- **URL**: `/app/user/add`
+- **方法**: POST
+- **认证**: 无需认证
+- **注册方式**:
+  - 手机验证码注册：提供 `phone`, `verCode`，不填 `invCode`
+  - 邀请码注册：提供 `invCode`，可选 `phone`, `email`，不填 `verCode`
+
+##### 1.4 用户登录
+- **URL**: `/app/login`
+- **方法**: POST
+- **认证**: 无需认证
+- **请求参数**: `userName`, `password`
+- **返回字段**:
+  ```json
+  {
+    "msg": "操作成功",
+    "code": 200,
+    "data": {
+      "userId": 100,
+      "token": "JWT_TOKEN"
+    }
+  }
+  ```
+
+##### 1.5 获取短信验证码
+- **URL**: `/sms/vercodeSms`
+- **方法**: GET
+- **认证**: 无需认证
+- **请求参数**: `phone`
+- **返回字段**:
+  ```json
+  {
+    "bizId": "业务ID",
+    "code": "OK",
+    "message": "验证码",
+    "requestId": "请求ID"
+  }
+  ```
+
+#### 2. 用户相关接口
+
+##### 2.1 获取用户信息
+- **URL**: `/app/user/info`
+- **方法**: GET
+- **认证**: 需要 Bearer Token
+- **返回字段**:
+  ```json
+  {
+    "msg": "操作成功",
+    "code": 200,
+    "roleIds": [3],
+    "data": {
+      "userId": 100,
+      "deptId": 202,
+      "legalName": "测试用户001",
+      "userName": "test001",
+      "nickName": "testuser001",
+      "email": "1836591303@qq.com",
+      "phonenumber": "18221568871",
+      "sex": "1",
+      "avatar": "",
+      "status": "0",
+      "loginIp": "114.220.210.5",
+      "loginDate": "2025-08-20T22:01:59.000+08:00",
+      "dept": {
+        "deptId": 202,
+        "deptName": "学校A",
+        "parentId": 1,
+        "ancestors": "0,1"
+      },
+      "roles": [{
+        "roleId": 3,
+        "roleName": "分管理员",
+        "roleKey": "part_manage",
+        "roleSort": 3,
+        "dataScope": "3"
+      }]
+    }
+  }
+  ```
+
+#### 3. 活动相关接口
+
+##### 3.1 获取活动列表
+- **URL**: `/app/activity/list`
+- **方法**: GET
+- **认证**: 需要 Bearer Token
+- **返回字段**:
+  ```json
+  {
+    "total": 1,
+    "rows": [{
+      "id": 20,
+      "name": "这里是活动名称",
+      "icon": "https://image.americanpromotioncompany.com/2025/08/20/8c7c0bc1-c4d3-4099-a0b4-21881d17885b.png",
+      "startTime": "2025-08-22 00:00:00",
+      "endTime": "2025-09-24 00:00:00",
+      "address": "这里是活动地点",
+      "enrollment": 50,
+      "detail": "<p>这里是活动详情</p>",
+      "signStartTime": "2025-08-20 00:00:00",
+      "signEndTime": "2025-09-25 00:00:00",
+      "enabled": 1,
+      "createUserId": 102,
+      "createName": "管理员",
+      "createNickName": "guanliyuan"
+    }],
+    "code": 200,
+    "msg": "查询成功"
+  }
+  ```
+
+##### 3.2 查询活动报名状态
+- **URL**: `/app/activity/list` (查询特定活动)
+- **方法**: GET
+- **认证**: 需要 Bearer Token
+- **返回状态**:
+  - `0`: 未报名
+  - `-1`: 已报名未签到
+  - `1`: 已签到
+
+##### 3.3 活动报名
+- **URL**: `/app/activity/enroll`
+- **方法**: GET
+- **认证**: 需要 Bearer Token
+- **参数**: `activityId`
+- **返回**: `data > 0` 表示报名成功
+
+##### 3.4 活动签到
+- **URL**: `/app/activity/signIn`
+- **方法**: GET
+- **认证**: 需要 Bearer Token
+- **参数**: `activityId`
+- **返回**: `data > 0` 表示签到成功
+
+#### 4. 公开接口（无需认证）
+
+##### 4.1 查询学校列表
+- **URL**: `/app/dept/list`
+- **方法**: GET
+- **认证**: **无需认证**（公开接口）
+- **返回字段**:
+  ```json
+  {
+    "msg": "操作成功",
+    "code": 200,
+    "data": [
+      {
+        "createBy": "superAdmin",
+        "createTime": "2025-08-14 13:47:56",
+        "deptId": 202,
+        "parentId": 1,
+        "ancestors": "0,1",
+        "deptName": "学校A",
+        "orderNum": 2,
+        "status": "0",
+        "delFlag": "0",
+        "children": []
+      },
+      {
+        "deptId": 210,
+        "parentId": 202,
+        "ancestors": "0,1,202", 
+        "deptName": "UCD",
+        "orderNum": 1,
+        "status": "0"
+      },
+      {
+        "deptId": 211,
+        "parentId": 202,
+        "ancestors": "0,1,202",
+        "deptName": "UCB", 
+        "orderNum": 2,
+        "status": "0"
+      },
+      {
+        "deptId": 214,
+        "parentId": 202,
+        "ancestors": "0,1,202",
+        "deptName": "UCLA",
+        "orderNum": 5, 
+        "status": "0"
+      }
+    ]
+  }
+  ```
+- **完整学校列表**:
+  - **主分类**: 学校A (202), 学校B (203)
+  - **UC系列**: UCD, UCB, UCSC, UCLA, UCI, UCSD, UCSB
+  - **其他学校**: USC, UMN, UW, U Berkeley music
+
+#### 5. 志愿者工时相关接口（管理员权限）
+
+##### 5.1 志愿者打卡记录列表 (管理员)
+- **URL**: `/app/hour/recordList`
+- **方法**: GET
+- **认证**: 需要 Bearer Token (管理员权限)
+- **返回字段**:
+  ```json
+  {
+    "total": 1,
+    "rows": [{
+      "id": 17,
+      "userId": 100,
+      "startTime": "2025-08-20T22:28:53.000+08:00",
+      "endTime": "2025-08-20T23:28:59.000+08:00",
+      "type": 1,
+      "operateUserId": null,
+      "operateLegalName": null,
+      "legalName": "测试用户001"
+    }],
+    "code": 200,
+    "msg": "查询成功"
+  }
+  ```
+
+##### 5.2 志愿者工时统计列表 (管理员)
+- **URL**: `/app/hour/hourList`
+- **方法**: GET
+- **认证**: 需要 Bearer Token (管理员权限)
+- **返回字段**:
+  ```json
+  {
+    "total": 1,
+    "rows": [{
+      "userId": 100,
+      "totalMinutes": 33,
+      "legalName": "测试用户001"
+    }],
+    "code": 200,
+    "msg": "查询成功"
+  }
+  ```
+
+##### 5.3 志愿者签到/签退 (管理员)
+- **URL**: `/app/hour/signRecord`
+- **方法**: POST
+- **认证**: 需要 Bearer Token (管理员权限)
+- **参数**: `userId`, `type`
+
+##### 5.4 查看志愿者最后签到记录 (管理员)
+- **URL**: `/app/hour/lastRecordList`
+- **方法**: GET
+- **认证**: 需要 Bearer Token (管理员权限)
+- **参数**: `userId`
+
+#### 6. 邀请码相关接口（管理员权限）
+
+##### 6.1 查询邀请码信息 (管理员)
+- **URL**: `/app/invitation/invInfo`
+- **方法**: POST
+- **认证**: 需要 Bearer Token (管理员权限)
+- **返回字段**:
+  ```json
+  {
+    "msg": "操作成功",
+    "code": 200,
+    "data": {
+      "id": 1,
+      "userId": 101,
+      "invCode": "Y7MW5HBV"
+    }
+  }
+  ```
+
+##### 6.2 生成邀请码 (管理员)
+- **URL**: `/app/invitation/addInv`
+- **方法**: POST
+- **认证**: 需要 Bearer Token (管理员权限)
+
+##### 6.3 重新生成邀请码 (管理员)
+- **URL**: `/app/invitation/resetInv`
+- **方法**: POST
+- **认证**: 需要 Bearer Token (管理员权限)
+
+#### 7. 组织相关接口
+
+##### 7.1 组织列表查询
+- **URL**: `/app/organization/list`
+- **方法**: GET
+- **认证**: 需要 Bearer Token
+- **返回字段**:
+  ```json
+  {
+    "total": 2,
+    "rows": [{
+      "id": 1,
+      "name": "学联组织",
+      "createTime": "2025-08-19 21:46:21"
+    }, {
+      "id": 2,
+      "name": "社团",
+      "createTime": "2025-08-19 21:46:28"
+    }],
+    "code": 200,
+    "msg": "查询成功"
+  }
+  ```
+
+### 🔧 重要字段说明
+
+#### 学校/部门相关
+- `deptId`: 学校/部门ID，用于权限控制和学校识别
+- `parentId`: 父级部门ID，用于构建层级关系
+- `ancestors`: 祖级关系链，格式如"0,1,202"表示层级路径
+- `deptName`: 学校/部门名称（如"UCD"、"UCLA"等）
+- `orderNum`: 显示排序号
+- `createBy`: 创建者（"superAdmin"、"admin"等）
+- `createTime`: 创建时间
+- `status`: 部门状态，"0"-正常，"1"-停用
+- `delFlag`: 删除标记，"0"-正常，"2"-删除
+- `children`: 子部门数组，用于构建树形结构
+
+**学校层级结构说明**:
+- **顶级**: 根节点 (ID: 0)
+- **一级分类**: 学校A (ID: 202), 学校B (ID: 203) 
+- **二级学校**: 具体大学，如UCD (ID: 210), UCB (ID: 211)等
+- **层级路径**: 通过ancestors字段表示，如"0,1,202"表示根节点→1→学校A
+
+#### 用户相关
+- `userId`: 用户唯一标识
+- `deptId`: 学校/部门ID，用于权限控制
+- `legalName`: 用户真实姓名
+- `userName`: 用户登录名
+- `nickName`: 用户昵称
+- `sex`: 性别，"1"-男，"0"-女
+- `status`: 用户状态，"0"-正常，"1"-停用
+
+#### 活动相关
+- `id`: 活动ID
+- `name`: 活动名称
+- `icon`: 活动图标URL
+- `enrollment`: 报名人数限制
+- `detail`: 活动详情HTML内容
+- `enabled`: 活动启用状态，1-启用，0-禁用
+
+#### 角色权限
+- `roleId`: 角色ID，3-分管理员
+- `roleName`: 角色名称
+- `roleKey`: 角色标识
+
+#### 通用响应格式
+- `msg`: 操作结果信息
+- `code`: 状态码，200-成功，500-错误，401-认证失败
+- `data`: 具体数据内容
+
+### 🚨 重要注意事项
+
+1. **认证机制**: 
+   - **公开接口**: `/captchaImage`, `/app/login`, `/app/user/add`, `/sms/vercodeSms`, `/app/dept/list` 无需认证
+   - **用户接口**: 需要在请求头中携带 `Authorization: Bearer {token}`
+   - **管理员接口**: 需要管理员权限的有效token
+
+2. **系统状态**: 注册功能当前被禁用（"当前系统没有开启注册功能！"）
+
+3. **验证码要求**: 管理员登录需要图形验证码
+
+4. **权限分级**: 有管理员专用接口（邀请码、志愿者管理等）
+
+5. **数据格式**: 时间格式为 `YYYY-MM-DD HH:mm:ss` 或 ISO 8601 格式
+
+6. **学校数据**: `/app/dept/list` 返回完整的学校层级结构，包含UC系列、USC等知名大学
+
 ---
 
 ## 更新日志
 
 - 2025-08-13: 初始版本，包含所有基础功能字段
 - 2025-08-13: 补充认证、二维码、文件上传、统计分析相关字段
-- 待更新: 根据后端实际实现调整字段名称
+- 2025-08-15: 新增定位服务、AI助手、Liquid Glass主题、国际化相关字段
+- 2025-08-15: 完善性能监控和用户体验相关字段
+- 2025-08-21: 连接实际后端API，更新真实接口信息和字段
 
 ---
 

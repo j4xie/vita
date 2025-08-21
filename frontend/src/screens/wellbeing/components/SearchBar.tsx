@@ -230,7 +230,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({
         <TouchableOpacity
           style={[
             styles.scanButton,
-            { backgroundColor: theme.colors.primary + '10' }
+            { backgroundColor: '#E5E7EB' } // 灰色背景
           ]}
           onPress={handleScanQR}
           disabled={loading}
@@ -241,7 +241,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({
           <Ionicons
             name="qr-code-outline"
             size={24}
-            color={loading ? theme.colors.primary + '60' : theme.colors.primary}
+            color={loading ? '#6B728060' : '#000000'}
           />
         </TouchableOpacity>
       </View>

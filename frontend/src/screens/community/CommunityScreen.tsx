@@ -10,12 +10,24 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTranslation } from 'react-i18next';
 import { theme } from '../../theme';
+import { LIQUID_GLASS_LAYERS, DAWN_GRADIENTS } from '../../theme/core';
 
 export const CommunityScreen: React.FC = () => {
   const { t } = useTranslation();
 
   return (
     <SafeAreaView style={styles.container}>
+      {/* 极淡绿色渐变背景 - 上半部分微弱薄荷调 */}
+      <LinearGradient 
+        colors={[
+          '#F0FDF4', // 上部分：极极淡的薄荷绿，几乎看不出来
+          '#F7FEF9', // 渐变到更淡的绿白
+          '#F8F9FA', // 下部分：中性灰
+          '#F1F3F4'  // 底部：灰色
+        ]}
+        style={StyleSheet.absoluteFill}
+        locations={[0, 0.3, 0.6, 1]} // 上半部分极淡绿调
+      />
       <ScrollView
         style={styles.scrollView}
         contentInsetAdjustmentBehavior="automatic"
@@ -27,20 +39,9 @@ export const CommunityScreen: React.FC = () => {
           <Text style={styles.subtitle}>{t('community.headerSubtitle')}</Text>
         </View>
 
-        {/* Empty State Card with Gradient - Shadow优化 */}
+        {/* Empty State Card with L1 Glass */}
         <View style={styles.emptyStateContainer}>
-          {/* Shadow容器 - 使用solid background优化阴影渲染 */}
-          <View style={styles.emptyStateShadowContainer}>
-            <LinearGradient
-              colors={[
-                'rgba(248, 250, 255, 0.95)', // 极浅的蓝灰色
-                'rgba(255, 255, 255, 0.98)', // 几乎纯白
-                'rgba(243, 244, 246, 0.92)', // 极浅的灰色
-              ]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={styles.emptyStateCard}
-            >
+          <View style={styles.emptyStateCard}>
             {/* SF Symbol Icon */}
             <View style={styles.iconContainer}>
               <Ionicons 
@@ -75,7 +76,6 @@ export const CommunityScreen: React.FC = () => {
                 <Text style={styles.featureText}>{t('community.features.supportDescription')}</Text>
               </View>
             </View>
-            </LinearGradient>
           </View>
         </View>
       </ScrollView>
@@ -123,25 +123,17 @@ const styles = StyleSheet.create({
     minHeight: 400, // 确保卡片有足够高度
   },
   
-  // Shadow容器 - 解决LinearGradient阴影冲突
-  emptyStateShadowContainer: {
-    borderRadius: 28, // 更圆润的28pt圆角
-    backgroundColor: theme.colors.background.primary, // solid background用于阴影优化
-    // 添加微妙的阴影增强层次感
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.03,
-    shadowRadius: 8,
-    elevation: 1, // Android阴影
-  },
-  
-  // Empty State Card - 渐变背景（移除阴影）
+  // Empty State Card - V2.0 中性玻璃卡片
   emptyStateCard: {
-    borderRadius: 28, // 更圆润的28pt圆角
-    paddingHorizontal: 28, // 稍微增加内边距
-    paddingVertical: 40, // 增加垂直内边距
+    borderRadius: 20,
+    paddingHorizontal: 28,
+    paddingVertical: 40,
     alignItems: 'center',
-    // 移除阴影，由emptyStateShadowContainer处理
+    backgroundColor: 'rgba(255, 255, 255, 0.9)', // 纯净白玻璃
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.3)', // 中性白边框
+    borderTopColor: 'rgba(255, 255, 255, 0.6)', // 顶部白色高光
+    ...theme.shadows.xs,
   },
   
   // Icon Container

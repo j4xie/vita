@@ -17,8 +17,10 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useTranslation } from 'react-i18next';
 import { theme } from '../../theme';
+import { LIQUID_GLASS_LAYERS, DAWN_GRADIENTS } from '../../theme/core';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
@@ -337,7 +339,7 @@ export const FilterBottomSheet: React.FC<FilterBottomSheetProps> = ({
     <View style={styles.filterSection}>
       <Text style={styles.sectionTitle}>{title}</Text>
       <View style={styles.filterGrid}>
-        {options.map(option => 
+        {(options || []).map(option => 
           renderFilterOption(option, tempFilters.includes(option.id))
         )}
       </View>
@@ -370,6 +372,8 @@ export const FilterBottomSheet: React.FC<FilterBottomSheetProps> = ({
             height: currentHeight,
             transform: [{ translateY }],
             paddingBottom: insets.bottom,
+            backgroundColor: LIQUID_GLASS_LAYERS.L3.background.light,
+            borderColor: LIQUID_GLASS_LAYERS.L3.border.color.light,
           }
         ]}
         {...panResponder.panHandlers}
@@ -504,7 +508,9 @@ export const FilterBottomSheet: React.FC<FilterBottomSheetProps> = ({
                 onClose();
               }, 800); // 延迟关闭，让用户看到结果
             }}>
-              <Text style={styles.applyButtonText}>{t('filters.apply', 'Apply')}</Text>
+              <View style={styles.applyButtonGlass}>
+                <Text style={styles.applyButtonText}>{t('filters.apply', 'Apply')}</Text>
+              </View>
             </TouchableOpacity>
           </View>
         </Animated.View>
@@ -520,7 +526,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(0, 0, 0, 1)',
+    backgroundColor: LIQUID_GLASS_LAYERS.L3.backdrop,
     zIndex: 999998, // 提高层级确保覆盖所有UI元素包括导航栏
   },
   backdropTouchable: {
@@ -531,14 +537,12 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: theme.liquidGlass.modal.background,
-    borderTopLeftRadius: 24, // v1.2: 24pt
-    borderTopRightRadius: 24,
+    borderTopLeftRadius: LIQUID_GLASS_LAYERS.L3.borderRadius.modal,
+    borderTopRightRadius: LIQUID_GLASS_LAYERS.L3.borderRadius.modal,
     borderTopWidth: 1,
     borderLeftWidth: 1,
     borderRightWidth: 1,
-    borderColor: theme.liquidGlass.modal.border,
-    ...theme.shadows['2xl'],
+    ...theme.shadows[LIQUID_GLASS_LAYERS.L3.shadow],
     zIndex: 999999, // 确保在遮罩之上并覆盖所有UI元素
     elevation: 999, // Android兼容性
   },
@@ -684,16 +688,16 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12, // 12-14pt范围内的水平内边距
     paddingVertical: 8, // 8pt垂直内边距
     borderWidth: 1,
-    borderColor: theme.colors.border.secondary,
     borderRadius: 18, // 18-20pt圆角
-    backgroundColor: theme.colors.background.secondary,
     minHeight: 36, // 36-40pt最小高度
     flexShrink: 1, // 启用收缩，避免被图标/计数挤爆
     overflow: 'hidden', // 外层裁剪，溢出在边界内被裁
+    backgroundColor: LIQUID_GLASS_LAYERS.L1.background.light,
+    borderColor: LIQUID_GLASS_LAYERS.L1.border.color.light,
   },
   filterOptionActive: {
-    backgroundColor: theme.colors.primary,
-    borderColor: theme.colors.primary,
+    backgroundColor: LIQUID_GLASS_LAYERS.L2.background.light,
+    borderColor: LIQUID_GLASS_LAYERS.L2.border.color.light,
   },
   filterIcon: {
     width: 20, // 固定宽高，不占据多余空间
@@ -768,22 +772,30 @@ const styles = StyleSheet.create({
   // Apply Button Shadow容器 - 解决阴影冲突
   applyButtonShadowContainer: {
     borderRadius: theme.borderRadius.button,
-    backgroundColor: theme.colors.primary,
+    backgroundColor: 'transparent',
     ...theme.shadows.button,
   },
   
   applyButton: {
     backgroundColor: 'transparent',
-    paddingHorizontal: theme.spacing.lg,
-    paddingVertical: theme.spacing.sm,
     borderRadius: theme.borderRadius.button,
-    minWidth: 80,
-    alignItems: 'center',
-    // 移除阴影，由applyButtonShadowContainer处理
   },
   applyButtonText: {
     fontSize: theme.typography.fontSize.base,
     fontWeight: theme.typography.fontWeight.semibold,
-    color: theme.colors.text.inverse,
+    color: '#1F2937', // 深灰色字体，在奶橘背景上清晰可读
+  },
+  
+  // V2.0 极简白色玻璃按钮 - iOS风格
+  applyButtonGlass: {
+    paddingHorizontal: theme.spacing.lg,
+    paddingVertical: theme.spacing.md,
+    borderRadius: 16,
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.95)', // 极简白色玻璃
+    borderWidth: 1,
+    borderColor: 'rgba(0, 0, 0, 0.1)', // 淡灰边框
+    borderTopColor: 'rgba(255, 255, 255, 0.8)', // 顶部白色高光
+    ...theme.shadows.xs, // 轻微阴影增强立体感
   },
 });

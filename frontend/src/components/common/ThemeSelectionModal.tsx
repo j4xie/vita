@@ -119,18 +119,18 @@ export const ThemeSelectionModal: React.FC<ThemeSelectionModalProps> = ({
   }> = [
     {
       mode: 'auto',
-      title: '跟随系统',
-      description: '根据系统设置自动切换',
+      title: t('profile.general.auto_mode'),
+      description: t('profile.general.auto_description'),
     },
     {
       mode: 'light',
-      title: '浅色模式',
-      description: '始终使用浅色界面',
+      title: t('profile.general.light_mode'),
+      description: t('profile.general.light_description'),
     },
     {
       mode: 'dark',
-      title: '深色模式',
-      description: '始终使用深色界面',
+      title: t('profile.general.dark_mode'),
+      description: t('profile.general.dark_description'),
     },
   ];
 

@@ -7,7 +7,6 @@ import {
   StyleSheet,
   Dimensions,
   Animated,
-  PanResponder,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -17,6 +16,8 @@ import { BRAND_GLASS, BRAND_INTERACTIONS, BRAND_GRADIENT } from '../../theme/cor
 import { scaleIn, scaleOut, bounce } from '../../utils/animations';
 import { usePerformanceDegradation } from '../../hooks/usePerformanceDegradation';
 import { analytics, Events } from '../../analytics/EventTracker';
+import { useSmartGesture } from '../../hooks/useSmartGesture';
+import { useCardPress } from '../../hooks/useCardPress';
 
 const { width: screenWidth } = Dimensions.get('window');
 const cardWidth = screenWidth - theme.spacing.lg * 2; // 使用语义化间距
@@ -37,7 +38,6 @@ interface ActivityCardProps {
   activity: {
     id: string;
     title: string;
-    subtitle?: string;
     location: string;
     date: string;
     time: string;
@@ -45,8 +45,6 @@ interface ActivityCardProps {
     attendees: number;
     maxAttendees: number;
     status: string;
-    price?: number;
-    isFree?: boolean;
     category?: string;
     organizer?: {
       name: string;
@@ -98,7 +96,6 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({
   const safeActivity = {
     id: safeString(activity.id),
     title: safeString(activity.title, 'Activity'),
-    subtitle: safeString(activity.subtitle),
     location: safeString(activity.location, 'TBD'),
     date: safeString(activity.date),
     time: safeString(activity.time, 'TBD'),
@@ -106,8 +103,6 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({
     attendees: safeNumber(activity.attendees, 0),
     maxAttendees: safeNumber(activity.maxAttendees, 0),
     status: safeString(activity.status, 'upcoming'),
-    price: safeNumber(activity.price, 0),
-    isFree: Boolean(activity.isFree),
     organizer: activity.organizer ? {
       name: safeString(activity.organizer.name, 'Organizer'),
       avatar: safeString(activity.organizer.avatar),
@@ -219,17 +214,50 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({
     onPress?.();
   };
 
-  const handleFavoritePress = (e: any) => {
-    e.stopPropagation();
+  const handleFavoritePress = () => {
     // 收藏按钮点击动画
     bounce(favoriteScaleAnim).start();
     onFavorite?.();
   };
 
-  const handleRegisterPress = (e: any) => {
-    e.stopPropagation();
+  const handleRegisterPress = () => {
     onRegister?.();
   };
+
+  // 使用简单的卡片点击检测 - 不干扰滚动
+  const cardGesture = useCardPress({
+    onPress: handleCardPress,
+    onPressIn: handlePressIn,
+    onPressOut: handlePressOut,
+  }, {
+    maxMoveThreshold: 15,      // 15px 内的移动仍视为点击
+    maxTimeThreshold: 400,     // 400ms 内视为点击
+    enableHaptics: true,
+    debug: false,
+  });
+
+  // 水平滑动检测 - 仅用于ActivityCard的滑动操作
+  const swipeGesture = useSmartGesture({
+    onSwipeStart: (direction) => {
+      if (direction === 'horizontal') {
+        setIsSwipeActive(true);
+      }
+    },
+    onSwipeEnd: (direction, distance) => {
+      if (direction === 'horizontal' && distance > SWIPE_CONFIG.THRESHOLD) {
+        const swipeDirection = distance > 0 ? 'right' : 'left';
+        revealActions(swipeDirection);
+      } else {
+        resetSwipe();
+      }
+    },
+  }, {
+    swipeThreshold: 8,         // 更低的阈值，优先捕获滑动
+    velocityThreshold: 0.3,    // 更低的速度阈值
+    timeThreshold: 200,        // 更短的时间阈值，快速响应
+    enableHaptics: false,      // 关闭触觉反馈，避免冲突
+    debug: false,
+  });
 
   // V1.1 规范: 滑动手势处理
   const resetSwipe = () => {
@@ -269,45 +297,13 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({
     ]).start();
   };
 
-  // 滑动手势响应器
-  const panResponder = useRef(
-    PanResponder.create({
-      onMoveShouldSetPanResponder: (evt, gestureState) => {
-        return Math.abs(gestureState.dx) > 10 && Math.abs(gestureState.dy) < 50;
-      },
-      onMoveShouldSetPanResponderCapture: () => false,
-      onPanResponderGrant: () => {
-        // React Native Reanimated 3 不支持直接访问 _value
-        translateXAnim.setOffset(0);
-      },
-      onPanResponderMove: (evt, gestureState) => {
-        // 限制滑动范围
-        const clampedDx = Math.max(-SWIPE_CONFIG.REVEAL_WIDTH, Math.min(SWIPE_CONFIG.REVEAL_WIDTH, gestureState.dx));
-        translateXAnim.setValue(clampedDx);
-        
-        // 动态调整操作按钮透明度
-        const opacity = Math.min(1, Math.abs(gestureState.dx) / SWIPE_CONFIG.THRESHOLD);
-        actionOpacityAnim.setValue(opacity);
-      },
-      onPanResponderRelease: (evt, gestureState) => {
-        translateXAnim.flattenOffset();
-        
-        if (Math.abs(gestureState.dx) > SWIPE_CONFIG.THRESHOLD) {
-          // 触发显示操作
-          const direction = gestureState.dx < 0 ? 'left' : 'right';
-          revealActions(direction);
-        } else {
-          // 回弹到原位
-          resetSwipe();
-        }
-      },
-    })
-  ).current;
+  // 移除了原有的PanResponder，使用新的智能手势检测系统
 
   // 滑动操作处理函数
   const handleSwipeAction = (action: 'share' | 'bookmark' | 'notify', callback?: () => void) => {
     // v1.2: 追踪滑动操作
-    analytics.trackActivityEvent(action, safeActivity.id, {
+    const trackingEvent = action === 'notify' ? 'view' : action; // 将notify映射到view事件
+    analytics.trackActivityEvent(trackingEvent, safeActivity.id, {
       swipe_action: action,
       title: safeActivity.title,
     });
@@ -346,7 +342,7 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({
               style={[styles.actionButton, styles.bookmarkButton]}
               onPress={() => handleSwipeAction('bookmark', onBookmark)}
             >
-              <Ionicons name="bookmark-outline" size={20} color="white" />
+              <Ionicons name="bookmark-outline" size={20} color={theme.colors.text.inverse} />
             </TouchableOpacity>
           )}
           {onShare && (
@@ -354,7 +350,7 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({
               style={[styles.actionButton, styles.shareButton]}
               onPress={() => handleSwipeAction('share', onShare)}
             >
-              <Ionicons name="share-outline" size={20} color="white" />
+              <Ionicons name="share-outline" size={20} color={theme.colors.text.inverse} />
             </TouchableOpacity>
           )}
         </Animated.View>
@@ -368,23 +364,23 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({
               style={[styles.actionButton, styles.notifyButton]}
               onPress={() => handleSwipeAction('notify', onNotifyMe)}
             >
-              <Ionicons name="notifications-outline" size={20} color="white" />
+              <Ionicons name="notifications-outline" size={20} color={theme.colors.text.inverse} />
             </TouchableOpacity>
           )}
         </Animated.View>
       )}
 
-      {/* 主卡片内容 - 使用Shadow包装器 */}
+      {/* 主卡片内容 - 使用智能手势检测 */}
       <Animated.View 
         style={[styles.container, animatedStyle]}
-        {...panResponder.panHandlers}
+        {...swipeGesture.panHandlers}
       >
         {/* Shadow容器 - solid background用于阴影优化 */}
         <View style={[
           styles.shadowContainer,
           isPerformanceDegraded && { ...theme.shadows.none } // 性能降级时移除阴影
         ]}>
-          <TouchableOpacity
+          <Animated.View
             style={[
               styles.touchableContainer,
               {
@@ -392,10 +388,7 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({
                 borderColor: liquidGlassConfig.border,
               }
             ]}
-            onPress={handleCardPress}
-            onPressIn={handlePressIn}
-            onPressOut={handlePressOut}
-            activeOpacity={1}
+            {...cardGesture.touchHandlers}
           >
       {/* Hero Image Section with Modern Gradient Overlay */}
       <View style={styles.imageContainer}>
@@ -427,8 +420,9 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({
                 <TouchableOpacity 
                   style={styles.favoriteButton}
                   onPress={handleFavoritePress}
+                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                 >
-                  <Ionicons name="heart-outline" size={22} color="white" />
+                  <Ionicons name="heart-outline" size={22} color={theme.colors.text.inverse} />
                 </TouchableOpacity>
               </Animated.View>
             )}
@@ -459,28 +453,23 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({
               {safeActivity.title}
             </Text>
             
-            {safeActivity.subtitle && (
-              <Text style={styles.subtitle} numberOfLines={1}>
-                {safeActivity.subtitle}
-              </Text>
-            )}
 
             {/* Meta Information */}
             <View style={styles.metaContainer}>
               <View style={styles.metaRow}>
                 <View style={styles.metaItem}>
-                  <Ionicons name="calendar-outline" size={14} color="rgba(255, 255, 255, 0.9)" />
+                  <Ionicons name="calendar-outline" size={14} color={theme.colors.text.secondary} />
                   <Text style={styles.metaText}>{formatDate(safeActivity.date)}</Text>
                 </View>
                 <View style={styles.metaItem}>
-                  <Ionicons name="time-outline" size={14} color="rgba(255, 255, 255, 0.9)" />
+                  <Ionicons name="time-outline" size={14} color={theme.colors.text.secondary} />
                   <Text style={styles.metaText}>{safeActivity.time}</Text>
                 </View>
               </View>
               
               <View style={styles.metaRow}>
                 <View style={styles.metaItem}>
-                  <Ionicons name="location-outline" size={14} color="rgba(255, 255, 255, 0.9)" />
+                  <Ionicons name="location-outline" size={14} color={theme.colors.text.secondary} />
                   <Text style={styles.metaText} numberOfLines={1}>{safeActivity.location}</Text>
                 </View>
               </View>
@@ -505,15 +494,6 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({
               {safeString(safeActivity.attendees)}/{safeString(safeActivity.maxAttendees)} people
             </Text>
             
-            {safeActivity.isFree && (
-              <View style={styles.freeTag}>
-                <Text style={styles.freeText}>Free</Text>
-              </View>
-            )}
-            
-            {safeActivity.price && !safeActivity.isFree && (
-              <Text style={styles.priceText}>¥{safeString(safeActivity.price)}</Text>
-            )}
           </View>
           
           <Text style={[
@@ -544,6 +524,7 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({
                 onPress={handleRegisterPress}
                 disabled={availableSpots === 0}
                 style={styles.registerButtonInner}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
               >
                 <Text style={[
                   styles.registerText,
@@ -556,7 +537,7 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({
           </View>
         )}
       </View>
-          </TouchableOpacity>
+          </Animated.View>
         </View>
       </Animated.View>
     </View>
@@ -575,20 +556,23 @@ const styles = StyleSheet.create({
   container: {
     width: cardWidth,
   },
-  // Shadow容器 - 解决LinearGradient阴影冲突
+  // Shadow容器 - 小红书风格卡片设计
   shadowContainer: {
-    borderRadius: theme.borderRadius.md,
-    backgroundColor: theme.colors.background.primary, // solid background用于阴影优化
-    ...theme.shadows.md,
+    borderRadius: theme.borderRadius.lg,
+    backgroundColor: '#FFFFFF', // 小红书风格白色背景
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 3,
   },
   
   // 基础容器样式 - 移除阴影到专用容器
   touchableContainer: {
-    backgroundColor: theme.liquidGlass.card.background,
-    borderRadius: theme.borderRadius.md, // v1.2 规范: 16pt 卡片圆角
+    backgroundColor: '#FFFFFF', // 小红书风格白色背景
+    borderRadius: theme.borderRadius.lg, // 更大的圆角
     overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: theme.liquidGlass.card.border,
+    borderWidth: 0, // 移除边框，使用阴影
   },
   
   // Image Section
@@ -653,7 +637,7 @@ const styles = StyleSheet.create({
   },
   organizerName: {
     fontSize: theme.typography.fontSize.sm,
-    color: 'rgba(255, 255, 255, 0.95)',
+    color: theme.colors.text.primary,
     fontWeight: theme.typography.fontWeight.medium,
     marginRight: theme.spacing.xs,
   },
@@ -662,21 +646,11 @@ const styles = StyleSheet.create({
   title: {
     fontSize: theme.typography.fontSize['2xl'],
     fontWeight: theme.typography.fontWeight.bold,
-    color: theme.colors.text.inverse,
+    color: '#FFFFFF',
     marginBottom: theme.spacing.xs,
     lineHeight: theme.typography.fontSize['2xl'] * theme.typography.lineHeight.tight,
-    // v1.2 文字描边增强对比度
-    textShadowColor: 'rgba(0, 0, 0, 0.9)', // 更强的描边
-    textShadowOffset: { width: 0, height: 2 },
-    textShadowRadius: 3,
-  },
-  subtitle: {
-    fontSize: theme.typography.fontSize.base,
-    color: 'rgba(255, 255, 255, 0.9)', // v1.2: 提高对比度
-    marginBottom: theme.spacing.sm,
-    fontWeight: theme.typography.fontWeight.medium,
-    // v1.2 文字描边增强对比度
-    textShadowColor: 'rgba(0, 0, 0, 0.7)',
+    // 增强文字描边确保可读性
+    textShadowColor: 'rgba(0, 0, 0, 0.8)',
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 2,
   },
@@ -700,7 +674,7 @@ const styles = StyleSheet.create({
   },
   metaText: {
     fontSize: theme.typography.fontSize.sm,
-    color: 'rgba(255, 255, 255, 0.95)', // v1.2: 略微增加透明度
+    color: 'rgba(255, 255, 255, 0.95)', // 恢复白色以适配深色背景
     marginLeft: theme.spacing.xs / 2,
     fontWeight: theme.typography.fontWeight.medium,
     // v1.2 文字描边增强对比度
@@ -709,17 +683,18 @@ const styles = StyleSheet.create({
     textShadowRadius: 2,
   },
   
-  // Bottom Action Section - 液态玻璃设计
+  // Bottom Action Section - 小红书风格白色背景
   actionContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     padding: theme.spacing.md,
-    backgroundColor: theme.liquidGlass.floating.background,
+    backgroundColor: '#FFFFFF',
     borderTopWidth: 1,
-    borderTopColor: theme.liquidGlass.card.border,
-    // 添加玻璃反光条
-    position: 'relative',
+    borderTopColor: 'rgba(0, 0, 0, 0.08)',
+    // 小红书风格的轻微圆角
+    borderBottomLeftRadius: theme.borderRadius.md,
+    borderBottomRightRadius: theme.borderRadius.md,
   },
   participantInfo: {
     flex: 1,
@@ -733,29 +708,13 @@ const styles = StyleSheet.create({
   participantText: {
     fontSize: theme.typography.fontSize.base,
     fontWeight: theme.typography.fontWeight.semibold,
-    color: theme.colors.text.primary,
+    color: '#1A1A1A', // 小红书风格深灰色
     marginLeft: theme.spacing.xs,
     marginRight: theme.spacing.sm,
   },
-  freeTag: {
-    backgroundColor: theme.colors.success,
-    paddingHorizontal: theme.spacing.xs,
-    paddingVertical: 2,
-    borderRadius: theme.borderRadius.badge,
-  },
-  freeText: {
-    fontSize: theme.typography.fontSize.xs,
-    color: theme.colors.text.inverse,
-    fontWeight: theme.typography.fontWeight.semibold,
-  },
-  priceText: {
-    fontSize: theme.typography.fontSize.base,
-    fontWeight: theme.typography.fontWeight.bold,
-    color: BRAND_INTERACTIONS.navigation.active.text,
-  },
   availableText: {
     fontSize: theme.typography.fontSize.sm,
-    color: theme.colors.text.secondary,
+    color: '#666666', // 小红书风格中灰色
   },
   urgentText: {
     color: theme.colors.warning,

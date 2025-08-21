@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -14,7 +14,12 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
+import { DeviceEventEmitter } from 'react-native';
 import { theme } from '../../theme';
+import { LIQUID_GLASS_LAYERS } from '../../theme/core';
+// import RenderHtml from 'react-native-render-html'; // 暂时注释掉，避免兼容性问题
+import { vitaGlobalAPI } from '../../services/VitaGlobalAPI';
+import { FrontendActivity } from '../../utils/activityAdapter';
 
 const { width: screenWidth } = Dimensions.get('window');
 
@@ -26,24 +31,78 @@ export const ActivityDetailScreen: React.FC = () => {
   const activity = route.params?.activity || {};
   
   const [isRegistered, setIsRegistered] = useState(false);
+  const [registrationStatus, setRegistrationStatus] = useState<'upcoming' | 'registered' | 'checked_in'>('upcoming');
+  const [loading, setLoading] = useState(false);
   const [isFavorited, setIsFavorited] = useState(false);
+
+  // 初始化报名状态
+  useEffect(() => {
+    if (activity.status) {
+      setRegistrationStatus(activity.status);
+      setIsRegistered(activity.status !== 'upcoming');
+    }
+  }, [activity.status]);
+
+  // 处理活动报名
+  const handleRegister = async () => {
+    if (loading || registrationStatus !== 'upcoming') return;
+
+    setLoading(true);
+    try {
+      const result = await vitaGlobalAPI.enrollActivity(parseInt(activity.id));
+      
+      if (result.code === 200 && result.data && result.data > 0) {
+        setRegistrationStatus('registered');
+        setIsRegistered(true);
+        Alert.alert(t('activityDetail.registration_success'), t('activityDetail.registration_success_message'));
+      } else {
+        Alert.alert(t('activityDetail.registration_failed'), result.msg || t('activityDetail.registration_failed_message'));
+      }
+    } catch (error) {
+      console.error('Registration error:', error);
+      Alert.alert(t('activityDetail.registration_failed'), t('common.network_error'));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 处理活动签到
+  const handleSignIn = async () => {
+    if (loading || registrationStatus !== 'registered') return;
+
+    setLoading(true);
+    try {
+      const result = await vitaGlobalAPI.signInActivity(parseInt(activity.id));
+      
+      if (result.code === 200 && result.data && result.data > 0) {
+        setRegistrationStatus('checked_in');
+        Alert.alert(t('activityDetail.checkin_success'), t('activityDetail.checkin_success_message'));
+      } else {
+        Alert.alert(t('activityDetail.checkin_failed'), result.msg || t('activityDetail.checkin_failed_message'));
+      }
+    } catch (error) {
+      console.error('Sign-in error:', error);
+      Alert.alert(t('activityDetail.checkin_failed'), t('common.network_error'));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 进入页面时隐藏TabBar，离开时显示
+  useEffect(() => {
+    // 发送隐藏TabBar事件
+    DeviceEventEmitter.emit('hideTabBar', true);
+
+    // 组件卸载时恢复TabBar
+    return () => {
+      DeviceEventEmitter.emit('hideTabBar', false);
+    };
+  }, []);
 
   const handleBack = () => {
     navigation.goBack();
   };
 
-  const handleRegister = () => {
-    // 检查是否登录
-    const isLoggedIn = false; // TODO: 从全局状态获取
-    
-    if (!isLoggedIn) {
-      // 未登录，跳转到登录页
-      navigation.navigate('Login', { returnTo: 'ActivityDetail' });
-    } else {
-      // 已登录，跳转到报名表单
-      navigation.navigate('RegistrationForm', { activity });
-    }
-  };
 
   const handleShare = () => {
     Alert.alert(t('activityDetail.share'), t('activityDetail.shareMessage'));
@@ -53,14 +112,6 @@ export const ActivityDetailScreen: React.FC = () => {
     setIsFavorited(!isFavorited);
   };
 
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    const month = date.getMonth() + 1;
-    const day = date.getDate();
-    const weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-    const weekDay = weekDays[date.getDay()];
-    return `${month}/${day} ${weekDay}`;
-  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -80,20 +131,26 @@ export const ActivityDetailScreen: React.FC = () => {
           >
             <Ionicons 
               name={isFavorited ? "heart" : "heart-outline"} 
-              size={24} 
-              color={isFavorited ? theme.colors.danger : theme.colors.text.inverse} 
+              size={20} // 稍微减小尺寸适配36px容器
+              color={isFavorited ? theme.colors.danger : '#FFFFFF'} // 白色图标
             />
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.fixedActionButton}
             onPress={handleShare}
           >
-            <Ionicons name="share-outline" size={24} color={theme.colors.text.inverse} />
+            <Ionicons name="share-outline" size={20} color="#FFFFFF" />
           </TouchableOpacity>
         </View>
       </View>
       
-      <ScrollView bounces={false} showsVerticalScrollIndicator={false}>
+      <ScrollView 
+        bounces={false} 
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ 
+          paddingBottom: 120 // 预留空间给浮动的立即报名按钮
+        }}
+      >
         {/* Image Header */}
         <View style={styles.imageContainer}>
           <Image
@@ -109,7 +166,7 @@ export const ActivityDetailScreen: React.FC = () => {
           <View style={styles.titleSection}>
             <Text style={styles.title}>{activity.title}</Text>
             <View style={styles.attendeeInfo}>
-              <Ionicons name="people" size={20} color={theme.colors.primary} />
+              <Ionicons name="people" size={20} color="#111827" />
               <Text style={styles.attendeeText}>
                 {activity.attendees} / {activity.maxAttendees} {t('activityDetail.peopleRegistered')}
               </Text>
@@ -122,14 +179,16 @@ export const ActivityDetailScreen: React.FC = () => {
               <View style={styles.infoCard}>
                 <View style={styles.infoCardOverlay} />
                 <View style={styles.infoCardIcon}>
-                  <Ionicons name="calendar" size={20} color={theme.colors.primary} />
+                  <Ionicons name="calendar" size={20} color="#111827" />
                 </View>
                 <View style={styles.infoCardContent}>
                   <Text style={styles.infoCardLabel}>{t('activityDetail.activityTime')}</Text>
-                  <Text style={styles.infoCardValue}>
-                    {formatDate(activity.date)}
+                  <Text style={styles.infoCardValue} numberOfLines={1}>
+                    {activity.endDate && activity.endDate !== activity.date 
+                      ? `${activity.date.split('-')[1]}/${activity.date.split('-')[2]}-${activity.endDate.split('-')[2]}`
+                      : `${activity.date.split('-')[1]}/${activity.date.split('-')[2]}`
+                    }
                   </Text>
-                  <Text style={styles.infoCardValue}>{activity.time}</Text>
                 </View>
               </View>
             </View>
@@ -138,7 +197,7 @@ export const ActivityDetailScreen: React.FC = () => {
               <View style={styles.infoCard}>
                 <View style={styles.infoCardOverlay} />
                 <View style={styles.infoCardIcon}>
-                  <Ionicons name="location" size={20} color={theme.colors.primary} />
+                  <Ionicons name="location" size={20} color="#111827" />
                 </View>
                 <View style={styles.infoCardContent}>
                   <Text style={styles.infoCardLabel}>{t('activityDetail.activityLocation')}</Text>
@@ -152,34 +211,14 @@ export const ActivityDetailScreen: React.FC = () => {
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>{t('activityDetail.activityDetails')}</Text>
             <Text style={styles.description}>
-              欢迎参加CU 2025春季迎新派对！这是一个绝佳的机会，让新生和老生相聚一堂，建立友谊，分享经验。
-              {'\n\n'}
-              活动亮点：
-              {'\n'}• 自助晚餐和饮料
-              {'\n'}• 互动游戏和抽奖活动
-              {'\n'}• 学生组织展示
-              {'\n'}• 社交网络机会
-              {'\n\n'}
-              请准时到场，我们期待与您见面！
+              {activity.detail ? 
+                // 暂时显示HTML内容的文本版本，后续可以添加HTML解析
+                activity.detail.replace(/<[^>]*>/g, '').replace(/&amp;/g, '&') :
+                t('activityDetail.no_details')
+              }
             </Text>
           </View>
 
-          {/* Requirements Section */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>{t('activityDetail.registrationRequirements')}</Text>
-            <View style={styles.requirementItem}>
-              <Ionicons name="checkmark-circle" size={20} color={theme.colors.success} />
-              <Text style={styles.requirementText}>CU在读学生</Text>
-            </View>
-            <View style={styles.requirementItem}>
-              <Ionicons name="checkmark-circle" size={20} color={theme.colors.success} />
-              <Text style={styles.requirementText}>需要学生证验证</Text>
-            </View>
-            <View style={styles.requirementItem}>
-              <Ionicons name="information-circle" size={20} color={theme.colors.primary} />
-              <Text style={styles.requirementText}>建议携带名片用于社交</Text>
-            </View>
-          </View>
 
           {/* Organizer Section */}
           <View style={styles.section}>
@@ -199,8 +238,7 @@ export const ActivityDetailScreen: React.FC = () => {
 
       {/* Bottom Register Button */}
       <View style={[styles.bottomContainer, { 
-        paddingBottom: insets.bottom + 20,
-        marginBottom: 16,
+        bottom: insets.bottom + 12, // 安全区上方间距≥12
       }]}>
         <View style={[
           styles.registerButtonShadowContainer,
@@ -208,12 +246,15 @@ export const ActivityDetailScreen: React.FC = () => {
         ]}>
           <TouchableOpacity
             style={styles.registerButton}
-            onPress={handleRegister}
-            disabled={isRegistered || activity.attendees >= activity.maxAttendees}
+            onPress={registrationStatus === 'upcoming' ? handleRegister : 
+                     registrationStatus === 'registered' ? handleSignIn : undefined}
+            disabled={loading || registrationStatus === 'checked_in'}
           >
             <Text style={styles.registerButtonText}>
-              {isRegistered ? t('activityDetail.registered') : 
-               activity.attendees >= activity.maxAttendees ? t('activityDetail.full') : t('activityDetail.registerNow')}
+              {loading ? t('common.loading') :
+               registrationStatus === 'upcoming' ? t('activityDetail.registerNow') :
+               registrationStatus === 'registered' ? t('activityDetail.checkin_now') :
+               registrationStatus === 'checked_in' ? t('activityDetail.checked_in') : t('activityDetail.unavailable')}
             </Text>
           </TouchableOpacity>
         </View>
@@ -251,10 +292,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
   },
   fixedActionButton: {
-    width: 40,
-    height: 40,
-    borderRadius: theme.borderRadius.full,
-    backgroundColor: 'rgba(0, 0, 0, 0.8)', // 增加不透明度避免阴影问题
+    width: 36, // 按建议调整为36
+    height: 36,
+    borderRadius: 18, // L1圆形
+    backgroundColor: LIQUID_GLASS_LAYERS.L1.background.light,
+    borderWidth: 1, // 描边1pt
+    borderColor: 'rgba(255, 255, 255, 0.3)',
     alignItems: 'center',
     justifyContent: 'center',
     marginLeft: theme.spacing[2],
@@ -338,7 +381,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: theme.borderRadius.full,
-    backgroundColor: theme.colors.primary + '20',
+    backgroundColor: 'rgba(17, 24, 39, 0.1)', // 淡黑色背景
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: theme.spacing[3],
@@ -369,7 +412,7 @@ const styles = StyleSheet.create({
     pointerEvents: 'none',
   },
   section: {
-    marginBottom: theme.spacing[4],
+    marginBottom: theme.spacing[4] - 15, // 减少15px，避免文字重叠
   },
   sectionTitle: {
     fontSize: theme.typography.fontSize.lg,
@@ -400,7 +443,7 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: theme.borderRadius.full,
-    backgroundColor: theme.colors.primary,
+    backgroundColor: '#111827', // 深黑色背景
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: theme.spacing[3],
@@ -424,16 +467,29 @@ const styles = StyleSheet.create({
     color: theme.colors.text.secondary,
   },
   bottomContainer: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
     padding: theme.spacing[4],
-    backgroundColor: theme.colors.text.inverse,
-    borderTopWidth: 1,
-    borderTopColor: theme.colors.border,
+    backgroundColor: 'rgba(255, 255, 255, 0.85)', // 更透明的白色背景
+    borderTopWidth: 0, // 去掉上方黑线
+    borderRadius: 24, // 添加圆角，与TabBar一致
+    marginHorizontal: 16, // 外轮廓与屏幕左右各留16-20
+    // 添加与TabBar相同的阴影效果
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.08,
+    shadowRadius: 16,
+    elevation: 4,
+    overflow: 'hidden',
   },
   // Register Button Shadow容器 - 解决阴影冲突
   registerButtonShadowContainer: {
-    borderRadius: theme.borderRadius.lg,
-    backgroundColor: theme.colors.primary,
-    ...theme.shadows.button,
+    borderRadius: 16, // 圆角14-16
+    // L2品牌玻璃效果
+    backgroundColor: 'rgba(249, 168, 137, 0.14)', // Dawn轻染14%
+    borderWidth: 1,
+    borderColor: 'rgba(249, 168, 137, 0.22)', // 品牌描边22%
   },
   
   registerButton: {

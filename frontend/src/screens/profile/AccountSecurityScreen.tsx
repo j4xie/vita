@@ -7,17 +7,13 @@ import {
   SafeAreaView,
   ScrollView,
   Alert,
-  ActionSheetIOS,
   Platform,
   useColorScheme,
   AccessibilityInfo,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
-import { useNavigation } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import * as Haptics from 'expo-haptics';
 
 import { theme } from '../../theme';
 
@@ -173,50 +169,6 @@ export const AccountSecurityScreen: React.FC = () => {
     checkAccessibility();
   }, []);
 
-  const handleLogout = () => {
-    // Haptic feedback
-    if (Platform.OS === 'ios' && !isReduceMotionEnabled) {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-    }
-
-    if (Platform.OS === 'ios') {
-      ActionSheetIOS.showActionSheetWithOptions(
-        {
-          title: t('profile.account.logoutConfirm'),
-          message: t('profile.account.logoutMessage'),
-          options: [t('profile.account.cancel'), t('profile.account.logout')],
-          destructiveButtonIndex: 1,
-          cancelButtonIndex: 0,
-        },
-        (buttonIndex) => {
-          if (buttonIndex === 1) {
-            performLogout();
-          }
-        }
-      );
-    } else {
-      Alert.alert(
-        t('profile.account.logoutConfirm'),
-        t('profile.account.logoutMessage'),
-        [
-          { text: t('profile.account.cancel'), style: 'cancel' },
-          { text: t('profile.account.logout'), style: 'destructive', onPress: performLogout },
-        ]
-      );
-    }
-  };
-
-  const performLogout = async () => {
-    try {
-      await AsyncStorage.clear();
-      navigation.reset({
-        index: 0,
-        routes: [{ name: 'Auth' }],
-      });
-    } catch (error) {
-      console.error('Logout error:', error);
-    }
-  };
 
   const accountItems = [
     {
@@ -352,18 +304,6 @@ export const AccountSecurityScreen: React.FC = () => {
             </View>
           </View>
 
-          {/* 退出登录 */}
-          <View style={styles.logoutContainer}>
-            <View style={styles.logoutRow}>
-              <SettingRow
-                title={t('profile.account.logout')}
-                icon="log-out-outline"
-                onPress={handleLogout}
-                isLast={true}
-                isDanger={true}
-              />
-            </View>
-          </View>
         </ScrollView>
       </SafeAreaView>
     </View>

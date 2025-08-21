@@ -10,7 +10,9 @@ import {
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
+import { LinearGradient } from 'expo-linear-gradient';
 import { theme } from '../../theme';
+import { LIQUID_GLASS_LAYERS, DAWN_GRADIENTS } from '../../theme/core';
 
 export const RegisterChoiceScreen: React.FC = () => {
   const navigation = useNavigation<any>();
@@ -25,7 +27,7 @@ export const RegisterChoiceScreen: React.FC = () => {
   };
 
   const handleNormalRegister = () => {
-    navigation.navigate('RegisterForm', { hasReferralCode: false });
+    navigation.navigate('RegisterStep1');
   };
 
   const handleSkip = () => {
@@ -34,6 +36,7 @@ export const RegisterChoiceScreen: React.FC = () => {
 
   return (
     <SafeAreaView style={styles.container}>
+      <LinearGradient colors={DAWN_GRADIENTS.skyCool} style={StyleSheet.absoluteFill} />
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={handleBack} style={styles.backButton}>
@@ -69,7 +72,7 @@ export const RegisterChoiceScreen: React.FC = () => {
           >
             <View style={styles.cardContent}>
               <View style={styles.iconContainer}>
-                <Ionicons name="qr-code" size={48} color={theme.colors.text.inverse} />
+                <Ionicons name="qr-code" size={48} color="#000000" />
               </View>
               <View style={styles.textContainer}>
                 <Text style={styles.cardTitle}>{t('auth.register.referral_registration')}</Text>
@@ -102,7 +105,7 @@ export const RegisterChoiceScreen: React.FC = () => {
                   {t('auth.register.normal_description')}
                 </Text>
               </View>
-              <Ionicons name="chevron-forward" size={24} color={theme.colors.text.disabled} />
+              <Ionicons name="chevron-forward" size={24} color={theme.colors.text.tertiary} />
             </View>
           </TouchableOpacity>
         </View>
@@ -143,7 +146,7 @@ export const RegisterChoiceScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: theme.colors.background.primary,
+    backgroundColor: 'rgba(255, 255, 255, 0.001)', // Nearly invisible but solid for shadow calculation
   },
   header: {
     flexDirection: 'row',
@@ -158,21 +161,16 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   skipButton: {
-    paddingVertical: theme.spacing[2],
-    paddingHorizontal: theme.spacing[4],
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    paddingVertical: theme.spacing.sm,
+    paddingHorizontal: theme.spacing.md,
+    backgroundColor: 'rgba(255, 255, 255, 0.001)', // Nearly invisible but solid for shadow calculation
     borderRadius: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
-    elevation: 2,
-    borderWidth: 1,
-    borderColor: 'rgba(0, 0, 0, 0.08)',
+    borderWidth: 1.5,
+    borderColor: LIQUID_GLASS_LAYERS.L2.border.color.light,
   },
   skipText: {
     fontSize: theme.typography.fontSize.sm,
-    color: theme.colors.text.primary,
+    color: theme.colors.primary,
     fontWeight: theme.typography.fontWeight.semibold,
   },
   content: {
@@ -216,15 +214,16 @@ const styles = StyleSheet.create({
     borderRadius: theme.borderRadius.xl,
     marginBottom: theme.spacing[4],
     padding: theme.spacing[5],
-    ...theme.shadows.md,
+    borderWidth: LIQUID_GLASS_LAYERS.L1.border.width,
+    ...theme.shadows.sm,
   },
   primaryCard: {
-    backgroundColor: theme.colors.primary,
+    backgroundColor: '#E5E7EB', // 灰色背景
+    borderColor: '#D1D5DB', // 灰色边框
   },
   secondaryCard: {
-    backgroundColor: theme.colors.text.inverse,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
+    backgroundColor: LIQUID_GLASS_LAYERS.L1.background.light,
+    borderColor: LIQUID_GLASS_LAYERS.L1.border.color.light,
   },
   cardContent: {
     flexDirection: 'row',

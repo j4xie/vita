@@ -6,6 +6,11 @@ import { theme } from './src/theme';
 import initI18next, { i18n } from './src/utils/i18n';
 import { AppNavigator } from './src/navigation/AppNavigator';
 
+// 开发环境导入测试QR码工具 - 暂时禁用
+// if (__DEV__) {
+//   import('./src/utils/testQRCodes');
+// }
+
 function MainApp() {
   return (
     <SafeAreaProvider>
@@ -44,7 +49,7 @@ export default function App() {
           <Text style={[styles.text, { color: theme.colors.text.primary }]}>
             🔄 正在启动西柚...
           </Text>
-          <Text style={[styles.subtitle, { color: theme.colors.text.secondary }]}>
+          <Text style={[styles.subtext, { color: theme.colors.text.secondary }]}>
             初始化国际化系统
           </Text>
         </View>

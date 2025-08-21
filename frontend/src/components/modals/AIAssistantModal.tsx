@@ -19,6 +19,7 @@ import * as Haptics from 'expo-haptics';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { theme } from '../../theme';
+import { LIQUID_GLASS_LAYERS, DAWN_GRADIENTS } from '../../theme/core';
 
 interface AIAssistantModalProps {
   visible: boolean;
@@ -137,20 +138,14 @@ export const AIAssistantModal: React.FC<AIAssistantModalProps> = ({
           <Animated.View
             style={[
               styles.modalContent,
+              styles.modalContentGlass,
               {
                 opacity: contentOpacity,
                 transform: [{ scale: contentScale }],
               },
             ]}
           >
-            <LinearGradient
-              colors={[
-                isDarkMode ? '#1c1c1e' : '#ffffff',
-                isDarkMode ? '#2c2c2e' : '#f8f9ff',
-                isDarkMode ? '#1c1c1e' : '#ffffff',
-              ]}
-              style={styles.contentGradient}
-            >
+            <View style={[styles.contentGradient, styles.contentGlass]}>
               {/* Close button - 36pt直径，44pt触达区域 */}
               <TouchableOpacity
                 style={styles.closeButton}
@@ -221,7 +216,7 @@ export const AIAssistantModal: React.FC<AIAssistantModalProps> = ({
                 </Text>
               </View>
 
-              {/* Feature preview */}
+              {/* Feature preview - 精简版 */}
               <View style={styles.featureSection}>
                 <Text style={[
                   styles.featureTitle,
@@ -235,12 +230,11 @@ export const AIAssistantModal: React.FC<AIAssistantModalProps> = ({
                     { icon: 'calendar-outline', text: t('ai.features.calendar') },
                     { icon: 'language-outline', text: t('ai.features.translation') },
                     { icon: 'school-outline', text: t('ai.features.academic') },
-                    { icon: 'bulb-outline', text: t('ai.features.suggestions') },
                   ].map((feature, index) => (
                     <View key={index} style={styles.featureItem}>
                       <Ionicons
                         name={feature.icon as any}
-                        size={20} // 20-22pt图标尺寸规范
+                        size={18} // 减小图标尺寸
                         color={themeColor}
                         style={styles.featureIcon}
                       />
@@ -255,22 +249,24 @@ export const AIAssistantModal: React.FC<AIAssistantModalProps> = ({
                 </View>
               </View>
 
-              {/* Action buttons - 只保留一个按钮 */}
+              {/* Action buttons - Dawn Gradient */}
               <View style={styles.buttonSection}>
-                {/* 单一按钮 - 我知道了 */}
                 <TouchableOpacity
-                  style={[styles.primaryButton, { backgroundColor: theme.colors.primary }]}
                   onPress={handleClose}
                   activeOpacity={0.8}
-                  accessibilityRole="button"
-                  accessibilityLabel={t('ai.gotIt')}
                 >
-                  <Text style={styles.primaryButtonText}>
-                    {t('ai.gotIt')}
-                  </Text>
+                  <View style={[
+                    styles.primaryButton,
+                    styles.l2BrandGlassButton // L2品牌玻璃按钮（推荐方案A）
+                  ]}
+                  >
+                    <Text style={styles.primaryButtonText}>
+                      {t('ai.gotIt')}
+                    </Text>
+                  </View>
                 </TouchableOpacity>
               </View>
-            </LinearGradient>
+            </View>
           </Animated.View>
         </TouchableWithoutFeedback>
       </View>
@@ -281,7 +277,7 @@ export const AIAssistantModal: React.FC<AIAssistantModalProps> = ({
 const styles = StyleSheet.create({
   backdrop: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0, 0, 0, 0.4)',
+    backgroundColor: 'rgba(0, 0, 0, 0.35)', // 遮罩黑30-40%
   },
   blurContainer: {
     flex: 1,
@@ -303,33 +299,41 @@ const styles = StyleSheet.create({
     elevation: 8, // Android轻量投影
   },
   contentGradient: {
-    borderRadius: 24, // 保持一致的圆角
-    paddingVertical: 28,
+    borderRadius: 28, // 按建议增加到24-28范围
+    paddingVertical: 20,
     paddingHorizontal: 24,
+    // L3玻璃效果
+    backgroundColor: 'rgba(255, 255, 255, 0.90)', // 90%白
+    overflow: 'hidden',
   },
   closeButton: {
     position: 'absolute',
-    top: 16,
-    right: 16,
-    width: 36, // 36pt直径
+    top: 12,
+    right: 12,
+    width: 36,
     height: 36,
-    borderRadius: 18,
-    backgroundColor: 'rgba(142, 142, 147, 0.12)',
+    borderRadius: 18, // L1圆形
+    backgroundColor: LIQUID_GLASS_LAYERS.L1.background.light,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
     justifyContent: 'center',
     alignItems: 'center',
     zIndex: 1,
   },
   header: {
     alignItems: 'center',
-    marginBottom: 16, // 调整与学校徽章的间距
+    marginBottom: 12, // 进一步压缩间距
+    marginTop: 2, // 进一步压缩间距
   },
   iconContainer: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
+    width: 44, // 减小图标容器
+    height: 44,
+    borderRadius: 22,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 8, // 压缩间距
+    // L2轻染背景
+    backgroundColor: 'rgba(249, 168, 137, 0.14)', // Dawn 14%轻染
   },
   title: {
     fontSize: 22, // 20-22pt规范
@@ -340,7 +344,7 @@ const styles = StyleSheet.create({
   },
   statusSection: {
     alignItems: 'center',
-    marginBottom: 20, // 学校徽章与标题间距12-16pt规范
+    marginBottom: 16, // 压缩间距
   },
   statusBadge: {
     flexDirection: 'row',
@@ -366,7 +370,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   messageSection: {
-    marginBottom: 24,
+    marginBottom: 18, // 压缩间距
   },
   mainMessage: {
     fontSize: 16, // 副标题15-17pt规范
@@ -382,12 +386,12 @@ const styles = StyleSheet.create({
     maxWidth: 280, // 限制最大宽度确保一行显示
   },
   featureSection: {
-    marginBottom: 28,
+    marginBottom: 16, // 进一步压缩区域间距
   },
   featureTitle: {
     fontSize: 16,
     fontWeight: '600',
-    marginBottom: 12,
+    marginBottom: 8, // 压缩标题间距
     textAlign: 'center',
   },
   featureList: {
@@ -397,10 +401,10 @@ const styles = StyleSheet.create({
   featureItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 9, // 8-10pt行距
-    minHeight: 28, // 确保列表项高度一致
-    justifyContent: 'center', // 每个功能项内部居中
-    maxWidth: 200, // 限制最大宽度
+    paddingVertical: 6, // 进一步压缩行距
+    minHeight: 18, // 减小最小高度
+    justifyContent: 'center',
+    maxWidth: 200,
   },
   featureIcon: {
     marginRight: 12,
@@ -419,16 +423,37 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 16,
+    paddingVertical: 12,
     paddingHorizontal: 24,
-    borderRadius: 12,
-    minHeight: 50,
+    borderRadius: 16, // 圆角14-16
+    minHeight: 48, // 高度44-48
+    // 增强对比度的按钮背景
+    backgroundColor: 'rgba(249, 168, 137, 0.8)', // 提高到80%确保足够对比度
+    borderWidth: 1,
+    borderColor: 'rgba(249, 168, 137, 0.9)', // 更深的描边
   },
   primaryButtonText: {
-    fontSize: 17,
+    fontSize: 15,
     fontWeight: '600',
-    color: 'white',
-    marginRight: 8,
+    color: '#FFFFFF', // 白字
+    textShadowColor: 'rgba(0, 0, 0, 0.2)', // 添加文字阴影增强可读性
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 1,
+  },
+  
+  // V2.0 L3浮层玻璃模态框
+  modalContentGlass: {
+    backgroundColor: LIQUID_GLASS_LAYERS.L3.background.light,
+    borderWidth: LIQUID_GLASS_LAYERS.L3.border.width,
+    borderColor: LIQUID_GLASS_LAYERS.L3.border.color.light,
+    borderRadius: LIQUID_GLASS_LAYERS.L3.borderRadius.modal,
+    ...theme.shadows[LIQUID_GLASS_LAYERS.L3.shadow],
+  },
+  
+  // V2.0 内容玻璃效果
+  contentGlass: {
+    backgroundColor: 'transparent',
+    borderWidth: 0,
   },
 });
 

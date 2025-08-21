@@ -1,14 +1,16 @@
 import React, { useRef } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Animated, useColorScheme } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useTranslation } from 'react-i18next';
 
 import { useTheme } from '../../theme';
-import { LIQUID_GLASS_LAYERS, BRAND_GLASS } from '../../theme/core';
+import { LIQUID_GLASS_LAYERS } from '../../theme/core';
 import { usePerformanceDegradation } from '../../hooks/usePerformanceDegradation';
 import { SegmentedControl } from './SegmentedControl';
+import { ACTIVITY_CATEGORIES } from '../../data/activityCategories';
 
 interface CategoryBarProps {
   selectedSegment: number;
@@ -36,13 +38,14 @@ const CategoryBar: React.FC<CategoryBarProps> = ({
   const { getLayerConfig } = usePerformanceDegradation();
   const L1Config = getLayerConfig('L1', isDarkMode);
   
-  // 调试：验证L1Config是否正确
-  console.log('CategoryBar L1Config:', L1Config);
+  // L1Config获取完成
 
+  const { i18n } = useTranslation();
+  const currentLanguage = i18n.language as 'zh' | 'en';
+  
   const segments = [
     t('activities.filters.all'),
-    t('activities.filters.ongoing'), 
-    t('activities.filters.upcoming')
+    ...ACTIVITY_CATEGORIES.map(category => category.name[currentLanguage])
   ];
 
   const handleFilterPress = () => {
@@ -67,17 +70,16 @@ const CategoryBar: React.FC<CategoryBarProps> = ({
 
   const styles = StyleSheet.create({
     container: {
-      height: 60, // 略增高度适配新设计
-      paddingHorizontal: 12, // 减少内边距适配窄容器
-      backgroundColor: 'rgba(255, 255, 255, 0.85)', // 直接使用L1玻璃背景
-      borderWidth: 1,
-      borderColor: 'rgba(255, 255, 255, 0.30)', // 直接使用L1边框色
-      borderRadius: 20, // 20pt圆角
-      marginHorizontal: -10, // 增加2px，从-8改为-10
-      marginVertical: 4, // 4pt垂直边距
+      height: 48,
+      paddingHorizontal: 0, // 移除padding，让内容自己控制间距
+      backgroundColor: 'rgba(255, 255, 255, 0.85)', // 强制显示玻璃背景以便调试
+      borderWidth: 1, // 临时添加边框以便看到容器
+      borderColor: 'rgba(255, 255, 255, 0.30)', // 玻璃边框
+      borderRadius: 20, // 添加圆角
+      marginHorizontal: 0, // 完全移除边距
+      marginVertical: 0, // 完全移除垂直边距
       justifyContent: 'center',
-      overflow: 'hidden',
-      // 直接使用xs阴影
+      // 添加阴影确保可见性
       shadowColor: '#000000',
       shadowOffset: { width: 0, height: 1 },
       shadowOpacity: 0.06,
@@ -89,34 +91,42 @@ const CategoryBar: React.FC<CategoryBarProps> = ({
       alignItems: 'center',
       justifyContent: 'space-between',
       height: '100%',
+      paddingHorizontal: 1.5, // 4个按钮往中间移动1.5px
     },
     segmentedControlWrapper: {
       flex: 1,
       marginRight: 8, // 减少右边距适配更窄容器
       justifyContent: 'center', // 确保垂直居中
       height: 38, // 与筛选按钮保持一致高度
+      // 移除调试边框
     },
     filterButtonContainer: {
       alignItems: 'center',
       justifyContent: 'center',
       height: 38, // 确保容器高度与按钮一致
-      marginRight: 0, // 移除负边距，给分段控制器更多空间
+      marginLeft: -2, // 再往左移动2px，从0改为-2
     },
     filterButton: {
-      width: 40, // 略增大适配新设计
-      height: 40,
-      borderRadius: 20,
-      backgroundColor: 'rgba(118, 118, 128, 0.12)', // 非激活状态
+      width: 38,
+      height: 38,
+      borderRadius: 19,
+      // 强制使用固定的玻璃背景，避免配置问题
+      backgroundColor: isDarkMode ? 'rgba(28, 28, 30, 0.85)' : 'rgba(255, 255, 255, 0.85)',
       borderWidth: 1,
-      borderColor: 'rgba(118, 118, 128, 0.2)',
+      borderColor: isDarkMode ? 'rgba(255, 255, 255, 0.15)' : 'rgba(255, 255, 255, 0.30)',
       alignItems: 'center',
       justifyContent: 'center',
-      ...theme.shadows.xs,
+      // 优化阴影效果，提高性能
+      shadowColor: '#000000',
+      shadowOffset: { width: 0, height: 2 }, // Reduced from 6 to 2
+      shadowOpacity: 0.08, // Reduced from 0.12 to 0.08
+      shadowRadius: 8, // Reduced from 16 to 8
+      elevation: 3, // Reduced from 6 to 3
     },
     filterButtonActive: {
-      backgroundColor: BRAND_GLASS.tint.primary, // L2品牌玻璃背景
-      borderColor: BRAND_GLASS.border.primary, // 品牌色描边
-      ...theme.shadows.sm, // 增强阴影
+      // 强制使用固定的品牌色背景
+      backgroundColor: isDarkMode ? 'rgba(255, 107, 53, 0.14)' : 'rgba(255, 107, 53, 0.14)',
+      borderColor: isDarkMode ? 'rgba(255, 107, 53, 0.18)' : 'rgba(255, 107, 53, 0.22)',
     },
     filterBadge: {
       position: 'absolute',
@@ -165,7 +175,7 @@ const CategoryBar: React.FC<CategoryBarProps> = ({
                 size={22} // 略增大图标
                 color={
                   hasActiveFilters
-                    ? '#FFFFFF' // 品牌玻璃上使用白色图标
+                    ? theme.colors.text.inverse
                     : theme.colors.text.secondary
                 }
               />

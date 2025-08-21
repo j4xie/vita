@@ -10,7 +10,16 @@ import {
   Animated,
   Platform,
   useColorScheme,
+  Dimensions,
 } from 'react-native';
+import Reanimated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+  withSpring,
+  withSequence,
+  Easing,
+} from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTranslation } from 'react-i18next';
@@ -36,8 +45,32 @@ export const SchoolSelectionScreen: React.FC<SchoolSelectionScreenProps> = ({ on
   const { getLayerConfig } = usePerformanceDegradation();
   const L1Config = getLayerConfig('L1', isDarkMode);
 
+  // 本地化学校名称显示函数
+  const getLocalizedSchoolDisplay = (school: School) => {
+    const isChineseUI = t('common.brand.name') === '西柚'; // 通过品牌名判断当前语言
+    return {
+      primary: isChineseUI ? school.name : school.englishName,
+      secondary: isChineseUI ? school.englishName : school.name,
+    };
+  };
+
   const [searchText, setSearchText] = useState('');
   const [filteredSchools, setFilteredSchools] = useState<School[]>(mockSchools);
+  
+  // 学校卡片放大跳转动画系统
+  const [cardLayouts, setCardLayouts] = useState<Map<string, any>>(new Map());
+  const [isTransitioning, setIsTransitioning] = useState(false);
+  const [selectedSchoolId, setSelectedSchoolId] = useState<string | null>(null);
+  
+  // 动画值 - v2方案
+  const transitionProgress = useSharedValue(0);
+  const cardScale = useSharedValue(1);
+  const cardOpacity = useSharedValue(1);
+  const cardX = useSharedValue(0);
+  const cardY = useSharedValue(0);
+  const cornerRadius = useSharedValue(16);
+  const blurGain = useSharedValue(0);
+  const highlightGain = useSharedValue(1);
 
   const handleSearch = useCallback((text: string) => {
     setSearchText(text);
@@ -53,12 +86,111 @@ export const SchoolSelectionScreen: React.FC<SchoolSelectionScreenProps> = ({ on
     }
   }, []);
 
+  // 记录卡片布局信息
+  const handleCardLayout = useCallback((schoolId: string, event: any) => {
+    const { x, y, width, height } = event.nativeEvent.layout;
+    setCardLayouts(prev => new Map(prev.set(schoolId, { x, y, width, height })));
+  }, []);
+  
+  // 学校卡片点击 - v2方案放大跳转
   const handleSchoolPress = useCallback((school: School) => {
-    if (Platform.OS === 'ios') {
-      Haptics.selectionAsync();
+    if (isTransitioning) return; // 防止重复点击
+    
+    const cardLayout = cardLayouts.get(school.id);
+    if (!cardLayout) {
+      // 没有布局信息，直接切换
+      onSchoolSelect(school);
+      return;
     }
-    onSchoolSelect(school);
-  }, [onSchoolSelect]);
+    
+    setIsTransitioning(true);
+    setSelectedSchoolId(school.id);
+    
+    // 阶段0: 按压反馈 (0-100ms)
+    cardScale.value = withTiming(0.98, { 
+      duration: 120, 
+      easing: Easing.bezier(0.2, 0.9, 0.2, 1) 
+    });
+    
+    // haptic反馈
+    if (Platform.OS === 'ios') {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
+    
+    // 延迟执行主动画
+    setTimeout(() => {
+      startMorphAnimation(school, cardLayout);
+    }, 100);
+  }, [isTransitioning, cardLayouts, onSchoolSelect]);
+  
+  // Morph-to-Header动画执行
+  const startMorphAnimation = useCallback((school: School, layout: any) => {
+    console.log('🎬 开始Morph动画到Header位置');
+    
+    // 计算目标Header坐标
+    const screenWidth = Dimensions.get('window').width;
+    const targetX = 16; // 页面左边距
+    const targetY = insets.top + 16; // Header顶部位置
+    
+    // 阶段1: 放大跳出 (100-320ms) - 克制放大1.12-1.18
+    const animationDuration = 220; // spring表观时长
+    
+    // 同步执行多个动画
+    cardScale.value = withSpring(1.15, { // 克制在1.12-1.18
+      damping: 20,
+      stiffness: 220,
+      mass: 1
+    });
+    
+    cardOpacity.value = withSequence(
+      withTiming(0.85, { duration: animationDuration * 0.7 }), // 70%进度降到0.85
+      withTiming(0.2, { duration: animationDuration * 0.3 })   // 最终到0.2
+    );
+    
+    // 移动到目标Header位置
+    cardX.value = withSpring(targetX - layout.x, {
+      damping: 20,
+      stiffness: 220
+    });
+    cardY.value = withSpring(targetY - layout.y, {
+      damping: 20, 
+      stiffness: 220
+    });
+    
+    // 材质联动: 角半径16→0
+    cornerRadius.value = withTiming(0, { duration: animationDuration });
+    
+    // 玻璃强度+4, 高光+15%
+    blurGain.value = withSequence(
+      withTiming(4, { duration: animationDuration * 0.4 }), // 0.3-0.7内增加
+      withTiming(0, { duration: animationDuration * 0.3 })  // 然后回归
+    );
+    highlightGain.value = withTiming(1.15, { duration: animationDuration * 0.5 });
+    
+    // 阶段2: 页面切换 - 提前到45%启动
+    setTimeout(() => {
+      console.log('🚀 45%进度，开始页面切换');
+      if (Platform.OS === 'ios') {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      }
+      // 这里触发页面切换
+      onSchoolSelect(school);
+    }, animationDuration * 0.45); // 45%进度启动
+    
+    // 完成清理
+    setTimeout(() => {
+      setIsTransitioning(false);
+      setSelectedSchoolId(null);
+      // 重置所有动画值
+      cardScale.value = 1;
+      cardOpacity.value = 1;
+      cardX.value = 0;
+      cardY.value = 0;
+      cornerRadius.value = 16;
+      blurGain.value = 0;
+      highlightGain.value = 1;
+    }, 500); // 总时长500ms
+  }, [insets.top, onSchoolSelect]);
 
   const renderSchoolCard = useCallback(({ item }: { item: School }) => {
     const animatedValue = new Animated.Value(1);
@@ -81,14 +213,28 @@ export const SchoolSelectionScreen: React.FC<SchoolSelectionScreenProps> = ({ on
       }).start();
     };
 
+    // 动画样式 - 仅对选中卡片应用
+    const isAnimatingCard = selectedSchoolId === item.id;
+    const animatedCardStyle = useAnimatedStyle(() => ({
+      transform: [
+        { translateX: isAnimatingCard ? cardX.value : 0 },
+        { translateY: isAnimatingCard ? cardY.value : 0 },
+        { scale: isAnimatingCard ? cardScale.value : animatedValue }
+      ],
+      opacity: isAnimatingCard ? cardOpacity.value : 1,
+      borderRadius: isAnimatingCard ? cornerRadius.value : 16,
+    }));
+
     return (
-      <Animated.View style={{ transform: [{ scale: animatedValue }] }}>
+      <Reanimated.View style={animatedCardStyle}>
         <TouchableOpacity
           style={[styles.schoolCard, styles.schoolCardGlass]}
           onPress={() => handleSchoolPress(item)}
           onPressIn={handlePressIn}
           onPressOut={handlePressOut}
+          onLayout={(event) => handleCardLayout(item.id, event)} // 布局追踪
           activeOpacity={0.9}
+          disabled={isTransitioning} // 动画期间禁用其他卡片
         >
           <LinearGradient
             colors={[item.color + '20', item.color + '10']}
@@ -107,12 +253,19 @@ export const SchoolSelectionScreen: React.FC<SchoolSelectionScreenProps> = ({ on
                 </View>
                 
                 <View style={styles.schoolDetails}>
-                  <Text style={[styles.schoolName, { color: isDarkMode ? '#ffffff' : '#000000' }]}>
-                    {item.name}
-                  </Text>
-                  <Text style={[styles.schoolEnglishName, { color: isDarkMode ? '#a1a1aa' : '#6b7280' }]}>
-                    {item.englishName}
-                  </Text>
+                  {(() => {
+                    const schoolDisplay = getLocalizedSchoolDisplay(item);
+                    return (
+                      <>
+                        <Text style={[styles.schoolName, { color: isDarkMode ? '#ffffff' : '#000000' }]}>
+                          {schoolDisplay.primary}
+                        </Text>
+                        <Text style={[styles.schoolEnglishName, { color: isDarkMode ? '#a1a1aa' : '#6b7280' }]}>
+                          {schoolDisplay.secondary}
+                        </Text>
+                      </>
+                    );
+                  })()}
                   <View style={styles.locationRow}>
                     <Ionicons 
                       name="location-outline" 
@@ -129,7 +282,7 @@ export const SchoolSelectionScreen: React.FC<SchoolSelectionScreenProps> = ({ on
               <View style={styles.rightSection}>
                 <View style={[styles.studentCountBadge, { backgroundColor: item.color + '20' }]}>
                   <Text style={[styles.studentCount, { color: item.color }]}>
-                    {item.studentCount}位志愿者
+                    {item.studentCount}{t('wellbeing.volunteer.volunteersCount')}
                   </Text>
                 </View>
                 <Ionicons 
@@ -141,7 +294,7 @@ export const SchoolSelectionScreen: React.FC<SchoolSelectionScreenProps> = ({ on
             </View>
           </LinearGradient>
         </TouchableOpacity>
-      </Animated.View>
+      </Reanimated.View>
     );
   }, [isDarkMode, handleSchoolPress]);
 

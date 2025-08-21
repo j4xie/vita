@@ -3,16 +3,16 @@
  * 充分利用 Hermes 引擎的性能优势，采用高效的数据结构和内存布局
  */
 
-// 西柚 颜色系统 - 核心常量
+// 奶橘色系统 - 参考图同款柔和色调
 export const CORE_COLORS = {
-  // 西柚 主色系 - 橙红品牌色
-  primary: '#FF6B35',
-  primaryPressed: '#E85A2F',
-  primaryDisabled: '#FFB399',
+  // 主色系 - 适中橙色 (用户指定)
+  primary: '#F9A889', // 适中饱和度的橙色
+  primaryPressed: '#E68956', // 按压时稍深
+  primaryDisabled: '#FCDBC8', // 禁用时变淡
   
-  // 西柚 辅色系 - 珊瑚红
-  secondary: '#FF4757',
-  secondaryPressed: '#E83E4F',
+  // 辅色系 - 温润奶茶色
+  secondary: '#FFF8E1', // 极淡的奶色
+  secondaryPressed: '#FFECB3', // 按压时的浅橘
   
   // 西柚 状态色
   success: '#2ED573',
@@ -195,17 +195,17 @@ export const CORE_SHADOWS = {
   },
   sm: {
     shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 6,
-    elevation: 2,
+    shadowOffset: { width: 0, height: 1 }, // Reduced from 2 to 1
+    shadowOpacity: 0.06, // Reduced from 0.08 to 0.06
+    shadowRadius: 3, // Reduced from 6 to 3
+    elevation: 1, // Reduced from 2 to 1
   },
   md: {
     shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.10,
-    shadowRadius: 12,
-    elevation: 4,
+    shadowOffset: { width: 0, height: 2 }, // Reduced from 4 to 2
+    shadowOpacity: 0.08, // Reduced from 0.10 to 0.08
+    shadowRadius: 6, // Reduced from 12 to 6
+    elevation: 2, // Reduced from 4 to 2
   },
   lg: {
     shadowColor: '#000000',
@@ -328,8 +328,24 @@ export const CORE_PLATFORM_OPTIMIZATIONS = {
   }
 } as const;
 
-// 西柚 品牌渐变系统
-export const BRAND_GRADIENT = ['#FF6B35', '#FF4D5E'] as const;
+// V2.0 极柔和朝霞渐变体系 - 微弱温暖色调
+export const DAWN_GRADIENTS = {
+  // Sky Cool (天际线) - 中性灰色系  
+  skyCool: ['#F8F9FA', '#F1F3F4', '#E8EAED', '#D1D5DB'] as const,
+  
+  // Dawn Warm (品牌主渐变) - 奶橘色系，参考图饱和度
+  dawnWarm: ['#FFFEF7', '#FFF8E1', '#FFE0B2'] as const, // 奶白到奶橘 (参考图色调)
+  
+  // Horizon Blend (过渡混合) - 上半部分微弱奶橘，参考图风格
+  horizonBlend: ['#F8F9FA', '#F5F6F7', '#FFFEF7', '#FFF0DC'] as const, // 微妙奶橘过渡
+  
+  // 渐变方向统一
+  direction: { x: 0.2, y: 0 }, // 225°角度对应的start/end坐标
+  directionEnd: { x: 0.8, y: 1 },
+} as const;
+
+// 向后兼容 - 主品牌渐变改为Dawn Warm
+export const BRAND_GRADIENT = DAWN_GRADIENTS.dawnWarm;
 
 // V2.0 西柚 品牌玻璃系统 - 增强版
 export const BRAND_GLASS = {
@@ -391,7 +407,7 @@ export const BRAND_GLASS = {
       android: {
         elevation: 4,
         shadowColor: '#FF6B35',
-        backgroundColor: 'transparent', // 重要：防止阴影被遮挡
+        backgroundColor: 'rgba(255, 255, 255, 0.001)', // Nearly invisible but solid for shadow calculation
       },
     },
     secondary: {
@@ -404,7 +420,7 @@ export const BRAND_GLASS = {
       android: {
         elevation: 3,
         shadowColor: '#FF4D5E',
-        backgroundColor: 'transparent',
+        backgroundColor: 'rgba(255, 255, 255, 0.001)', // Nearly invisible but solid for shadow calculation
       },
     },
     subtle: {
@@ -417,7 +433,7 @@ export const BRAND_GLASS = {
       android: {
         elevation: 2,
         shadowColor: '#FF6B35',
-        backgroundColor: 'transparent',
+        backgroundColor: 'rgba(255, 255, 255, 0.001)', // Nearly invisible but solid for shadow calculation
       },
     },
   },
@@ -616,11 +632,11 @@ export const LIQUID_GLASS_LAYERS = {
     borderRadius: 0,
   },
   
-  // L1 玻璃面板层 - 卡片、导航栏、列表容器
+  // L1 玻璃面板层 - 卡片、导航栏、列表容器  
   L1: {
     background: {
-      light: 'rgba(255, 255, 255, 0.85)',     // 浅色模式玻璃
-      dark: 'rgba(28, 28, 30, 0.85)',         // 深色模式玻璃
+      light: 'rgba(255, 255, 255, 0.85)',     // 浅色模式85%白玻璃
+      dark: 'rgba(28, 28, 30, 0.55)',         // 深色模式55%黑玻璃 (按您的规范)
     },
     blur: {
       ios: 20,          // iOS原生模糊强度
@@ -646,11 +662,11 @@ export const LIQUID_GLASS_LAYERS = {
     },
   },
   
-  // L2 品牌玻璃层 - 强调/选中状态
+  // L2 品牌玻璃层 - 强调/选中状态 (在L1基础上+Dawn Warm轻染14%)
   L2: {
     background: {
-      light: 'rgba(255, 107, 53, 0.14)',      // 西柚橙色轻染
-      dark: 'rgba(255, 107, 53, 0.12)',       // 深色模式橙色轻染
+      light: 'rgba(255, 107, 53, 0.14)',      // 浅色模式Dawn Warm轻染14%
+      dark: 'rgba(255, 107, 53, 0.14)',       // 深色模式同样14%轻染 (在55%黑玻璃基础上)
       coral: 'rgba(255, 77, 94, 0.12)',       // 珊瑚红变体
     },
     blur: {
@@ -683,8 +699,8 @@ export const LIQUID_GLASS_LAYERS = {
   // L3 浮层/弹窗层 - AI助手弹窗、模态框、工具提示
   L3: {
     background: {
-      light: 'rgba(255, 255, 255, 0.90)',
-      dark: 'rgba(28, 28, 30, 0.90)',
+      light: 'rgba(255, 255, 255, 0.90)',     // 浅色模式90%白玻璃
+      dark: 'rgba(28, 28, 30, 0.65)',         // 深色模式65%黑玻璃 (按您的规范)
     },
     blur: {
       ios: 30,          // 更强模糊营造浮层感
@@ -710,6 +726,36 @@ export const LIQUID_GLASS_LAYERS = {
       dark: 'rgba(0, 0, 0, 0.30)',
       blur: 15,
     },
+  },
+} as const;
+
+// V2.0 朝霞Overlay系统 - 白字可读性保障
+export const DAWN_OVERLAYS = {
+  // 照片/强底白字保障 - 严格按照规范
+  darkOverlay: {
+    light: 'rgba(0, 0, 0, 0.06)',      // 6%暗遮罩 (最轻)
+    medium: 'rgba(0, 0, 0, 0.08)',     // 8%暗遮罩 (常用)
+    strong: 'rgba(0, 0, 0, 0.10)',     // 10%暗遮罩 (最强)
+  },
+  
+  // 标题内阴影增强
+  titleShadow: {
+    color: 'rgba(0, 0, 0, 0.01)',      // 1%内阴影
+    offset: { width: 0, height: 1 },
+    radius: 1,
+  },
+  
+  // 白字对比标准
+  textContrast: {
+    minimum: 4.5,                      // 最低对比度要求
+    target: 6.0,                       // 目标对比度
+  },
+  
+  // 朝霞雾气效果
+  mistEffect: {
+    light: 'rgba(255, 255, 255, 0.15)', // 轻雾气
+    medium: 'rgba(255, 255, 255, 0.25)', // 中雾气
+    strong: 'rgba(255, 255, 255, 0.35)', // 强雾气
   },
 } as const;
 
@@ -764,6 +810,136 @@ export const BLUR_STRATEGIES = {
       light: ['rgba(255, 255, 255, 0.98)', 'rgba(255, 255, 255, 0.90)'],
       dark: ['rgba(28, 28, 30, 0.98)', 'rgba(28, 28, 30, 0.90)'],
     },
+  },
+} as const;
+
+// V2.0 克制化颜色系统 - 朝霞·Liquid Glass 规范
+export const RESTRAINED_COLORS = {
+  // L1 基础容器系统 (85%白玻璃 + 中性描边)
+  L1_CONTAINER: {
+    background: {
+      light: 'rgba(255, 255, 255, 0.85)', // 浅色模式85%白玻璃
+      dark: 'rgba(28, 28, 30, 0.55)',     // 深色模式55%黑玻璃
+    },
+    border: {
+      color: {
+        light: 'rgba(255, 255, 255, 0.30)',
+        dark: 'rgba(255, 255, 255, 0.15)',
+      },
+      width: 1,
+    },
+    // 内侧rim效果 (225°方向，≤8%透明度)
+    innerRim: {
+      light: 'rgba(255, 107, 53, 0.08)',
+      dark: 'rgba(255, 107, 53, 0.06)',
+    },
+    shadow: 'xs' as const, // 仅XS阴影
+    borderRadius: {
+      card: 16,
+      surface: 20,
+      compact: 12,
+    },
+  },
+  
+  // L2 品牌强调系统 (L1基础 + Dawn轻染14%)
+  L2_EMPHASIS: {
+    background: {
+      light: 'rgba(255, 107, 53, 0.14)', // Dawn轻染14%
+      dark: 'rgba(240, 90, 45, 0.14)',   // 深色模式降饱和6%
+    },
+    border: {
+      color: {
+        light: 'rgba(255, 107, 53, 0.22)', // Dawn描边22%
+        dark: 'rgba(240, 90, 45, 0.22)',
+      },
+      width: 1,
+    },
+    textColor: {
+      light: '#FFFFFF',
+      dark: '#FFFFFF',
+    },
+    shadow: 'xs' as const,
+    borderRadius: {
+      button: 14,
+      pill: 20,
+      compact: 12,
+    },
+  },
+  
+  // Dawn胶囊系统 (CTA/选中/徽章专用)
+  DAWN_PILL: {
+    small: {
+      background: 'rgba(255, 107, 53, 0.14)',
+      border: 'rgba(255, 107, 53, 0.22)',
+      height: 20,
+      borderRadius: 10,
+      textColor: '#FFFFFF',
+      fontSize: 10,
+    },
+    medium: {
+      background: 'rgba(255, 107, 53, 0.14)',
+      border: 'rgba(255, 107, 53, 0.22)',
+      height: 24,
+      borderRadius: 12,
+      textColor: '#FFFFFF',
+      fontSize: 12,
+    },
+    large: {
+      background: 'rgba(255, 107, 53, 0.14)',
+      border: 'rgba(255, 107, 53, 0.22)',
+      height: 32,
+      borderRadius: 16,
+      textColor: '#FFFFFF',
+      fontSize: 14,
+    },
+  },
+  
+  // 照片遮罩系统 (保障白字可读性≥4.5:1)
+  PHOTO_OVERLAY: {
+    darkMask: {
+      light: 'rgba(0, 0, 0, 0.06)',   // 6%暗遮罩(最轻)
+      medium: 'rgba(0, 0, 0, 0.08)',  // 8%暗遮罩(常用)
+      strong: 'rgba(0, 0, 0, 0.10)',  // 10%暗遮罩(最强)
+    },
+    textShadow: {
+      color: 'rgba(0, 0, 0, 0.01)',
+      offset: { width: 0, height: 1 },
+      radius: 1,
+    },
+    contrastTarget: 4.5, // 最低对比度要求
+  },
+  
+  // FAB系统 (56×56标准尺寸，禁用外发光)
+  FAB_SYSTEM: {
+    container: {
+      size: 56,
+      background: 'rgba(255, 255, 255, 0.85)', // L1容器
+      border: 'rgba(255, 255, 255, 0.30)',
+      borderRadius: 28,
+      shadow: 'xs' as const,
+    },
+    icon: {
+      background: 'rgba(255, 107, 53, 0.14)', // Dawn小圈圈
+      border: 'rgba(255, 107, 53, 0.22)',
+      size: 20,
+      borderRadius: 6,
+    },
+    // 禁用项
+    glow: false,
+    externalShadow: false,
+    rays: false,
+  },
+  
+  // Android降级策略
+  ANDROID_FALLBACK: {
+    L2_SOLID: {
+      background: '#FF6B35', // 纯色Dawn
+      border: 'rgba(255, 107, 53, 0.22)',
+      textColor: '#FFFFFF',
+      pressEffect: -8, // 按压时亮度-8%
+    },
+    disableBlur: true,
+    maxShadow: 'sm' as const,
   },
 } as const;
 

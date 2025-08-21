@@ -6,6 +6,7 @@
     "loading": "Loading...",
     "error": "Error",
     "success": "Success",
+    "network_error": "Network connection failed, please try again later",
     "confirm": "Confirm",
     "cancel": "Cancel",
     "save": "Save",
@@ -18,12 +19,14 @@
     "brand_name": "Pomelo",
     "filter": "Filter, {{count}} selected",
     "filterHint": "Tap to open filter panel",
-    "all": "All"
+    "all": "All",
+    "online": "Online",
+    "offline": "Offline"
   },
   "language": {
     "selection": {
       "title": "Select Language",
-      "subtitle": "Please choose your preferred language",
+      "subtitle": "Choose your language",
       "chinese": "中文",
       "english": "English",
       "confirm": "Confirm Selection",
@@ -34,7 +37,7 @@
       "title": "Language Settings", 
       "current": "Current Language",
       "change": "Change Language",
-      "restart_note": "Language changes will take effect immediately",
+      "restart_note": "Changes apply immediately",
       "chinese": "中文",
       "english": "English",
       "description": "Choose your preferred language. Changes will take effect immediately and be fully applied after restarting the app.",
@@ -44,16 +47,16 @@
   "form": {
     "errors": {
       "legalNameRequired": "Please enter legal name",
-      "englishNicknameRequired": "Please enter English nickname",
+      "englishNicknameRequired": "Enter English nickname",
       "universityRequired": "Please enter university",
-      "emailRequired": "Please enter school email",
-      "emailInvalid": "Please enter a valid school email",
-      "passwordRequired": "Please enter password",
-      "passwordMinLength": "Password must be at least 8 characters",
+      "emailRequired": "Enter school email",
+      "emailInvalid": "Invalid school email",
+      "passwordRequired": "Enter password",
+      "passwordMinLength": "Password too short",
       "passwordMismatch": "Passwords do not match",
       "phoneRequired": "Please enter phone number",
-      "phoneInvalidCN": "Please enter a valid Chinese mobile number",
-      "phoneInvalidUS": "Please enter a valid US phone number"
+      "phoneInvalidCN": "Invalid Chinese number",
+      "phoneInvalidUS": "Invalid US number"
     },
     "labels": {
       "legalName": "Legal Name *",
@@ -65,20 +68,20 @@
       "phoneNumber": "Phone Number *"
     },
     "placeholders": {
-      "legalName": "Enter your legal full name",
-      "englishNickname": "Enter your English nickname",
-      "university": "Enter your university name",
-      "password": "At least 8 characters with letters and numbers",
-      "confirmPassword": "Please enter password again"
+      "legalName": "Enter full name",
+      "englishNickname": "Enter nickname",
+      "university": "Enter university",
+      "password": "8+ chars, letters & numbers",
+      "confirmPassword": "Confirm password"
     },
     "steps": {
       "step": "Step",
       "basicInfo": "Basic Information",
-      "basicInfoDesc": "Please fill in your real information",
+      "basicInfoDesc": "Fill in your information",
       "accountSetup": "Account Setup",
-      "accountSetupDesc": "Set up your login account and password",
+      "accountSetupDesc": "Set up login credentials",
       "contact": "Contact",
-      "contactDesc": "Please select and enter your phone number"
+      "contactDesc": "Enter your phone number"
     },
     "buttons": {
       "next": "Next",
@@ -99,7 +102,7 @@
       "codeSent": "Code Sent",
       "codeSentMessage": "Verification code sent to",
       "sendFailed": "Send Failed",
-      "sendFailedMessage": "Failed to send verification code, please try again"
+      "sendFailedMessage": "Send failed, try again"
     },
     "referralCode": "Referral Code: "
   },
@@ -122,18 +125,18 @@
     "register": {
       "choice_title": "Choose Registration Type",
       "join_pomelo": "Join Pomelo",
-      "choose_registration_method": "Choose your registration method",
+      "choose_registration_method": "How would you like to register?",
       "referral_registration": "Referral Registration",
-      "referral_description": "Scan referral code for quick registration",
+      "referral_description": "Quick signup with referral",
       "referral_badge": "Recommended",
       "normal_registration": "Normal Registration",
-      "normal_description": "Fill out information directly", 
+      "normal_description": "Sign up directly", 
       "benefits_title": "After registration, you can:",
       "benefits": {
-        "join_activities": "Join various exciting activities",
-        "get_qr_codes": "Get activity check-in QR codes",
-        "manage_registrations": "Manage your registration records", 
-        "receive_notifications": "Receive activity updates"
+        "join_activities": "Join events",
+        "get_qr_codes": "Get QR codes",
+        "manage_registrations": "Track registrations", 
+        "receive_notifications": "Get updates"
       },
       "student_option": "Student Registration",
       "organization_option": "Organization Registration", 
@@ -153,12 +156,18 @@
         "contact_info": "Contact Information", 
         "contact_info_desc": "Please choose and fill in your phone number",
         "referral_code": "Referral Code: {{code}}",
+        "username_label": "Username *",
+        "username_placeholder": "Enter username (6-20 alphanumeric)",
         "legal_name_label": "Legal Name *",
         "legal_name_placeholder": "Enter your legal full name",
         "english_nickname_label": "English Nickname *",
         "english_nickname_placeholder": "Enter your English nickname",
         "university_label": "University *",
-        "university_placeholder": "Enter your school name",
+        "university_placeholder": "Select your school",
+        "gender_label": "Gender",
+        "gender_male": "Male",
+        "gender_female": "Female",
+        "gender_unknown": "Unknown",
         "email_label": "School Email * (Login Account)",
         "email_placeholder": "Enter your school email",
         "password_label": "Set Password *",
@@ -172,7 +181,28 @@
         "terms_checkbox": "I have read and agree to",
         "send_code": "Send Code",
         "next_step": "Next Step",
-        "register": "Register"
+        "register": "Register",
+        "step1_description": "Please fill in your basic information, we will generate your school email",
+        "first_name_label": "First Name *",
+        "first_name_placeholder": "Enter your first name",
+        "last_name_label": "Last Name *", 
+        "last_name_placeholder": "Enter your last name",
+        "school_email_preview": "School Email Preview",
+        "email_username_placeholder": "Username",
+        "complete_email": "Complete Email",
+        "loading_schools": "Loading schools...",
+        "step2_description": "Set up your login account and password",
+        "invitation_step1_description": "Invitation registration: Please fill in your basic information (phone optional)",
+        "invitation_step2_description": "Set up your account information, no verification code needed",
+        "phone_label_optional": "Phone Number (Optional)",
+        "nickname_label": "Nickname *",
+        "nickname_placeholder": "Enter your nickname",
+        "verification_code_label": "Phone Verification Code *",
+        "verification_code_placeholder": "Enter 6-digit code",
+        "organization_label": "Organization *",
+        "organization_placeholder": "Select your organization",
+        "loading_organizations": "Loading organizations...",
+        "email_help": "This email will be your login account"
       },
       "sms": {
         "code_sent_title": "Verification Code Sent",
@@ -182,24 +212,55 @@
       }
     },
     "validation": {
+      "username_required": "Please enter username",
+      "username_length": "Username must be 6-20 characters",
+      "username_format": "Username can only contain letters and numbers",
       "email_required": "Please enter school email",
       "email_invalid": "Please enter a valid email address",
       "email_school_invalid": "Please enter a valid school email",
       "password_required": "Please enter password",
       "password_min_length": "Password must be at least 6 characters",
       "password_min_length_8": "Password must be at least 8 characters",
+      "password_length_6_20": "Password must be 6-20 characters",
       "password_mismatch": "Passwords do not match",
       "legal_name_required": "Please enter legal name",
+      "legal_name_length": "Legal name cannot exceed 50 characters",
       "english_nickname_required": "Please enter English nickname",
+      "english_nickname_length": "English nickname cannot exceed 50 characters",
       "university_required": "Please enter university",
       "phone_required": "Please enter phone number",
       "phone_china_invalid": "Please enter a valid Chinese phone number",
-      "phone_usa_invalid": "Please enter a valid US phone number"
+      "phone_usa_invalid": "Please enter a valid US phone number",
+      "first_name_required": "Please enter first name",
+      "last_name_required": "Please enter last name",
+      "email_username_required": "Please enter email username",
+      "email_username_too_short": "Email username must be at least 3 characters",
+      "email_username_invalid": "Email username can only contain letters, numbers, dots, underscores and hyphens",
+      "nickname_required": "Please enter nickname",
+      "nickname_length": "Nickname cannot exceed 50 characters",
+      "verification_code_required": "Please enter verification code",
+      "verification_code_format": "Verification code must be 6 digits",
+      "organization_required": "Please select organization",
+      "username_available": "Username available",
+      "email_available": "Email available"
     },
     "errors": {
       "login_failed": "Login Failed",
-      "invalid_credentials": "Invalid email or password, please try again",
-      "network_error": "Network connection error, please try again"
+      "invalid_credentials": "Wrong email or password",
+      "network_error": "Network error, try again",
+      "school_load_failed": "Failed to load school list, please try again"
+    },
+    "register": {
+      "success": {
+        "title": "Registration Successful",
+        "message": "Congratulations! Please login with your school email"
+      },
+      "errors": {
+        "school_load_failed": "Failed to load school list",
+        "organization_load_failed": "Failed to load organization list",
+        "register_failed": "Registration Failed",
+        "register_failed_message": "Registration failed, please check your information and try again"
+      }
     }
   },
   "navigation": {
@@ -223,21 +284,22 @@
       "notifications": "Notifications",
       "general": "General", 
       "aboutSupport": "About & Support",
-      "language": "Language"
+      "language": "Language",
+      "edit_profile": "Edit Profile"
     }
   },
   "activities": {
-    "discover": "Discover Amazing Activities",
+    "discover": "Discover Events",
     "searchPlaceholder": "Search activities...",
     "empty": "No activities available",
-    "pullToRefresh": "Pull to refresh for latest activities",
+    "pullToRefresh": "Pull to refresh",
     "filters": {
       "all": "All",
       "ongoing": "Ongoing",
       "upcoming": "Upcoming",
       "ended": "Ended",
       "available": "Available",
-      "availableOnly": "Show available activities only"
+      "availableOnly": "Available only"
     },
     "list": {
       "title": "Exciting Activities", 
@@ -259,13 +321,31 @@
       "notificationsGeneral": "Notifications & General",
       "aboutSupport": "About & Support"
     },
-    "subtitle": "Manage your personal information and settings",
+    "subtitle": "Manage your profile and settings",
     "logout": "Logout",
     "settings": "Settings",
     "language": "Language",
-    "notifications": "Notifications",
     "privacy": "Privacy",
-    "about": "About",
+    "volunteer_hours_label": "Volunteer Hours",
+    "points_label": "Points",
+    "verification_code_label": "Verification Code",
+    "settings_and_help": "Settings & Help",
+    "region": "Region",
+    "my_activities": "My Activities",
+    "view_all": "View All",
+    "not_participated": "Upcoming",
+    "participated": "Attended",
+    "bookmarked": "Favored",
+    "pending_review": "To Review",
+    "my_membership": "My Membership",
+    "membership_title": "Membership",
+    "membership_regular": "Regular",
+    "exclusive_support": "Premium Support",
+    "birthday_privileges": "Birthday Benefits",
+    "exclusive_activities": "VIP Events",
+    "upgrade_membership": "Upgrade",
+    "my_reviews": "My Reviews",
+    "write_review": "Write",
     "menuItems": {
       "accountSecurity": "Account & Security",
       "notifications": "Notifications",
@@ -281,22 +361,28 @@
       "dataAndCache": "Data & Cache",
       "clearCache": "Clear Cache",
       "clearCacheTitle": "Clear Cache",
-      "clearCacheMessage": "This will clear all cached data except login information. Continue?",
+      "clearCacheMessage": "Clear all cached data except login info?",
       "cancel": "Cancel",
       "clear": "Clear",
       "clearSuccess": "Cache Cleared",
-      "clearSuccessMessage": "Cache cleared successfully, app performance may be improved.",
+      "clearSuccessMessage": "Cache cleared successfully.",
       "clearFailed": "Clear Failed",
-      "clearFailedMessage": "Error occurred while clearing cache, please try again later.",
+      "clearFailedMessage": "Failed to clear cache. Try again.",
       "cacheSizeFallback": "128 MB",
       "sectionDisplayAppearance": "Display & Appearance",
       "sectionStoragePerformance": "Storage & Performance",
-      "regionTimezoneMessage": "Region and timezone settings feature coming soon",
-      "darkModePattern": "Dark Mode Pattern"
+      "regionTimezoneMessage": "Coming soon",
+      "darkModePattern": "Dark Mode Pattern",
+      "light_mode": "Light Mode",
+      "dark_mode": "Dark Mode",
+      "auto_mode": "Follow System",
+      "auto_description": "Follow system setting",
+      "light_description": "Always light",
+      "dark_description": "Always dark"
     },
     "edit": {
       "changeAvatar": "Change Avatar",
-      "changeAvatarMessage": "Avatar upload feature coming soon",
+      "changeAvatarMessage": "Coming soon",
       "name": "Name",
       "namePlaceholder": "Enter your name",
       "email": "Email",
@@ -312,21 +398,21 @@
       "saving": "Saving...",
       "save": "Save",
       "saveSuccess": "Save Successful",
-      "saveSuccessMessage": "Your profile has been updated",
+      "saveSuccessMessage": "Profile updated",
       "confirm": "OK"
     },
     "account": {
       "personalProfile": "Personal Profile",
-      "personalProfileMessage": "Edit profile feature coming soon",
+      "personalProfileMessage": "Coming soon",
       "loginSecurity": "Login & Security",
-      "loginSecurityMessage": "Security settings feature coming soon",
+      "loginSecurityMessage": "Coming soon",
       "privacyPermissions": "Privacy & Permissions",
-      "privacyPermissionsMessage": "Permission management feature coming soon",
+      "privacyPermissionsMessage": "Coming soon",
       "thirdPartyAccounts": "Third-party Account Binding",
-      "thirdPartyAccountsMessage": "Account binding feature coming soon",
+      "thirdPartyAccountsMessage": "Coming soon",
       "logout": "Logout",
       "logoutConfirm": "Confirm Logout",
-      "logoutMessage": "Logging out will clear local data and you will need to log in again.",
+      "logoutMessage": "You'll need to log in again.",
       "cancel": "Cancel",
       "accountInfo": "Account Information",
       "sectionAccountInfo": "Account Information",
@@ -335,51 +421,50 @@
     "about": {
       "aboutApp": "About App",
       "feedbackHelp": "Feedback & Help",
-      "feedbackHelpMessage": "User feedback feature coming soon",
+      "feedbackHelpMessage": "Coming soon",
       "githubRepo": "GitHub Repository",
       "privacyPolicy": "Privacy Policy",
       "termsOfService": "Terms of Service",
-      "openSourceLicenses": "Open Source Licenses",
-      "openSourceLicensesMessage": "Open source license information feature coming soon",
+      "openSourceLicenses": "Licenses",
+      "openSourceLicensesMessage": "Coming soon",
       "diagnosticLogs": "Diagnostic Logs",
-      "diagnosticLogsMessage": "Diagnostic logs feature coming soon",
-      "appInfoDetails": "Version: 1.0.0\nBuild: 1.0.0 (1)\nRelease Date: August 2025\n\nAn activity platform designed for Chinese students overseas, connecting communities and sharing wonderful experiences.",
+      "diagnosticLogsMessage": "Coming soon",
+      "appInfoDetails": "Version: 1.0.0\nBuild: 1.0.0 (1)\nRelease Date: August 2025\n\nAn activity platform designed for international students overseas, connecting communities and sharing wonderful experiences.",
       "confirmAppInfo": "OK",
       "error": "Error",
-      "cannotOpenLink": "Cannot open link",
-      "linkError": "Unable to open link",
-      "linkErrorMessage": "Unable to open link, please manually visit our website",
+      "cannotOpenLink": "Can't open link",
+      "linkError": "Can't open link",
+      "linkErrorMessage": "Please visit our website manually",
       "confirm": "OK",
       "sectionAppInfo": "App Information",
       "sectionSupportFeedback": "Support & Feedback",
       "sectionLegalTerms": "Legal Terms",
       "sectionAdvancedSettings": "Advanced Settings",
       "privacyPolicyError": "Error",
-      "privacyPolicyErrorMessage": "Unable to open link, please manually visit our website to view privacy policy",
+      "privacyPolicyErrorMessage": "Visit our website for privacy policy",
       "termsOfServiceError": "Error", 
-      "termsOfServiceErrorMessage": "Unable to open link, please manually visit our website to view terms of service"
+      "termsOfServiceErrorMessage": "Visit our website for terms of service"
     },
     "notifications": {
-      "pushPermissions": "Push Notification Permissions",
-      "pushPermissionsSubtitle": "Manage push permissions in system settings",
-      "openSystemSettings": "Unable to open settings",
-      "openSystemSettingsMessage": "Please manually go to Settings > Apps > Pomelo > Notifications to manage notification permissions",
+      "pushPermissions": "Push Notifications",
+      "pushPermissionsSubtitle": "Manage in system settings",
+      "openSystemSettings": "Can't open settings",
+      "openSystemSettingsMessage": "Go to Settings > Apps > Pomelo > Notifications",
       "activityUpdates": "Activity Updates",
-      "activityUpdatesSubtitle": "Important notifications about activity changes, cancellations, etc.",
+      "activityUpdatesSubtitle": "Activity alerts",
       "registrationSuccess": "Registration Success",
-      "registrationSuccessSubtitle": "Registration confirmation and reminder notifications",
+      "registrationSuccessSubtitle": "Registration alerts",
       "commentsMessages": "Comments & Messages",
-      "commentsMessagesSubtitle": "Notifications when receiving comments or messages",
+      "commentsMessagesSubtitle": "Comments and messages",
       "doNotDisturb": "Do Not Disturb",
       "doNotDisturbTime": "22:00 - 08:00",
       "doNotDisturbOff": "Off",
-      "doNotDisturbMessage": "Do not disturb settings feature coming soon",
+      "doNotDisturbMessage": "Coming soon",
       "notificationSummary": "Notification Summary",
       "notificationSummaryOff": "Off",
-      "notificationSummaryMessage": "Notification summary settings feature coming soon",
-      "pushPermissions": "Push Notification Permission",
-      "cannotOpenSettings": "Cannot Open Settings",
-      "cannotOpenSettingsMessage": "Please manually go to System Settings > Apps > Pomelo > Notifications to manage notification permissions",
+      "notificationSummaryMessage": "Coming soon",
+      "cannotOpenSettings": "Can't Open Settings",
+      "cannotOpenSettingsMessage": "Go to System Settings > Apps > Pomelo > Notifications",
       "sectionPushPermissions": "Push Permissions",
       "sectionNotificationTypes": "Notification Types",
       "sectionAdvancedSettings": "Advanced Settings"
@@ -389,7 +474,7 @@
     "title": "Pomelo AI Assistant",
     "status": "In Development",
     "mainMessage": "AI Assistant Coming Soon",
-    "description": "We are training our AI assistant to better understand and help Chinese international students.",
+    "description": "Training our AI to help students better.",
     "comingFeatures": "Upcoming Features",
     "features": {
       "chat": "Intelligent Conversation",
@@ -407,18 +492,18 @@
   },
   "consulting": {
     "title": "Consulting Services",
-    "subtitle": "Professional guidance for international students",
-    "serviceOverview": "Professional advisors provide personalized guidance for you",
+    "subtitle": "Professional guidance for students",
+    "serviceOverview": "Get personalized guidance",
     "serviceHighlights": "Service Highlights",
     "supportedSchools": "Supported Schools",
-    "professionalTeam": "Professional Advisors",
+    "professionalTeam": "Expert Advisors",
     "onlineServices": "Online Services",
     "selectSchool": "Select Your School",
-    "selectDescription": "Please choose your school and we will provide exclusive consulting services for you",
+    "selectDescription": "Choose your school for exclusive services",
     "moduleDevelopment": "Consulting Services Coming Soon",
-    "developmentMessage": "We're building exclusive consulting services for {{school}} students",
-    "developmentMessageFallback": "We're building exclusive consulting services for your school",
-    "developmentDescription": "Your personalized guidance platform is being crafted with care. Get ready for an amazing experience!",
+    "developmentMessage": "Building services for {{school}} students",
+    "developmentMessageFallback": "Building services for your school",
+    "developmentDescription": "Your guidance platform is coming soon!",
     "comingFeatures": "What's Coming",
     "academicConsulting": "Academic Consulting",
     "lifeGuidance": "Life Guidance", 
@@ -431,21 +516,21 @@
   },
   "community": {
     "title": "Student Community",
-    "subtitle": "Connect Chinese students worldwide",
+    "subtitle": "Connect students worldwide",
     "headerTitle": "Student Community",
     "headerSubtitle": "Connect peers, share wonderful moments, grow together",
-    "developing": "Community features are under development",
-    "developingDescription": "We are building a warm community exclusively for Chinese students",
+    "developing": "Coming soon",
+    "developingDescription": "Building a warm student community",
     "upcomingFeatures": "Upcoming Features",
     "features": {
       "discussions": "Topic Discussions",
-      "discussionsDescription": "Topic discussions and experience sharing",
+      "discussionsDescription": "Share experiences",
       "events": "Community Events",
-      "eventsDescription": "Community activities and meetup organization",
+      "eventsDescription": "Organize meetups",
       "achievements": "Achievement System",
-      "achievementsDescription": "Study assistance and resource sharing",
+      "achievementsDescription": "Share resources",
       "support": "Mutual Support",
-      "supportDescription": "Growth records and achievement system"
+      "supportDescription": "Track achievements"
     },
     "comingSoon": "Coming Soon"
   },
@@ -457,40 +542,40 @@
     "scanQRCode": "Scan QR code",
     "scanComingSoon": "QR code scanning feature coming soon",
     "searchFor": "Search \"{{phone}}\"",
-    "subtitle": "Comprehensive protection for overseas students",
+    "subtitle": "Safety support for students",
     "tabs": {
       "plan": "Wellbeing Plan",
       "volunteer": "Volunteer Features"
     },
     "plan": {
       "title": "Wellbeing Plan",
-      "subtitle": "Comprehensive safety and mental health support for overseas students",
+      "subtitle": "Safety and mental health support",
       "features": {
-        "location": "Location Safety Monitoring",
-        "emergency": "24/7 Emergency Contact",
-        "mental": "Mental Health Counseling", 
-        "medical": "Medical Health Guidance"
+        "location": "Location Safety",
+        "emergency": "Emergency Contact",
+        "mental": "Mental Health", 
+        "medical": "Health Guidance"
       },
       "developing": "Under Development"
     },
     "volunteer": {
-      "searchPlaceholder": "Enter phone number to search volunteers",
+      "searchPlaceholder": "Search by phone",
       "phoneRequired": "Please enter phone number",
-      "phoneFormatError": "Please enter correct phone number format",
+      "phoneFormatError": "Invalid phone format",
       "volunteerNotFound": "Volunteer not found",
-      "noMatchingVolunteers": "No matching volunteers found",
+      "noMatchingVolunteers": "No matches found",
       "noVolunteerRecords": "No volunteer records",
       "scanComingSoon": "Scan function coming soon",
       "expandDetails": "Tap to expand details",
       "collapseDetails": "Tap to collapse details",
-      "searchVolunteerPhone": "Search volunteer phone number",
-      "enterPhoneSearch": "Enter 11-digit phone number for search",
+      "searchVolunteerPhone": "Search by phone",
+      "enterPhoneSearch": "Enter phone number",
       "clearInput": "Clear input",
       "scanQRCode": "Scan QR Code",
-      "scanComingSoonHint": "Scan function coming soon",
+      "scanComingSoonHint": "Coming soon",
       "cancelSignOut": "Cancel sign out",
-      "searchVolunteers": "Search volunteers by phone number",
-      "noVolunteersFound": "No matching volunteers found",
+      "searchVolunteers": "Search volunteers",
+      "noVolunteersFound": "No matches",
       "noRecords": "No volunteer records",
       "checkInTime": "Check-in Time",
       "workDuration": "Work Duration", 
@@ -501,52 +586,22 @@
       "hours": "h"
     }
   },
-  "explore": {
-    "title": "Explore Activities",
-    "subtitle": "Discover exciting activities around you",
-    "choose_school": "Choose School",
-    "activity_categories": "Activity Categories", 
-    "recommended_activities": "Recommended Activities",
-    "view_more": "View More",
-    "activities_count": "{{count}} activities",
-    "schools": {
-      "all": "All Schools",
-      "all_short": "All"
-    },
-    "categories": {
-      "academic": "Academic Lectures",
-      "social": "Social Gatherings",
-      "career": "Career Development", 
-      "culture": "Cultural Activities",
-      "sports": "Sports & Fitness"
-    },
-    "features": {
-      "category_developing": "{{categoryName}} feature is under development and will support browsing activities by category.",
-      "recommendations_developing": "More recommendation features are under development and will provide personalized activity suggestions."
-    }
-  },
-  "language": {
-    "chinese": "中文",
-    "simplified_chinese": "简体中文",
-    "chinese_description": "适合中文用户使用",
-    "english": "English",
-    "english_description": "For English speakers", 
-    "recommended": "Recommended",
-    "selection": {
-      "title": "选择语言",
-      "title_en": "Choose Language",
-      "description": "请选择您偏好的语言",
-      "description_en": "Please choose your preferred language",
-      "confirm": "确认选择", 
-      "confirm_en": "Confirm Selection"
-    }
+  "location": {
+    "permission_required_title": "Location Permission Required",
+    "permission_required_message": "Allow location access for nearby activities.",
+    "go_to_settings": "Go to Settings",
+    "android_permission_instruction": "Enable in Settings > App Permissions > Location",
+    "check_in_now": "Check In Now",
+    "permission_denied": "Location permission denied"
   },
   "qr": {
     "scanning": {
       "title": "Scan Referral Code",
-      "instruction": "Place the referral QR code within the frame for automatic scanning",
-      "manual_input": "Manual Input Referral Code",
-      "manual_input_title": "Manual Input Referral Code",
+      "instruction": "Place QR code in the frame",
+      "user_identity_instruction": "Place user identity QR code in the frame\nto view user information",
+      "merchant_instruction": "Place merchant QR code in the frame\nto get exclusive membership card",
+      "manual_input": "Enter Code",
+      "manual_input_title": "Enter Code",
       "manual_input_desc": "Enter your referral code",
       "input_placeholder": "Enter your referral code",
       "referral_code_label": "Referral Code", 
@@ -554,25 +609,96 @@
       "cancel": "Cancel",
       "manual_input_button": "Manual Input"
     },
+    "camera": {
+      "permission_requesting": "Getting camera access...",
+      "no_permission": "No camera permission",
+      "permission_instruction": "Allow camera access in settings",
+      "request_permission_button": "Request Permission"
+    },
     "results": {
-      "referral_success_title": "Referral Code Scanned Successfully",
+      "referral_success_title": "Code Scanned",
       "referral_success_message": "Referral Code: {{referralCode}}",
       "continue_register": "Continue Registration",
       "invalid_referral_title": "Invalid Referral Code",
-      "invalid_referral_message": "Please scan a valid referral QR code",
+      "invalid_referral_message": "Invalid referral code",
       "rescan": "Scan Again",
       "back": "Back",
       "checkin_success_title": "Check-in Successful",
       "checkin_success_message": "Activity check-in completed!",
       "confirm": "OK",
       "invalid_qr_title": "Invalid QR Code",
-      "invalid_qr_message": "Please scan a valid activity QR code",
+      "invalid_qr_message": "Invalid QR code",
       "scan_result": "Scan Result"
+    },
+    "actions": {
+      "save": "Save",
+      "saving": "Saving",
+      "share": "Share"
+    },
+    "identity": {
+      "title": "My Identity Code",
+      "scan_instruction": "Scan QR code to view my information"
+    },
+    "save": {
+      "permission_denied_title": "Permission Denied",
+      "permission_denied_message": "Please allow photo library access in settings",
+      "success_title": "Saved Successfully",
+      "success_message": "QR code saved to photo library",
+      "error_title": "Save Failed",
+      "error_message": "Failed to save QR code"
+    },
+    "share": {
+      "title": "Share Identity Code",
+      "message": "This is {{name}}'s identity code from {{organization}}"
+    },
+    "user": {
+      "error_title": "Scan Failed",
+      "unknown_error": "Unable to read user information",
+      "profile_title": "User Information",
+      "organization": "Organization",
+      "activity_stats": "Activity Statistics",
+      "participated": "Participated",
+      "volunteer_hours": "Volunteer Hours",
+      "points": "Points",
+      "recent_activities": "Recent Activities",
+      "limited_access": "Limited access, some information not visible",
+      "add_contact": "Add Contact"
     }
   },
   "volunteer": {
     "title": "Volunteer Check-in Management",
-    "subtitle": "Manage volunteer check-in/out and work hour records"
+    "subtitle": "Manage volunteer hours",
+    "default_name": "Volunteer",
+    "create_activity_button": "Create Activity",
+    "weekly_stats_title": "Weekly Stats",
+    "active_activities_label": "Active Activities",
+    "total_participants_label": "Total Participants",
+    "new_registrations_label": "New Registrations",
+    "management_features_title": "Management Features",
+    "recent_activities_title": "Recent Activities",
+    "view_all_button": "View All"
+  },
+  "school": {
+    "not_found_message": "School information not found",
+    "volunteer_details_title": "Volunteer Details",
+    "active_volunteers_title": "Active Volunteers",
+    "click_volunteer_instruction": "Tap to view check-in status",
+    "volunteers_label": "Volunteers",
+    "activities_count_label": "Activities",
+    "rating_label": "Rating"
+  },
+  "volunteer_status": {
+    "checked_in": "Checked In",
+    "checked_out": "Checked Out",
+    "not_checked_in": "Not Checked In",
+    "check_in_time_label": "Check-in Time:",
+    "check_out_time_label": "Check-out Time:",
+    "today_duration_label": "Today's Duration:",
+    "total_duration_label": "Total Duration:",
+    "last_check_in_label": "Last Check-in:",
+    "last_check_out_label": "Last Check-out:",
+    "check_in_button": "Check In",
+    "check_out_button": "Check Out"
   },
   "mockData": {
     "schools": {
@@ -606,9 +732,6 @@
       "internationalServices": "International Student Services",
       "cssa": {
         "description": "Providing academic and cultural support for Chinese students"
-      },
-      "careerCenter": {
-        "description": "Professional career development guidance services"
       }
     },
     "volunteers": {
@@ -627,7 +750,9 @@
       "student": "Student"
     },
     "student": "Student",
-    "user": "User"
+    "user": "User",
+    "guest": "Guest",
+    "not_logged_in": "Not logged in"
   },
   "activityCard": {
     "status": {
@@ -648,10 +773,22 @@
     "registrationRequirements": "Registration Requirements",
     "organizer": "Organizer",
     "share": "Share",
-    "shareMessage": "Share feature coming soon",
+    "shareMessage": "Coming soon",
     "registerNow": "Register Now",
-    "registered": "Registered",
-    "full": "Full"
+    "registered": "Registered", 
+    "full": "Full",
+    "no_details": "No activity details available",
+    "registration_success": "Registration Successful",
+    "registration_success_message": "You have successfully registered for this activity!",
+    "registration_failed": "Registration Failed",
+    "registration_failed_message": "Registration failed, please try again later",
+    "checkin_success": "Check-in Successful",
+    "checkin_success_message": "You have successfully checked in!",
+    "checkin_failed": "Check-in Failed",
+    "checkin_failed_message": "Check-in failed, please try again later",
+    "checkin_now": "Check In Now",
+    "checked_in": "Checked In",
+    "unavailable": "Unavailable"
   },
   "volunteerCheckIn": {
     "searchVolunteer": "Search Volunteer",
@@ -662,6 +799,7 @@
     "checkOut": "Check Out",
     "scan": "Scan",
     "todayRecords": "Today's Records",
+    "noPermission": "You don't have permission to access volunteer management features",
     "status": {
       "checkedIn": "Checked In",
       "checkedOut": "Checked Out",
@@ -680,7 +818,7 @@
       "thisVolunteerService": "This Volunteer Service",
       "timeRange": "Time Range",
       "serviceDuration": "Service Duration",
-      "signOutNote": "Sign out will automatically record this volunteer service duration",
+      "signOutNote": "This will record your volunteer hours",
       "cancelSignOut": "Cancel Sign Out",
       "signingOut": "Signing Out...",
       "minutes": "min"
@@ -689,15 +827,15 @@
       "hint": "Hint",
       "phoneRequired": "Please enter phone number",
       "notFound": "Not Found",
-      "userNotFound": "User with this phone number not found",
+      "userNotFound": "Phone number not found",
       "confirmCheckIn": "Confirm Check-in",
       "confirmCheckInMessage": "Confirm check-in for {name}?",
       "confirmCheckOut": "Confirm Check-out",
       "confirmCheckOutMessage": "Confirm check-out for {name}?\nVolunteer hours: {hours} hours {minutes} minutes",
       "checkInSuccess": "Check-in Successful",
-      "checkInSuccessMessage": "{name} checked in successfully",
+      "checkInSuccessMessage": "{name} checked in",
       "checkOutSuccess": "Check-out Successful",
-      "checkOutSuccessMessage": "{name} checked out successfully\nDuration: {hours} hours {minutes} minutes",
+      "checkOutSuccessMessage": "{name} checked out\nWorked: {hours}h {minutes}m",
       "scanFunction": "Scan Function",
       "scanComingSoon": "Scan function coming soon"
     }
@@ -705,13 +843,9 @@
   "filters": {
     "title": "Filters",
     "clearAll": "Clear All",
-    "categories": "Categories",
-    "status": "Status",
-    "location": "Location",
-    "date": "Date",
-    "resultsCount": "Found {{count}} activities",
-    "resultsCountNumber": "Found {{count}} activities",
-    "noResults": "No activities found",
+    "resultsCount": "{{count}} activities",
+    "resultsCountNumber": "{{count}} found",
+    "noResults": "No activities",
     "apply": "Apply",
     "categories": {
       "academic": "Academic",
@@ -723,7 +857,7 @@
     },
     "status": {
       "available": "Available",
-      "almostFull": "Almost Full",
+      "almostFull": "Nearly Full",
       "waitlist": "Waitlist",
       "ended": "Ended"
     },
@@ -744,25 +878,25 @@
   "alerts": {
     "feature_not_implemented": "Feature not implemented",
     "logout_confirm": "Confirm Logout",
-    "logout_message": "Are you sure you want to logout?",
+    "logout_message": "Log out?",
     "error": "Error",
     "success": "Success",
     "verificationCodeSent": "Verification Code Sent",
     "verificationCodeSentMessage": "Verification code sent to +{{code}} {{phone}}",
     "sendFailed": "Send Failed",
-    "sendFailedMessage": "Failed to send verification code, please try again",
-    "languageSwitched": "Language switched to Chinese",
-    "reportGenerationFailed": "Unable to generate acceptance report",
-    "reportExportFailed": "Failed to export report"
+    "sendFailedMessage": "Send failed, try again",
+    "languageSwitched": "Switched to Chinese",
+    "reportGenerationFailed": "Report generation failed",
+    "reportExportFailed": "Export failed"
   },
   "placeholders": {
     "searchActivities": "Search activities...",
-    "searchSchoolsAndActivities": "Search schools, activities...",
+    "searchSchoolsAndActivities": "Search...",
     "searchSchools": "Search schools...",
-    "enterFullName": "Enter your full legal name",
-    "enterNickname": "Enter your English nickname",
-    "enterSchoolName": "Enter your school name",
-    "enterPassword": "At least 8 characters with letters and numbers",
+    "enterFullName": "Enter full name",
+    "enterNickname": "Enter nickname",
+    "enterSchoolName": "Enter school",
+    "enterPassword": "8+ chars, letters & numbers",
     "confirmPassword": "Confirm your password"
   },
   "ui": {
@@ -771,7 +905,7 @@
     "basicInfo": "Basic Information",
     "basicInfoDesc": "Please fill in your real information",
     "appearanceSettings": "Appearance Settings",
-    "generating": "Generating acceptance report...",
+    "generating": "Generating report...",
     "cannotGenerateReport": "Cannot generate report",
     "acceptanceReport": "Acceptance Report",
     "overallScore": "Overall Score",
@@ -792,7 +926,7 @@
   },
   "accessibility": {
     "searchActivities": "Search activities",
-    "searchActivitiesHint": "Enter keywords to search activities",
+    "searchActivitiesHint": "Enter keywords",
     "clearSearch": "Clear search",
     "expandDetails": "Tap to expand details",
     "collapseDetails": "Tap to collapse details"

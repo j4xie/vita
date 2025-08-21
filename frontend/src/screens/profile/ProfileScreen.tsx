@@ -20,6 +20,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 
 import { theme } from '../../theme';
+import { LIQUID_GLASS_LAYERS } from '../../theme/core';
 import { useLanguage } from '../../context/LanguageContext';
 
 export const ProfileScreen: React.FC = () => {
@@ -272,7 +273,7 @@ export const ProfileScreen: React.FC = () => {
       </Text>
       <View style={[
         styles.listContainer,
-        isDarkMode && styles.listContainerDark
+        styles.listContainerGlass
       ]}>
         {items.map((item, index) => 
           renderMenuItem(item, index === items.length - 1)
@@ -301,7 +302,7 @@ export const ProfileScreen: React.FC = () => {
         <TouchableOpacity 
           style={[
             styles.avatarCard,
-            isDarkMode && styles.avatarCardDark
+            styles.avatarCardGlass
           ]}
           onPress={handleEditProfile}
           activeOpacity={0.6}
@@ -420,7 +421,7 @@ const styles = StyleSheet.create({
   },
   
   contentContainer: {
-    paddingHorizontal: 16, // Standard iOS margins
+    paddingHorizontal: 16, // Match ProfileHomeScreen layout approach
     paddingTop: 20,
   },
 
@@ -495,7 +496,7 @@ const styles = StyleSheet.create({
     color: '#8e8e93', // iOS secondaryLabel
     textTransform: 'uppercase',
     marginBottom: 8,
-    marginLeft: 16, // Align with list content
+    marginLeft: 16, // Align with content padding
   },
   groupTitleDark: {
     color: '#8e8e93', // iOS secondaryLabel dark
@@ -632,5 +633,20 @@ const styles = StyleSheet.create({
   },
   versionTextDark: {
     color: '#8e8e93', // iOS secondaryLabel dark
+  },
+  
+  // V2.0 L1玻璃样式
+  avatarCardGlass: {
+    backgroundColor: LIQUID_GLASS_LAYERS.L1.background.light,
+    borderWidth: LIQUID_GLASS_LAYERS.L1.border.width,
+    borderColor: LIQUID_GLASS_LAYERS.L1.border.color.light,
+  },
+  
+  listContainerGlass: {
+    backgroundColor: LIQUID_GLASS_LAYERS.L1.background.light,
+    borderWidth: LIQUID_GLASS_LAYERS.L1.border.width,
+    borderColor: LIQUID_GLASS_LAYERS.L1.border.color.light,
+    borderRadius: LIQUID_GLASS_LAYERS.L1.borderRadius.card, // 16pt圆角
+    ...theme.shadows[LIQUID_GLASS_LAYERS.L1.shadow],
   },
 });

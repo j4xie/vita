@@ -13,6 +13,8 @@ import * as Haptics from 'expo-haptics';
 import { theme } from '../../theme';
 import { BlurView } from 'expo-blur';
 import { AIAssistantModal } from '../modals/AIAssistantModal';
+import { RESTRAINED_COLORS } from '../../theme/core';
+// import { useRestrainedColors } from '../../hooks/useRestrainedColors'; // 暂时移除避免hooks错误
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -40,6 +42,10 @@ export const FloatingAIButton: React.FC<FloatingAIButtonProps> = ({
   const { metrics, getOptimizedStyles } = usePerformanceDegradation();
   const isPerformanceDegraded = metrics.shouldDegrade;
   const optimizedStyles = getOptimizedStyles();
+  
+  // 简化的平台配置
+  const isDarkMode = false;
+  const isAndroid = Platform.OS === 'android';
   
   // Reanimated 3 shared values
   const breathingScale = useSharedValue(1);
@@ -411,7 +417,7 @@ export const FloatingAIButton: React.FC<FloatingAIButtonProps> = ({
 
   const buttonAnimatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: breathingScale.value * pressScale.value }],
-    borderColor: 'rgba(255, 107, 53, 0.3)', // 西柚 橙色边框
+    borderColor: 'rgba(249, 168, 137, 0.2)', // 温和的橙色边框
   }));
 
   const shimmerAnimatedStyle = useAnimatedStyle(() => ({
@@ -442,33 +448,21 @@ export const FloatingAIButton: React.FC<FloatingAIButtonProps> = ({
   return (
     <>
       <Animated.View style={[styles.container, { bottom: insets.bottom + 70 }, containerAnimatedStyle]}>
-        {/* 多层发光效果 - 更自然的光晕 */}
+        {/* 温和发光效果 - 克制版本 */}
         {!isPerformanceDegraded && (
           <>
-            {/* 外层柔和发光 */}
+            {/* 外层柔和发光 - 温和版 */}
             <Animated.View
               style={[styles.glowLayerOuter, glowAnimatedStyle]}
               pointerEvents="none"
             />
-            {/* 内层强化发光 */}
+            {/* 内层强化发光 - 温和版 */}
             <Animated.View
               style={[styles.glowLayer, glowAnimatedStyle]}
               pointerEvents="none"
             />
           </>
         )}
-        
-        {/* Particle effects - only on high-performance devices */}
-        {!isPerformanceDegraded && !optimizedStyles.simplifiedAnimations && [0, 1, 2].map((index) => (
-          <Animated.View
-            key={index}
-            style={[
-              styles.particle,
-              particleAnimatedStyle(index),
-            ]}
-            pointerEvents="none"
-          />
-        ))}
 
         <TouchableOpacity
           onPressIn={handlePressIn}
@@ -484,37 +478,37 @@ export const FloatingAIButton: React.FC<FloatingAIButtonProps> = ({
               { borderWidth: 2 },
             ]}
           >
-            {/* Glass border effect */}
+            {/* 温和玻璃边框效果 */}
             <LinearGradient
               colors={[
-                'rgba(255, 255, 255, 0.2)',
-                'rgba(255, 255, 255, 0.05)',
-                'rgba(255, 255, 255, 0.1)',
+                'rgba(255, 255, 255, 0.15)', // 更温和的边框
+                'rgba(255, 255, 255, 0.03)',
+                'rgba(255, 255, 255, 0.08)',
               ]}
               style={styles.glassBorder}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
             />
             
-            {/* Main button content with blur */}
+            {/* 主按钮内容 */}
             <Animated.View style={styles.blurContainer}>
               <BlurView 
                 intensity={Platform.OS === 'android' ? (isPerformanceDegraded ? 30 : 60) : (isPerformanceDegraded ? 60 : 90)} 
                 style={styles.blurContainer} 
                 tint="light"
               >
-              {/* 西柚 Background gradient */}
+              {/* 温和品牌渐变背景 */}
               <LinearGradient
                 colors={[
-                  'rgba(255, 107, 53, 0.85)',  // 西柚 活力橙
-                  'rgba(255, 71, 87, 0.85)',    // 西柚 珊瑚红
-                  'rgba(255, 107, 53, 0.85)',  // 西柚 活力橙
+                  'rgba(249, 168, 137, 0.45)',  // 降低饱和度的温和橙
+                  'rgba(255, 180, 162, 0.45)',  // 温和珊瑚色
+                  'rgba(249, 168, 137, 0.45)',  // 温和橙色
                 ]}
                 style={styles.gradientBackground}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
               >
-                {/* Shimmer effect - only on high-performance devices */}
+                {/* 微妙Shimmer效果 - 保留但降低强度 */}
                 {!isPerformanceDegraded && !optimizedStyles.simplifiedAnimations && (
                   <Animated.View
                     style={[styles.shimmer, shimmerAnimatedStyle]}
@@ -522,7 +516,7 @@ export const FloatingAIButton: React.FC<FloatingAIButtonProps> = ({
                   />
                 )}
                 
-                {/* 可爱西柚图标 */}
+                {/* 西柚图标 */}
                 <Animated.View
                   style={[styles.iconContainer, iconAnimatedStyle]}
                 >
@@ -533,7 +527,7 @@ export const FloatingAIButton: React.FC<FloatingAIButtonProps> = ({
                   />
                 </Animated.View>
                 
-                {/* Inner glow */}
+                {/* 温和内发光 */}
                 <View style={styles.innerGlow} pointerEvents="none" />
               </LinearGradient>
               </BlurView>
@@ -554,34 +548,35 @@ export const FloatingAIButton: React.FC<FloatingAIButtonProps> = ({
 const styles = StyleSheet.create({
   container: {
     position: 'absolute',
-    right: 8.5, // 8.5px 右边距 (向右移动15px)
-    width: 70, // 自适应西柚+AI组合 (52+14+4 padding)
-    height: 68, // 自适应西柚+AI组合 (52+12+4 padding)
+    right: 8.5, // 恢复原位置
+    width: 70, // 恢复原尺寸
+    height: 68,
     zIndex: 9999,
-    alignItems: 'flex-start', // 改为左上对齐
+    alignItems: 'flex-start',
     justifyContent: 'flex-start',
-    paddingTop: 2, // 顶部安全边距
-    paddingLeft: 2, // 左侧安全边距
+    paddingTop: 2,
+    paddingLeft: 2,
+    backgroundColor: 'rgba(255, 255, 255, 0.001)', // Nearly invisible but solid for shadow calculation
   },
   touchable: {
-    width: 66, // 西柚+AI的实际宽度
-    height: 64, // 西柚+AI的实际高度
+    width: 66, // 恢复原尺寸
+    height: 64,
   },
   button: {
-    width: 66, // 西柚+AI的实际宽度
-    height: 64, // 西柚+AI的实际高度
-    borderRadius: 26, // 自适应圆角
+    width: 66, // 恢复原尺寸
+    height: 64,
+    borderRadius: 26,
     overflow: 'hidden',
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    backgroundColor: 'rgba(255, 255, 255, 0.08)', // 更温和的背景
     ...Platform.select({
       ios: {
-        shadowColor: '#FF6B35', // 西柚 橙色阴影
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.3,
-        shadowRadius: 12,
+        shadowColor: '#F9A889', // 温和的橙色阴影
+        shadowOffset: { width: 0, height: 2 }, // Reduced from 4 to 2
+        shadowOpacity: 0.12, // Reduced from 0.18 to 0.12
+        shadowRadius: 8, // Reduced from 12 to 8
       },
       android: {
-        elevation: 12,
+        elevation: 4, // Reduced from 8 to 4
       },
     }),
   },
@@ -591,12 +586,12 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    borderRadius: 26, // 自适应圆角
+    borderRadius: 26,
   },
   blurContainer: {
     width: '100%',
     height: '100%',
-    borderRadius: 26, // 自适应圆角
+    borderRadius: 26,
     overflow: 'hidden',
   },
   gradientBackground: {
@@ -609,43 +604,44 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     zIndex: 2,
   },
+  // 温和发光层 - 降低强度
   glowLayerOuter: {
     position: 'absolute',
-    top: -9, // 精确居中计算
-    left: -9, // 精确居中计算
-    width: 84, // 外层发光
+    top: -9,
+    left: -9,
+    width: 84,
     height: 82,
     borderRadius: 28,
-    backgroundColor: 'rgba(255, 107, 53, 0.08)', // 更淡的外围发光
+    backgroundColor: 'rgba(249, 168, 137, 0.05)', // 大幅降低发光强度
     ...Platform.select({
       ios: {
-        shadowColor: '#FF6B35',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.15,
-        shadowRadius: 28,
+        shadowColor: '#F9A889',
+        shadowOffset: { width: 0, height: 2 }, // Reduced from 4 to 2
+        shadowOpacity: 0.05, // Reduced from 0.08 to 0.05
+        shadowRadius: 12, // Reduced from 20 to 12
       },
       android: {
-        elevation: 5,
+        elevation: 2, // Reduced from 3 to 2
       },
     }),
   },
   glowLayer: {
     position: 'absolute',
-    top: -5, // 精确居中计算
-    left: -5, // 精确居中计算
-    width: 72, // 内层发光
+    top: -5,
+    left: -5,
+    width: 72,
     height: 70,
     borderRadius: 24,
-    backgroundColor: 'rgba(255, 107, 53, 0.18)', // 适中的内层发光
+    backgroundColor: 'rgba(249, 168, 137, 0.08)', // 降低内层发光
     ...Platform.select({
       ios: {
-        shadowColor: '#FF6B35',
-        shadowOffset: { width: 0, height: 3 },
-        shadowOpacity: 0.25,
-        shadowRadius: 18,
+        shadowColor: '#F9A889',
+        shadowOffset: { width: 0, height: 2 }, // Reduced from 3 to 2
+        shadowOpacity: 0.08, // Reduced from 0.12 to 0.08
+        shadowRadius: 8, // Reduced from 12 to 8
       },
       android: {
-        elevation: 10,
+        elevation: 3, // Reduced from 6 to 3
       },
     }),
   },
@@ -654,8 +650,7 @@ const styles = StyleSheet.create({
     top: 0,
     bottom: 0,
     width: 30,
-    backgroundColor: 'rgba(255, 255, 255, 0.3)',
-    // transform: [{ skewX: '-20deg' }], // Temporarily disabled - potential syntax issue
+    backgroundColor: 'rgba(255, 255, 255, 0.18)', // 降低shimmer强度
   },
   innerGlow: {
     position: 'absolute',
@@ -664,25 +659,18 @@ const styles = StyleSheet.create({
     width: '60%',
     height: '60%',
     borderRadius: 100,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    backgroundColor: 'rgba(255, 255, 255, 0.06)', // 降低内发光强度
     ...Platform.select({
       ios: {
         shadowColor: '#ffffff',
         shadowOffset: { width: 0, height: 0 },
-        shadowOpacity: 0.3,
-        shadowRadius: 10,
+        shadowOpacity: 0.08, // Reduced from 0.15 to 0.08
+        shadowRadius: 4, // Reduced from 8 to 4
       },
       android: {
         elevation: 0,
       },
     }),
-  },
-  particle: {
-    position: 'absolute',
-    width: 4,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: 'rgba(255, 255, 255, 0.8)',
   },
 });
 

@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { useColorScheme, Appearance } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import i18n from '../utils/i18n';
 
 export type ThemeMode = 'light' | 'dark' | 'auto';
 
@@ -74,12 +75,43 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
 
   // 获取主题模式显示名称
   const getThemeModeDisplayName = (mode: ThemeMode): string => {
-    const displayNames = {
-      'light': '浅色模式',
-      'dark': '深色模式',
-      'auto': '跟随系统',
-    };
-    return displayNames[mode] || mode;
+    try {
+      // Always try to use i18n first
+      if (i18n.isInitialized && i18n.t) {
+        const translationKey = `profile.general.${mode}_mode`;
+        const translated = i18n.t(translationKey);
+        // If translation exists and is not the same as key, use it
+        if (translated && translated !== translationKey) {
+          return translated;
+        }
+      }
+      
+      // Enhanced fallback that checks current language properly
+      const currentLang = (i18n.language || i18n.resolvedLanguage || 'en-US').startsWith('zh') ? 'zh-CN' : 'en-US';
+      
+      const fallbacks = {
+        'zh-CN': {
+          'light': '浅色模式',
+          'dark': '深色模式', 
+          'auto': '跟随系统',
+        },
+        'en-US': {
+          'light': 'Light Mode',
+          'dark': 'Dark Mode',
+          'auto': 'Follow System',
+        }
+      };
+      
+      return fallbacks[currentLang]?.[mode] || mode;
+    } catch (error) {
+      // Final fallback - assume English for international app
+      const englishFallback = {
+        'light': 'Light Mode',
+        'dark': 'Dark Mode', 
+        'auto': 'Follow System',
+      };
+      return englishFallback[mode] || mode;
+    }
   };
 
   const contextValue: ThemeContextType = {

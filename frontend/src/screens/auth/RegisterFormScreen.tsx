@@ -15,18 +15,27 @@ import {
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
+import { LinearGradient } from 'expo-linear-gradient';
 import { theme } from '../../theme';
+import { LIQUID_GLASS_LAYERS, DAWN_GRADIENTS } from '../../theme/core';
+import { SchoolSelector } from '../../components/common/SchoolSelector';
+import { vitaGlobalAPI } from '../../services/VitaGlobalAPI';
 
 interface FormData {
+  userName: string;
   legalName: string;
   englishNickname: string;
   university: string;
+  universityId: string;
   email: string;
   password: string;
   confirmPassword: string;
   phoneType: 'CN' | 'US';
   phoneNumber: string;
+  sex: '0' | '1' | '2'; // 0-男，1-女，2-未知
   referralCode?: string;
+  organizationId?: string;
+  bizId?: string; // SMS验证码接口返回的字段
 }
 
 export const RegisterFormScreen: React.FC = () => {
@@ -45,15 +54,20 @@ export const RegisterFormScreen: React.FC = () => {
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   
   const [formData, setFormData] = useState<FormData>({
+    userName: '',
     legalName: '',
     englishNickname: '',
     university: '',
+    universityId: '',
     email: '',
     password: '',
     confirmPassword: '',
     phoneType: 'CN',
     phoneNumber: '',
+    sex: '2', // 默认未知
     referralCode: referralCode || '',
+    organizationId: '',
+    bizId: '',
   });
 
   const [errors, setErrors] = useState<Partial<FormData>>({});
@@ -70,12 +84,24 @@ export const RegisterFormScreen: React.FC = () => {
   const validateStep1 = () => {
     const newErrors: Partial<FormData> = {};
     
+    if (!formData.userName) {
+      newErrors.userName = t('validation.username_required');
+    } else if (formData.userName.length < 6 || formData.userName.length > 20) {
+      newErrors.userName = t('validation.username_length');
+    } else if (!/^[a-zA-Z0-9]+$/.test(formData.userName)) {
+      newErrors.userName = t('validation.username_format');
+    }
+    
     if (!formData.legalName) {
       newErrors.legalName = t('validation.legal_name_required');
+    } else if (formData.legalName.length > 50) {
+      newErrors.legalName = t('validation.legal_name_length');
     }
     
     if (!formData.englishNickname) {
       newErrors.englishNickname = t('validation.english_nickname_required');
+    } else if (formData.englishNickname.length > 50) {
+      newErrors.englishNickname = t('validation.english_nickname_length');
     }
     
     if (!formData.university) {
@@ -97,8 +123,8 @@ export const RegisterFormScreen: React.FC = () => {
     
     if (!formData.password) {
       newErrors.password = t('validation.password_required');
-    } else if (formData.password.length < 8) {
-      newErrors.password = t('validation.password_min_length_8');
+    } else if (formData.password.length < 6 || formData.password.length > 20) {
+      newErrors.password = t('validation.password_length_6_20');
     }
     
     if (formData.password !== formData.confirmPassword) {
@@ -164,35 +190,50 @@ export const RegisterFormScreen: React.FC = () => {
     
     setLoading(true);
     try {
-      // TODO: 调用发送验证码API
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const phoneNumber = formData.phoneType === 'CN' 
+        ? `86${formData.phoneNumber}` 
+        : `1${formData.phoneNumber}`;
       
-      Alert.alert(
-        t('auth.register.sms.code_sent_title'),
-        t('auth.register.sms.code_sent_message', {
-          countryCode: formData.phoneType === 'CN' ? '86' : '1',
-          phoneNumber: formData.phoneNumber
-        })
-      );
+      // 调用发送验证码API
+      const result = await vitaGlobalAPI.sendSMSVerification(phoneNumber);
       
-      // 开始倒计时
-      setCountdown(60);
-      const timer = setInterval(() => {
-        setCountdown(prev => {
-          if (prev <= 1) {
-            clearInterval(timer);
-            return 0;
-          }
-          return prev - 1;
+      if (result.code === 'OK' && result.bizId) {
+        // 保存bizId到表单数据
+        updateFormData('bizId', result.bizId);
+        
+        Alert.alert(
+          t('auth.register.sms.code_sent_title'),
+          t('auth.register.sms.code_sent_message', {
+            countryCode: formData.phoneType === 'CN' ? '86' : '1',
+            phoneNumber: formData.phoneNumber
+          })
+        );
+        
+        // 开始倒计时
+        setCountdown(60);
+        const timer = setInterval(() => {
+          setCountdown(prev => {
+            if (prev <= 1) {
+              clearInterval(timer);
+              return 0;
+            }
+            return prev - 1;
+          });
+        }, 1000);
+        
+        navigation.navigate('Verification', { 
+          formData: {
+            ...formData,
+            bizId: result.bizId
+          },
+          phoneNumber: formData.phoneNumber,
+          phoneType: formData.phoneType 
         });
-      }, 1000);
-      
-      navigation.navigate('Verification', { 
-        formData,
-        phoneNumber: formData.phoneNumber,
-        phoneType: formData.phoneType 
-      });
+      } else {
+        Alert.alert('发送失败', '验证码发送失败，请稍后重试');
+      }
     } catch (error) {
+      console.error('发送验证码错误:', error);
       Alert.alert(t('auth.register.sms.send_failed_title'), t('auth.register.sms.send_failed_message'));
     } finally {
       setLoading(false);
@@ -215,6 +256,19 @@ export const RegisterFormScreen: React.FC = () => {
     </View>
   );
 
+  const renderStepContent = () => {
+    switch (currentStep) {
+      case 1:
+        return renderStep1();
+      case 2:
+        return renderStep2();
+      case 3:
+        return renderStep3();
+      default:
+        return null;
+    }
+  };
+
   const renderStep1 = () => (
     <View style={styles.stepContainer}>
       <Text style={styles.stepTitle}>{t('auth.register.form.basic_info')}</Text>
@@ -226,6 +280,20 @@ export const RegisterFormScreen: React.FC = () => {
           <Text style={styles.referralText}>{t('auth.register.form.referral_code', { code: formData.referralCode })}</Text>
         </View>
       )}
+
+      <View style={styles.inputContainer}>
+        <Text style={styles.label}>{t('auth.register.form.username_label')}</Text>
+        <TextInput
+          style={[styles.input, errors.userName && styles.inputError]}
+          placeholder={t('auth.register.form.username_placeholder')}
+          value={formData.userName}
+          onChangeText={(text) => updateFormData('userName', text)}
+          placeholderTextColor={theme.colors.text.disabled}
+          autoCapitalize="none"
+          autoCorrect={false}
+        />
+        {errors.userName && <Text style={styles.errorText}>{errors.userName}</Text>}
+      </View>
 
       <View style={styles.inputContainer}>
         <Text style={styles.label}>{t('auth.register.form.legal_name_label')}</Text>
@@ -253,14 +321,16 @@ export const RegisterFormScreen: React.FC = () => {
 
       <View style={styles.inputContainer}>
         <Text style={styles.label}>{t('auth.register.form.university_label')}</Text>
-        <TextInput
-          style={[styles.input, errors.university && styles.inputError]}
-          placeholder={t('auth.register.form.university_placeholder')}
+        <SchoolSelector
           value={formData.university}
-          onChangeText={(text) => updateFormData('university', text)}
-          placeholderTextColor={theme.colors.text.disabled}
+          selectedId={formData.universityId}
+          onSelect={(school) => {
+            updateFormData('university', school.deptName);
+            updateFormData('universityId', school.deptId.toString());
+          }}
+          placeholder={t('auth.register.form.university_placeholder')}
+          error={errors.university}
         />
-        {errors.university && <Text style={styles.errorText}>{errors.university}</Text>}
       </View>
     </View>
   );
@@ -355,6 +425,36 @@ export const RegisterFormScreen: React.FC = () => {
         {errors.phoneNumber && <Text style={styles.errorText}>{errors.phoneNumber}</Text>}
       </View>
 
+      <View style={styles.inputContainer}>
+        <Text style={styles.label}>{t('auth.register.form.gender_label')}</Text>
+        <View style={styles.genderContainer}>
+          <TouchableOpacity
+            style={[styles.genderButton, formData.sex === '0' && styles.genderActive]}
+            onPress={() => updateFormData('sex', '0')}
+          >
+            <Text style={[styles.genderText, formData.sex === '0' && styles.genderTextActive]}>
+              {t('auth.register.form.gender_male')}
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.genderButton, formData.sex === '1' && styles.genderActive]}
+            onPress={() => updateFormData('sex', '1')}
+          >
+            <Text style={[styles.genderText, formData.sex === '1' && styles.genderTextActive]}>
+              {t('auth.register.form.gender_female')}
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.genderButton, formData.sex === '2' && styles.genderActive]}
+            onPress={() => updateFormData('sex', '2')}
+          >
+            <Text style={[styles.genderText, formData.sex === '2' && styles.genderTextActive]}>
+              {t('auth.register.form.gender_unknown')}
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+
       <TouchableOpacity
         style={styles.termsContainer}
         onPress={() => setAgreedToTerms(!agreedToTerms)}
@@ -376,6 +476,7 @@ export const RegisterFormScreen: React.FC = () => {
 
   return (
     <SafeAreaView style={styles.container}>
+      <LinearGradient colors={DAWN_GRADIENTS.skyCool} style={StyleSheet.absoluteFill} />
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.keyboardView}
@@ -399,9 +500,9 @@ export const RegisterFormScreen: React.FC = () => {
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
-          {currentStep === 1 && renderStep1()}
-          {currentStep === 2 && renderStep2()}
-          {currentStep === 3 && renderStep3()}
+          <View style={styles.formContainer}>
+            {renderStepContent()}
+          </View>
         </ScrollView>
 
         {/* Bottom Button */}
@@ -432,7 +533,7 @@ export const RegisterFormScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: theme.colors.background,
+    backgroundColor: 'transparent',
   },
   keyboardView: {
     flex: 1,
@@ -457,24 +558,17 @@ const styles = StyleSheet.create({
     color: theme.colors.text.primary,
   },
   skipButton: {
-    paddingVertical: theme.spacing[2],
-    paddingHorizontal: theme.spacing[3],
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
-    borderRadius: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.08,
-    shadowRadius: 2,
-    elevation: 1,
-    borderWidth: 1,
-    borderColor: 'rgba(0, 0, 0, 0.06)',
-    minWidth: 40,
-    alignItems: 'center',
+    paddingVertical: theme.spacing.sm,
+    paddingHorizontal: theme.spacing.md,
+    backgroundColor: 'transparent',
+    borderRadius: 20,
+    borderWidth: 1.5,
+    borderColor: LIQUID_GLASS_LAYERS.L2.border.color.light,
   },
   skipText: {
     fontSize: theme.typography.fontSize.sm,
-    color: theme.colors.text.primary,
-    fontWeight: theme.typography.fontWeight.medium,
+    color: theme.colors.primary,
+    fontWeight: theme.typography.fontWeight.semibold,
   },
   progressContainer: {
     paddingHorizontal: theme.spacing[6],
@@ -500,6 +594,14 @@ const styles = StyleSheet.create({
   scrollContent: {
     flexGrow: 1,
     paddingHorizontal: theme.spacing[6],
+  },
+  formContainer: {
+    backgroundColor: LIQUID_GLASS_LAYERS.L1.background.light,
+    borderRadius: LIQUID_GLASS_LAYERS.L1.borderRadius.card,
+    borderColor: LIQUID_GLASS_LAYERS.L1.border.color.light,
+    borderWidth: LIQUID_GLASS_LAYERS.L1.border.width,
+    padding: theme.spacing.lg,
+    ...theme.shadows[LIQUID_GLASS_LAYERS.L1.shadow],
   },
   stepContainer: {
     paddingVertical: theme.spacing[4],
@@ -627,6 +729,31 @@ const styles = StyleSheet.create({
   },
   termsLink: {
     color: theme.colors.primary,
+    fontWeight: theme.typography.fontWeight.medium,
+  },
+  genderContainer: {
+    flexDirection: 'row',
+    marginBottom: theme.spacing[2],
+  },
+  genderButton: {
+    flex: 1,
+    paddingVertical: theme.spacing[3],
+    borderRadius: theme.borderRadius.lg,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    alignItems: 'center',
+    marginHorizontal: theme.spacing[1],
+  },
+  genderActive: {
+    backgroundColor: theme.colors.primary,
+    borderColor: theme.colors.primary,
+  },
+  genderText: {
+    fontSize: theme.typography.fontSize.base,
+    color: theme.colors.text.secondary,
+  },
+  genderTextActive: {
+    color: theme.colors.text.inverse,
     fontWeight: theme.typography.fontWeight.medium,
   },
   bottomContainer: {

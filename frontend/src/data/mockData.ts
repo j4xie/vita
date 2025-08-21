@@ -1,7 +1,6 @@
 export interface Activity {
   id: string;
   title: string;
-  subtitle?: string;
   location: string;
   date: string;
   time: string;
@@ -16,8 +15,6 @@ export interface Activity {
     avatar?: string;
     verified?: boolean;
   };
-  price?: number;
-  isFree?: boolean;
 }
 
 export const mockActivities: Activity[] = [
@@ -37,8 +34,6 @@ export const mockActivities: Activity[] = [
       name: 'CU中国学生学者联合会',
       verified: true
     },
-    price: 0,
-    isFree: true,
   },
   {
     id: '2',
@@ -56,8 +51,6 @@ export const mockActivities: Activity[] = [
       name: 'CU中国学生学者联合会',
       verified: true
     },
-    price: 5,
-    isFree: false,
   },
   {
     id: '3',
@@ -75,8 +68,6 @@ export const mockActivities: Activity[] = [
       name: '职业发展中心',
       verified: true
     },
-    price: 0,
-    isFree: true,
   },
   {
     id: '4',
@@ -94,8 +85,6 @@ export const mockActivities: Activity[] = [
       name: '国际学生服务中心',
       verified: true
     },
-    price: 0,
-    isFree: true,
   },
   {
     id: '5',
@@ -113,8 +102,6 @@ export const mockActivities: Activity[] = [
       name: '体育协会',
       verified: false
     },
-    price: 0,
-    isFree: true,
   },
   {
     id: '6',
@@ -132,8 +119,6 @@ export const mockActivities: Activity[] = [
       name: '国际学生联合会',
       verified: true
     },
-    price: 10,
-    isFree: false,
   },
   {
     id: '7',
@@ -151,8 +136,6 @@ export const mockActivities: Activity[] = [
       name: '商学院职业服务',
       verified: true
     },
-    price: 0,
-    isFree: true,
   },
   {
     id: '8',
@@ -170,8 +153,6 @@ export const mockActivities: Activity[] = [
       name: '数学系学生会',
       verified: false
     },
-    price: 0,
-    isFree: true,
   },
   {
     id: '9',
@@ -189,8 +170,6 @@ export const mockActivities: Activity[] = [
       name: '户外运动俱乐部',
       verified: false
     },
-    price: 5,
-    isFree: false,
   },
   {
     id: '10',
@@ -208,8 +187,6 @@ export const mockActivities: Activity[] = [
       name: '摄影协会',
       verified: false
     },
-    price: 0,
-    isFree: true,
   },
   {
     id: '11',
@@ -227,8 +204,6 @@ export const mockActivities: Activity[] = [
       name: '计算机科学系',
       verified: true
     },
-    price: 0,
-    isFree: true,
   },
   {
     id: '12',
@@ -246,8 +221,6 @@ export const mockActivities: Activity[] = [
       name: '电影社',
       verified: false
     },
-    price: 3,
-    isFree: false,
   },
   {
     id: '13',
@@ -265,8 +238,6 @@ export const mockActivities: Activity[] = [
       name: '创业孵化中心',
       verified: true
     },
-    price: 0,
-    isFree: true,
   },
   {
     id: '14',
@@ -284,8 +255,6 @@ export const mockActivities: Activity[] = [
       name: '健康生活社',
       verified: false
     },
-    price: 0,
-    isFree: true,
   },
   {
     id: '15',
@@ -303,8 +272,6 @@ export const mockActivities: Activity[] = [
       name: '学生会',
       verified: true
     },
-    price: 0,
-    isFree: true,
   },
 ];
 

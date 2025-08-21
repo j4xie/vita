@@ -19,6 +19,7 @@ import * as Haptics from 'expo-haptics';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { theme } from '../../theme';
+import { LIQUID_GLASS_LAYERS, DAWN_GRADIENTS } from '../../theme/core';
 
 export interface SchoolInfo {
   id: string;
@@ -148,20 +149,14 @@ export const ConsultingDevModal: React.FC<ConsultingDevModalProps> = ({
           <Animated.View
             style={[
               styles.modalContent,
+              styles.modalContentGlass,
               {
                 opacity: contentOpacity,
                 transform: [{ scale: contentScale }],
               },
             ]}
           >
-            <LinearGradient
-              colors={[
-                isDarkMode ? '#1c1c1e' : '#ffffff',
-                isDarkMode ? '#2c2c2e' : '#f8f9ff',
-                isDarkMode ? '#1c1c1e' : '#ffffff',
-              ]}
-              style={styles.contentGradient}
-            >
+            <View style={[styles.contentGradient, styles.contentGlass]}>
               {/* Close button - 36pt直径，44pt触达区域 */}
               <TouchableOpacity
                 style={styles.closeButton}
@@ -265,22 +260,20 @@ export const ConsultingDevModal: React.FC<ConsultingDevModalProps> = ({
                 </View>
               </View>
 
-              {/* Action buttons - 只保留一个按钮 */}
+              {/* Action buttons - Dawn Gradient */}
               <View style={styles.buttonSection}>
-                {/* 单一按钮 - 我知道了 */}
                 <TouchableOpacity
-                  style={[styles.primaryButton, { backgroundColor: theme.colors.primary }]}
                   onPress={handleClose}
                   activeOpacity={0.8}
-                  accessibilityRole="button"
-                  accessibilityLabel={t('consulting.iKnow')}
                 >
-                  <Text style={styles.primaryButtonText}>
-                    {t('consulting.iKnow')}
-                  </Text>
+                  <View style={styles.primaryButtonGlass}>
+                    <Text style={styles.primaryButtonText}>
+                      {t('consulting.iKnow')}
+                    </Text>
+                  </View>
                 </TouchableOpacity>
               </View>
-            </LinearGradient>
+            </View>
           </Animated.View>
         </TouchableWithoutFeedback>
       </View>
@@ -438,11 +431,26 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     minHeight: 50,
   },
+  
+  // V2.0 白色玻璃按钮
+  primaryButtonGlass: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 16,
+    paddingHorizontal: 24,
+    borderRadius: 16,
+    minHeight: 50,
+    backgroundColor: 'rgba(255, 255, 255, 0.95)', // 极简白色玻璃
+    borderWidth: 1,
+    borderColor: 'rgba(0, 0, 0, 0.1)', // 淡灰边框
+    borderTopColor: 'rgba(255, 255, 255, 0.8)', // 顶部白色高光
+    ...theme.shadows.xs,
+  },
   primaryButtonText: {
     fontSize: 17,
     fontWeight: '600',
-    color: 'white',
-    marginRight: 8,
+    color: '#1F2937', // 深灰色字体，在奶橘背景上更清晰
   },
   secondaryButton: {
     flexDirection: 'row',
@@ -460,6 +468,21 @@ const styles = StyleSheet.create({
   },
   buttonIcon: {
     marginLeft: 4,
+  },
+  
+  // V2.0 L3浮层玻璃模态框
+  modalContentGlass: {
+    backgroundColor: LIQUID_GLASS_LAYERS.L3.background.light,
+    borderWidth: LIQUID_GLASS_LAYERS.L3.border.width,
+    borderColor: LIQUID_GLASS_LAYERS.L3.border.color.light,
+    borderRadius: LIQUID_GLASS_LAYERS.L3.borderRadius.modal,
+    ...theme.shadows[LIQUID_GLASS_LAYERS.L3.shadow],
+  },
+  
+  // V2.0 内容玻璃效果
+  contentGlass: {
+    backgroundColor: 'transparent',
+    borderWidth: 0,
   },
 });
 

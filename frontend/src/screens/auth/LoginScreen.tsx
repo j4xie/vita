@@ -21,14 +21,18 @@ import { LinearGradient } from 'expo-linear-gradient';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useTranslation } from 'react-i18next';
 import { theme } from '../../theme';
-import { BRAND_INTERACTIONS } from '../../theme/core';
+import { LIQUID_GLASS_LAYERS, DAWN_GRADIENTS } from '../../theme/core';
 import { fadeIn, slideInFromBottom } from '../../utils/animations';
+import { vitaGlobalAPI } from '../../services/VitaGlobalAPI';
+import { useUser } from '../../context/UserContext';
+import { login as apiLogin, getUserInfo } from '../../services/authAPI';
 
 const { width, height } = Dimensions.get('window');
 
 export const LoginScreen: React.FC = () => {
   const { t } = useTranslation();
   const navigation = useNavigation<any>();
+  const { login: userLogin } = useUser();
   
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -38,6 +42,7 @@ export const LoginScreen: React.FC = () => {
   
   // 表单验证状态
   const [errors, setErrors] = useState<{email?: string; password?: string}>({});
+  const [focusedInput, setFocusedInput] = useState<string | null>(null);
   
   // 动画状态
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -81,28 +86,81 @@ export const LoginScreen: React.FC = () => {
     setLoading(true);
     
     try {
-      // TODO: 调用登录API
-      // 模拟API调用
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      // 尝试多种登录方式
+      let loginCredentials;
       
-      // 保存登录状态
-      if (rememberMe) {
-        await AsyncStorage.setItem('userToken', 'mock-jwt-token');
-        await AsyncStorage.setItem('userEmail', email);
+      // 判断输入是邮箱还是用户名
+      if (email.includes('@')) {
+        loginCredentials = { email: email, password: password };
+      } else {
+        loginCredentials = { username: email, password: password };
       }
       
-      // 导航到主页或返回之前的页面
-      const returnTo = navigation.getState()?.routes?.find((r: any) => r.params?.returnTo)?.params?.returnTo;
-      if (returnTo) {
-        navigation.navigate(returnTo);
+      console.log('尝试登录:', loginCredentials); // 调试信息
+      
+      // 调用登录API
+      const result = await apiLogin(loginCredentials);
+      
+      console.log('登录响应:', result); // 调试信息
+      
+      if (result.code === 200 && result.data?.token) {
+        // 登录成功，获取用户详细信息
+        try {
+          const userInfoResult = await getUserInfo(result.data.token);
+          if (userInfoResult.code === 200 && userInfoResult.data) {
+            // 通过UserContext设置用户信息
+            await userLogin(result.data.token, userInfoResult.data);
+          }
+        } catch (userInfoError) {
+          console.warn('获取用户信息失败，但登录成功:', userInfoError);
+          // 即使获取用户信息失败，也允许登录
+          await userLogin(result.data.token);
+        }
+        
+        // 保存用户邮箱（如果选择记住我）
+        if (rememberMe) {
+          await AsyncStorage.setItem('userEmail', email);
+          await AsyncStorage.setItem('rememberMe', 'true');
+        } else {
+          await AsyncStorage.removeItem('userEmail');
+          await AsyncStorage.removeItem('rememberMe');
+        }
+        
+        // 导航到主页或返回之前的页面
+        const returnTo = navigation.getState()?.routes?.find((r: any) => r.params?.returnTo)?.params?.returnTo;
+        if (returnTo) {
+          navigation.navigate(returnTo);
+        } else {
+          navigation.reset({
+            index: 0,
+            routes: [{ name: 'Main' }],
+          });
+        }
       } else {
-        navigation.reset({
-          index: 0,
-          routes: [{ name: 'Main' }],
-        });
+        // 详细的错误处理
+        let errorMessage = result.msg || t('auth.errors.invalid_credentials');
+        
+        if (result.code === 500 && errorMessage.includes('用户不存在')) {
+          errorMessage = '用户名或邮箱不存在，请检查输入或先注册账号';
+        } else if (result.code === 500 && errorMessage.includes('密码错误')) {
+          errorMessage = '密码错误，请重新输入';
+        }
+        
+        Alert.alert(t('auth.errors.login_failed'), errorMessage);
       }
     } catch (error) {
-      Alert.alert(t('auth.errors.login_failed'), t('auth.errors.invalid_credentials'));
+      console.error('登录错误:', error);
+      
+      let errorMessage = t('auth.errors.network_error');
+      if (error instanceof Error) {
+        if (error.message.includes('Network')) {
+          errorMessage = '网络连接失败，请检查网络后重试';
+        } else if (error.message.includes('500')) {
+          errorMessage = '服务器错误，请稍后重试';
+        }
+      }
+      
+      Alert.alert(t('auth.errors.login_failed'), errorMessage);
     } finally {
       setLoading(false);
     }
@@ -122,9 +180,7 @@ export const LoginScreen: React.FC = () => {
 
   return (
     <LinearGradient
-      colors={['rgba(248, 250, 255, 0.95)', 'rgba(240, 247, 255, 0.85)']}
-      start={{ x: 0, y: 0 }}
-      end={{ x: 1, y: 1 }}
+      colors={DAWN_GRADIENTS.skyCool}
       style={styles.container}
     >
       <SafeAreaView style={styles.safeArea}>
@@ -137,12 +193,12 @@ export const LoginScreen: React.FC = () => {
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
           >
-            {/* Skip Button */}
+            {/* Skip Button - L2 Outline */}
             <TouchableOpacity style={styles.skipButton} onPress={handleSkip}>
               <Text style={styles.skipText}>{t('auth.login.skip')}</Text>
             </TouchableOpacity>
 
-            {/* Main Content Card */}
+            {/* Main Content Card - L1 Glass */}
             <Animated.View 
               style={[
                 styles.contentCard, 
@@ -171,7 +227,7 @@ export const LoginScreen: React.FC = () => {
             {/* Email Input */}
             <View style={styles.inputContainer}>
               <Text style={styles.label}>{t('auth.login.email_label')}</Text>
-              <View style={[styles.inputWrapper, errors.email && styles.inputError]}>
+              <View style={[styles.inputWrapper, errors.email && styles.inputError, focusedInput === 'email' && styles.inputFocused]}>
                 <Ionicons name="mail-outline" size={20} color={theme.colors.text.disabled} />
                 <TextInput
                   style={styles.input}
@@ -181,6 +237,8 @@ export const LoginScreen: React.FC = () => {
                     setEmail(text);
                     if (errors.email) setErrors({...errors, email: undefined});
                   }}
+                  onFocus={() => setFocusedInput('email')}
+                  onBlur={() => setFocusedInput(null)}
                   keyboardType="email-address"
                   autoCapitalize="none"
                   autoCorrect={false}
@@ -195,7 +253,7 @@ export const LoginScreen: React.FC = () => {
             {/* Password Input */}
             <View style={styles.inputContainer}>
               <Text style={styles.label}>{t('auth.login.password_label')}</Text>
-              <View style={[styles.inputWrapper, errors.password && styles.inputError]}>
+              <View style={[styles.inputWrapper, errors.password && styles.inputError, focusedInput === 'password' && styles.inputFocused]}>
                 <Ionicons name="lock-closed-outline" size={20} color={theme.colors.text.disabled} />
                 <TextInput
                   style={styles.input}
@@ -205,6 +263,8 @@ export const LoginScreen: React.FC = () => {
                     setPassword(text);
                     if (errors.password) setErrors({...errors, password: undefined});
                   }}
+                  onFocus={() => setFocusedInput('password')}
+                  onBlur={() => setFocusedInput(null)}
                   secureTextEntry={!showPassword}
                   placeholderTextColor={theme.colors.text.disabled}
                 />
@@ -296,38 +356,31 @@ const styles = StyleSheet.create({
     minHeight: height * 0.9,
   },
   
-  // Skip Button
+  // Skip Button - V2.0 L2 Outline
   skipButton: {
     alignSelf: 'flex-end',
     paddingVertical: theme.spacing.sm,
     paddingHorizontal: theme.spacing.md,
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    backgroundColor: 'transparent',
     borderRadius: 20,
     marginBottom: theme.spacing.lg,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 4,
-    elevation: 3,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
+    borderWidth: 1.5,
+    borderColor: LIQUID_GLASS_LAYERS.L2.border.color.light,
   },
   skipText: {
     fontSize: theme.typography.fontSize.base,
-    color: theme.colors.text.primary,
+    color: theme.colors.primary,
     fontWeight: theme.typography.fontWeight.semibold,
   },
   
-  // Main Content Card - 玻璃态设计
+  // Main Content Card - V2.0 L1 Glass
   contentCard: {
-    backgroundColor: theme.liquidGlass.card.background,
-    borderRadius: theme.borderRadius.modal + 4,
-    padding: theme.spacing['2xl'],
-    marginHorizontal: theme.spacing.xs,
-    ...theme.shadows.lg,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
-    backdropFilter: 'blur(20px)', // 毛玻璃效果
+    backgroundColor: LIQUID_GLASS_LAYERS.L1.background.light,
+    borderRadius: theme.borderRadius.xl,
+    padding: theme.spacing.xl,
+    ...theme.shadows[LIQUID_GLASS_LAYERS.L1.shadow],
+    borderWidth: LIQUID_GLASS_LAYERS.L1.border.width,
+    borderColor: LIQUID_GLASS_LAYERS.L1.border.color.light,
   },
   
   // Logo Section
@@ -390,12 +443,21 @@ const styles = StyleSheet.create({
   inputWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: theme.colors.background.secondary,
-    borderRadius: theme.borderRadius.input,
+    backgroundColor: 'rgba(255, 255, 255, 0.5)',
+    borderRadius: theme.borderRadius.base,
     paddingHorizontal: theme.spacing.md,
-    paddingVertical: theme.spacing.md,
-    borderWidth: 2,
-    borderColor: theme.colors.border.secondary,
+    borderWidth: 1.5,
+    borderColor: 'transparent', // Default state has no visible border
+    transition: 'border-color 0.3s ease-in-out',
+  },
+  inputFocused: {
+    borderColor: theme.colors.primary, // Dawn Warm border
+    // Rim highlight can be simulated with a shadow
+    shadowColor: theme.colors.primary,
+    shadowRadius: 8,
+    shadowOpacity: 0.3,
+    shadowOffset: { width: 0, height: 0 },
+    elevation: 4,
   },
   inputError: {
     borderColor: theme.colors.danger,
@@ -448,7 +510,7 @@ const styles = StyleSheet.create({
   },
   forgotText: {
     fontSize: theme.typography.fontSize.base,
-    color: BRAND_INTERACTIONS.navigation.active.text,
+    color: theme.colors.text.primary, // Changed from BRAND_INTERACTIONS
     fontWeight: theme.typography.fontWeight.semibold,
   },
   
@@ -494,7 +556,7 @@ const styles = StyleSheet.create({
   },
   registerLink: {
     fontSize: theme.typography.fontSize.base,
-    color: BRAND_INTERACTIONS.navigation.active.text,
+    color: theme.colors.text.primary, // Changed from BRAND_INTERACTIONS
     fontWeight: theme.typography.fontWeight.bold,
     marginLeft: theme.spacing.xs,
   },

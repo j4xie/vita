@@ -120,9 +120,9 @@ export const VolunteerScreen: React.FC = () => {
                 </Text>
               </View>
               <View>
-                <Text style={styles.userName}>{user?.name || '志愿者'}</Text>
+                <Text style={styles.userName}>{user?.name || t('volunteer.default_name')}</Text>
                 <Text style={styles.userRole}>
-                  {user?.permissions.isOrganizer ? '活动组织者' : '志愿者'}
+                  {user?.permissions.isOrganizer ? t('userInfo.roles.organizer') : t('userInfo.roles.volunteer')}
                 </Text>
               </View>
             </View>
@@ -138,7 +138,7 @@ export const VolunteerScreen: React.FC = () => {
                   style={styles.createButtonGradient}
                 >
                   <Ionicons name="add" size={24} color="white" />
-                  <Text style={styles.createButtonText}>创建活动</Text>
+                  <Text style={styles.createButtonText}>{t('volunteer.create_activity_button')}</Text>
                 </LinearGradient>
               </TouchableOpacity>
             </View>
@@ -147,14 +147,14 @@ export const VolunteerScreen: React.FC = () => {
 
         {/* Quick Stats */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>本周数据</Text>
+          <Text style={styles.sectionTitle}>{t('volunteer.weekly_stats_title')}</Text>
           <View style={styles.statsContainer}>
             <View style={styles.statCard}>
               <View style={[styles.statIcon, { backgroundColor: theme.colors.primary + '20' }]}>
                 <Ionicons name="calendar" size={24} color={theme.colors.primary} />
               </View>
               <Text style={styles.statValue}>8</Text>
-              <Text style={styles.statLabel}>活跃活动</Text>
+              <Text style={styles.statLabel}>{t('volunteer.active_activities_label')}</Text>
             </View>
             
             <View style={styles.statCard}>
@@ -162,7 +162,7 @@ export const VolunteerScreen: React.FC = () => {
                 <Ionicons name="people" size={24} color="#8E24AA" />
               </View>
               <Text style={styles.statValue}>156</Text>
-              <Text style={styles.statLabel}>总参与者</Text>
+              <Text style={styles.statLabel}>{t('volunteer.total_participants_label')}</Text>
             </View>
             
             <View style={styles.statCard}>
@@ -170,14 +170,14 @@ export const VolunteerScreen: React.FC = () => {
                 <Ionicons name="checkmark-circle" size={24} color="#26A69A" />
               </View>
               <Text style={styles.statValue}>24</Text>
-              <Text style={styles.statLabel}>新报名</Text>
+              <Text style={styles.statLabel}>{t('volunteer.new_registrations_label')}</Text>
             </View>
           </View>
         </View>
 
         {/* Volunteer Features */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>管理功能</Text>
+          <Text style={styles.sectionTitle}>{t('volunteer.management_features_title')}</Text>
           <View style={styles.featuresGrid}>
             {volunteerFeatures.map((feature) => (
               <TouchableOpacity
@@ -216,9 +216,9 @@ export const VolunteerScreen: React.FC = () => {
         {/* Recent Activities */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>最近活动</Text>
+            <Text style={styles.sectionTitle}>{t('volunteer.recent_activities_title')}</Text>
             <TouchableOpacity onPress={() => navigation.navigate('Home')}>
-              <Text style={styles.seeMoreText}>查看全部</Text>
+              <Text style={styles.seeMoreText}>{t('volunteer.view_all_button')}</Text>
             </TouchableOpacity>
           </View>
           
@@ -242,7 +242,7 @@ export const VolunteerScreen: React.FC = () => {
                   </Text>
                   <View style={styles.activityStats}>
                     <Text style={styles.activityAttendees}>
-                      {activity.attendees}/{activity.maxAttendees} 人
+                      {activity.attendees}/{activity.maxAttendees} {t('activityCard.people')}
                     </Text>
                     <View style={[
                       styles.activityStatus,
@@ -260,7 +260,7 @@ export const VolunteerScreen: React.FC = () => {
                             : theme.colors.primary
                         }
                       ]}>
-                        {activity.status === 'ongoing' ? '进行中' : '即将开始'}
+                        {activity.status === 'ongoing' ? t('activityCard.status.ongoing') : t('activityCard.status.upcoming')}
                       </Text>
                     </View>
                   </View>

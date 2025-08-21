@@ -7,17 +7,17 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		03E507EADC28BD89AD33D087 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 419F83D49B4EE0C62494B155 /* PrivacyInfo.xcprivacy */; };
 		13B07FBC1A68108700A75B9A /* AppDelegate.mm in Sources */ = {isa = PBXBuildFile; fileRef = 13B07FB01A68108700A75B9A /* AppDelegate.mm */; };
 		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
 		13B07FC11A68108700A75B9A /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 13B07FB71A68108700A75B9A /* main.m */; };
-		22A42AE6F3F641CBABFE1FBD /* noop-file.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF573F7C9BB84A5B8951A8E9 /* noop-file.swift */; };
 		3E461D99554A48A4959DE609 /* SplashScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */; };
 		96905EF65AED1B983A6B3ABC /* libPods-vitaglobalapp.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 58EEBF8E8E6FB1BC6CAF49B5 /* libPods-vitaglobalapp.a */; };
-		9E6E91422C22391EA04601BC /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 8F58052349B8D8621995955E /* PrivacyInfo.xcprivacy */; };
+		97BF10B55C884A3186DCF41A /* noop-file.swift in Sources */ = {isa = PBXBuildFile; fileRef = 675EE72F79794BD8A406AEF7 /* noop-file.swift */; };
 		B18059E884C0ABDD17F3DC3D /* ExpoModulesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = FAC715A2D49A985799AEE119 /* ExpoModulesProvider.swift */; };
+		B65ECC59798447DF9EBDD0E9 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 47D85CAD20FD4B6581A4B985 /* InfoPlist.strings */; };
 		BB2F792D24A3F905000567C9 /* Expo.plist in Resources */ = {isa = PBXBuildFile; fileRef = BB2F792C24A3F905000567C9 /* Expo.plist */; };
-		D184F26EF90145E9BB0ED8FF /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 6E10C6D93C7D41CDAA6F4C0E /* InfoPlist.strings */; };
-		DE6882B695674E5E9F9BDA6C /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 78CBD19DAF834EFF84ECD9A1 /* InfoPlist.strings */; };
+		F62DF0D871D443D79F621837 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 3FAF6790919E4910B2B9B6CD /* InfoPlist.strings */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -27,18 +27,18 @@
 		13B07FB51A68108700A75B9A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = vitaglobalapp/Images.xcassets; sourceTree = "<group>"; };
 		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = vitaglobalapp/Info.plist; sourceTree = "<group>"; };
 		13B07FB71A68108700A75B9A /* main.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = main.m; path = vitaglobalapp/main.m; sourceTree = "<group>"; };
-		5808639DA5EF4A4EA8FD3950 /* vitaglobalapp-Bridging-Header.h */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 4; includeInIndex = 0; lastKnownFileType = sourcecode.c.h; name = "vitaglobalapp-Bridging-Header.h"; path = "vitaglobalapp/vitaglobalapp-Bridging-Header.h"; sourceTree = "<group>"; };
+		3FAF6790919E4910B2B9B6CD /* InfoPlist.strings */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 4; includeInIndex = 0; lastKnownFileType = text.plist.strings; name = InfoPlist.strings; path = "zh-CN.lproj/InfoPlist.strings"; sourceTree = "<group>"; };
+		419F83D49B4EE0C62494B155 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; name = PrivacyInfo.xcprivacy; path = vitaglobalapp/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		428B6C5A26264D879AC46FBE /* vitaglobalapp-Bridging-Header.h */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 4; includeInIndex = 0; lastKnownFileType = sourcecode.c.h; name = "vitaglobalapp-Bridging-Header.h"; path = "vitaglobalapp/vitaglobalapp-Bridging-Header.h"; sourceTree = "<group>"; };
+		47D85CAD20FD4B6581A4B985 /* InfoPlist.strings */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 4; includeInIndex = 0; lastKnownFileType = text.plist.strings; name = InfoPlist.strings; path = "en-US.lproj/InfoPlist.strings"; sourceTree = "<group>"; };
 		58EEBF8E8E6FB1BC6CAF49B5 /* libPods-vitaglobalapp.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-vitaglobalapp.a"; sourceTree = BUILT_PRODUCTS_DIR; };
+		675EE72F79794BD8A406AEF7 /* noop-file.swift */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 4; includeInIndex = 0; lastKnownFileType = sourcecode.swift; name = "noop-file.swift"; path = "vitaglobalapp/noop-file.swift"; sourceTree = "<group>"; };
 		6C2E3173556A471DD304B334 /* Pods-vitaglobalapp.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-vitaglobalapp.debug.xcconfig"; path = "Target Support Files/Pods-vitaglobalapp/Pods-vitaglobalapp.debug.xcconfig"; sourceTree = "<group>"; };
-		6E10C6D93C7D41CDAA6F4C0E /* InfoPlist.strings */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 4; includeInIndex = 0; lastKnownFileType = text.plist.strings; name = InfoPlist.strings; path = "zh-CN.lproj/InfoPlist.strings"; sourceTree = "<group>"; };
-		78CBD19DAF834EFF84ECD9A1 /* InfoPlist.strings */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 4; includeInIndex = 0; lastKnownFileType = text.plist.strings; name = InfoPlist.strings; path = "en-US.lproj/InfoPlist.strings"; sourceTree = "<group>"; };
 		7A4D352CD337FB3A3BF06240 /* Pods-vitaglobalapp.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-vitaglobalapp.release.xcconfig"; path = "Target Support Files/Pods-vitaglobalapp/Pods-vitaglobalapp.release.xcconfig"; sourceTree = "<group>"; };
-		8F58052349B8D8621995955E /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; name = PrivacyInfo.xcprivacy; path = vitaglobalapp/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = SplashScreen.storyboard; path = vitaglobalapp/SplashScreen.storyboard; sourceTree = "<group>"; };
 		BB2F792C24A3F905000567C9 /* Expo.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Expo.plist; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
 		FAC715A2D49A985799AEE119 /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-vitaglobalapp/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
-		FF573F7C9BB84A5B8951A8E9 /* noop-file.swift */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 4; includeInIndex = 0; lastKnownFileType = sourcecode.swift; name = "noop-file.swift"; path = "vitaglobalapp/noop-file.swift"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -63,9 +63,9 @@
 				13B07FB61A68108700A75B9A /* Info.plist */,
 				13B07FB71A68108700A75B9A /* main.m */,
 				AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */,
-				FF573F7C9BB84A5B8951A8E9 /* noop-file.swift */,
-				5808639DA5EF4A4EA8FD3950 /* vitaglobalapp-Bridging-Header.h */,
-				8F58052349B8D8621995955E /* PrivacyInfo.xcprivacy */,
+				675EE72F79794BD8A406AEF7 /* noop-file.swift */,
+				428B6C5A26264D879AC46FBE /* vitaglobalapp-Bridging-Header.h */,
+				419F83D49B4EE0C62494B155 /* PrivacyInfo.xcprivacy */,
 			);
 			name = vitaglobalapp;
 			sourceTree = "<group>";
@@ -77,6 +77,15 @@
 				58EEBF8E8E6FB1BC6CAF49B5 /* libPods-vitaglobalapp.a */,
 			);
 			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		47957DC0D17C49CAB31754FF /* en-US.lproj */ = {
+			isa = PBXGroup;
+			children = (
+				47D85CAD20FD4B6581A4B985 /* InfoPlist.strings */,
+			);
+			name = "en-US.lproj";
+			path = "";
 			sourceTree = "<group>";
 		};
 		832341AE1AAA6A7D00B99B32 /* Libraries */ = {
@@ -121,29 +130,11 @@
 			isa = PBXGroup;
 			children = (
 				BB2F792C24A3F905000567C9 /* Expo.plist */,
-				BB30C5692C9D438FB98A53BC /* zh-CN.lproj */,
-				C1F9E79D3A4B4A1FB7A8EBE4 /* en-US.lproj */,
+				F591ED679C904CF2831BD414 /* zh-CN.lproj */,
+				47957DC0D17C49CAB31754FF /* en-US.lproj */,
 			);
 			name = Supporting;
 			path = vitaglobalapp/Supporting;
-			sourceTree = "<group>";
-		};
-		BB30C5692C9D438FB98A53BC /* zh-CN.lproj */ = {
-			isa = PBXGroup;
-			children = (
-				6E10C6D93C7D41CDAA6F4C0E /* InfoPlist.strings */,
-			);
-			name = "zh-CN.lproj";
-			path = "";
-			sourceTree = "<group>";
-		};
-		C1F9E79D3A4B4A1FB7A8EBE4 /* en-US.lproj */ = {
-			isa = PBXGroup;
-			children = (
-				78CBD19DAF834EFF84ECD9A1 /* InfoPlist.strings */,
-			);
-			name = "en-US.lproj";
-			path = "";
 			sourceTree = "<group>";
 		};
 		D65327D7A22EEC0BE12398D9 /* Pods */ = {
@@ -163,6 +154,15 @@
 			name = ExpoModulesProviders;
 			sourceTree = "<group>";
 		};
+		F591ED679C904CF2831BD414 /* zh-CN.lproj */ = {
+			isa = PBXGroup;
+			children = (
+				3FAF6790919E4910B2B9B6CD /* InfoPlist.strings */,
+			);
+			name = "zh-CN.lproj";
+			path = "";
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -171,13 +171,13 @@
 			buildConfigurationList = 13B07F931A680F5B00A75B9A /* Build configuration list for PBXNativeTarget "vitaglobalapp" */;
 			buildPhases = (
 				08A4A3CD28434E44B6B9DE2E /* [CP] Check Pods Manifest.lock */,
-				BC1416C003004AE8FAEB5400 /* [Expo] Configure project */,
+				673F1CC0113542C903D739EE /* [Expo] Configure project */,
 				13B07F871A680F5B00A75B9A /* Sources */,
 				13B07F8C1A680F5B00A75B9A /* Frameworks */,
 				13B07F8E1A680F5B00A75B9A /* Resources */,
 				00DD1BFF1BD5951E006B06BC /* Bundle React Native code and images */,
 				800E24972A6A228C8D4807E9 /* [CP] Copy Pods Resources */,
-				DCD0B8D6B0DA6974DAB04F69 /* [CP] Embed Pods Frameworks */,
+				B8EB0C9F25D1E91C4B6BC7E5 /* [CP] Embed Pods Frameworks */,
 			);
 			buildRules = (
 			);
@@ -227,9 +227,9 @@
 				BB2F792D24A3F905000567C9 /* Expo.plist in Resources */,
 				13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */,
 				3E461D99554A48A4959DE609 /* SplashScreen.storyboard in Resources */,
-				D184F26EF90145E9BB0ED8FF /* InfoPlist.strings in Resources */,
-				DE6882B695674E5E9F9BDA6C /* InfoPlist.strings in Resources */,
-				9E6E91422C22391EA04601BC /* PrivacyInfo.xcprivacy in Resources */,
+				F62DF0D871D443D79F621837 /* InfoPlist.strings in Resources */,
+				B65ECC59798447DF9EBDD0E9 /* InfoPlist.strings in Resources */,
+				03E507EADC28BD89AD33D087 /* PrivacyInfo.xcprivacy in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -273,6 +273,25 @@
 			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
 			showEnvVarsInLog = 0;
 		};
+		673F1CC0113542C903D739EE /* [Expo] Configure project */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = "[Expo] Configure project";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "# This script configures Expo modules and generates the modules provider file.\nbash -l -c \"./Pods/Target\\ Support\\ Files/Pods-vitaglobalapp/expo-configure-project.sh\"\n";
+		};
 		800E24972A6A228C8D4807E9 /* [CP] Copy Pods Resources */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
@@ -315,26 +334,7 @@
 			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-vitaglobalapp/Pods-vitaglobalapp-resources.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
-		BC1416C003004AE8FAEB5400 /* [Expo] Configure project */ = {
-			isa = PBXShellScriptBuildPhase;
-			alwaysOutOfDate = 1;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputFileListPaths = (
-			);
-			inputPaths = (
-			);
-			name = "[Expo] Configure project";
-			outputFileListPaths = (
-			);
-			outputPaths = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "# This script configures Expo modules and generates the modules provider file.\nbash -l -c \"./Pods/Target\\ Support\\ Files/Pods-vitaglobalapp/expo-configure-project.sh\"\n";
-		};
-		DCD0B8D6B0DA6974DAB04F69 /* [CP] Embed Pods Frameworks */ = {
+		B8EB0C9F25D1E91C4B6BC7E5 /* [CP] Embed Pods Frameworks */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -362,7 +362,7 @@
 				13B07FBC1A68108700A75B9A /* AppDelegate.mm in Sources */,
 				13B07FC11A68108700A75B9A /* main.m in Sources */,
 				B18059E884C0ABDD17F3DC3D /* ExpoModulesProvider.swift in Sources */,
-				22A42AE6F3F641CBABFE1FBD /* noop-file.swift in Sources */,
+				97BF10B55C884A3186DCF41A /* noop-file.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "Pomelo - Student Activities",
-    "description": "Activity management and registration platform for Chinese international students overseas",
+    "description": "Activity management and registration platform for international students overseas",
     "splash": {
       "backgroundColor": "#ffffff"
     },

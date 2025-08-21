@@ -17,7 +17,7 @@ import Animated, {
   Easing,
 } from 'react-native-reanimated';
 import { theme } from '../../theme';
-import { LIQUID_GLASS_LAYERS, BRAND_GLASS } from '../../theme/core';
+import { LIQUID_GLASS_LAYERS } from '../../theme/core';
 import { usePerformanceDegradation } from '../../hooks/usePerformanceDegradation';
 
 interface SegmentedControlProps {
@@ -91,10 +91,12 @@ export const SegmentedControl: React.FC<SegmentedControlProps> = ({
   // 选中指示器动画样式
   const indicatorAnimatedStyle = useAnimatedStyle(() => {
     const translateX = animatedIndex.value * segmentWidth.value + animatedIndex.value * 2; // 包含2pt间距
+    const indicatorWidth = 18; // 固定指示器宽度
+    const centerOffset = (segmentWidth.value - indicatorWidth) / 2; // 计算居中偏移
     
     return {
-      transform: [{ translateX }],
-      width: segmentWidth.value,
+      transform: [{ translateX: translateX + centerOffset }],
+      width: indicatorWidth,
     };
   });
 
@@ -108,7 +110,7 @@ export const SegmentedControl: React.FC<SegmentedControlProps> = ({
   const getSegmentTextStyle = (index: number) => [
     styles.segmentText,
     index === selectedIndex
-      ? (isDarkMode ? styles.selectedTextDark : styles.selectedTextLight)
+      ? styles.selectedText
       : (isDarkMode ? styles.unselectedTextDark : styles.unselectedTextLight),
   ];
 
@@ -119,11 +121,10 @@ export const SegmentedControl: React.FC<SegmentedControlProps> = ({
 
   return (
     <View style={containerStyles} onLayout={onContainerLayout}>
-      {/* 选中指示器 */}
+      {/* 选中指示器 - 底部横线 */}
       <Animated.View
         style={[
           styles.selectedIndicator,
-          isDarkMode ? styles.selectedIndicatorDark : styles.selectedIndicatorLight,
           indicatorAnimatedStyle,
         ]}
       />
@@ -168,46 +169,31 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   
-  // 容器背景 - 系统风格
+  // 容器背景 - 临时添加背景色以便看到边框效果
   containerLight: {
-    backgroundColor: 'rgba(118, 118, 128, 0.12)', // iOS系统分段控件背景
+    backgroundColor: 'rgba(245, 246, 247, 0.5)', // 轻微背景色便于调试
   },
   containerDark: {
-    backgroundColor: 'rgba(118, 118, 128, 0.24)', // 深色模式背景
+    backgroundColor: 'rgba(28, 28, 30, 0.5)', // 深色模式背景
   },
   
-  // 选中指示器
+  // 选中指示器 - 简洁底部横线
   selectedIndicator: {
     position: 'absolute',
-    height: 34, // 38 - 4 (padding)
-    borderRadius: 17,
-    top: 2,
-    left: 2,
+    height: 3, // 3px高度Dawn细条
+    width: 18, // 缩短宽度，从24改为18pt
+    backgroundColor: '#F9A889',
+    bottom: 0,
+    borderRadius: 1.5, // 微圆角
+    // 移除alignSelf和marginLeft，由动画逻辑控制居中
   },
   
   selectedIndicatorLight: {
-    backgroundColor: LIQUID_GLASS_LAYERS.L2.background.light, // L2品牌玻璃背景
-    borderWidth: LIQUID_GLASS_LAYERS.L2.border.width,
-    borderColor: LIQUID_GLASS_LAYERS.L2.border.color.light,
-    ...theme.shadows[LIQUID_GLASS_LAYERS.L2.shadow],
-    // iOS品牌色发光效果
-    ...(Platform.OS === 'ios' && {
-      shadowColor: LIQUID_GLASS_LAYERS.L2.glow.color,
-      shadowOpacity: 0.2,
-      shadowRadius: LIQUID_GLASS_LAYERS.L2.glow.radius,
-    }),
+    // Styles are now token-based and applied directly
   },
   
   selectedIndicatorDark: {
-    backgroundColor: LIQUID_GLASS_LAYERS.L2.background.dark,
-    borderWidth: LIQUID_GLASS_LAYERS.L2.border.width,
-    borderColor: LIQUID_GLASS_LAYERS.L2.border.color.dark,
-    ...theme.shadows[LIQUID_GLASS_LAYERS.L2.shadow],
-    ...(Platform.OS === 'ios' && {
-      shadowColor: LIQUID_GLASS_LAYERS.L2.glow.color,
-      shadowOpacity: 0.15,
-      shadowRadius: LIQUID_GLASS_LAYERS.L2.glow.radius,
-    }),
+    // Styles are now token-based and applied directly
   },
   
   // 分段按钮
@@ -232,19 +218,16 @@ const styles = StyleSheet.create({
     lineHeight: 16,
   },
   
-  // 选中文字 - 白字
-  selectedTextLight: {
-    color: '#FFFFFF',
-  },
-  selectedTextDark: {
-    color: '#FFFFFF',
+  // 选中文字 - 黑色
+  selectedText: {
+    color: '#111827', // 深黑色
   },
   
-  // 未选中文字 - 次级文字色
+  // 未选中文字 - 灰色
   unselectedTextLight: {
-    color: 'rgba(60, 60, 67, 0.6)', // iOS系统次级文字色
+    color: '#9CA3AF', // 中等灰色
   },
   unselectedTextDark: {
-    color: 'rgba(235, 235, 245, 0.6)', // 深色模式次级文字色
+    color: '#9CA3AF', // 保持一致的灰色
   },
 });

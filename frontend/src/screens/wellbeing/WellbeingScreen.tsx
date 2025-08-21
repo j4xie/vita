@@ -13,11 +13,14 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useTranslation } from 'react-i18next';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { theme } from '../../theme';
-import { LIQUID_GLASS_LAYERS, BRAND_GLASS, BRAND_INTERACTIONS } from '../../theme/core';
+import { LIQUID_GLASS_LAYERS, DAWN_GRADIENTS } from '../../theme/core';
 import { usePerformanceDegradation } from '../../hooks/usePerformanceDegradation';
 import { VolunteerListScreen } from './VolunteerListScreen';
 import { SchoolSelectionScreen } from './SchoolSelectionScreen';
+import { VolunteerListLiquidScreen } from './VolunteerListLiquidScreen';
 import { School } from '../../data/mockData';
+import { SegmentedGlass } from '../../ui/glass/SegmentedGlass';
+import { Glass } from '../../ui/glass/GlassTheme';
 
 const { width: screenWidth } = Dimensions.get('window');
 
@@ -97,61 +100,27 @@ export const WellbeingScreen: React.FC = () => {
     setShowSchoolSelection(true);
   };
 
-  const renderTabHeader = () => (
-    <View style={styles.tabContainer}>
-      <View style={styles.tabBackground}>
-        <View style={styles.tabsWrapper}>
-          {tabs.map((tab) => {
-            const isActive = activeTab === tab.id;
-            const isEnabled = tab.enabled;
-            
-            return (
-              <TouchableOpacity
-                key={tab.id}
-                style={[
-                  styles.tab,
-                  isActive && isEnabled && styles.tabActive,
-                  !isEnabled && styles.tabDisabled,
-                ]}
-                onPress={() => handleTabPress(tab.id, isEnabled)}
-                activeOpacity={isEnabled ? 0.7 : 1}
-                disabled={!isEnabled}
-              >
-                <View style={styles.tabContent}>
-                  <Ionicons
-                    name={tab.icon}
-                    size={20}
-                    color={
-                      !isEnabled
-                        ? theme.colors.text.disabled
-                        : isActive
-                        ? theme.colors.primary
-                        : theme.colors.text.secondary
-                    }
-                  />
-                  <Text
-                    style={[
-                      styles.tabText,
-                      !isEnabled && styles.tabTextDisabled,
-                      isActive && isEnabled && styles.tabTextActive,
-                    ]}
-                  >
-                    {tab.title}
-                  </Text>
-                  {!isEnabled && (
-                    <View style={styles.disabledBadge}>
-                      <Text style={styles.disabledBadgeText}>{t('wellbeing.plan.developing')}</Text>
-                    </View>
-                  )}
-                </View>
-                {isActive && isEnabled && <View style={styles.activeIndicator} />}
-              </TouchableOpacity>
-            );
-          })}
-        </View>
+  const renderTabHeader = () => {
+    const segmentLabels = tabs.map(tab => tab.title);
+    const enabledTabs = tabs.filter(tab => tab.enabled);
+    const currentIndex = enabledTabs.findIndex(tab => tab.id === activeTab);
+    
+    return (
+      <View style={styles.tabContainer}>
+        <SegmentedGlass
+          segments={segmentLabels}
+          selectedIndex={Math.max(0, currentIndex)}
+          onIndexChange={(index) => {
+            const selectedTab = enabledTabs[index];
+            if (selectedTab) {
+              handleTabPress(selectedTab.id, selectedTab.enabled);
+            }
+          }}
+          disabled={false}
+        />
       </View>
-    </View>
-  );
+    );
+  };
 
   const renderWellbeingPlan = () => (
     <View style={styles.disabledContent}>
@@ -208,19 +177,10 @@ export const WellbeingScreen: React.FC = () => {
       case 'wellbeing-plan':
         return renderWellbeingPlan();
       case 'volunteer':
-        if (showSchoolSelection || !selectedSchool) {
-          return (
-            <View style={styles.volunteerContent}>
-              <SchoolSelectionScreen onSchoolSelect={handleSchoolSelect} />
-            </View>
-          );
-        }
+        // 直接显示VolunteerListLiquidScreen，它内部处理学校列表
         return (
           <View style={styles.volunteerContent}>
-            <VolunteerListScreen 
-              selectedSchool={selectedSchool}
-              onBackToSchoolSelection={handleBackToSchoolSelection}
-            />
+            <VolunteerListLiquidScreen />
           </View>
         );
       default:
@@ -233,6 +193,17 @@ export const WellbeingScreen: React.FC = () => {
 
   return (
     <SafeAreaView style={styles.container}>
+      {/* 修正：上半部分温暖渐变背景 */}
+      <LinearGradient 
+        colors={[
+          '#FFF8E1', // 上部分：极淡奶橘色
+          '#FFFEF7', // 渐变到奶白
+          '#F8F9FA', // 下部分：回到中性灰
+          '#F1F3F4'  // 底部：灰色
+        ]}
+        style={StyleSheet.absoluteFill}
+        locations={[0, 0.3, 0.6, 1]} // 确保上半部分是温暖色
+      />
       {shouldShowTabHeader && renderTabHeader()}
       {renderContent()}
     </SafeAreaView>
@@ -253,52 +224,52 @@ const styles = StyleSheet.create({
   tabBackground: {
     paddingHorizontal: 16,
     paddingTop: 12,
-    paddingBottom: 4, // 从8减少到4，缩小与下方内容的间距
-    backgroundColor: theme.colors.background.secondary,
+    paddingBottom: 4,
+    backgroundColor: 'rgba(255, 255, 255, 0.001)', // Nearly invisible but solid for shadow calculation
   },
   tabsWrapper: {
     flexDirection: 'row',
-    backgroundColor: LIQUID_GLASS_LAYERS.L1.background.light, // L1玻璃背景
+    backgroundColor: LIQUID_GLASS_LAYERS.L1.background.light,
     borderWidth: LIQUID_GLASS_LAYERS.L1.border.width,
     borderColor: LIQUID_GLASS_LAYERS.L1.border.color.light,
-    borderRadius: LIQUID_GLASS_LAYERS.L1.borderRadius.card, // 16pt圆角
-    borderRadius: 12,
+    borderRadius: LIQUID_GLASS_LAYERS.L1.borderRadius.card,
     padding: 4,
-    borderWidth: 1,
-    borderColor: 'rgba(0, 0, 0, 0.06)',
-    // 移除重阴影，保持轻量设计
+    ...theme.shadows[LIQUID_GLASS_LAYERS.L1.shadow],
   },
   tab: {
     flex: 1,
     position: 'relative',
-    overflow: 'visible',
+    borderRadius: LIQUID_GLASS_LAYERS.L2.borderRadius.card, // For ripple effect on Android
+    overflow: 'hidden',
   },
   tabActive: {
-    backgroundColor: LIQUID_GLASS_LAYERS.L2.background.light, // L2品牌玻璃背景
-    borderWidth: LIQUID_GLASS_LAYERS.L2.border.width,
-    borderColor: LIQUID_GLASS_LAYERS.L2.border.color.light,
-    borderRadius: LIQUID_GLASS_LAYERS.L2.borderRadius.compact, // 12pt圆角
-    ...theme.shadows[LIQUID_GLASS_LAYERS.L2.shadow],
+    backgroundColor: 'rgba(255, 255, 255, 0.001)', // Nearly invisible but solid for shadow calculation
+    borderBottomWidth: 2, // 底部横线
+    borderBottomColor: '#F9A889', // 柔和奶橘色横线
+    paddingBottom: 2, // 轻微底部间距
   },
   tabDisabled: {
     opacity: 0.6,
+    borderWidth: 1,
+    borderColor: 'rgba(0,0,0,0.1)',
+    borderStyle: 'dashed',
   },
   tabContent: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: theme.spacing[3],
+    paddingVertical: theme.spacing[2], // Adjusted padding
     paddingHorizontal: theme.spacing[2],
     position: 'relative',
   },
   tabText: {
     fontSize: theme.typography.fontSize.sm,
     fontWeight: theme.typography.fontWeight.medium,
-    color: theme.colors.text.secondary,
+    color: '#8E8E93', // 未选中时使用明显的灰色
     marginLeft: theme.spacing[2],
   },
   tabTextActive: {
-    color: theme.colors.primary,
+    color: '#111827', // 选中时使用深黑色
     fontWeight: theme.typography.fontWeight.semibold,
   },
   tabTextDisabled: {
@@ -306,12 +277,11 @@ const styles = StyleSheet.create({
   },
   activeIndicator: {
     position: 'absolute',
-    bottom: -theme.spacing[2],
-    left: '50%',
-    marginLeft: -12,
-    width: 24,
+    bottom: 4, // Position indicator at the bottom of the tab
+    left: '40%',
+    right: '40%',
     height: 3,
-    backgroundColor: theme.colors.primary,
+    backgroundColor: theme.colors.text.inverse, // Use white for indicator on L2 glass
     borderRadius: 2,
   },
   disabledBadge: {

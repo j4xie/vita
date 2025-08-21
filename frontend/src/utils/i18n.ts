@@ -50,8 +50,8 @@ export const getSavedLanguage = async (): Promise<SupportedLanguage | null> => {
   try {
     const savedLanguage = await AsyncStorage.getItem(LANGUAGE_STORAGE_KEY);
     if (savedLanguage && SUPPORTED_LANGUAGES && typeof SUPPORTED_LANGUAGES === 'object') {
-      const supportedKeys = Object.keys(SUPPORTED_LANGUAGES);
-      if (supportedKeys.includes(savedLanguage)) {
+      const supportedKeys = Object.keys(SUPPORTED_LANGUAGES) || [];
+      if (Array.isArray(supportedKeys) && supportedKeys.includes(savedLanguage)) {
         return savedLanguage as SupportedLanguage;
       }
     }

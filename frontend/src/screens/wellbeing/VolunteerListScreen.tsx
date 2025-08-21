@@ -424,8 +424,30 @@ export const VolunteerListScreen: React.FC<VolunteerListScreenProps> = ({
               {i18n.language.startsWith('zh') ? selectedSchool.name : selectedSchool.englishName}
             </Text>
             <Text style={[styles.schoolSubtitle, { color: isDarkMode ? '#a1a1aa' : '#6b7280' }]}>
-              {schoolFilteredVolunteers.length}{t('wellbeing.volunteer.volunteersCount')}
+              University of California, Berkeley
             </Text>
+            <View style={styles.locationRow}>
+              <Ionicons name="location-outline" size={12} color="#9CA3AF" />
+              <Text style={styles.locationText}>Berkeley, CA</Text>
+            </View>
+            
+            {/* Hero卡内统计数据 - 嵌入学校卡底部 */}
+            <View style={styles.heroStatsSection}>
+              <View style={styles.heroStatItem}>
+                <Text style={styles.heroStatNumber}>156</Text>
+                <Text style={styles.heroStatLabel}>{t('school.volunteers_label')}</Text>
+              </View>
+              <View style={styles.heroStatDivider} />
+              <View style={styles.heroStatItem}>
+                <Text style={styles.heroStatNumber}>24</Text>
+                <Text style={styles.heroStatLabel}>{t('school.activities_count_label')}</Text>
+              </View>
+              <View style={styles.heroStatDivider} />
+              <View style={styles.heroStatItem}>
+                <Text style={styles.heroStatNumber}>4.8★</Text>
+                <Text style={styles.heroStatLabel}>评分</Text>
+              </View>
+            </View>
           </View>
         </View>
       )}
@@ -585,6 +607,90 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '600',
     textAlign: 'center',
+  },
+  
+  // Hero玻璃卡 - 学校信息+统计一体化
+  heroCard: {
+    marginHorizontal: 16,
+    marginTop: 8,
+    marginBottom: 16,
+    backgroundColor: 'rgba(255, 255, 255, 0.85)', // 玻璃材质
+    borderRadius: 16, // 大卡16pt圆角
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+    borderTopColor: 'rgba(255, 255, 255, 0.6)', // 顶部1px高光
+    paddingVertical: 16,
+    paddingHorizontal: 14, // 14pt内边距
+    minHeight: 120, // 112-124pt高度
+    // 玻璃阴影
+    shadowColor: 'rgba(0, 0, 0, 0.08)',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    elevation: 1,
+  },
+  
+  schoolSection: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12, // 与统计区分隔
+  },
+  
+  schoolBadge: {
+    width: 48, // 44-52pt范围
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: '#6B7280',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+  },
+  
+  locationRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 4,
+  },
+  
+  locationText: {
+    fontSize: 12,
+    color: '#9CA3AF',
+    marginLeft: 4,
+  },
+  
+  // Hero卡内统计数据
+  heroStatsSection: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingTop: 12,
+    borderTopWidth: 0.5,
+    borderTopColor: 'rgba(255, 255, 255, 0.12)', // 极细分隔线
+  },
+  
+  heroStatItem: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  
+  heroStatNumber: {
+    fontSize: 16, // 等宽数字
+    fontWeight: '700',
+    color: '#111827',
+    fontVariant: ['tabular-nums'], // 等宽数字
+    marginBottom: 2,
+  },
+  
+  heroStatLabel: {
+    fontSize: 12,
+    color: '#6B7280',
+    opacity: 0.7,
+  },
+  
+  heroStatDivider: {
+    width: 1,
+    height: 16,
+    backgroundColor: 'rgba(255, 255, 255, 0.12)', // 极细竖分隔白12%
+    marginHorizontal: 8,
   },
 });
 
