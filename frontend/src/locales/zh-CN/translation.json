@@ -1,7 +1,7 @@
 {
   "common": {
     "brand": {
-      "name": "西柚"
+      "name": "PomeloX"
     },
     "loading": "加载中...",
     "error": "错误",
@@ -16,12 +16,28 @@
     "done": "完成",
     "retry": "重试",
     "close": "关闭",
-    "brand_name": "西柚",
+    "brand_name": "PomeloX",
     "filter": "筛选，已选 {{count}} 项",
     "filterHint": "可点按打开筛选面板",
     "all": "全部",
     "online": "在线",
-    "offline": "离线"
+    "offline": "离线",
+    "enable": "启用",
+    "search_placeholder": "搜索活动...",
+    "select_school": "选择学校",
+    "select_organization": "选择组织",
+    "search_schools": "搜索学校...",
+    "network_timeout": "网络请求超时，请重试",
+    "server_connection_failed": "服务器连接失败，请稍后重试",
+    "load_failed": "加载失败，请检查网络后重试",
+    "operation_failed": "操作失败",
+    "retry_later": "请稍后重试",
+    "feature_developing": "功能开发中",
+    "estimated_development_time": "预计开发时间：2-3周",
+    "will_notify_when_ready": "完成后将通过推送通知",
+    "got_it": "我知道了",
+    "api_error": "API错误",
+    "network_connection_error": "网络连接失败，请检查网络设置"
   },
   "language": {
     "selection": {
@@ -35,19 +51,25 @@
     "current": "当前语言: {{language}}",
     "settings": {
       "title": "语言设置",
-      "current": "当前语言", 
+      "current": "当前语言",
       "change": "更改语言",
       "restart_note": "语言更改将立即生效",
       "chinese": "中文",
       "english": "English",
       "description": "选择您的首选语言。更改将立即生效并在重启应用后完全应用。",
-      "footerNote": "语言更改会影响应用界面、日期格式和数字显示。某些内容可能需要重启应用才能完全更新。"
-    }
+      "footerNote": "语言更改会影响应用界面、日期格式和数字显示。某些内容可能需要重启应用才能完全更新。",
+      "change_error": "语言切换失败"
+    },
+    "chinese": "中文",
+    "simplified_chinese": "简体中文",
+    "chinese_description": "选择中文作为应用语言",
+    "english_description": "选择英文作为应用语言",
+    "english": "English"
   },
   "form": {
     "errors": {
       "legalNameRequired": "请输入法定名",
-      "englishNicknameRequired": "请输入英文昵称", 
+      "englishNicknameRequired": "请输入英文昵称",
       "universityRequired": "请输入所属学校",
       "emailRequired": "请输入学校邮箱",
       "emailInvalid": "请输入有效的学校邮箱",
@@ -111,42 +133,61 @@
       "title": "登录",
       "welcome": "欢迎回来",
       "subtitle": "登录您的账户，发现精彩活动",
-      "email_label": "学校邮箱",
-      "email_placeholder": "请输入学校邮箱",
+      "login_hint": "请使用注册时的用户名或邮箱登录",
+      "email_label": "用户名或邮箱",
+      "email_placeholder": "请输入用户名或邮箱",
       "password_label": "密码",
       "password_placeholder": "请输入密码",
       "remember_me": "记住我",
       "forgot_password": "忘记密码？",
       "login_button": "登录",
+      "login": "登录",
       "register_text": "还没有账号？",
       "register_link": "立即注册",
       "skip": "跳过"
     },
     "register": {
       "choice_title": "选择注册方式",
-      "join_pomelo": "加入 西柚",
+      "join_pomelo": "加入 PomeloX",
       "choose_registration_method": "选择您的注册方式",
       "referral_registration": "推荐码注册",
       "referral_description": "扫描推荐码快速注册",
       "referral_badge": "推荐使用",
-      "normal_registration": "普通注册", 
+      "normal_registration": "普通注册",
       "normal_description": "直接填写信息注册",
       "benefits_title": "注册后您可以：",
       "benefits": {
         "join_activities": "报名参加各类精彩活动",
-        "get_qr_codes": "获取活动核销二维码", 
+        "get_qr_codes": "获取活动核销二维码",
         "manage_registrations": "管理您的报名记录",
         "receive_notifications": "接收活动更新通知"
       },
       "student_option": "学生注册",
       "organization_option": "组织注册",
-      "form_title": "注册账户", 
+      "form_title": "注册账户",
       "already_have_account": "已有账号？",
       "login_link": "立即登录",
       "terms_agreement": "注册即表示您同意我们的",
-      "terms_of_service": "服务条款", 
-      "and": "和",
+      "terms_of_service": "服务条款",
       "privacy_policy": "隐私政策",
+      "and": "和",
+      "privacy": {
+        "title": "隐私协议",
+        "subtitle": "请仔细阅读以下隐私政策，了解我们如何收集和使用您的个人信息",
+        "accept_button": "我同意并继续",
+        "decline_button": "不同意",
+        "content": "欢迎使用 PomeloX 应用程序。我们非常重视您的隐私权。本隐私政策旨在向您说明我们如何收集、使用、存储和保护您的个人信息。\n\n## 我们收集的信息\n\n为了为您提供最佳的服务体验，我们需要收集以下个人信息：\n\n• **身份信息**：法定姓名、英文昵称，用于身份验证和个性化服务\n• **联系信息**：电子邮箱地址和手机号码，用于账户验证、重要通知和安全提醒\n• **学籍信息**：所属大学，用于匹配相关活动和服务\n• **基本资料**：性别等基础信息，用于提供个性化推荐\n\n## 信息使用目的\n\n您的个人信息将仅用于以下合法目的：\n\n• 创建和管理您的用户账户\n• 为您提供活动报名和管理服务\n• 发送重要的服务通知和安全提醒\n• 改进我们的服务质量和用户体验\n• 确保平台安全和防止欺诈行为\n\n## 第三方服务\n\n为了提供完整的服务，我们可能使用以下第三方服务：\n\n• **Firebase Cloud Messaging**：用于推送重要活动通知\n• **阿里云**：用于短信验证码发送服务\n• **Cloudflare**：用于安全存储用户上传的图片和文件\n\n这些服务提供商均遵循严格的数据保护标准，我们不会向其提供超出服务必需的个人信息。",
+        "data_usage_highlight": "您的法定姓名、电话和邮箱仅用于身份验证和必要通知，我们承诺不会将这些敏感信息用于营销目的或与第三方分享。",
+        "data_protection": "## 数据保护承诺\n\n我们采用业界标准的安全措施保护您的个人信息：\n\n• 所有数据传输均采用 HTTPS 加密\n• 密码使用安全哈希算法存储\n• 定期进行安全审计和漏洞检测\n• 严格限制内部人员对个人信息的访问权限\n\n## 您的权利\n\n根据相关法律法规，您对个人信息享有以下权利：\n\n• **查看权**：随时查看我们收集的您的个人信息\n• **修改权**：更正不准确或过时的个人信息\n• **删除权**：要求删除您的个人信息和账户\n• **限制处理权**：限制我们对您信息的处理方式\n• **数据可移植权**：获取您个人信息的副本\n\n## 数据保留\n\n• **账户信息**：在您使用服务期间保留\n• **活动记录**：保留2年用于服务改进\n• **通信记录**：保留1年用于客服支持\n• **已删除数据**：30天内从所有系统中永久删除\n\n## 联系我们\n\n如有任何隐私相关问题，请通过以下方式联系我们：\n\n• 邮箱：info@americanpromotioncompany.com\n• 客服支持：通过应用内客服联系\n\n继续注册即表示您已理解并同意上述隐私政策条款。",
+        "please_scroll": "请滚动阅读完整协议",
+        "read_complete": "已阅读完成",
+        "scroll_to_accept": "请先阅读完整协议"
+      },
+      "verification": {
+        "title": "短信验证",
+        "verify_phone": "验证您的手机号",
+        "verify_and_register": "验证并注册"
+      },
       "form": {
         "progress": "第 {{current}} 步，共 {{total}} 步",
         "basic_info": "基本信息",
@@ -160,32 +201,29 @@
         "username_placeholder": "请输入用户名(6-20位字母数字)",
         "legal_name_label": "法定名 *",
         "legal_name_placeholder": "请输入您的法定姓名",
-        "english_nickname_label": "英文昵称 *", 
+        "english_nickname_label": "英文昵称 *",
         "english_nickname_placeholder": "请输入您的英文昵称",
         "university_label": "所属学校 *",
         "university_placeholder": "请选择您的学校",
         "gender_label": "性别",
-        "gender_male": "男",
-        "gender_female": "女", 
-        "gender_unknown": "未知",
-        "email_label": "学校邮箱 * (作为登录账号)",
-        "email_placeholder": "请输入您的学校邮箱",
-        "password_label": "设置密码 *",
-        "password_placeholder": "请设置您的密码",
+        "male": "男",
+        "female": "女",
+        "password_label": "密码 *",
+        "password_placeholder": "请输入密码(6-20位)",
         "confirm_password_label": "确认密码 *",
-        "confirm_password_placeholder": "请再次输入密码确认",
-        "phone_china": "🇨🇳 中国号码",
+        "confirm_password_placeholder": "请再次输入密码",
+        "phone_china": "🇨🇳 中国手机号",
         "phone_usa": "🇺🇸 美国号码",
         "phone_label": "电话号码 *",
         "phone_placeholder": "请输入您的电话号码",
         "terms_checkbox": "我已阅读并同意",
         "send_code": "发送验证码",
         "next_step": "下一步",
-        "register": "注册",
+        "register": "注册账户",
         "step1_description": "请填写您的基本信息，我们将为您生成学校邮箱",
         "first_name_label": "名 *",
         "first_name_placeholder": "请输入您的名",
-        "last_name_label": "姓 *", 
+        "last_name_label": "姓 *",
         "last_name_placeholder": "请输入您的姓",
         "school_email_preview": "学校邮箱预览",
         "email_username_placeholder": "用户名",
@@ -202,7 +240,24 @@
         "organization_label": "所属组织 *",
         "organization_placeholder": "请选择您的组织",
         "loading_organizations": "加载组织列表中...",
-        "email_help": "该邮箱将作为您的登录账号"
+        "email_help": "该邮箱将作为您的登录账号",
+        "email_label": "邮箱 *",
+        "email_placeholder": "请输入您的邮箱",
+        "school_label": "学校 *",
+        "school_placeholder": "请选择您的学校",
+        "gender_male": "男",
+        "gender_female": "女",
+        "gender_unknown": "其他"
+      },
+      "success": {
+        "title": "注册成功",
+        "message": "恭喜您注册成功！请使用您的学校邮箱登录"
+      },
+      "errors": {
+        "school_load_failed": "加载学校列表失败",
+        "organization_load_failed": "加载组织列表失败",
+        "register_failed": "注册失败",
+        "register_failed_message": "注册失败，请检查信息后重试"
       },
       "sms": {
         "code_sent_title": "验证码已发送",
@@ -212,6 +267,13 @@
       }
     },
     "validation": {
+      "errors": {
+        "legal_name_required": "请输入法定名",
+        "nickname_required": "请输入昵称",
+        "phone_required": "请输入电话号码",
+        "email_required": "请输入邮箱",
+        "email_format": "邮箱格式不正确"
+      },
       "username_required": "请输入用户名",
       "username_length": "用户名长度为6-20位",
       "username_format": "用户名只能包含字母和数字",
@@ -225,7 +287,7 @@
       "password_mismatch": "两次密码输入不一致",
       "legal_name_required": "请输入法定名",
       "legal_name_length": "法定名长度不能超过50位",
-      "english_nickname_required": "请输入英文昵称", 
+      "english_nickname_required": "请输入英文昵称",
       "english_nickname_length": "英文昵称长度不能超过50位",
       "university_required": "请输入所属学校",
       "phone_required": "请输入电话号码",
@@ -242,31 +304,26 @@
       "verification_code_format": "验证码必须为6位数字",
       "organization_required": "请选择所属组织",
       "username_available": "用户名可用",
-      "email_available": "邮箱可用"
+      "email_available": "邮箱可用",
+      "username_min_length": "用户名或邮箱至少3位字符",
+      "user_not_exists": "用户名或邮箱不存在，请检查输入或先注册账号",
+      "password_incorrect": "密码错误，请重新输入"
     },
     "errors": {
       "login_failed": "登录失败",
       "invalid_credentials": "邮箱或密码错误，请重试",
       "network_error": "网络连接错误，请重试",
-      "school_load_failed": "加载学校列表失败，请重试"
+      "school_load_failed": "加载学校列表失败，请重试",
+      "network_connection_failed": "网络连接失败，请检查网络后重试",
+      "server_error": "服务器错误，请稍后重试"
     },
-    "register": {
-      "success": {
-        "title": "注册成功",
-        "message": "恭喜您注册成功！请使用您的学校邮箱登录"
-      },
-      "errors": {
-        "school_load_failed": "加载学校列表失败",
-        "organization_load_failed": "加载组织列表失败",
-        "register_failed": "注册失败",
-        "register_failed_message": "注册失败，请检查信息后重试"
-      }
-    }
+    "login_required": "请先登录",
+    "login_required_message": "需要登录后才能收藏活动"
   },
   "navigation": {
     "tabs": {
       "home": "首页",
-      "explore": "探索", 
+      "explore": "探索",
       "consulting": "咨询",
       "community": "社区",
       "profile": "个人",
@@ -282,7 +339,7 @@
       "back": "返回",
       "accountSecurity": "账户与安全",
       "notifications": "通知",
-      "general": "通用", 
+      "general": "通用",
       "aboutSupport": "关于与支持",
       "language": "语言",
       "edit_profile": "编辑资料"
@@ -296,7 +353,7 @@
     "filters": {
       "all": "全部",
       "ongoing": "进行中",
-      "upcoming": "即将开始", 
+      "upcoming": "即将开始",
       "ended": "已结束",
       "available": "可报名",
       "availableOnly": "仅显示可报名活动"
@@ -311,7 +368,27 @@
       "registered": "已报名",
       "full": "名额已满",
       "ended": "活动已结束"
-    }
+    },
+    "registration": {
+      "form_title": "活动报名",
+      "personal_info": "个人信息",
+      "form_subtitle": "请确认您的个人信息，我们将自动为您填写已有信息",
+      "info_note": "提交报名后，请现场扫描签到二维码完成签到",
+      "submit_button": "确认报名",
+      "success_title": "报名成功",
+      "success_message": "您已成功报名该活动，现场请扫描签到二维码完成签到",
+      "failed_title": "报名失败",
+      "failed_message": "报名失败，请稍后重试",
+      "register_now": "立即报名"
+    },
+    "status": {
+      "registered": "已报名",
+      "checked_in": "已签到",
+      "available": "可报名",
+      "registration_closed": "报名已结束"
+    },
+    "bookmark_unavailable": "收藏功能暂时不可用",
+    "fetch_failed": "获取活动失败"
   },
   "profile": {
     "title": "个人中心",
@@ -323,9 +400,15 @@
     },
     "subtitle": "管理您的个人信息和设置",
     "logout": "退出登录",
+    "account": {
+      "logout": "退出登录",
+      "logoutConfirm": "确认退出",
+      "logoutMessage": "您确定要退出登录吗？",
+      "cancel": "取消"
+    },
     "settings": "设置",
     "language": "语言",
-    "privacy": "隐私",
+    "privacy": "隐私设置",
     "volunteer_hours_label": "志愿时长",
     "points_label": "积分",
     "verification_code_label": "核销码",
@@ -333,8 +416,8 @@
     "region": "地区",
     "my_activities": "我的活动",
     "view_all": "查看全部",
-    "not_participated": "未参加",
-    "participated": "已参加",
+    "not_participated": "未签到",
+    "participated": "已签到",
     "bookmarked": "收藏",
     "pending_review": "待评价",
     "my_membership": "我的会员",
@@ -347,8 +430,12 @@
     "my_cards": "我的会员卡",
     "my_reviews": "我的评价",
     "write_review": "写评价",
+    "no_reviews": "暂无评价",
+    "review_after_activity": "参加活动后可以写评价",
+    "school_info": "学校信息",
     "menuItems": {
       "accountSecurity": "账户与安全",
+      "notifications": "通知",
       "general": "通用",
       "aboutSupport": "关于与支持"
     },
@@ -374,7 +461,7 @@
       "regionTimezoneMessage": "地区时区设置功能即将推出",
       "darkModePattern": "深色模式",
       "light_mode": "浅色模式",
-      "dark_mode": "深色模式", 
+      "dark_mode": "深色模式",
       "auto_mode": "跟随系统",
       "auto_description": "根据系统设置自动切换",
       "light_description": "始终使用浅色界面",
@@ -401,84 +488,29 @@
       "saveSuccessMessage": "您的个人资料已更新",
       "confirm": "确定"
     },
-    "account": {
-      "personalProfile": "个人资料",
-      "personalProfileMessage": "编辑个人资料功能即将推出",
-      "loginSecurity": "登录与安全",
-      "loginSecurityMessage": "安全设置功能即将推出",
-      "privacyPermissions": "隐私与权限",
-      "privacyPermissionsMessage": "权限管理功能即将推出",
-      "thirdPartyAccounts": "第三方账号绑定",
-      "thirdPartyAccountsMessage": "账号绑定功能即将推出",
-      "logout": "退出登录",
-      "logoutConfirm": "确认退出登录",
-      "logoutMessage": "退出登录将清除本地数据，您需要重新登录。",
-      "cancel": "取消",
-      "accountInfo": "账户信息",
-      "sectionAccountInfo": "账户信息",
-      "sectionPrivacySecurity": "隐私与安全"
+    "activity": {
+      "not_checked_in_title": "待签到活动",
+      "checked_in_title": "已签到活动",
+      "no_pending_checkin": "暂无待签到活动",
+      "no_checked_in": "暂无已签到活动",
+      "checked_in": "已签到",
+      "scan_to_checkin": "去扫码签到"
     },
-    "about": {
-      "aboutApp": "关于应用",
-      "feedbackHelp": "反馈与帮助",
-      "feedbackHelpMessage": "用户反馈功能即将推出",
-      "githubRepo": "GitHub 仓库",
-      "privacyPolicy": "隐私政策",
-      "termsOfService": "服务条款",
-      "openSourceLicenses": "开源许可",
-      "openSourceLicensesMessage": "开源许可信息功能即将推出",
-      "diagnosticLogs": "诊断日志",
-      "diagnosticLogsMessage": "诊断日志功能即将推出",
-      "appInfoDetails": "版本: 1.0.0\n构建: 1.0.0 (1)\n发布时间: 2025年8月\n\n专为海外留学生设计的活动平台，连接社区，分享精彩。",
-      "confirmAppInfo": "确定",
-      "error": "错误",
-      "cannotOpenLink": "无法打开链接",
-      "linkError": "无法打开链接",
-      "linkErrorMessage": "无法打开链接，请手动访问我们的网站",
-      "confirm": "确定",
-      "sectionAppInfo": "应用信息",
-      "sectionSupportFeedback": "支持与反馈",
-      "sectionLegalTerms": "法律条款",
-      "sectionAdvancedSettings": "高级设置",
-      "privacyPolicyError": "错误",
-      "privacyPolicyErrorMessage": "无法打开链接，请手动访问我们的网站查看隐私政策",
-      "termsOfServiceError": "错误",
-      "termsOfServiceErrorMessage": "无法打开链接，请手动访问我们的网站查看服务条款"
-    },
-    "notifications": {
-      "pushPermissions": "推送通知权限",
-      "pushPermissionsSubtitle": "在系统设置中管理推送权限",
-      "openSystemSettings": "无法打开设置",
-      "openSystemSettingsMessage": "请手动前往 设置 > 应用 > 西柚 > 通知 来管理通知权限",
-      "activityUpdates": "活动更新",
-      "activityUpdatesSubtitle": "活动时间变更、取消等重要通知",
-      "registrationSuccess": "报名成功",
-      "registrationSuccessSubtitle": "报名确认和提醒通知",
-      "commentsMessages": "评论与私信",
-      "commentsMessagesSubtitle": "收到评论或私信时的通知",
-      "doNotDisturb": "勿扰时段",
-      "doNotDisturbTime": "22:00 - 08:00",
-      "doNotDisturbOff": "关闭",
-      "doNotDisturbMessage": "勿扰时段设置功能即将推出",
-      "notificationSummary": "通知摘要",
-      "notificationSummaryOff": "关闭",
-      "notificationSummaryMessage": "通知摘要设置功能即将推出",
-      "cannotOpenSettings": "无法打开设置",
-      "cannotOpenSettingsMessage": "请手动前往系统设置 > 应用 > 西柚 > 通知来管理通知权限",
-      "sectionPushPermissions": "推送权限",
-      "sectionNotificationTypes": "通知类型",
-      "sectionAdvancedSettings": "高级设置"
-    }
+    "account": "账户设置",
+    "about": "关于我们",
+    "notifications": "通知设置",
+    "appearance": "外观设置",
+    "feedback": "意见反馈"
   },
   "ai": {
-    "title": "西柚 AI 助手",
+    "title": "PomeloX AI 助手",
     "status": "正在开发中",
     "mainMessage": "AI智能助手即将上线",
     "description": "我们正在训练AI助手，让它能够更好地理解并帮助海外留学生。",
     "comingFeatures": "即将推出的功能",
     "features": {
       "chat": "智能对话咨询",
-      "calendar": "活动推荐与规划", 
+      "calendar": "活动推荐与规划",
       "translation": "多语言翻译助手",
       "academic": "学业问题解答",
       "suggestions": "个性化建议"
@@ -488,7 +520,20 @@
   },
   "explore": {
     "title": "发现页面",
-    "subtitle": "探索更多精彩内容"
+    "subtitle": "探索更多精彩内容",
+    "schools": {
+      "all": "全部学校",
+      "all_short": "全部"
+    },
+    "choose_school": "选择学校",
+    "activities_count": "活动数量",
+    "activity_categories": "活动分类",
+    "category_fallback": "该分类",
+    "category_developing_message": "{{category}}功能正在开发中，将支持按分类浏览活动。",
+    "searching": "正在搜索 \"{{query}}\"...",
+    "searchResults": "搜索 \"{{query}}\" 找到 {{count}} 个活动",
+    "noSearchResults": "未找到与 \"{{query}}\" 匹配的活动",
+    "clearSearch": "清除搜索"
   },
   "consulting": {
     "title": "咨询服务",
@@ -498,6 +543,11 @@
     "supportedSchools": "支持学校",
     "professionalTeam": "专业顾问",
     "onlineServices": "在线服务",
+    "stats": {
+      "supported_schools": "支持学校",
+      "professional_advisors": "专业顾问",
+      "online_services": "在线服务"
+    },
     "selectSchool": "选择您的学校",
     "selectDescription": "请选择您所在的学校，我们将为您提供专属的咨询服务",
     "moduleDevelopment": "咨询服务即将上线",
@@ -506,7 +556,7 @@
     "developmentDescription": "你的个性化指导平台正在打磨中，敬请期待！",
     "comingFeatures": "即将推出",
     "academicConsulting": "学术咨询",
-    "lifeGuidance": "生活指导", 
+    "lifeGuidance": "生活指导",
     "careerPlanning": "职业规划",
     "stayTuned": "敬请期待",
     "subscribeNotification": "通知我上线",
@@ -536,21 +586,11 @@
       "support": "互助支持",
       "supportDescription": "成长记录与成就系统"
     },
-    "comingSoon": "敬请期待"
+    "comingSoon": "敬请期待",
+    "no_schools_available": "暂无可用学校",
+    "check_connection": "请检查网络连接"
   },
   "wellbeing": {
-    "title": "安心服务",
-    "searchVolunteerPhone": "搜索志愿者手机号",
-    "searchHint": "输入11位手机号进行搜索",
-    "clearInput": "清空输入",
-    "scanQRCode": "扫描二维码",
-    "scanComingSoon": "扫码功能即将上线",
-    "searchFor": "搜索 \"{{phone}}\"",
-    "subtitle": "全方位守护海外学子安全",
-    "tabs": {
-      "plan": "安心计划",
-      "volunteer": "志愿者功能"
-    },
     "plan": {
       "title": "安心计划",
       "subtitle": "为海外学子提供全方位的安全保障和心理健康支持",
@@ -560,7 +600,27 @@
         "mental": "心理健康咨询",
         "medical": "医疗健康指导"
       },
-      "developing": "正在开发中"
+      "developing": "正在开发中",
+      "welcome_title": "欢迎来到安心计划",
+      "welcome_subtitle": "我们致力于为海外学子提供全方位的安全保障和心理健康支持",
+      "emergency_contacts": "紧急联系",
+      "emergency_911": "紧急报警 911",
+      "emergency_911_desc": "遇到紧急情况时立即拨打",
+      "crisis_hotline": "心理危机热线 988",
+      "crisis_hotline_desc": "24小时心理健康支持服务",
+      "mental_health": "心理健康资源",
+      "counseling_services": "心理咨询服务",
+      "counseling_desc": "专业的心理健康咨询和治疗服务",
+      "mindfulness": "正念冥想",
+      "mindfulness_desc": "通过正念练习改善心理健康",
+      "life_guidance": "生活指导",
+      "academic_support": "学术支持",
+      "academic_support_desc": "学习方法指导和学术资源支持",
+      "housing_support": "住宿支持",
+      "housing_support_desc": "住房信息和居住环境改善建议",
+      "community_support": "社区支持",
+      "peer_support": "同伴互助",
+      "peer_support_desc": "与其他学生建立联系和相互支持"
     },
     "volunteer": {
       "searchPlaceholder": "请输入手机号码",
@@ -582,12 +642,32 @@
       "noVolunteersFound": "未找到匹配的志愿者",
       "noRecords": "暂无志愿者记录",
       "checkInTime": "签到时间",
-      "workDuration": "工作时长", 
+      "workDuration": "工作时长",
       "totalHours": "累计时长",
       "lastCheckInTime": "上次签到时间",
       "lastCheckOutTime": "上次签出时间",
       "volunteersCount": "位志愿者",
-      "hours": "小时"
+      "hours": "小时",
+      "minutes": "分钟",
+      "confirmSignOut": "确认签出",
+      "thisVolunteerService": "本次志愿服务",
+      "timeRange": "时间区间",
+      "serviceDuration": "服务时长",
+      "signOutNote": "感谢您的志愿服务",
+      "signingOut": "签出中...",
+      "rating": "评分"
+    },
+    "title": "安心服务",
+    "searchVolunteerPhone": "搜索志愿者手机号",
+    "searchHint": "输入11位手机号进行搜索",
+    "clearInput": "清空输入",
+    "scanQRCode": "扫描二维码",
+    "scanComingSoon": "扫码功能即将上线",
+    "searchFor": "搜索 \"{{phone}}\"",
+    "subtitle": "全方位守护海外学子安全",
+    "tabs": {
+      "plan": "安心计划",
+      "volunteer": "志愿者功能"
     }
   },
   "location": {
@@ -605,7 +685,7 @@
       "user_identity_instruction": "将用户身份二维码放入框内\n查看用户信息",
       "merchant_instruction": "将商家二维码放入框内\n获取专属会员卡",
       "manual_input": "手动输入推荐码",
-      "manual_input_title": "手动输入推荐码", 
+      "manual_input_title": "手动输入推荐码",
       "manual_input_desc": "请输入您的推荐码",
       "input_placeholder": "请输入您的推荐码",
       "referral_code_label": "推荐码",
@@ -632,7 +712,18 @@
       "confirm": "确定",
       "invalid_qr_title": "无效的二维码",
       "invalid_qr_message": "请扫描正确的活动二维码",
-      "scan_result": "扫描结果"
+      "scan_result": "扫描结果",
+      "signin_success_title": "签到成功",
+      "signin_success_message": "您已成功签到该活动！",
+      "signin_failed_title": "签到失败",
+      "signin_failed_message": "签到失败，请稍后重试",
+      "not_registered_title": "未报名",
+      "not_registered_message": "您尚未报名该活动，是否现在报名？",
+      "already_signed_in_title": "已签到",
+      "already_signed_in_message": "您已经签到过该活动了",
+      "invalid_activity_qr_message": "无效的活动二维码",
+      "unknown_status_message": "未知的报名状态",
+      "check_status_failed": "检查报名状态失败"
     },
     "actions": {
       "save": "保存",
@@ -642,6 +733,9 @@
     "identity": {
       "title": "我的身份码",
       "scan_instruction": "扫描二维码查看我的信息"
+    },
+    "organization": {
+      "switch_title": "切换组织"
     },
     "save": {
       "permission_denied_title": "权限被拒绝",
@@ -667,6 +761,27 @@
       "recent_activities": "最近活动",
       "limited_access": "权限有限，部分信息不可见",
       "add_contact": "添加联系"
+    },
+    "errors": {
+      "invalid_user_code": "无效的用户身份码",
+      "scan_valid_user_qr": "请扫描有效的用户身份二维码",
+      "identity_data_error": "身份码数据错误",
+      "cannot_read_user_info": "无法读取用户身份信息",
+      "scan_failed": "扫描失败",
+      "process_user_code_error": "处理用户身份码时发生错误",
+      "invalid_qr_code": "无效的QR码",
+      "scan_valid_merchant_qr": "请扫描有效的商家二维码",
+      "qr_expired": "QR码已过期",
+      "get_new_qr_from_merchant": "请向商家获取新的二维码",
+      "invalid_merchant_qr": "无效的商家QR码",
+      "missing_merchant_info": "缺少商家信息",
+      "process_qr_error": "处理二维码时发生错误",
+      "no_organization_selected": "未选择组织",
+      "select_organization_first": "请先选择您所属的学联组织",
+      "creation_failed": "创建失败",
+      "card_creation_error": "创建会员卡时发生错误",
+      "switch_failed": "切换失败",
+      "organization_switch_error": "切换组织时发生错误"
     }
   },
   "volunteer": {
@@ -680,7 +795,12 @@
     "new_registrations_label": "新报名",
     "management_features_title": "管理功能",
     "recent_activities_title": "最近活动",
-    "view_all_button": "查看全部"
+    "view_all_button": "查看全部",
+    "search_failed": "搜索失败，请重试",
+    "checkin_failed": "签到失败",
+    "checkin_failed_retry": "签到失败，请重试",
+    "checkout_failed": "签退失败",
+    "checkout_failed_retry": "签退失败，请重试"
   },
   "school": {
     "not_found_message": "学校信息不存在",
@@ -704,48 +824,6 @@
     "check_in_button": "签到",
     "check_out_button": "签出"
   },
-  "mockData": {
-    "schools": {
-      "berkeley": "加州大学伯克利分校",
-      "ucla": "加州大学洛杉矶分校",
-      "usc": "南加州大学",
-      "washington": "华盛顿大学"
-    },
-    "activities": {
-      "springConcert": {
-        "title": "NYU春季音乐会", 
-        "subtitle": "古典音乐欣赏会"
-      },
-      "careerLecture": {
-        "title": "Fordham职业发展讲座",
-        "subtitle": "Tech行业求职指南"
-      },
-      "chineseNewYear": {
-        "title": "中国新年庆祝晚会",
-        "subtitle": "传统文化庆祝活动"
-      },
-      "taxWorkshop": {
-        "title": "留学生税务讲座", 
-        "subtitle": "美国税务基础知识"
-      }
-    },
-    "organizers": {
-      "chineseStudentAssociation": "NYU中国学生学者联合会",
-      "businessCareerCenter": "Fordham商学院中国学生会",
-      "careerCenter": "职业发展中心",
-      "internationalServices": "国际学生服务中心",
-      "cssa": {
-        "description": "为中国学生提供学术和文化支持"
-      }
-    },
-    "volunteers": {
-      "chen": "陈志豪",
-      "li": "李思雨", 
-      "wang": "王建华",
-      "zhang": "张同学",
-      "liu": "刘同学"
-    }
-  },
   "alerts": {
     "feature_not_implemented": "功能尚未实现",
     "logout_confirm": "确认退出",
@@ -758,7 +836,8 @@
     "sendFailedMessage": "验证码发送失败，请重试",
     "languageSwitched": "语言已切换为中文",
     "reportGenerationFailed": "无法生成验收报告",
-    "reportExportFailed": "导出报告失败"
+    "reportExportFailed": "导出报告失败",
+    "feature_under_development": "请等待后续开发"
   },
   "userInfo": {
     "roles": {
@@ -790,6 +869,9 @@
     "activityDetails": "活动详情",
     "registrationRequirements": "报名要求",
     "organizer": "主办方",
+    "official_activity": "官方活动",
+    "verified_organizer": "官方认证组织",
+    "activity_organizer": "活动组织方",
     "share": "分享",
     "shareMessage": "分享功能即将上线",
     "registerNow": "立即报名",
@@ -815,6 +897,15 @@
     "userInfo": "用户信息",
     "checkIn": "签到",
     "checkOut": "签出",
+    "personalDashboard": "个人工时",
+    "personalDashboardDesc": "查看您的志愿工时记录",
+    "personalHours": "我的工时统计",
+    "myRecords": "我的打卡记录",
+    "records_unit": "条",
+    "currentUser": "当前用户",
+    "totalHours": "累计工时",
+    "staffReadOnlyNotice": "内部员工只能查看个人工时，无法操作他人签到",
+    "searchSchoolVolunteer": "搜索本校志愿者",
     "scan": "扫码",
     "todayRecords": "今日签到记录",
     "noPermission": "您没有访问志愿者管理功能的权限",
@@ -831,6 +922,8 @@
       "checkOutTime": "签出时间",
       "worked": "已工作",
       "totalHours": "累计时长",
+      "lastCheckIn": "上次签到",
+      "lastCheckOut": "上次签出",
       "hours": "小时",
       "confirmSignOut": "确认签出",
       "thisVolunteerService": "本次志愿服务",
@@ -839,7 +932,8 @@
       "signOutNote": "签出后将自动记录本次志愿服务时长",
       "cancelSignOut": "取消签出",
       "signingOut": "签出中...",
-      "minutes": "分钟"
+      "minutes": "分钟",
+      "today": "今日"
     },
     "alerts": {
       "hint": "提示",
@@ -847,13 +941,13 @@
       "notFound": "未找到",
       "userNotFound": "未找到该手机号码对应的用户",
       "confirmCheckIn": "确认签到",
-      "confirmCheckInMessage": "确认为 {name} 签到吗？",
+      "confirmCheckInMessage": "确认为 {{name}} 签到吗？",
       "confirmCheckOut": "确认签出",
-      "confirmCheckOutMessage": "确认为 {name} 签出吗？\n本次志愿时长：{hours}小时{minutes}分钟",
+      "confirmCheckOutMessage": "确认为 {{name}} 签出吗？\n本次志愿时长：{{hours}}小时{{minutes}}分钟",
       "checkInSuccess": "签到成功",
-      "checkInSuccessMessage": "{name} 已成功签到",
+      "checkInSuccessMessage": "{{name}} 已成功签到",
       "checkOutSuccess": "签出成功",
-      "checkOutSuccessMessage": "{name} 已成功签出\n本次时长：{hours}小时{minutes}分钟",
+      "checkOutSuccessMessage": "{{name}} 已成功签出\n本次时长：{{hours}}小时{{minutes}}分钟",
       "scanFunction": "扫码功能",
       "scanComingSoon": "扫码功能即将上线"
     }
@@ -878,23 +972,9 @@
       "volunteer": "志愿"
     },
     "status": {
-      "available": "可报名",
-      "almostFull": "即将满员",
-      "waitlist": "等待列表",
+      "all": "全部",
+      "upcoming": "即将开始",
       "ended": "已结束"
-    },
-    "location": {
-      "campus": "校内",
-      "downtown": "市中心",
-      "online": "线上",
-      "offsite": "校外"
-    },
-    "date": {
-      "today": "今天",
-      "tomorrow": "明天",
-      "thisWeek": "本周",
-      "thisMonth": "本月",
-      "nextMonth": "下个月"
     }
   },
   "placeholders": {
@@ -937,7 +1017,9 @@
     "searchActivitiesHint": "输入关键词搜索活动",
     "clearSearch": "清除搜索",
     "expandDetails": "点击展开详情",
-    "collapseDetails": "点击收起详情"
+    "collapseDetails": "点击收起详情",
+    "switch_organization": "切换学联组织",
+    "switch_organization_hint": "点击打开组织选择器"
   },
   "cards": {
     "my_cards": "我的会员卡",
@@ -949,6 +1031,60 @@
     "start_collecting_cards": "开始收集您的第一张会员卡",
     "try_different_search": "尝试使用不同的关键词搜索",
     "scan_qr_code": "扫码获取会员卡",
-    "search_placeholder": "搜索会员卡..."
+    "search_placeholder": "搜索会员卡...",
+    "cards_count_unit": "张",
+    "expired": "已过期",
+    "feature_developing": "会员卡功能正在开发中，请等待后续版本",
+    "categories": {
+      "dining": "餐饮美食",
+      "retail": "零售购物",
+      "service": "生活服务",
+      "education": "教育培训",
+      "entertainment": "休闲娱乐",
+      "other": "其他"
+    }
+  },
+  "validation": {
+    "errors": {
+      "legal_name_required": "请输入法定名",
+      "nickname_required": "请输入昵称",
+      "phone_required": "请输入手机号码",
+      "email_required": "请输入邮箱地址",
+      "email_format": "邮箱格式不正确",
+      "password_required": "请输入密码",
+      "password_length": "密码长度至少8位",
+      "password_mismatch": "两次密码输入不一致",
+      "verification_code_required": "请输入验证码",
+      "verification_code_format": "验证码格式不正确"
+    },
+    "username_required": "请输入用户名",
+    "username_length": "用户名长度为6-20位",
+    "username_format": "用户名只能包含字母和数字",
+    "legal_name_required": "请输入法定名",
+    "legal_name_length": "法定名长度不能超过50位",
+    "english_nickname_required": "请输入英文昵称",
+    "english_nickname_length": "英文昵称长度不能超过50位",
+    "university_required": "请选择学校",
+    "phone_required": "请输入电话号码",
+    "phone_china_invalid": "手机号格式不正确",
+    "phone_usa_invalid": "电话号码格式不正确",
+    "email_required": "请输入邮箱",
+    "email_invalid": "邮箱格式不正确",
+    "email_school_invalid": "请输入学校邮箱",
+    "password_required": "请输入密码",
+    "password_min_length": "密码长度至少6位",
+    "password_min_length_8": "密码长度至少8位",
+    "password_length_6_20": "密码长度为6-20位",
+    "password_mismatch": "两次密码输入不一致",
+    "nickname_required": "请输入昵称",
+    "nickname_length": "昵称长度不能超过50位",
+    "verification_code_required": "请输入验证码",
+    "verification_code_format": "验证码必须为6位数字",
+    "organization_required": "请选择组织",
+    "first_name_required": "请输入名",
+    "last_name_required": "请输入姓",
+    "email_username_required": "请输入邮箱用户名",
+    "email_username_too_short": "邮箱用户名至少3位",
+    "email_username_invalid": "邮箱用户名格式不正确"
   }
 }
