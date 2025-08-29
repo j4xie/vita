@@ -1,8 +1,12 @@
 {
   "expo": {
-    "name": "pomelox-app",
-    "slug": "pomelox",
-    "version": "1.0.0",
+    "developmentClient": {
+      "silentLaunch": true,
+      "showDeveloperMenu": false
+    },
+    "name": "PomeloX",
+    "slug": "vitaglobal",
+    "version": "1.0.1",
     "owner": "stevenj4",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -20,7 +24,29 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.anonymous.pomeloxapp"
+      "bundleIdentifier": "com.pomelotech.pomelo",
+      "infoPlist": {
+        "NSAppTransportSecurity": {
+          "NSAllowsArbitraryLoads": true,
+          "NSAllowsLocalNetworking": true,
+          "NSExceptionDomains": {
+            "106.14.165.234": {
+              "NSExceptionAllowsInsecureHTTPLoads": true,
+              "NSExceptionMinimumTLSVersion": "TLSv1.0",
+              "NSIncludesSubdomains": true
+            },
+            "100.110.80.184": {
+              "NSExceptionAllowsInsecureHTTPLoads": true,
+              "NSExceptionMinimumTLSVersion": "TLSv1.0",
+              "NSIncludesSubdomains": true
+            },
+            "localhost": {
+              "NSExceptionAllowsInsecureHTTPLoads": true,
+              "NSExceptionMinimumTLSVersion": "TLSv1.0"
+            }
+          }
+        }
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -28,7 +54,7 @@
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
-      "package": "com.anonymous.pomeloxapp",
+      "package": "com.pomelotech.pomelo",
       "permissions": [
         "android.permission.CAMERA",
         "android.permission.RECORD_AUDIO",
