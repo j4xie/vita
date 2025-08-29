@@ -25,6 +25,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.pomelotech.pomelo",
+      "buildNumber": "2",
       "infoPlist": {
         "NSAppTransportSecurity": {
           "NSAllowsArbitraryLoads": true,
@@ -58,14 +59,24 @@
       "permissions": [
         "android.permission.CAMERA",
         "android.permission.RECORD_AUDIO",
-        "android.permission.CAMERA",
-        "android.permission.RECORD_AUDIO"
+        "android.permission.VIBRATE",
+        "android.permission.USE_FINGERPRINT",
+        "com.android.vending.BILLING"
       ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
     },
-    "plugins": [],
+    "plugins": [
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/notification-icon.png",
+          "color": "#FF6B35",
+          "defaultChannel": "default"
+        }
+      ]
+    ],
     "extra": {
       "eas": {
         "projectId": "fc3f2447-eea3-4c1d-8aed-ba0452fc2198"
