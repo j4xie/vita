@@ -393,7 +393,7 @@ export const ProfileScreen: React.FC = () => {
           allowFontScaling={true}
           maxFontSizeMultiplier={1.2}
           >
-            西柚 v1.0.0
+            PomeloX v1.0.0
           </Text>
         </View>
         </ScrollView>

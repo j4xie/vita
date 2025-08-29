@@ -52,13 +52,13 @@ export const SegmentedControl: React.FC<SegmentedControlProps> = ({
     AccessibilityInfo.isReduceMotionEnabled().then(setIsReduceMotionEnabled);
   }, []);
 
-  // 更新选中索引动画
+  // 更新选中索引动画 - 增强流畅度
   useEffect(() => {
-    const duration = isReduceMotionEnabled ? 120 : 200;
+    const duration = isReduceMotionEnabled ? 120 : 300; // 延长动画时间
     
     animatedIndex.value = withTiming(selectedIndex, {
       duration,
-      easing: Easing.out(Easing.cubic),
+      easing: Easing.bezier(0.4, 0.0, 0.2, 1), // Material Design 标准缓动
     });
   }, [selectedIndex, isReduceMotionEnabled]);
 
@@ -82,17 +82,18 @@ export const SegmentedControl: React.FC<SegmentedControlProps> = ({
     onIndexChange(index);
   };
 
-  // 容器布局回调
+  // 容器布局回调 - 优化气泡宽度计算
   const onContainerLayout = (event: any) => {
     const { width } = event.nativeEvent.layout;
-    segmentWidth.value = (width - 2 * 2) / segments.length; // 减去间距
+    // 恢复正常的宽度计算，不强制增加宽度
+    segmentWidth.value = (width - 2 * 2) / segments.length; // 考虑padding的宽度计算
   };
 
-  // 选中指示器动画样式
+  // 选中指示器动画样式 - 线条指示器
   const indicatorAnimatedStyle = useAnimatedStyle(() => {
-    const translateX = animatedIndex.value * segmentWidth.value + animatedIndex.value * 2; // 包含2pt间距
-    const indicatorWidth = 18; // 固定指示器宽度
-    const centerOffset = (segmentWidth.value - indicatorWidth) / 2; // 计算居中偏移
+    const translateX = animatedIndex.value * segmentWidth.value + animatedIndex.value * 2; // 包含padding
+    const indicatorWidth = 18;
+    const centerOffset = (segmentWidth.value - indicatorWidth) / 2;
     
     return {
       transform: [{ translateX: translateX + centerOffset }],
@@ -121,7 +122,7 @@ export const SegmentedControl: React.FC<SegmentedControlProps> = ({
 
   return (
     <View style={containerStyles} onLayout={onContainerLayout}>
-      {/* 选中指示器 - 底部横线 */}
+      {/* 选中指示器 - 椭圆背景 */}
       <Animated.View
         style={[
           styles.selectedIndicator,
@@ -162,30 +163,29 @@ export const SegmentedControl: React.FC<SegmentedControlProps> = ({
 const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
-    height: 38, // 统一高度
+    height: 38, // 恢复正常高度
     borderRadius: 19, // 高度的一半
-    padding: 2,
+    padding: 2, // 恢复padding
     position: 'relative',
     alignItems: 'center',
   },
   
-  // 容器背景 - 临时添加背景色以便看到边框效果
+  // 容器背景 - 透明背景
   containerLight: {
-    backgroundColor: 'rgba(245, 246, 247, 0.5)', // 轻微背景色便于调试
+    backgroundColor: 'transparent',
   },
   containerDark: {
-    backgroundColor: 'rgba(28, 28, 30, 0.5)', // 深色模式背景
+    backgroundColor: 'transparent',
   },
   
-  // 选中指示器 - 简洁底部横线
+  // 选中指示器 - 恢复底部线条样式
   selectedIndicator: {
     position: 'absolute',
-    height: 3, // 3px高度Dawn细条
-    width: 18, // 缩短宽度，从24改为18pt
-    backgroundColor: '#F9A889',
-    bottom: 0,
+    height: 3, // 细线条指示器
+    width: 18, // 固定寽度
+    backgroundColor: '#F9A889', // 品牌色
+    bottom: 0, // 底部对齐
     borderRadius: 1.5, // 微圆角
-    // 移除alignSelf和marginLeft，由动画逻辑控制居中
   },
   
   selectedIndicatorLight: {
@@ -199,11 +199,11 @@ const styles = StyleSheet.create({
   // 分段按钮
   segmentButton: {
     flex: 1,
-    height: 34, // 匹配指示器高度
+    height: 34, // 恢复正常高度
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: 17,
-    marginHorizontal: 1,
+    marginHorizontal: 1, // 恢复边距
   },
   
   disabledSegment: {
@@ -218,16 +218,19 @@ const styles = StyleSheet.create({
     lineHeight: 16,
   },
   
-  // 选中文字 - 黑色
+  // 选中文字 - 深色
   selectedText: {
-    color: '#111827', // 深黑色
+    color: '#1D1D1F', // 更深的黑色
+    fontWeight: '600',
   },
   
   // 未选中文字 - 灰色
   unselectedTextLight: {
-    color: '#9CA3AF', // 中等灰色
+    color: '#8E8E93', // iOS标准灰色
+    fontWeight: '500',
   },
   unselectedTextDark: {
-    color: '#9CA3AF', // 保持一致的灰色
+    color: '#8E8E93', // 保持一致的灰色
+    fontWeight: '500',
   },
 });

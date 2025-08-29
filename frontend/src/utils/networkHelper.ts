@@ -1,4 +1,4 @@
-// 网络请求助手 - 专门处理VitaGlobal API调用
+// 网络请求助手 - 专门处理PomeloX API调用
 
 const BASE_URL = 'http://106.14.165.234:8085';
 

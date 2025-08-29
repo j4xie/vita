@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-西柚/Pomelo is a Phase 0 MVP platform for Chinese international students overseas, focusing on activity management and registration. The project has a critical 5-week development timeline targeting September 2025 launch.
+PomeloX is a Phase 0 MVP platform for Chinese international students overseas, focusing on activity management and registration. The project has a critical 5-week development timeline targeting September 2025 launch.
 
 **Current Status:** Third-party services configured (85% complete), ready for code implementation.
 
@@ -120,7 +120,7 @@ All services are pre-configured and ready for development:
 
 #### Visual Language
 - **Primary Design Pattern:** Liquid Glass with blur effects and translucency
-- **Color System:** 西柚/Pomelo brand colors with warm gradient palette
+- **Color System:** PomeloX/Pomelo brand colors with warm gradient palette
   - Primary: #FF6B35 (Vibrant Orange) - Used for CTAs and active states
   - Secondary: #FF4757 (Coral Red) - Used for secondary actions and gradients
   - Accent: #FF8A65 (Light Orange) - Used for highlights and hover states
@@ -290,11 +290,13 @@ const listConfig = {
 - ❌ **硬编码中文文本**: 任何用户可见的中文字符串必须使用 `t()` 翻译函数
 - ❌ **单语言开发**: 新增中文翻译时必须同时添加对应的英文翻译
 - ❌ **无意义键名**: 禁止使用 `text1`, `label2` 等无语义的翻译键名
+- ❌ **Mock数据使用**: 除非明确要求，严禁使用Mock API和Mock数据，必须使用真实后端接口
 
 ### **✅ 强制要求**
 - ✅ **双语同步**: 每个翻译键必须在 `zh-CN` 和 `en-US` 文件中都存在
 - ✅ **语义化键名**: 使用描述性的翻译键名，如 `auth.login.welcome`
 - ✅ **插值支持**: 动态内容使用 `{{variable}}` 语法
+- ✅ **真实数据优先**: 优先使用真实后端API，确保数据准确性和功能完整性
 
 ### **📋 翻译键命名规范**
 ```typescript
@@ -347,6 +349,89 @@ t('button')  // 过于简单
 - [ ] 英文翻译是否准确自然？
 - [ ] 动态内容是否正确使用插值语法？
 - [ ] JSON格式是否正确无语法错误？
+
+### **🚨 翻译键显示问题预防机制 (2025-08-23 新增)**
+
+#### **问题原因分析**
+翻译键显示而非翻译文本的根本原因：
+1. **开发流程缺陷**: 编写t()调用时未同步添加翻译值
+2. **JSON语法错误**: 语法错误导致整个翻译文件加载失败
+3. **翻译文件结构混乱**: 重复section、路径不一致导致键被覆盖
+4. **缺乏验证机制**: 没有开发时和CI/CD的翻译键验证
+
+#### **🔧 强制验证工具**
+```bash
+# 开发时验证翻译键完整性
+npm run validate-translations
+
+# 验证工具位置
+frontend/package-scripts/validate-translations.js
+```
+
+#### **📋 严格开发规范**
+1. **新增翻译键时**:
+   - 必须同时在 zh-CN 和 en-US 文件中添加
+   - 添加后立即运行 `npm run validate-translations` 验证
+   - 翻译键路径必须遵循 `feature.component.element` 结构
+
+2. **翻译键命名约束**:
+   ```typescript
+   // ✅ 正确格式
+   t('auth.register.form.email_label')
+   t('activities.registration.success_title')
+   t('validation.errors.required_field')
+   
+   // ❌ 禁止格式
+   t('text1') // 无语义
+   t('label') // 过于简单
+   t('auth.register.form.invalid_key') // 键不存在
+   ```
+
+3. **JSON文件维护**:
+   - 提交前必须通过 JSON.parse() 验证
+   - 禁止重复的section或键名
+   - 使用一致的缩进和格式
+
+#### **⚡ 自动化检测**
+- **开发环境**: i18n fallback显示 `[MISSING: key_name]` 而非键名
+- **CI/CD**: 构建时自动运行翻译验证，失败则阻止部署
+- **代码提交**: Git pre-commit hook验证翻译完整性
+
+#### **🎯 责任分配**
+- **开发者**: 新增t()调用时必须同步添加翻译
+- **Code Review**: 必须检查翻译相关更改
+- **Claude Code**: 发现翻译键问题时立即修复并更新规范
+
+#### **📋 验证工具使用指南**
+```bash
+# 验证所有翻译键
+cd frontend && node package-scripts/validate-translations.js
+
+# 添加到package.json scripts中
+"scripts": {
+  "validate-translations": "node package-scripts/validate-translations.js"
+}
+
+# Git pre-commit hook (推荐)
+#!/bin/sh
+cd frontend && npm run validate-translations
+if [ $? -ne 0 ]; then
+  echo "❌ 翻译键验证失败，请修复后再提交"
+  exit 1
+fi
+```
+
+#### **🚨 常见翻译键显示问题快速诊断**
+当界面显示翻译键名而非翻译文本时：
+
+1. **检查JSON语法**: `python3 -m json.tool src/locales/zh-CN/translation.json`
+2. **验证键路径**: 运行翻译验证工具
+3. **检查i18n配置**: 确认 `utils/i18n.ts` 中没有强制语言设置
+4. **检查控制台**: 查看是否有翻译相关错误信息
+
+#### **⚠️ 历史问题记录**
+- 2025-08-23: 发现大量翻译键显示问题，根本原因是JSON语法错误+重复section+缺失验证
+- 修复策略: 统一翻译文件结构 + 添加验证工具 + 更新开发规范
 
 #### Touch Targets
 - **Minimum Size:** 44x44 points (iOS), 48x48dp (Android)
@@ -470,6 +555,55 @@ All third-party services are configured with development credentials. Production
 
 ## 🚨 Critical Development Rules
 
+### Mock数据和API使用规范
+
+**⚠️ 严格禁止使用Mock数据，除非明确要求！**
+
+**问题原因**: Mock数据会误导用户，导致以下问题：
+- 用户看到虚假的统计数字（如显示100积分但实际为0）
+- 功能测试不准确，无法发现真实的API问题
+- 用户操作后数据不更新，影响用户体验
+- 不同用户可能看到相同的Mock数据，破坏个性化体验
+
+**❌ 禁止的做法:**
+```typescript
+// 禁止使用Mock API
+const mockData = await MockAPI.getUserData();
+
+// 禁止硬编码Mock数据
+const userStats = { points: 1680, hours: 24 }; // Mock数据
+
+// 禁止返回Mock数据
+return { bookmarked: 5, participated: 8 }; // Mock数字
+```
+
+**✅ 正确的做法:**
+```typescript
+// 使用真实API
+const userData = await vitaGlobalAPI.getUserInfo();
+
+// 显示真实数据或0
+const userStats = { points: userData.points || 0, hours: userData.hours || 0 };
+
+// API失败时显示空状态
+if (!response.success) {
+  return { bookmarked: 0, participated: 0 }; // 真实的空状态
+}
+```
+
+**例外情况**: 只有在以下情况下才可以使用Mock数据：
+- 明确要求使用Mock数据进行功能演示
+- 后端接口暂未实现且需要UI开发时的临时方案
+- 单元测试中的测试数据
+
+**数据处理最佳实践**:
+- **用户统计数据**: 必须从后端API获取或显示0，不得显示虚假数字
+- **个人活动状态**: 基于真实的报名状态(registrationStatus)计算，不得硬编码
+- **收藏和评价功能**: 使用用户ID隔离的本地存储，确保多用户数据独立
+- **志愿者数量**: 从getUserList API获取真实工作人员统计，按权限级别显示
+- **会员卡数据**: 显示真实的0状态，不显示虚假卡片
+- **空状态处理**: API失败或无数据时显示美观的空状态，而非Mock数据
+
 ### React Native Reanimated Scroll Handler Issue
 
 **⚠️ NEVER use `useAnimatedScrollHandler` with FlatList, SectionList, or ScrollView in this project!**
@@ -557,3 +691,49 @@ const handleScroll = useCallback((event: any) => {
 **Recent Enhanced Files:**
 - `ActivityListScreen.tsx`: Enhanced with safety checks and error handling
 - `usePerformanceDegradation.ts`: Added validation and error boundaries
+
+### 志愿者签到签退API规范 (Added 2025-08-25)
+
+**⚠️ 关键发现**: 志愿者签退需要先获取签到记录ID
+
+**问题原因**: 后端签退接口需要签到记录的`id`参数来标识要签退的具体记录
+
+**正确的API调用方式:**
+
+```typescript
+// ✅ 签到 - 直接调用
+await volunteerSignRecord(
+  userId, 
+  1, // 签到
+  operateUserId,
+  operateLegalName,
+  startTime // 当前时间
+);
+
+// ✅ 签退 - 需要先获取记录ID
+const lastRecord = await getLastVolunteerRecord();
+const recordId = lastRecord.data?.id;
+
+await volunteerSignRecord(
+  userId, 
+  2, // 签退
+  operateUserId,
+  operateLegalName,
+  undefined, // 签到时间不需要
+  endTime, // 当前时间
+  recordId // 必需的记录ID
+);
+```
+
+**API参数格式**: `application/x-www-form-urlencoded`
+
+**签到参数**: `userId`, `type=1`, `startTime`, `operateUserId`, `operateLegalName`
+**签退参数**: `id`, `userId`, `type=2`, `endTime`, `operateUserId`, `operateLegalName`
+
+**测试确认 (2025-08-25)**:
+- 签到: ✅ `curl -X POST .../signRecord -d "userId=120&type=1&startTime=2025-08-25 19:00:00"`
+- 签退: ✅ `curl -X POST .../signRecord -d "id=22&userId=120&type=2&endTime=2025-08-25 19:05:00"`
+
+**文件位置**: 
+- API实现: `frontend/src/services/volunteerAPI.ts`
+- 前端调用: `frontend/src/screens/wellbeing/SchoolDetailScreen.tsx`

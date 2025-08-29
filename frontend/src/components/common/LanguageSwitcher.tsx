@@ -122,11 +122,7 @@ export const LanguageSwitcher: React.FC<LanguageSwitcherProps> = ({
       closeLanguageModal();
       
       // 显示成功提示
-      if (language === 'zh-CN') {
-        Alert.alert(t('alerts.success'), t('alerts.languageSwitched'));
-      } else {
-        Alert.alert('Success', 'Language switched to English');
-      }
+      Alert.alert(t('alerts.success'), t('alerts.languageSwitched'));
     } catch (error) {
       console.error('Error changing language:', error);
       Alert.alert(

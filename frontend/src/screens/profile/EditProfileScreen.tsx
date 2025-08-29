@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -10,6 +10,7 @@ import {
   Platform,
   useColorScheme,
   Alert,
+  Keyboard,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
@@ -18,6 +19,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 
 import { theme } from '../../theme';
+import { useTabBarHide } from '../../hooks/useTabBarHide';
 
 interface FormFieldProps {
   label: string;
@@ -104,6 +106,9 @@ export const EditProfileScreen: React.FC = () => {
   });
 
   const [isLoading, setIsLoading] = useState(false);
+
+  // 使用统一的TabBar隐藏Hook
+  useTabBarHide();
 
   const handleSave = async () => {
     if (Platform.OS === 'ios') {

@@ -15,6 +15,7 @@ import {
   Animated,
   Dimensions,
   AccessibilityInfo,
+  Alert,
 } from 'react-native';
 // Added Animated for sticky filter bar
 import Reanimated, {
@@ -40,14 +41,16 @@ import { LiquidGlassTab } from '../../components/ui/LiquidGlassTab';
 import { FilterBottomSheet } from '../../components/ui/FilterBottomSheet';
 import CategoryBar from '../../components/ui/CategoryBar';
 import { ListSkeleton } from '../../components/ui/SkeletonScreen';
-import { vitaGlobalAPI } from '../../services/VitaGlobalAPI';
+import { pomeloXAPI } from '../../services/PomeloXAPI';
 import { adaptActivityList, FrontendActivity } from '../../utils/activityAdapter';
 import { ACTIVITY_CATEGORIES, getCategoryName } from '../../data/activityCategories';
-import { getActivityListSimple } from '../../utils/networkHelper';
+// import { getActivityListSimple } from '../../utils/networkHelper'; // 废弃：不带token的简化版本
 import { usePerformanceDegradation } from '../../hooks/usePerformanceDegradation';
 import { useFilter } from '../../context/FilterContext';
-import { OrganizationProvider, useOrganization } from '../../context/OrganizationContext';
-import { OrganizationSwitcher } from '../../components/organization/OrganizationSwitcher';
+// import { OrganizationProvider, useOrganization } from '../../context/OrganizationContext'; // 移除组织功能
+// import { OrganizationSwitcher } from '../../components/organization/OrganizationSwitcher'; // 移除组织切换器
+import { activityStatsService } from '../../services/activityStatsService';
+import { useUser } from '../../context/UserContext';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 // 定位相关import暂时移除，等后端就绪后启用
 // import { LocationPermissionBanner } from '../../components/location/LocationPermissionBanner';
@@ -196,45 +199,32 @@ export const ActivityListScreen: React.FC = () => {
   
   // Animation now handled by LiquidGlassTab component
   
-  const filterTabs = ['all', 'ongoing', 'upcoming', 'ended'];
+  // 修改为基于时间的3个状态 - 使用翻译函数
+  const filterTabs = ['all', 'upcoming', 'ended'];
   const segmentLabels = [
-    t('activities.filters.all'),
-    t('activities.filters.ongoing'), 
-    t('activities.filters.upcoming'),
-    t('activities.filters.ended'),
+    t('filters.status.all', '全部'),
+    t('filters.status.upcoming', '即将开始'),
+    t('filters.status.ended', '已结束'),
   ];
 
   // V1.1 规范: BottomSheet 过滤器选项配置 - 使用翻译系统
   const categoryFilters = [
-    { id: 'academic', label: t('filters.categories.academic', '学术'), icon: 'school-outline', count: 12, color: theme.colors.primary },
-    { id: 'social', label: t('filters.categories.social', '社交'), icon: 'people-outline', count: 8, color: theme.colors.secondary },
-    { id: 'career', label: t('filters.categories.career', '职业'), icon: 'briefcase-outline', count: 5, color: theme.colors.success },
-    { id: 'sports', label: t('filters.categories.sports', '运动'), icon: 'fitness-outline', count: 15, color: theme.colors.warning },
-    { id: 'culture', label: t('filters.categories.culture', '文化'), icon: 'library-outline', count: 7, color: theme.colors.primary },
-    { id: 'volunteer', label: t('filters.categories.volunteer', '志愿'), icon: 'heart-outline', count: 3, color: theme.colors.danger },
+    { id: 'academic', label: t('filters.categories.academic', '学术'), icon: 'school-outline', count: 0, color: theme.colors.primary },
+    { id: 'social', label: t('filters.categories.social', '社交'), icon: 'people-outline', count: 0, color: theme.colors.secondary },
+    { id: 'career', label: t('filters.categories.career', '职业'), icon: 'briefcase-outline', count: 0, color: theme.colors.success },
+    { id: 'sports', label: t('filters.categories.sports', '运动'), icon: 'fitness-outline', count: 0, color: theme.colors.warning },
+    { id: 'culture', label: t('filters.categories.culture', '文化'), icon: 'library-outline', count: 0, color: theme.colors.primary },
+    { id: 'volunteer', label: t('filters.categories.volunteer', '志愿'), icon: 'heart-outline', count: 0, color: theme.colors.danger },
   ];
 
   const statusFilters = [
-    { id: 'available', label: t('filters.status.available', '可报名'), icon: 'checkmark-circle-outline', count: 25 },
-    { id: 'almost-full', label: t('filters.status.almostFull', '即将满员'), icon: 'warning-outline', count: 8 },
-    { id: 'waitlist', label: t('filters.status.waitlist', '等待列表'), icon: 'time-outline', count: 4 },
-    { id: 'ended', label: t('filters.status.ended', '已结束'), icon: 'close-circle-outline', count: 12 },
+    { id: 'upcoming', label: t('filters.status.upcoming', '即将开始'), icon: 'time-outline' },
+    { id: 'ended', label: t('filters.status.ended', '已结束'), icon: 'close-circle-outline' },
   ];
 
-  const locationFilters = [
-    { id: 'campus', label: t('filters.location.campus', '校内'), icon: 'business-outline', count: 18 },
-    { id: 'downtown', label: t('filters.location.downtown', '市中心'), icon: 'location-outline', count: 12 },
-    { id: 'online', label: t('filters.location.online', '线上'), icon: 'desktop-outline', count: 15 },
-    { id: 'offsite', label: t('filters.location.offsite', '校外'), icon: 'car-outline', count: 5 },
-  ];
+  const locationFilters = [];
 
-  const dateFilters = [
-    { id: 'today', label: t('filters.date.today', '今天'), count: 3 },
-    { id: 'tomorrow', label: t('filters.date.tomorrow', '明天'), count: 5 },
-    { id: 'this-week', label: t('filters.date.thisWeek', '本周'), count: 18 },
-    { id: 'this-month', label: t('filters.date.thisMonth', '本月'), count: 42 },
-    { id: 'next-month', label: t('filters.date.nextMonth', '下个月'), count: 8 },
-  ];
+  const dateFilters = [];
 
   
   // Handle segment change for CategoryBar
@@ -312,8 +302,8 @@ export const ActivityListScreen: React.FC = () => {
 
       const selectedCategory = activeFilter > 0 ? ACTIVITY_CATEGORIES[activeFilter - 1] : null;
       
-      // 使用简化的网络请求
-      const result = await getActivityListSimple({
+      // 使用带token的完整API请求以获取用户报名状态
+      const result = await pomeloXAPI.getActivityList({
         pageNum: page,
         pageSize: 20,
         name: searchText || undefined,
@@ -321,6 +311,18 @@ export const ActivityListScreen: React.FC = () => {
       });
 
       const adaptedData = adaptActivityList(result, currentLanguage);
+      
+      // 调试：检查适配后的活动状态
+      console.log('🎯 活动数据适配结果:', {
+        success: adaptedData.success,
+        total: adaptedData.total,
+        activitiesCount: adaptedData.activities.length,
+        statusSample: adaptedData.activities.slice(0, 3).map(activity => ({
+          id: activity.id,
+          title: activity.title,
+          status: activity.status
+        }))
+      });
 
       if (adaptedData.success) {
         if (page === 1 || isRefresh) {
@@ -337,24 +339,24 @@ export const ActivityListScreen: React.FC = () => {
         setHasMore(adaptedData.activities.length === 20); // 如果返回数据等于pageSize，说明可能还有更多
       } else {
         console.error('获取活动列表失败:', adaptedData.message);
-        setError('API错误: ' + adaptedData.message);
+        setError(t('common.api_error') + ': ' + adaptedData.message);
         if (page === 1) {
           setActivities([]);
         }
       }
     } catch (error: any) {
-      console.error('获取活动数据错误:', error);
+      // 优化错误日志，避免在用户界面显示技术错误
+      console.warn('获取活动数据失败:', error.message || error);
       
       // 判断错误类型并设置用户友好的错误信息
       if (error.name === 'AbortError') {
-        setError('请求超时，请检查网络连接');
-        console.log('请求被取消或超时');
+        setError(t('common.network_timeout'));
       } else if (error.message?.includes('Network request failed')) {
-        setError('网络连接失败，请检查网络设置');
-        console.log('网络连接失败');
+        setError(t('common.network_connection_error'));
+      } else if (error.message?.includes('fetch')) {
+        setError(t('common.server_connection_failed'));
       } else {
-        setError('未知错误: ' + (error.message || '请求失败'));
-        console.log('其他错误:', error.message);
+        setError(t('common.load_failed'));
       }
       
       // 网络错误时显示空列表
@@ -421,9 +423,14 @@ export const ActivityListScreen: React.FC = () => {
         if (categoryFilters.some(f => f.id === filterId)) {
           return activity.category === filterId;
         }
-        // 状态过滤
+        // 状态过滤 - 使用后端type字段（高效）
         if (statusFilters.some(f => f.id === filterId)) {
-          return activity.status === filterId;
+          if (filterId === 'upcoming') {
+            return activity.status === 'upcoming';
+          } else if (filterId === 'ended') {
+            return activity.status === 'ended';
+          }
+          return false;
         }
         // 地点过滤
         if (locationFilters.some(f => f.id === filterId)) {
@@ -472,9 +479,26 @@ export const ActivityListScreen: React.FC = () => {
       activity.title.toLowerCase().includes(searchText.toLowerCase()) ||
       activity.location.toLowerCase().includes(searchText.toLowerCase());
     
-    // 状态匹配
+    // 基于时间的状态匹配
     const currentFilterKey = filterTabs[activeFilter];
-    const matchesFilter = currentFilterKey === 'all' || activity.status === currentFilterKey;
+    let matchesFilter = true;
+    
+    if (currentFilterKey !== 'all') {
+      const now = new Date();
+      const activityEndTime = new Date(activity.endDate || activity.date);
+      
+      // 使用后端状态字段，无需时间计算
+      switch(currentFilterKey) {
+        case 'upcoming':
+          matchesFilter = activity.status === 'upcoming';
+          break;
+        case 'ended':
+          matchesFilter = activity.status === 'ended';
+          break;
+        default:
+          matchesFilter = true;
+      }
+    }
     
     // 过滤器匹配
     if (activeFilters.length > 0) {
@@ -483,7 +507,12 @@ export const ActivityListScreen: React.FC = () => {
           return activity.category === filterId;
         }
         if (statusFilters.some(f => f.id === filterId)) {
-          return activity.status === filterId;
+          if (filterId === 'upcoming') {
+            return activity.status === 'upcoming';
+          } else if (filterId === 'ended') {
+            return activity.status === 'ended';
+          }
+          return false;
         }
         if (locationFilters.some(f => f.id === filterId)) {
           return activity.locationType === filterId;
@@ -512,9 +541,28 @@ export const ActivityListScreen: React.FC = () => {
     // TODO: 实现分享功能
   };
 
-  const handleBookmark = (activity: any) => {
-    console.log('收藏活动:', activity.title);
-    // TODO: 实现收藏功能
+  const { user } = useUser();
+
+  const handleBookmark = async (activity: any) => {
+    if (!user?.id) {
+      Alert.alert(t('auth.login_required'), t('auth.login_required_message'));
+      return;
+    }
+    
+    try {
+      const isBookmarked = await activityStatsService.toggleBookmark(user.id, activity.id);
+      console.log(`${isBookmarked ? '收藏' : '取消收藏'}活动:`, activity.title);
+      
+      // 触觉反馈
+      if (Platform.OS === 'ios') {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      }
+      
+      // TODO: 可以添加Toast提示
+    } catch (error) {
+      console.error('收藏操作失败:', error);
+      Alert.alert(t('common.operation_failed'), t('activities.bookmark_unavailable'));
+    }
   };
 
   const handleNotifyMe = (activity: any) => {
@@ -587,6 +635,8 @@ export const ActivityListScreen: React.FC = () => {
         
         <View style={[styles.header, styles.headerGlass]}>
           <View style={styles.headerLeft}>
+            {/* 临时隐藏地点选择功能 - 第一期产品暂不需要定位功能 */}
+            {/*
             <TouchableOpacity 
               style={styles.locationSelector}
               onPress={() => {
@@ -600,6 +650,7 @@ export const ActivityListScreen: React.FC = () => {
               <Text style={styles.locationText}>{selectedCity}</Text>
               <Ionicons name="chevron-down" size={16} color="#9CA3AF" />
             </TouchableOpacity>
+            */}
           </View>
           {/* Scan Button - 线条样式 */}
           <TouchableOpacity onPress={handleScan} style={styles.scanButton}>
@@ -684,13 +735,13 @@ export const ActivityListScreen: React.FC = () => {
             {error ? (
               <>
                 <Ionicons name="wifi-outline" size={64} color={theme.colors.danger} />
-                <Text style={styles.emptyText}>网络连接问题</Text>
+                <Text style={styles.emptyText}>{t('common.network_error')}</Text>
                 <Text style={styles.emptySubtext}>{error}</Text>
                 <TouchableOpacity 
                   style={styles.retryButton}
                   onPress={() => fetchActivities(1, true)}
                 >
-                  <Text style={styles.retryButtonText}>重试</Text>
+                  <Text style={styles.retryButtonText}>{t('common.retry')}</Text>
                 </TouchableOpacity>
               </>
             ) : (
@@ -831,74 +882,9 @@ export const ActivityListScreen: React.FC = () => {
 
 // ==================== 组织切换器包装组件 ====================
 
+// 组织切换器已移除 - 简化为空组件
 const OrganizationSwitcherWrapper: React.FC = () => {
-  const { t } = useTranslation();
-  const navigation = useNavigation<any>();
-  
-  // 安全地获取组织context
-  let orgContext;
-  try {
-    orgContext = useOrganization();
-    console.log('OrganizationContext loaded:', !!orgContext.currentOrganization);
-  } catch (error) {
-    console.log('OrganizationContext not available, skipping switcher');
-    return null;
-  }
-  
-  const {
-    currentOrganization,
-    organizations,
-    isSwitching,
-    switchOrganization,
-    isInitialized
-  } = orgContext;
-
-  console.log('Switcher render check:', {
-    isInitialized,
-    currentOrganization: currentOrganization?.name,
-    organizationCount: organizations?.length,
-    isSwitching
-  });
-
-  const handleOrganizationChange = useCallback(async (organizationId: string) => {
-    try {
-      console.log('Switching to organization:', organizationId);
-      const result = await switchOrganization(organizationId);
-      if (result.success) {
-        console.log('Organization switched successfully:', result.newOrganization?.displayNameZh);
-      }
-    } catch (error) {
-      console.error('Failed to switch organization:', error);
-    }
-  }, [switchOrganization]);
-
-  // 更宽松的显示条件，优先显示轮盘
-  if (!organizations || organizations.length <= 1) {
-    console.log('Switcher hidden - not enough organizations:', organizations?.length);
-    return null;
-  }
-
-  // 如果没有当前组织，使用第一个作为默认值
-  const displayOrganization = currentOrganization || organizations[0];
-  
-  console.log('Switcher will render with:', {
-    isInitialized,
-    currentOrg: displayOrganization?.name,
-    orgCount: organizations?.length,
-    isSwitching
-  });
-
-  console.log('Rendering organization switcher with org:', displayOrganization?.name);
-  return (
-    <OrganizationSwitcher
-      topOffset={undefined} // 使用默认位置
-      onOrganizationChange={handleOrganizationChange}
-      currentOrganization={displayOrganization}
-      organizations={organizations}
-      disabled={isSwitching || false}
-      testID="explore-organization-switcher"
-    />
-  );
+  return null;
 };
 
 // ==================== 主导出组件 ====================
@@ -906,14 +892,12 @@ const OrganizationSwitcherWrapper: React.FC = () => {
 const ActivityListScreenWithProvider: React.FC = () => {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <OrganizationProvider userId="user_123">
-        <ActivityListScreen />
-      </OrganizationProvider>
+      <ActivityListScreen />
     </GestureHandlerRootView>
   );
 };
 
-// 导出包装后的组件
+// 导出简化后的组件
 export { ActivityListScreenWithProvider as ActivityListScreen };
 
 const styles = StyleSheet.create({
@@ -992,7 +976,7 @@ const styles = StyleSheet.create({
     paddingBottom: 16, // 恢复原来的底部间距
     backgroundColor: 'rgba(255, 255, 255, 0.001)', // Nearly invisible but solid for shadow calculation // 透明背景，使用页面的渐变背景
     paddingHorizontal: 0, // 移除padding，让CategoryBar自己控制边距
-    marginHorizontal: theme.spacing.md - 13.5, // 再加宽2px，从-11.5改为-13.5
+    marginHorizontal: theme.spacing.md - 18, // 进一步加宽给filter按钮更多移动空间
   },
   nearbyChipContainer: {
     paddingHorizontal: 12,

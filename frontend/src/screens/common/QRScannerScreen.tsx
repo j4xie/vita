@@ -22,6 +22,8 @@ import { membershipCardService } from '../../services/MembershipCardService';
 import { MerchantQRScanResult, ParsedMerchantQR } from '../../types/cards';
 import { Organization } from '../../types/organization';
 import { UserIdentityData, ParsedUserQRCode } from '../../types/userIdentity';
+import { pomeloXAPI } from '../../services/PomeloXAPI';
+import { useUser } from '../../context/UserContext';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 const scanAreaSize = screenWidth * 0.7;
@@ -30,12 +32,18 @@ export const QRScannerScreen: React.FC = () => {
   const { t } = useTranslation();
   const navigation = useNavigation<any>();
   const route = useRoute<any>();
-  const purpose = route.params?.purpose || 'scan'; // 'register' | 'verify' | 'scan' | 'membership_card' | 'user_identity'
+  const purpose = route.params?.purpose || 'scan'; // 'register' | 'verify' | 'scan' | 'membership_card' | 'user_identity' | 'activity_signin'
   const returnScreen = route.params?.returnScreen;
+  const onScanSuccess = route.params?.onScanSuccess; // 扫码成功回调
+  const onScanError = route.params?.onScanError; // 扫码失败回调
+  const activity = route.params?.activity; // 活动信息
   
   const [permission, requestPermission] = useCameraPermissions();
   const [scanned, setScanned] = useState(false);
   const [torchOn, setTorchOn] = useState(false);
+  
+  // 用户相关状态
+  const { user } = useUser();
   
   // 组织相关状态
   const { 
@@ -74,6 +82,9 @@ export const QRScannerScreen: React.FC = () => {
         break;
       case 'user_identity':
         handleUserIdentityScan(data);
+        break;
+      case 'activity_signin':
+        handleActivitySignInScan(data);
         break;
       default:
         handleGeneralScan(data);
@@ -204,10 +215,211 @@ export const QRScannerScreen: React.FC = () => {
     }
   };
 
+  const handleActivitySignInScan = async (qrData: string) => {
+    // 如果有自定义回调函数（来自ActivityDetailScreen），使用回调
+    if (onScanSuccess) {
+      try {
+        // 验证扫码数据的有效性
+        const activityId = parseActivityQRCode(qrData);
+        if (!activityId) {
+          if (onScanError) {
+            onScanError('无效的活动二维码');
+          } else {
+            showScanError(
+              t('qr.results.invalid_qr_title'),
+              t('qr.results.invalid_activity_qr_message')
+            );
+          }
+          return;
+        }
+
+        // 调用成功回调
+        await onScanSuccess(qrData);
+      } catch (error) {
+        if (onScanError) {
+          onScanError('扫码处理失败');
+        } else {
+          showScanError('扫码失败', '处理扫码结果时出错');
+        }
+      }
+      return;
+    }
+
+    // 原有的独立签到逻辑（保持兼容性）
+    if (!user?.id) {
+      Alert.alert(
+        t('qr.results.signin_failed_title'),
+        t('auth.errors.not_logged_in'),
+        [
+          {
+            text: t('common.confirm'),
+            onPress: () => navigation.navigate('Login'),
+          },
+        ]
+      );
+      return;
+    }
+
+    try {
+      // 解析活动二维码，提取活动ID
+      const activityId = parseActivityQRCode(qrData);
+      
+      if (!activityId) {
+        showScanError(
+          t('qr.results.invalid_qr_title'),
+          t('qr.results.invalid_activity_qr_message')
+        );
+        return;
+      }
+
+      // 检查用户报名状态
+      const signInfo = await pomeloXAPI.getSignInfo(activityId, parseInt(user.userId));
+      
+      if (signInfo.code === 200) {
+        switch (signInfo.data) {
+          case 0:
+            // 未报名，跳转到活动详情页面
+            Alert.alert(
+              t('qr.results.not_registered_title'),
+              t('qr.results.not_registered_message'),
+              [
+                {
+                  text: t('activities.registration.register_now'),
+                  onPress: () => {
+                    // 获取活动信息并跳转
+                    navigation.navigate('ActivityDetail', { 
+                      activity: { id: activityId.toString() }
+                    });
+                  },
+                },
+                {
+                  text: t('common.cancel'),
+                  style: 'cancel',
+                  onPress: () => setScanned(false),
+                },
+              ]
+            );
+            break;
+            
+          case -1:
+            // 已报名未签到，执行签到
+            await performSignIn(activityId);
+            break;
+            
+          case 1:
+            // 已签到
+            Alert.alert(
+              t('qr.results.already_signed_in_title'),
+              t('qr.results.already_signed_in_message'),
+              [
+                {
+                  text: t('common.confirm'),
+                  onPress: () => setScanned(false),
+                },
+              ]
+            );
+            break;
+            
+          default:
+            showScanError(
+              t('qr.results.signin_failed_title'),
+              t('qr.results.unknown_status_message')
+            );
+        }
+      } else {
+        showScanError(
+          t('qr.results.signin_failed_title'),
+          signInfo.msg || t('qr.results.check_status_failed')
+        );
+      }
+    } catch (error) {
+      console.error('Activity sign-in scan error:', error);
+      showScanError(
+        t('qr.results.signin_failed_title'),
+        t('common.network_error')
+      );
+    }
+  };
+
+  const parseActivityQRCode = (qrData: string): number | null => {
+    try {
+      // 假设活动二维码格式为: VG_ACTIVITY_{activityId} 或包含JSON的base64
+      if (qrData.startsWith('VG_ACTIVITY_')) {
+        const data = qrData.replace('VG_ACTIVITY_', '');
+        // 尝试解析为JSON
+        try {
+          const activityData = JSON.parse(atob(data));
+          return activityData.activityId;
+        } catch {
+          // 如果不是JSON，可能直接是活动ID
+          return parseInt(data);
+        }
+      }
+      
+      // 尝试直接解析为数字
+      const directId = parseInt(qrData);
+      if (!isNaN(directId)) {
+        return directId;
+      }
+      
+      return null;
+    } catch (error) {
+      console.error('Error parsing activity QR code:', error);
+      return null;
+    }
+  };
+
+  const performSignIn = async (activityId: number) => {
+    try {
+      const result = await pomeloXAPI.signInActivity(activityId, parseInt(user?.id || '0'));
+      
+      if (result.code === 200) {
+        // 签到成功
+        if (Platform.OS === 'ios') {
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        }
+        
+        Alert.alert(
+          t('qr.results.signin_success_title'),
+          t('qr.results.signin_success_message'),
+          [
+            {
+              text: t('common.confirm'),
+              onPress: () => {
+                if (returnScreen) {
+                  navigation.navigate(returnScreen);
+                } else {
+                  navigation.goBack();
+                }
+              },
+            },
+          ]
+        );
+      } else {
+        showScanError(
+          t('qr.results.signin_failed_title'),
+          result.msg || t('qr.results.signin_failed_message')
+        );
+      }
+    } catch (error) {
+      console.error('Sign-in API error:', error);
+      showScanError(
+        t('qr.results.signin_failed_title'),
+        t('common.network_error')
+      );
+    }
+  };
+
   const handleGeneralScan = (data: string) => {
     // 首先检查是否为用户身份码
     if (data.startsWith('VG_USER_')) {
       handleUserIdentityScan(data);
+      return;
+    }
+
+    // 检查是否为活动签到码
+    if (data.startsWith('VG_ACTIVITY_') || /^\d+$/.test(data)) {
+      handleActivitySignInScan(data);
       return;
     }
 
@@ -230,13 +442,13 @@ export const QRScannerScreen: React.FC = () => {
       const parsedUser = parseUserIdentityQR(qrData);
       
       if (!parsedUser.isValid) {
-        showScanError('无效的用户身份码', parsedUser.error || '请扫描有效的用户身份二维码');
+        showScanError(t('qr.errors.invalid_user_code'), parsedUser.error || t('qr.errors.scan_valid_user_qr'));
         return;
       }
 
 
       if (!parsedUser.data) {
-        showScanError('身份码数据错误', '无法读取用户身份信息');
+        showScanError(t('qr.errors.identity_data_error'), t('qr.errors.cannot_read_user_info'));
         return;
       }
 
@@ -245,7 +457,7 @@ export const QRScannerScreen: React.FC = () => {
 
     } catch (error) {
       console.error('Error processing user identity QR code:', error);
-      showScanError('扫描失败', '处理用户身份码时发生错误');
+      showScanError(t('qr.errors.scan_failed'), t('qr.errors.process_user_code_error'));
     }
   };
 
@@ -329,17 +541,17 @@ export const QRScannerScreen: React.FC = () => {
       const parsedQR = membershipCardService.parseMerchantQR(qrData);
       
       if (!parsedQR.isValid) {
-        showScanError('无效的QR码', parsedQR.error || '请扫描有效的商家二维码');
+        showScanError(t('qr.errors.invalid_qr_code'), parsedQR.error || t('qr.errors.scan_valid_merchant_qr'));
         return;
       }
 
       if (parsedQR.isExpired) {
-        showScanError('QR码已过期', '请向商家获取新的二维码');
+        showScanError(t('qr.errors.qr_expired'), t('qr.errors.get_new_qr_from_merchant'));
         return;
       }
 
       if (!parsedQR.merchantId) {
-        showScanError('无效的商家QR码', '缺少商家信息');
+        showScanError(t('qr.errors.invalid_merchant_qr'), t('qr.errors.missing_merchant_info'));
         return;
       }
 
@@ -348,7 +560,7 @@ export const QRScannerScreen: React.FC = () => {
       
     } catch (error) {
       console.error('Error processing merchant QR code:', error);
-      showScanError('扫描失败', '处理二维码时发生错误');
+      showScanError(t('qr.errors.scan_failed'), t('qr.errors.process_qr_error'));
     } finally {
       setIsProcessing(false);
     }
@@ -356,38 +568,19 @@ export const QRScannerScreen: React.FC = () => {
 
   const checkMerchantPermission = async (merchantId: string, qrData: string) => {
     if (!currentOrganization) {
-      showScanError('未选择组织', '请先选择您所属的学联组织');
+      showScanError(t('qr.errors.no_organization_selected'), t('qr.errors.select_organization_first'));
       return;
     }
 
-    // 模拟检查商家权限（实际应该调用API）
-    const mockMerchantPermissions = {
-      'merchant_starbucks': ['org_columbia_cu', 'org_cssa'],
-      'merchant_mcdonalds': ['org_columbia_cu'],
-      'merchant_subway': ['org_cssa'],
-    };
-
-    const allowedOrganizations = mockMerchantPermissions[merchantId as keyof typeof mockMerchantPermissions] || [];
+    // 检查商家权限（应该调用真实API）
+    // Mock permissions removed - should use real API call
+    const allowedOrganizations: string[] = [];
     
-    if (allowedOrganizations.includes(currentOrganization.id)) {
-      // 有权限，可以创建会员卡
-      await createMembershipCard(merchantId, qrData);
-    } else {
-      // 无权限，检查是否有其他可用组织
-      const availableOrgs = organizations.filter(org => 
-        allowedOrganizations.includes(org.id) && hasOrganizationAccess(org.id)
-      );
-
-      if (availableOrgs.length > 0) {
-        // 显示组织切换提示
-        showOrganizationSwitchPrompt(merchantId, qrData, availableOrgs);
-      } else {
-        showScanError(
-          '无访问权限', 
-          `您所在的组织 ${currentOrganization.displayNameZh} 没有权限访问此商家的会员服务`
-        );
-      }
-    }
+    // Since mock permissions are removed, show service unavailable message
+    showScanError(
+      t('qr.errors.service_unavailable') || '服务暂不可用',
+      t('qr.errors.merchant_permissions_developing') || '商家权限系统开发中，请联系管理员'
+    );
   };
 
   const createMembershipCard = async (merchantId: string, qrData: string) => {
@@ -461,7 +654,7 @@ export const QRScannerScreen: React.FC = () => {
 
     } catch (error) {
       console.error('Error creating membership card:', error);
-      showScanError('创建失败', '创建会员卡时发生错误');
+      showScanError(t('qr.errors.creation_failed'), t('qr.errors.card_creation_error'));
     }
   };
 
@@ -505,7 +698,7 @@ export const QRScannerScreen: React.FC = () => {
       }
     } catch (error) {
       console.error('Error switching organization:', error);
-      showScanError('切换失败', '切换组织时发生错误');
+      showScanError(t('qr.errors.switch_failed'), t('qr.errors.organization_switch_error'));
     } finally {
       setIsProcessing(false);
     }
@@ -712,7 +905,7 @@ const OrganizationSwitchModal: React.FC<OrganizationSwitchModalProps> = ({
       <View style={modalStyles.overlay}>
         <View style={modalStyles.container}>
           <View style={modalStyles.header}>
-            <Text style={modalStyles.title}>切换组织</Text>
+            <Text style={modalStyles.title}>{t('qr.organization.switch_title', '切换组织')}</Text>
             <TouchableOpacity onPress={onClose} style={modalStyles.closeButton}>
               <Ionicons name="close" size={24} color={theme.colors.text.secondary} />
             </TouchableOpacity>
@@ -753,7 +946,7 @@ const OrganizationSwitchModal: React.FC<OrganizationSwitchModalProps> = ({
             style={modalStyles.cancelButton}
             onPress={onClose}
           >
-            <Text style={modalStyles.cancelButtonText}>取消</Text>
+            <Text style={modalStyles.cancelButtonText}>{t('common.cancel')}</Text>
           </TouchableOpacity>
         </View>
       </View>

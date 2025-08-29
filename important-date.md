@@ -1,4 +1,4 @@
-# VitaGlobal Phase 0 项目启动流程 & 重要时间节点
+# PomeloX Phase 0 项目启动流程 & 重要时间节点
 
 ## 📊 项目现状分析
 
@@ -49,7 +49,7 @@
 
 1. Gmail SMTP配置补充 (5分钟)
    - 在GCP.md中补充: SMTP端口587
-   - 在GCP.md中补充: 发件人名称 "VitaGlobal Support"
+   - 在GCP.md中补充: 发件人名称 "PomeloX Support"
 
 2. Firebase移动端配置文件 (20分钟)
    - 访问Firebase Console: https://console.firebase.google.com/

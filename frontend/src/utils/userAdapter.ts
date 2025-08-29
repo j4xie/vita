@@ -75,11 +75,13 @@ export interface BackendUserInfo {
 // 前端用户数据接口（简化格式）
 export interface FrontendUser {
   id: string;
+  userId?: string; // 兼容字段，与id相同
   userName: string;
   legalName: string;
   nickName: string;
   email: string;
   phone: string;
+  phonenumber?: string; // 兼容字段，与phone相同
   avatar: string;
   gender: 'male' | 'female' | 'unknown';
   isActive: boolean;
@@ -93,6 +95,11 @@ export interface FrontendUser {
     parentId: number;
     ancestors: string;
   };
+  dept?: { // 兼容字段，与school相同
+    deptId: number;
+    deptName: string;
+  };
+  deptId?: number; // 兼容字段
   
   // 角色权限
   roles: Array<{
@@ -109,7 +116,14 @@ export interface FrontendUser {
     canManageActivities: boolean;
     canManageVolunteers: boolean;
     canManageInvitations: boolean;
+    // 兼容字段
+    isOrganizer?: boolean;
+    canAccessVolunteerFeatures?: boolean;
   };
+  
+  // 兼容字段
+  name?: string; // 与legalName相同
+  verified?: boolean;
 }
 
 /**
@@ -156,13 +170,18 @@ const formatDateTime = (dateTime: string): string => {
  * 适配用户信息数据
  */
 export const adaptUserInfo = (backendUser: BackendUserInfo): FrontendUser => {
+  const userId = backendUser.userId.toString();
+  const permissions = parsePermissions(backendUser.roles, backendUser.admin);
+  
   return {
-    id: backendUser.userId.toString(),
+    id: userId,
+    userId, // 兼容字段
     userName: backendUser.userName,
     legalName: backendUser.legalName,
     nickName: backendUser.nickName,
     email: backendUser.email,
     phone: backendUser.phonenumber,
+    phonenumber: backendUser.phonenumber, // 兼容字段
     avatar: backendUser.avatar || '', // 处理空头像
     gender: convertGender(backendUser.sex),
     isActive: backendUser.status === '0', // "0"表示正常状态
@@ -176,6 +195,11 @@ export const adaptUserInfo = (backendUser: BackendUserInfo): FrontendUser => {
       parentId: backendUser.dept.parentId,
       ancestors: backendUser.dept.ancestors,
     },
+    dept: { // 兼容字段
+      deptId: backendUser.deptId,
+      deptName: backendUser.dept.deptName,
+    },
+    deptId: backendUser.deptId, // 兼容字段
     
     // 角色信息
     roles: backendUser.roles.map(role => ({
@@ -186,7 +210,15 @@ export const adaptUserInfo = (backendUser: BackendUserInfo): FrontendUser => {
     })),
     
     // 权限解析
-    permissions: parsePermissions(backendUser.roles, backendUser.admin),
+    permissions: {
+      ...permissions,
+      isOrganizer: permissions.isPartAdmin, // 兼容字段
+      canAccessVolunteerFeatures: permissions.canManageVolunteers, // 兼容字段
+    },
+    
+    // 兼容字段
+    name: backendUser.legalName,
+    verified: true, // 默认已验证
   };
 };
 

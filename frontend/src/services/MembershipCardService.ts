@@ -18,15 +18,15 @@ import {
   CardCreationResult,
   ParsedMerchantQR
 } from '../types/cards';
-import MockAPI from './MockAPI';
+// MockAPI import removed - using real data only
 
 // ==================== 存储键名 ====================
 
 const STORAGE_KEYS = {
-  MEMBERSHIP_CARDS: '@vitaglobal:membership_cards',
-  CARD_DISPLAY_CACHE: '@vitaglobal:card_display_cache',
-  MERCHANTS_CACHE: '@vitaglobal:merchants_cache',
-  ORGANIZATIONS_CACHE: '@vitaglobal:organizations_cache',
+  MEMBERSHIP_CARDS: '@pomelox:membership_cards',
+  CARD_DISPLAY_CACHE: '@pomelox:card_display_cache',
+  MERCHANTS_CACHE: '@pomelox:merchants_cache',
+  ORGANIZATIONS_CACHE: '@pomelox:organizations_cache',
 } as const;
 
 // ==================== 会员卡服务类 ====================
@@ -44,17 +44,11 @@ export class MembershipCardService {
   // ==================== 本地存储操作 ====================
 
   /**
-   * 获取所有会员卡 (优先使用Mock API)
+   * 获取所有会员卡 (仅使用真实数据)
    */
   async getAllCards(): Promise<MembershipCard[]> {
     try {
-      // 优先使用Mock API
-      const mockCards = await MockAPI.getUserMembershipCards('user_123');
-      if (mockCards.length > 0) {
-        return mockCards;
-      }
-
-      // 降级到本地存储
+      // 使用本地存储的真实数据
       const data = await AsyncStorage.getItem(STORAGE_KEYS.MEMBERSHIP_CARDS);
       if (!data) return [];
 
@@ -167,8 +161,8 @@ export class MembershipCardService {
    */
   parseMerchantQR(qrData: string): ParsedMerchantQR {
     try {
-      // VitaGlobal商家QR码格式: vitaglobal://merchant/{merchantId}?location={locationId}&campaign={campaignId}
-      if (!qrData.startsWith('vitaglobal://merchant/')) {
+      // PomeloX商家QR码格式: pomelox://merchant/{merchantId}?location={locationId}&campaign={campaignId}
+      if (!qrData.startsWith('pomelox://merchant/')) {
         return {
           isValid: false,
           isExpired: false,
@@ -224,8 +218,8 @@ export class MembershipCardService {
    * 生成会员卡QR码数据
    */
   generateCardQRData(card: MembershipCard): string {
-    // 格式: vitaglobal://card/{cardType}/{cardId}?number={cardNumber}&org={orgId}
-    const baseUrl = `vitaglobal://card/${card.cardType}/${card.id}`;
+    // 格式: pomelox://card/{cardType}/{cardId}?number={cardNumber}&org={orgId}
+    const baseUrl = `pomelox://card/${card.cardType}/${card.id}`;
     const params = new URLSearchParams({
       number: card.cardNumber,
       org: card.organizationId,
@@ -526,22 +520,10 @@ export class MembershipCardService {
     membershipLevel?: string;
   }): Promise<MembershipCard> {
     try {
-      // 使用Mock API创建
-      const newCard = await MockAPI.createMembershipCard({
-        userId: params.userId,
-        organizationId: params.organizationId,
-        merchantId: params.merchantId,
-        cardType: params.cardType
-      });
-
-      // 同时保存到本地存储作为备份
-      await this.saveCard(newCard);
+      // 直接创建本地会员卡 - 不再使用 MockAPI
+      console.log('Creating membership card locally');
       
-      return newCard;
-    } catch (error) {
-      console.error('Error creating membership card:', error);
-      
-      // 降级到本地创建
+      // 本地创建逻辑
       const cardNumber = this.generateCardNumber(params.organizationId, params.cardType);
       const qrCodeData = this.generateCardQRData({
         id: '', // 临时ID，会在保存时生成真实ID
@@ -567,21 +549,44 @@ export class MembershipCardService {
 
       await this.saveCard(card);
       return card;
+    } catch (error) {
+      console.error('Error creating membership card:', error);
+      
+      // 返回错误的会员卡对象
+      const errorCard: MembershipCard = {
+        id: `error_${Date.now()}`,
+        userId: params.userId,
+        organizationId: params.organizationId || '',
+        merchantId: params.merchantId || '',
+        cardType: params.cardType,
+        cardNumber: 'ERROR',
+        displayName: '创建失败',
+        points: 0,
+        membershipLevel: 'basic',
+        qrCodeData: '',
+        isActive: false,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      };
+      
+      return errorCard;
     }
   }
 
   /**
-   * 获取商家信息 (使用Mock API)
+   * 获取商家信息 (返回空 - 不再使用 Mock 数据)
    */
   getMerchantInfo(merchantId: string): Merchant | undefined {
-    return MockAPI.getMerchantById(merchantId);
+    console.warn('getMerchantInfo: Mock API removed, returning undefined');
+    return undefined;
   }
 
   /**
-   * 获取组织信息 (使用Mock API)
+   * 获取组织信息 (返回空 - 不再使用 Mock 数据)
    */
   getOrganizationInfo(organizationId: string): Organization | undefined {
-    return MockAPI.getOrganizationById(organizationId);
+    console.warn('getOrganizationInfo: Mock API removed, returning undefined');
+    return undefined;
   }
 }
 

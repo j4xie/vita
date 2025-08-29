@@ -11,7 +11,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import { Glass } from './GlassTheme';
-import { getSchoolLogo } from './schoolLogos';
+import { getSchoolLogo } from '../../utils/schoolLogos';
 
 interface LiquidGlassListItemProps {
   id: string;
@@ -41,25 +41,50 @@ export const LiquidGlassListItem: React.FC<LiquidGlassListItemProps> = ({
   const pressed = useSharedValue(0);
   const logoSource = getSchoolLogo(schoolId);
   
+  // 添加滑动容忍度
+  const [touchStart, setTouchStart] = React.useState<{x: number, y: number} | null>(null);
+  
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: 1 - 0.02 * pressed.value }], // scale 1 → 0.98
   }));
 
-  const handlePressIn = () => {
+  const handlePressIn = (event: any) => {
     if (disabled) return;
+    
+    // 记录触摸开始位置
+    setTouchStart({
+      x: event.nativeEvent.pageX,
+      y: event.nativeEvent.pageY
+    });
+    
     pressed.value = withTiming(1, { duration: Glass.animation.pressDuration });
   };
 
-  const handlePressOut = () => {
+  const handlePressOut = (event: any) => {
     if (disabled) return;
     
     pressed.value = withSpring(0, Glass.animation.springConfig);
+    
+    // 检查是否是滑动操作
+    if (touchStart) {
+      const deltaX = Math.abs(event.nativeEvent.pageX - touchStart.x);
+      const deltaY = Math.abs(event.nativeEvent.pageY - touchStart.y);
+      const threshold = 10; // 10像素的滑动容忍度
+      
+      // 如果滑动距离超过阈值，不触发点击
+      if (deltaX > threshold || deltaY > threshold) {
+        console.log('检测到滑动操作，取消点击事件');
+        setTouchStart(null);
+        return;
+      }
+    }
     
     // iOS触觉反馈
     if (Platform.OS === 'ios') {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
     
+    setTouchStart(null);
     onPress();
   };
 
@@ -94,7 +119,9 @@ export const LiquidGlassListItem: React.FC<LiquidGlassListItemProps> = ({
             onPressOut={handlePressOut}
             disabled={disabled}
             style={[styles.content, disabled && styles.disabledContent]}
-            activeOpacity={1}
+            activeOpacity={0.95}
+            delayLongPress={200}
+            hitSlop={{ top: 5, bottom: 5, left: 5, right: 5 }}
           >
           {/* 左侧校徽 */}
           <View style={[
@@ -140,16 +167,6 @@ export const LiquidGlassListItem: React.FC<LiquidGlassListItemProps> = ({
 
           {/* 右侧徽章和chevron */}
           <View style={styles.rightSection}>
-            {/* 人数徽章 */}
-            <View style={[styles.badge, { backgroundColor: `rgba(100,120,160,0.18)` }]}>
-              <Ionicons
-                name="people"
-                size={12}
-                color={Glass.textMain}
-                style={styles.badgeIcon}
-              />
-              <Text style={styles.badgeText}>{volunteers}</Text>
-            </View>
             
             {/* Chevron */}
             <Ionicons

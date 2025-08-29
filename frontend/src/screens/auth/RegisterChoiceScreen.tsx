@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -6,6 +6,7 @@ import {
   StyleSheet,
   SafeAreaView,
   Image,
+  Alert,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
@@ -13,10 +14,15 @@ import { useTranslation } from 'react-i18next';
 import { LinearGradient } from 'expo-linear-gradient';
 import { theme } from '../../theme';
 import { LIQUID_GLASS_LAYERS, DAWN_GRADIENTS } from '../../theme/core';
+import { PrivacyAgreementModal } from '../../components/modals/PrivacyAgreementModal';
+import { TermsModal } from '../../components/modals/TermsModal';
 
 export const RegisterChoiceScreen: React.FC = () => {
   const navigation = useNavigation<any>();
   const { t } = useTranslation();
+  const [showPrivacyModal, setShowPrivacyModal] = useState(false);
+  const [termsModalVisible, setTermsModalVisible] = useState(false);
+  const [termsModalType, setTermsModalType] = useState<'terms' | 'privacy'>('terms');
 
   const handleBack = () => {
     navigation.goBack();
@@ -27,11 +33,30 @@ export const RegisterChoiceScreen: React.FC = () => {
   };
 
   const handleNormalRegister = () => {
-    navigation.navigate('RegisterStep1');
+    // 显示隐私协议弹窗
+    setShowPrivacyModal(true);
+  };
+
+  const handlePrivacyAccept = () => {
+    setShowPrivacyModal(false);
+    // 用户同意隐私协议后才能进入注册表单
+    navigation.navigate('RegisterForm');
+  };
+
+  const handlePrivacyDecline = () => {
+    setShowPrivacyModal(false);
+    // 用户拒绝隐私协议，返回上一页面（通常是登录页面）
+    navigation.goBack();
   };
 
   const handleSkip = () => {
     navigation.navigate('Main');
+  };
+
+  // 处理条款和隐私政策点击
+  const handleTermsPress = (type: 'terms' | 'privacy') => {
+    setTermsModalType(type);
+    setTermsModalVisible(true);
   };
 
   return (
@@ -72,7 +97,7 @@ export const RegisterChoiceScreen: React.FC = () => {
           >
             <View style={styles.cardContent}>
               <View style={styles.iconContainer}>
-                <Ionicons name="qr-code" size={48} color="#000000" />
+                <Ionicons name="qr-code" size={48} color={theme.colors.text.inverse} />
               </View>
               <View style={styles.textContainer}>
                 <Text style={styles.cardTitle}>{t('auth.register.referral_registration')}</Text>
@@ -132,13 +157,32 @@ export const RegisterChoiceScreen: React.FC = () => {
         </View>
 
         {/* Terms */}
-        <Text style={styles.terms}>
-          {t('auth.register.terms_agreement')}
-          <Text style={styles.termsLink}> {t('auth.register.terms_of_service')} </Text>
-          {t('auth.register.and')}
-          <Text style={styles.termsLink}> {t('auth.register.privacy_policy')}</Text>
-        </Text>
+        <View style={styles.termsContainer}>
+          <Text style={styles.terms}>
+            {t('auth.register.terms_agreement')}
+            <TouchableOpacity onPress={() => handleTermsPress('terms')}>
+              <Text style={styles.termsLink}> {t('auth.register.terms_of_service')} </Text>
+            </TouchableOpacity>
+            {t('auth.register.and')}
+            <TouchableOpacity onPress={() => handleTermsPress('privacy')}>
+              <Text style={styles.termsLink}> {t('auth.register.privacy_policy')}</Text>
+            </TouchableOpacity>
+          </Text>
+        </View>
       </View>
+
+      {/* Privacy Agreement Modal */}
+      <PrivacyAgreementModal
+        visible={showPrivacyModal}
+        onAccept={handlePrivacyAccept}
+        onDecline={handlePrivacyDecline}
+      />
+      
+      <TermsModal
+        visible={termsModalVisible}
+        type={termsModalType}
+        onClose={() => setTermsModalVisible(false)}
+      />
     </SafeAreaView>
   );
 };
@@ -195,7 +239,7 @@ const styles = StyleSheet.create({
   logoImage: {
     width: 72,
     height: 72,
-    // 移除tintColor，保持VitaGlobal logo原色
+    // 移除tintColor，保持PomeloX logo原色
   },
   title: {
     fontSize: theme.typography.fontSize['2xl'],
@@ -218,12 +262,12 @@ const styles = StyleSheet.create({
     ...theme.shadows.sm,
   },
   primaryCard: {
-    backgroundColor: '#E5E7EB', // 灰色背景
-    borderColor: '#D1D5DB', // 灰色边框
+    backgroundColor: theme.colors.primary, // 主色调背景
+    borderColor: theme.colors.primary,
   },
   secondaryCard: {
-    backgroundColor: LIQUID_GLASS_LAYERS.L1.background.light,
-    borderColor: LIQUID_GLASS_LAYERS.L1.border.color.light,
+    backgroundColor: '#E5E7EB', // 灰色背景  
+    borderColor: '#D1D5DB', // 灰色边框
   },
   cardContent: {
     flexDirection: 'row',
@@ -255,8 +299,9 @@ const styles = StyleSheet.create({
   },
   cardDescription: {
     fontSize: theme.typography.fontSize.sm,
-    color: 'rgba(255, 255, 255, 0.9)',
+    color: theme.colors.text.inverse,
     marginBottom: theme.spacing[2],
+    opacity: 0.9,
   },
   secondaryCardDescription: {
     color: theme.colors.text.secondary,
@@ -291,6 +336,10 @@ const styles = StyleSheet.create({
     fontSize: theme.typography.fontSize.sm,
     color: theme.colors.text.secondary,
     marginLeft: theme.spacing[2],
+  },
+  termsContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   terms: {
     fontSize: theme.typography.fontSize.xs,

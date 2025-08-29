@@ -21,6 +21,7 @@ import * as Haptics from 'expo-haptics';
 
 import { theme } from '../../theme';
 import { UserIdentityData, IdentityQRCodeProps } from '../../types/userIdentity';
+import { generateUserQRContent } from '../../utils/userIdentityMapper';
 
 const { width: screenWidth } = Dimensions.get('window');
 const qrSize = Math.min(screenWidth * 0.6, 280);
@@ -37,18 +38,9 @@ export const UserIdentityQRModal: React.FC<IdentityQRCodeProps> = ({
   const [qrRef, setQrRef] = useState<any>(null);
   const [isSaving, setIsSaving] = useState(false);
 
-  // 生成QR码内容
+  // 生成QR码内容 - 使用优化的生成函数
   const generateQRContent = (): string => {
-    try {
-      // 使用 encodeURIComponent + btoa 来正确处理 Unicode 字符
-      const jsonString = JSON.stringify(userData);
-      const encodedString = encodeURIComponent(jsonString);
-      const base64String = btoa(encodedString);
-      return `VG_USER_${base64String}`;
-    } catch (error) {
-      console.error('Error generating QR content:', error);
-      return `VG_USER_ERROR_${userData.userId}`;
-    }
+    return generateUserQRContent(userData);
   };
 
   const handleSaveQRCode = async () => {

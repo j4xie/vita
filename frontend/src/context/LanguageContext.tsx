@@ -48,6 +48,7 @@ export const LanguageProvider: React.FC<LanguageProviderProps> = ({ children }) 
         
         let targetLanguage: SupportedLanguage;
         
+        // 恢复正常的语言选择逻辑
         if (firstLaunch && !savedLanguage) {
           // 首次启动，使用设备语言但不自动保存
           targetLanguage = deviceLanguage;

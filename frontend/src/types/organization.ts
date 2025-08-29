@@ -325,7 +325,7 @@ export const isMerchantCard = (card: MembershipCard): boolean => {
 };
 
 export const isValidQRCode = (qrData: string): boolean => {
-  return qrData.startsWith('vitaglobal://') || qrData.startsWith('https://vitaglobal.com/');
+  return qrData.startsWith('pomelox://') || qrData.startsWith('https://pomelox.com/');
 };
 
 export const isExpiredCard = (card: MembershipCard): boolean => {

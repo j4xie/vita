@@ -1,194 +1,186 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
+  ScrollView,
   StyleSheet,
   SafeAreaView,
-  ScrollView,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
+import { Platform } from 'react-native';
+import * as Haptics from 'expo-haptics';
 import { useTranslation } from 'react-i18next';
-import { theme } from '../../theme';
-import { LIQUID_GLASS_LAYERS, DAWN_GRADIENTS } from '../../theme/core';
+import { CommunityDevModal, SchoolInfo } from '../../components/modals/CommunityDevModal';
+import { GlassCapsule } from '../../components/consulting/GlassCapsule';
+import { SchoolGrid } from '../../components/common/SchoolGrid';
+import { useSchoolData } from '../../hooks/useSchoolData';
+import { Glass } from '../../ui/glass/GlassTheme';
+
 
 export const CommunityScreen: React.FC = () => {
   const { t } = useTranslation();
+  const navigation = useNavigation<any>();
+  const insets = useSafeAreaInsets();
+  
+  const { schools, loading, loadSchools } = useSchoolData();
+  
+  const [showModal, setShowModal] = useState(false);
+  const [selectedSchool, setSelectedSchool] = useState<SchoolInfo | null>(null);
+  const [selectedSchoolId, setSelectedSchoolId] = useState<string | null>(null);
+
+
+  const handleSchoolSelect = (schoolId: string) => {
+    // 触觉反馈
+    if (Platform.OS === 'ios') {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
+    
+    // 找到选中的学校
+    const school = schools.find(s => s.id === schoolId);
+    if (school) {
+      setSelectedSchoolId(schoolId);
+      setSelectedSchool({
+        id: schoolId,
+        name: school.name,
+        shortName: school.shortName,
+      });
+      setShowModal(true);
+    }
+  };
+
+  const handleCloseModal = () => {
+    setShowModal(false);
+    setSelectedSchool(null);
+    setSelectedSchoolId(null);
+  };
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* 极淡绿色渐变背景 - 上半部分微弱薄荷调 */}
-      <LinearGradient 
+      {/* iOS风格Header背景：增强对比的暖色渐变 */}
+      <LinearGradient
         colors={[
-          '#F0FDF4', // 上部分：极极淡的薄荷绿，几乎看不出来
-          '#F7FEF9', // 渐变到更淡的绿白
-          '#F8F9FA', // 下部分：中性灰
-          '#F1F3F4'  // 底部：灰色
+          Glass.pageBgTop,     // 更深的暖色
+          Glass.pageBgBottom,  // 明显对比
+          '#F8F9FA',          // 渐变到浅灰
+          '#F1F3F4'           // 底部中性灰
         ]}
-        style={StyleSheet.absoluteFill}
-        locations={[0, 0.3, 0.6, 1]} // 上半部分极淡绿调
+        start={{ x: 0, y: 0 }} 
+        end={{ x: 0, y: 1 }}
+        style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0 }}
+        locations={[0, 0.3, 0.7, 1]} // 上半部分暖色，下半部分中性
       />
-      <ScrollView
+
+      <ScrollView 
         style={styles.scrollView}
-        contentInsetAdjustmentBehavior="automatic"
         showsVerticalScrollIndicator={false}
+        contentInsetAdjustmentBehavior="automatic"
+        contentContainerStyle={[
+          styles.scrollContent, 
+          { 
+            paddingBottom: insets.bottom + 80 
+          }
+        ]}
       >
-        {/* Large Title Header */}
-        <View style={styles.headerSection}>
-          <Text style={styles.largeTitle}>{t('community.headerTitle')}</Text>
-          <Text style={styles.subtitle}>{t('community.headerSubtitle')}</Text>
+        {/* Header - iOS风格大标题 */}
+        <View style={styles.header}>
+          <Text style={styles.headerTitle}>{t('community.headerTitle')}</Text>
+          <Text style={styles.headerSubtitle}>
+            {t('community.headerSubtitle')}
+          </Text>
         </View>
 
-        {/* Empty State Card with L1 Glass */}
-        <View style={styles.emptyStateContainer}>
-          <View style={styles.emptyStateCard}>
-            {/* SF Symbol Icon */}
-            <View style={styles.iconContainer}>
-              <Ionicons 
-                name="person-add-outline" 
-                size={36} 
-                color={theme.colors.text.tertiary}
-              />
-            </View>
-
-            {/* Main Text */}
-            <Text style={styles.emptyStateTitle}>{t('community.developing')}</Text>
-            <Text style={styles.emptyStateDescription}>
-              {t('community.developingDescription')}
-            </Text>
-
-            {/* Feature Points - Centered */}
-            <View style={styles.featurePoints}>
-              <View style={styles.featurePoint}>
-                <View style={styles.bulletPoint} />
-                <Text style={styles.featureText}>{t('community.features.discussionsDescription')}</Text>
-              </View>
-              <View style={styles.featurePoint}>
-                <View style={styles.bulletPoint} />
-                <Text style={styles.featureText}>{t('community.features.eventsDescription')}</Text>
-              </View>
-              <View style={styles.featurePoint}>
-                <View style={styles.bulletPoint} />
-                <Text style={styles.featureText}>{t('community.features.achievementsDescription')}</Text>
-              </View>
-              <View style={styles.featurePoint}>
-                <View style={styles.bulletPoint} />
-                <Text style={styles.featureText}>{t('community.features.supportDescription')}</Text>
-              </View>
-            </View>
-          </View>
+        {/* 统计胶囊（玻璃） */}
+        <View style={styles.statsSection}>
+          <GlassCapsule
+            items={[
+              { value: '10+', label: t('consulting.stats.supported_schools') },
+              { value: '50+', label: t('consulting.stats.professional_advisors') },
+              { value: '24/7', label: t('consulting.stats.online_services') },
+            ]}
+          />
         </View>
+
+        {/* Section 标题 */}
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>{t('consulting.selectSchool')}</Text>
+          <Text style={styles.sectionDescription}>
+            {t('consulting.selectDescription')}
+          </Text>
+        </View>
+
+        {/* 学校网格 */}
+        <SchoolGrid
+          schools={schools}
+          loading={loading}
+          onSchoolSelect={handleSchoolSelect}
+          onRetry={loadSchools}
+        />
       </ScrollView>
+
+      {/* Community Development Modal */}
+      <CommunityDevModal
+        visible={showModal}
+        school={selectedSchool}
+        onClose={handleCloseModal}
+      />
     </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
-  // Container - 系统背景
   container: {
     flex: 1,
-    backgroundColor: theme.colors.background.primary, // systemBackground
+    backgroundColor: 'rgba(255, 255, 255, 0.001)',
   },
   
-  // ScrollView
   scrollView: {
     flex: 1,
   },
   
-  // Large Title Header - iOS原生大标题风格
-  headerSection: {
-    paddingHorizontal: 20, // 系统标准边距
-    paddingTop: 16,
-    paddingBottom: 32,
+  scrollContent: {
+    flexGrow: 1,
   },
-  largeTitle: {
-    fontSize: 28, // SF Pro Display Large Title
-    fontWeight: '700', // Bold
-    color: theme.colors.text.primary, // label
-    letterSpacing: 0.35,
-    marginBottom: 4,
-  },
-  subtitle: {
-    fontSize: 15, // SF Pro Text 次要文字
-    color: theme.colors.text.secondary, // secondaryLabel
-    lineHeight: 20,
-    maxWidth: '85%', // 确保不超过屏幕宽度
-  },
-  
-  // Empty State Container
-  emptyStateContainer: {
+
+  header: {
     paddingHorizontal: 20,
-    paddingVertical: 24,
-    justifyContent: 'center',
-    minHeight: 400, // 确保卡片有足够高度
+    paddingTop: 16,
+    paddingBottom: 12,
   },
   
-  // Empty State Card - V2.0 中性玻璃卡片
-  emptyStateCard: {
-    borderRadius: 20,
-    paddingHorizontal: 28,
-    paddingVertical: 40,
-    alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.9)', // 纯净白玻璃
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.3)', // 中性白边框
-    borderTopColor: 'rgba(255, 255, 255, 0.6)', // 顶部白色高光
-    ...theme.shadows.xs,
+  headerTitle: {
+    fontSize: 28,
+    fontWeight: '700',
+    color: Glass.textMain,
   },
   
-  // Icon Container
-  iconContainer: {
-    marginBottom: 20, // 图标与文字间距
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    backgroundColor: theme.colors.background.tertiary, // 浅色图标背景
+  headerSubtitle: {
+    marginTop: 6,
+    fontSize: 14,
+    color: Glass.textWeak,
+  },
+
+  statsSection: {
+    paddingHorizontal: Glass.touch.spacing.sectionMargin,
+    marginBottom: 20,
+  },
+
+  sectionHeader: {
+    paddingHorizontal: Glass.touch.spacing.sectionMargin,
+    marginBottom: 10,
   },
   
-  // Main Text
-  emptyStateTitle: {
-    fontSize: 22, // Title 2级别
-    fontWeight: '600', // Semibold
-    color: theme.colors.text.primary, // label
-    textAlign: 'center',
-    marginBottom: 8,
-    lineHeight: 28,
-  },
-  emptyStateDescription: {
-    fontSize: 17, // 正文字体
-    color: theme.colors.text.secondary, // secondaryLabel
-    textAlign: 'center',
-    lineHeight: 22,
-    marginBottom: 24,
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: Glass.textMain,
   },
   
-  // Feature Points List - 居中对齐
-  featurePoints: {
-    alignItems: 'center', // 整个列表居中
-    marginBottom: 16, // 减少底部边距，因为没有按钮了
+  sectionDescription: {
+    marginTop: 6,
+    fontSize: 14,
+    color: Glass.textWeak,
   },
-  featurePoint: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 12, // 稍微增加行距
-    paddingHorizontal: 12, // 增加左右内边距
-    justifyContent: 'center', // 每个点也居中
-    maxWidth: 280, // 限制最大宽度确保美观
-  },
-  bulletPoint: {
-    width: 4,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: theme.colors.text.tertiary, // tertiaryLabel
-    marginRight: 12,
-    flexShrink: 0,
-  },
-  featureText: {
-    fontSize: 15, // 次要文字大小
-    color: theme.colors.text.secondary, // secondaryLabel
-    lineHeight: 20,
-    flex: 1,
-  },
+
 });

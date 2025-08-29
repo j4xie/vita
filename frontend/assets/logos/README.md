@@ -1,4 +1,4 @@
-# 西柚/Pomelo Logo 文件说明
+# PomeloX/Pomelo Logo 文件说明
 
 请将提供的橙色盾牌 logo 图片保存为以下文件：
 

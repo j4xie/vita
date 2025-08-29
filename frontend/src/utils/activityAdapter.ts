@@ -17,7 +17,8 @@ export interface BackendActivity {
   createUserId: number;
   createName: string;
   createNickName: string;
-  registrationStatus?: number;
+  signStatus?: number; // 0-未报名，-1-已报名未签到，1-已签到
+  type?: number; // -1-即将开始，1-已开始，2-已结束
   categoryId?: number;
 }
 
@@ -49,12 +50,28 @@ export interface FrontendActivity {
 /**
  * 转换报名状态
  */
-const convertRegistrationStatus = (registrationStatus?: number): 'upcoming' | 'registered' | 'checked_in' => {
-  switch (registrationStatus) {
+const convertRegistrationStatus = (signStatus?: number): 'upcoming' | 'registered' | 'checked_in' => {
+  switch (signStatus) {
     case -1:
       return 'registered';
     case 1:
       return 'checked_in';
+    default:
+      return 'upcoming';
+  }
+};
+
+/**
+ * 转换活动类型状态
+ */
+const convertActivityType = (type?: number): 'upcoming' | 'ongoing' | 'ended' => {
+  switch (type) {
+    case -1:
+      return 'upcoming';
+    case 1:
+      return 'ongoing';
+    case 2:
+      return 'ended';
     default:
       return 'upcoming';
   }
@@ -88,6 +105,19 @@ export const adaptActivity = (
   const { date, time } = parseDateTime(backendActivity.startTime);
   const { date: endDate } = parseDateTime(backendActivity.endTime);
   
+  // 优先使用signStatus（报名状态），如果没有则使用type（活动状态）
+  const activityStatus = backendActivity.signStatus !== undefined 
+    ? convertRegistrationStatus(backendActivity.signStatus)
+    : convertActivityType(backendActivity.type);
+    
+  // 调试：记录状态转换
+  console.log(`🔄 活动${backendActivity.id}(${backendActivity.name})状态转换:`, {
+    原始signStatus: backendActivity.signStatus,
+    原始type: backendActivity.type, 
+    转换后status: activityStatus,
+    使用了signStatus: backendActivity.signStatus !== undefined
+  });
+
   return {
     id: backendActivity.id.toString(),
     title: backendActivity.name,
@@ -98,7 +128,7 @@ export const adaptActivity = (
     image: backendActivity.icon,
     attendees: 0, // 后端暂无此数据，默认为0
     maxAttendees: backendActivity.enrollment || 100, // 如果enrollment为0，默认设为100
-    status: convertRegistrationStatus(backendActivity.registrationStatus),
+    status: activityStatus,
     category: backendActivity.categoryId 
       ? getCategoryName(backendActivity.categoryId, language)
       : undefined,

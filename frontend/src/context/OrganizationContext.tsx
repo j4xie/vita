@@ -12,7 +12,7 @@ import {
   OrganizationSwitchResult,
   OrganizationError
 } from '../types/organization';
-import MockAPI from '../services/MockAPI';
+import { fetchOrganizationList } from '../services/registrationAPI';
 
 // ==================== Context类型定义 ====================
 
@@ -174,12 +174,12 @@ function organizationReducer(
 // ==================== Storage Keys ====================
 
 const STORAGE_KEYS = {
-  CURRENT_ORGANIZATION: '@vitaglobal:current_organization',
-  ORGANIZATIONS: '@vitaglobal:organizations',
-  USER_MEMBERSHIPS: '@vitaglobal:user_memberships',
-  MEMBERSHIP_CARDS: '@vitaglobal:membership_cards',
-  LAST_SYNC_TIME: '@vitaglobal:last_sync_time',
-  AVAILABLE_MERCHANTS: '@vitaglobal:available_merchants',
+  CURRENT_ORGANIZATION: '@pomelox:current_organization',
+  ORGANIZATIONS: '@pomelox:organizations',
+  USER_MEMBERSHIPS: '@pomelox:user_memberships',
+  MEMBERSHIP_CARDS: '@pomelox:membership_cards',
+  LAST_SYNC_TIME: '@pomelox:last_sync_time',
+  AVAILABLE_MERCHANTS: '@pomelox:available_merchants',
 } as const;
 
 // ==================== Context创建 ====================
@@ -276,7 +276,7 @@ export const OrganizationProvider: React.FC<OrganizationProviderProps> = ({
       // 检查组织是否存在
       const targetOrg = state.organizations.find(org => org.id === organizationId);
       if (!targetOrg) {
-        throw new Error('组织不存在');
+        throw new Error('Organization not found');
       }
 
       // 检查用户权限
@@ -287,7 +287,7 @@ export const OrganizationProvider: React.FC<OrganizationProviderProps> = ({
       );
       
       if (!userMembership) {
-        throw new Error('用户无权限访问此组织');
+        throw new Error('User has no permission to access this organization');
       }
 
       // 保存之前的组织
@@ -324,7 +324,7 @@ export const OrganizationProvider: React.FC<OrganizationProviderProps> = ({
     } catch (error) {
       const errorInfo: OrganizationError = {
         code: 'PERMISSION_DENIED',
-        message: error instanceof Error ? error.message : '切换组织失败',
+        message: error instanceof Error ? error.message : 'Organization switch failed',
         details: { organizationId, error }
       };
       
@@ -350,7 +350,10 @@ export const OrganizationProvider: React.FC<OrganizationProviderProps> = ({
       
       if (userId) {
         // 使用Mock API获取用户组织数据
-        const { organizations, memberships } = await MockAPI.getUserOrganizations(userId);
+        // 使用真实API替代MockAPI
+        const organizationsResult = await fetchOrganizationList();
+        const organizations = organizationsResult.success ? organizationsResult.organizations : [];
+        const memberships: UserOrganization[] = [];
         
         dispatch({ type: 'SET_ORGANIZATIONS', payload: organizations });
         dispatch({ type: 'SET_USER_MEMBERSHIPS', payload: memberships });
@@ -372,9 +375,10 @@ export const OrganizationProvider: React.FC<OrganizationProviderProps> = ({
         ]);
         
       } else {
-        // 降级到静态模拟数据 (无用户ID情况)
-        const mockOrganizations = MockAPI.getOrganizations();
-        dispatch({ type: 'SET_ORGANIZATIONS', payload: mockOrganizations });
+        // 无用户ID时也使用真实API获取组织数据
+        const organizationsResult = await fetchOrganizationList();
+        const organizations = organizationsResult.success ? organizationsResult.organizations : [];
+        dispatch({ type: 'SET_ORGANIZATIONS', payload: organizations });
       }
 
       dispatch({ type: 'SET_LAST_SYNC_TIME', payload: new Date().toISOString() });

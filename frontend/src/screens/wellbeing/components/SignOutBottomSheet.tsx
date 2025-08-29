@@ -17,6 +17,7 @@ import * as Haptics from 'expo-haptics';
 
 import { theme } from '../../../theme';
 import { VolunteerRecord } from './VolunteerCard';
+import { SafeText } from '../../../components/common/SafeText';
 
 interface SignOutBottomSheetProps {
   visible: boolean;
@@ -194,12 +195,12 @@ export const SignOutBottomSheet: React.FC<SignOutBottomSheetProps> = ({
               <Ionicons name="person" size={32} color={theme.colors.primary} />
             </View>
             <View style={styles.userDetails}>
-              <Text style={[styles.userName, { color: isDarkMode ? '#ffffff' : '#000000' }]}>
+              <SafeText style={[styles.userName, { color: isDarkMode ? '#ffffff' : '#000000' }]} fallback="志愿者">
                 {volunteer.name}
-              </Text>
-              <Text style={[styles.userPhone, { color: isDarkMode ? '#8e8e93' : '#8e8e93' }]}>
+              </SafeText>
+              <SafeText style={[styles.userPhone, { color: isDarkMode ? '#8e8e93' : '#8e8e93' }]} fallback="无手机号">
                 {volunteer.phone}
-              </Text>
+              </SafeText>
             </View>
           </View>
 
@@ -218,18 +219,18 @@ export const SignOutBottomSheet: React.FC<SignOutBottomSheetProps> = ({
                   <Text style={[styles.timeLabel, { color: isDarkMode ? '#8e8e93' : '#8e8e93' }]}>
                     {t('wellbeing.volunteer.timeRange')}
                   </Text>
-                  <Text style={[styles.timeValue, { color: isDarkMode ? '#ffffff' : '#000000' }]}>
+                  <SafeText style={[styles.timeValue, { color: isDarkMode ? '#ffffff' : '#000000' }]} fallback="--:-- - --:--">
                     {signOutInfo.timeRange}
-                  </Text>
+                  </SafeText>
                 </View>
                 
                 <View style={styles.timeRow}>
                   <Text style={[styles.timeLabel, { color: isDarkMode ? '#8e8e93' : '#8e8e93' }]}>
                     {t('wellbeing.volunteer.serviceDuration')}
                   </Text>
-                  <Text style={[styles.durationValue, { color: theme.colors.primary }]}>
+                  <SafeText style={[styles.durationValue, { color: theme.colors.primary }]} fallback="0小时0分钟">
                     {signOutInfo.duration}
-                  </Text>
+                  </SafeText>
                 </View>
               </View>
             </View>

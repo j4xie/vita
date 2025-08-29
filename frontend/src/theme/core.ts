@@ -14,7 +14,7 @@ export const CORE_COLORS = {
   secondary: '#FFF8E1', // 极淡的奶色
   secondaryPressed: '#FFECB3', // 按压时的浅橘
   
-  // 西柚 状态色
+  // PomeloX 状态色
   success: '#2ED573',
   warning: '#FFA726',
   danger: '#EF4444',
@@ -139,7 +139,7 @@ export const CORE_LIQUID_GLASS = {
       card: 'rgba(255, 255, 255, 0.85)',
       modal: 'rgba(255, 255, 255, 0.90)', 
       floating: 'rgba(255, 255, 255, 0.75)',
-      primaryGlass: 'rgba(255, 107, 53, 0.15)', // 西柚 橙色玻璃
+      primaryGlass: 'rgba(255, 107, 53, 0.15)', // PomeloX 橙色玻璃
     },
   },
   
@@ -168,12 +168,12 @@ export const CORE_LIQUID_GLASS = {
     border: 'rgba(255, 255, 255, 0.30)',
   },
   
-  // 西柚 主色玻璃 - 橙红品牌风格
+  // PomeloX 主色玻璃 - 橙红品牌风格
   primaryGlass: {
-    background: 'rgba(255, 107, 53, 0.15)', // 西柚 橙色玻璃
+    background: 'rgba(255, 107, 53, 0.15)', // PomeloX 橙色玻璃
     backgroundShadowOptimized: 'rgba(255, 107, 53, 0.25)', // 阴影优化版本
     backgroundSolid: '#FFF2EE', // 淡橙色solid版本（用于shadow容器）
-    border: 'rgba(255, 107, 53, 0.30)', // 西柚 橙色边框
+    border: 'rgba(255, 107, 53, 0.30)', // PomeloX 橙色边框
   },
 } as const;
 
@@ -347,7 +347,7 @@ export const DAWN_GRADIENTS = {
 // 向后兼容 - 主品牌渐变改为Dawn Warm
 export const BRAND_GRADIENT = DAWN_GRADIENTS.dawnWarm;
 
-// V2.0 西柚 品牌玻璃系统 - 增强版
+// V2.0 PomeloX 品牌玻璃系统 - 增强版
 export const BRAND_GLASS = {
   // 玻璃染色层 - 用于选中态/高亮的玻璃背景
   tint: {
@@ -458,7 +458,7 @@ export const BRAND_GLASS = {
   },
 } as const;
 
-// V2.0 西柚 品牌交互系统 - 增强版
+// V2.0 PomeloX 品牌交互系统 - 增强版
 export const BRAND_INTERACTIONS = {
   // 按钮状态
   button: {
@@ -676,7 +676,7 @@ export const LIQUID_GLASS_LAYERS = {
     },
     border: {
       color: {
-        light: 'rgba(255, 107, 53, 0.22)',    // 西柚橙色描边
+        light: 'rgba(255, 107, 53, 0.22)',    // PomeloX橙色描边
         dark: 'rgba(255, 107, 53, 0.18)',
         coral: 'rgba(255, 77, 94, 0.18)',     // 珊瑚红描边
       },

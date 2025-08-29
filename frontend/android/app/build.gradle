@@ -86,9 +86,9 @@ android {
     buildToolsVersion rootProject.ext.buildToolsVersion
     compileSdk rootProject.ext.compileSdkVersion
 
-    namespace 'com.anonymous.vitaglobalapp'
+    namespace 'com.anonymous.pomeloxapp'
     defaultConfig {
-        applicationId 'com.anonymous.vitaglobalapp'
+        applicationId 'com.anonymous.pomeloxapp'
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1

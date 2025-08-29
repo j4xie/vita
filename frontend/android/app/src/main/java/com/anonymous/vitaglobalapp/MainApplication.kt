@@ -1,4 +1,4 @@
-package com.anonymous.vitaglobalapp
+package com.anonymous.pomeloxapp
 
 import android.app.Application
 import android.content.res.Configuration

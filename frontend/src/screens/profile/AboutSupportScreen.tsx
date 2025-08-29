@@ -154,7 +154,7 @@ export const AboutSupportScreen: React.FC = () => {
 
   const handleAppInfo = () => {
     Alert.alert(
-      '西柚',
+      'PomeloX',
       t('profile.about.appInfoDetails'),
       [{ text: t('profile.about.confirmAppInfo'), style: 'default' }]
     );
@@ -165,7 +165,7 @@ export const AboutSupportScreen: React.FC = () => {
   };
 
   const handlePrivacyPolicy = () => {
-    const url = 'https://vitaglobal.github.io/privacy-policy';
+    const url = 'https://pomelox.github.io/privacy-policy';
     Linking.canOpenURL(url).then(supported => {
       if (supported) {
         Linking.openURL(url);
@@ -176,7 +176,7 @@ export const AboutSupportScreen: React.FC = () => {
   };
 
   const handleTermsOfService = () => {
-    const url = 'https://vitaglobal.github.io/terms-of-service';
+    const url = 'https://pomelox.github.io/terms-of-service';
     Linking.canOpenURL(url).then(supported => {
       if (supported) {
         Linking.openURL(url);
@@ -196,7 +196,7 @@ export const AboutSupportScreen: React.FC = () => {
 
   const handleGitHub = () => {
     // Example external link
-    const url = 'https://github.com/vitaglobal';
+    const url = 'https://github.com/pomelox';
     Linking.canOpenURL(url).then(supported => {
       if (supported) {
         Linking.openURL(url);
@@ -403,10 +403,10 @@ export const AboutSupportScreen: React.FC = () => {
           {/* Version Footer */}
           <View style={styles.versionFooter}>
             <Text style={styles.versionText}>
-              西柚 v1.0.0 Build 1
+              PomeloX v1.0.0 Build 1
             </Text>
             <Text style={styles.copyrightText}>
-              © 2025 西柚. All rights reserved.
+              © 2025 PomeloX. All rights reserved.
             </Text>
           </View>
         </ScrollView>

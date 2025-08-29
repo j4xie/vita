@@ -148,7 +148,7 @@ export const AccessibleTouchable: React.FC<AccessibleTouchableProps> = ({
     }),
     // Android TalkBack特定属性
     ...(Platform.OS === 'android' && {
-      importantForAccessibility: 'yes',
+      importantForAccessibility: 'yes' as const,
     }),
   };
 

@@ -166,8 +166,8 @@ export const OrganizationSwitcher: React.FC<OrganizationSwitcherProps> = ({
             onPress={handleExpand}
             hitSlop={{ top: 10, bottom: 10, left: 5, right: 15 }}
             accessibilityRole="button"
-            accessibilityLabel="切换学联组织"
-            accessibilityHint="点击打开组织选择器"
+            accessibilityLabel={t('accessibility.switch_organization')}
+            accessibilityHint={t('accessibility.switch_organization_hint')}
           />
         </Animated.View>
       )}

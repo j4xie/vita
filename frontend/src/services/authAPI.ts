@@ -10,9 +10,9 @@ const BASE_URL = 'http://106.14.165.234:8085';
 
 // 存储键名
 const STORAGE_KEYS = {
-  TOKEN: '@vitaglobal_token',
-  USER_ID: '@vitaglobal_user_id',
-  USER_INFO: '@vitaglobal_user_info',
+  TOKEN: '@pomelox_token',
+  USER_ID: '@pomelox_user_id',
+  USER_INFO: '@pomelox_user_info',
 } as const;
 
 // 登录请求参数
@@ -106,17 +106,32 @@ export const login = async (credentials: LoginRequest): Promise<APIResponse<Logi
 /**
  * 获取用户信息
  * @param token 用户token
+ * @param userId 用户ID（可选，如果不提供会尝试从存储获取）
  * @returns 用户信息
  */
-export const getUserInfo = async (token?: string): Promise<APIResponse<UserInfo>> => {
+export const getUserInfo = async (token?: string, userId?: number): Promise<APIResponse<UserInfo>> => {
   try {
     const authToken = token || await AsyncStorage.getItem(STORAGE_KEYS.TOKEN);
+    let targetUserId = userId;
     
     if (!authToken) {
       throw new Error('No token available');
     }
 
-    const response = await fetch(`${BASE_URL}/app/user/info`, {
+    // 如果没有提供userId，尝试从存储获取
+    if (!targetUserId) {
+      const storedUserId = await AsyncStorage.getItem(STORAGE_KEYS.USER_ID);
+      if (storedUserId) {
+        targetUserId = parseInt(storedUserId, 10);
+      }
+    }
+
+    // 构建URL，根据截图，需要userId参数
+    const url = targetUserId 
+      ? `${BASE_URL}/app/user/info?userId=${targetUserId}`
+      : `${BASE_URL}/app/user/info`;
+
+    const response = await fetch(url, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',

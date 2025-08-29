@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -18,7 +18,8 @@ import { LIQUID_GLASS_LAYERS, BRAND_GLASS, BRAND_INTERACTIONS } from '../../../t
 import { usePerformanceDegradation } from '../../../hooks/usePerformanceDegradation';
 import { formatTime, formatDuration, formatHours } from '../utils/timeFormatter';
 import { i18n } from '../../../utils/i18n';
-import { mockSchools } from '../../../data/mockData';
+import { SafeText } from '../../../components/common/SafeText';
+// mockSchools removed - using real school data
 
 export interface VolunteerRecord {
   id: string;
@@ -65,14 +66,48 @@ export const VolunteerCard: React.FC<VolunteerCardProps> = ({
   const { getLayerConfig } = usePerformanceDegradation();
   const L1Config = getLayerConfig('L1', isDarkMode);
   
+  // 🕒 实时计时器状态
+  const [currentWorkDuration, setCurrentWorkDuration] = useState<string>('');
+  
+  // 🕒 实时计时器 - 为已签到用户显示工作时长
+  useEffect(() => {
+    if ((volunteer as any).checkInStatus === 'checked_in' && volunteer.checkInTime) {
+      const updateDuration = () => {
+        try {
+          const checkInTime = new Date(volunteer.checkInTime);
+          const now = new Date();
+          const diffMs = now.getTime() - checkInTime.getTime();
+          
+          if (diffMs > 0) {
+            const hours = Math.floor(diffMs / (1000 * 60 * 60));
+            const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((diffMs % (1000 * 60)) / 1000);
+            setCurrentWorkDuration(`${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`);
+          } else {
+            setCurrentWorkDuration('00:00:00');
+          }
+        } catch (error) {
+          console.warn('实时计时器计算错误:', error);
+          setCurrentWorkDuration('--:--:--');
+        }
+      };
+      
+      // 立即更新一次
+      updateDuration();
+      
+      // 每秒更新
+      const timer = setInterval(updateDuration, 1000);
+      
+      return () => clearInterval(timer);
+    } else {
+      setCurrentWorkDuration('');
+    }
+  }, [(volunteer as any).checkInStatus, volunteer.checkInTime]);
+  
   // 获取本地化学校名称
   const getLocalizedSchoolName = (schoolName: string) => {
-    const school = mockSchools.find(s => 
-      s.englishName === schoolName || s.name === schoolName
-    );
-    if (!school) return schoolName;
-    
-    return i18n.language.startsWith('zh') ? school.name : school.englishName;
+    // mockSchools removed - return schoolName as-is
+    return schoolName;
   };
   
   // 动画值
@@ -219,33 +254,33 @@ export const VolunteerCard: React.FC<VolunteerCardProps> = ({
         {/* 基础信息行 - 始终显示 */}
         <View style={styles.baseRow}>
           <View style={styles.leftColumn}>
-            <Text style={[styles.name, { color: isDarkMode ? theme.colors.text.primary : theme.colors.text.primary }]}>
+            <SafeText style={[styles.name, { color: isDarkMode ? theme.colors.text.primary : theme.colors.text.primary }]} fallback="志愿者">
               {volunteer.name}
-            </Text>
-            <Text style={[styles.phone, { color: theme.colors.text.secondary }]}>
+            </SafeText>
+            <SafeText style={[styles.phone, { color: theme.colors.text.secondary }]} fallback="无手机号">
               {volunteer.phone}
-            </Text>
-            <Text style={[styles.school, { color: theme.colors.text.secondary }]}>
+            </SafeText>
+            <SafeText style={[styles.school, { color: theme.colors.text.secondary }]} fallback="学校信息">
               {getLocalizedSchoolName(volunteer.school)}
-            </Text>
+            </SafeText>
           </View>
           
           <View style={styles.rightColumn}>
             {/* 状态胶囊 */}
             <View style={[styles.statusBadge, { backgroundColor: statusInfo.bgColor }]}>
-              <Text style={[
+              <SafeText style={[
                 styles.statusText,
                 { color: volunteer.status === 'checked_in' ? 'white' : statusInfo.color }
-              ]}>
+              ]} fallback="状态未知">
                 {statusInfo.text}
-              </Text>
+              </SafeText>
             </View>
             
             {/* 时间信息预览 */}
             {volunteer.checkInTime && (
-              <Text style={[styles.timePreview, { color: theme.colors.text.secondary }]}>
+              <SafeText style={[styles.timePreview, { color: theme.colors.text.secondary }]} fallback="--:--">
                 {formatTime(volunteer.checkInTime)}
-              </Text>
+              </SafeText>
             )}
           </View>
         </View>
@@ -260,21 +295,21 @@ export const VolunteerCard: React.FC<VolunteerCardProps> = ({
                 <Text style={[styles.timeLabel, { color: theme.colors.text.secondary }]}>
                   {t('wellbeing.volunteer.checkInTime')}
                 </Text>
-                <Text style={[styles.timeValue, { color: theme.colors.text.primary }]}>
+                <SafeText style={[styles.timeValue, { color: theme.colors.text.primary }]} fallback="--:--">
                   {formatTime(volunteer.checkInTime)}
-                </Text>
+                </SafeText>
               </View>
             )}
             
-            {volunteer.status === 'checked_in' && volunteer.checkInTime && (
+            {(volunteer as any).checkInStatus === 'checked_in' && volunteer.checkInTime && (
               <View style={styles.timeRow}>
                 <Ionicons name="timer-outline" size={16} color={theme.colors.warning} />
                 <Text style={[styles.timeLabel, { color: theme.colors.text.secondary }]}>
-                  {t('wellbeing.volunteer.workDuration')}
+                  {t('wellbeing.volunteer.currentWorkDuration')}
                 </Text>
-                <Text style={[styles.timeValue, { color: theme.colors.text.primary }]}>
-                  {getCurrentDuration()}
-                </Text>
+                <SafeText style={[styles.timeValue, { color: theme.colors.primary, fontWeight: 'bold' }]} fallback="00:00:00">
+                  {currentWorkDuration || '00:00:00'}
+                </SafeText>
               </View>
             )}
             
@@ -285,9 +320,9 @@ export const VolunteerCard: React.FC<VolunteerCardProps> = ({
                 <Text style={[styles.timeLabel, { color: theme.colors.text.secondary }]}>
                   {t('wellbeing.volunteer.lastCheckInTime')}
                 </Text>
-                <Text style={[styles.timeValue, { color: theme.colors.text.primary }]}>
+                <SafeText style={[styles.timeValue, { color: theme.colors.text.primary }]} fallback="--:--">
                   {formatTime(volunteer.lastCheckInTime)}
-                </Text>
+                </SafeText>
               </View>
             )}
             
@@ -298,9 +333,9 @@ export const VolunteerCard: React.FC<VolunteerCardProps> = ({
                 <Text style={[styles.timeLabel, { color: theme.colors.text.secondary }]}>
                   {t('wellbeing.volunteer.lastCheckOutTime')}
                 </Text>
-                <Text style={[styles.timeValue, { color: theme.colors.text.primary }]}>
+                <SafeText style={[styles.timeValue, { color: theme.colors.text.primary }]} fallback="--:--">
                   {formatTime(volunteer.lastCheckOutTime)}
-                </Text>
+                </SafeText>
               </View>
             )}
             
@@ -309,9 +344,9 @@ export const VolunteerCard: React.FC<VolunteerCardProps> = ({
               <Text style={[styles.timeLabel, { color: theme.colors.text.secondary }]}>
                 {t('wellbeing.volunteer.totalHours')}
               </Text>
-              <Text style={[styles.timeValue, { color: theme.colors.text.primary }]}>
-{volunteer.totalHours?.toFixed(1) || 0} {t('wellbeing.volunteer.hours')}
-              </Text>
+              <SafeText style={[styles.timeValue, { color: theme.colors.text.primary }]} fallback="0小时">
+                {Math.max(0, volunteer.totalHours || 0).toFixed(1)} {t('wellbeing.volunteer.hours')}
+              </SafeText>
             </View>
           </View>
 

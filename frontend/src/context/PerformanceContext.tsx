@@ -209,8 +209,8 @@ export const getPerformanceAdjustedTheme = (baseTheme: any, settings: Performanc
           blur: 0,
         },
         active: {
-          background: 'rgba(255, 107, 53, 0.15)', // 西柚 橙色
-          border: 'rgba(255, 107, 53, 0.30)', // 西柚 橙色边框
+          background: 'rgba(255, 107, 53, 0.15)', // PomeloX 橙色
+          border: 'rgba(255, 107, 53, 0.30)', // PomeloX 橙色边框
           blur: 10,
         }, // 保持激活状态
       },

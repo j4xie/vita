@@ -6,7 +6,7 @@ import {
   Platform,
   DeviceEventEmitter,
 } from 'react-native';
-// import { Ionicons } from '@expo/vector-icons'; // 替换为可爱西柚图标
+// import { Ionicons } from '@expo/vector-icons'; // 替换为可爱PomeloX图标
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
@@ -516,7 +516,7 @@ export const FloatingAIButton: React.FC<FloatingAIButtonProps> = ({
                   />
                 )}
                 
-                {/* 西柚图标 */}
+                {/* PomeloX图标 */}
                 <Animated.View
                   style={[styles.iconContainer, iconAnimatedStyle]}
                 >

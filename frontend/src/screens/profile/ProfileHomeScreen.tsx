@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -10,12 +10,13 @@ import {
   Platform,
   Alert,
   ActionSheetIOS,
+  DeviceEventEmitter,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 import * as Haptics from 'expo-haptics';
 
@@ -24,9 +25,15 @@ import { LIQUID_GLASS_LAYERS } from '../../theme/core';
 import { usePerformanceDegradation } from '../../hooks/usePerformanceDegradation';
 import { PersonalInfoCard } from '../../components/profile/PersonalInfoCard';
 import { UserIdentityQRModal } from '../../components/modals/UserIdentityQRModal';
+import { UserActivityModal } from '../../components/modals/UserActivityModal';
+import { LoginRequiredModal } from '../../components/modals/LoginRequiredModal';
 import { UserIdentityData } from '../../types/userIdentity';
 import { useUser } from '../../context/UserContext';
-import { getUserDisplayName, getUserAvatar } from '../../utils/userAdapter';
+// import { getUserDisplayName, getUserAvatar } from '../../utils/userAdapter'; // 暂时注释，直接使用用户数据
+import { mapUserToIdentityData } from '../../utils/userIdentityMapper';
+import { activityStatsService, UserActivityStats } from '../../services/activityStatsService';
+import { pomeloXAPI } from '../../services/PomeloXAPI';
+import { getCurrentToken } from '../../services/authAPI';
 
 interface SettingRowProps {
   title: string;
@@ -174,14 +181,30 @@ export const ProfileHomeScreen: React.FC = () => {
   // 身份二维码状态
   const [showIdentityQR, setShowIdentityQR] = useState(false);
   
+  // 活动统计状态
+  const [activityStats, setActivityStats] = useState<UserActivityStats>({
+    notParticipated: 0,
+    participated: 0,
+    bookmarked: 0,
+    pendingReview: 0,
+  });
+  const [isLoadingStats, setIsLoadingStats] = useState(false);
+  
+  // 用户活动模态框状态
+  const [showActivityModal, setShowActivityModal] = useState(false);
+  const [activityModalType, setActivityModalType] = useState<'not_checked_in' | 'checked_in'>('not_checked_in');
+  
+  // 登录提示模态框状态
+  const [showLoginModal, setShowLoginModal] = useState(false);
+  
   // V2.0 获取分层配置
   const { getLayerConfig } = usePerformanceDegradation();
   const L1Config = getLayerConfig('L1', isDarkMode);
   
-  // 精简统计数据 - 仅保留2项降低认知负荷
+  // 精简统计数据 - 移除Mock数据
   const userStats = {
-    volunteerHours: 24, // 保留：学生刚需
-    points: 1680,       // 保留：积分进度
+    volunteerHours: 0, // 无Mock数据，显示实际值
+    points: 0,         // 无Mock数据，显示实际值
   };
   
   // VIP状态 - 无权益暂时隐藏
@@ -189,33 +212,15 @@ export const ProfileHomeScreen: React.FC = () => {
   const membershipStatus = hasVipBenefits ? 'vip' : 'free';
 
   // 生成用户身份数据
+  // 生成用户身份数据 - 使用真实的登录用户数据
   const generateUserIdentityData = (): UserIdentityData => {
-    return {
-      userId: 'user_123', // TODO: 从实际用户数据获取
-      userName: 'test007',
-      legalName: '测试用户0017',
-      nickName: 'testtest0017',
-      email: 'user@example.com',
-      avatarUrl: undefined, // TODO: 从用户数据获取
-      studentId: '20240001',
-      deptId: 'dept_001',
-      currentOrganization: {
-        id: 'org_columbia_cu',
-        name: 'Columbia CU',
-        displayNameZh: '哥大中国学生学者联谊会',
-        displayNameEn: 'Columbia Chinese Union',
-      },
-      memberOrganizations: [
-        {
-          id: 'org_columbia_cu',
-          role: 'member',
-          isPrimary: true,
-          joinedAt: '2024-01-15T10:00:00Z',
-          status: 'active',
-        },
-      ],
-      type: 'user_identity',
-    };
+    if (!user || !isAuthenticated) {
+      // 如果用户未登录，返回访客数据
+      return mapUserToIdentityData(null);
+    }
+
+    // 使用真实的用户数据
+    return mapUserToIdentityData(user);
   };
 
   const handleShowIdentityQR = () => {
@@ -224,6 +229,146 @@ export const ProfileHomeScreen: React.FC = () => {
     }
     setShowIdentityQR(true);
   };
+
+  // 处理未签到活动点击
+  const handleNotCheckedInPress = () => {
+    if (Platform.OS === 'ios') {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
+    setActivityModalType('not_checked_in');
+    setShowActivityModal(true);
+  };
+
+  // 处理已签到活动点击
+  const handleCheckedInPress = () => {
+    if (Platform.OS === 'ios') {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
+    setActivityModalType('checked_in');
+    setShowActivityModal(true);
+  };
+
+  // 处理未登录用户点击活动统计
+  const handleUnauthenticatedPress = () => {
+    if (Platform.OS === 'ios') {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+    }
+    setShowLoginModal(true);
+  };
+
+  // 处理登录模态框中的登录按钮点击
+  const handleLoginFromModal = () => {
+    setShowLoginModal(false);
+    navigation.navigate('Login');
+  };
+
+  // 刷新活动统计数据回调
+  const handleRefreshStats = () => {
+    loadActivityStats();
+  };
+
+  // 调试函数 - 检查用户活动API原始数据
+  const debugUserActivities = async () => {
+    if (!user?.id) {
+      Alert.alert('调试信息', `用户未登录或ID缺失\n用户对象: ${JSON.stringify(user, null, 2)}`);
+      return;
+    }
+
+    try {
+      console.log('🔍 开始调试用户活动API...');
+      
+      // 测试getUserActivityList API - 直接传userId参数
+      console.log('🔍 测试调用API，用户ID:', parseInt(user.id));
+      const response = await pomeloXAPI.getUserActivityList(parseInt(user.id), -1);
+      
+      console.log('🔍 getUserActivityList完整响应:', JSON.stringify(response, null, 2));
+      
+      const token = await getCurrentToken();
+      const debugInfo = {
+        '用户信息': {
+          'ID': user.id,
+          '用户名': user.userName,
+          '法定姓名': user.legalName,
+          '权限级别': user.roles?.[0]?.name || '无角色'
+        },
+        'Token状态': {
+          '是否存在': !!token,
+          '长度': token?.length || 0
+        },
+        'API响应': {
+          '响应码': response.code,
+          '是否有数据': !!response.data,
+          '活动数量': response.data?.rows?.length || 0
+        },
+        '活动列表': response.data?.rows?.map(activity => ({
+          id: activity.id,
+          name: activity.name,
+          signStatus: activity.signStatus,
+          type: activity.type
+        })) || []
+      };
+      
+      Alert.alert('调试信息', JSON.stringify(debugInfo, null, 2));
+      
+    } catch (error) {
+      console.error('🔍 调试API失败:', error);
+      Alert.alert('调试错误', error.message);
+    }
+  };
+
+  // 加载活动统计数据
+  const loadActivityStats = async () => {
+    if (!isAuthenticated || !user?.id) {
+      // 静默处理未登录状态，避免不必要的控制台警告
+      return;
+    }
+    
+    try {
+      setIsLoadingStats(true);
+      console.log('📊 正在加载活动统计，用户信息:', {
+        userId: user.id,
+        userName: user.userName,
+        isAuthenticated
+      });
+      const stats = await activityStatsService.getUserActivityStats(user.id);
+      setActivityStats(stats);
+      console.log('📊 ✅ 活动统计加载成功');
+    } catch (error) {
+      console.error('📊 ❌ 加载活动统计失败:', error);
+    } finally {
+      setIsLoadingStats(false);
+    }
+  };
+
+  // 页面加载时获取统计数据 - 只在已登录且有用户ID时调用
+  useEffect(() => {
+    if (isAuthenticated && user?.id) {
+      loadActivityStats();
+    }
+  }, [isAuthenticated, user?.id]);
+
+  // 页面聚焦时刷新统计数据（用户从活动页面返回时）
+  useFocusEffect(
+    useCallback(() => {
+      if (isAuthenticated && user?.id) {
+        loadActivityStats();
+      }
+    }, [isAuthenticated, user?.id])
+  );
+
+  // 监听活动报名成功事件
+  useEffect(() => {
+    const registrationListener = DeviceEventEmitter.addListener('activityRegistered', () => {
+      console.log('📊 收到活动报名成功事件，刷新统计数据');
+      if (isAuthenticated) {
+        loadActivityStats();
+      }
+    });
+
+    return () => {
+      registrationListener?.remove();
+    };
+  }, [isAuthenticated]);
 
   // Logout handling functions
   const handleLogout = () => {
@@ -547,7 +692,7 @@ export const ProfileHomeScreen: React.FC = () => {
     },
 
     cardCountBadge: {
-      backgroundColor: '#FF6B35', // 西柚橙色
+      backgroundColor: '#FF6B35', // PomeloX橙色
       borderRadius: 10,
       minWidth: 20,
       height: 20,
@@ -753,6 +898,26 @@ export const ProfileHomeScreen: React.FC = () => {
       marginLeft: 'auto',
     },
     
+    // 空状态样式
+    emptyStateContainer: {
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingVertical: 40,
+      paddingHorizontal: 20,
+    },
+    emptyStateText: {
+      fontSize: 16,
+      fontWeight: '500',
+      color: '#6B7280',
+      marginTop: 12,
+      marginBottom: 4,
+    },
+    emptyStateSubtext: {
+      fontSize: 14,
+      color: '#9CA3AF',
+      textAlign: 'center',
+    },
+    
     // Logout section styles
     logoutSection: {
       marginTop: 24,
@@ -827,9 +992,9 @@ export const ProfileHomeScreen: React.FC = () => {
             {/* V2.0 双层结构：外层solid背景用于阴影，内层L2品牌玻璃 */}
             <View style={styles.personalInfoShadowContainer}>
               <PersonalInfoCard
-                name={user ? getUserDisplayName(user) : t('userInfo.guest')}
-                email={user?.email || t('userInfo.not_logged_in')}
-                avatarUrl={user ? getUserAvatar(user) : undefined}
+                name={user ? (user.nickName || user.userName || '用户') : t('userInfo.guest')}
+                email={user?.email || (user ? user.userName || '用户邮箱' : t('userInfo.not_logged_in'))}
+                avatarUrl={undefined}
                 onPress={() => {
                   if (isAuthenticated) {
                     navigation.navigate('EditProfile');
@@ -840,65 +1005,101 @@ export const ProfileHomeScreen: React.FC = () => {
                 membershipStatus={membershipStatus}
                 onQRCodePress={handleShowIdentityQR}
                 stats={user ? {
-                  volunteerHours: 0, // 可以后续从志愿者API获取
-                  points: user.roles.length * 100, // 基于角色计算积分
+                  volunteerHours: 0, // 实际数据，无Mock值
+                  points: 0, // 实际数据，无Mock值
                 } : undefined}
               />
             </View>
           </View>
 
-          {/* 我的活动区 - 精简为2个Tab */}
+          {/* 我的活动区 - 统一显示活动统计布局 */}
           <View style={styles.activitySection}>
             <View style={styles.sectionHeader}>
               <Text style={styles.sectionTitle}>{t('profile.my_activities')}</Text>
-              <TouchableOpacity>
-                <Text style={styles.seeAllText}>{t('profile.view_all')}</Text>
-              </TouchableOpacity>
+              {/* 调试和刷新按钮 - 只有登录用户才显示 */}
+              {isAuthenticated && user?.id && (
+                <View style={{ flexDirection: 'row', gap: 10 }}>
+                  <TouchableOpacity onPress={debugUserActivities}>
+                    <Text style={styles.seeAllText}>调试</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity onPress={async () => {
+                    console.log('🔄 强制刷新活动统计');
+                    // 检查token和用户数据
+                    const token = await getCurrentToken();
+                    console.log('🔐 当前token状态:', { hasToken: !!token, userId: user?.id });
+                    
+                    await activityStatsService.clearUserLocalData(user.id);
+                    loadActivityStats();
+                  }}>
+                    <Text style={styles.seeAllText}>刷新</Text>
+                  </TouchableOpacity>
+                </View>
+              )}
             </View>
             <View style={styles.activityContainer}>
-              <TouchableOpacity style={styles.activityItem}>
+              <TouchableOpacity 
+                style={styles.activityItem} 
+                onPress={isAuthenticated && user?.id ? handleNotCheckedInPress : handleUnauthenticatedPress}
+              >
                 <View style={styles.activityIconL2}>
-                  <Ionicons name="calendar-outline" size={18} color="#6B7280" />
+                  <Ionicons name="time-outline" size={18} color="#6B7280" />
                 </View>
                 <View style={styles.activityInfo}>
                   <Text style={styles.activityLabel}>{t('profile.not_participated')}</Text>
-                  <Text style={styles.activityCount}>3</Text>
+                  <Text style={styles.activityCount}>
+                    {isAuthenticated && user?.id ? (isLoadingStats ? '...' : activityStats.notParticipated) : '--'}
+                  </Text>
                 </View>
               </TouchableOpacity>
               
               <View style={styles.activitySeparator} />
               
-              <TouchableOpacity style={styles.activityItem}>
+              <TouchableOpacity 
+                style={styles.activityItem} 
+                onPress={isAuthenticated && user?.id ? handleCheckedInPress : handleUnauthenticatedPress}
+              >
                 <View style={styles.activityIconL2}>
-                  <Ionicons name="checkmark-circle-outline" size={18} color="#6B7280" />
+                  <Ionicons name="checkmark-circle" size={18} color="#6B7280" />
                 </View>
                 <View style={styles.activityInfo}>
                   <Text style={styles.activityLabel}>{t('profile.participated')}</Text>
-                  <Text style={styles.activityCount}>8</Text>
+                  <Text style={styles.activityCount}>
+                    {isAuthenticated && user?.id ? (isLoadingStats ? '...' : activityStats.participated) : '--'}
+                  </Text>
                 </View>
               </TouchableOpacity>
               
               <View style={styles.activitySeparator} />
               
-              <TouchableOpacity style={styles.activityItem}>
+              <TouchableOpacity 
+                style={styles.activityItem}
+                onPress={isAuthenticated && user?.id ? () => {} : handleUnauthenticatedPress}
+              >
                 <View style={styles.activityIconL2}>
                   <Ionicons name="heart-outline" size={18} color="#6B7280" />
                 </View>
                 <View style={styles.activityInfo}>
                   <Text style={styles.activityLabel}>{t('profile.bookmarked')}</Text>
-                  <Text style={styles.activityCount}>5</Text>
+                  <Text style={styles.activityCount}>
+                    {isAuthenticated && user?.id ? (isLoadingStats ? '...' : activityStats.bookmarked) : '--'}
+                  </Text>
                 </View>
               </TouchableOpacity>
               
               <View style={styles.activitySeparator} />
               
-              <TouchableOpacity style={styles.activityItem}>
+              <TouchableOpacity 
+                style={styles.activityItem}
+                onPress={isAuthenticated && user?.id ? () => {} : handleUnauthenticatedPress}
+              >
                 <View style={styles.activityIconL2}>
                   <Ionicons name="star-outline" size={18} color="#6B7280" />
                 </View>
                 <View style={styles.activityInfo}>
                   <Text style={styles.activityLabel}>{t('profile.pending_review')}</Text>
-                  <Text style={styles.activityCount}>2</Text>
+                  <Text style={styles.activityCount}>
+                    {isAuthenticated && user?.id ? (isLoadingStats ? '...' : activityStats.pendingReview) : '--'}
+                  </Text>
                 </View>
               </TouchableOpacity>
             </View>
@@ -940,22 +1141,18 @@ export const ProfileHomeScreen: React.FC = () => {
                   <Ionicons name="card-outline" size={16} color="#6B7280" />
                   <Text style={styles.myCardsText}>{t('profile.my_cards', '我的会员卡')}</Text>
                   <View style={styles.cardCountBadge}>
-                    <Text style={styles.cardCountText}>3</Text>
+                    <Text style={styles.cardCountText}>0</Text>
                   </View>
                 </TouchableOpacity>
 
+                {/* 组织切换按钮已移除 */}
+
                 <TouchableOpacity 
-                  style={styles.orgSwitchButton}
+                  style={styles.upgradeButtonDawn}
                   onPress={() => {
-                    // 临时在这里添加组织切换功能
-                    console.log('Organization switch button pressed');
+                    Alert.alert(t('alerts.feature_not_implemented'), t('alerts.feature_under_development'));
                   }}
                 >
-                  <Ionicons name="swap-horizontal-outline" size={16} color="#6B7280" />
-                  <Text style={styles.orgSwitchText}>切换组织</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity style={styles.upgradeButtonDawn}>
                   <Text style={styles.upgradeTextDawn}>{t('profile.upgrade_membership')}</Text>
                 </TouchableOpacity>
               </View>
@@ -966,56 +1163,23 @@ export const ProfileHomeScreen: React.FC = () => {
           <View style={styles.reviewSection}>
             <View style={styles.sectionHeader}>
               <Text style={styles.sectionTitle}>{t('profile.my_reviews')}</Text>
-              <TouchableOpacity style={styles.writeReviewButtonL2}>
+              <TouchableOpacity 
+                style={styles.writeReviewButtonL2}
+                onPress={() => {
+                  Alert.alert(t('alerts.feature_not_implemented'), t('alerts.feature_under_development'));
+                }}
+              >
                 <Ionicons name="create-outline" size={16} color="#FFF" />
                 <Text style={styles.writeReviewTextL2}>{t('profile.write_review')}</Text>
               </TouchableOpacity>
             </View>
             
-            {/* 评价卡片列表 - L1容器结构化 */}
+            {/* 评价卡片列表 - 空状态 */}
             <View style={styles.reviewList}>
-              <View style={styles.reviewCardL1}>
-                <View style={styles.reviewThumbnail}>
-                  <Ionicons name="image-outline" size={24} color="#9CA3AF" />
-                </View>
-                <View style={styles.reviewContent}>
-                  <Text style={styles.reviewTitleL1} numberOfLines={2}>
-                    CU春季迎新派对超棒！
-                  </Text>
-                  <View style={styles.reviewMeta}>
-                    <View style={styles.reviewMetaItem}>
-                      <Ionicons name="heart-outline" size={14} color="#6B7280" />
-                      <Text style={styles.reviewMetaText}>24</Text>
-                    </View>
-                    <View style={styles.reviewMetaItem}>
-                      <Ionicons name="chatbubble-outline" size={14} color="#6B7280" />
-                      <Text style={styles.reviewMetaText}>5</Text>
-                    </View>
-                    <Text style={styles.reviewDate}>2天前</Text>
-                  </View>
-                </View>
-              </View>
-              
-              <View style={styles.reviewCardL1}>
-                <View style={styles.reviewThumbnail}>
-                  <Ionicons name="image-outline" size={24} color="#9CA3AF" />
-                </View>
-                <View style={styles.reviewContent}>
-                  <Text style={styles.reviewTitleL1} numberOfLines={2}>
-                    学术交流会收获很多
-                  </Text>
-                  <View style={styles.reviewMeta}>
-                    <View style={styles.reviewMetaItem}>
-                      <Ionicons name="heart-outline" size={14} color="#6B7280" />
-                      <Text style={styles.reviewMetaText}>18</Text>
-                    </View>
-                    <View style={styles.reviewMetaItem}>
-                      <Ionicons name="chatbubble-outline" size={14} color="#6B7280" />
-                      <Text style={styles.reviewMetaText}>3</Text>
-                    </View>
-                    <Text style={styles.reviewDate}>1周前</Text>
-                  </View>
-                </View>
+              <View style={styles.emptyStateContainer}>
+                <Ionicons name="chatbubble-outline" size={48} color="#D1D5DB" />
+                <Text style={styles.emptyStateText}>{t('profile.no_reviews', '暂无评价')}</Text>
+                <Text style={styles.emptyStateSubtext}>{t('profile.review_after_activity', '参加活动后可以写评价')}</Text>
               </View>
             </View>
           </View>
@@ -1040,22 +1204,45 @@ export const ProfileHomeScreen: React.FC = () => {
             </View>
           </View>
 
-          {/* Logout Button - Separated at bottom */}
-          <View style={styles.logoutSection}>
-            <TouchableOpacity 
-              style={styles.logoutButton}
-              onPress={handleLogout}
-              activeOpacity={0.7}
-            >
-              <Ionicons 
-                name="log-out-outline" 
-                size={20} 
-                color="#DC2626" 
-                style={styles.logoutIcon}
-              />
-              <Text style={styles.logoutText}>{t('profile.account.logout')}</Text>
-            </TouchableOpacity>
-          </View>
+          {/* Logout Button - 只有登录用户才显示 */}
+          {isAuthenticated && (
+            <View style={styles.logoutSection}>
+              <TouchableOpacity 
+                style={styles.logoutButton}
+                onPress={handleLogout}
+                activeOpacity={0.7}
+              >
+                <Ionicons 
+                  name="log-out-outline" 
+                  size={20} 
+                  color="#DC2626" 
+                  style={styles.logoutIcon}
+                />
+                <Text style={styles.logoutText}>{t('profile.account.logout')}</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+          
+          {/* 未登录时显示登录按钮 */}
+          {!isAuthenticated && (
+            <View style={styles.logoutSection}>
+              <TouchableOpacity 
+                style={[styles.logoutButton, { borderColor: theme.colors.primary }]}
+                onPress={() => navigation.navigate('Login')}
+                activeOpacity={0.7}
+              >
+                <Ionicons 
+                  name="log-in-outline" 
+                  size={20} 
+                  color={theme.colors.primary}
+                  style={styles.logoutIcon}
+                />
+                <Text style={[styles.logoutText, { color: theme.colors.primary }]}>
+                  {t('auth.login.login')}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          )}
         </ScrollView>
       </SafeAreaView>
 
@@ -1064,6 +1251,21 @@ export const ProfileHomeScreen: React.FC = () => {
         visible={showIdentityQR}
         onClose={() => setShowIdentityQR(false)}
         userData={generateUserIdentityData()}
+      />
+
+      {/* 用户活动列表模态框 */}
+      <UserActivityModal
+        visible={showActivityModal}
+        onClose={() => setShowActivityModal(false)}
+        activityType={activityModalType}
+        onRefreshStats={handleRefreshStats}
+      />
+
+      {/* 登录提示模态框 */}
+      <LoginRequiredModal
+        visible={showLoginModal}
+        onClose={() => setShowLoginModal(false)}
+        onLogin={handleLoginFromModal}
       />
     </View>
   );

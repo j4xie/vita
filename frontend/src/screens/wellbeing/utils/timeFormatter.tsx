@@ -33,16 +33,47 @@ export const formatHours = (hours: number): string => {
   }
 };
 
-// 格式化时间为 MM-DD HH:MM 格式
+// 格式化时间为简洁直观的年月日时间格式
 export const formatTime = (dateString: string): string => {
   const date = new Date(dateString);
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
+  const now = new Date();
+  const isToday = date.toDateString() === now.toDateString();
   const time = date.toLocaleTimeString('zh-CN', {
     hour: '2-digit',
     minute: '2-digit',
   });
-  return `${month}-${day} ${time}`;
+  
+  if (isToday) {
+    // 今天显示：今日 14:30
+    return i18n.language.startsWith('zh') ? `今日 ${time}` : `Today ${time}`;
+  } else {
+    // 其他日期显示：2025/8/24 14:30 （简洁的斜杠格式）
+    const year = date.getFullYear();
+    const month = date.getMonth() + 1;
+    const day = date.getDate();
+    
+    if (i18n.language.startsWith('zh')) {
+      return `${year}/${month}/${day} ${time}`;
+    } else {
+      // 英文：8/24/2025 2:30 PM
+      return date.toLocaleString('en-US', {
+        year: 'numeric',
+        month: 'numeric', 
+        day: 'numeric',
+        hour: 'numeric',
+        minute: '2-digit',
+      });
+    }
+  }
+};
+
+// 格式化签到时间为最简洁格式（用于Toast提示）
+export const formatTimeCompact = (dateString: string): string => {
+  const date = new Date(dateString);
+  return date.toLocaleTimeString('zh-CN', {
+    hour: '2-digit',
+    minute: '2-digit',
+  });
 };
 
 // 格式化时间范围

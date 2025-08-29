@@ -398,11 +398,11 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({
           resizeMode="cover"
         />
         
-        {/* 西柚 对比度增强渐变遮罩 */}
+        {/* PomeloX 对比度增强渐变遮罩 */}
         <LinearGradient
           colors={[
-            'rgba(255, 107, 53, 0.05)',   // 西柚 橙色轻微遮罩
-            'rgba(255, 71, 87, 0.15)',    // 西柚 珊瑚红深度
+            'rgba(255, 107, 53, 0.05)',   // PomeloX 橙色轻微遮罩
+            'rgba(255, 71, 87, 0.15)',    // PomeloX 珊瑚红深度
             'rgba(26, 26, 26, 0.75)'      // 底部暗层确保文字对比度
           ]}
           style={styles.gradientOverlay}
@@ -556,23 +556,24 @@ const styles = StyleSheet.create({
   container: {
     width: cardWidth,
   },
-  // Shadow容器 - 小红书风格卡片设计
+  // Shadow容器 - Liquid Glass 风格卡片设计
   shadowContainer: {
     borderRadius: theme.borderRadius.lg,
-    backgroundColor: '#FFFFFF', // 小红书风格白色背景
+    backgroundColor: 'rgba(255, 255, 255, 0.85)', // 加强背景白色
     shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 3,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 6,
   },
   
-  // 基础容器样式 - 移除阴影到专用容器
+  // 基础容器样式 - 加强 Liquid Glass 效果
   touchableContainer: {
-    backgroundColor: '#FFFFFF', // 小红书风格白色背景
+    backgroundColor: 'rgba(255, 255, 255, 0.85)', // 加强背景白色
     borderRadius: theme.borderRadius.lg, // 更大的圆角
     overflow: 'hidden',
-    borderWidth: 0, // 移除边框，使用阴影
+    borderWidth: 1.5, // 添加清晰边框
+    borderColor: 'rgba(255, 255, 255, 0.8)', // 明显的白色边框
   },
   
   // Image Section
@@ -683,16 +684,16 @@ const styles = StyleSheet.create({
     textShadowRadius: 2,
   },
   
-  // Bottom Action Section - 小红书风格白色背景
+  // Bottom Action Section - Liquid Glass 风格背景
   actionContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     padding: theme.spacing.md,
-    backgroundColor: '#FFFFFF',
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(0, 0, 0, 0.08)',
-    // 小红书风格的轻微圆角
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    borderTopWidth: 1.5,
+    borderTopColor: 'rgba(255, 255, 255, 0.6)',
+    // Liquid Glass 风格的圆角
     borderBottomLeftRadius: theme.borderRadius.md,
     borderBottomRightRadius: theme.borderRadius.md,
   },

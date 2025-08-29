@@ -22,96 +22,28 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useTranslation } from 'react-i18next';
 import { useNavigation } from '@react-navigation/native';
 import { getSchoolLogo } from '../../utils/schoolLogos';
+import { fetchSchoolList } from '../../services/registrationAPI';
+import { useUser } from '../../context/UserContext';
+import { getSchoolVolunteerStats } from '../../services/volunteerAPI';
+import { getSchoolVolunteerCount } from '../../services/userStatsAPI';
 import { SegmentedGlass } from '../../ui/glass/SegmentedGlass';
 import { GlassSearchBar } from '../../ui/glass/GlassSearchBar';
 import { LiquidGlassListItem } from '../../ui/glass/LiquidGlassListItem';
 import { Glass } from '../../ui/glass/GlassTheme';
 
-// 模拟学校数据
-const mockSchools = [
-  {
-    id: 'uw',
-    nameCN: '华盛顿大学',
-    nameEN: 'University of Washington',
-    city: '西雅图',
-    state: 'WA',
-    volunteers: 156,
-    tint: '#8F8CF0',
-  },
-  {
-    id: 'usc',
-    nameCN: '南加州大学',
-    nameEN: 'University of Southern California',
-    city: '洛杉矶',
-    state: 'CA',
-    volunteers: 203,
-    tint: '#F0A1A1',
-  },
-  {
-    id: 'ucla',
-    nameCN: '加州大学洛杉矶分校',
-    nameEN: 'UC Los Angeles',
-    city: '洛杉矶',
-    state: 'CA',
-    volunteers: 287,
-    tint: '#BBD6F6',
-  },
-  {
-    id: 'ucb',
-    nameCN: '加州大学伯克利分校',
-    nameEN: 'UC Berkeley',
-    city: '伯克利',
-    state: 'CA',
-    volunteers: 194,
-    tint: '#B3E5FC',
-  },
-  {
-    id: 'ucd',
-    nameCN: '加州大学戴维斯分校',
-    nameEN: 'UC Davis',
-    city: '戴维斯',
-    state: 'CA',
-    volunteers: 142,
-    tint: '#8FB7CA',
-  },
-  {
-    id: 'uci',
-    nameCN: '加州大学尔湾分校',
-    nameEN: 'UC Irvine',
-    city: '尔湾',
-    state: 'CA',
-    volunteers: 178,
-    tint: '#F6E39B',
-  },
-  {
-    id: 'ucsd',
-    nameCN: '加州大学圣地亚哥分校',
-    nameEN: 'UC San Diego',
-    city: '圣地亚哥',
-    state: 'CA',
-    volunteers: 225,
-    tint: '#D1C4E9',
-  },
-  {
-    id: 'umn',
-    nameCN: '明尼苏达大学',
-    nameEN: 'University of Minnesota',
-    city: '明尼阿波利斯',
-    state: 'MN',
-    volunteers: 134,
-    tint: '#FFCDD2',
-  },
-];
+// Mock schools data removed - using real API data only
 
 export const VolunteerListLiquidScreen: React.FC = () => {
   const { t } = useTranslation();
   const navigation = useNavigation<any>();
   const insets = useSafeAreaInsets();
+  const { permissions, user } = useUser(); // 获取用户权限和用户信息
   
   // 状态管理
   const [searchQuery, setSearchQuery] = useState('');
   const [refreshing, setRefreshing] = useState(false);
-  const [schools, setSchools] = useState(mockSchools);
+  const [schools, setSchools] = useState<any[]>([]); // 初始为空，避免显示Mock数据
+  const [loading, setLoading] = useState(true); // 显示loading状态
   
   // 学校卡片放大跳转动画系统 - v2方案
   const [cardLayouts, setCardLayouts] = useState<Map<string, any>>(new Map());
@@ -126,6 +58,129 @@ export const VolunteerListLiquidScreen: React.FC = () => {
   const cornerRadius = useSharedValue(16);
   const blurGain = useSharedValue(0);
   const highlightGain = useSharedValue(1);
+
+  // 加载真实学校数据
+  const loadSchoolData = useCallback(async () => {
+    try {
+      setLoading(true); // 显示loading状态
+      const result = await fetchSchoolList();
+      
+      if (result.code === 200 && result.data) {
+        // 根据用户权限过滤学校数据
+        let filteredSchools = result.data.filter(school => school.deptId >= 210);
+        
+        // 分管理员：只能看到自己的学校
+        if (permissions.getDataScope() === 'school') {
+          const userDeptId = user?.deptId;
+          if (userDeptId) {
+            filteredSchools = filteredSchools.filter(school => school.deptId === userDeptId);
+            console.log('📊 [SCHOOL-FILTER] 分管理员权限：只显示本校', { userDeptId, filteredCount: filteredSchools.length });
+          }
+        }
+        
+        // 将学校数据转换为组件需要的格式
+        const realSchools = filteredSchools.map(school => ({
+            id: school.deptId.toString(),
+            nameCN: getSchoolDisplayName(school.deptName),
+            nameEN: school.deptName,
+            city: getSchoolCity(school.deptName),
+            state: getSchoolState(school.deptName),
+            volunteers: 0, // 将通过API获取真实数据
+            tint: getSchoolColor(school.deptName),
+            deptId: school.deptId,
+            deptName: school.deptName,
+          }));
+        
+        // 为每个学校获取真实的用户统计数据（包括各角色）
+        const schoolsWithStats = await Promise.all(
+          realSchools.map(async (school) => {
+            try {
+              // 使用真实的用户统计API，计算各角色用户
+              const volunteerCount = await getSchoolVolunteerCount(school.deptId);
+              
+              console.log(`学校${school.deptName}(ID:${school.deptId})志愿者数量:`, volunteerCount);
+              
+              return {
+                ...school,
+                volunteers: volunteerCount, // 真实的志愿者数量（内部员工+管理员）
+              };
+            } catch (error) {
+              console.warn(`获取学校${school.deptName}用户统计失败:`, error);
+              return {
+                ...school,
+                volunteers: 0, // 失败时显示0
+              };
+            }
+          })
+        );
+        
+        setSchools(schoolsWithStats);
+      } else {
+        // API失败时显示空状态
+        console.warn('学校数据加载失败');
+        setSchools([]);
+      }
+    } catch (error) {
+      console.error('加载学校数据失败:', error);
+      // API失败时显示空状态
+      setSchools([]);
+    } finally {
+      setLoading(false); // 恢复loading状态管理
+    }
+  }, []);
+
+  // 组件加载时立即获取数据 - 避免初始显示"没有学校"
+  React.useEffect(() => {
+    loadSchoolData();
+  }, []); // 只在组件加载时执行一次
+
+  // 学校显示名称映射
+  const getSchoolDisplayName = (deptName: string): string => {
+    const nameMap: Record<string, string> = {
+      'UCD': '加州大学戴维斯分校',
+      'UCB': '加州大学伯克利分校',
+      'UCLA': '加州大学洛杉矶分校',
+      'USC': '南加州大学',
+      'UCI': '加州大学尔湾分校',
+      'UCSD': '加州大学圣地亚哥分校',
+      'UCSB': '加州大学圣芭芭拉分校',
+      'UCSC': '加州大学圣克鲁兹分校',
+      'UW': '华盛顿大学',
+      'UMN': '明尼苏达大学',
+      'U Berklee Music': '伯克利音乐学院',
+    };
+    return nameMap[deptName] || deptName;
+  };
+
+  // 学校城市映射
+  const getSchoolCity = (deptName: string): string => {
+    const cityMap: Record<string, string> = {
+      'UCD': '戴维斯', 'UCB': '伯克利', 'UCLA': '洛杉矶', 'USC': '洛杉矶',
+      'UCI': '尔湾', 'UCSD': '圣地亚哥', 'UCSB': '圣芭芭拉', 'UCSC': '圣克鲁兹',
+      'UW': '西雅图', 'UMN': '明尼阿波利斯', 'U Berklee Music': '波士顿',
+    };
+    return cityMap[deptName] || '未知城市';
+  };
+
+  // 学校州映射
+  const getSchoolState = (deptName: string): string => {
+    const stateMap: Record<string, string> = {
+      'UCD': 'CA', 'UCB': 'CA', 'UCLA': 'CA', 'USC': 'CA',
+      'UCI': 'CA', 'UCSD': 'CA', 'UCSB': 'CA', 'UCSC': 'CA',
+      'UW': 'WA', 'UMN': 'MN', 'U Berklee Music': 'MA',
+    };
+    return stateMap[deptName] || 'Unknown';
+  };
+
+  // 学校颜色映射
+  const getSchoolColor = (deptName: string): string => {
+    const colorMap: Record<string, string> = {
+      'UCD': '#8F8CF0', 'UCB': '#F0A1A1', 'UCLA': '#A1E3F0', 'USC': '#F0E1A1',
+      'UCI': '#F6E39B', 'UCSD': '#D1C4E9', 'UCSB': '#C8E6C9', 'UCSC': '#FFCDD2',
+      'UW': '#E1BEE7', 'UMN': '#FFCDD2', 'U Berklee Music': '#FFE0B2',
+    };
+    return colorMap[deptName] || '#E0E0E0';
+  };
   
   // 动画样式 - 仅原位置缩放
   const animatedCardStyle = useAnimatedStyle(() => ({
@@ -145,14 +200,12 @@ export const VolunteerListLiquidScreen: React.FC = () => {
     );
   });
 
-  // 下拉刷新
-  const onRefresh = useCallback(() => {
+  // 下拉刷新 - 使用真实API
+  const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    // 模拟API调用
-    setTimeout(() => {
-      setRefreshing(false);
-    }, 1500);
-  }, []);
+    await loadSchoolData();
+    setRefreshing(false);
+  }, [loadSchoolData]);
 
   // 处理学校选择
   // 记录卡片布局信息
@@ -298,8 +351,8 @@ export const VolunteerListLiquidScreen: React.FC = () => {
   // 渲染空状态
   const renderEmptyState = () => (
     <View style={styles.emptyContainer}>
-      <Text style={styles.emptyText}>No schools found</Text>
-      <Text style={styles.emptySubtext}>Try adjusting your search criteria</Text>
+      <Text style={styles.emptyText}>{t('school.no_volunteers_found')}</Text>
+      <Text style={styles.emptySubtext}>{t('explore.category_developing_message', { category: t('wellbeing.title') })}</Text>
     </View>
   );
 
@@ -311,7 +364,7 @@ export const VolunteerListLiquidScreen: React.FC = () => {
         {/* 搜索框 - 直接显示，不需要Tab判断 */}
         <View style={styles.searchSection}>
           <GlassSearchBar
-            placeholder="Search schools..."
+            placeholder={t('common.search_schools')}
             value={searchQuery}
             onChangeText={setSearchQuery}
           />
@@ -329,6 +382,7 @@ export const VolunteerListLiquidScreen: React.FC = () => {
                 refreshing={refreshing}
                 onRefresh={onRefresh}
                 tintColor={Glass.textWeak}
+                title={t('common.loading')}
               />
             }
             contentContainerStyle={[

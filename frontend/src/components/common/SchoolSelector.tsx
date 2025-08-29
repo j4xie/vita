@@ -14,7 +14,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { theme } from '../../theme';
 import { LIQUID_GLASS_LAYERS } from '../../theme/core';
-import { vitaGlobalAPI } from '../../services/VitaGlobalAPI';
+import { pomeloXAPI } from '../../services/PomeloXAPI';
 
 interface School {
   deptId: number;
@@ -37,10 +37,11 @@ export const SchoolSelector: React.FC<SchoolSelectorProps> = ({
   value,
   selectedId,
   onSelect,
-  placeholder = "选择学校",
+  placeholder,
   error,
 }) => {
   const { t } = useTranslation();
+  const defaultPlaceholder = placeholder || t('common.select_school');
   const [modalVisible, setModalVisible] = useState(false);
   const [schools, setSchools] = useState<School[]>([]);
   const [filteredSchools, setFilteredSchools] = useState<School[]>([]);
@@ -50,22 +51,24 @@ export const SchoolSelector: React.FC<SchoolSelectorProps> = ({
   const fetchSchools = async () => {
     setLoading(true);
     try {
-      const result = await vitaGlobalAPI.getSchoolList();
+      const result = await pomeloXAPI.getSchoolList();
       
       if (result.code === 200 && result.data) {
-        // 过滤出实际的学校（排除主分类）
+        // 过滤出实际的学校（排除测试数据和非学校部门）
         const actualSchools = result.data.filter((school: School) => 
-          school.parentId !== 1 && school.deptName !== '学校A' && school.deptName !== '学校B'
+          school.deptName !== '学校A' && 
+          school.deptName !== '学校B' && 
+          school.deptName !== 'CU总部'
         );
         
         setSchools(actualSchools);
         setFilteredSchools(actualSchools);
       } else {
-        Alert.alert('错误', '获取学校列表失败');
+        Alert.alert(t('common.error'), t('auth.register.form.school_load_failed'));
       }
     } catch (error) {
       console.error('获取学校列表错误:', error);
-      Alert.alert('错误', '网络连接失败');
+      Alert.alert(t('common.error'), t('common.network_error'));
     } finally {
       setLoading(false);
     }
@@ -128,7 +131,7 @@ export const SchoolSelector: React.FC<SchoolSelectorProps> = ({
           styles.selectorText,
           !value && styles.selectorPlaceholder
         ]}>
-          {value || placeholder}
+          {value || defaultPlaceholder}
         </Text>
         <Ionicons 
           name="chevron-down" 
@@ -142,12 +145,12 @@ export const SchoolSelector: React.FC<SchoolSelectorProps> = ({
       <Modal
         visible={modalVisible}
         animationType="slide"
-        presentationStyle="pageSheet"
+        presentationStyle="formSheet"
         onRequestClose={() => setModalVisible(false)}
       >
         <View style={styles.modalContainer}>
           <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>选择学校</Text>
+            <Text style={styles.modalTitle}>{t('common.select_school')}</Text>
             <TouchableOpacity
               onPress={() => setModalVisible(false)}
               style={styles.closeButton}
@@ -165,7 +168,7 @@ export const SchoolSelector: React.FC<SchoolSelectorProps> = ({
             />
             <TextInput
               style={styles.searchInput}
-              placeholder="搜索学校..."
+              placeholder={t('common.search_schools')}
               value={searchText}
               onChangeText={setSearchText}
               placeholderTextColor={theme.colors.text.disabled}
@@ -175,7 +178,7 @@ export const SchoolSelector: React.FC<SchoolSelectorProps> = ({
           {loading ? (
             <View style={styles.loadingContainer}>
               <ActivityIndicator size="large" color={theme.colors.primary} />
-              <Text style={styles.loadingText}>加载学校列表...</Text>
+              <Text style={styles.loadingText}>{t('auth.register.form.loading_schools')}</Text>
             </View>
           ) : (
             <FlatList
@@ -231,7 +234,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: theme.spacing[4],
     paddingVertical: theme.spacing[3],
     borderBottomWidth: 1,
-    borderBottomColor: theme.colors.border,
+    borderBottomColor: theme.colors.border.primary,
   },
   modalTitle: {
     fontSize: theme.typography.fontSize.lg,

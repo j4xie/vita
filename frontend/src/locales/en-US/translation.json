@@ -182,6 +182,10 @@
       "terms_of_service": "Terms of Service",
       "privacy_policy": "Privacy Policy",
       "and": "and",
+      "success_title": "Registration Successful",
+      "success_message": "Congratulations! You have successfully registered. Welcome to PomeloX",
+      "error_title": "Registration Failed",
+      "error_message": "An error occurred during registration. Please try again later",
       "privacy": {
         "title": "Privacy Agreement",
         "subtitle": "Please carefully read the following privacy policy to understand how we collect and use your personal information",
@@ -225,10 +229,14 @@
         "confirm_password_placeholder": "Re-enter password",
         "phone_china": "🇨🇳 China Mobile",
         "phone_usa": "🇺🇸 US Number",
+        "us_phone_not_supported_title": "US Phone Numbers Not Currently Supported",
+        "us_phone_not_supported_message": "We currently do not accept US phone number registrations.",
+        "us_phone_contact_info": "If you don't have a Chinese phone number, please contact dev@americanpromotioncompany.com or get a referral code through a recommended organization.",
         "phone_label": "Phone Number *",
         "phone_placeholder": "Enter your phone number",
         "terms_checkbox": "I have read and agree to",
         "send_code": "Send Code",
+        "complete_registration": "Complete Registration",
         "next_step": "Next Step",
         "register": "Register Account",
         "step1_description": "Please fill in your basic information, we will generate a school email for you",
@@ -248,7 +256,7 @@
         "nickname_placeholder": "Enter your nickname",
         "verification_code_label": "SMS Verification Code *",
         "verification_code_placeholder": "Enter 6-digit code",
-        "organization_label": "Organization *",
+        "organization_label": "Referral Organization *",
         "organization_placeholder": "Select your organization",
         "loading_organizations": "Loading organizations...",
         "email_help": "This email will be your login account",
@@ -328,8 +336,13 @@
       "network_connection_failed": "Network connection failed, please check and retry",
       "server_error": "Server error, please try again later"
     },
+    "verification": {
+      "title": "SMS Verification",
+      "verify_phone": "Verify Your Phone",
+      "verify_and_register": "Verify and Register"
+    },
     "login_required": "Please login first",
-    "login_required_message": "Login required to bookmark activities"
+    "login_required_message": "Login to bookmark and track activities"
   },
   "navigation": {
     "tabs": {
@@ -438,6 +451,7 @@
     "birthday_privileges": "Birthday Benefits",
     "exclusive_activities": "VIP Events",
     "upgrade_membership": "Upgrade",
+    "my_cards": "My Cards",
     "my_reviews": "My Reviews",
     "write_review": "Write",
     "no_reviews": "No reviews yet",
@@ -506,7 +520,6 @@
       "saveSuccessMessage": "Profile updated",
       "confirm": "OK"
     },
-    "account": "Account Settings",
     "about": "About Us",
     "notifications": "Notifications",
     "appearance": "Appearance",
@@ -650,6 +663,7 @@
       "noRecords": "No volunteer records",
       "checkInTime": "Check-in Time",
       "workDuration": "Work Duration",
+      "currentWorkDuration": "Current Work Duration",
       "totalHours": "Total Hours",
       "lastCheckInTime": "Last Check-in Time",
       "lastCheckOutTime": "Last Check-out Time",
@@ -924,6 +938,9 @@
       "checkOutTime": "Check-out Time",
       "worked": "Worked",
       "totalHours": "Total Hours",
+      "lastCheckIn": "Last Check-in",
+      "lastCheckOut": "Last Check-out", 
+      "today": "Today",
       "hours": "h",
       "confirmSignOut": "Confirm Sign Out",
       "thisVolunteerService": "This Volunteer Service",
@@ -981,6 +998,9 @@
     "feature_not_implemented": "Feature not implemented",
     "logout_confirm": "Confirm Logout",
     "logout_message": "Log out?",
+    "login_required_title": "Login Required",
+    "login_required_activity_message": "Login to view your activity statistics",
+    "go_login": "Login",
     "error": "Error",
     "success": "Success",
     "verificationCodeSent": "Verification Code Sent",
@@ -1101,5 +1121,15 @@
     "email_username_required": "Please enter email username",
     "email_username_too_short": "Email username too short",
     "email_username_invalid": "Invalid email username format"
+  },
+  "legal": {
+    "terms": {
+      "title": "Terms of Service",
+      "full_content": "## Grapefruit-PomeloX Terms of Service\n\n**Effective Date:** August 15, 2025\n**Version:** v1.0\n\n### 1. Service Overview\n\nWelcome to Grapefruit-PomeloX! We are a comprehensive service and safety platform designed specifically for Chinese students studying in the US and their parents. From pre-departure preparation to local life, from activity registration to emergency coordination, we are committed to providing professional services throughout the study abroad journey.\n\n### 2. Service Scope\n\n**Core Features:**\n• AI Q&A: Study abroad guides, visa course housing guidance\n• Wellbeing Plan: Emergency response, volunteer assistance\n• Airport pickup services: Free bus reservations, paid transfers\n• Local discounts: Merchant coupons, points system\n• Marketplace: Information posting, job listings\n• Alumni network: Email verification, high-trust referrals\n• Activity management: Event publishing, registration management, QR check-in\n• Volunteer management: Check-in/out, hour tracking\n\n### 3. User Registration & Responsibilities\n\n**Registration Requirements:**\n• At least 14 years old (under 14 requires guardian consent)\n• Provide truthful, accurate, and complete registration information\n• Valid school email or referral code\n• Accept these Terms of Service and Privacy Policy\n\n**User Responsibilities:**\n• Protect account password security, do not share with others\n• Take responsibility for all activities under your account\n• Update account information timely to ensure accuracy\n\n### 4. Code of Conduct\n\n**You promise to:**\n• Comply with laws and regulations of China and your country\n• Respect others' legitimate rights and privacy\n• Provide truthful and accurate personal information\n• Not engage in any behavior that may harm the platform or other users\n\n**Prohibited Behaviors:**\n• Post illegal, harmful, threatening, or inappropriate content\n• Spread false information, rumors, or misleading content\n• Infringe on others' intellectual property or privacy rights\n• Attempt to hack, attack, or interfere with our systems\n• Unauthorized commercial promotion\n\n### 5. Intellectual Property\n\nAll content of the Grapefruit-PomeloX platform, including software code, interface design, trademarks, etc., is protected by intellectual property law and owned by Grapefruit-PomeloX.\n\n### 6. Disclaimer\n\n**Service Status:**\n• Services are provided \"as is\", no guarantee of complete uninterrupted, error-free operation\n• No guarantee of third-party activity quality or safety\n• Not liable for indirect losses caused by service use\n\n**Liability Limitation:**\nTo the maximum extent permitted by law, our liability shall not exceed your direct actual losses, with a total cap of $100.\n\n### 7. Dispute Resolution\n\nFor disputes, we recommend resolution through:\n• Email: info@americanpromotioncompany.com\n• In-app customer service system\n• Legal action in competent courts if negotiation fails\n\n### 8. Terms Changes\n\nWe may modify these terms based on business development. Important changes will be notified 30 days in advance. Continued use indicates acceptance of new terms.\n\n### 9. Contact Information\n\n**Technical Support:** info@americanpromotioncompany.com\n**Legal Affairs:** dev@americanpromotioncompany.com\n**Service Hours:** Monday-Friday 9:00-18:00 (Beijing Time)\n\n---\n\n**Thank you for choosing Grapefruit-PomeloX**\n\nThese Terms of Service are governed by the laws of the People's Republic of China. We are committed to providing quality service to Chinese students overseas."
+    },
+    "privacy": {
+      "title": "Privacy Policy",
+      "full_content": "## Grapefruit-PomeloX Privacy Policy\n\n**Effective Date:** August 15, 2025\n**Version:** v1.0\n\n### 1. Policy Overview\n\nWelcome to Grapefruit-PomeloX! We deeply understand the importance of personal information protection and promise to strictly comply with relevant laws and regulations including the Personal Information Protection Law of the People's Republic of China.\n\n### 2. Information Collection\n\n**Information You Actively Provide:**\n• Registration info: Legal name, English nickname, school, school email\n• Contact info: Chinese or US phone number\n• Identity verification: Referral code info, SMS verification code\n• Activity-related: Activity registration info, personal preferences\n• Volunteer service: Volunteer activity records, check-in times\n\n**Automatically Collected Information:**\n• Device info: Device model, OS version, app version\n• Usage data: App usage statistics, feature click records\n• Network info: IP address (only for technical support and security)\n• Push info: Device push tokens (for notifications)\n\n### 3. Information Use Purposes\n\nWe collect your personal information only for:\n• Creating and managing your user account\n• Processing activity registration and volunteer management\n• Providing AI Q&A and study abroad guidance services\n• Sending important service notifications and security alerts\n• Analyzing user behavior to improve product features\n• Preventing fraud and abuse, protecting user security\n\n### 4. Third-Party Service Integration\n\nTo provide complete services, we integrate the following third-party services:\n• **Gmail SMTP**: For sending verification emails and notifications\n• **Cloudflare R2**: Securely store activity images and user avatars\n• **Firebase FCM**: Send important notifications and activity reminders\n• **Google OAuth**: Optional third-party login method\n\n### 5. User Rights\n\nAccording to laws and regulations, you have the following rights:\n• **Right to Know**: Understand the types and purposes of personal information we collect\n• **Access Right**: View personal information we have collected about you\n• **Correction Right**: Correct inaccurate personal information\n• **Deletion Right**: Request deletion of your personal information and account\n• **Restriction Right**: Limit processing of certain personal information\n• **Data Portability Right**: Obtain personal data in structured format\n\n### 6. Minor Protection\n\n• **Under 14**: Must obtain guardian consent\n• **14-18 years**: Recommended use under guardian guidance\n• **Over 18**: Can independently use all functions\n\nWe apply stricter security measures for minor information.\n\n### 7. Data Security Measures\n\n**Technical Security:**\n• Use AES-256 encryption algorithm to protect sensitive data\n• Full-site HTTPS encrypted transmission\n• Strict permission management and identity verification\n• 24/7 security monitoring and anomaly detection\n\n**Management Security:**\n• Employees can only access work-necessary data\n• Record all data access and operations\n• Regular security risk assessments\n\n### 8. Data Storage\n\n• **Storage Location**: Primarily stored on servers in China\n• **Storage Period**: Only retained during necessary periods\n• **Deletion Mechanism**: Automatic deletion or anonymization after expiration\n\n### 9. Contact Us\n\nFor privacy-related questions, please contact:\n• **Email**: info@americanpromotioncompany.com\n• **Data Protection Officer**: dev@americanpromotioncompany.com\n• **Service Hours**: Monday-Friday 9:00-18:00 (Beijing Time)\n\n### 10. Policy Updates\n\nWe may modify this policy based on legal changes or business development. Important updates will be notified through in-app notifications, emails, etc.\n\n---\n\n**Thank you for your trust**\n\nProtecting your privacy is our responsibility and the foundation of building trust with you. We welcome any suggestions or feedback."
+    }
   }
 }

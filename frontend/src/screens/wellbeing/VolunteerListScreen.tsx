@@ -25,102 +25,14 @@ import { usePerformanceDegradation } from '../../hooks/usePerformanceDegradation
 import { VolunteerCard, VolunteerRecord } from './components/VolunteerCard';
 import { SearchBar } from './components/SearchBar';
 import { SignOutBottomSheet } from './components/SignOutBottomSheet';
-import { School } from '../../data/mockData';
+// School type moved to real data types
 
 const { height: screenHeight } = Dimensions.get('window');
 
 // 操作状态枚举
 type OperationState = 'idle' | 'searching' | 'signingIn' | 'signingOut' | 'success' | 'error';
 
-// Mock数据
-const mockVolunteers: VolunteerRecord[] = [
-  // UCB志愿者
-  {
-    id: '1',
-    phone: '15101234567',
-    name: '陈志豪',
-    school: 'UC Berkeley',
-    status: 'checked_in',
-    checkInTime: '2025-08-13T09:30:00',
-    totalHours: 45.5,
-    lastCheckInTime: '2025-08-12T08:15:00',
-    lastCheckOutTime: '2025-08-12T16:30:00',
-  },
-  {
-    id: '2',
-    phone: '15101234568',
-    name: '李思雨',
-    school: 'UC Berkeley',
-    status: 'not_checked_in',
-    totalHours: 32.0,
-    lastCheckInTime: '2025-08-11T13:20:00',
-    lastCheckOutTime: '2025-08-11T17:45:00',
-  },
-  {
-    id: '3',
-    phone: '15101234569',
-    name: '王建华',
-    school: 'UC Berkeley',
-    status: 'checked_in',
-    checkInTime: '2025-08-13T10:15:00',
-    totalHours: 28.5,
-    lastCheckInTime: '2025-08-10T09:30:00',
-    lastCheckOutTime: '2025-08-10T15:15:00',
-  },
-  // 其他学校志愿者
-  {
-    id: '4',
-    phone: '13812345678',
-    name: '张同学',
-    school: 'UCLA',
-    status: 'checked_in',
-    checkInTime: '2025-08-13T14:30:00',
-    totalHours: 25.5,
-    lastCheckInTime: '2025-08-12T09:15:00',
-    lastCheckOutTime: '2025-08-12T17:30:00',
-  },
-  {
-    id: '5',
-    phone: '13912345678',
-    name: '李同学',
-    school: 'University of Washington',
-    status: 'not_checked_in',
-    totalHours: 18.0,
-    lastCheckInTime: '2025-08-11T14:20:00',
-    lastCheckOutTime: '2025-08-11T18:45:00',
-  },
-  {
-    id: '6',
-    phone: '15012345678',
-    name: '王同学',
-    school: 'USC',
-    status: 'not_checked_in',
-    totalHours: 42.0,
-    lastCheckInTime: '2025-08-10T08:30:00',
-    lastCheckOutTime: '2025-08-10T16:15:00',
-  },
-  {
-    id: '7',
-    phone: '18612345678',
-    name: '陈同学',
-    school: 'UC San Diego',
-    status: 'checked_in',
-    checkInTime: '2025-08-13T13:00:00',
-    totalHours: 15.5,
-    lastCheckInTime: '2025-08-09T10:45:00',
-    lastCheckOutTime: '2025-08-09T15:20:00',
-  },
-  {
-    id: '8',
-    phone: '17712345678',
-    name: '刘同学',
-    school: 'UC Irvine',
-    status: 'not_checked_in',
-    totalHours: 8.0,
-    lastCheckInTime: '2025-08-08T13:10:00',
-    lastCheckOutTime: '2025-08-08T17:00:00',
-  },
-];
+// mockVolunteers removed - using real volunteer data from API
 
 interface VolunteerListScreenProps {
   selectedSchool?: School;
@@ -144,12 +56,12 @@ export const VolunteerListScreen: React.FC<VolunteerListScreenProps> = ({
   // 状态管理
   const [searchPhone, setSearchPhone] = useState('');
   const [searchError, setSearchError] = useState('');
-  const [volunteers, setVolunteers] = useState<VolunteerRecord[]>(mockVolunteers);
+  const [volunteers, setVolunteers] = useState<VolunteerRecord[]>([]);
   
   // 根据选中的学校过滤志愿者
   const schoolFilteredVolunteers = selectedSchool 
-    ? mockVolunteers.filter(volunteer => volunteer.school === selectedSchool.englishName)
-    : mockVolunteers;
+    ? volunteers.filter(volunteer => volunteer.school === selectedSchool.englishName)
+    : volunteers;
     
   const [filteredVolunteers, setFilteredVolunteers] = useState<VolunteerRecord[]>(schoolFilteredVolunteers);
   const [selectedVolunteerId, setSelectedVolunteerId] = useState<string | null>(null);
@@ -279,7 +191,7 @@ export const VolunteerListScreen: React.FC<VolunteerListScreenProps> = ({
       
       // 显示成功提示
       const timeString = new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
-      showSuccessToast(`✓ ${timeString}`);
+      showSuccessToast(`[OK] ${timeString}`);
       
       if (Platform.OS === 'ios') {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
@@ -322,7 +234,7 @@ export const VolunteerListScreen: React.FC<VolunteerListScreenProps> = ({
       
       // 显示成功提示
       const timeString = checkOutTime.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
-      showSuccessToast(`✓ ${timeString}`);
+      showSuccessToast(`[OK] ${timeString}`);
       
       if (Platform.OS === 'ios') {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
@@ -428,7 +340,7 @@ export const VolunteerListScreen: React.FC<VolunteerListScreenProps> = ({
             </Text>
             <View style={styles.locationRow}>
               <Ionicons name="location-outline" size={12} color="#9CA3AF" />
-              <Text style={styles.locationText}>Berkeley, CA</Text>
+              <Text style={styles.locationText}>{selectedSchool?.location || 'Berkeley, CA'}</Text>
             </View>
             
             {/* Hero卡内统计数据 - 嵌入学校卡底部 */}
@@ -445,7 +357,7 @@ export const VolunteerListScreen: React.FC<VolunteerListScreenProps> = ({
               <View style={styles.heroStatDivider} />
               <View style={styles.heroStatItem}>
                 <Text style={styles.heroStatNumber}>4.8★</Text>
-                <Text style={styles.heroStatLabel}>评分</Text>
+                <Text style={styles.heroStatLabel}>{t('wellbeing.volunteer.rating')}</Text>
               </View>
             </View>
           </View>

@@ -8,7 +8,7 @@ import { i18n } from '../../utils/i18n';
 const HomeScreen = () => (
   <View style={styles.screen}>
     <Text style={[styles.title, { color: theme.colors.text.primary }]}>
-      主页 - 西柚
+      主页 - PomeloX
     </Text>
     <Text style={[styles.subtitle, { color: theme.colors.text.secondary }]}>
       语言: {i18n.language} | 导航系统就绪 ✅

@@ -11,7 +11,7 @@ class ApiService {
     // Use localhost for development, will be replaced with actual domain
     this.baseURL = __DEV__ 
       ? 'http://localhost:8000/api/v1' 
-      : 'https://api.vitaglobal.app/api/v1';
+      : 'https://api.pomelox.app/api/v1';
     
     this.client = axios.create({
       baseURL: this.baseURL,

@@ -20,62 +20,44 @@ import { useUser } from '../../context/UserContext';
 
 const { width: screenWidth } = Dimensions.get('window');
 
-// V2.0 Mock data for volunteer features - 使用主题色派生色
+// 志愿者功能配置 - 不显示假数字
 const volunteerFeatures = [
   {
     id: 'activities',
     title: '活动管理',
     description: '创建、编辑和管理活动',
     icon: 'calendar-outline',
-    color: theme.colors.primary, // 主品牌色
-    count: 8,
+    color: theme.colors.primary,
+    count: 0, // 显示真实的0而非假数字
   },
   {
     id: 'attendees',
     title: '参与者管理',
     description: '查看和管理活动报名',
     icon: 'people-outline',
-    color: theme.colors.secondary, // 次品牌色
-    count: 156,
+    color: theme.colors.secondary,
+    count: 0, // 显示真实的0而非假数字
   },
   {
     id: 'analytics',
     title: '数据分析',
     description: '活动数据和统计报告',
     icon: 'analytics-outline',
-    color: theme.colors.success, // 成功色
-    count: 12,
+    color: theme.colors.success,
+    count: 0, // 显示真实的0而非假数字
   },
   {
     id: 'notifications',
     title: '通知管理',
     description: '发送活动通知和提醒',
     icon: 'notifications-outline',
-    color: theme.colors.warning, // 警告色
-    count: 24,
+    color: theme.colors.warning,
+    count: 0, // 显示真实的0而非假数字
   },
 ];
 
-const recentActivities = [
-  {
-    id: '1',
-    title: 'CU春季迎新派对',
-    status: 'ongoing',
-    attendees: 45,
-    maxAttendees: 120,
-    date: '2025-03-15',
-    image: 'https://images.unsplash.com/photo-1511578314322-379afb476865?w=400&h=300&fit=crop',
-  },
-  {
-    id: '2',
-    title: '学术交流会',
-    status: 'upcoming',
-    attendees: 28,
-    maxAttendees: 60,
-    date: '2025-03-22',
-    image: 'https://images.unsplash.com/photo-1517048676732-d65bc937f952?w=400&h=300&fit=crop',
-  },
-];
+// recentActivities removed - showing empty state until real data available
+const recentActivities: any[] = [];
 
 export const VolunteerScreen: React.FC = () => {
   const { t } = useTranslation();

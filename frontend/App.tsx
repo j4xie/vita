@@ -6,10 +6,17 @@ import { theme } from './src/theme';
 import initI18next, { i18n } from './src/utils/i18n';
 import { AppNavigator } from './src/navigation/AppNavigator';
 
-// 开发环境导入测试QR码工具 - 暂时禁用
-// if (__DEV__) {
-//   import('./src/utils/testQRCodes');
-// }
+// 导入时间管理服务
+import { timeManager, validateDeviceTime } from './src/services/timeManager';
+
+// 开发环境导入测试工具
+if (__DEV__) {
+  // 导入志愿者测试套件
+  require('./src/utils/volunteerTestSuite');
+  // 导入时间冲突检测器
+  require('./src/utils/timeConflictDetector');
+  console.log('🧪 测试工具已加载');
+}
 
 function MainApp() {
   return (
@@ -24,21 +31,42 @@ export default function App() {
   const [isI18nReady, setIsI18nReady] = useState(false);
 
   useEffect(() => {
-    const initializeI18n = async () => {
+    const initializeApp = async () => {
       try {
-        console.log('🚀 初始化西柚应用...');
-        console.log('🌐 初始化i18n系统...');
+        console.log('[INIT] 初始化应用...');
+        
+        // 1. 验证设备时间
+        const timeValidation = await validateDeviceTime();
+        if (!timeValidation.isValid) {
+          console.warn('[TIME-WARNING]', timeValidation.warning);
+          // TODO: 可以考虑显示用户警告弹窗
+          // Alert.alert('时间警告', timeValidation.warning);
+        } else {
+          console.log('[TIME] 设备时间验证通过');
+        }
+        
+        // 2. 初始化i18n系统
+        console.log('[I18N] 初始化i18n系统...');
         await initI18next();
-        console.log('✅ i18n初始化完成，当前语言:', i18n.language);
+        console.log('[SUCCESS] i18n初始化完成，当前语言:', i18n.language);
+        
+        // 3. 确保时间管理器运行
+        console.log('[TIME] 全局时间管理器已启用');
+        
         setIsI18nReady(true);
       } catch (error) {
-        console.error('❌ 应用初始化失败:', error);
+        console.error('[ERROR] 应用初始化失败:', error);
         // 即使失败也继续运行，保证应用可用性
         setIsI18nReady(true);
       }
     };
 
-    initializeI18n();
+    initializeApp();
+    
+    // 应用退出时清理时间管理器
+    return () => {
+      timeManager.cleanup();
+    };
   }, []);
 
   if (!isI18nReady) {
@@ -47,7 +75,7 @@ export default function App() {
         <StatusBar style="auto" />
         <View style={[styles.container, { backgroundColor: theme.colors.background.primary }]}>
           <Text style={[styles.text, { color: theme.colors.text.primary }]}>
-            🔄 正在启动西柚...
+正在启动应用...
           </Text>
           <Text style={[styles.subtext, { color: theme.colors.text.secondary }]}>
             初始化国际化系统

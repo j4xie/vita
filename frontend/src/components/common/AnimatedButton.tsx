@@ -158,7 +158,7 @@ export const AnimatedButton: React.FC<AnimatedButtonProps> = ({
     </Animated.View>
   );
 
-  const buttonStyles = [
+  const buttonStyles: any[] = [
     styles.button,
     {
       paddingVertical: sizeConfig.paddingVertical,

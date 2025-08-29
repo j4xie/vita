@@ -60,7 +60,7 @@ export const UnimplementedFeature: React.FC<UnimplementedFeatureProps> = ({
             </View>
 
             {/* Title */}
-            <Text style={styles.title}>功能开发中</Text>
+            <Text style={styles.title}>{t('common.feature_developing')}</Text>
 
             {/* Message */}
             <Text style={styles.message}>{displayMessage}</Text>
@@ -73,7 +73,7 @@ export const UnimplementedFeature: React.FC<UnimplementedFeatureProps> = ({
                   size={16} 
                   color={theme.colors.text.secondary} 
                 />
-                <Text style={styles.infoText}>预计开发时间：2-3周</Text>
+                <Text style={styles.infoText}>{t('common.estimated_development_time')}</Text>
               </View>
               <View style={styles.infoItem}>
                 <Ionicons 
@@ -81,7 +81,7 @@ export const UnimplementedFeature: React.FC<UnimplementedFeatureProps> = ({
                   size={16} 
                   color={theme.colors.text.secondary} 
                 />
-                <Text style={styles.infoText}>完成后将通过推送通知</Text>
+                <Text style={styles.infoText}>{t('common.will_notify_when_ready')}</Text>
               </View>
             </View>
 
@@ -92,7 +92,7 @@ export const UnimplementedFeature: React.FC<UnimplementedFeatureProps> = ({
                 onPress={onClose}
                 activeOpacity={0.8}
               >
-                <Text style={styles.primaryButtonText}>我知道了</Text>
+                <Text style={styles.primaryButtonText}>{t('common.got_it')}</Text>
               </TouchableOpacity>
             </View>
           </LinearGradient>

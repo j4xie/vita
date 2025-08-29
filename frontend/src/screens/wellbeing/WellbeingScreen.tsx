@@ -15,19 +15,135 @@ import { useRoute, useNavigation } from '@react-navigation/native';
 import { theme } from '../../theme';
 import { LIQUID_GLASS_LAYERS, DAWN_GRADIENTS } from '../../theme/core';
 import { usePerformanceDegradation } from '../../hooks/usePerformanceDegradation';
+import { useUser } from '../../context/UserContext';
 import { VolunteerListScreen } from './VolunteerListScreen';
 import { SchoolSelectionScreen } from './SchoolSelectionScreen';
 import { VolunteerListLiquidScreen } from './VolunteerListLiquidScreen';
-import { School } from '../../data/mockData';
+// School type moved to real data types (if needed)
+import { WellbeingPlanContent } from '../../components/wellbeing/WellbeingPlanContent';
 import { SegmentedGlass } from '../../ui/glass/SegmentedGlass';
 import { Glass } from '../../ui/glass/GlassTheme';
+import { getVolunteerHours, getVolunteerRecords } from '../../services/volunteerAPI';
+
+// 临时School类型定义
+interface School {
+  id: string;
+  name: string;
+  nameCN?: string;
+  nameEN?: string;
+}
 
 const { width: screenWidth } = Dimensions.get('window');
+
+// 个人志愿者数据组件
+const PersonalVolunteerData: React.FC = () => {
+  const { user } = useUser();
+  const { t } = useTranslation();
+  const [personalData, setPersonalData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  React.useEffect(() => {
+    loadPersonalData();
+  }, [user]);
+
+  const loadPersonalData = async () => {
+    try {
+      setLoading(true);
+      if (!user?.userId) {
+        setPersonalData(null);
+        return;
+      }
+
+      // 获取个人工时统计
+      const hoursResult = await getVolunteerHours({ userId: user.userId });
+      // 获取个人签到记录  
+      const recordsResult = await getVolunteerRecords({ userId: user.userId });
+      
+      const myHourRecord = hoursResult?.rows?.find((h: any) => h.userId === user.userId);
+      const myRecords = recordsResult?.rows?.filter((r: any) => r.userId === user.userId) || [];
+      
+      setPersonalData({
+        totalHours: myHourRecord ? myHourRecord.totalMinutes / 60 : 0,
+        totalRecords: myRecords.length,
+        recentRecord: myRecords[0] || null,
+        user: {
+          name: user.legalName || user.userName,
+          department: user.dept?.deptName || '未知部门',
+          level: 'Staff',
+        }
+      });
+    } catch (error) {
+      console.error('获取个人志愿者数据失败:', error);
+      setPersonalData(null);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <View style={styles.selfDataView}>
+        <Text>加载中...</Text>
+      </View>
+    );
+  }
+
+  if (!personalData) {
+    return (
+      <View style={styles.selfDataView}>
+        <Text>暂无志愿者工作记录</Text>
+      </View>
+    );
+  }
+
+  return (
+    <View style={styles.personalDataContainer}>
+      {/* 个人基本信息 */}
+      <View style={styles.personalInfoCard}>
+        <Text style={styles.personalName}>{personalData.user.name}</Text>
+        <Text style={styles.personalRole}>{personalData.user.level} • {personalData.user.department}</Text>
+      </View>
+
+      {/* 工作统计 */}
+      <View style={styles.statsCard}>
+        <View style={styles.statItem}>
+          <Text style={styles.statValue}>{personalData.totalHours.toFixed(1)}</Text>
+          <Text style={styles.statLabel}>总工作时长 (小时)</Text>
+        </View>
+        <View style={styles.statItem}>
+          <Text style={styles.statValue}>{personalData.totalRecords}</Text>
+          <Text style={styles.statLabel}>签到记录数</Text>
+        </View>
+      </View>
+
+      {/* 最近记录 */}
+      {personalData.recentRecord && (
+        <View style={styles.recentRecordCard}>
+          <Text style={styles.recentRecordTitle}>最近工作记录</Text>
+          <View style={styles.recordRow}>
+            <Text style={styles.recordLabel}>签到时间:</Text>
+            <Text style={styles.recordValue}>
+              {new Date(personalData.recentRecord.startTime).toLocaleString('zh-CN')}
+            </Text>
+          </View>
+          {personalData.recentRecord.endTime && (
+            <View style={styles.recordRow}>
+              <Text style={styles.recordLabel}>签退时间:</Text>
+              <Text style={styles.recordValue}>
+                {new Date(personalData.recentRecord.endTime).toLocaleString('zh-CN')}
+              </Text>
+            </View>
+          )}
+        </View>
+      )}
+    </View>
+  );
+};
 
 interface TabItem {
   id: string;
   title: string;
-  icon: keyof typeof Ionicons.glyphMap;
+  icon: string; // 简化为string类型避免复杂的Ionicons类型检查
   enabled: boolean;
 }
 
@@ -37,7 +153,9 @@ export const WellbeingScreen: React.FC = () => {
   const { t } = useTranslation();
   const route = useRoute();
   const navigation = useNavigation();
-  const [activeTab, setActiveTab] = useState('volunteer'); // 默认选中启用的tab
+  const { permissions, user } = useUser(); // 获取用户权限和用户信息
+  
+  const [activeTab, setActiveTab] = useState('wellbeing-plan'); // 默认选中安心计划
   const [selectedSchool, setSelectedSchool] = useState<School | null>(null);
   const [showSchoolSelection, setShowSchoolSelection] = useState(false);
   
@@ -67,20 +185,37 @@ export const WellbeingScreen: React.FC = () => {
     }
   }, [route.params, navigation]);
   
+  // 权限调试日志
+  console.log('🔍 [WELLBEING-PERMISSION] 权限检查详情:', {
+    userName: user?.userName,
+    legalName: user?.legalName,
+    permissionLevel: permissions.getPermissionLevel(),
+    hasVolunteerAccess: permissions.hasVolunteerManagementAccess(),
+    isStaff: permissions.isStaff(),
+    isPartManager: permissions.isPartManager(),
+    isAdmin: permissions.isAdmin(),
+    fallbackCondition: user?.userName === 'admin' || user?.legalName?.includes('管理员')
+  });
+
+  // 根据用户权限动态生成tabs
   const tabs: TabItem[] = [
     {
       id: 'wellbeing-plan',
       title: t('wellbeing.tabs.plan'),
       icon: 'shield-outline',
-      enabled: true, // 启用Wellbeing Plan按钮
+      enabled: true, // 所有用户都能看到安心计划
     },
-    {
+    // 只有管理员才能看到志愿者管理 - 调试模式强制显示admin用户
+    ...(permissions.hasVolunteerManagementAccess() || 
+        (user?.userName === 'admin' || user?.legalName?.includes('管理员')) ? [{
       id: 'volunteer',
       title: t('wellbeing.tabs.volunteer'),
       icon: 'people-outline',
       enabled: true,
-    },
+    }] : []),
   ];
+
+  console.log('🔍 [WELLBEING-TABS] 生成的tabs数量:', tabs.length, tabs.map(t => t.id));
 
   const handleTabPress = (tabId: string, enabled: boolean) => {
     if (enabled) {
@@ -173,23 +308,41 @@ export const WellbeingScreen: React.FC = () => {
   );
 
   const renderContent = () => {
+    // 如果是普通用户，直接显示安心计划内容，不显示切换
+    if (permissions.isRegularUser()) {
+      return <WellbeingPlanContent />;
+    }
+
+    // 管理员用户：根据选择的tab显示不同内容
     switch (activeTab) {
       case 'wellbeing-plan':
-        return renderWellbeingPlan();
+        return <WellbeingPlanContent />;
       case 'volunteer':
-        // 直接显示VolunteerListLiquidScreen，它内部处理学校列表
-        return (
-          <View style={styles.volunteerContent}>
-            <VolunteerListLiquidScreen />
-          </View>
-        );
+        // 根据权限显示不同的志愿者界面
+        if (permissions.getDataScope() === 'self') {
+          // Staff：只显示自己的志愿者工作记录
+          return (
+            <View style={styles.volunteerContent}>
+              <Text style={styles.staffTitle}>我的志愿者工作记录</Text>
+              <Text style={styles.staffSubtitle}>内部员工只能查看个人工作时长和记录</Text>
+              <PersonalVolunteerData />
+            </View>
+          );
+        } else {
+          // 总管理员和分管理员：显示学校管理界面
+          return (
+            <View style={styles.volunteerContent}>
+              <VolunteerListLiquidScreen />
+            </View>
+          );
+        }
       default:
-        return renderWellbeingPlan();
+        return <WellbeingPlanContent />;
     }
   };
 
-  // 只在选择学校模式或未选中学校时显示tab header
-  const shouldShowTabHeader = showSchoolSelection || !selectedSchool;
+  // 只有管理员才显示tab header，普通用户直接显示内容
+  const shouldShowTabHeader = !permissions.isRegularUser() && (showSchoolSelection || !selectedSchool || tabs.length > 1);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -393,5 +546,101 @@ const styles = StyleSheet.create({
     fontWeight: theme.typography.fontWeight.semibold,
     color: 'white',
     marginLeft: theme.spacing[1],
+  },
+
+  // Staff用户专用样式
+  staffTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#1F2937',
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  staffSubtitle: {
+    fontSize: 14,
+    color: '#6B7280',
+    marginBottom: 24,
+    textAlign: 'center',
+    paddingHorizontal: 16,
+  },
+  selfDataView: {
+    flex: 1,
+    padding: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.8)',
+    borderRadius: 12,
+    margin: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+
+  // 个人志愿者数据样式
+  personalDataContainer: {
+    flex: 1,
+    padding: 16,
+  },
+  personalInfoCard: {
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    borderRadius: 12,
+    padding: 20,
+    marginBottom: 16,
+    alignItems: 'center',
+  },
+  personalName: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#1F2937',
+    marginBottom: 4,
+  },
+  personalRole: {
+    fontSize: 14,
+    color: '#6B7280',
+  },
+  statsCard: {
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    borderRadius: 12,
+    padding: 20,
+    marginBottom: 16,
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+  },
+  statItem: {
+    alignItems: 'center',
+  },
+  statValue: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: '#059669',
+    marginBottom: 4,
+  },
+  statLabel: {
+    fontSize: 12,
+    color: '#6B7280',
+    textAlign: 'center',
+  },
+  recentRecordCard: {
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    borderRadius: 12,
+    padding: 20,
+  },
+  recentRecordTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1F2937',
+    marginBottom: 12,
+  },
+  recordRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  recordLabel: {
+    fontSize: 14,
+    color: '#6B7280',
+  },
+  recordValue: {
+    fontSize: 14,
+    color: '#1F2937',
+    fontWeight: '500',
   },
 });

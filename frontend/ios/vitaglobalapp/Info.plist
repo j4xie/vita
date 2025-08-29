@@ -7,7 +7,7 @@
     <key>CFBundleDevelopmentRegion</key>
     <string>$(DEVELOPMENT_LANGUAGE)</string>
     <key>CFBundleDisplayName</key>
-    <string>vitaglobal-app</string>
+    <string>pomelox-app</string>
     <key>CFBundleExecutable</key>
     <string>$(EXECUTABLE_NAME)</string>
     <key>CFBundleIdentifier</key>
@@ -27,13 +27,13 @@
       <dict>
         <key>CFBundleURLSchemes</key>
         <array>
-          <string>com.anonymous.vitaglobalapp</string>
+          <string>com.anonymous.pomeloxapp</string>
         </array>
       </dict>
       <dict>
         <key>CFBundleURLSchemes</key>
         <array>
-          <string>exp+vitaglobal</string>
+          <string>exp+pomelox</string>
         </array>
       </dict>
     </array>
@@ -56,7 +56,21 @@
           <key>NSExceptionAllowsInsecureHTTPLoads</key>
           <true/>
           <key>NSExceptionMinimumTLSVersion</key>
-          <string>TLSv1.0</string>
+          <string>TLSv1.2</string>
+        </dict>
+        <key>100.110.80.184</key>
+        <dict>
+          <key>NSExceptionAllowsInsecureHTTPLoads</key>
+          <true/>
+          <key>NSExceptionMinimumTLSVersion</key>
+          <string>TLSv1.2</string>
+        </dict>
+        <key>localhost</key>
+        <dict>
+          <key>NSExceptionAllowsInsecureHTTPLoads</key>
+          <true/>
+          <key>NSExceptionMinimumTLSVersion</key>
+          <string>TLSv1.2</string>
         </dict>
       </dict>
     </dict>

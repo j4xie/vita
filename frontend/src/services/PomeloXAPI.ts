@@ -127,10 +127,22 @@ class PomeloXAPI {
   }
 
   /**
-   * 获取学校列表
+   * 获取学校列表 (公开接口，无需认证)
    */
   async getSchoolList(): Promise<ApiResponse<School[]>> {
-    return this.request('/app/dept/list', { method: 'GET' });
+    const response = await fetch(`${BASE_URL}/app/dept/list`, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+      },
+    });
+    
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: 获取学校列表失败`);
+    }
+    
+    return response.json();
   }
 
   /**

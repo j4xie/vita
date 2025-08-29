@@ -1,4 +1,4 @@
-# VitaGlobal 开发环境 Docker Compose 配置
+# PomeloX 开发环境 Docker Compose 配置
 # 用于本地开发的PostgreSQL和Redis服务
 
 version: '3.8'
@@ -7,23 +7,23 @@ services:
   # PostgreSQL 数据库服务
   postgres:
     image: postgres:15-alpine
-    container_name: vitaglobal_postgres
+    container_name: pomelox_postgres
     restart: unless-stopped
     ports:
       - "5432:5432"
     environment:
-      POSTGRES_DB: vitaglobal_db
-      POSTGRES_USER: vitaglobal
-      POSTGRES_PASSWORD: vitaglobal_password
+      POSTGRES_DB: pomelox_db
+      POSTGRES_USER: pomelox
+      POSTGRES_PASSWORD: pomelox_password
       POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=C"
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./database/init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
       - ./database/seed.sql:/docker-entrypoint-initdb.d/02-seed.sql:ro
     networks:
-      - vitaglobal_network
+      - pomelox_network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U vitaglobal -d vitaglobal_db"]
+      test: ["CMD-SHELL", "pg_isready -U pomelox -d pomelox_db"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -31,7 +31,7 @@ services:
   # Redis 缓存和会话存储
   redis:
     image: redis:7-alpine
-    container_name: vitaglobal_redis
+    container_name: pomelox_redis
     restart: unless-stopped
     ports:
       - "6379:6379"
@@ -40,7 +40,7 @@ services:
       - redis_data:/data
       - ./redis/redis.conf:/usr/local/etc/redis/redis.conf:ro
     networks:
-      - vitaglobal_network
+      - pomelox_network
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
@@ -50,18 +50,18 @@ services:
   # PostgreSQL 管理界面 (可选，用于开发调试)
   pgadmin:
     image: dpage/pgadmin4:latest
-    container_name: vitaglobal_pgadmin
+    container_name: pomelox_pgadmin
     restart: unless-stopped
     ports:
       - "5050:80"
     environment:
-      PGADMIN_DEFAULT_EMAIL: admin@vitaglobal.dev
+      PGADMIN_DEFAULT_EMAIL: admin@pomelox.dev
       PGADMIN_DEFAULT_PASSWORD: admin123
       PGADMIN_CONFIG_SERVER_MODE: 'False'
     volumes:
       - pgadmin_data:/var/lib/pgadmin
     networks:
-      - vitaglobal_network
+      - pomelox_network
     depends_on:
       - postgres
     profiles:
@@ -70,7 +70,7 @@ services:
   # Redis 管理界面 (可选，用于开发调试)
   redis-commander:
     image: rediscommander/redis-commander:latest
-    container_name: vitaglobal_redis_commander
+    container_name: pomelox_redis_commander
     restart: unless-stopped
     ports:
       - "8081:8081"
@@ -79,7 +79,7 @@ services:
       HTTP_USER: admin
       HTTP_PASSWORD: admin123
     networks:
-      - vitaglobal_network
+      - pomelox_network
     depends_on:
       - redis
     profiles:
@@ -88,7 +88,7 @@ services:
   # Nginx 反向代理 (可选，用于生产环境测试)
   nginx:
     image: nginx:alpine
-    container_name: vitaglobal_nginx
+    container_name: pomelox_nginx
     restart: unless-stopped
     ports:
       - "80:80"
@@ -98,7 +98,7 @@ services:
       - ./nginx/ssl:/etc/nginx/ssl:ro
       - ./nginx/logs:/var/log/nginx
     networks:
-      - vitaglobal_network
+      - pomelox_network
     profiles:
       - production # 使用 docker-compose --profile production up 启动
 
@@ -113,7 +113,7 @@ volumes:
 
 # 网络定义
 networks:
-  vitaglobal_network:
+  pomelox_network:
     driver: bridge
     ipam:
       config:
@@ -142,9 +142,9 @@ networks:
 # 🗄️ 数据库连接信息:
 # Host: localhost
 # Port: 5432
-# Database: vitaglobal_db
-# Username: vitaglobal
-# Password: vitaglobal_password
+# Database: pomelox_db
+# Username: pomelox
+# Password: pomelox_password
 #
 # 🔧 Redis连接信息:
 # Host: localhost
@@ -152,7 +152,7 @@ networks:
 # DB: 0 (默认)
 #
 # 🌐 管理界面访问 (需要--profile tools):
-# PgAdmin: http://localhost:5050 (admin@vitaglobal.dev / admin123)
+# PgAdmin: http://localhost:5050 (admin@pomelox.dev / admin123)
 # Redis Commander: http://localhost:8081 (admin / admin123)
 #
 # 🧹 清理数据:

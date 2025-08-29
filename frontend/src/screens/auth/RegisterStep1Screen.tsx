@@ -84,6 +84,7 @@ export const RegisterStep1Screen: React.FC = () => {
         const schoolData = createSchoolDataFromBackend(response.data);
         setSchools(schoolData);
       } else {
+        console.error('加载学校列表失败:', response);
         Alert.alert(t('common.error'), t('auth.register.errors.school_load_failed'));
       }
     } catch (error) {

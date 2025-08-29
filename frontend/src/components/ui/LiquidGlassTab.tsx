@@ -213,7 +213,7 @@ const styles = StyleSheet.create({
   
   // 激活状态 - 实色但保留玻璃质感
   active: {
-    backgroundColor: BRAND_INTERACTIONS.navigation.active.text, // 西柚 #FF6B35
+    backgroundColor: BRAND_INTERACTIONS.navigation.active.text, // PomeloX #FF6B35
     borderWidth: 1,
     borderColor: theme.liquidGlass.primaryGlass.border,
     ...theme.shadows.xs,

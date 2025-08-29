@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "vitaglobal-app",
-    "slug": "vitaglobal",
+    "name": "pomelox-app",
+    "slug": "pomelox",
     "version": "1.0.0",
     "owner": "stevenj4",
     "orientation": "portrait",
@@ -20,7 +20,7 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.anonymous.vitaglobalapp"
+      "bundleIdentifier": "com.anonymous.pomeloxapp"
     },
     "android": {
       "adaptiveIcon": {
@@ -28,7 +28,7 @@
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
-      "package": "com.anonymous.vitaglobalapp",
+      "package": "com.anonymous.pomeloxapp",
       "permissions": [
         "android.permission.CAMERA",
         "android.permission.RECORD_AUDIO",

@@ -9,6 +9,7 @@ import {
   SafeAreaView,
   Dimensions,
   Alert,
+  Keyboard,
 } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -18,8 +19,9 @@ import { DeviceEventEmitter } from 'react-native';
 import { theme } from '../../theme';
 import { LIQUID_GLASS_LAYERS } from '../../theme/core';
 // import RenderHtml from 'react-native-render-html'; // 暂时注释掉，避免兼容性问题
-import { vitaGlobalAPI } from '../../services/VitaGlobalAPI';
+import { pomeloXAPI } from '../../services/PomeloXAPI';
 import { FrontendActivity } from '../../utils/activityAdapter';
+import { useUser } from '../../context/UserContext';
 
 const { width: screenWidth } = Dimensions.get('window');
 
@@ -29,62 +31,211 @@ export const ActivityDetailScreen: React.FC = () => {
   const route = useRoute<any>();
   const insets = useSafeAreaInsets();
   const activity = route.params?.activity || {};
+  const { user, isAuthenticated } = useUser();
   
   const [isRegistered, setIsRegistered] = useState(false);
   const [registrationStatus, setRegistrationStatus] = useState<'upcoming' | 'registered' | 'checked_in'>('upcoming');
   const [loading, setLoading] = useState(false);
   const [isFavorited, setIsFavorited] = useState(false);
 
-  // 初始化报名状态
+  // 初始化报名状态 - 使用后端signStatus字段
   useEffect(() => {
+    console.log('🎯 ActivityDetailScreen初始化报名状态:', {
+      activityId: activity.id,
+      activityTitle: activity.title,
+      activityStatus: activity.status,
+      hasStatus: !!activity.status
+    });
+    
+    // 根据activity的status字段设置本地状态
     if (activity.status) {
-      setRegistrationStatus(activity.status);
-      setIsRegistered(activity.status !== 'upcoming');
+      // activity.status已经通过activityAdapter转换过了
+      if (activity.status === 'registered' || activity.status === 'checked_in') {
+        setRegistrationStatus(activity.status);
+        setIsRegistered(true);
+        console.log('✅ 设置为已报名状态:', activity.status);
+      } else {
+        setRegistrationStatus('upcoming');
+        setIsRegistered(false);
+        console.log('📋 设置为未报名状态');
+      }
+    } else {
+      console.log('⚠️ 活动无状态信息，默认为未报名');
+      setRegistrationStatus('upcoming');
+      setIsRegistered(false);
     }
-  }, [activity.status]);
+  }, [activity.status, activity.id]);
+
+  // 页面聚焦时验证最新的报名状态（确保数据同步）
+  useEffect(() => {
+    const verifyRegistrationStatus = async () => {
+      if (!user?.id || !activity.id) return;
+      
+      try {
+        console.log('🔍 验证活动报名状态:', {
+          activityId: activity.id,
+          userId: user.id
+        });
+        
+        const signInfo = await pomeloXAPI.getSignInfo(parseInt(activity.id), parseInt(user.id));
+        
+        console.log('📋 最新报名状态检查结果:', signInfo);
+        
+        if (signInfo.code === 200) {
+          const latestStatus = signInfo.data;
+          let newStatus: 'upcoming' | 'registered' | 'checked_in';
+          
+          switch (latestStatus) {
+            case -1:
+              newStatus = 'registered';
+              setIsRegistered(true);
+              break;
+            case 1:
+              newStatus = 'checked_in';
+              setIsRegistered(true);
+              break;
+            default:
+              newStatus = 'upcoming';
+              setIsRegistered(false);
+          }
+          
+          if (newStatus !== registrationStatus) {
+            console.log('🔄 更新报名状态:', {
+              从: registrationStatus,
+              到: newStatus
+            });
+            setRegistrationStatus(newStatus);
+          }
+        }
+      } catch (error) {
+        console.warn('⚠️ 验证报名状态失败:', error);
+      }
+    };
+
+    // 只在页面首次加载或活动ID变化时验证
+    if (activity.id) {
+      verifyRegistrationStatus();
+    }
+  }, [activity.id, user?.id]); // 移除registrationStatus依赖避免无限循环
+
+  // 键盘监听 - 保持tab bar隐藏状态
+  useEffect(() => {
+    const keyboardDidShowListener = Keyboard.addListener('keyboardDidShow', () => {
+      navigation.getParent()?.setOptions({
+        tabBarStyle: { display: 'none' },
+      });
+    });
+
+    const keyboardDidHideListener = Keyboard.addListener('keyboardDidHide', () => {
+      navigation.getParent()?.setOptions({
+        tabBarStyle: { display: 'none' },
+      });
+    });
+
+    navigation.getParent()?.setOptions({
+      tabBarStyle: { display: 'none' },
+    });
+
+    return () => {
+      keyboardDidShowListener?.remove();
+      keyboardDidHideListener?.remove();
+    };
+  }, [navigation]);
 
   // 处理活动报名
   const handleRegister = async () => {
-    if (loading || registrationStatus !== 'upcoming') return;
+    if (loading) return;
 
-    setLoading(true);
-    try {
-      const result = await vitaGlobalAPI.enrollActivity(parseInt(activity.id));
-      
-      if (result.code === 200 && result.data && result.data > 0) {
-        setRegistrationStatus('registered');
-        setIsRegistered(true);
-        Alert.alert(t('activityDetail.registration_success'), t('activityDetail.registration_success_message'));
-      } else {
-        Alert.alert(t('activityDetail.registration_failed'), result.msg || t('activityDetail.registration_failed_message'));
-      }
-    } catch (error) {
-      console.error('Registration error:', error);
-      Alert.alert(t('activityDetail.registration_failed'), t('common.network_error'));
-    } finally {
-      setLoading(false);
+    // 检查用户登录状态
+    if (!isAuthenticated) {
+      // 未登录，跳转到登录页面
+      navigation.navigate('Login', { returnTo: 'ActivityDetail', activityId: activity.id });
+      return;
+    }
+
+    // 已登录，跳转到报名表单页面
+    if (registrationStatus === 'upcoming') {
+      navigation.navigate('ActivityRegistrationForm', { activity });
+      return;
     }
   };
 
-  // 处理活动签到
+  // 处理活动签到 - 打开扫码页面
   const handleSignIn = async () => {
     if (loading || registrationStatus !== 'registered') return;
 
-    setLoading(true);
     try {
-      const result = await vitaGlobalAPI.signInActivity(parseInt(activity.id));
+      console.log('开始活动签到流程:', { activityId: activity.id, activityName: activity.name });
       
-      if (result.code === 200 && result.data && result.data > 0) {
-        setRegistrationStatus('checked_in');
-        Alert.alert(t('activityDetail.checkin_success'), t('activityDetail.checkin_success_message'));
-      } else {
-        Alert.alert(t('activityDetail.checkin_failed'), result.msg || t('activityDetail.checkin_failed_message'));
-      }
+      // 导航到扫码页面，传递活动信息和签到回调
+      navigation.navigate('QRScanner', {
+        purpose: 'activity_signin', // 扫码目的：活动签到
+        activity: activity, // 传递活动信息
+        onScanSuccess: async (scannedData: string) => {
+          // 扫码成功后的处理
+          console.log('扫码成功，开始签到:', scannedData);
+          
+          try {
+            setLoading(true);
+            // 调用活动签到API
+            const result = await pomeloXAPI.signInActivity(parseInt(activity.id), user?.id ? parseInt(user.id) : 0);
+            
+            console.log('签到结果:', result);
+            
+            if (result.code === 200 && result.data && result.data > 0) {
+              setRegistrationStatus('checked_in');
+              
+              // 发送签到成功事件，更新活动列表
+              DeviceEventEmitter.emit('activitySignedIn', { activityId: activity.id });
+              
+              Alert.alert(
+                t('activityDetail.checkin_success'), 
+                t('activityDetail.checkin_success_message')
+              );
+              
+              // 返回活动详情页面
+              navigation.goBack();
+            } else {
+              // 详细的错误处理
+              let errorMessage = result.msg || t('activityDetail.checkin_failed_message');
+              
+              if (result.code === 500) {
+                if (errorMessage.includes('已签到')) {
+                  errorMessage = '您已经签到过这个活动了';
+                  setRegistrationStatus('checked_in');
+                } else if (errorMessage.includes('时间')) {
+                  errorMessage = '签到时间未到或已过期';
+                } else if (errorMessage.includes('未报名')) {
+                  errorMessage = '您尚未报名此活动，无法签到';
+                } else {
+                  errorMessage = '签到失败，请稍后重试';
+                }
+              }
+              
+              Alert.alert(t('activityDetail.checkin_failed'), errorMessage);
+            }
+          } catch (error) {
+            console.error('Activity sign in error:', error);
+            Alert.alert(t('activityDetail.checkin_failed'), t('common.network_error'));
+          } finally {
+            setLoading(false);
+          }
+        },
+        onScanError: (error: string) => {
+          // 扫码失败的处理
+          console.error('扫码失败:', error);
+          Alert.alert(
+            '扫码失败',
+            '请重新扫描活动签到二维码'
+          );
+        }
+      });
     } catch (error) {
-      console.error('Sign-in error:', error);
-      Alert.alert(t('activityDetail.checkin_failed'), t('common.network_error'));
-    } finally {
-      setLoading(false);
+      console.error('打开扫码页面失败:', error);
+      Alert.alert(
+        '打开扫码失败',
+        '无法启动扫码功能，请检查相机权限'
+      );
     }
   };
 
@@ -93,11 +244,20 @@ export const ActivityDetailScreen: React.FC = () => {
     // 发送隐藏TabBar事件
     DeviceEventEmitter.emit('hideTabBar', true);
 
-    // 组件卸载时恢复TabBar
+    // 监听报名成功事件
+    const registrationListener = DeviceEventEmitter.addListener('activityRegistered', (data: { activityId: string }) => {
+      if (data.activityId === activity.id) {
+        setRegistrationStatus('registered');
+        setIsRegistered(true);
+      }
+    });
+
+    // 组件卸载时恢复TabBar和清理监听器
     return () => {
       DeviceEventEmitter.emit('hideTabBar', false);
+      registrationListener.remove();
     };
-  }, []);
+  }, [activity.id]);
 
   const handleBack = () => {
     navigation.goBack();
@@ -112,6 +272,14 @@ export const ActivityDetailScreen: React.FC = () => {
     setIsFavorited(!isFavorited);
   };
 
+  // 格式化时间为12小时制
+  const formatTime = (timeString: string) => {
+    const [hours, minutes] = timeString.split(':');
+    const hour24 = parseInt(hours);
+    const hour12 = hour24 === 0 ? 12 : hour24 > 12 ? hour24 - 12 : hour24;
+    const ampm = hour24 >= 12 ? 'PM' : 'AM';
+    return `${hour12}:${minutes} ${ampm}`;
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -183,12 +351,17 @@ export const ActivityDetailScreen: React.FC = () => {
                 </View>
                 <View style={styles.infoCardContent}>
                   <Text style={styles.infoCardLabel}>{t('activityDetail.activityTime')}</Text>
-                  <Text style={styles.infoCardValue} numberOfLines={1}>
+                  <Text style={styles.infoCardValue} numberOfLines={2}>
                     {activity.endDate && activity.endDate !== activity.date 
-                      ? `${activity.date.split('-')[1]}/${activity.date.split('-')[2]}-${activity.endDate.split('-')[2]}`
-                      : `${activity.date.split('-')[1]}/${activity.date.split('-')[2]}`
+                      ? `${activity.date.split('-')[1].padStart(2, '0')}/${activity.date.split('-')[2].padStart(2, '0')}-${activity.endDate.split('-')[1].padStart(2, '0')}/${activity.endDate.split('-')[2].padStart(2, '0')}`
+                      : `${activity.date.split('-')[1].padStart(2, '0')}/${activity.date.split('-')[2].padStart(2, '0')}`
                     }
                   </Text>
+                  {activity.time && activity.time !== '00:00' && (
+                    <Text style={[styles.infoCardValue, { fontSize: 14, marginTop: 2 }]}>
+                      {formatTime(activity.time)}
+                    </Text>
+                  )}
                 </View>
               </View>
             </View>
@@ -225,11 +398,15 @@ export const ActivityDetailScreen: React.FC = () => {
             <Text style={styles.sectionTitle}>{t('activityDetail.organizer')}</Text>
             <View style={styles.organizerCard}>
               <View style={styles.organizerAvatar}>
-                <Text style={styles.organizerAvatarText}>CU</Text>
+                <Text style={styles.organizerAvatarText}>
+                  {activity.organizer?.name ? activity.organizer.name.substring(0, 2).toUpperCase() : 'ORG'}
+                </Text>
               </View>
               <View style={styles.organizerInfo}>
-                <Text style={styles.organizerName}>CU中国学生学者联合会</Text>
-                <Text style={styles.organizerDesc}>官方认证学生组织</Text>
+                <Text style={styles.organizerName}>{activity.organizer?.name || t('activityDetail.official_activity', '官方活动')}</Text>
+                <Text style={styles.organizerDesc}>
+                  {activity.organizer?.verified ? t('activityDetail.verified_organizer', '官方认证组织') : t('activityDetail.activity_organizer', '活动组织方')}
+                </Text>
               </View>
             </View>
           </View>
@@ -242,16 +419,16 @@ export const ActivityDetailScreen: React.FC = () => {
       }]}>
         <View style={[
           styles.registerButtonShadowContainer,
-          isRegistered && styles.registeredButton
+          registrationStatus === 'checked_in' && styles.checkedInButton
         ]}>
           <TouchableOpacity
             style={styles.registerButton}
-            onPress={registrationStatus === 'upcoming' ? handleRegister : 
-                     registrationStatus === 'registered' ? handleSignIn : undefined}
+            onPress={registrationStatus === 'registered' ? handleSignIn : handleRegister}
             disabled={loading || registrationStatus === 'checked_in'}
           >
             <Text style={styles.registerButtonText}>
               {loading ? t('common.loading') :
+               !isAuthenticated ? '请登录后进行报名' :
                registrationStatus === 'upcoming' ? t('activityDetail.registerNow') :
                registrationStatus === 'registered' ? t('activityDetail.checkin_now') :
                registrationStatus === 'checked_in' ? t('activityDetail.checked_in') : t('activityDetail.unavailable')}
@@ -485,11 +662,14 @@ const styles = StyleSheet.create({
   },
   // Register Button Shadow容器 - 解决阴影冲突
   registerButtonShadowContainer: {
-    borderRadius: 16, // 圆角14-16
-    // L2品牌玻璃效果
-    backgroundColor: 'rgba(249, 168, 137, 0.14)', // Dawn轻染14%
-    borderWidth: 1,
-    borderColor: 'rgba(249, 168, 137, 0.22)', // 品牌描边22%
+    borderRadius: 16,
+    // 使用鲜明的主题色
+    backgroundColor: theme.colors.primary, // 鲜明的橙色背景
+    shadowColor: theme.colors.primary,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 4,
   },
   
   registerButton: {
@@ -497,9 +677,8 @@ const styles = StyleSheet.create({
     paddingVertical: theme.spacing[4],
     borderRadius: theme.borderRadius.lg,
     alignItems: 'center',
-    // 移除阴影，由registerButtonShadowContainer处理
   },
-  registeredButton: {
+  checkedInButton: {
     backgroundColor: theme.colors.text.disabled,
   },
   registerButtonText: {

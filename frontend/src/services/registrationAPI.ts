@@ -17,10 +17,10 @@ const BASE_URL = 'http://106.14.165.234:8085';
  */
 export const sendSMSVerificationCode = async (phoneNumber: string): Promise<SMSVerificationResponse> => {
   try {
-    const response = await fetch(`${BASE_URL}/sms/vercodeSms?phone=${phoneNumber}`, {
+    const response = await fetch(`${BASE_URL}/sms/vercodeSms?phoneNum=${phoneNumber}`, {
       method: 'GET',
       headers: {
-        'Content-Type': 'application/json',
+        'Accept': 'application/json',
       },
     });
 
@@ -46,7 +46,7 @@ export const fetchSchoolList = async (): Promise<APIResponse<any[]>> => {
     const response = await fetch(`${BASE_URL}/app/dept/list`, {
       method: 'GET',
       headers: {
-        'Content-Type': 'application/json',
+        'Accept': 'application/json',
       },
     });
 
@@ -71,7 +71,7 @@ export const fetchOrganizationList = async (): Promise<APIResponse<OrganizationD
     const response = await fetch(`${BASE_URL}/app/organization/list`, {
       method: 'GET',
       headers: {
-        'Content-Type': 'application/json',
+        'Accept': 'application/json',
       },
     });
 
@@ -233,36 +233,24 @@ export const validateInvitationCode = async (invCode: string): Promise<{
   message?: string;
 }> => {
   try {
-    const response = await fetch(`${BASE_URL}/app/invitation/validate?invCode=${invCode}`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
+    // 由于API文档中没有validate接口，我们简单验证邀请码格式
+    // 邀请码应该是8位字母数字组合，如API文档示例中的Y7MW5HBV
+    const isValidFormat = /^[A-Z0-9]{8}$/.test(invCode);
     
-    if (response.ok) {
-      const data = await response.json();
-      if (data.code === 200) {
-        return {
-          valid: true,
-          data: data.data,
-        };
-      } else {
-        return {
-          valid: false,
-          message: data.msg || '邀请码无效',
-        };
-      }
-    } else {
-      // 如果接口不存在，假设邀请码有效（开发阶段）
-      console.warn('邀请码验证接口不存在');
+    if (isValidFormat) {
+      // 返回格式有效的响应，实际验证在注册时进行
       return {
         valid: true,
         data: {
-          inviterName: '测试推荐人',
+          inviterName: '管理员', // 模拟数据，实际注册时由后端验证
           organizationName: '学联组织',
-          organizationId: 1,
         },
+        message: '邀请码格式有效'
+      };
+    } else {
+      return {
+        valid: false,
+        message: '邀请码格式不正确，应为8位字母数字组合'
       };
     }
   } catch (error) {

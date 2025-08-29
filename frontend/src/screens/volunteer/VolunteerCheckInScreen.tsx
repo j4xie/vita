@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -14,11 +14,26 @@ import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTranslation } from 'react-i18next';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { theme } from '../../theme';
 import { useUser } from '../../context/UserContext';
-import { UserInfo } from '../../components/common/UserInfo';
+import { SafeText } from '../../components/common/SafeText';
+import { SafeAlert } from '../../utils/SafeAlert';
+import { useTabBarHide } from '../../hooks/useTabBarHide';
+import { 
+  getVolunteerRecords, 
+  getVolunteerHours, 
+  volunteerSignRecord, 
+  getLastVolunteerRecord,
+  formatVolunteerHours,
+  getVolunteerStatus,
+  VolunteerRecord as APIVolunteerRecord,
+  VolunteerHours
+} from '../../services/volunteerAPI';
+import { VolunteerStateService, VolunteerInfo } from '../../services/volunteerStateService';
 
-interface VolunteerRecord {
+// 前端展示用的志愿者记录类型
+interface DisplayVolunteerRecord {
   id: string;
   phone: string;
   name: string;
@@ -28,68 +43,42 @@ interface VolunteerRecord {
   status: 'not_checked_in' | 'checked_in' | 'checked_out';
   duration?: number; // 分钟
   totalHours?: number; // 总志愿时长（小时）
+  userId?: number; // 添加userId用于API调用
+  lastCheckInTime?: string; // 上次签到时间
+  lastCheckOutTime?: string; // 上次签出时间
+  currentRecordId?: number; // 当前签到记录ID，用于签出
 }
 
-// Mock data for demonstration - UCB志愿者
-const mockVolunteers: VolunteerRecord[] = [
-  {
-    id: '1',
-    phone: '15101234567',
-    name: '陈志豪',
-    school: 'UC Berkeley',
-    status: 'checked_in',
-    checkInTime: '2025-08-13T09:30:00',
-    totalHours: 45.5,
-  },
-  {
-    id: '2',
-    phone: '15101234568',
-    name: '李思雨', 
-    school: 'UC Berkeley',
-    status: 'not_checked_in',
-    totalHours: 32.0,
-  },
-  {
-    id: '3',
-    phone: '15101234569',
-    name: '王建华',
-    school: 'UC Berkeley', 
-    status: 'checked_out',
-    checkInTime: '2025-08-13T08:00:00',
-    checkOutTime: '2025-08-13T12:00:00',
-    duration: 240,
-    totalHours: 28.5,
-  },
-  // 其他学校志愿者用于搜索测试
-  {
-    id: '4',
-    phone: '13812345678',
-    name: '张同学',
-    school: 'UCLA',
-    status: 'checked_in',
-    checkInTime: '2025-08-13T14:30:00',
-    totalHours: 25.5,
-  },
-  {
-    id: '5',
-    phone: '13912345678',
-    name: '李同学', 
-    school: 'University of Washington',
-    status: 'not_checked_in',
-    totalHours: 18.0,
-  },
-];
+// 移除重复的持久化键定义 - 统一使用VolunteerStateService
+
+// mockVolunteers removed - using real volunteer data from API
 
 export const VolunteerCheckInScreen: React.FC = () => {
   const { t } = useTranslation();
   const navigation = useNavigation<any>();
-  const { user, hasPermission } = useUser();
+  const { user, hasPermission, permissions, permissionLevel } = useUser();
   
   const [searchPhone, setSearchPhone] = useState('');
-  const [currentUser, setCurrentUser] = useState<VolunteerRecord | null>(null);
-  const [todayRecords, setTodayRecords] = useState<VolunteerRecord[]>(mockVolunteers);
+  const [currentUser, setCurrentUser] = useState<DisplayVolunteerRecord | null>(null);
+  const [todayRecords, setTodayRecords] = useState<DisplayVolunteerRecord[]>([]);
   const [loading, setLoading] = useState(false);
+  const [recordsLoading, setRecordsLoading] = useState(true);
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [volunteerHours, setVolunteerHours] = useState<VolunteerHours[]>([]);
+  
+  // 操作防重复锁
+  const operationLockRef = useRef<Set<number>>(new Set());
+  
+  // 缓存历史记录（用于展示"上次签到/签出时间"）
+  const lastRecordCacheRef = useRef<Map<number, APIVolunteerRecord>>(new Map());
+
+  // 使用统一的TabBar隐藏Hook
+  useTabBarHide();
+
+  // 加载志愿者数据
+  useEffect(() => {
+    loadVolunteerData();
+  }, []);
 
   // 更新当前时间
   useEffect(() => {
@@ -100,126 +89,430 @@ export const VolunteerCheckInScreen: React.FC = () => {
     return () => clearInterval(timer);
   }, []);
 
+  // 初始化志愿者状态服务
+  useEffect(() => {
+    VolunteerStateService.initialize();
+    return () => VolunteerStateService.cleanup();
+  }, []);
+
+  // 当选择志愿者时，加载该用户的历史记录
+  useEffect(() => {
+    if (currentUser?.userId) {
+      loadUserLastRecord(currentUser.userId);
+    }
+  }, [currentUser?.userId]);
+
+  // 监控状态服务变化
+  useEffect(() => {
+    const handleStateChange = () => {
+      // 当持久化数据变化时重新渲染
+      setCurrentTime(new Date());
+    };
+    
+    VolunteerStateService.addListener(handleStateChange);
+    return () => VolunteerStateService.removeListener(handleStateChange);
+  }, []);
+
+
+  // 加载用户的最后一条记录（用于展示历史记录）
+  const loadUserLastRecord = async (userId: number) => {
+    try {
+      if (lastRecordCacheRef.current.has(userId)) return; // 已缓存
+
+      console.log('🔍 [DEBUG] 加载用户记录:', userId);
+      
+      const last = await getLastVolunteerRecord(userId);
+      console.log('🔍 [DEBUG] API返回最后记录:', last);
+      
+      if (last?.code === 200 && last?.data) {
+        const record = last.data;
+        lastRecordCacheRef.current.set(userId, record);
+        
+        console.log('🔍 [DEBUG] 处理记录数据:', {
+          startTime: record.startTime,
+          endTime: record.endTime,
+          isCurrentlyCheckedIn: !record.endTime
+        });
+        
+        // 更新currentUser的历史记录信息
+        if (currentUser && currentUser.userId === userId) {
+          let updatedUser;
+          
+          if (record.startTime && !record.endTime) {
+            // 用户当前已签到状态
+            console.log('🔍 [DEBUG] 用户当前已签到，设置当前签到信息');
+            updatedUser = {
+              ...currentUser,
+              status: 'checked_in' as const,
+              checkInTime: record.startTime,
+              currentRecordId: record.id,
+              // 清除签出时间，因为用户重新签到了
+              checkOutTime: undefined,
+            };
+            
+            // 同步持久化时间
+            await VolunteerStateService.persistCheckinTime(userId, record.startTime);
+            console.log('🔍 [DEBUG] 已保存持久化时间:', record.startTime);
+          } else {
+            // 用户已签出状态
+            console.log('🔍 [DEBUG] 用户已签出，设置历史记录');
+            updatedUser = {
+              ...currentUser,
+              status: 'checked_out' as const,
+              checkInTime: undefined, // 清除当前签到时间
+              lastCheckInTime: record.startTime,
+              lastCheckOutTime: record.endTime,
+            };
+            
+            // 清除持久化时间（因为已签出）
+            await VolunteerStateService.persistCheckinTime(userId, null);
+          }
+          
+          setCurrentUser(updatedUser);
+          console.log('🔍 [DEBUG] 更新用户状态:', updatedUser);
+        }
+      }
+    } catch (e) {
+      console.warn('加载最后签到记录失败:', e);
+    }
+  };
+
+  // 计算当前本次时长（分钟）
+  const getCurrentDurationMinutes = (vol: DisplayVolunteerRecord) => {
+    const start = vol?.checkInTime || persistedCheckins[vol?.userId!];
+    if (!start) return 0;
+    const startDate = new Date(start);
+    const diffMs = currentTime.getTime() - startDate.getTime();
+    return Math.max(0, Math.floor(diffMs / 60000));
+  };
+
+  // 格式化时长显示
+  const formatDuration = (minutes: number) => {
+    const h = Math.floor(minutes / 60);
+    const m = minutes % 60;
+    return h > 0 ? `${h}小时${m}分钟` : `${m}分钟`;
+  };
+
+  // 加载志愿者记录和工时数据
+  const loadVolunteerData = async () => {
+    try {
+      setRecordsLoading(true);
+      
+      // 根据用户权限构建API过滤参数
+      let recordsFilters = {};
+      let hoursFilters = {};
+      
+      const dataScope = permissions.getDataScope();
+      if (dataScope === 'school' && user?.deptId) {
+        // 分管理员：只获取本校数据
+        recordsFilters = { deptId: user.deptId };
+        hoursFilters = { deptId: user.deptId };
+      } else if (dataScope === 'self' && user?.userId) {
+        // 内部员工：只获取个人数据
+        recordsFilters = { userId: user.userId };
+        hoursFilters = { userId: user.userId };
+      }
+      // 总管理员：无过滤参数，获取所有数据
+      
+      // 并行加载记录和工时数据
+      const [recordsResult, hoursResult] = await Promise.all([
+        getVolunteerRecords(recordsFilters),
+        getVolunteerHours(hoursFilters)
+      ]);
+
+      // 处理打卡记录
+      if (recordsResult.code === 200 && recordsResult.rows && recordsResult.rows.length > 0) {
+        const displayRecords = await convertAPIRecordsToDisplay(recordsResult.rows);
+        setTodayRecords(displayRecords);
+      } else if (recordsResult.msg === '无权限') {
+        // 如果无权限，使用Mock数据并显示提示
+        console.warn('用户无志愿者管理权限，使用演示数据');
+        setTodayRecords([]);
+      } else {
+        // 其他情况，使用Mock数据作为降级
+        setTodayRecords([]);
+      }
+
+      // 处理工时数据
+      if (hoursResult.code === 200 && hoursResult.rows && hoursResult.rows.length > 0) {
+        setVolunteerHours(hoursResult.rows);
+      }
+
+    } catch (error) {
+      console.error('加载志愿者数据失败:', error);
+      // 如果API失败，使用Mock数据作为降级
+      setTodayRecords([]);
+    } finally {
+      setRecordsLoading(false);
+    }
+  };
+
+  // 将API记录转换为前端显示格式
+  const convertAPIRecordsToDisplay = async (apiRecords: APIVolunteerRecord[]): Promise<DisplayVolunteerRecord[]> => {
+    return apiRecords.map(record => {
+      const apiStatus = getVolunteerStatus(record);
+      // 将API状态转换为前端状态
+      let displayStatus: 'not_checked_in' | 'checked_in' | 'checked_out';
+      switch (apiStatus) {
+        case 'signed_in':
+          displayStatus = 'checked_in';
+          break;
+        case 'signed_out':
+          displayStatus = 'checked_out';
+          break;
+        default:
+          displayStatus = 'not_checked_in';
+          break;
+      }
+      
+      return {
+        id: record.id.toString(),
+        phone: record.userId.toString(), // 暂时用userId，可能需要获取实际手机号
+        name: record.legalName,
+        school: '获取中...', // 需要根据用户信息获取学校
+        checkInTime: record.startTime,
+        checkOutTime: record.endTime,
+        status: displayStatus,
+        userId: record.userId,
+        totalHours: getVolunteerTotalHours(record.userId)
+      };
+    });
+  };
+
+  // 获取用户总工时
+  const getVolunteerTotalHours = (userId: number): number => {
+    const userHours = volunteerHours.find(h => h.userId === userId);
+    return userHours ? Math.round(userHours.totalMinutes / 60 * 10) / 10 : 0;
+  };
+
   // 搜索志愿者
   const handleSearch = async () => {
     if (!searchPhone.trim()) {
-      Alert.alert(t('volunteerCheckIn.alerts.hint'), t('volunteerCheckIn.alerts.phoneRequired'));
+      SafeAlert.alert(t('volunteerCheckIn.alerts.hint'), t('volunteerCheckIn.alerts.phoneRequired'));
       return;
     }
 
+    console.log('🔍 [DEBUG] 开始搜索志愿者:', searchPhone.trim());
     setLoading(true);
-    // 模拟API调用
-    setTimeout(() => {
-      const user = mockVolunteers.find(v => v.phone === searchPhone.trim());
-      setCurrentUser(user || null);
-      setLoading(false);
+    
+    try {
+      // 在今日记录中搜索手机号对应的志愿者
+      const foundUser = todayRecords.find(v => v.phone === searchPhone.trim());
+      console.log('🔍 [DEBUG] 搜索结果:', foundUser);
       
-      if (!user) {
-        Alert.alert(t('volunteerCheckIn.alerts.notFound'), t('volunteerCheckIn.alerts.userNotFound'));
+      if (foundUser) {
+        console.log('🔍 [DEBUG] 找到用户，获取最新签到状态');
+        
+        // 获取该用户的最新签到状态
+        try {
+          const lastRecord = await getLastVolunteerRecord(foundUser.userId!);
+          console.log('🔍 [DEBUG] 最新记录:', lastRecord);
+          
+          if (lastRecord.code === 200 && lastRecord.data) {
+            // 更新用户状态
+            const apiStatus = getVolunteerStatus(lastRecord.data);
+            let displayStatus: 'not_checked_in' | 'checked_in' | 'checked_out';
+            switch (apiStatus) {
+              case 'signed_in':
+                displayStatus = 'checked_in';
+                break;
+              case 'signed_out':
+                displayStatus = 'checked_out';
+                break;
+              default:
+                displayStatus = 'not_checked_in';
+                break;
+            }
+            
+            console.log('🔍 [DEBUG] 状态转换:', { apiStatus, displayStatus });
+            
+            const updatedUser = {
+              ...foundUser,
+              status: displayStatus,
+              checkInTime: lastRecord.data.startTime,
+              checkOutTime: lastRecord.data.endTime,
+              currentRecordId: (!lastRecord.data.endTime && lastRecord.data.startTime) ? lastRecord.data.id : undefined,
+            };
+            
+            console.log('🔍 [DEBUG] 设置用户数据:', updatedUser);
+            setCurrentUser(updatedUser);
+            
+            // 如果当前已签到，同步持久化时间
+            if (displayStatus === 'checked_in' && lastRecord.data.startTime) {
+              await persistCheckinTime(foundUser.userId!, lastRecord.data.startTime);
+              console.log('🔍 [DEBUG] 已保存持久化时间');
+            }
+          } else {
+            console.log('🔍 [DEBUG] 没有最新记录，使用缓存数据');
+            setCurrentUser(foundUser);
+          }
+        } catch (error) {
+          console.warn('获取最新记录失败，使用缓存数据:', error);
+          setCurrentUser(foundUser);
+        }
+      } else {
+        console.log('🔍 [DEBUG] 未找到用户');
+        setCurrentUser(null);
+        SafeAlert.alert(t('volunteerCheckIn.alerts.notFound'), t('volunteerCheckIn.alerts.userNotFound'));
       }
-    }, 500);
+    } catch (error) {
+      console.error('搜索志愿者失败:', error);
+      SafeAlert.alert(t('common.error'), t('volunteer.search_failed'));
+    } finally {
+      setLoading(false);
+    }
   };
 
   // 签到
-  const handleCheckIn = () => {
-    if (!currentUser) return;
+  const handleCheckIn = async () => {
+    if (!currentUser || !currentUser.userId) return;
 
-    Alert.alert(
-      t('volunteerCheckIn.alerts.confirmCheckIn'),
-      t('volunteerCheckIn.alerts.confirmCheckInMessage', { name: currentUser.name }),
-      [
-        { text: t('common.cancel'), style: 'cancel' },
-        {
-          text: t('common.confirm'),
-          onPress: () => {
-            const updatedUser = {
-              ...currentUser,
-              status: 'checked_in' as const,
-              checkInTime: new Date().toISOString(),
-            };
-            setCurrentUser(updatedUser);
-            
-            // 更新记录列表
-            setTodayRecords(prev => 
-              prev.map(v => v.id === currentUser.id ? updatedUser : v)
-            );
-            
-            Alert.alert(
-              t('volunteerCheckIn.alerts.checkInSuccess'), 
-              t('volunteerCheckIn.alerts.checkInSuccessMessage', { name: currentUser.name })
-            );
-          },
-        },
-      ]
-    );
+    // 直接执行签到，移除Alert避免Text渲染错误
+    console.log('🔄 执行签到:', currentUser.name);
+    
+    const executeCheckIn = async () => {
+            try {
+              setLoading(true);
+              
+              // 调用真实的签到API（带 startTime）
+              const startTime = new Date().toISOString().replace('T', ' ').substring(0, 19);
+              const result = await volunteerSignRecord(currentUser.userId!, 1, undefined, undefined, startTime);
+              
+              if (result.code === 200) {
+                const checkInTimeISO = new Date().toISOString();
+                const updatedUser = {
+                  ...currentUser,
+                  status: 'checked_in' as const,
+                  checkInTime: checkInTimeISO,
+                };
+                setCurrentUser(updatedUser);
+                
+                // 持久化签到时间
+                await persistCheckinTime(currentUser.userId!, checkInTimeISO);
+                
+                // 更新记录列表
+                setTodayRecords(prev => 
+                  prev.map(v => v.id === currentUser.id ? updatedUser : v)
+                );
+                
+                // 重新加载数据以获取最新状态
+                await loadVolunteerData();
+                
+                console.log('✅ 签到成功:', currentUser.name);
+              } else {
+                console.error('❌ 签到失败:', result.msg);
+              }
+            } catch (error) {
+              console.error('❌ 签到异常:', error);
+            } finally {
+              setLoading(false);
+            }
+    };
+    
+    // 立即执行签到
+    executeCheckIn();
   };
 
   // 签出
-  const handleCheckOut = () => {
-    if (!currentUser || !currentUser.checkInTime) return;
+  const handleCheckOut = async () => {
+    if (!currentUser || !currentUser.userId) return;
 
-    const checkInTime = new Date(currentUser.checkInTime);
+    // 优先使用持久化时间，再使用当前签到时间
+    const checkInTimeStr = currentUser.checkInTime || VolunteerStateService.getPersistedCheckinTime(currentUser.userId);
+    if (!checkInTimeStr) {
+      SafeAlert.alert(t('common.error'), '未找到签到时间记录');
+      return;
+    }
+
+    const checkInTime = new Date(checkInTimeStr);
     const checkOutTime = new Date();
-    const duration = Math.floor((checkOutTime.getTime() - checkInTime.getTime()) / (1000 * 60));
+    
+    // 验证时间有效性
+    if (isNaN(checkInTime.getTime()) || isNaN(checkOutTime.getTime())) {
+      SafeAlert.alert(t('common.error'), t('volunteerCheckIn.time.serviceDuration'));
+      return;
+    }
+    
+    const timeDiff = checkOutTime.getTime() - checkInTime.getTime();
+    const duration = Math.max(0, Math.floor(timeDiff / (1000 * 60))); // 确保非负数
 
-    Alert.alert(
-      t('volunteerCheckIn.alerts.confirmCheckOut'),
-      t('volunteerCheckIn.alerts.confirmCheckOutMessage', { 
-        name: currentUser.name,
-        hours: Math.floor(duration / 60),
-        minutes: duration % 60
-      }),
-      [
-        { text: t('common.cancel'), style: 'cancel' },
-        {
-          text: t('common.confirm'),
-          onPress: () => {
-            const updatedUser = {
-              ...currentUser,
-              status: 'checked_out' as const,
-              checkOutTime: checkOutTime.toISOString(),
-              duration,
-              totalHours: (currentUser.totalHours || 0) + (duration / 60),
-            };
-            setCurrentUser(updatedUser);
-            
-            // 更新记录列表
-            setTodayRecords(prev => 
-              prev.map(v => v.id === currentUser.id ? updatedUser : v)
-            );
-            
-            Alert.alert(
-              t('volunteerCheckIn.alerts.checkOutSuccess'), 
-              t('volunteerCheckIn.alerts.checkOutSuccessMessage', { 
-                name: currentUser.name,
-                hours: Math.floor(duration / 60),
-                minutes: duration % 60
-              })
-            );
-          },
-        },
-      ]
-    );
+    // 直接执行签退，移除SafeAlert.alert避免Text渲染错误
+    console.log('🔄 执行签退:', currentUser.name, `${Math.floor(duration / 60)}h${duration % 60}m`);
+    
+    const executeCheckOut = async () => {
+            try {
+              setLoading(true);
+              
+              // 调用真实的签退API（带 endTime 和 recordId）
+              const endTime = checkOutTime.toISOString().replace('T', ' ').substring(0, 19);
+              const result = await volunteerSignRecord(
+                currentUser.userId!, 
+                2, // 2表示签退
+                undefined, 
+                undefined, 
+                undefined, // startTime (签退时不需要)
+                endTime,
+                currentUser.currentRecordId // 当前记录ID
+              ); 
+              
+              if (result.code === 200) {
+                const updatedUser = {
+                  ...currentUser,
+                  status: 'checked_out' as const,
+                  checkOutTime: checkOutTime.toISOString(),
+                  duration,
+                  totalHours: (currentUser.totalHours || 0) + (duration / 60),
+                  lastCheckOutTime: checkOutTime.toISOString(),
+                };
+                setCurrentUser(updatedUser);
+                
+                // 清除持久化的签到时间
+                await persistCheckinTime(currentUser.userId!, null);
+                
+                // 更新记录列表
+                setTodayRecords(prev => 
+                  prev.map(v => v.id === currentUser.id ? updatedUser : v)
+                );
+                
+                // 重新加载数据以获取最新状态
+                await loadVolunteerData();
+                
+                // 使用console.log替代Alert，避免Text渲染错误
+                console.log('✅ 签退成功:', {
+                  name: currentUser.name || '志愿者',
+                  hours: Math.floor(duration / 60),
+                  minutes: duration % 60
+                });
+                
+                console.log('✅ 签退API调用成功');
+              } else {
+                console.error('❌ 签退失败:', result.msg);
+              }
+            } catch (error) {
+              console.error('❌ 签退异常:', error);
+            } finally {
+              setLoading(false);
+            }
+    };
+    
+    // 立即执行签退
+    executeCheckOut();
   };
 
   // 扫码功能
   const handleScanQR = () => {
     // 跳转到扫码页面或实现扫码逻辑
-    Alert.alert(t('volunteerCheckIn.alerts.scanFunction'), t('volunteerCheckIn.alerts.scanComingSoon'));
+    SafeAlert.alert(t('volunteerCheckIn.alerts.scanFunction'), t('volunteerCheckIn.alerts.scanComingSoon'));
   };
 
-  // 计算签到时长
-  const getCheckInDuration = (checkInTime: string) => {
-    const start = new Date(checkInTime);
-    const now = currentTime;
-    const diff = Math.floor((now.getTime() - start.getTime()) / (1000 * 60));
-    const hours = Math.floor(diff / 60);
-    const minutes = diff % 60;
-    return `${hours} ${t('volunteerCheckIn.time.hours')} ${minutes} ${t('volunteerCheckIn.time.minutes')}`;
+  // 计算签到时长（使用统一服务）
+  const getCheckInDuration = (vol: DisplayVolunteerRecord) => {
+    const minutes = VolunteerStateService.getCurrentDurationMinutes(vol as VolunteerInfo, currentTime);
+    return VolunteerStateService.formatDuration(minutes);
   };
 
   // 渲染记录项
-  const renderRecord = ({ item }: { item: VolunteerRecord }) => {
+  const renderRecord = ({ item }: { item: DisplayVolunteerRecord }) => {
     const getStatusColor = () => {
       switch (item.status) {
         case 'checked_in': return theme.colors.success;
@@ -243,19 +536,19 @@ export const VolunteerCheckInScreen: React.FC = () => {
       >
         <View style={styles.recordContent}>
           <View style={styles.recordInfo}>
-            <Text style={styles.recordName}>{item.name}</Text>
-            <Text style={styles.recordPhone}>{item.phone}</Text>
-            <Text style={styles.recordSchool}>{item.school}</Text>
+            <Text style={styles.recordName}>{String(item.name || '志愿者')}</Text>
+            <Text style={styles.recordPhone}>{String(item.phone || '无手机号')}</Text>
+            <Text style={styles.recordSchool}>{String(item.school || '学校信息')}</Text>
           </View>
           
           <View style={styles.recordStatus}>
             <View style={[styles.statusDot, { backgroundColor: getStatusColor() }]} />
             <Text style={[styles.statusText, { color: getStatusColor() }]}>
-              {getStatusText()}
+              {String(getStatusText() || '状态未知')}
             </Text>
-            {item.status === 'checked_in' && item.checkInTime && (
+            {item.status === 'checked_in' && (
               <Text style={styles.durationText}>
-                {getCheckInDuration(item.checkInTime)}
+                {getCheckInDuration(item)}
               </Text>
             )}
           </View>
@@ -264,8 +557,8 @@ export const VolunteerCheckInScreen: React.FC = () => {
     );
   };
 
-  // 权限检查 - 只有管理员可以访问志愿者管理功能
-  if (!hasPermission('canManageVolunteers')) {
+  // 权限检查 - 普通用户不能访问志愿者管理功能
+  if (permissions.isRegularUser()) {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.noPermissionContainer}>
@@ -280,6 +573,120 @@ export const VolunteerCheckInScreen: React.FC = () => {
             <Text style={styles.backButtonText}>{t('common.back')}</Text>
           </TouchableOpacity>
         </View>
+      </SafeAreaView>
+    );
+  }
+
+  // 内部员工专用：个人工时查看界面
+  const renderStaffPersonalView = () => {
+    const userHours = volunteerHours.find(h => h.userId === user?.userId);
+    const userRecords = todayRecords.filter(r => r.userId === user?.userId);
+
+    return (
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>{t('volunteerCheckIn.personalHours')}</Text>
+        
+        {/* 个人工时统计卡片 */}
+        <View style={styles.personalStatsCard}>
+          <View style={styles.statsHeader}>
+            <Ionicons name="person-circle" size={32} color={theme.colors.primary} />
+            <View style={styles.statsInfo}>
+              <Text style={styles.statsName}>{user?.legalName || t('volunteerCheckIn.currentUser')}</Text>
+              <Text style={styles.statsSchool}>{user?.dept?.deptName || t('profile.school_info', '学校信息')}</Text>
+            </View>
+          </View>
+          
+          <View style={styles.statsContent}>
+            <View style={styles.statItem}>
+              <Text style={styles.statLabel}>{t('volunteerCheckIn.totalHours')}</Text>
+              <Text style={styles.statValue}>
+                {userHours && typeof userHours.totalMinutes === 'number' 
+                  ? formatVolunteerHours(userHours.totalMinutes) 
+                  : '0小时'}
+              </Text>
+            </View>
+            
+            <View style={styles.statItem}>
+              <Text style={styles.statLabel}>{t('volunteerCheckIn.todayRecords')}</Text>
+              <Text style={styles.statValue}>{userRecords.length} {t('volunteerCheckIn.records_unit', '条')}</Text>
+            </View>
+          </View>
+        </View>
+
+        {/* 个人打卡记录列表 */}
+        {userRecords.length > 0 && (
+          <View style={styles.personalRecordsSection}>
+            <Text style={styles.sectionTitle}>{t('volunteerCheckIn.myRecords')}</Text>
+            {userRecords.map((record, index) => (
+              <View key={index} style={styles.personalRecordItem}>
+                <View style={styles.recordTimeInfo}>
+                  <Text style={styles.recordDate}>
+                    {record.checkInTime ? new Date(record.checkInTime).toLocaleDateString() : '今日'}
+                  </Text>
+                  <Text style={styles.recordTime}>
+                    {record.checkInTime ? new Date(record.checkInTime).toLocaleTimeString() : '--'}
+                    {' - '}
+                    {record.checkOutTime ? new Date(record.checkOutTime).toLocaleTimeString() : '进行中'}
+                  </Text>
+                </View>
+                <View style={styles.recordDuration}>
+                  <Text style={styles.durationText}>
+                    {record.duration ? `${Math.floor(record.duration / 60)}h ${record.duration % 60}m` : '计时中...'}
+                  </Text>
+                </View>
+              </View>
+            ))}
+          </View>
+        )}
+        
+        {/* 只读提示 */}
+        <View style={styles.readOnlyNotice}>
+          <Ionicons name="information-circle" size={16} color={theme.colors.text.secondary} />
+          <Text style={styles.readOnlyText}>
+            {t('volunteerCheckIn.staffReadOnlyNotice')}
+          </Text>
+        </View>
+      </View>
+    );
+  };
+
+  // 如果是内部员工，显示个人界面
+  if (permissions.isStaff()) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+          {/* Header */}
+          <LinearGradient
+            colors={['rgba(248, 250, 255, 0.95)', 'rgba(240, 247, 255, 0.85)']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.header}
+          >
+            <View style={styles.headerContent}>
+              <View>
+                <Text style={styles.headerTitle}>{t('volunteerCheckIn.personalDashboard')}</Text>
+                <Text style={styles.headerSubtitle}>{t('volunteerCheckIn.personalDashboardDesc')}</Text>
+              </View>
+            </View>
+            
+            {/* 当前时间显示 */}
+            <View style={styles.timeContainer}>
+              <Ionicons name="time-outline" size={16} color={theme.colors.text.secondary} />
+              <Text style={styles.currentTime}>
+                {currentTime.toLocaleString('zh-CN', {
+                  year: 'numeric',
+                  month: '2-digit', 
+                  day: '2-digit',
+                  hour: '2-digit',
+                  minute: '2-digit',
+                  second: '2-digit',
+                })}
+              </Text>
+            </View>
+          </LinearGradient>
+
+          {renderStaffPersonalView()}
+        </ScrollView>
       </SafeAreaView>
     );
   }
@@ -317,43 +724,50 @@ export const VolunteerCheckInScreen: React.FC = () => {
           </View>
         </LinearGradient>
 
-        {/* Search Section */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>{t('volunteerCheckIn.searchVolunteer')}</Text>
-          <View style={styles.searchContainer}>
-            <TextInput
-              style={styles.searchInput}
-              placeholder={t('volunteerCheckIn.searchPlaceholder')}
-              value={searchPhone}
-              onChangeText={setSearchPhone}
-              keyboardType="phone-pad"
-              maxLength={11}
-            />
-            {/* Search Button - Shadow优化 */}
-            <View style={styles.searchButtonShadowContainer}>
-              <TouchableOpacity
-                style={styles.searchButton}
-                onPress={handleSearch}
-                disabled={loading}
-              >
-                <LinearGradient
-                  colors={[theme.colors.primary, theme.colors.primaryPressed]}
-                  style={styles.searchButtonGradient}
+        {/* Search Section - 只有管理员能搜索其他人 */}
+        {permissions.canCheckInOut() && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>
+              {permissions.isAdmin() 
+                ? t('volunteerCheckIn.searchVolunteer') 
+                : t('volunteerCheckIn.searchSchoolVolunteer')
+              }
+            </Text>
+            <View style={styles.searchContainer}>
+              <TextInput
+                style={styles.searchInput}
+                placeholder={t('volunteerCheckIn.searchPlaceholder')}
+                value={searchPhone}
+                onChangeText={setSearchPhone}
+                keyboardType="phone-pad"
+                maxLength={11}
+              />
+              {/* Search Button - Shadow优化 */}
+              <View style={styles.searchButtonShadowContainer}>
+                <TouchableOpacity
+                  style={styles.searchButton}
+                  onPress={handleSearch}
+                  disabled={loading}
                 >
-                  <Ionicons name="search" size={20} color="white" />
-                  <Text style={styles.searchButtonText}>{t('volunteerCheckIn.search')}</Text>
-                </LinearGradient>
+                  <LinearGradient
+                    colors={[theme.colors.primary, theme.colors.primaryPressed]}
+                    style={styles.searchButtonGradient}
+                  >
+                    <Ionicons name="search" size={20} color="white" />
+                    <Text style={styles.searchButtonText}>{t('volunteerCheckIn.search')}</Text>
+                  </LinearGradient>
+                </TouchableOpacity>
+              </View>
+              
+              <TouchableOpacity
+                style={styles.scanButton}
+                onPress={handleScanQR}
+              >
+                <Ionicons name="qr-code-outline" size={24} color="#000000" />
               </TouchableOpacity>
             </View>
-            
-            <TouchableOpacity
-              style={styles.scanButton}
-              onPress={handleScanQR}
-            >
-              <Ionicons name="qr-code-outline" size={24} color="#000000" />
-            </TouchableOpacity>
           </View>
-        </View>
+        )}
 
         {/* User Info and Actions */}
         {currentUser && (
@@ -362,7 +776,7 @@ export const VolunteerCheckInScreen: React.FC = () => {
             <View style={styles.userCard}>
               <View style={styles.userInfo}>
                 <View style={styles.userHeader}>
-                  <Text style={styles.userName}>{currentUser.name}</Text>
+                  <SafeText style={styles.userName} fallback="志愿者">{currentUser.name}</SafeText>
                   <View style={[
                     styles.userStatus,
                     { backgroundColor: currentUser.status === 'checked_in' ? theme.colors.success : theme.colors.background.secondary }
@@ -377,8 +791,8 @@ export const VolunteerCheckInScreen: React.FC = () => {
                   </View>
                 </View>
                 
-                <Text style={styles.userPhone}>{currentUser.phone}</Text>
-                <Text style={styles.userSchool}>{currentUser.school}</Text>
+                <SafeText style={styles.userPhone} fallback="无手机号">{currentUser.phone}</SafeText>
+                <SafeText style={styles.userSchool} fallback="学校信息">{currentUser.school}</SafeText>
                 
                 {/* 时间信息 */}
                 <View style={styles.timeInfo}>
@@ -386,12 +800,12 @@ export const VolunteerCheckInScreen: React.FC = () => {
                     <View style={styles.timeItem}>
                       <Ionicons name="log-in-outline" size={16} color={theme.colors.success} />
                       <Text style={styles.timeLabel}>{t('volunteerCheckIn.time.checkInTime')}</Text>
-                      <Text style={styles.timeValue}>
+                      <SafeText style={styles.timeValue} fallback="--:--">
                         {new Date(currentUser.checkInTime).toLocaleTimeString('zh-CN', { 
                           hour: '2-digit', 
                           minute: '2-digit' 
                         })}
-                      </Text>
+                      </SafeText>
                     </View>
                   )}
                   
@@ -399,22 +813,56 @@ export const VolunteerCheckInScreen: React.FC = () => {
                     <View style={styles.timeItem}>
                       <Ionicons name="log-out-outline" size={16} color={theme.colors.primary} />
                       <Text style={styles.timeLabel}>{t('volunteerCheckIn.time.checkOutTime')}</Text>
-                      <Text style={styles.timeValue}>
+                      <SafeText style={styles.timeValue} fallback="--:--">
                         {new Date(currentUser.checkOutTime).toLocaleTimeString('zh-CN', {
                           hour: '2-digit',
                           minute: '2-digit'
                         })}
-                      </Text>
+                      </SafeText>
                     </View>
                   )}
                   
-                  {currentUser.status === 'checked_in' && currentUser.checkInTime && (
+                  
+                  {currentUser.status === 'checked_in' && (
                     <View style={styles.timeItem}>
                       <Ionicons name="timer-outline" size={16} color={theme.colors.warning} />
                       <Text style={styles.timeLabel}>{t('volunteerCheckIn.time.worked')}</Text>
-                      <Text style={styles.timeValue}>
-                        {getCheckInDuration(currentUser.checkInTime)}
-                      </Text>
+                      <SafeText style={styles.timeValue} fallback="0小时0分钟">
+                        {getCheckInDuration(currentUser)}
+                      </SafeText>
+                    </View>
+                  )}
+                  
+                  
+                  {/* 上次签到时间 */}
+                  {currentUser.lastCheckInTime && (
+                    <View style={styles.timeItem}>
+                      <Ionicons name="log-in" size={16} color={theme.colors.primary} />
+                      <Text style={styles.timeLabel}>{t('volunteerCheckIn.time.lastCheckIn')}</Text>
+                      <SafeText style={styles.timeValue} fallback="--:--">
+                        {new Date(currentUser.lastCheckInTime).toLocaleString('zh-CN', {
+                          month: '2-digit',
+                          day: '2-digit',
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        })}
+                      </SafeText>
+                    </View>
+                  )}
+                  
+                  {/* 上次签出时间 */}
+                  {currentUser.lastCheckOutTime && (
+                    <View style={styles.timeItem}>
+                      <Ionicons name="log-out" size={16} color={theme.colors.success} />
+                      <Text style={styles.timeLabel}>{t('volunteerCheckIn.time.lastCheckOut')}</Text>
+                      <SafeText style={styles.timeValue} fallback="--:--">
+                        {new Date(currentUser.lastCheckOutTime).toLocaleString('zh-CN', {
+                          month: '2-digit',
+                          day: '2-digit',
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        })}
+                      </SafeText>
                     </View>
                   )}
                   
@@ -428,42 +876,44 @@ export const VolunteerCheckInScreen: React.FC = () => {
                 </View>
               </View>
               
-              {/* Action Buttons - Shadow优化 */}
-              <View style={styles.actionButtons}>
-                {currentUser.status === 'not_checked_in' && (
-                  <View style={styles.actionButtonShadowContainer}>
-                    <TouchableOpacity
-                      style={styles.actionButton}
-                      onPress={handleCheckIn}
-                    >
-                      <LinearGradient
-                        colors={[theme.colors.primary, theme.colors.primaryPressed]}
-                        style={styles.actionButtonGradient}
+              {/* Action Buttons - 只有管理员可以操作 */}
+              {permissions.canCheckInOut() && (
+                <View style={styles.actionButtons}>
+                  {currentUser.status === 'not_checked_in' && (
+                    <View style={styles.actionButtonShadowContainer}>
+                      <TouchableOpacity
+                        style={styles.actionButton}
+                        onPress={handleCheckIn}
                       >
-                        <Ionicons name="log-in-outline" size={20} color="white" />
-                        <Text style={styles.actionButtonText}>{t('volunteerCheckIn.checkIn')}</Text>
-                      </LinearGradient>
-                    </TouchableOpacity>
-                  </View>
-                )}
-                
-                {currentUser.status === 'checked_in' && (
-                  <View style={styles.actionButtonShadowContainer}>
-                    <TouchableOpacity
-                      style={styles.actionButton}
-                      onPress={handleCheckOut}
-                    >
-                      <LinearGradient
-                        colors={[theme.colors.success, '#10B981']}
-                        style={styles.actionButtonGradient}
+                        <LinearGradient
+                          colors={[theme.colors.primary, theme.colors.primaryPressed]}
+                          style={styles.actionButtonGradient}
+                        >
+                          <Ionicons name="log-in-outline" size={20} color="white" />
+                          <Text style={styles.actionButtonText}>{t('volunteerCheckIn.checkIn')}</Text>
+                        </LinearGradient>
+                      </TouchableOpacity>
+                    </View>
+                  )}
+                  
+                  {currentUser.status === 'checked_in' && (
+                    <View style={styles.actionButtonShadowContainer}>
+                      <TouchableOpacity
+                        style={styles.actionButton}
+                        onPress={handleCheckOut}
                       >
-                        <Ionicons name="log-out-outline" size={20} color="white" />
-                        <Text style={styles.actionButtonText}>{t('volunteerCheckIn.checkOut')}</Text>
-                      </LinearGradient>
-                    </TouchableOpacity>
-                  </View>
-                )}
-              </View>
+                        <LinearGradient
+                          colors={[theme.colors.success, '#10B981']}
+                          style={styles.actionButtonGradient}
+                        >
+                          <Ionicons name="log-out-outline" size={20} color="white" />
+                          <Text style={styles.actionButtonText}>{t('volunteerCheckIn.checkOut')}</Text>
+                        </LinearGradient>
+                      </TouchableOpacity>
+                    </View>
+                  )}
+                </View>
+              )}
             </View>
           </View>
         )}
@@ -569,14 +1019,14 @@ const styles = StyleSheet.create({
   },
   searchInput: {
     flex: 1,
-    backgroundColor: theme.liquidGlass.card.background,
+    backgroundColor: theme.colors.background.primary,
     borderRadius: theme.borderRadius.lg,
     paddingHorizontal: theme.spacing[3],
     paddingVertical: theme.spacing[3],
     fontSize: theme.typography.fontSize.base,
     color: theme.colors.text.primary,
     borderWidth: 1,
-    borderColor: theme.liquidGlass.card.border,
+    borderColor: theme.colors.border.primary,
   },
   // Search Button Shadow容器 - 解决LinearGradient阴影冲突
   searchButtonShadowContainer: {
@@ -617,12 +1067,12 @@ const styles = StyleSheet.create({
 
   // User Card
   userCard: {
-    backgroundColor: theme.liquidGlass.card.background,
+    backgroundColor: theme.colors.background.primary,
     borderRadius: theme.borderRadius.lg,
     padding: theme.spacing[4],
     borderWidth: 1,
-    borderColor: theme.liquidGlass.card.border,
-    ...theme.shadows.card,
+    borderColor: theme.colors.border.primary,
+    ...theme.shadows.md,
   },
   userInfo: {
     marginBottom: theme.spacing[4],
@@ -714,11 +1164,11 @@ const styles = StyleSheet.create({
     maxHeight: 400,
   },
   recordItem: {
-    backgroundColor: theme.liquidGlass.card.background,
+    backgroundColor: theme.colors.background.primary,
     borderRadius: theme.borderRadius.lg,
     marginBottom: theme.spacing[2],
     borderWidth: 1,
-    borderColor: theme.liquidGlass.card.border,
+    borderColor: theme.colors.border.primary,
     ...theme.shadows.xs,
   },
   recordContent: {
@@ -761,5 +1211,94 @@ const styles = StyleSheet.create({
     fontSize: theme.typography.fontSize.xs,
     color: theme.colors.text.tertiary,
     marginTop: theme.spacing[1],
+  },
+  
+  // Staff Personal View Styles
+  personalStatsCard: {
+    backgroundColor: theme.colors.background.primary,
+    borderRadius: theme.borderRadius.lg,
+    padding: theme.spacing[4],
+    borderWidth: 1,
+    borderColor: theme.colors.border.primary,
+    ...theme.shadows.md,
+    marginBottom: theme.spacing[4],
+  },
+  statsHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: theme.spacing[3],
+  },
+  statsInfo: {
+    marginLeft: theme.spacing[3],
+    flex: 1,
+  },
+  statsName: {
+    fontSize: theme.typography.fontSize.lg,
+    fontWeight: theme.typography.fontWeight.bold,
+    color: theme.colors.text.primary,
+  },
+  statsSchool: {
+    fontSize: theme.typography.fontSize.sm,
+    color: theme.colors.text.secondary,
+    marginTop: theme.spacing[1],
+  },
+  statsContent: {
+    flexDirection: 'row',
+    gap: theme.spacing[4],
+  },
+  statItem: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  statLabel: {
+    fontSize: theme.typography.fontSize.sm,
+    color: theme.colors.text.secondary,
+    marginBottom: theme.spacing[1],
+  },
+  statValue: {
+    fontSize: theme.typography.fontSize.xl,
+    fontWeight: theme.typography.fontWeight.bold,
+    color: theme.colors.primary,
+  },
+  personalRecordsSection: {
+    marginTop: theme.spacing[4],
+  },
+  personalRecordItem: {
+    backgroundColor: theme.colors.background.primary,
+    borderRadius: theme.borderRadius.lg,
+    padding: theme.spacing[3],
+    marginBottom: theme.spacing[2],
+    borderWidth: 1,
+    borderColor: theme.colors.border.primary,
+  },
+  recordTimeInfo: {
+    flex: 1,
+  },
+  recordDate: {
+    fontSize: theme.typography.fontSize.sm,
+    fontWeight: theme.typography.fontWeight.semibold,
+    color: theme.colors.text.primary,
+  },
+  recordTime: {
+    fontSize: theme.typography.fontSize.xs,
+    color: theme.colors.text.secondary,
+    marginTop: theme.spacing[1],
+  },
+  recordDuration: {
+    alignItems: 'flex-end',
+  },
+  readOnlyNotice: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: theme.colors.background.secondary,
+    padding: theme.spacing[3],
+    borderRadius: theme.borderRadius.md,
+    marginTop: theme.spacing[4],
+  },
+  readOnlyText: {
+    fontSize: theme.typography.fontSize.xs,
+    color: theme.colors.text.secondary,
+    marginLeft: theme.spacing[2],
+    flex: 1,
   },
 });

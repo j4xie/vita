@@ -125,7 +125,7 @@ export const GrapefruitIcon: React.FC<GrapefruitIconProps> = ({
         animatedProps={animatedSvgProps}
       >
         <Defs>
-          {/* 西柚外皮渐变 - VitaGlobal 橙红风格 */}
+          {/* PomeloX外皮渐变 - PomeloX 橙红风格 */}
           <RadialGradient id="grapefruitGradient" cx="0.3" cy="0.3" r="0.8">
             <Stop offset="0%" stopColor="#FFD1C7" stopOpacity="1" />
             <Stop offset="70%" stopColor="#FFB399" stopOpacity="1" />
@@ -146,7 +146,7 @@ export const GrapefruitIcon: React.FC<GrapefruitIconProps> = ({
           </SvgLinearGradient>
         </Defs>
 
-        {/* 主要西柚形状 */}
+        {/* 主要PomeloX形状 */}
         <Ellipse
           cx="22"
           cy="22"

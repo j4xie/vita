@@ -6,6 +6,7 @@ import {
   Image,
   ActivityIndicator,
   Platform,
+  TouchableOpacity,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
@@ -30,6 +31,7 @@ interface SimpleActivityCardProps {
     title: string;
     location: string;
     date: string;
+    endDate?: string; // 添加结束日期
     time: string;
     attendees: number;
     maxAttendees: number;
@@ -41,6 +43,9 @@ interface SimpleActivityCardProps {
   // 滚动视差动画支持
   scrollY?: Animated.SharedValue<number>;
   index?: number;
+  // 新增收藏功能
+  onBookmark?: (activity: any) => void;
+  isBookmarked?: boolean;
 }
 
 export const SimpleActivityCard: React.FC<SimpleActivityCardProps> = ({
@@ -48,6 +53,8 @@ export const SimpleActivityCard: React.FC<SimpleActivityCardProps> = ({
   onPress,
   scrollY,
   index = 0,
+  onBookmark,
+  isBookmarked = false,
 }) => {
   const { t, i18n } = useTranslation();
   const [imageLoading, setImageLoading] = useState(true);
@@ -201,19 +208,39 @@ export const SimpleActivityCard: React.FC<SimpleActivityCardProps> = ({
     return () => clearTimeout(timer);
   }, []);
 
-  // 格式化日期显示
-  const formatDate = () => {
-    const date = new Date(activity.date);
-    const month = date.getMonth() + 1;
-    const day = date.getDate();
+  // 格式化日期区间显示
+  const formatDateRange = () => {
+    const formatSingleDate = (dateStr: string) => {
+      const [year, month, day] = dateStr.split('-');
+      return { month: parseInt(month), day: parseInt(day) };
+    };
     
-    if (i18n.language === 'zh-CN') {
-      return `${month}月${day}日 ${activity.time}`;
+    const start = formatSingleDate(activity.date);
+    
+    // 格式化时间为12小时制
+    const formatTime = (timeStr: string) => {
+      if (!timeStr || timeStr === '00:00') return '';
+      const [hours, minutes] = timeStr.split(':');
+      const hour24 = parseInt(hours);
+      const hour12 = hour24 === 0 ? 12 : hour24 > 12 ? hour24 - 12 : hour24;
+      const ampm = hour24 >= 12 ? 'PM' : 'AM';
+      return ` ${hour12}:${minutes}${ampm}`;
+    };
+    
+    // 构建日期显示 - 始终使用完整格式 月/日-月/日
+    let dateDisplay = '';
+    if (activity.endDate && activity.endDate !== activity.date) {
+      const end = formatSingleDate(activity.endDate);
+      // 始终显示完整格式: 09/11-09/17
+      dateDisplay = `${start.month.toString().padStart(2, '0')}/${start.day.toString().padStart(2, '0')}-${end.month.toString().padStart(2, '0')}/${end.day.toString().padStart(2, '0')}`;
     } else {
-      const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 
-                          'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-      return `${monthNames[month - 1]} ${day} ${activity.time}`;
+      // 单日: 09/11
+      dateDisplay = `${start.month.toString().padStart(2, '0')}/${start.day.toString().padStart(2, '0')}`;
     }
+    
+    // 添加时间（如果不是00:00）
+    const timeDisplay = formatTime(activity.time);
+    return dateDisplay + timeDisplay;
   };
 
   // 计算参与率
@@ -321,12 +348,30 @@ export const SimpleActivityCard: React.FC<SimpleActivityCardProps> = ({
         style={styles.overlayGradient}
       />
 
-      {/* 状态标签 - L2微型胶囊 */}
+      {/* 状态标签 - 暂时隐藏 */}
+      {/*
       <View style={styles.statusBadge}>
         <Text style={styles.badgeText}>{statusConfig.label}</Text>
       </View>
+      */}
 
-      {/* 参与人数指示器 - L2微型胶囊 */}
+      {/* 收藏按钮 */}
+      {onBookmark && (
+        <TouchableOpacity 
+          style={styles.bookmarkButton}
+          onPress={() => onBookmark(activity)}
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+        >
+          <Ionicons 
+            name={isBookmarked ? "heart" : "heart-outline"} 
+            size={20} 
+            color={isBookmarked ? "#FF6B35" : "rgba(255, 255, 255, 0.8)"} 
+          />
+        </TouchableOpacity>
+      )}
+
+      {/* 参与人数指示器 - 暂时隐藏 */}
+      {/*
       <View style={styles.attendeeBadge}>
         <Ionicons 
           name="people" 
@@ -338,28 +383,31 @@ export const SimpleActivityCard: React.FC<SimpleActivityCardProps> = ({
           {activity.attendees}/{activity.maxAttendees}
         </Text>
       </View>
+      */}
 
-      {/* 底部信息区 */}
+      {/* 底部信息区 - 压缩布局 */}
       <View style={styles.infoContainer}>
-        <Text style={styles.title} numberOfLines={2}>
+        <Text style={styles.title} numberOfLines={1}>
           {activity.title}
         </Text>
         
-        <View style={styles.locationRow}>
-          <Ionicons 
-            name="location-outline" 
-            size={14} 
-            color="#666666" 
-            style={styles.locationIcon}
-          />
-          <Text style={styles.location} numberOfLines={1}>
-            {activity.location}
+        <View style={styles.detailsRow}>
+          <View style={styles.locationRow}>
+            <Ionicons 
+              name="location-outline" 
+              size={12} 
+              color="#666666" 
+              style={styles.locationIcon}
+            />
+            <Text style={styles.location} numberOfLines={1}>
+              {activity.location}
+            </Text>
+          </View>
+          
+          <Text style={styles.time}>
+            {formatDateRange()}
           </Text>
         </View>
-        
-        <Text style={styles.time}>
-          {formatDate()}
-        </Text>
       </View>
       </Animated.View>
     </Animated.View>
@@ -481,44 +529,65 @@ const styles = StyleSheet.create({
     right: 12,
     zIndex: 3, // 确保在遮罩上方
   },
+
+  // 收藏按钮样式
+  bookmarkButton: {
+    position: 'absolute',
+    top: 12,
+    left: 12,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(0, 0, 0, 0.3)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 3,
+  },
   
-  // 底部信息区 - 小红书风格纯色背景
+  // 底部信息区 - 压缩布局
   infoContainer: {
     position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
-    padding: 16,
-    paddingTop: 20,
+    padding: 12,  // 从16减少到12
+    paddingTop: 12, // 从20减少到12，压缩高度
     backgroundColor: '#FFFFFF', // 纯白色背景
     borderBottomLeftRadius: theme.borderRadius.card,
     borderBottomRightRadius: theme.borderRadius.card,
     zIndex: 2, // 确保在遮罩上方
   },
   title: {
-    fontSize: 18,
+    fontSize: 16, // 从18减少到16
     fontWeight: '700',
     color: '#1A1A1A', // 小红书风格深色文字
-    marginBottom: 8,
+    marginBottom: 6, // 从8减少到6
     // 移除阴影，在白色背景上不需要
+  },
+  // 新增：时间和地点同行布局
+  detailsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
   },
   locationRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 4,
+    flex: 1,
   },
   locationIcon: {
-    marginRight: 4,
+    marginRight: 3, // 从4减少到3
   },
   location: {
-    fontSize: 14,
+    fontSize: 13, // 从14减少到13
     color: '#666666', // 小红书风格中灰色
     flex: 1,
     // 移除阴影和透明度，在白色背景上不需要
   },
   time: {
-    fontSize: 13,
+    fontSize: 12, // 从13减少到12
     color: '#666666', // 小红书风格中灰色
+    marginLeft: 8, // 添加左边距，与地点分开
     // 移除阴影和透明度，在白色背景上不需要
   },
 });

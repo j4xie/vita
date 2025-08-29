@@ -302,7 +302,7 @@ const styles = StyleSheet.create({
   logoImage: {
     width: 80,
     height: 80,
-    // 移除tintColor，保持VitaGlobal logo原色
+    // 移除tintColor，保持PomeloX logo原色
   },
   title: {
     fontSize: theme.typography.fontSize['3xl'],

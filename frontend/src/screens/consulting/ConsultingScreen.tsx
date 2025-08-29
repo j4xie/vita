@@ -19,6 +19,7 @@ import { useTranslation } from 'react-i18next';
 import { theme } from '../../theme';
 import { LIQUID_GLASS_LAYERS, DAWN_GRADIENTS } from '../../theme/core';
 import { getSchoolLogo } from '../../utils/schoolLogos';
+import { SchoolLogo } from '../../components/common/SchoolLogo';
 import { ConsultingDevModal, SchoolInfo } from '../../components/modals/ConsultingDevModal';
 import { GlassCapsule } from '../../components/consulting/GlassCapsule';
 import { LiquidGlassCard } from '../../components/consulting/LiquidGlassCard';
@@ -36,19 +37,7 @@ import Animated, {
 
 const { width: screenWidth } = Dimensions.get('window');
 
-// iOS风格学校配色 - 温和色调
-const mockSchools = [
-  { id: 'uw', name: 'University of Washington', shortName: 'UW', tint: '#8F8CF0' },
-  { id: 'usc', name: 'University of Southern California', shortName: 'USC', tint: '#F0A1A1' },
-  { id: 'ucd', name: 'UC Davis', shortName: 'UCD', tint: '#8FB7CA' },
-  { id: 'ucsc', name: 'UC Santa Cruz', shortName: 'UCSC', tint: '#A7BACB' },
-  { id: 'ucla', name: 'UC Los Angeles', shortName: 'UCLA', tint: '#BBD6F6' },
-  { id: 'uci', name: 'UC Irvine', shortName: 'UCI', tint: '#F6E39B' },
-  { id: 'ucsb', name: 'UC Santa Barbara', shortName: 'UCSB', tint: '#C8E6C9' },
-  { id: 'umn', name: 'University of Minnesota', shortName: 'UMN', tint: '#FFCDD2' },
-  { id: 'ucsd', name: 'UC San Diego', shortName: 'UCSD', tint: '#D1C4E9' },
-  { id: 'ucb', name: 'UC Berkeley', shortName: 'UCB', tint: '#B3E5FC' },
-];
+// School consulting data will be loaded from real API when implemented
 
 export const ConsultingScreen: React.FC = () => {
   const { t } = useTranslation();
@@ -75,17 +64,14 @@ export const ConsultingScreen: React.FC = () => {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
     
-    // Find the school info for the modal
-    const school = mockSchools.find(s => s.id === schoolId);
-    if (school) {
-      setSelectedSchoolId(schoolId);
-      setSelectedSchool({
-        id: school.id,
-        name: school.name,
-        shortName: school.shortName,
-      });
-      setShowModal(true);
-    }
+    // Consulting service feature developing - show placeholder modal
+    setSelectedSchoolId(schoolId);
+    setSelectedSchool({
+      id: schoolId,
+      name: 'Consulting Service Developing',
+      shortName: 'DEV',
+    });
+    setShowModal(true);
   };
 
   const handleCloseModal = () => {
@@ -100,38 +86,12 @@ export const ConsultingScreen: React.FC = () => {
   const cardWidth = Math.floor((screenWidth - gutter * 3) / 2); // 2列布局
 
   const renderSchoolGrid = () => {
-    const schoolRows = [];
-    for (let i = 0; i < mockSchools.length; i += 2) {
-      const row = mockSchools.slice(i, i + 2);
-      schoolRows.push(row);
-    }
-
     return (
       <View style={styles.schoolsGrid}>
-        {schoolRows.map((row, rowIndex) => (
-          <View key={rowIndex} style={styles.schoolRow}>
-            {row.map((school, index) => {
-              const isSelected = selectedSchoolId === school.id;
-              return (
-                <Animated.View
-                  key={school.id}
-                  entering={FadeIn.delay(400 + (rowIndex * 2 + index) * 50).duration(300).springify()}
-                >
-                  <LiquidGlassCard
-                    width={cardWidth}
-                    height={112}
-                    title={school.name}
-                    badge={school.shortName}
-                    badgeTint={school.tint}
-                    schoolId={school.id}
-                    isSelected={isSelected}
-                    onPress={() => handleSchoolSelect(school.id)}
-                  />
-                </Animated.View>
-              );
-            })}
-          </View>
-        ))}
+        <View style={styles.emptyState}>
+          <Text style={styles.emptyText}>{t('consulting.service_developing') || '咨询服务开发中'}</Text>
+          <Text style={styles.emptySubtext}>{t('consulting.contact_admin') || '如有需要请联系管理员'}</Text>
+        </View>
       </View>
     );
   };
@@ -167,9 +127,9 @@ export const ConsultingScreen: React.FC = () => {
       >
         {/* Header - iOS风格大标题 */}
         <View style={styles.header}>
-          <Text style={styles.headerTitle}>Consulting Services</Text>
+          <Text style={styles.headerTitle}>{t('consulting.title')}</Text>
           <Text style={styles.headerSubtitle}>
-            Professional guidance for international students
+            {t('consulting.subtitle')}
           </Text>
         </View>
 
@@ -177,18 +137,18 @@ export const ConsultingScreen: React.FC = () => {
         <View style={styles.statsSection}>
           <GlassCapsule
             items={[
-              { value: '10+', label: 'Supported Schools' },
-              { value: '50+', label: 'Professional Advisors' },
-              { value: '24/7', label: 'Online Services' },
+              { value: '10+', label: t('consulting.stats.supported_schools') },
+              { value: '50+', label: t('consulting.stats.professional_advisors') },
+              { value: '24/7', label: t('consulting.stats.online_services') },
             ]}
           />
         </View>
 
         {/* Section 标题 */}
         <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Select Your School</Text>
+          <Text style={styles.sectionTitle}>{t('consulting.selectSchool')}</Text>
           <Text style={styles.sectionDescription}>
-            Please choose your school and we will provide exclusive consulting services for you
+            {t('consulting.selectDescription')}
           </Text>
         </View>
 
@@ -272,5 +232,29 @@ const styles = StyleSheet.create({
   schoolRow: {
     flexDirection: 'row',
     columnGap: Glass.touch.spacing.gridGutter,
+  },
+
+  // Empty state
+  emptyState: {
+    padding: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    borderRadius: 16,
+    marginHorizontal: Glass.touch.spacing.sectionMargin,
+  },
+  
+  emptyText: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: Glass.textMain,
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  
+  emptySubtext: {
+    fontSize: 14,
+    color: Glass.textWeak,
+    textAlign: 'center',
   },
 });

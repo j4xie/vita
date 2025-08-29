@@ -15,7 +15,7 @@ import { useTranslation } from 'react-i18next';
 import { LinearGradient } from 'expo-linear-gradient';
 import { theme } from '../../theme';
 import { LIQUID_GLASS_LAYERS, DAWN_GRADIENTS } from '../../theme/core';
-import { vitaGlobalAPI } from '../../services/VitaGlobalAPI';
+import { pomeloXAPI } from '../../services/PomeloXAPI';
 
 export const VerificationScreen: React.FC = () => {
   const navigation = useNavigation<any>();
@@ -50,7 +50,7 @@ export const VerificationScreen: React.FC = () => {
   const handleVerifyAndRegister = async () => {
     const code = verificationCode.join('');
     if (code.length !== 6) {
-      Alert.alert('错误', '请输入6位验证码');
+      Alert.alert(t('common.error'), t('validation.errors.verification_code_format'));
       return;
     }
 
@@ -72,7 +72,7 @@ export const VerificationScreen: React.FC = () => {
         ...(formData.organizationId && { orgId: formData.organizationId }),
       };
 
-      const result = await vitaGlobalAPI.register(registerData);
+      const result = await pomeloXAPI.register(registerData);
 
       if (result.code === 200) {
         Alert.alert(
@@ -86,11 +86,11 @@ export const VerificationScreen: React.FC = () => {
           ]
         );
       } else {
-        Alert.alert('注册失败', result.msg || '注册过程中出现错误');
+        Alert.alert(t('auth.register.errors.register_failed'), result.msg || t('auth.register.errors.register_failed_message'));
       }
     } catch (error) {
       console.error('注册错误:', error);
-      Alert.alert('注册失败', '网络连接失败，请稍后重试');
+      Alert.alert(t('auth.register.errors.register_failed'), t('common.network_error'));
     } finally {
       setLoading(false);
     }
@@ -104,10 +104,10 @@ export const VerificationScreen: React.FC = () => {
         ? `86${phoneNumber}` 
         : `1${phoneNumber}`;
       
-      const result = await vitaGlobalAPI.sendSMSVerification(phoneNumberWithCode);
+      const result = await pomeloXAPI.sendSMSVerification(phoneNumberWithCode);
       
       if (result.code === 'OK') {
-        Alert.alert('验证码已发送', '请查看短信验证码');
+        Alert.alert(t('auth.register.sms.code_sent_title'), t('auth.register.sms.code_sent_message'));
         
         // 更新 bizId
         formData.bizId = result.bizId;
@@ -124,10 +124,10 @@ export const VerificationScreen: React.FC = () => {
           });
         }, 1000);
       } else {
-        Alert.alert('发送失败', '验证码发送失败，请稍后重试');
+        Alert.alert(t('auth.register.sms.send_failed_title'), t('auth.register.sms.send_failed_message'));
       }
     } catch (error) {
-      Alert.alert('发送失败', '网络连接失败');
+      Alert.alert(t('auth.register.sms.send_failed_title'), t('common.network_error'));
     }
   };
 
@@ -143,13 +143,13 @@ export const VerificationScreen: React.FC = () => {
         >
           <Ionicons name="arrow-back" size={24} color={theme.colors.text.primary} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>短信验证</Text>
+        <Text style={styles.headerTitle}>{t('auth.verification.title')}</Text>
         <View style={styles.placeholder} />
       </View>
 
       <View style={styles.content}>
         <View style={styles.formContainer}>
-          <Text style={styles.title}>验证您的手机号</Text>
+          <Text style={styles.title}>{t('auth.verification.verify_phone')}</Text>
           <Text style={styles.subtitle}>
             我们已向 +{phoneType === 'CN' ? '86' : '1'} {phoneNumber} 发送验证码
           </Text>
@@ -194,7 +194,7 @@ export const VerificationScreen: React.FC = () => {
             {loading ? (
               <ActivityIndicator color={theme.colors.text.inverse} />
             ) : (
-              <Text style={styles.verifyButtonText}>验证并注册</Text>
+              <Text style={styles.verifyButtonText}>{t('auth.verification.verify_and_register')}</Text>
             )}
           </TouchableOpacity>
         </View>
@@ -215,7 +215,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: theme.spacing[4],
     paddingVertical: theme.spacing[3],
     borderBottomWidth: 1,
-    borderBottomColor: theme.colors.border,
+    borderBottomColor: theme.colors.border.primary,
   },
   backButton: {
     width: 40,

@@ -25,9 +25,9 @@ import * as Haptics from 'expo-haptics';
 import { useTranslation } from 'react-i18next';
 
 import { theme } from '../../theme';
-import { useOrganization } from '../../context/OrganizationContext';
+// import { useOrganization } from '../../context/OrganizationContext'; // 移除组织功能
 import { membershipCardService } from '../../services/MembershipCardService';
-import MockAPI from '../../services/MockAPI';
+// MockAPI import removed - using real data only
 import { 
   CardDisplayInfo, 
   CardGroupCollection, 
@@ -45,12 +45,11 @@ export const MyCardsScreen: React.FC = () => {
   const colorScheme = useColorScheme();
   const isDarkMode = colorScheme === 'dark';
 
-  const {
-    currentOrganization,
-    membershipCards,
-    isLoading,
-    refreshOrganizations
-  } = useOrganization();
+  // 移除组织依赖，简化为本地状态
+  const currentOrganization = null;
+  const membershipCards: any[] = [];
+  const isLoading = false;
+  const refreshOrganizations = async () => {};
 
   // ==================== 状态管理 ====================
 
@@ -59,17 +58,17 @@ export const MyCardsScreen: React.FC = () => {
     groups: {
       organizationCards: {
         id: 'organization',
-        title: '组织会员卡',
+        title: t('cards.organization_cards'),
         cards: [],
         count: 0
       },
       merchantCards: {
-        dining: { id: 'dining', title: '餐饮美食', cards: [], count: 0 },
-        retail: { id: 'retail', title: '零售购物', cards: [], count: 0 },
-        service: { id: 'service', title: '生活服务', cards: [], count: 0 },
-        education: { id: 'education', title: '教育培训', cards: [], count: 0 },
-        entertainment: { id: 'entertainment', title: '休闲娱乐', cards: [], count: 0 },
-        other: { id: 'other', title: '其他', cards: [], count: 0 }
+        dining: { id: 'dining', title: t('cards.categories.dining'), cards: [], count: 0 },
+        retail: { id: 'retail', title: t('cards.categories.retail'), cards: [], count: 0 },
+        service: { id: 'service', title: t('cards.categories.service'), cards: [], count: 0 },
+        education: { id: 'education', title: t('cards.categories.education'), cards: [], count: 0 },
+        entertainment: { id: 'entertainment', title: t('cards.categories.entertainment'), cards: [], count: 0 },
+        other: { id: 'other', title: t('cards.categories.other'), cards: [], count: 0 }
       },
       totalCount: 0,
       recentlyUsed: [],
@@ -106,22 +105,13 @@ export const MyCardsScreen: React.FC = () => {
     try {
       setState(prev => ({ ...prev, loading: true, error: undefined }));
 
-      // 获取用户的所有会员卡
-      const allCards = await MockAPI.getUserMembershipCards('user_123', currentOrganization.id);
+      // 暂时返回空数据，不使用Mock API
+      const allCards: any[] = [];
 
-      // 转换为显示格式
-      const displayCards = allCards.map(card => {
-        const organization = MockAPI.getOrganizationById(card.organizationId);
-        const merchant = card.merchantId ? MockAPI.getMerchantById(card.merchantId) : undefined;
-        
-        return membershipCardService.formatCardForDisplay(
-          card,
-          organization,
-          merchant
-        );
-      });
+      // 转换为显示格式 - 空数组
+      const displayCards: any[] = [];
 
-      // 分组
+      // 分组 - 空分组
       const groups = membershipCardService.groupCards(displayCards);
 
       setState(prev => ({
@@ -138,10 +128,10 @@ export const MyCardsScreen: React.FC = () => {
         loading: false,
         error: {
           type: 'NETWORK_ERROR',
-          title: '加载失败',
-          subtitle: '无法加载会员卡数据',
+          title: t('common.load_failed'),
+          subtitle: t('cards.feature_developing'),
           retryAction: {
-            label: '重试',
+            label: t('common.retry'),
             onPress: loadCards
           }
         }
@@ -208,12 +198,9 @@ export const MyCardsScreen: React.FC = () => {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     }
 
-    // 跳转到QR扫描页面
-    navigation.navigate('QRScanner', { 
-      mode: 'membership_card',
-      returnScreen: 'MyCards'
-    });
-  }, [navigation]);
+    // 显示功能暂未开放提示
+    Alert.alert(t('alerts.feature_not_implemented'), t('cards.feature_developing'));
+  }, []);
 
   const handleSearchToggle = useCallback(() => {
     setShowSearch(prev => !prev);
@@ -477,7 +464,7 @@ const CardSection: React.FC<CardSectionProps> = ({ group, onCardPress }) => (
         )}
         <Text style={styles.sectionTitle}>{group.title}</Text>
       </View>
-      <Text style={styles.sectionCount}>{group.count}张</Text>
+      <Text style={styles.sectionCount}>{group.count} {t('cards.cards_count_unit', '张')}</Text>
     </View>
 
     <View style={styles.cardGrid}>
@@ -530,7 +517,7 @@ const MembershipCardItem: React.FC<MembershipCardItemProps> = ({ card, onPress }
 
         <View style={styles.cardFooter}>
           <View style={styles.cardPoints}>
-            <Text style={styles.cardPointsLabel}>积分</Text>
+            <Text style={styles.cardPointsLabel}>{t('profile.points_label')}</Text>
             <Text style={styles.cardPointsValue}>{card.points}</Text>
           </View>
           
@@ -543,7 +530,7 @@ const MembershipCardItem: React.FC<MembershipCardItemProps> = ({ card, onPress }
       {/* 过期标识 */}
       {card.isExpired && (
         <View style={styles.expiredBadge}>
-          <Text style={styles.expiredText}>已过期</Text>
+          <Text style={styles.expiredText}>{t('cards.expired', '已过期')}</Text>
         </View>
       )}
     </LinearGradient>
@@ -552,7 +539,7 @@ const MembershipCardItem: React.FC<MembershipCardItemProps> = ({ card, onPress }
 
 const LoadingState: React.FC = () => (
   <View style={styles.loadingState}>
-    <Text style={styles.loadingText}>加载中...</Text>
+    <Text style={styles.loadingText}>{t('common.loading')}</Text>
   </View>
 );
 

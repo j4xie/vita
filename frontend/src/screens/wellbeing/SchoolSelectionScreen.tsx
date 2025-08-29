@@ -29,7 +29,11 @@ import * as Haptics from 'expo-haptics';
 import { theme } from '../../theme';
 import { LIQUID_GLASS_LAYERS, BRAND_GLASS } from '../../theme/core';
 import { usePerformanceDegradation } from '../../hooks/usePerformanceDegradation';
-import { mockSchools, School } from '../../data/mockData';
+// mockSchools and School type moved to real data (using getUserList API)
+import { getUserList } from '../../services/adminAPI';
+import { pomeloXAPI } from '../../services/PomeloXAPI';
+import { getUserList } from '../../services/userStatsAPI';
+import { useUser } from '../../context/UserContext';
 
 interface SchoolSelectionScreenProps {
   onSchoolSelect: (school: School) => void;
@@ -41,13 +45,16 @@ export const SchoolSelectionScreen: React.FC<SchoolSelectionScreenProps> = ({ on
   const isDarkMode = colorScheme === 'dark';
   const insets = useSafeAreaInsets();
   
+  // 用户权限检查
+  const { user, permissions, permissionLevel } = useUser();
+  
   // V2.0 获取分层配置
   const { getLayerConfig } = usePerformanceDegradation();
   const L1Config = getLayerConfig('L1', isDarkMode);
 
   // 本地化学校名称显示函数
   const getLocalizedSchoolDisplay = (school: School) => {
-    const isChineseUI = t('common.brand.name') === '西柚'; // 通过品牌名判断当前语言
+    const isChineseUI = t('common.brand.name') === 'PomeloX'; // 通过品牌名判断当前语言
     return {
       primary: isChineseUI ? school.name : school.englishName,
       secondary: isChineseUI ? school.englishName : school.name,
@@ -55,7 +62,13 @@ export const SchoolSelectionScreen: React.FC<SchoolSelectionScreenProps> = ({ on
   };
 
   const [searchText, setSearchText] = useState('');
-  const [filteredSchools, setFilteredSchools] = useState<School[]>(mockSchools);
+  const [filteredSchools, setFilteredSchools] = useState<any[]>([]);
+  const [schools, setSchools] = useState<School[]>([]);
+  const [isLoadingSchools, setIsLoadingSchools] = useState(false);
+  
+  // 志愿者数量状态 - 从后端API获取，使用deptId作为键
+  const [volunteerCounts, setVolunteerCounts] = useState<Record<number, number>>({});
+  const [isLoadingCounts, setIsLoadingCounts] = useState(false);
   
   // 学校卡片放大跳转动画系统
   const [cardLayouts, setCardLayouts] = useState<Map<string, any>>(new Map());
@@ -72,19 +85,189 @@ export const SchoolSelectionScreen: React.FC<SchoolSelectionScreenProps> = ({ on
   const blurGain = useSharedValue(0);
   const highlightGain = useSharedValue(1);
 
-  const handleSearch = useCallback((text: string) => {
-    setSearchText(text);
-    if (!text.trim()) {
-      setFilteredSchools(mockSchools);
-    } else {
-      const filtered = mockSchools.filter(school =>
-        school.name.toLowerCase().includes(text.toLowerCase()) ||
-        school.englishName.toLowerCase().includes(text.toLowerCase()) ||
-        school.location.toLowerCase().includes(text.toLowerCase())
-      );
-      setFilteredSchools(filtered);
+  // 获取学校列表
+  const loadSchools = useCallback(async () => {
+    try {
+      setIsLoadingSchools(true);
+      console.log('🏫 开始获取学校列表...');
+      
+      const response = await pomeloXAPI.getSchoolList();
+      
+      if (response.code === 200 && response.data) {
+        console.log('🏫 学校列表获取成功:', {
+          count: response.data.length,
+          schools: response.data.map(s => ({ deptId: s.deptId, deptName: s.deptName }))
+        });
+        setSchools(response.data);
+      } else {
+        console.error('🏫 学校列表获取失败:', response);
+        setSchools([]);
+      }
+    } catch (error) {
+      console.error('🏫 获取学校列表异常:', error);
+      setSchools([]);
+    } finally {
+      setIsLoadingSchools(false);
     }
   }, []);
+
+  // 获取实时志愿者数量
+  const loadVolunteerCounts = useCallback(async () => {
+    // 只有总管理员和分管理员可以查看志愿者数量统计
+    if (!permissions.hasUserManagementAccess()) {
+      console.log('🚫 当前用户无权限查看志愿者数量统计');
+      return;
+    }
+    
+    try {
+      setIsLoadingCounts(true);
+      console.log('🔄 开始获取志愿者数量(管理员+内部员工)...', { permissionLevel, userName: user?.userName });
+
+      const userListResult = await getUserList();
+
+      if (userListResult.code === 200 && Array.isArray(userListResult.data)) {
+        const users: any[] = userListResult.data;
+        const deptToUserIds = new Map<number, Set<number>>();
+
+        for (const u of users) {
+          const deptId: number | undefined = u?.deptId;
+          const userId: number | undefined = u?.userId;
+          if (!deptId || !userId) continue;
+
+          // 分管理员权限：仅统计本校
+          if (permissionLevel === 'part_manager') {
+            const currentUserDeptId = user?.dept?.deptId;
+            if (deptId !== currentUserDeptId) continue;
+          }
+
+          const userName: string = (u?.userName || '').toLowerCase();
+          const postCode: string = (u?.postCode || '').toLowerCase();
+          const roleKeys: string[] = Array.isArray(u?.roles)
+            ? u.roles.map((r: any) => String(r?.roleKey || '').toLowerCase())
+            : [];
+
+          const isManager = userName.includes('admin') || roleKeys.some(k => k.includes('admin'));
+          const isStaff = userName.includes('eb') || postCode === 'pic' || roleKeys.some(k => k.includes('staff') || k.includes('internal'));
+
+          if (!(isManager || isStaff)) continue;
+
+          if (!deptToUserIds.has(deptId)) deptToUserIds.set(deptId, new Set<number>());
+          deptToUserIds.get(deptId)!.add(userId);
+        }
+
+        const counts: Record<number, number> = {};
+        deptToUserIds.forEach((set, deptId) => {
+          counts[deptId] = set.size;
+        });
+
+        console.log('📈 管理员+内部员工数量统计结果(去重后):', counts);
+        setVolunteerCounts(counts);
+      } else {
+        console.warn('📊 用户列表获取失败，使用空统计');
+        setVolunteerCounts({});
+      }
+    } catch (error) {
+      console.error('获取志愿者数量失败:', error);
+      // 失败时使用空数据
+      setVolunteerCounts({});
+    } finally {
+      setIsLoadingCounts(false);
+    }
+  }, [permissions, permissionLevel, user]);
+
+  // 根据权限级别获取志愿者数量显示
+  const getVolunteerCountDisplay = useCallback((school: School): string => {
+    switch (permissionLevel) {
+      case 'super_admin':
+        // 总管理员：显示所有学校的真实数据
+        if (isLoadingCounts) return '...';
+        return `${volunteerCounts[school.deptId] || 0}`;
+        
+      case 'part_manager':
+        // 分管理员：只显示本校数据，其他学校显示"-"
+        if (isLoadingCounts) return '...';
+        // 判断是否为用户所属学校（需要根据实际的学校匹配逻辑）
+        const isUserSchool = user?.dept?.deptName && (
+          user.dept.deptName === school.name || 
+          user.dept.deptName === school.englishName ||
+          user.dept.deptName === 'CU总部' // 特殊情况处理
+        );
+        return isUserSchool ? `${volunteerCounts[school.deptId] || 0}` : '-';
+        
+      case 'staff':
+        // 内部员工：不显示统计数据
+        return '-';
+        
+      default:
+        return '-';
+    }
+  }, [permissionLevel, isLoadingCounts, volunteerCounts, user]);
+
+  // 组件初始化时加载数据
+  React.useEffect(() => {
+    loadSchools();
+    loadVolunteerCounts();
+  }, [loadSchools, loadVolunteerCounts]);
+
+  const handleSearch = useCallback((text: string) => {
+    setSearchText(text);
+    
+    if (!text.trim()) {
+      setFilteredSchools([]);
+      return;
+    }
+    
+    // 实现学校搜索功能
+    const filtered = schools.filter(school => 
+      school.deptName.toLowerCase().includes(text.toLowerCase()) ||
+      school.deptId.toString().includes(text)
+    );
+    
+    setFilteredSchools(filtered);
+    console.log('🔍 学校搜索结果:', { searchText: text, resultsCount: filtered.length });
+  }, [schools]);
+
+  // 渲染学校卡片
+  const renderSchoolCard = useCallback(({ item: school }: { item: School }) => {
+    const volunteerCount = getVolunteerCountDisplay(school);
+    
+    return (
+      <TouchableOpacity
+        style={styles.schoolCard}
+        onPress={() => handleSchoolPress(school)}
+        onLayout={(event) => handleCardLayout(school.deptId.toString(), event)}
+        activeOpacity={0.7}
+      >
+        <View style={styles.schoolCardContent}>
+          {/* 学校图标 */}
+          <View style={styles.schoolIcon}>
+            <Text style={styles.schoolIconText}>
+              {school.deptName.substring(0, 2)}
+            </Text>
+          </View>
+          
+          {/* 学校信息 */}
+          <View style={styles.schoolInfo}>
+            <Text style={styles.schoolName}>{school.deptName}</Text>
+            <Text style={styles.schoolLocation}>
+              部门ID: {school.deptId}
+            </Text>
+          </View>
+          
+          {/* 志愿者数量 */}
+          <View style={styles.volunteerCountContainer}>
+            <View style={styles.volunteerCountBadge}>
+              <Ionicons name="people" size={16} color="#6B7280" />
+              <Text style={styles.volunteerCountText}>
+                {volunteerCount}
+              </Text>
+            </View>
+            <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
+          </View>
+        </View>
+      </TouchableOpacity>
+    );
+  }, [getVolunteerCountDisplay, handleSchoolPress, handleCardLayout]);
 
   // 记录卡片布局信息
   const handleCardLayout = useCallback((schoolId: string, event: any) => {
@@ -96,7 +279,7 @@ export const SchoolSelectionScreen: React.FC<SchoolSelectionScreenProps> = ({ on
   const handleSchoolPress = useCallback((school: School) => {
     if (isTransitioning) return; // 防止重复点击
     
-    const cardLayout = cardLayouts.get(school.id);
+    const cardLayout = cardLayouts.get(school.deptId.toString());
     if (!cardLayout) {
       // 没有布局信息，直接切换
       onSchoolSelect(school);
@@ -282,7 +465,7 @@ export const SchoolSelectionScreen: React.FC<SchoolSelectionScreenProps> = ({ on
               <View style={styles.rightSection}>
                 <View style={[styles.studentCountBadge, { backgroundColor: item.color + '20' }]}>
                   <Text style={[styles.studentCount, { color: item.color }]}>
-                    {item.studentCount}{t('wellbeing.volunteer.volunteersCount')}
+                    {getVolunteerCountDisplay(item)}{t('wellbeing.volunteer.volunteersCount')}
                   </Text>
                 </View>
                 <Ionicons 
@@ -299,6 +482,11 @@ export const SchoolSelectionScreen: React.FC<SchoolSelectionScreenProps> = ({ on
   }, [isDarkMode, handleSchoolPress]);
 
   const ItemSeparator = useCallback(() => <View style={{ height: 12 }} />, []);
+
+  // 组件加载时获取志愿者数量
+  React.useEffect(() => {
+    loadVolunteerCounts();
+  }, [loadVolunteerCounts]);
 
   // 计算内容底部边距（避免被底栏遮挡）
   const contentInsetBottom = 56 + 12 + insets.bottom; // tabBar高度 + 间距 + 安全区域
@@ -331,9 +519,9 @@ export const SchoolSelectionScreen: React.FC<SchoolSelectionScreenProps> = ({ on
 
       {/* 学校列表 */}
       <FlatList
-        data={filteredSchools}
+        data={searchText.trim() ? filteredSchools : schools}
         renderItem={renderSchoolCard}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item) => item.deptId.toString()}
         ItemSeparatorComponent={ItemSeparator}
         style={styles.list}
         contentContainerStyle={{
@@ -509,6 +697,52 @@ const styles = StyleSheet.create({
     borderColor: LIQUID_GLASS_LAYERS.L1.border.color.light,
     borderRadius: LIQUID_GLASS_LAYERS.L1.borderRadius.surface, // 20pt圆角
     ...theme.shadows[LIQUID_GLASS_LAYERS.L1.shadow],
+  },
+  
+  // 新增样式
+  schoolCardContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+  },
+  schoolIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: '#E5E7EB',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+  },
+  schoolIconText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#6B7280',
+  },
+  schoolLocation: {
+    fontSize: 13,
+    color: '#9CA3AF',
+    marginTop: 2,
+  },
+  volunteerCountContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginLeft: 'auto',
+  },
+  volunteerCountBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F3F4F6',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+    marginRight: 8,
+  },
+  volunteerCountText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#374151',
+    marginLeft: 4,
   },
 });
 

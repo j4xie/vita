@@ -1,4 +1,4 @@
-package com.anonymous.vitaglobalapp
+package com.anonymous.pomeloxapp
 
 import android.os.Build
 import android.os.Bundle

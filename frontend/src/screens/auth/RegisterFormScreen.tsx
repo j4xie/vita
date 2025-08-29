@@ -12,14 +12,31 @@ import {
   Alert,
   ActivityIndicator,
 } from 'react-native';
-import { useNavigation, useRoute } from '@react-navigation/native';
+import { useNavigation, useRoute, CommonActions } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { LinearGradient } from 'expo-linear-gradient';
 import { theme } from '../../theme';
 import { LIQUID_GLASS_LAYERS, DAWN_GRADIENTS } from '../../theme/core';
 import { SchoolSelector } from '../../components/common/SchoolSelector';
-import { vitaGlobalAPI } from '../../services/VitaGlobalAPI';
+import { OrganizationSelector } from '../../components/common/OrganizationSelector';
+import { pomeloXAPI } from '../../services/PomeloXAPI';
+import { TermsModal } from '../../components/modals/TermsModal';
+
+// 学校名称到邮箱域名的映射表
+const SCHOOL_EMAIL_DOMAINS: Record<string, string> = {
+  'UC Berkeley': 'berkeley.edu',
+  'UC Santa Cruz': 'ucsc.edu',  
+  'U Southern California': 'usc.edu',
+  'UC Los Angeles': 'ucla.edu',
+  'UC Irvine': 'uci.edu',
+  'UC San Diego': 'ucsd.edu',
+  'U of Minnesota Twin Cities': 'umn.edu',
+  'University of Washington': 'uw.edu',
+  'U Berklee Music': 'berklee.edu',
+  'UC Santa Barbara': 'ucsb.edu',
+  'UC Davis': 'ucdavis.edu',
+};
 
 interface FormData {
   userName: string;
@@ -28,14 +45,17 @@ interface FormData {
   university: string;
   universityId: string;
   email: string;
+  emailPrefix: string; // 邮箱前缀部分
   password: string;
   confirmPassword: string;
   phoneType: 'CN' | 'US';
   phoneNumber: string;
   sex: '0' | '1' | '2'; // 0-男，1-女，2-未知
   referralCode?: string;
-  organizationId?: string;
+  organization: string; // 组织名称
+  organizationId: string; // 组织ID
   bizId?: string; // SMS验证码接口返回的字段
+  privacyConsent: boolean; // 隐私协议同意状态
 }
 
 export const RegisterFormScreen: React.FC = () => {
@@ -52,6 +72,8 @@ export const RegisterFormScreen: React.FC = () => {
   const [verificationCode, setVerificationCode] = useState('');
   const [countdown, setCountdown] = useState(0);
   const [agreedToTerms, setAgreedToTerms] = useState(false);
+  const [termsModalVisible, setTermsModalVisible] = useState(false);
+  const [termsModalType, setTermsModalType] = useState<'terms' | 'privacy'>('terms');
   
   const [formData, setFormData] = useState<FormData>({
     userName: '',
@@ -60,14 +82,17 @@ export const RegisterFormScreen: React.FC = () => {
     university: '',
     universityId: '',
     email: '',
+    emailPrefix: '',
     password: '',
     confirmPassword: '',
     phoneType: 'CN',
     phoneNumber: '',
     sex: '2', // 默认未知
     referralCode: referralCode || '',
+    organization: '',
     organizationId: '',
     bizId: '',
+    privacyConsent: true, // 用户从RegisterChoice页面来时已经同意了隐私协议
   });
 
   const [errors, setErrors] = useState<Partial<FormData>>({});
@@ -117,8 +142,21 @@ export const RegisterFormScreen: React.FC = () => {
     
     if (!formData.email) {
       newErrors.email = t('validation.email_required');
-    } else if (!formData.email.includes('@') || !formData.email.includes('.edu')) {
-      newErrors.email = t('validation.email_school_invalid');
+    } else {
+      const domain = SCHOOL_EMAIL_DOMAINS[formData.university];
+      if (domain) {
+        // 对于有固定域名的学校，验证前缀是否为空
+        if (!formData.emailPrefix) {
+          newErrors.email = t('validation.email_required');
+        } else if (!/^[a-zA-Z0-9._-]+$/.test(formData.emailPrefix)) {
+          newErrors.email = t('validation.email_prefix_invalid');
+        }
+      } else {
+        // 对于没有固定域名的学校，验证完整邮箱格式
+        if (!formData.email.includes('@') || !formData.email.includes('.edu')) {
+          newErrors.email = t('validation.email_school_invalid');
+        }
+      }
     }
     
     if (!formData.password) {
@@ -176,13 +214,24 @@ export const RegisterFormScreen: React.FC = () => {
         setCurrentStep(currentStep + 1);
         scrollRef.current?.scrollTo({ y: 0, animated: true });
       } else {
-        sendVerificationCode();
+        // 第3步：根据是否有推荐码决定流程
+        if (hasReferralCode) {
+          completeRegistration();
+        } else {
+          sendVerificationCode();
+        }
       }
     }
   };
 
   const handleSkip = () => {
-    navigation.navigate('Main');
+    // 重置导航栈，避免页面叠加问题
+    navigation.dispatch(
+      CommonActions.reset({
+        index: 0,
+        routes: [{ name: 'Main' }],
+      })
+    );
   };
 
   const sendVerificationCode = async () => {
@@ -191,11 +240,11 @@ export const RegisterFormScreen: React.FC = () => {
     setLoading(true);
     try {
       const phoneNumber = formData.phoneType === 'CN' 
-        ? `86${formData.phoneNumber}` 
+        ? `86${formData.phoneNumber}` // SMS API需要86前缀
         : `1${formData.phoneNumber}`;
       
       // 调用发送验证码API
-      const result = await vitaGlobalAPI.sendSMSVerification(phoneNumber);
+      const result = await pomeloXAPI.sendSMSVerification(phoneNumber);
       
       if (result.code === 'OK' && result.bizId) {
         // 保存bizId到表单数据
@@ -230,7 +279,7 @@ export const RegisterFormScreen: React.FC = () => {
           phoneType: formData.phoneType 
         });
       } else {
-        Alert.alert('发送失败', '验证码发送失败，请稍后重试');
+        Alert.alert(t('auth.register.sms.send_failed_title'), t('auth.register.sms.send_failed_message'));
       }
     } catch (error) {
       console.error('发送验证码错误:', error);
@@ -244,6 +293,95 @@ export const RegisterFormScreen: React.FC = () => {
     setFormData(prev => ({ ...prev, [field]: value }));
     if (errors[field]) {
       setErrors(prev => ({ ...prev, [field]: undefined }));
+    }
+  };
+
+  // 根据学校更新邮箱域名
+  const handleSchoolSelect = (school: any) => {
+    updateFormData('university', school.deptName);
+    updateFormData('universityId', school.deptId.toString());
+    
+    // 清空之前的邮箱数据
+    updateFormData('emailPrefix', '');
+    updateFormData('email', '');
+  };
+
+  // 处理邮箱前缀输入
+  const handleEmailPrefixChange = (prefix: string) => {
+    updateFormData('emailPrefix', prefix);
+    
+    const domain = SCHOOL_EMAIL_DOMAINS[formData.university];
+    if (domain && prefix) {
+      updateFormData('email', `${prefix}@${domain}`);
+    } else {
+      updateFormData('email', prefix);
+    }
+  };
+
+  // 处理条款和隐私政策点击
+  const handleTermsPress = (type: 'terms' | 'privacy') => {
+    setTermsModalType(type);
+    setTermsModalVisible(true);
+  };
+
+  // 解析注册错误为用户友好提示
+  const parseRegistrationError = (errorMsg: string): string => {
+    if (errorMsg.includes('phonenumber')) return t('validation.phone_format_error');
+    if (errorMsg.includes('email')) return t('validation.email_format_error');
+    if (errorMsg.includes('userName')) return t('validation.username_already_exists');
+    if (errorMsg.includes('Duplicate entry')) return t('validation.duplicate_registration');
+    if (errorMsg.includes('too long')) return t('validation.field_too_long');
+    if (errorMsg.includes('constraint')) return t('validation.data_constraint_error');
+    return t('auth.register.error_message');
+  };
+
+  // 完成注册（推荐码用户）
+  const completeRegistration = async () => {
+    setLoading(true);
+    try {
+      const phoneNumber = formData.phoneType === 'CN' 
+        ? formData.phoneNumber // 中国手机号直接使用11位格式
+        : `1${formData.phoneNumber}`; // 美国号码保持+1前缀
+
+      const registrationData = {
+        userName: formData.userName,
+        legalName: formData.legalName,
+        nickName: formData.englishNickname,
+        password: formData.password,
+        phonenumber: phoneNumber,
+        email: formData.email,
+        sex: formData.sex,
+        deptId: formData.universityId,
+        orgId: formData.organizationId,
+        invCode: formData.referralCode,
+      };
+
+      const result = await pomeloXAPI.register(registrationData);
+      
+      if (result.code === 200) {
+        Alert.alert(
+          t('auth.register.success_title'),
+          t('auth.register.success_message'),
+          [{
+            text: t('common.confirm'),
+            onPress: () => navigation.dispatch(
+              CommonActions.reset({
+                index: 0,
+                routes: [{ name: 'Main' }],
+              })
+            )
+          }]
+        );
+      } else {
+        const friendlyError = parseRegistrationError(result.msg || '');
+        Alert.alert(t('auth.register.error_title'), friendlyError);
+      }
+    } catch (error) {
+      console.error('注册失败:', error);
+      const friendlyError = parseRegistrationError(error.message || '');
+      Alert.alert(t('auth.register.error_title'), friendlyError);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -291,6 +429,9 @@ export const RegisterFormScreen: React.FC = () => {
           placeholderTextColor={theme.colors.text.disabled}
           autoCapitalize="none"
           autoCorrect={false}
+          secureTextEntry={false}
+          textContentType="username"
+          autoComplete="username-new"
         />
         {errors.userName && <Text style={styles.errorText}>{errors.userName}</Text>}
       </View>
@@ -303,6 +444,9 @@ export const RegisterFormScreen: React.FC = () => {
           value={formData.legalName}
           onChangeText={(text) => updateFormData('legalName', text)}
           placeholderTextColor={theme.colors.text.disabled}
+          secureTextEntry={false}
+          textContentType="name"
+          autoComplete="name"
         />
         {errors.legalName && <Text style={styles.errorText}>{errors.legalName}</Text>}
       </View>
@@ -315,6 +459,9 @@ export const RegisterFormScreen: React.FC = () => {
           value={formData.englishNickname}
           onChangeText={(text) => updateFormData('englishNickname', text)}
           placeholderTextColor={theme.colors.text.disabled}
+          secureTextEntry={false}
+          textContentType="nickname"
+          autoComplete="off"
         />
         {errors.englishNickname && <Text style={styles.errorText}>{errors.englishNickname}</Text>}
       </View>
@@ -324,10 +471,7 @@ export const RegisterFormScreen: React.FC = () => {
         <SchoolSelector
           value={formData.university}
           selectedId={formData.universityId}
-          onSelect={(school) => {
-            updateFormData('university', school.deptName);
-            updateFormData('universityId', school.deptId.toString());
-          }}
+          onSelect={handleSchoolSelect}
           placeholder={t('auth.register.form.university_placeholder')}
           error={errors.university}
         />
@@ -338,20 +482,40 @@ export const RegisterFormScreen: React.FC = () => {
   const renderStep2 = () => (
     <View style={styles.stepContainer}>
       <Text style={styles.stepTitle}>{t('auth.register.form.account_setup')}</Text>
-      <Text style={styles.stepSubtitle}>设置您的登录账号和密码</Text>
+      <Text style={styles.stepSubtitle}>{t('auth.register.form.step2_description')}</Text>
 
       <View style={styles.inputContainer}>
         <Text style={styles.label}>{t('auth.register.form.email_label')}</Text>
-        <TextInput
-          style={[styles.input, errors.email && styles.inputError]}
-          placeholder="example@university.edu"
-          value={formData.email}
-          onChangeText={(text) => updateFormData('email', text)}
-          keyboardType="email-address"
-          autoCapitalize="none"
-          autoCorrect={false}
-          placeholderTextColor={theme.colors.text.disabled}
-        />
+        {SCHOOL_EMAIL_DOMAINS[formData.university] ? (
+          <View style={styles.emailInputWrapper}>
+            <TextInput
+              style={[styles.emailPrefixInput, errors.email && styles.inputError]}
+              placeholder="your-username"
+              value={formData.emailPrefix}
+              onChangeText={handleEmailPrefixChange}
+              keyboardType="email-address"
+              autoCapitalize="none"
+              autoCorrect={false}
+              placeholderTextColor={theme.colors.text.disabled}
+              textContentType="emailAddress"
+              autoComplete="email"
+            />
+            <Text style={styles.emailDomain}>@{SCHOOL_EMAIL_DOMAINS[formData.university]}</Text>
+          </View>
+        ) : (
+          <TextInput
+            style={[styles.input, errors.email && styles.inputError]}
+            placeholder="example@university.edu"
+            value={formData.email}
+            onChangeText={(text) => updateFormData('email', text)}
+            keyboardType="email-address"
+            autoCapitalize="none"
+            autoCorrect={false}
+            placeholderTextColor={theme.colors.text.disabled}
+            textContentType="emailAddress"
+            autoComplete="email"
+          />
+        )}
         {errors.email && <Text style={styles.errorText}>{errors.email}</Text>}
       </View>
 
@@ -399,7 +563,13 @@ export const RegisterFormScreen: React.FC = () => {
         </TouchableOpacity>
         <TouchableOpacity
           style={[styles.phoneTypeButton, formData.phoneType === 'US' && styles.phoneTypeActive]}
-          onPress={() => updateFormData('phoneType', 'US')}
+          onPress={() => {
+            Alert.alert(
+              t('auth.register.form.us_phone_not_supported_title'),
+              `${t('auth.register.form.us_phone_not_supported_message')}\n\n${t('auth.register.form.us_phone_contact_info')}`,
+              [{ text: t('common.confirm'), style: 'default' }]
+            );
+          }}
         >
           <Text style={[styles.phoneTypeText, formData.phoneType === 'US' && styles.phoneTypeTextActive]}>
             {t('auth.register.form.phone_usa')}
@@ -455,22 +625,41 @@ export const RegisterFormScreen: React.FC = () => {
         </View>
       </View>
 
-      <TouchableOpacity
-        style={styles.termsContainer}
-        onPress={() => setAgreedToTerms(!agreedToTerms)}
-      >
-        <View style={[styles.checkbox, agreedToTerms && styles.checkboxChecked]}>
-          {agreedToTerms && (
-            <Ionicons name="checkmark" size={16} color={theme.colors.text.inverse} />
-          )}
+      <View style={styles.inputContainer}>
+        <Text style={styles.label}>{t('auth.register.form.organization_label')}</Text>
+        <OrganizationSelector
+          value={formData.organization}
+          selectedId={formData.organizationId}
+          onSelect={(organization) => {
+            updateFormData('organization', organization.name);
+            updateFormData('organizationId', organization.id.toString());
+          }}
+          placeholder={t('auth.register.form.organization_placeholder')}
+          error={errors.organization}
+        />
+      </View>
+
+      <View style={styles.termsContainer}>
+        <TouchableOpacity onPress={() => setAgreedToTerms(!agreedToTerms)}>
+          <View style={[styles.checkbox, agreedToTerms && styles.checkboxChecked]}>
+            {agreedToTerms && (
+              <Ionicons name="checkmark" size={16} color={theme.colors.text.inverse} />
+            )}
+          </View>
+        </TouchableOpacity>
+        <View style={styles.termsTextContainer}>
+          <Text style={styles.termsText}>
+            {t('auth.register.form.terms_checkbox')}
+            <TouchableOpacity onPress={() => handleTermsPress('terms')}>
+              <Text style={styles.termsLink}> {t('auth.register.terms_of_service')} </Text>
+            </TouchableOpacity>
+            {t('auth.register.and')}
+            <TouchableOpacity onPress={() => handleTermsPress('privacy')}>
+              <Text style={styles.termsLink}> {t('auth.register.privacy_policy')}</Text>
+            </TouchableOpacity>
+          </Text>
         </View>
-        <Text style={styles.termsText}>
-          {t('auth.register.form.terms_checkbox')}
-          <Text style={styles.termsLink}> 服务条款 </Text>
-          和
-          <Text style={styles.termsLink}> 隐私政策</Text>
-        </Text>
-      </TouchableOpacity>
+      </View>
     </View>
   );
 
@@ -520,12 +709,20 @@ export const RegisterFormScreen: React.FC = () => {
               <ActivityIndicator color={theme.colors.text.inverse} />
             ) : (
               <Text style={styles.nextButtonText}>
-                {currentStep === 3 ? t('auth.register.form.send_code') : t('auth.register.form.next_step')}
+                {currentStep === 3 
+                  ? (hasReferralCode ? t('auth.register.form.complete_registration') : t('auth.register.form.send_code'))
+                  : t('auth.register.form.next_step')}
               </Text>
             )}
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
+      
+      <TermsModal
+        visible={termsModalVisible}
+        type={termsModalType}
+        onClose={() => setTermsModalVisible(false)}
+      />
     </SafeAreaView>
   );
 };
@@ -545,7 +742,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: theme.spacing[4],
     paddingVertical: theme.spacing[3],
     borderBottomWidth: 1,
-    borderBottomColor: theme.colors.border,
+    borderBottomColor: theme.colors.border.primary,
   },
   backButton: {
     width: 40,
@@ -702,10 +899,39 @@ const styles = StyleSheet.create({
     fontSize: theme.typography.fontSize.base,
     color: theme.colors.text.primary,
   },
-  termsContainer: {
+  emailInputWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
+    backgroundColor: theme.colors.background.secondary,
+    borderRadius: theme.borderRadius.lg,
+    borderWidth: 1,
+    borderColor: 'transparent',
+    paddingRight: theme.spacing[4],
+  },
+  emailPrefixInput: {
+    flex: 0,
+    minWidth: 120,
+    maxWidth: 180,
+    paddingHorizontal: theme.spacing[4],
+    paddingVertical: theme.spacing[3],
+    fontSize: theme.typography.fontSize.base,
+    color: theme.colors.text.primary,
+  },
+  emailDomain: {
+    paddingLeft: theme.spacing[1],
+    paddingVertical: theme.spacing[3],
+    fontSize: theme.typography.fontSize.base,
+    color: theme.colors.text.secondary,
+    backgroundColor: 'transparent',
+  },
+  termsContainer: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
     marginTop: theme.spacing[2],
+  },
+  termsTextContainer: {
+    flex: 1,
+    marginLeft: theme.spacing[2],
   },
   checkbox: {
     width: 20,
@@ -758,15 +984,16 @@ const styles = StyleSheet.create({
   },
   bottomContainer: {
     padding: theme.spacing[6],
-    backgroundColor: theme.colors.text.inverse,
-    borderTopWidth: 1,
-    borderTopColor: theme.colors.border,
+    backgroundColor: 'transparent',
   },
   nextButton: {
     backgroundColor: theme.colors.primary,
     paddingVertical: theme.spacing[4],
     borderRadius: theme.borderRadius.lg,
     alignItems: 'center',
+    ...theme.shadows.md,
+    shadowColor: theme.colors.primary,
+    shadowOpacity: 0.3,
   },
   nextButtonDisabled: {
     opacity: 0.5,

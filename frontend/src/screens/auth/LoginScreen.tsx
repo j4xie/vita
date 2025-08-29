@@ -23,9 +23,8 @@ import { useTranslation } from 'react-i18next';
 import { theme } from '../../theme';
 import { LIQUID_GLASS_LAYERS, DAWN_GRADIENTS } from '../../theme/core';
 import { fadeIn, slideInFromBottom } from '../../utils/animations';
-import { vitaGlobalAPI } from '../../services/VitaGlobalAPI';
+import { pomeloXAPI } from '../../services/PomeloXAPI';
 import { useUser } from '../../context/UserContext';
-import { login as apiLogin, getUserInfo } from '../../services/authAPI';
 
 const { width, height } = Dimensions.get('window');
 
@@ -66,9 +65,10 @@ export const LoginScreen: React.FC = () => {
     
     if (!email) {
       newErrors.email = t('auth.validation.email_required');
-    } else if (!validateEmail(email)) {
-      newErrors.email = t('auth.validation.email_invalid');
+    } else if (email.length < 3) {
+      newErrors.email = t('auth.validation.username_min_length');
     }
+    // 移除邮箱格式验证，允许用户名格式
     
     if (!password) {
       newErrors.password = t('auth.validation.password_required');
@@ -86,36 +86,19 @@ export const LoginScreen: React.FC = () => {
     setLoading(true);
     
     try {
-      // 尝试多种登录方式
-      let loginCredentials;
+      console.log('尝试登录:', { userName: email, password: '[HIDDEN]' }); // 调试信息
       
-      // 判断输入是邮箱还是用户名
-      if (email.includes('@')) {
-        loginCredentials = { email: email, password: password };
-      } else {
-        loginCredentials = { username: email, password: password };
-      }
-      
-      console.log('尝试登录:', loginCredentials); // 调试信息
-      
-      // 调用登录API
-      const result = await apiLogin(loginCredentials);
+      // 调用PomeloX登录API，后端需要userName字段
+      const result = await pomeloXAPI.login({
+        userName: email, // 后端接受邮箱作为userName
+        password: password,
+      });
       
       console.log('登录响应:', result); // 调试信息
       
       if (result.code === 200 && result.data?.token) {
-        // 登录成功，获取用户详细信息
-        try {
-          const userInfoResult = await getUserInfo(result.data.token);
-          if (userInfoResult.code === 200 && userInfoResult.data) {
-            // 通过UserContext设置用户信息
-            await userLogin(result.data.token, userInfoResult.data);
-          }
-        } catch (userInfoError) {
-          console.warn('获取用户信息失败，但登录成功:', userInfoError);
-          // 即使获取用户信息失败，也允许登录
-          await userLogin(result.data.token);
-        }
+        // 登录成功，通过UserContext获取用户信息
+        await userLogin(result.data.token);
         
         // 保存用户邮箱（如果选择记住我）
         if (rememberMe) {
@@ -141,9 +124,9 @@ export const LoginScreen: React.FC = () => {
         let errorMessage = result.msg || t('auth.errors.invalid_credentials');
         
         if (result.code === 500 && errorMessage.includes('用户不存在')) {
-          errorMessage = '用户名或邮箱不存在，请检查输入或先注册账号';
+          errorMessage = t('auth.validation.user_not_exists');
         } else if (result.code === 500 && errorMessage.includes('密码错误')) {
-          errorMessage = '密码错误，请重新输入';
+          errorMessage = t('auth.validation.password_incorrect');
         }
         
         Alert.alert(t('auth.errors.login_failed'), errorMessage);
@@ -154,9 +137,9 @@ export const LoginScreen: React.FC = () => {
       let errorMessage = t('auth.errors.network_error');
       if (error instanceof Error) {
         if (error.message.includes('Network')) {
-          errorMessage = '网络连接失败，请检查网络后重试';
+          errorMessage = t('auth.errors.network_connection_failed');
         } else if (error.message.includes('500')) {
-          errorMessage = '服务器错误，请稍后重试';
+          errorMessage = t('auth.errors.server_error');
         }
       }
       
@@ -411,7 +394,7 @@ const styles = StyleSheet.create({
   logoImage: {
     width: 80,
     height: 80,
-    // 移除tintColor，保持VitaGlobal logo原色
+    // 移除tintColor，保持PomeloX logo原色
   },
   welcomeText: {
     fontSize: theme.typography.fontSize['3xl'],

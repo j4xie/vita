@@ -7,9 +7,10 @@ import { getFocusedRouteNameFromRoute } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useTranslation } from 'react-i18next';
-import { vitaGlobalAPI } from '../services/VitaGlobalAPI';
+import { pomeloXAPI } from '../services/PomeloXAPI';
 import { theme } from '../theme';
 import { CustomTabBar } from '../components/navigation/CustomTabBar';
+import { SimpleSearchTabBar } from '../components/navigation/SimpleSearchTabBar';
 import { useUser, UserProvider } from '../context/UserContext';
 import { pageTransitions } from '../utils/animations';
 import { LanguageProvider } from '../context/LanguageContext';
@@ -19,6 +20,7 @@ import { FilterProvider } from '../context/FilterContext';
 // Screens
 import { ActivityListScreen } from '../screens/activities/ActivityListScreen';
 import { ActivityDetailScreen } from '../screens/activities/ActivityDetailScreen';
+import { ActivityRegistrationFormScreen } from '../screens/activities/ActivityRegistrationFormScreen';
 import { LoginScreen } from '../screens/auth/LoginScreen';
 import { RegisterChoiceScreen } from '../screens/auth/RegisterChoiceScreen';
 import { RegisterFormScreen } from '../screens/auth/RegisterFormScreen';
@@ -37,12 +39,13 @@ import { EditProfileScreen } from '../screens/profile/EditProfileScreen';
 // Cards Screens
 import { MyCardsScreen } from '../screens/cards/MyCardsScreen';
 // Organization Provider
-import { OrganizationProvider } from '../context/OrganizationContext';
+import { OrganizationProvider } from '../context/OrganizationContext'; // 暂时注释功能，保留接口
 // Other Tab Screens
 import { ExploreScreen } from '../screens/explore/ExploreScreen';
 import { ConsultingScreen } from '../screens/consulting/ConsultingScreen';
 import { CommunityScreen } from '../screens/community/CommunityScreen';
 import { WellbeingScreen } from '../screens/wellbeing/WellbeingScreen';
+import { SearchScreen } from '../screens/search/SearchScreen';
 import SchoolDetailScreen from '../screens/wellbeing/SchoolDetailScreen';
 import { VolunteerCheckInScreen } from '../screens/volunteer/VolunteerCheckInScreen';
 import { FloatingAIButton } from '../components/common/FloatingAIButton';
@@ -202,23 +205,36 @@ const HomeNavigator = () => {
           ...pageTransitions.slideFromRight,
         }}
       />
+      <MainStack.Screen 
+        name="ActivityRegistrationForm" 
+        component={ActivityRegistrationFormScreen}
+        options={{
+          ...pageTransitions.slideFromRight,
+        }}
+      />
     </MainStack.Navigator>
   );
 };
 
-// MyCards Screen with Organization Provider
-const MyCardsScreenWithProvider = () => (
-  <OrganizationProvider userId="user_123">
-    <MyCardsScreen />
-  </OrganizationProvider>
-);
+// MyCards Screen - 启用组织Provider以支持会员卡功能
+const MyCardsScreenWithProvider = () => {
+  const { user } = useUser();
+  return (
+    <OrganizationProvider userId={user?.id || "guest"}>
+      <MyCardsScreen />
+    </OrganizationProvider>
+  );
+};
 
-// QRScanner Screen with Organization Provider
-const QRScannerScreenWithProvider = () => (
-  <OrganizationProvider userId="user_123">
-    <QRScannerScreen />
-  </OrganizationProvider>
-);
+// QRScanner Screen - 启用组织Provider以支持扫码功能  
+const QRScannerScreenWithProvider = () => {
+  const { user } = useUser();
+  return (
+    <OrganizationProvider userId={user?.id || "guest"}>
+      <QRScannerScreen />
+    </OrganizationProvider>
+  );
+};
 
 // Profile Stack Navigator
 const ProfileNavigator = () => {
@@ -344,12 +360,7 @@ const TabNavigator = () => {
             };
           }}
         />
-        {/* 咨询 - 原探索位置 */}
-        <Tab.Screen 
-          name="Consulting" 
-          component={ConsultingScreen}
-        />
-        {/* 社区 - 新增 */}
+        {/* 社区咨询 - 合并咨询功能 */}
         <Tab.Screen 
           name="Community" 
           component={CommunityScreen}
@@ -398,7 +409,7 @@ export const AppNavigator = () => {
     // Check if user is logged in
     const checkLoginStatus = async () => {
       try {
-        const isAuthenticated = await vitaGlobalAPI.isAuthenticated();
+        const isAuthenticated = await pomeloXAPI.isAuthenticated();
         setUserToken(isAuthenticated ? 'authenticated' : null);
       } catch (error) {
         console.error('Error checking login status:', error);
@@ -450,11 +461,61 @@ export const AppNavigator = () => {
             }}
           />
           
-          {/* Other Auth Screens that can be accessed from Main */}
-          <RootStack.Screen name="Login" component={LoginScreen} />
-          <RootStack.Screen name="RegisterChoice" component={RegisterChoiceScreen} />
-          <RootStack.Screen name="RegisterForm" component={RegisterFormScreen} />
-          <RootStack.Screen name="Verification" component={VerificationScreen} />
+          {/* Search Screen - 独立搜索页面 */}
+          <RootStack.Screen 
+            name="Search" 
+            component={SearchScreen}
+            options={{
+              ...pageTransitions.slideFromRight,
+            }}
+          />
+          
+          {/* Global Activity Screens - 可以从任何地方访问的活动页面 */}
+          <RootStack.Screen 
+            name="ActivityDetail" 
+            component={ActivityDetailScreen}
+            options={{
+              ...pageTransitions.slideFromRight,
+            }}
+          />
+          <RootStack.Screen 
+            name="ActivityRegistrationForm" 
+            component={ActivityRegistrationFormScreen}
+            options={{
+              ...pageTransitions.slideFromRight,
+            }}
+          />
+          
+          {/* Global Auth Screens - 可以从任何地方访问的认证页面 */}
+          <RootStack.Screen 
+            name="Login" 
+            component={LoginScreen}
+            options={{
+              ...pageTransitions.slideFromRight,
+            }}
+          />
+          <RootStack.Screen 
+            name="RegisterChoice" 
+            component={RegisterChoiceScreen}
+            options={{
+              ...pageTransitions.slideFromBottom,
+            }}
+          />
+          <RootStack.Screen 
+            name="RegisterForm" 
+            component={RegisterFormScreen}
+            options={{
+              ...pageTransitions.fade,
+            }}
+          />
+          <RootStack.Screen 
+            name="Verification" 
+            component={VerificationScreen}
+            options={{
+              ...pageTransitions.slideFromRight,
+            }}
+          />
+          
         </RootStack.Navigator>
         </NavigationContainer>
         </ThemeProvider>

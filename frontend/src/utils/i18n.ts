@@ -85,6 +85,114 @@ export const isFirstLaunch = async (): Promise<boolean> => {
   }
 };
 
+// 智能fallback翻译生成
+const generateSmartFallback = (key: string, language: string = 'zh-CN'): string => {
+  // 如果键名本身就是中文，直接返回
+  if (/[\u4e00-\u9fff]/.test(key)) {
+    return key;
+  }
+  
+  // 基于键名语义生成友好的中文翻译
+  const parts = key.split('.');
+  const lastPart = parts[parts.length - 1];
+  
+  const semanticMap: Record<string, string> = {
+    // 常用操作
+    'login': '登录',
+    'register': '注册', 
+    'logout': '退出登录',
+    'save': '保存',
+    'cancel': '取消',
+    'confirm': '确认',
+    'submit': '提交',
+    'delete': '删除',
+    'edit': '编辑',
+    'add': '添加',
+    'remove': '移除',
+    'search': '搜索',
+    'filter': '筛选',
+    'refresh': '刷新',
+    'loading': '加载中...',
+    'success': '成功',
+    'error': '错误',
+    'failed': '失败',
+    'warning': '警告',
+    
+    // 表单相关
+    'title': '标题',
+    'name': '姓名',
+    'email': '邮箱',
+    'phone': '手机号',
+    'password': '密码',
+    'address': '地址',
+    'description': '描述',
+    'message': '消息',
+    'content': '内容',
+    'label': '标签',
+    'placeholder': '请输入',
+    'required': '必填',
+    'optional': '选填',
+    
+    // 页面和组件
+    'home': '首页',
+    'profile': '个人中心',
+    'settings': '设置',
+    'activities': '活动',
+    'community': '社区',
+    'explore': '探索',
+    'wellbeing': '安心服务',
+    'volunteer': '志愿者',
+    'consulting': '咨询服务',
+    'cards': '会员卡',
+    
+    // 状态
+    'active': '活跃',
+    'inactive': '非活跃',
+    'pending': '待处理',
+    'completed': '已完成',
+    'available': '可用',
+    'unavailable': '不可用',
+  };
+  
+  // 检查完整键名
+  if (semanticMap[key]) {
+    return semanticMap[key];
+  }
+  
+  // 检查最后一部分
+  if (semanticMap[lastPart]) {
+    return semanticMap[lastPart];
+  }
+  
+  // 检查包含模式
+  for (const [pattern, translation] of Object.entries(semanticMap)) {
+    if (lastPart.includes(pattern)) {
+      return translation;
+    }
+  }
+  
+  // 生成基于键结构的友好名称
+  const category = parts[0] || '';
+  const categoryMap: Record<string, string> = {
+    'auth': '认证',
+    'profile': '个人',
+    'activities': '活动', 
+    'wellbeing': '安心',
+    'community': '社区',
+    'explore': '探索',
+    'volunteer': '志愿',
+    'consulting': '咨询',
+    'validation': '验证',
+    'common': '通用',
+    'navigation': '导航',
+  };
+  
+  const categoryName = categoryMap[category] || category;
+  const elementName = lastPart.replace(/_/g, '').replace(/([A-Z])/g, ' $1').trim() || '内容';
+  
+  return `${categoryName}${elementName}`;
+};
+
 // 语言资源映射
 const resources = {
   'zh-CN': {
@@ -100,6 +208,7 @@ const initI18next = async () => {
   // 尝试获取已保存的语言偏好
   const savedLanguage = await getSavedLanguage();
   const deviceLanguage = detectDeviceLanguage();
+  // 使用保存的语言或设备语言
   const initialLanguage = savedLanguage || deviceLanguage;
 
   return i18n
@@ -128,7 +237,39 @@ const initI18next = async () => {
       react: {
         useSuspense: false,
       },
+      
+      // 智能fallback配置 - 关键防护
+      missingKeyHandler: (lng: readonly string[], ns: string, key: string, fallbackValue: string, updateMissing: boolean, options: any) => {
+        const smartFallback = generateSmartFallback(key, lng[0]);
+        console.warn(`🔄 翻译键缺失，使用智能fallback: ${key} → ${smartFallback}`);
+      },
+      
+      // 解析错误处理
+      parseMissingKeyHandler: (key: string) => {
+        const smartFallback = generateSmartFallback(key);
+        console.warn(`⚠️  翻译解析失败，使用智能fallback: ${key} → ${smartFallback}`);
+        return smartFallback;
+      },
     });
+};
+
+// 安全的翻译函数包装器
+export const safeT = (key: string, options?: any): string => {
+  try {
+    const result = i18n.t(key, options);
+    
+    // 检查是否返回了键名（翻译失败的标志）
+    if (typeof result === 'string' && (result === key || result.startsWith('translation:'))) {
+      const fallback = generateSmartFallback(key);
+      console.warn(`🛡️  翻译失败保护: ${key} → ${fallback}`);
+      return fallback;
+    }
+    
+    return typeof result === 'string' ? result : generateSmartFallback(key);
+  } catch (error) {
+    console.error(`❌ 翻译调用错误: ${key}`, error);
+    return generateSmartFallback(key);
+  }
 };
 
 // 导出i18n实例
