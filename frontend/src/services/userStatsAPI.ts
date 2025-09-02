@@ -22,31 +22,109 @@ export const getUserList = async (): Promise<{
       throw new Error('用户未登录');
     }
 
-    const response = await fetch(`${BASE_URL}/system/user/list`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
-      },
+    // 🚨 后端权限过滤逻辑：总管理员需要动态pageSize，分管理员已完全过滤
+    
+    // 先获取用户总数和默认返回数量
+    const initialResponse = await fetch(`${BASE_URL}/system/user/list`, {
+      headers: { 'Authorization': `Bearer ${token}` }
     });
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+    const initialData = await initialResponse.json();
+    
+    if (initialData.code !== 200) {
+      throw new Error('获取用户总数失败');
+    }
+    
+    const returnedCount = initialData.rows?.length || 0;
+    const totalCount = initialData.total || 0;
+    
+    console.log(`📊 [API-ACCESS] 权限检查: total=${totalCount}, returned=${returnedCount}`);
+    
+    let response;
+    if (returnedCount < totalCount) {
+      // 总管理员：需要动态pageSize获取完整数据
+      console.log(`🔍 [ADMIN-ACCESS] 检测到总管理员权限，使用pageSize=${totalCount}获取完整数据`);
+      response = await fetch(`${BASE_URL}/system/user/list?pageSize=${totalCount}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+    } else {
+      // 分管理员：后端已完全过滤，直接使用默认结果
+      console.log(`🔍 [PART-MANAGER-ACCESS] 检测到分管理员权限，后端已过滤为本校用户`);
+      response = initialResponse;
     }
 
-    const data = await response.json();
+    let data;
+    if (response === initialResponse) {
+      // 分管理员：直接使用已解析的数据
+      data = initialData;
+    } else {
+      // 总管理员：解析新的响应
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      data = await response.json();
+    }
     
-    // 处理系统API的返回格式
+    console.log(`📊 [USERLIST-API] 当前权限下获取到${data.rows?.length || 0}/${data.total || 0}个用户`);
+    
+    // 处理完整用户列表
     if (data.code === 200 && data.rows) {
+      // 为每个用户获取详细权限信息
+      const userPromises = data.rows.map(async (user: any) => {
+        try {
+          // 调用/app/user/info获取完整用户信息包括deptId和roleKey
+          const userInfoResponse = await fetch(`${BASE_URL}/app/user/info?userId=${user.userId}`, {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`,
+            },
+          });
+          
+          if (userInfoResponse.ok) {
+            const userInfo = await userInfoResponse.json();
+            if (userInfo.code === 200 && userInfo.data) {
+              // 返回完整的用户信息
+              return {
+                userId: user.userId,
+                legalName: userInfo.data.legalName || user.legalName,
+                deptId: userInfo.data.deptId,
+                userName: userInfo.data.userName || user.userName,
+                dept: userInfo.data.dept,
+                roles: userInfo.data.roles || [],
+                phonenumber: userInfo.data.phonenumber,
+              };
+            }
+          }
+          
+          // 如果获取用户信息失败，返回null以便过滤掉
+          console.warn(`用户${user.userId}信息获取失败，将被过滤`);
+          return null;
+        } catch (error) {
+          console.warn(`获取用户${user.userId}详细信息失败:`, error);
+          return null;
+        }
+      });
+      
+      const results = await Promise.all(userPromises);
+      const users = results.filter(user => user !== null); // 过滤掉失败的用户
+      
       return {
         code: data.code,
         msg: data.msg,
-        data: data.rows, // 将rows映射到data字段
-        total: data.total
+        data: users,
+        total: users.length
       };
     }
     
-    return data;
+    return {
+      code: data.code || 200,
+      msg: data.msg || '查询成功',
+      data: [] // 返回空数组而不是失败
+    };
   } catch (error) {
     console.error('获取用户列表失败:', error);
     return {

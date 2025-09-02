@@ -30,12 +30,13 @@ import { VerificationScreen } from '../screens/auth/VerificationScreen';
 import { QRScannerScreen } from '../screens/common/QRScannerScreen';
 // Profile Screens
 import { ProfileHomeScreen } from '../screens/profile/ProfileHomeScreen';
-import { AccountSecurityScreen } from '../screens/profile/AccountSecurityScreen';
+// import { AccountSecurityScreen } from '../screens/profile/AccountSecurityScreen'; // 文件已删除
 import { NotificationScreen } from '../screens/profile/NotificationScreen';
 import { GeneralScreen } from '../screens/profile/GeneralScreen';
 import { AboutSupportScreen } from '../screens/profile/AboutSupportScreen';
 import { LanguageSelectionScreen } from '../screens/profile/LanguageSelectionScreen';
 import { EditProfileScreen } from '../screens/profile/EditProfileScreen';
+import { ActivityLayoutSelectionScreen } from '../screens/profile/ActivityLayoutSelectionScreen';
 // Cards Screens
 import { MyCardsScreen } from '../screens/cards/MyCardsScreen';
 // Organization Provider
@@ -51,6 +52,7 @@ import { VolunteerCheckInScreen } from '../screens/volunteer/VolunteerCheckInScr
 import { FloatingAIButton } from '../components/common/FloatingAIButton';
 import { GlobalTouchHandler } from '../components/common/GlobalTouchHandler';
 import { ErrorBoundary } from '../components/common/ErrorBoundary';
+import { TermsScreen } from '../screens/legal/TermsScreen';
 
 // Stack Navigators
 const RootStack = createStackNavigator();
@@ -118,6 +120,25 @@ const AuthNavigator = () => {
         options={{
           ...pageTransitions.slideFromRight,
         }}
+      />
+      <AuthStack.Screen 
+        name="Terms" 
+        component={TermsScreen}
+        options={({ route }) => ({
+          headerShown: true,
+          title: (route.params as any)?.type === 'privacy' ? '隐私政策' : '服务条款',
+          headerStyle: {
+            backgroundColor: '#f2f2f7',
+            shadowOpacity: 0,
+            elevation: 0,
+          },
+          headerTitleStyle: {
+            fontSize: 17,
+            fontWeight: '600',
+          },
+          headerBackTitle: '返回',
+          ...pageTransitions.slideFromRight,
+        })}
       />
     </AuthStack.Navigator>
   );
@@ -238,7 +259,8 @@ const QRScannerScreenWithProvider = () => {
 
 // Profile Stack Navigator
 const ProfileNavigator = () => {
-  const { t } = useTranslation();
+  // 移除Provider外部的翻译调用
+  // const { t } = useTranslation();
   
   return (
     <ProfileStack.Navigator
@@ -253,7 +275,7 @@ const ProfileNavigator = () => {
           fontSize: 17,
           fontWeight: '600',
         },
-        headerBackTitle: t('navigation.headers.back'),
+        headerBackTitle: '返回',
         ...pageTransitions.slideFromRight,
         transitionSpec: {
           open: {
@@ -278,46 +300,56 @@ const ProfileNavigator = () => {
           headerShown: false, // Hide header for home screen
         }}
       />
+      {/* AccountSecurity功能已移除
       <ProfileStack.Screen 
         name="AccountSecurity" 
         component={AccountSecurityScreen}
         options={{
-          title: t('navigation.headers.accountSecurity'),
+          title: '账户安全',
         }}
       />
+      */}
       <ProfileStack.Screen 
         name="Notifications" 
         component={NotificationScreen}
         options={{
-          title: t('navigation.headers.notifications'),
+          title: '通知设置',
         }}
       />
       <ProfileStack.Screen 
         name="General" 
         component={GeneralScreen}
         options={{
-          title: t('navigation.headers.general'),
+          title: '通用设置',
         }}
       />
       <ProfileStack.Screen 
         name="AboutSupport" 
         component={AboutSupportScreen}
         options={{
-          title: t('navigation.headers.aboutSupport'),
+          title: '关于和支持',
         }}
       />
       <ProfileStack.Screen 
         name="LanguageSelection" 
         component={LanguageSelectionScreen}
         options={{
-          title: t('navigation.headers.language'),
+          title: '语言设置',
         }}
       />
       <ProfileStack.Screen 
         name="EditProfile" 
         component={EditProfileScreen}
         options={{
-          title: t('navigation.headers.edit_profile'),
+          title: '编辑资料',
+        }}
+      />
+      <ProfileStack.Screen 
+        name="ActivityLayoutSelection" 
+        component={ActivityLayoutSelectionScreen}
+        options={{
+          title: '布局选择',
+          headerShown: false,
         }}
       />
       <ProfileStack.Screen 
@@ -326,6 +358,14 @@ const ProfileNavigator = () => {
         options={{
           headerShown: false, // MyCardsScreen有自己的header
         }}
+      />
+      <ProfileStack.Screen 
+        name="Terms" 
+        component={TermsScreen}
+        options={({ route }) => ({
+          title: (route.params as any)?.type === 'privacy' ? '隐私政策' : '服务条款',
+          ...pageTransitions.slideFromRight,
+        })}
       />
     </ProfileStack.Navigator>
   );
@@ -401,7 +441,8 @@ const TabNavigator = () => {
 
 // Root Navigator
 export const AppNavigator = () => {
-  const { t } = useTranslation();
+  // 移除Provider外部的翻译调用
+  // const { t } = useTranslation();
   const [isLoading, setIsLoading] = useState(true);
   const [userToken, setUserToken] = useState<string | null>(null);
 
@@ -425,7 +466,7 @@ export const AppNavigator = () => {
   if (isLoading) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-        <Text>{t('common.loading')}</Text>
+        <Text>Loading...</Text>
       </View>
     );
   }
@@ -511,6 +552,15 @@ export const AppNavigator = () => {
           <RootStack.Screen 
             name="Verification" 
             component={VerificationScreen}
+            options={{
+              ...pageTransitions.slideFromRight,
+            }}
+          />
+          
+          {/* Legal Screens */}
+          <RootStack.Screen 
+            name="Terms" 
+            component={TermsScreen}
             options={{
               ...pageTransitions.slideFromRight,
             }}

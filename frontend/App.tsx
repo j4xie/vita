@@ -1,3 +1,8 @@
+// TextEncoder polyfill for react-native-qrcode-svg
+import { TextEncoder, TextDecoder } from 'text-encoding';
+global.TextEncoder = TextEncoder;
+global.TextDecoder = TextDecoder;
+
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
@@ -5,9 +10,14 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { theme } from './src/theme';
 import initI18next, { i18n } from './src/utils/i18n';
 import { AppNavigator } from './src/navigation/AppNavigator';
+import { ToastManager } from './src/components/common/ToastManager';
 
 // 导入时间管理服务
 import { timeManager, validateDeviceTime } from './src/services/timeManager';
+
+// 导入智能提醒系统
+import { initializeSmartAlerts } from './src/services/smartAlertSystem';
+
 
 // 开发环境导入测试工具
 if (__DEV__) {
@@ -23,6 +33,8 @@ function MainApp() {
     <SafeAreaProvider>
       <StatusBar style="auto" />
       <AppNavigator />
+      {/* 🎨 全局Toast管理器 */}
+      <ToastManager />
     </SafeAreaProvider>
   );
 }
@@ -35,14 +47,13 @@ export default function App() {
       try {
         console.log('[INIT] 初始化应用...');
         
-        // 1. 验证设备时间
+        // 1. 验证设备时间（优化处理）
         const timeValidation = await validateDeviceTime();
-        if (!timeValidation.isValid) {
+        if (!timeValidation.isValid && timeValidation.warning) {
+          // 🚨 只有真正的时间问题才显示警告
           console.warn('[TIME-WARNING]', timeValidation.warning);
-          // TODO: 可以考虑显示用户警告弹窗
-          // Alert.alert('时间警告', timeValidation.warning);
         } else {
-          console.log('[TIME] 设备时间验证通过');
+          console.log('[TIME] 设备时间验证通过:', timeValidation.info || '基础验证通过');
         }
         
         // 2. 初始化i18n系统
@@ -52,6 +63,11 @@ export default function App() {
         
         // 3. 确保时间管理器运行
         console.log('[TIME] 全局时间管理器已启用');
+        
+        // 4. 初始化智能提醒系统
+        console.log('[ALERT] 初始化智能提醒系统...');
+        const alertSystemInitialized = await initializeSmartAlerts();
+        console.log('[ALERT]', alertSystemInitialized ? '✅ 智能提醒系统启用' : '❌ 智能提醒系统失败');
         
         setIsI18nReady(true);
       } catch (error) {

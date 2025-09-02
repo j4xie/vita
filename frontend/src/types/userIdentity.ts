@@ -11,6 +11,8 @@ export interface UserIdentityData {
   deptId?: string;
   currentOrganization?: OrganizationInfo;
   memberOrganizations?: UserOrganizationMembership[];
+  school?: SchoolInfo;
+  position?: PositionInfo;
   type: 'user_identity';
 }
 
@@ -20,6 +22,22 @@ export interface OrganizationInfo {
   displayNameZh: string;
   displayNameEn?: string;
   logoUrl?: string;
+}
+
+export interface SchoolInfo {
+  id: string;
+  name: string;
+  fullName?: string;
+  parentId?: number;
+  ancestors?: string;
+}
+
+export interface PositionInfo {
+  roleKey: string;
+  roleName: string;
+  displayName: string;
+  displayNameEn?: string;
+  level: 'admin' | 'part_admin' | 'staff' | 'user';
 }
 
 export interface UserOrganizationMembership {

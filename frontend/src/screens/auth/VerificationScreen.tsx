@@ -65,12 +65,19 @@ export const VerificationScreen: React.FC = () => {
         phonenumber: formData.phoneNumber,
         email: formData.email,
         sex: formData.sex,
-        deptId: formData.universityId,
+        deptId: formData.universityId, // 传递学校ID，确保用户关联正确的学校
         verCode: code,
         bizId: formData.bizId,
         ...(formData.referralCode && { invCode: formData.referralCode }),
         ...(formData.organizationId && { orgId: formData.organizationId }),
       };
+
+      console.log('📋 短信验证码注册数据:', {
+        ...registerData,
+        password: '[HIDDEN]',
+        selectedSchool: formData.university,
+        deptId: formData.universityId
+      });
 
       const result = await pomeloXAPI.register(registerData);
 

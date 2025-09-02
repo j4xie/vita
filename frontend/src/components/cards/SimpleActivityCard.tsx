@@ -24,6 +24,8 @@ import * as Haptics from 'expo-haptics';
 import { theme } from '../../theme';
 import { LIQUID_GLASS_LAYERS, DAWN_OVERLAYS, RESTRAINED_COLORS } from '../../theme/core';
 import { useCardPress } from '../../hooks/useCardPress';
+import { useMemoizedDarkMode } from '../../hooks/useDarkMode';
+import { useTheme } from '../../context/ThemeContext';
 
 interface SimpleActivityCardProps {
   activity: {
@@ -59,6 +61,10 @@ export const SimpleActivityCard: React.FC<SimpleActivityCardProps> = ({
   const { t, i18n } = useTranslation();
   const [imageLoading, setImageLoading] = useState(true);
   const [imageError, setImageError] = useState(false);
+  
+  // 🌙 Dark Mode Support
+  const darkMode = useMemoizedDarkMode();
+  const { isDarkMode } = darkMode;
 
   // 流畅动画系统
   const scale = useSharedValue(1);
@@ -99,6 +105,32 @@ export const SimpleActivityCard: React.FC<SimpleActivityCardProps> = ({
   };
 
   const statusConfig = getStatusConfig();
+  
+  // 获取活动状态标签 - 与GridActivityCard保持一致
+  const getActivityLabel = () => {
+    // 第一优先级：用户的报名/签到状态
+    if (activity.status === 'registered') {
+      return { type: 'registered', label: t('activities.status.registered', '已报名') };
+    }
+    if (activity.status === 'checked_in') {
+      return { type: 'checked_in', label: t('activities.status.checked_in', '已签到') };
+    }
+    
+    // 第二优先级：时间紧急程度
+    const now = new Date();
+    const activityStart = new Date(activity.date + ' ' + activity.time);
+    const hoursToStart = (activityStart.getTime() - now.getTime()) / (1000 * 60 * 60);
+    
+    if (hoursToStart >= 0 && hoursToStart <= 24) {
+      return { type: 'today', label: t('activities.urgency.today', '今日开始') };
+    } else if (hoursToStart >= 0 && hoursToStart <= 168) {
+      return { type: 'upcoming', label: t('activities.urgency.upcoming', '即将开始') };
+    }
+    
+    return null; // 不显示标签
+  };
+  
+  const activityLabel = getActivityLabel();
 
   // 手势开始动画
   const handleGestureStart = () => {
@@ -239,8 +271,8 @@ export const SimpleActivityCard: React.FC<SimpleActivityCardProps> = ({
     }
     
     // 添加时间（如果不是00:00）
-    const timeDisplay = formatTime(activity.time);
-    return dateDisplay + timeDisplay;
+    const timeDisplay = formatTime(activity.time) || '';
+    return String(dateDisplay) + String(timeDisplay);
   };
 
   // 计算参与率
@@ -348,12 +380,19 @@ export const SimpleActivityCard: React.FC<SimpleActivityCardProps> = ({
         style={styles.overlayGradient}
       />
 
-      {/* 状态标签 - 暂时隐藏 */}
-      {/*
-      <View style={styles.statusBadge}>
-        <Text style={styles.badgeText}>{statusConfig.label}</Text>
-      </View>
-      */}
+      {/* 活动状态标识 */}
+      {activityLabel && (
+        <View style={[
+          styles.activityBadge,
+          activityLabel.type === 'registered' ? styles.registeredBadge :
+          activityLabel.type === 'checked_in' ? styles.checkedInBadge :
+          activityLabel.type === 'today' ? styles.todayBadge : styles.upcomingBadge
+        ]}>
+          <Text style={styles.badgeText}>
+            {activityLabel.label}
+          </Text>
+        </View>
+      )}
 
       {/* 收藏按钮 */}
       {onBookmark && (
@@ -388,7 +427,7 @@ export const SimpleActivityCard: React.FC<SimpleActivityCardProps> = ({
       {/* 底部信息区 - 压缩布局 */}
       <View style={styles.infoContainer}>
         <Text style={styles.title} numberOfLines={1}>
-          {activity.title}
+          {String(activity?.title || '')}
         </Text>
         
         <View style={styles.detailsRow}>
@@ -400,7 +439,7 @@ export const SimpleActivityCard: React.FC<SimpleActivityCardProps> = ({
               style={styles.locationIcon}
             />
             <Text style={styles.location} numberOfLines={1}>
-              {activity.location}
+              {String(activity?.location || '')}
             </Text>
           </View>
           
@@ -496,6 +535,29 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '600',
     color: theme.colors.text.inverse,
+  },
+
+  // 活动状态标识
+  activityBadge: {
+    position: 'absolute',
+    top: 12,
+    right: 12,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 10,
+    zIndex: 3,
+  },
+  registeredBadge: {
+    backgroundColor: '#10B981', // 绿色：已报名
+  },
+  checkedInBadge: {
+    backgroundColor: '#059669', // 深绿色：已签到
+  },
+  todayBadge: {
+    backgroundColor: '#EF4444', // 红色：今日开始
+  },
+  upcomingBadge: {
+    backgroundColor: '#F59E0B', // 橙色：即将开始
   },
 
   // 状态标签

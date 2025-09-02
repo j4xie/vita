@@ -13,7 +13,6 @@ import {
   RefreshControl,
   TouchableOpacity,
   TextInput,
-  useColorScheme,
   Alert,
   Platform,
 } from 'react-native';
@@ -25,6 +24,7 @@ import * as Haptics from 'expo-haptics';
 import { useTranslation } from 'react-i18next';
 
 import { theme } from '../../theme';
+import { useTheme } from '../../context/ThemeContext';
 // import { useOrganization } from '../../context/OrganizationContext'; // 移除组织功能
 import { membershipCardService } from '../../services/MembershipCardService';
 // MockAPI import removed - using real data only
@@ -42,8 +42,8 @@ import { MembershipCard } from '../../types/organization';
 export const MyCardsScreen: React.FC = () => {
   const { t } = useTranslation();
   const navigation = useNavigation<any>();
-  const colorScheme = useColorScheme();
-  const isDarkMode = colorScheme === 'dark';
+  const themeContext = useTheme();
+  const isDarkMode = themeContext.isDarkMode;
 
   // 移除组织依赖，简化为本地状态
   const currentOrganization = null;
@@ -573,11 +573,15 @@ const styles = StyleSheet.create({
   },
 
   header: {
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
     paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderBottomWidth: 0.5,
-    borderBottomColor: 'rgba(0, 0, 0, 0.1)',
+    paddingVertical: 16,
+    borderBottomWidth: 0,
+    shadowColor: 'rgba(0, 0, 0, 0.03)',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 1,
+    shadowRadius: 8,
+    elevation: 1,
   },
 
   headerTop: {
@@ -635,9 +639,15 @@ const styles = StyleSheet.create({
 
   tabContainer: {
     flexDirection: 'row',
-    backgroundColor: '#F3F4F6',
-    borderRadius: 12,
-    padding: 4,
+    backgroundColor: 'rgba(255, 255, 255, 0.7)',
+    borderRadius: 16,
+    padding: 6,
+    marginHorizontal: 4,
+    shadowColor: 'rgba(0, 0, 0, 0.05)',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 1,
+    shadowRadius: 8,
+    elevation: 2,
   },
 
   tabButton: {
@@ -645,28 +655,28 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 8,
+    borderRadius: 12,
   },
 
   tabButtonActive: {
-    backgroundColor: '#FFFFFF',
-    shadowColor: 'rgba(0, 0, 0, 0.1)',
-    shadowOffset: { width: 0, height: 1 },
+    backgroundColor: 'rgba(255, 107, 53, 0.1)',
+    shadowColor: 'rgba(255, 107, 53, 0.3)',
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 1,
-    shadowRadius: 2,
-    elevation: 1,
+    shadowRadius: 4,
+    elevation: 3,
   },
 
   tabButtonText: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '500',
     color: theme.colors.text.secondary,
   },
 
   tabButtonTextActive: {
-    color: theme.colors.text.primary,
+    color: theme.colors.primary,
     fontWeight: '600',
   },
 

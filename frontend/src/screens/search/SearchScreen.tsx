@@ -25,14 +25,19 @@ import Animated, {
 } from 'react-native-reanimated';
 
 import { theme } from '../../theme';
+import { useAllDarkModeStyles } from '../../hooks/useDarkModeStyles';
 import { SimpleActivityCard } from '../../components/cards/SimpleActivityCard';
 import { pomeloXAPI } from '../../services/PomeloXAPI';
-import { adaptActivityList } from '../../utils/activityAdapter';
+import { adaptActivity } from '../../utils/activityAdapter';
 
 export const SearchScreen: React.FC = ({ route }: any) => {
   const { t } = useTranslation();
   const navigation = useNavigation<any>();
   const insets = useSafeAreaInsets();
+  
+  const darkModeSystem = useAllDarkModeStyles();
+  const { isDarkMode, styles: dmStyles, gradients: dmGradients, blur: dmBlur, icons: dmIcons } = darkModeSystem;
+  
   const initialSearchText = route?.params?.initialSearchText || '';
   const [searchText, setSearchText] = useState(initialSearchText);
   const [searchResults, setSearchResults] = useState<any[]>([]);
@@ -101,17 +106,8 @@ export const SearchScreen: React.FC = ({ route }: any) => {
           搜索词: text 
         });
         
-        const adaptedResults = filteredRows.map((activity: any) => ({
-          id: activity.id.toString(),
-          title: activity.name,
-          location: activity.address,
-          date: activity.startTime?.split(' ')[0] || '',
-          endDate: activity.endTime?.split(' ')[0] || '',
-          time: activity.startTime?.split(' ')[1]?.slice(0, 5) || '',
-          attendees: 0,
-          maxAttendees: activity.enrollment || 0,
-          image: activity.icon,
-        }));
+        // 使用标准的activityAdapter确保数据一致性
+        const adaptedResults = filteredRows.map(activity => adaptActivity(activity));
         setSearchResults(adaptedResults);
       }
     } catch (error) {
@@ -138,23 +134,26 @@ export const SearchScreen: React.FC = ({ route }: any) => {
   }));
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, dmStyles.page.safeArea]}>
       {/* 背景 */}
       <LinearGradient
-        colors={['#F8F9FA', '#F1F2F3', '#EDEEF0']}
+        colors={isDarkMode ? ['#000000', '#1C1C1E', '#2C2C2E'] : ['#F8F9FA', '#F1F2F3', '#EDEEF0']}
         style={StyleSheet.absoluteFill}
         locations={[0, 0.5, 1]}
       />
 
       {/* 搜索栏 */}
       <Animated.View style={[styles.searchBarContainer, searchBarAnimatedStyle]}>
-        <View style={styles.searchInputContainer}>
-          <Ionicons name="search" size={20} color="#9CA3AF" />
+        <View style={[
+          styles.searchInputContainer,
+          dmStyles.card.contentSection
+        ]}>
+          <Ionicons name="search" size={20} color={dmIcons.secondary} />
           <TextInput
             ref={searchInputRef}
-            style={styles.searchInput}
+            style={[styles.searchInput, dmStyles.text.primary]}
             placeholder={t('placeholders.searchActivities')}
-            placeholderTextColor="#9CA3AF"
+            placeholderTextColor={dmIcons.secondary}
             value={searchText}
             onChangeText={handleSearch}
             autoCapitalize="none"
@@ -167,7 +166,7 @@ export const SearchScreen: React.FC = ({ route }: any) => {
           style={styles.cancelButton}
           onPress={handleCancel}
         >
-          <Text style={styles.cancelText}>{t('common.cancel')}</Text>
+          <Text style={[styles.cancelText, dmStyles.text.primary]}>{t('common.cancel')}</Text>
         </TouchableOpacity>
       </Animated.View>
 
@@ -175,19 +174,19 @@ export const SearchScreen: React.FC = ({ route }: any) => {
       <Animated.View style={[styles.contentContainer, contentAnimatedStyle]}>
         {isLoading ? (
           <View style={styles.loadingContainer}>
-            <Text style={styles.loadingText}>{t('common.loading')}</Text>
+            <Text style={[styles.loadingText, dmStyles.text.secondary]}>{t('common.loading')}</Text>
           </View>
         ) : searchText.trim().length === 0 ? (
           <View style={styles.emptyContainer}>
-            <Ionicons name="search-outline" size={64} color="#D1D5DB" />
-            <Text style={styles.emptyTitle}>{t('accessibility.searchActivities')}</Text>
-            <Text style={styles.emptySubtitle}>{t('accessibility.searchActivitiesHint')}</Text>
+            <Ionicons name="search-outline" size={64} color={dmIcons.tertiary} />
+            <Text style={[styles.emptyTitle, dmStyles.text.primary]}>{t('accessibility.searchActivities')}</Text>
+            <Text style={[styles.emptySubtitle, dmStyles.text.secondary]}>{t('accessibility.searchActivitiesHint')}</Text>
           </View>
         ) : searchResults.length === 0 ? (
           <View style={styles.emptyContainer}>
-            <Ionicons name="search-outline" size={64} color="#D1D5DB" />
-            <Text style={styles.emptyTitle}>{t('filters.noResults')}</Text>
-            <Text style={styles.emptySubtitle}>{t('cards.try_different_search')}</Text>
+            <Ionicons name="search-outline" size={64} color={dmIcons.tertiary} />
+            <Text style={[styles.emptyTitle, dmStyles.text.primary]}>{t('filters.noResults')}</Text>
+            <Text style={[styles.emptySubtitle, dmStyles.text.secondary]}>{t('cards.try_different_search')}</Text>
           </View>
         ) : (
           <ScrollView 
@@ -227,7 +226,6 @@ const styles = StyleSheet.create({
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
     borderRadius: 22,
     paddingHorizontal: 16,
     paddingVertical: 12,
@@ -241,7 +239,6 @@ const styles = StyleSheet.create({
   searchInput: {
     flex: 1,
     fontSize: 16,
-    color: '#1A1A1A',
     height: 20,
   },
   cancelButton: {

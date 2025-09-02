@@ -118,15 +118,6 @@ export const SimpleSearchTabBar: React.FC<SimpleSearchTabBarProps> = ({
   const isExplorePage = currentRoute?.name === 'Explore';
   const showSearchButton = isExplorePage;
 
-  // 搜索按钮显示调试
-  console.log('🔍 搜索按钮显示检查:', {
-    currentRouteName: currentRoute?.name,
-    stateIndex: state.index,
-    routesCount: state.routes.length,
-    isExplorePage,
-    showSearchButton,
-    allRoutes: state.routes.map(r => r.name)
-  });
 
   // 气泡状态保护机制
   const saveBubbleState = useCallback(() => {
@@ -173,21 +164,12 @@ export const SimpleSearchTabBar: React.FC<SimpleSearchTabBarProps> = ({
   useEffect(() => {
     const currentIndex = Math.min(state.index || 0, tabs.length - 1);
     
-    console.log('📊 导航状态监控:', {
-      stateIndex: state.index,
-      currentIndex,
-      uiState,
-      currentTabIndex: currentTabIndex.value,
-      needsSync: uiState === 'tabs' && currentTabIndex.value !== currentIndex
-    });
     
     if (uiState === 'tabs' && currentTabIndex.value !== currentIndex) {
-      console.log('🔄 同步气泡位置:', currentTabIndex.value, '→', currentIndex);
       
       currentTabIndex.value = currentIndex;
       const targetPosition = calculateBubblePosition(currentIndex);
       
-      console.log('🫧 气泡同步到位置:', targetPosition);
       bubbleX.value = withSpring(targetPosition, {
         damping: 20,
         stiffness: 300
@@ -312,27 +294,16 @@ export const SimpleSearchTabBar: React.FC<SimpleSearchTabBarProps> = ({
 
   // Tab点击处理 - 添加详细调试和简化逻辑
   const handleTabPress = useCallback((route: any, isFocused: boolean, targetIndex: number) => {
-    console.log('🔍 Tab点击调试:', {
-      routeName: route.name,
-      isFocused,
-      targetIndex,
-      uiState,
-      canProcess: !isFocused && uiState === 'tabs'
-    });
 
     if (isFocused) {
-      console.log('⏸️ 已选中Tab，跳过处理');
-      return;
+  return;
     }
     
     if (uiState !== 'tabs') {
-      console.log('⏸️ 非tabs状态，当前状态:', uiState);
-      return;
+  return;
     }
     
-    console.log('✅ 开始处理Tab点击');
-
-    if (Platform.OS === 'ios') {
+if (Platform.OS === 'ios') {
       Haptics.selectionAsync();
     }
 
@@ -342,28 +313,16 @@ export const SimpleSearchTabBar: React.FC<SimpleSearchTabBarProps> = ({
       canPreventDefault: true,
     });
 
-    console.log('📡 导航事件状态:', {
-      defaultPrevented: event.defaultPrevented,
-      targetRoute: route.name
-    });
-
-    if (!event.defaultPrevented) {
-      console.log('🎯 执行Tab切换到:', route.name);
-      
-      currentTabIndex.value = targetIndex;
+if (!event.defaultPrevented) {
+currentTabIndex.value = targetIndex;
       const targetPosition = calculateBubblePosition(targetIndex);
-      
-      console.log('🫧 气泡动画到位置:', targetPosition);
       bubbleX.value = withSpring(targetPosition, {
         damping: 20,
         stiffness: 300
       });
-      
-      console.log('🚀 执行导航切换');
+
       navigation.navigate(route.name);
-    } else {
-      console.log('🚫 导航事件被阻止');
-    }
+}
   }, [uiState, calculateBubblePosition, navigation]);
 
   // 动画样式
@@ -420,7 +379,6 @@ export const SimpleSearchTabBar: React.FC<SimpleSearchTabBarProps> = ({
                   key={tab.key}
                   style={[styles.tab, { width: geometry.tabWidth }]}
                   onPress={() => {
-                    console.log('🖱️ 直接点击Tab:', tab.label, route.name);
                     if (!isFocused) {
                       navigation.navigate(route.name);
                     }

@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { useColorScheme, Appearance } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import i18n from '../utils/i18n';
+import { useTranslation } from 'react-i18next';
 
 export type ThemeMode = 'light' | 'dark' | 'auto';
 
@@ -9,7 +9,7 @@ interface ThemeContextType {
   themeMode: ThemeMode;
   isDarkMode: boolean;
   changeThemeMode: (mode: ThemeMode) => Promise<void>;
-  getThemeModeDisplayName: (mode: ThemeMode) => string;
+  getThemeModeDisplayName: (mode: ThemeMode, t?: (key: string) => string) => string;
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
@@ -73,16 +73,26 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
     }
   };
 
-  // 获取主题模式显示名称 - 强制中文
-  const getThemeModeDisplayName = (mode: ThemeMode): string => {
-    // 直接使用中文，不依赖i18n
-    const chineseModeNames = {
+  // 获取主题模式显示名称 - 使用i18n国际化
+  const getThemeModeDisplayName = (mode: ThemeMode, t?: (key: string) => string): string => {
+    const modeKeys = {
+      'light': 'profile.general.light_mode',
+      'dark': 'profile.general.dark_mode', 
+      'auto': 'profile.general.auto_mode',
+    };
+    
+    if (t) {
+      return t(modeKeys[mode]) || mode;
+    }
+    
+    // Fallback when t function is not available
+    const fallbackNames = {
       'light': '浅色模式',
       'dark': '深色模式', 
       'auto': '跟随系统',
     };
     
-    return chineseModeNames[mode] || mode;
+    return fallbackNames[mode] || mode;
   };
 
   const contextValue: ThemeContextType = {

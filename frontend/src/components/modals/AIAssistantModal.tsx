@@ -5,7 +5,6 @@ import {
   TouchableOpacity,
   StyleSheet,
   Platform,
-  useColorScheme,
   Animated,
   Modal,
   Dimensions,
@@ -19,6 +18,8 @@ import * as Haptics from 'expo-haptics';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { theme } from '../../theme';
+import { useTheme } from '../../context/ThemeContext';
+import { useAllDarkModeStyles } from '../../hooks/useDarkModeStyles';
 import { LIQUID_GLASS_LAYERS, DAWN_GRADIENTS } from '../../theme/core';
 
 interface AIAssistantModalProps {
@@ -33,8 +34,8 @@ export const AIAssistantModal: React.FC<AIAssistantModalProps> = ({
   onClose,
 }) => {
   const { t } = useTranslation();
-  const colorScheme = useColorScheme();
-  const isDarkMode = colorScheme === 'dark';
+  const darkModeSystem = useAllDarkModeStyles();
+  const { isDarkMode, styles: dmStyles, gradients: dmGradients } = darkModeSystem;
   const insets = useSafeAreaInsets();
 
   // Animation values
@@ -145,7 +146,11 @@ export const AIAssistantModal: React.FC<AIAssistantModalProps> = ({
               },
             ]}
           >
-            <View style={[styles.contentGradient, styles.contentGlass]}>
+            <View style={[
+              styles.contentGradient, 
+              styles.contentGlass,
+              { backgroundColor: isDarkMode ? dmStyles.modal.container.backgroundColor : 'rgba(255, 255, 255, 0.90)' }
+            ]}>
               {/* Close button - 36pt直径，44pt触达区域 */}
               <TouchableOpacity
                 style={styles.closeButton}
@@ -302,8 +307,6 @@ const styles = StyleSheet.create({
     borderRadius: 28, // 按建议增加到24-28范围
     paddingVertical: 20,
     paddingHorizontal: 24,
-    // L3玻璃效果
-    backgroundColor: 'rgba(255, 255, 255, 0.90)', // 90%白
     overflow: 'hidden',
   },
   closeButton: {

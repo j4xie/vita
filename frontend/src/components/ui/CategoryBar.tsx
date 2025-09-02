@@ -9,30 +9,41 @@ import { useTranslation } from 'react-i18next';
 import { useTheme } from '../../theme';
 import { LIQUID_GLASS_LAYERS } from '../../theme/core';
 import { usePerformanceDegradation } from '../../hooks/usePerformanceDegradation';
+import { useMemoizedDarkMode } from '../../hooks/useDarkMode';
 import { SegmentedControl } from './SegmentedControl';
 import { ACTIVITY_CATEGORIES } from '../../data/activityCategories';
 
 interface CategoryBarProps {
   selectedSegment: number;
   onSegmentChange: (index: number) => void;
-  onFilterPress: () => void;
+  onFilterPress?: () => void; // 设为可选
+  onScanPress: () => void; // 新增扫码按钮回调
   hasActiveFilters?: boolean;
   activeFiltersCount?: number;
+  viewLayout?: 'list' | 'grid';
+  onLayoutChange?: (layout: 'list' | 'grid') => void;
 }
 
 const CategoryBar: React.FC<CategoryBarProps> = ({
   selectedSegment,
   onSegmentChange,
   onFilterPress,
+  onScanPress,
   hasActiveFilters = false,
   activeFiltersCount = 0,
+  viewLayout = 'list',
+  onLayoutChange,
 }) => {
   const { t } = useTranslation();
   const theme = useTheme();
   const insets = useSafeAreaInsets();
-  const colorScheme = useColorScheme();
-  const isDarkMode = colorScheme === 'dark';
+  // 🌙 Dark Mode Support - 使用统一的Hook
+  const darkMode = useMemoizedDarkMode();
+  const { isDarkMode } = darkMode;
+  
   const filterButtonScale = useRef(new Animated.Value(1)).current;
+  const layoutButtonScale = useRef(new Animated.Value(1)).current;
+  const scanButtonScale = useRef(new Animated.Value(1)).current;
   
   // 容器缩放动画
   const containerScale = useRef(new Animated.Value(1)).current;
@@ -73,6 +84,8 @@ const CategoryBar: React.FC<CategoryBarProps> = ({
   }, [selectedSegment]);
 
   const handleFilterPress = () => {
+    if (!onFilterPress) return;
+    
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     
     // Add press animation - 180ms标准时长
@@ -92,39 +105,128 @@ const CategoryBar: React.FC<CategoryBarProps> = ({
     onFilterPress();
   };
 
+  const handleScanPress = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    
+    // Add press animation
+    Animated.sequence([
+      Animated.timing(scanButtonScale, {
+        toValue: 0.95,
+        duration: 90,
+        useNativeDriver: true,
+      }),
+      Animated.timing(scanButtonScale, {
+        toValue: 1,
+        duration: 90,
+        useNativeDriver: true,
+      }),
+    ]).start();
+    
+    onScanPress();
+  };
+
+  const handleLayoutChange = () => {
+    console.log(`🎯 CategoryBar 按钮被点击! 当前布局: ${viewLayout}`);
+    
+    if (!onLayoutChange) {
+      console.warn('⚠️ onLayoutChange callback not provided');
+      alert('onLayoutChange callback missing!');
+      return;
+    }
+    
+    const newLayout = viewLayout === 'list' ? 'grid' : 'list';
+    console.log(`🔄 准备切换: ${viewLayout} -> ${newLayout}`);
+    
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    
+    // Add press animation
+    Animated.sequence([
+      Animated.timing(layoutButtonScale, {
+        toValue: 0.95,
+        duration: 90,
+        useNativeDriver: true,
+      }),
+      Animated.timing(layoutButtonScale, {
+        toValue: 1,
+        duration: 90,
+        useNativeDriver: true,
+      }),
+    ]).start();
+    
+    console.log(`📞 调用 onLayoutChange(${newLayout})`);
+    onLayoutChange(newLayout);
+  };
+
   const styles = StyleSheet.create({
     container: {
-      height: 48,
+      height: 40,
       paddingHorizontal: 0,
-      backgroundColor: isDarkMode ? 'rgba(40, 40, 42, 0.95)' : 'rgba(255, 255, 255, 0.85)', // 加强背景白色
-      borderRadius: 24, // 更圆润的背景
+      backgroundColor: isDarkMode ? darkMode.elevatedBackground : 'rgba(255, 255, 255, 0.85)',
+      borderRadius: 20,
       marginHorizontal: 0,
       marginVertical: 0,
       justifyContent: 'center',
-      // 加强阴影和边框
       borderWidth: 1.5,
-      borderColor: isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(255, 255, 255, 0.8)',
+      borderColor: isDarkMode ? 'rgba(84, 84, 88, 0.6)' : 'rgba(255, 255, 255, 0.8)',
       shadowColor: '#000000',
       shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.12,
-      shadowRadius: 4,
-      elevation: 3,
+      shadowOpacity: isDarkMode ? 0.25 : 0.12,
+      shadowRadius: isDarkMode ? 6 : 4,
+      elevation: isDarkMode ? 5 : 3,
     },
     contentContainer: {
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
       height: '100%',
-      paddingHorizontal: 0, // 移除padding让气泡可以贴边
+      paddingHorizontal: 8,
+    },
+    leftButtonsContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
+    rightButtonContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginLeft: 8,
+    },
+    scanButton: {
+      width: 32,
+      height: 32,
+      borderRadius: 16,
+      borderWidth: 1.5,
+      borderColor: '#F9A889',
+      backgroundColor: 'transparent',
+      alignItems: 'center',
+      justifyContent: 'center',
+      shadowColor: '#000000',
+      shadowOffset: { width: 0, height: 1 },
+      shadowOpacity: 0.1,
+      shadowRadius: 2,
+      elevation: 2,
+    },
+    layoutButton: {
+      width: 32,
+      height: 32,
+      borderRadius: 16,
+      backgroundColor: 'rgba(255, 255, 255, 0.8)',
+      borderWidth: 1,
+      borderColor: 'rgba(255, 255, 255, 0.4)',
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginRight: 8,
+      shadowColor: '#000000',
+      shadowOffset: { width: 0, height: 1 },
+      shadowOpacity: 0.1,
+      shadowRadius: 2,
+      elevation: 2,
     },
     segmentedControlWrapper: {
       flex: 1,
-      marginRight: 0, // 移除filter按钮后恢复正常边距
+      marginHorizontal: 8,
       justifyContent: 'center',
-      height: 38, // 恢复正常高度匹配SegmentedControl
-      marginLeft: 0, // 移除filter按钮后恢复居中
-    },
-    // Filter相关样式已移除
+      height: 32,
+    }
   });
 
   return (
@@ -138,6 +240,28 @@ const CategoryBar: React.FC<CategoryBarProps> = ({
       ]}
     >
       <View style={styles.contentContainer}>
+        {/* 左侧按钮容器 */}
+        <View style={styles.leftButtonsContainer}>
+          {/* 布局切换按钮 */}
+          {onLayoutChange && (
+            <Animated.View style={{ transform: [{ scale: layoutButtonScale }] }}>
+              <TouchableOpacity
+                style={styles.layoutButton}
+                onPress={handleLayoutChange}
+                activeOpacity={0.8}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              >
+                <Ionicons
+                  name={viewLayout === 'list' ? 'grid-outline' : 'list-outline'}
+                  size={16}
+                  color="#666666"
+                />
+              </TouchableOpacity>
+            </Animated.View>
+          )}
+        </View>
+        
+        {/* 分段控件 */}
         <View style={styles.segmentedControlWrapper}>
           <SegmentedControl
             segments={segments}
@@ -146,7 +270,23 @@ const CategoryBar: React.FC<CategoryBarProps> = ({
           />
         </View>
         
-        {/* Filter按钮已移除 */}
+        {/* 右侧扫码按钮 */}
+        <View style={styles.rightButtonContainer}>
+          <Animated.View style={{ transform: [{ scale: scanButtonScale }] }}>
+            <TouchableOpacity
+              style={styles.scanButton}
+              onPress={handleScanPress}
+              activeOpacity={0.8}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            >
+              <Ionicons
+                name="scan-outline"
+                size={18}
+                color="#F9A889"
+              />
+            </TouchableOpacity>
+          </Animated.View>
+        </View>
       </View>
     </Animated.View>
   );

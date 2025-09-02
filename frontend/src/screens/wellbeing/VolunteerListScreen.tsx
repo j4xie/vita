@@ -5,7 +5,6 @@ import {
   FlatList,
   StyleSheet,
   Platform,
-  useColorScheme,
   Alert,
   Dimensions,
   AccessibilityInfo,
@@ -20,12 +19,19 @@ import * as Haptics from 'expo-haptics';
 import { Ionicons } from '@expo/vector-icons';
 
 import { theme } from '../../theme';
+// 🎉 JSC引擎下恢复完整动画和性能监控
 import { LIQUID_GLASS_LAYERS, BRAND_GLASS, BRAND_GRADIENT } from '../../theme/core';
 import { usePerformanceDegradation } from '../../hooks/usePerformanceDegradation';
+import { useTheme } from '../../context/ThemeContext';
 import { VolunteerCard, VolunteerRecord } from './components/VolunteerCard';
 import { SearchBar } from './components/SearchBar';
 import { SignOutBottomSheet } from './components/SignOutBottomSheet';
-// School type moved to real data types
+import { School } from '../../hooks/useSchoolData';
+import { performVolunteerCheckIn, performVolunteerCheckOut, getVolunteerRecords, getVolunteerHours } from '../../services/volunteerAPI';
+import { useUser } from '../../context/UserContext';
+import { getUserList } from '../../services/userStatsAPI';
+import { getUserPermissionLevel } from '../../types/userPermissions';
+import { getCurrentToken } from '../../services/authAPI';
 
 const { height: screenHeight } = Dimensions.get('window');
 
@@ -44,12 +50,16 @@ export const VolunteerListScreen: React.FC<VolunteerListScreenProps> = ({
   onBackToSchoolSelection 
 }) => {
   const { t } = useTranslation();
-  const colorScheme = useColorScheme();
-  const isDarkMode = colorScheme === 'dark';
+  const themeContext = useTheme();
+  const isDarkMode = themeContext.isDarkMode;
   const insets = useSafeAreaInsets();
   const tabBarHeight = useBottomTabBarHeight();
   
-  // V2.0 获取分层配置
+  // 获取用户信息用于API调用
+  const { user: userInfo } = useUser();
+  
+  
+  // 🎉 JSC引擎下恢复性能监控和分层配置
   const { getLayerConfig } = usePerformanceDegradation();
   const L1Config = getLayerConfig('L1', isDarkMode);
   
@@ -60,7 +70,7 @@ export const VolunteerListScreen: React.FC<VolunteerListScreenProps> = ({
   
   // 根据选中的学校过滤志愿者
   const schoolFilteredVolunteers = selectedSchool 
-    ? volunteers.filter(volunteer => volunteer.school === selectedSchool.englishName)
+    ? volunteers.filter(volunteer => volunteer.school === (selectedSchool.engName || selectedSchool.deptName))
     : volunteers;
     
   const [filteredVolunteers, setFilteredVolunteers] = useState<VolunteerRecord[]>(schoolFilteredVolunteers);
@@ -76,12 +86,139 @@ export const VolunteerListScreen: React.FC<VolunteerListScreenProps> = ({
   const successToastOpacity = useRef(new Animated.Value(0)).current;
   const [successMessage, setSuccessMessage] = useState('');
   
+
   // 更新当前时间
   useEffect(() => {
     const timer = setInterval(() => {
       setCurrentTime(new Date());
     }, 1000);
     return () => clearInterval(timer);
+  }, []);
+
+  // 初始化志愿者数据
+  useEffect(() => {
+    const loadVolunteerData = async () => {
+      try {
+        console.log('🔍 [VOLUNTEER-LIST] 开始加载志愿者数据...');
+        
+        // 获取所有用户列表
+        const userListResult = await getUserList();
+        if (userListResult.code !== 200 || !userListResult.data) {
+          console.warn('⚠️ 获取用户列表失败');
+          setVolunteers([]);
+          return;
+        }
+        
+        // 获取志愿者工时和记录数据
+        const [hoursResult, recordsResult] = await Promise.all([
+          getVolunteerHours(),
+          getVolunteerRecords()
+        ]);
+        
+        console.log('📊 [VOLUNTEER-LIST] API数据获取结果:', {
+          userCount: userListResult.data.length,
+          hoursCount: hoursResult.rows?.length || 0,
+          recordsCount: recordsResult.rows?.length || 0
+        });
+        
+        // 🚨 差异化处理：总管理员需要前端筛选，分管理员信任后端过滤
+        const userListResult = await getUserList();
+        
+        if (userListResult.code !== 200 || !userListResult.data) {
+          console.warn('⚠️ 获取用户列表失败');
+          setVolunteers([]);
+          return;
+        }
+        
+        console.log(`📊 [USER-PROCESSING] 后端返回${userListResult.data.length}个用户，开始构建志愿者列表...`);
+        
+        const volunteerList: VolunteerRecord[] = [];
+        
+        for (const user of userListResult.data) {
+          try {
+            const permissionLevel = getUserPermissionLevel(user);
+            const isVolunteerRole = ['manage', 'part_manage', 'staff'].includes(permissionLevel);
+            
+            console.log(`🎯 [USER-ANALYSIS] ${user.userName}:`, {
+              userId: user.userId,
+              权限级别: permissionLevel,
+              是否志愿者: isVolunteerRole,
+              学校: user.dept?.deptName,
+              roles: user.roles?.map(r => r.key) || []
+            });
+            
+            if (!isVolunteerRole) {
+              console.log(`⚠️ 跳过非志愿者: ${user.userName} (${permissionLevel})`);
+              continue;
+            }
+            
+            // 查找工时记录
+            const hourRecord = hoursResult.rows?.find((h: any) => h.userId === user.userId);
+            
+            // 获取最新签到记录
+            let lastRecord = null;
+            try {
+              const lastRecordResponse = await fetch(`http://106.14.165.234:8085/app/hour/lastRecordList?userId=${user.userId}`, {
+                headers: { 'Authorization': `Bearer ${await getCurrentToken()}` }
+              });
+              const lastRecordData = await lastRecordResponse.json();
+              if (lastRecordData.code === 200 && lastRecordData.data) {
+                lastRecord = lastRecordData.data;
+              }
+            } catch (error) {
+              console.warn(`⚠️ 获取用户${user.userId}最新记录失败:`, error);
+            }
+            
+            // 确定显示信息
+            let level = '';
+            switch (permissionLevel) {
+              case 'manage': level = 'President'; break;
+              case 'part_manage': level = 'Vice President'; break;
+              case 'staff': level = 'EB'; break;
+            }
+            
+            // 确定签到状态
+            let status: 'not_checked_in' | 'checked_in' = 'not_checked_in';
+            if (lastRecord && lastRecord.startTime && !lastRecord.endTime) {
+              status = 'checked_in';
+            }
+            
+            const volunteer: VolunteerRecord = {
+              id: String(user.userId),
+              phone: user.phonenumber || '未设置',
+              name: user.legalName || user.userName,
+              school: user.dept?.deptName || '未知学校',
+              userId: user.userId,
+              legalName: user.legalName,
+              checkInTime: lastRecord?.startTime,
+              checkOutTime: lastRecord?.endTime,
+              status,
+              totalHours: hourRecord ? Math.round((hourRecord.totalMinutes || 0) / 60 * 10) / 10 : 0,
+              lastCheckInTime: lastRecord?.startTime,
+              lastCheckOutTime: lastRecord?.endTime,
+            };
+            
+            volunteerList.push(volunteer);
+            console.log(`✅ 添加志愿者: ${volunteer.name}(${volunteer.userId}) - ${level} - ${volunteer.school}`);
+            
+          } catch (error) {
+            console.error(`❌ 处理用户${user.userId}失败:`, error);
+          }
+        }
+        
+        console.log('✅ [VOLUNTEER-LIST] 志愿者列表构建完成:', {
+          totalCount: volunteerList.length,
+          volunteers: volunteerList.map((v: any) => `${v.name}(${v.userId})`)
+        });
+        
+        setVolunteers(volunteerList);
+      } catch (error) {
+        console.error('❌ [VOLUNTEER-LIST] 加载志愿者数据失败:', error);
+        setVolunteers([]);
+      }
+    };
+    
+    loadVolunteerData();
   }, []);
 
   // 当选中学校变化时更新过滤的志愿者列表
@@ -91,7 +228,7 @@ export const VolunteerListScreen: React.FC<VolunteerListScreenProps> = ({
     setSearchError('');
   }, [selectedSchool]);
 
-  // 搜索志愿者
+  // 🎉 JSC引擎下恢复完整的搜索逻辑
   const handleSearch = useCallback(async () => {
     if (!searchPhone.trim()) {
       setSearchError(t('wellbeing.volunteer.phoneRequired'));
@@ -108,7 +245,7 @@ export const VolunteerListScreen: React.FC<VolunteerListScreenProps> = ({
     setSearchError('');
     setOperationState('searching');
 
-    // 模拟API调用
+    // 🎉 恢复模拟API调用的用户体验
     setTimeout(() => {
       const filtered = schoolFilteredVolunteers.filter(v => 
         v.phone.includes(searchPhone) || 
@@ -173,31 +310,54 @@ export const VolunteerListScreen: React.FC<VolunteerListScreenProps> = ({
     }
   }, [filteredVolunteers]);
 
-  // 处理签到
+  // 🎉 JSC引擎下恢复完整的签到逻辑
   const handleCheckIn = useCallback(async (volunteer: VolunteerRecord) => {
-    setOperationState('signingIn');
-    
-    // 模拟API调用
-    setTimeout(() => {
-      const updatedVolunteer = {
-        ...volunteer,
-        status: 'checked_in' as const,
-        checkInTime: new Date().toISOString(),
-      };
+    try {
+      // 完整的参数验证
+      const operateUserId = userInfo?.userId;
+      const operateLegalName = userInfo?.legalName;
+      const targetUserId = volunteer.userId;
       
-      // 更新状态
-      updateVolunteerRecord(updatedVolunteer);
-      setOperationState('success');
-      
-      // 显示成功提示
-      const timeString = new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
-      showSuccessToast(`[OK] ${timeString}`);
-      
-      if (Platform.OS === 'ios') {
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      if (!operateUserId || !operateLegalName || !targetUserId) {
+        Alert.alert('签到失败', '用户信息不完整，请重新登录');
+        return;
       }
-    }, 1000);
-  }, []);
+      
+      setOperationState('signingIn');
+      
+      // 🎉 恢复async/await异步调用（JSC引擎下安全）
+      const result = await performVolunteerCheckIn(
+        targetUserId,
+        operateUserId,
+        operateLegalName
+      );
+      
+      if (result.code === 200) {
+        const updatedVolunteer = {
+          ...volunteer,
+          status: 'checked_in' as const,
+          checkInTime: new Date().toISOString(),
+        };
+        
+        updateVolunteerRecord(updatedVolunteer);
+        setOperationState('success');
+        
+        const timeString = new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
+        showSuccessToast(`[OK] ${timeString}`);
+        
+        if (Platform.OS === 'ios') {
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        }
+      } else {
+        setOperationState('error');
+        Alert.alert('签到失败', result.msg || '请稍后重试');
+      }
+    } catch (error) {
+      setOperationState('error');
+      console.error('签到失败:', error);
+      Alert.alert('签到失败', '网络错误，请检查连接后重试');
+    }
+  }, [userInfo]);
 
   // 处理签出（显示确认弹层）
   const handleCheckOut = useCallback((volunteer: VolunteerRecord) => {
@@ -205,42 +365,66 @@ export const VolunteerListScreen: React.FC<VolunteerListScreenProps> = ({
     setShowSignOutSheet(true);
   }, []);
 
-  // 确认签出
+  // 🎉 JSC引擎下恢复完整的签退逻辑
   const confirmSignOut = useCallback(async () => {
     if (!pendingSignOutVolunteer) return;
     
-    setOperationState('signingOut');
-    
-    // 模拟API调用
-    setTimeout(() => {
-      if (!pendingSignOutVolunteer.checkInTime) return;
+    try {
+      // 完整的参数验证
+      const operateUserId = userInfo?.userId;
+      const operateLegalName = userInfo?.legalName;
+      const targetUserId = pendingSignOutVolunteer.userId;
       
-      const checkInTime = new Date(pendingSignOutVolunteer.checkInTime);
-      const checkOutTime = new Date();
-      const duration = Math.floor((checkOutTime.getTime() - checkInTime.getTime()) / (1000 * 60));
-      
-      const updatedVolunteer = {
-        ...pendingSignOutVolunteer,
-        status: 'not_checked_in' as const,
-        checkInTime: undefined, // 清除签到时间
-        totalHours: (pendingSignOutVolunteer.totalHours || 0) + (duration / 60),
-      };
-      
-      // 更新状态
-      updateVolunteerRecord(updatedVolunteer);
-      setOperationState('success');
-      setShowSignOutSheet(false);
-      setPendingSignOutVolunteer(null);
-      
-      // 显示成功提示
-      const timeString = checkOutTime.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
-      showSuccessToast(`[OK] ${timeString}`);
-      
-      if (Platform.OS === 'ios') {
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      if (!operateUserId || !operateLegalName || !targetUserId) {
+        Alert.alert('签退失败', '用户信息不完整，请重新登录');
+        setShowSignOutSheet(false);
+        setPendingSignOutVolunteer(null);
+        return;
       }
-    }, 1000);
-  }, [pendingSignOutVolunteer]);
+      
+      setOperationState('signingOut');
+      
+      // 🎉 恢复async/await异步调用（JSC引擎下安全）
+      const result = await performVolunteerCheckOut(
+        targetUserId,
+        operateUserId,
+        operateLegalName
+      );
+      
+      if (result.code === 200) {
+        // 🚨 不在此处计算时长，让API层的通知系统处理
+        // 因为API层有更准确的服务端时间数据
+        
+        const updatedVolunteer = {
+          ...pendingSignOutVolunteer,
+          status: 'not_checked_in' as const,
+          checkInTime: undefined,
+          // 暂不更新totalHours，等API层的真实计算
+        };
+        
+        updateVolunteerRecord(updatedVolunteer);
+        setOperationState('success');
+        setShowSignOutSheet(false);
+        setPendingSignOutVolunteer(null);
+        
+        const timeString = new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
+        
+        // 🎉 简化Toast，让详细通知由API层的智能通知系统处理
+        showSuccessToast(`[OK] ${timeString} - 签退成功`);
+        
+        if (Platform.OS === 'ios') {
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        }
+      } else {
+        setOperationState('error');
+        Alert.alert('签退失败', result.msg || '请稍后重试');
+      }
+    } catch (error) {
+      setOperationState('error');
+      console.error('签退失败:', error);
+      Alert.alert('签退失败', '网络错误，请检查连接后重试');
+    }
+  }, [pendingSignOutVolunteer, userInfo]);
 
   // 取消签出
   const cancelSignOut = useCallback(() => {
@@ -333,14 +517,14 @@ export const VolunteerListScreen: React.FC<VolunteerListScreenProps> = ({
           </TouchableOpacity>
           <View style={styles.schoolInfo}>
             <Text style={[styles.schoolName, { color: isDarkMode ? '#ffffff' : '#000000' }]}>
-              {i18n.language.startsWith('zh') ? selectedSchool.name : selectedSchool.englishName}
+              {i18n.language.startsWith('zh') ? selectedSchool.deptName : (selectedSchool.engName || selectedSchool.deptName)}
             </Text>
             <Text style={[styles.schoolSubtitle, { color: isDarkMode ? '#a1a1aa' : '#6b7280' }]}>
               University of California, Berkeley
             </Text>
             <View style={styles.locationRow}>
               <Ionicons name="location-outline" size={12} color="#9CA3AF" />
-              <Text style={styles.locationText}>{selectedSchool?.location || 'Berkeley, CA'}</Text>
+              <Text style={styles.locationText}>{'Berkeley, CA'}</Text>
             </View>
             
             {/* Hero卡内统计数据 - 嵌入学校卡底部 */}

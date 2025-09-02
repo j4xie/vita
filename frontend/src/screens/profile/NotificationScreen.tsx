@@ -8,7 +8,6 @@ import {
   ScrollView,
   Alert,
   Platform,
-  useColorScheme,
   Switch,
   Linking,
 } from 'react-native';
@@ -18,6 +17,14 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 
 import { theme } from '../../theme';
+import { useTheme } from '../../context/ThemeContext';
+import { useAllDarkModeStyles } from '../../hooks/useDarkModeStyles';
+import { 
+  smartAlertSystem, 
+  getAlertSettings, 
+  saveAlertSettings,
+  AlertSettings 
+} from '../../services/smartAlertSystem';
 
 interface SettingRowProps {
   title: string;
@@ -42,8 +49,8 @@ const SettingRow: React.FC<SettingRowProps> = ({
   onSwitchChange,
   subtitle,
 }) => {
-  const colorScheme = useColorScheme();
-  const isDarkMode = colorScheme === 'dark';
+  const themeContext = useTheme();
+  const isDarkMode = themeContext.isDarkMode;
 
   const handlePress = () => {
     if (Platform.OS === 'ios') {
@@ -93,14 +100,14 @@ const SettingRow: React.FC<SettingRowProps> = ({
     settingText: {
       fontSize: 17,
       fontWeight: '400',
-      color: isDarkMode ? '#ffffff' : '#000000',
+      color: '#000000', // Default light color
     },
     settingTextDark: {
       color: '#ffffff',
     },
     settingSubtitle: {
       fontSize: 13,
-      color: isDarkMode ? '#8e8e93' : '#8e8e93',
+      color: '#8e8e93',
       marginTop: 2,
     },
     settingSubtitleDark: {
@@ -112,7 +119,7 @@ const SettingRow: React.FC<SettingRowProps> = ({
     },
     settingValue: {
       fontSize: 15,
-      color: isDarkMode ? '#8e8e93' : '#8e8e93',
+      color: '#8e8e93',
       marginRight: 8,
     },
     settingValueDark: {
@@ -146,6 +153,7 @@ const SettingRow: React.FC<SettingRowProps> = ({
             style={[
               rowStyles.settingText,
               isDarkMode && rowStyles.settingTextDark,
+              { color: isDarkMode ? '#ffffff' : '#000000' }
             ]}
             allowFontScaling={true}
             maxFontSizeMultiplier={1.4}
@@ -157,6 +165,7 @@ const SettingRow: React.FC<SettingRowProps> = ({
               style={[
                 rowStyles.settingSubtitle,
                 isDarkMode && rowStyles.settingSubtitleDark,
+                { color: isDarkMode ? '#8e8e93' : '#8e8e93' }
               ]}
               allowFontScaling={true}
               maxFontSizeMultiplier={1.3}
@@ -206,16 +215,54 @@ const SettingRow: React.FC<SettingRowProps> = ({
 
 export const NotificationScreen: React.FC = () => {
   const { t } = useTranslation();
-  const colorScheme = useColorScheme();
-  const isDarkMode = colorScheme === 'dark';
+  const darkModeSystem = useAllDarkModeStyles();
+  const { isDarkMode, styles: dmStyles, gradients: dmGradients } = darkModeSystem;
   const insets = useSafeAreaInsets();
 
-  // Notification settings state
-  const [pushEnabled, setPushEnabled] = useState(true);
-  const [activityUpdates, setActivityUpdates] = useState(true);
-  const [registrationSuccess, setRegistrationSuccess] = useState(true);
-  const [comments, setComments] = useState(false);
-  const [doNotDisturb, setDoNotDisturb] = useState(false);
+  // Alert settings state
+  const [settings, setSettings] = useState<AlertSettings>({
+    activityUpdates: true,
+    registrationSuccess: true,
+    comments: false,
+    doNotDisturb: false,
+    doNotDisturbStartTime: '22:00',
+    doNotDisturbEndTime: '08:00',
+  });
+  const [permissionStatus, setPermissionStatus] = useState<'granted' | 'denied' | 'undetermined'>('granted'); // JS系统默认有权限
+
+  // 加载提醒设置
+  useEffect(() => {
+    const loadAlertData = async () => {
+      try {
+        // 加载用户设置
+        const savedSettings = await getAlertSettings();
+        setSettings(savedSettings);
+        
+        // 获取权限状态（JS系统默认有权限）
+        const status = await smartAlertSystem.getPermissionStatus();
+        setPermissionStatus(status);
+      } catch (error) {
+        console.error('加载提醒数据失败:', error);
+      }
+    };
+
+    loadAlertData();
+  }, []);
+
+  // 处理设置变更
+  const handleSettingChange = async (key: keyof AlertSettings, value: boolean) => {
+    try {
+      const newSettings = { ...settings, [key]: value };
+      setSettings(newSettings);
+      await saveAlertSettings(newSettings);
+      
+      if (Platform.OS === 'ios') {
+        Haptics.selectionAsync();
+      }
+    } catch (error) {
+      console.error('保存提醒设置失败:', error);
+    }
+  };
 
   const handleSystemSettings = async () => {
     try {
@@ -235,12 +282,17 @@ export const NotificationScreen: React.FC = () => {
     }
   };
 
-  const handleDoNotDisturbSettings = () => {
-    Alert.alert(t('profile.notifications.doNotDisturb'), t('profile.notifications.doNotDisturbMessage'));
-  };
-
-  const handleNotificationSummary = () => {
-    Alert.alert(t('profile.notifications.notificationSummary'), t('profile.notifications.notificationSummaryMessage'));
+  // 测试相关函数已移除
+  /*
+  const handleTestAlert = async () => {
+    try {
+      await smartAlertSystem.showSuccessAlert(
+        t('profile.notifications.testAlertTitle', '🧪 Test Alert'),
+        t('profile.notifications.testAlertMessage', 'Smart notification system is working! This is a test message.')
+      );
+    } catch (error) {
+      console.error('测试提醒失败:', error);
+    }
   };
 
   const pushItems = [
@@ -248,62 +300,43 @@ export const NotificationScreen: React.FC = () => {
       id: 'system-permission',
       title: t('profile.notifications.pushPermissions'),
       icon: 'notifications-outline' as keyof typeof Ionicons.glyphMap,
-      subtitle: t('profile.notifications.pushPermissionsSubtitle'),
-      onPress: handleSystemSettings,
+      onPress: handleTestAlert,
     },
   ];
+  */
 
   const notificationTypes = [
     {
       id: 'activity-updates',
       title: t('profile.notifications.activityUpdates'),
       icon: 'calendar-outline' as keyof typeof Ionicons.glyphMap,
-      subtitle: t('profile.notifications.activityUpdatesSubtitle'),
       hasSwitch: true,
-      switchValue: activityUpdates,
-      onSwitchChange: setActivityUpdates,
+      switchValue: settings.activityUpdates,
+      onSwitchChange: (value: boolean) => handleSettingChange('activityUpdates', value),
     },
     {
       id: 'registration-success',
       title: t('profile.notifications.registrationSuccess'),
       icon: 'checkmark-circle-outline' as keyof typeof Ionicons.glyphMap,
-      subtitle: t('profile.notifications.registrationSuccessSubtitle'),
       hasSwitch: true,
-      switchValue: registrationSuccess,
-      onSwitchChange: setRegistrationSuccess,
+      switchValue: settings.registrationSuccess,
+      onSwitchChange: (value: boolean) => handleSettingChange('registrationSuccess', value),
     },
     {
       id: 'comments',
       title: t('profile.notifications.commentsMessages'),
       icon: 'chatbubble-outline' as keyof typeof Ionicons.glyphMap,
-      subtitle: t('profile.notifications.commentsMessagesSubtitle'),
       hasSwitch: true,
-      switchValue: comments,
-      onSwitchChange: setComments,
+      switchValue: settings.comments,
+      onSwitchChange: (value: boolean) => handleSettingChange('comments', value),
     },
   ];
 
-  const advancedItems = [
-    {
-      id: 'do-not-disturb',
-      title: t('profile.notifications.doNotDisturb'),
-      icon: 'moon-outline' as keyof typeof Ionicons.glyphMap,
-      value: doNotDisturb ? t('profile.notifications.doNotDisturbTime') : t('profile.notifications.doNotDisturbOff'),
-      onPress: handleDoNotDisturbSettings,
-    },
-    {
-      id: 'summary',
-      title: t('profile.notifications.notificationSummary'),
-      icon: 'list-outline' as keyof typeof Ionicons.glyphMap,
-      value: t('profile.notifications.notificationSummaryOff'),
-      onPress: handleNotificationSummary,
-    },
-  ];
 
   const styles = StyleSheet.create({
     container: {
       flex: 1,
-      backgroundColor: isDarkMode ? '#000000' : '#f2f2f7',
+      backgroundColor: '#f2f2f7', // Default light background
     },
     safeArea: {
       flex: 1,
@@ -322,13 +355,13 @@ export const NotificationScreen: React.FC = () => {
     groupTitle: {
       fontSize: 13,
       fontWeight: '400',
-      color: isDarkMode ? '#8e8e93' : '#8e8e93',
+      color: '#8e8e93', // Default light color
       textTransform: 'uppercase',
       marginBottom: 8,
       marginLeft: 16,
     },
     listContainer: {
-      backgroundColor: isDarkMode ? '#1c1c1e' : '#ffffff',
+      backgroundColor: '#ffffff', // Default white background
       borderRadius: 14,
       overflow: 'hidden',
       ...Platform.select({
@@ -346,17 +379,27 @@ export const NotificationScreen: React.FC = () => {
   });
 
   return (
-    <View style={styles.container}>
+    <View style={[
+      styles.container,
+      { backgroundColor: isDarkMode ? dmStyles.page.safeArea.backgroundColor : '#f2f2f7' }
+    ]}>
       <SafeAreaView style={styles.safeArea}>
         <ScrollView
           style={styles.scrollView}
           contentContainerStyle={styles.contentContainer}
           showsVerticalScrollIndicator={false}
         >
-          {/* 推送权限 */}
+          {/* 推送权限 - 暂时隐藏测试功能 */}
+          {/*
           <View style={styles.groupContainer}>
-            <Text style={styles.groupTitle}>{t('profile.notifications.sectionPushPermissions')}</Text>
-            <View style={styles.listContainer}>
+            <Text style={[
+              styles.groupTitle,
+              { color: isDarkMode ? dmStyles.text.secondary.color : '#8e8e93' }
+            ]}>{t('profile.notifications.sectionPushPermissions')}</Text>
+            <View style={[
+              styles.listContainer,
+              { backgroundColor: isDarkMode ? dmStyles.card.contentSection.backgroundColor : '#ffffff' }
+            ]}>
               {pushItems.map((item, index) => (
                 <SettingRow
                   key={item.id}
@@ -369,11 +412,18 @@ export const NotificationScreen: React.FC = () => {
               ))}
             </View>
           </View>
+          */}
 
           {/* 通知类型 */}
           <View style={styles.groupContainer}>
-            <Text style={styles.groupTitle}>{t('profile.notifications.sectionNotificationTypes')}</Text>
-            <View style={styles.listContainer}>
+            <Text style={[
+              styles.groupTitle,
+              { color: isDarkMode ? dmStyles.text.secondary.color : '#8e8e93' }
+            ]}>{t('profile.notifications.sectionNotificationTypes')}</Text>
+            <View style={[
+              styles.listContainer,
+              { backgroundColor: isDarkMode ? dmStyles.card.contentSection.backgroundColor : '#ffffff' }
+            ]}>
               {notificationTypes.map((item, index) => (
                 <SettingRow
                   key={item.id}
@@ -389,22 +439,6 @@ export const NotificationScreen: React.FC = () => {
             </View>
           </View>
 
-          {/* 高级设置 */}
-          <View style={styles.groupContainer}>
-            <Text style={styles.groupTitle}>{t('profile.notifications.sectionAdvancedSettings')}</Text>
-            <View style={styles.listContainer}>
-              {advancedItems.map((item, index) => (
-                <SettingRow
-                  key={item.id}
-                  title={item.title}
-                  icon={item.icon}
-                  value={item.value}
-                  onPress={item.onPress}
-                  isLast={index === advancedItems.length - 1}
-                />
-              ))}
-            </View>
-          </View>
         </ScrollView>
       </SafeAreaView>
     </View>

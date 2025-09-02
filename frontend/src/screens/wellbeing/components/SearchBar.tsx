@@ -6,7 +6,6 @@ import {
   TouchableOpacity,
   StyleSheet,
   Platform,
-  useColorScheme,
   Animated,
   Keyboard,
   Alert,
@@ -16,6 +15,7 @@ import { useTranslation } from 'react-i18next';
 import * as Haptics from 'expo-haptics';
 
 import { theme } from '../../../theme';
+import { useTheme } from '../../../context/ThemeContext';
 import { LIQUID_GLASS_LAYERS, BRAND_GLASS } from '../../../theme/core';
 import { usePerformanceDegradation } from '../../../hooks/usePerformanceDegradation';
 
@@ -39,8 +39,8 @@ export const SearchBar: React.FC<SearchBarProps> = ({
   placeholder,
 }) => {
   const { t } = useTranslation();
-  const colorScheme = useColorScheme();
-  const isDarkMode = colorScheme === 'dark';
+  const themeContext = useTheme();
+  const isDarkMode = themeContext.isDarkMode;
   
   // V2.0 获取分层配置
   const { getLayerConfig } = usePerformanceDegradation();

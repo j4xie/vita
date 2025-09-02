@@ -15,6 +15,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { theme } from '../../theme';
 import { LIQUID_GLASS_LAYERS } from '../../theme/core';
+import { useMemoizedDarkMode, useBlurViewConfig } from '../../hooks/useDarkMode';
+import { useTheme } from '../../context/ThemeContext';
 
 interface PrivacyAgreementModalProps {
   visible: boolean;
@@ -31,26 +33,65 @@ export const PrivacyAgreementModal: React.FC<PrivacyAgreementModalProps> = ({
   const [hasScrolledToBottom, setHasScrolledToBottom] = useState(false);
   const [scrollProgress, setScrollProgress] = useState(0);
   const scrollViewRef = useRef<ScrollView>(null);
+  
+  // 🌙 Dark Mode Support
+  const darkMode = useMemoizedDarkMode();
+  const blurConfig = useBlurViewConfig();
+  const { isDarkMode } = darkMode;
 
   const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
     const { contentOffset, contentSize, layoutMeasurement } = event.nativeEvent;
     const scrollY = contentOffset.y;
     const scrollHeight = contentSize.height - layoutMeasurement.height;
     
+    // 🚀 调试滚动信息
+    console.log('📜 [PRIVACY-SCROLL]:', {
+      scrollY: Math.round(scrollY),
+      scrollHeight: Math.round(scrollHeight),
+      contentHeight: Math.round(contentSize.height),
+      layoutHeight: Math.round(layoutMeasurement.height),
+      canScroll: scrollHeight > 0
+    });
+    
     // 计算滚动进度 (0-1)
     const progress = scrollHeight > 0 ? Math.min(scrollY / scrollHeight, 1) : 1;
     setScrollProgress(progress);
     
-    // 检测是否滚动到底部 (允许5px的误差)
-    const isAtBottom = scrollY >= scrollHeight - 5;
+    // 🚀 更宽松的底部检测 (允许20px的误差)
+    const isAtBottom = scrollHeight <= 20 || scrollY >= scrollHeight - 20;
     setHasScrolledToBottom(isAtBottom);
+    
+    // 如果内容不够长无需滚动，直接标记为已读完
+    if (scrollHeight <= 0) {
+      setHasScrolledToBottom(true);
+    }
   };
 
   const handleModalShow = () => {
     // 重置状态当模态框显示时
     setHasScrolledToBottom(false);
     setScrollProgress(0);
+    
+    // 🚀 延迟检查内容高度，如果内容很短则自动启用Accept按钮
+    setTimeout(() => {
+      if (scrollViewRef.current) {
+        scrollViewRef.current.measure((x, y, width, height, pageX, pageY) => {
+          console.log('📐 [PRIVACY-LAYOUT] ScrollView尺寸:', { width, height });
+        });
+      }
+    }, 500);
   };
+
+  // 🌙 Dynamic Styles - 基于Dark Mode动态生成关键样式
+  const dynamicModalContainer = {
+    ...styles.modalContainer,
+    backgroundColor: isDarkMode ? darkMode.elevatedBackground : LIQUID_GLASS_LAYERS.L1.background.light,
+    borderColor: isDarkMode ? 'rgba(84, 84, 88, 0.6)' : LIQUID_GLASS_LAYERS.L1.border.color.light,
+  };
+
+  const dynamicIconColor = isDarkMode ? darkMode.brandPrimary : theme.colors.primary;
+  const dynamicTextColor = isDarkMode ? darkMode.primaryText : theme.colors.text.primary;
+  const dynamicSecondaryTextColor = isDarkMode ? darkMode.secondaryText : theme.colors.text.secondary;
 
   return (
     <Modal
@@ -60,20 +101,20 @@ export const PrivacyAgreementModal: React.FC<PrivacyAgreementModalProps> = ({
       statusBarTranslucent={true}
       onShow={handleModalShow}
     >
-      <BlurView intensity={20} style={StyleSheet.absoluteFill}>
+      <BlurView intensity={blurConfig.intensity} tint={blurConfig.tint} style={StyleSheet.absoluteFill}>
         <SafeAreaView style={styles.container}>
           <View style={styles.overlay}>
-            <View style={styles.modalContainer}>
-              {/* Header */}
-              <View style={styles.header}>
-                <View style={styles.iconContainer}>
+            <View style={dynamicModalContainer}>
+              {/* Header - 🌙 Dark Mode适配 */}
+              <View style={[styles.header, { borderBottomColor: dynamicSecondaryTextColor }]}>
+                <View style={[styles.iconContainer, { backgroundColor: dynamicIconColor + '15' }]}>
                   <Ionicons 
                     name="shield-checkmark" 
                     size={24} 
-                    color={theme.colors.primary} 
+                    color={dynamicIconColor}
                   />
                 </View>
-                <Text style={styles.title}>
+                <Text style={[styles.title, { color: dynamicTextColor }]}>
                   {t('auth.register.privacy.title')}
                 </Text>
                 <Text style={styles.subtitle}>
@@ -99,6 +140,18 @@ export const PrivacyAgreementModal: React.FC<PrivacyAgreementModalProps> = ({
                 showsVerticalScrollIndicator={true}
                 onScroll={handleScroll}
                 scrollEventThrottle={16}
+                bounces={true}
+                alwaysBounceVertical={true}
+                nestedScrollEnabled={true}
+                scrollEnabled={true}
+                keyboardShouldPersistTaps="handled"
+                onContentSizeChange={(contentWidth, contentHeight) => {
+                  console.log('📐 [PRIVACY-CONTENT] 内容尺寸变化:', { contentWidth, contentHeight });
+                }}
+                onLayout={(event) => {
+                  const { height } = event.nativeEvent.layout;
+                  console.log('📐 [PRIVACY-CONTAINER] 容器高度:', height);
+                }}
               >
                 <Text style={styles.contentText}>
                   {t('auth.register.privacy.content')}
@@ -171,7 +224,7 @@ const styles = StyleSheet.create({
   modalContainer: {
     width: '100%',
     maxWidth: 400,
-    maxHeight: '85%',
+    height: '80%', // 🚀 使用固定高度比例确保布局稳定
     backgroundColor: LIQUID_GLASS_LAYERS.L1.background.light,
     borderRadius: LIQUID_GLASS_LAYERS.L1.borderRadius.modal,
     borderWidth: LIQUID_GLASS_LAYERS.L1.border.width,
@@ -209,7 +262,7 @@ const styles = StyleSheet.create({
   },
   contentScrollView: {
     flex: 1,
-    maxHeight: 300,
+    maxHeight: 400, // 🚀 增加最大高度，确保有足够滚动空间
   },
   contentContainer: {
     padding: theme.spacing[6],

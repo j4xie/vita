@@ -2,21 +2,23 @@ const { getDefaultConfig } = require('expo/metro-config');
 
 const config = getDefaultConfig(__dirname);
 
-// 🚀 启用 Hermes 全性能模式
-console.log('🚀 JS 引擎: Hermes (全性能模式)');
+// 🔧 切换到 JSC 引擎解决真机崩溃问题
+console.log('🔧 JS 引擎: JSC (兼容模式)');
 
 // 生产环境优化配置
 config.transformer = {
   ...config.transformer,
   minifierConfig: {
     ...config.transformer.minifierConfig,
-    // 启用完整优化
-    keep_fnames: false,
+    // 🚨 保留函数名，防止"undefined is not a function"错误
+    keep_fnames: true,
     mangle: {
-      keep_fnames: false,
+      keep_fnames: true,
+      // 特别保护志愿者相关函数
+      reserved: ['performVolunteerCheckIn', 'performVolunteerCheckOut', 'volunteerSignRecord', 'handleCheckIn', 'handleCheckOut']
     },
-    // 生产环境移除 console 日志
-    ...(process.env.NODE_ENV === 'production' && {
+    // 🚨 暂时保留console用于调试工作时长问题
+    ...(false && process.env.NODE_ENV === 'production' && {
       drop_console: true,
       drop_debugger: true,
     }),

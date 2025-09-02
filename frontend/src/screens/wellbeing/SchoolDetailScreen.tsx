@@ -10,6 +10,7 @@ import {
   FlatList,
   Alert,
   Platform,
+  TextInput,
 } from 'react-native';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -20,15 +21,21 @@ import { useTranslation } from 'react-i18next';
 import { Glass } from '../../ui/glass/GlassTheme';
 import { GlassCapsule } from '../../components/consulting/GlassCapsule';
 import { getSchoolLogo } from '../../utils/schoolLogos';
-import { getVolunteerRecords, getVolunteerHours, volunteerSignRecord, getLastVolunteerRecord, getVolunteerStatus } from '../../services/volunteerAPI';
+import { getVolunteerRecords, getVolunteerHours, performVolunteerCheckIn, performVolunteerCheckOut, getLastVolunteerRecord, getVolunteerStatus } from '../../services/volunteerAPI';
 import { VolunteerStateService, VolunteerInfo } from '../../services/volunteerStateService';
 import { getUserList } from '../../services/userStatsAPI';
 import { pomeloXAPI } from '../../services/PomeloXAPI';
+import { getUserPermissionLevel } from '../../types/userPermissions';
 import { useUser } from '../../context/UserContext';
 import { SafeText } from '../../components/common/SafeText';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { getCurrentToken, getCurrentUserId } from '../../services/authAPI';
-import { useGlobalTime, getAPITimeFormat, getFrontendTimeFormat } from '../../services/timeManager';
+import { getCurrentToken } from '../../services/authAPI';
+import { getAPITimeFormat, getFrontendTimeFormat } from '../../services/timeManager';
+import { apiCache, CacheTTL } from '../../services/apiCache';
+import { i18n } from '../../utils/i18n';
+import { positionService } from '../../services/positionService';
+import { useAllDarkModeStyles } from '../../hooks/useDarkModeStyles';
+// 移除SearchBar导入，改为使用内置搜索组件
+
 
 // 移除重复的持久化键定义 - 统一使用VolunteerStateService
 
@@ -38,21 +45,36 @@ export const SchoolDetailScreen: React.FC = () => {
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
   
+  const darkModeSystem = useAllDarkModeStyles();
+  const { isDarkMode, styles: dmStyles, gradients: dmGradients, blur: dmBlur, icons: dmIcons } = darkModeSystem;
+  
   const school = (route.params as any)?.school;
-  const { permissions, user: userInfo } = useUser(); // 获取用户权限和用户信息
+  const { permissions, user: userInfo, isAuthenticated } = useUser(); // 获取用户权限和用户信息
   const [volunteers, setVolunteers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingProgress, setLoadingProgress] = useState(0);
+  const [loadingMessage, setLoadingMessage] = useState('正在加载...');
   const [expandedVolunteer, setExpandedVolunteer] = useState<string | null>(null);
-  const currentTime = useGlobalTime(); // 使用统一的时间管理
+  
+  // 搜索功能状态
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchError, setSearchError] = useState('');
+  const [isSearching, setIsSearching] = useState(false);
+  const [searchResultIndex, setSearchResultIndex] = useState<number | null>(null);
+  
+  // 移除全局时间管理
   const [activitiesCount, setActivitiesCount] = useState<number>(0);
   const [operationInProgress, setOperationInProgress] = useState<Record<string, boolean>>({});
-  // 持久化签到时间状态（用于实时计时）
-  const [persistedCheckins, setPersistedCheckins] = useState<Record<number, string>>({});
+  // 移除持久化计时功能
   // 操作防重复锁 - 增强版本
   const operationLockRef = React.useRef<Set<number>>(new Set());
   const pendingOperationsRef = React.useRef<Map<string, Promise<any>>>(new Map());
   // 缓存每个用户的最后一条记录（用于展示"上次签到/签出时间"）
   const lastRecordCacheRef = React.useRef<Map<number, any>>(new Map());
+  
+  // FlatList引用用于滚动控制
+  const flatListRef = React.useRef<FlatList>(null);
+
 
   // 移除独立计时器 - 现在使用全局时间管理
 
@@ -61,48 +83,18 @@ export const SchoolDetailScreen: React.FC = () => {
     VolunteerStateService.cleanup(); // 先清理
     VolunteerStateService.initialize(); // 再初始化
     console.log('🔄 [FORCE-CLEAR] 已重置志愿者状态服务');
-    return () => VolunteerStateService.cleanup();
+    
+    return () => {
+      // 🚨 CRITICAL FIX: Comprehensive cleanup to prevent memory leaks
+      VolunteerStateService.cleanup();
+      operationLockRef.current.clear();
+      pendingOperationsRef.current.clear();
+      lastRecordCacheRef.current.clear();
+      console.log('🧹 [CLEANUP] 已清理所有内存引用');
+    };
   }, []);
 
-  // 加载持久化的签到时间 - 智能清理错误状态
-  React.useEffect(() => {
-    const loadAndCleanPersistedData = async () => {
-      try {
-        // 获取持久化数据
-        const persistedData = await AsyncStorage.getItem('vg_volunteer_checkin_times');
-        const parsed = persistedData ? JSON.parse(persistedData) : {};
-        
-        console.log('📱 [PERSISTED-DATA] 当前持久化数据:', parsed);
-        
-        // 🚨 SYSTEM FIX: 清理不一致的持久化数据
-        // 如果有持久化数据，需要验证与后端状态是否一致
-        const cleanedData: Record<number, string> = {};
-        let hasInconsistentData = false;
-        
-        for (const [userIdStr, persistedTime] of Object.entries(parsed)) {
-          if (typeof persistedTime === 'string' && persistedTime.length > 0) {
-            hasInconsistentData = true;
-            console.warn(`🚨 [CLEANUP] 发现用户${userIdStr}有持久化签到时间，需要验证后端状态`);
-          }
-        }
-        
-        if (hasInconsistentData) {
-          console.log('🧹 [CLEANUP] 清理可能不一致的持久化数据');
-          await AsyncStorage.removeItem('vg_volunteer_checkin_times');
-          setPersistedCheckins({});
-        } else {
-          setPersistedCheckins(parsed);
-        }
-        
-        console.log('✅ [PERSISTED-DATA] 持久化数据处理完成');
-      } catch (error) {
-        console.warn('📱 处理持久化数据失败:', error);
-        setPersistedCheckins({});
-      }
-    };
-    
-    loadAndCleanPersistedData();
-  }, []);
+  // 移除复杂的持久化逻辑
 
 
   // 展开卡片时，加载该用户的最后一条记录用于展示"上次签到/签出时间"
@@ -155,13 +147,11 @@ export const SchoolDetailScreen: React.FC = () => {
               if (currentStatus === 'signed_in') {
                 updates.checkInTime = backendRecord.startTime;
                 updates.checkOutTime = null;
-                // 恢复持久化计时
-                persistCheckinTime(v.userId, backendRecord.startTime).catch(console.warn);
+                // 移除持久化逻辑
               } else {
                 updates.checkInTime = null;
                 updates.checkOutTime = backendRecord.endTime;
-                // 清除持久化计时
-                persistCheckinTime(v.userId, null).catch(console.warn);
+                // 移除持久化逻辑
               }
               
               return { ...vol, ...updates };
@@ -182,48 +172,213 @@ export const SchoolDetailScreen: React.FC = () => {
 
   // 使用统一的状态服务计算时长
   const getCurrentDurationMinutes = (vol: any) => {
-    return VolunteerStateService.getCurrentDurationMinutes(vol as VolunteerInfo, currentTime);
+    return VolunteerStateService.getCurrentDurationMinutes(vol as VolunteerInfo, new Date());
   };
 
   const formatDuration = (minutes: number) => {
     return VolunteerStateService.formatDuration(minutes);
   };
 
-  // 持久化签到时间管理
-  const persistCheckinTime = async (userId: number, startTime: string | null) => {
+  // 志愿者搜索功能 - 支持姓名和手机号搜索
+  const searchVolunteer = async () => {
+    if (!searchQuery.trim()) {
+      setSearchError('请输入志愿者姓名或手机号');
+      return;
+    }
+    
+    setIsSearching(true);
+    setSearchError('');
+    setSearchResultIndex(null);
+    
     try {
-      const newData = { ...persistedCheckins };
-      if (startTime) {
-        newData[userId] = startTime;
+      const query = searchQuery.trim().toLowerCase();
+      
+      // 在当前志愿者列表中搜索
+      const matchedIndex = volunteers.findIndex(volunteer => {
+        // 支持姓名搜索（模糊匹配）
+        const nameMatches = 
+          volunteer.name?.toLowerCase().includes(query) ||
+          volunteer.legalName?.toLowerCase().includes(query) ||
+          volunteer.userName?.toLowerCase().includes(query);
+          
+        // 支持手机号搜索（去除格式符号后匹配）
+        const cleanQuery = query.replace(/\D/g, '');
+        const phoneMatches = cleanQuery.length >= 3 && 
+          (volunteer.phoneNumber || '').replace(/\D/g, '').includes(cleanQuery);
+          
+        return nameMatches || phoneMatches;
+      });
+      
+      if (matchedIndex !== -1) {
+        const foundVolunteer = volunteers[matchedIndex];
+        console.log('🔍 [SEARCH-SUCCESS] 找到志愿者:', {
+          index: matchedIndex,
+          name: foundVolunteer.name,
+          userId: foundVolunteer.userId,
+          searchQuery: query
+        });
+        
+        // 跳转到志愿者位置并展开
+        scrollToVolunteer(matchedIndex, foundVolunteer.id);
+        setSearchResultIndex(matchedIndex);
+        
+        // 显示成功提示并清空搜索
+        Alert.alert(
+          '找到志愿者', 
+          `已定位到 ${foundVolunteer.name}`,
+          [{ text: '确定', onPress: () => {
+            setSearchQuery('');
+            setTimeout(() => setSearchResultIndex(null), 2000);
+          }}]
+        );
+        
       } else {
-        delete newData[userId];
+        setSearchError(`未找到匹配"${searchQuery.trim()}"的志愿者`);
+        // 3秒后清除错误信息
+        setTimeout(() => setSearchError(''), 3000);
       }
-      setPersistedCheckins(newData);
-      await AsyncStorage.setItem('vg_volunteer_checkin_times', JSON.stringify(newData));
-      console.log('📱 持久化签到时间:', { userId, startTime, newData });
     } catch (error) {
-      console.warn('📱 保存持久化数据失败:', error);
+      console.error('志愿者搜索失败:', error);
+      setSearchError('搜索失败，请重试');
+      setTimeout(() => setSearchError(''), 3000);
+    } finally {
+      setIsSearching(false);
     }
   };
+
+  // 简化的搜索输入处理
+  const handleSearchInput = (text: string) => {
+    setSearchQuery(text);
+    setSearchError('');
+    
+    // 如果输入为空，清除所有搜索状态
+    if (!text.trim()) {
+      setSearchResultIndex(null);
+      return;
+    }
+    
+    // 输入达到2个字符时自动高亮匹配（不自动滚动）
+    if (text.trim().length >= 2) {
+      const query = text.trim().toLowerCase();
+      const matchedIndex = volunteers.findIndex(volunteer => {
+        // 支持姓名搜索（模糊匹配）
+        const nameMatches = 
+          volunteer.name?.toLowerCase().includes(query) ||
+          volunteer.legalName?.toLowerCase().includes(query) ||
+          volunteer.userName?.toLowerCase().includes(query);
+          
+        // 支持手机号搜索（简化版本，不强制格式）
+        const phoneMatches = query.length >= 3 && 
+          (volunteer.phoneNumber || '').toLowerCase().includes(query);
+          
+        return nameMatches || phoneMatches;
+      });
+      
+      if (matchedIndex !== -1) {
+        setSearchResultIndex(matchedIndex);
+        setSearchError('');
+      } else {
+        setSearchResultIndex(null);
+      }
+    }
+  };
+
+  // 滚动到指定志愿者并展开详情
+  const scrollToVolunteer = (index: number, volunteerId: string) => {
+    try {
+      // 滚动到指定位置
+      flatListRef.current?.scrollToIndex({
+        index,
+        animated: true,
+        viewPosition: 0.5, // 居中显示
+      });
+      
+      // 展开志愿者详情
+      setExpandedVolunteer(volunteerId);
+      
+      console.log(`📍 [SCROLL-TO] 已跳转到志愿者 ${volunteerId}，索引 ${index}`);
+    } catch (error) {
+      console.error('跳转到志愿者位置失败:', error);
+      // 降级处理：直接展开，不滚动
+      setExpandedVolunteer(volunteerId);
+    }
+  };
+
+  // 处理扫码功能 - 暂时禁用
+  const handleScanQR = () => {
+    // 二维码功能暂时禁用
+    console.log('QR扫码功能已禁用');
+  };
+
+  // 移除持久化计时功能
   
+  // 🌍 根据当前语言和用户要求获取学校显示信息
+  const getSchoolDisplayInfo = () => {
+    const currentLanguage = i18n.language;
+    
+    // Title Display Logic (用户要求):
+    // - English interface: Use engName
+    // - Chinese interface: Use deptName
+    const title = (currentLanguage === 'en-US' && school?.engName) 
+      ? school.engName 
+      : school?.deptName || school?.nameCN || '未知学校';
+    
+    // Subtitle Display: Always use aprName in both languages
+    const subtitle = school?.aprName || '';
+    
+    return { title, subtitle };
+  };
+  
+
   // 加载志愿者数据和活动统计
   React.useEffect(() => {
     loadVolunteerData();
     loadSchoolActivitiesCount();
   }, [school]);
 
-  const loadVolunteerData = async () => {
+  const loadVolunteerData = async (forceClearCache = false) => {
     try {
-      setLoading(true);
       
-      console.log('🔍 SchoolDetailScreen权限和数据加载:', {
-        school: school?.nameCN || school?.name,
+      // 🚨 HERMES DETECTION: 检测JavaScript引擎
+      let jsEngine = 'unknown';
+      try {
+        if ((global as any).HermesInternal) {
+          jsEngine = 'Hermes';
+        } else if ((global as any).__JSC__) {
+          jsEngine = 'JSC';
+        } else {
+          jsEngine = 'Other';
+        }
+      } catch (e) {
+        jsEngine = 'Detection failed';
+      }
+      
+      
+      setLoading(true);
+      setLoadingProgress(0);
+      setLoadingMessage('正在加载志愿者数据...');
+      
+      if (forceClearCache) {
+        console.log('🧹 [CACHE-CLEAR] 强制清理API缓存...');
+        try {
+          // 清理API缓存
+          if (typeof (apiCache as any)?.clearAll === 'function') {
+            (apiCache as any).clearAll();
+          }
+        } catch (e) {
+          console.warn('缓存清理失败:', e);
+        }
+      }
+      
+      const permissionInfo = {
+        school: getSchoolDisplayInfo().title,
         schoolId: school?.id,
         deptId: school?.deptId,
         currentUser: {
           userName: userInfo?.userName,
           legalName: userInfo?.legalName,
-          deptId: userInfo?.deptId
+          deptId: userInfo?.deptId,
+          rawRoles: userInfo?.roles
         },
         permissions: {
           level: permissions.getPermissionLevel(),
@@ -232,11 +387,14 @@ export const SchoolDetailScreen: React.FC = () => {
           canViewAllSchools: permissions.canViewAllSchools(),
           hasVolunteerAccess: permissions.hasVolunteerManagementAccess()
         }
-      });
+      };
+      
+      console.log('🔍 SchoolDetailScreen权限和数据加载:', permissionInfo);
       
       // 根据权限和学校ID过滤数据
       let filters = {};
       const dataScope = permissions.getDataScope();
+      
       
       if (dataScope === 'school' && school?.deptId) {
         // 分管理员和内部员工：只能查看本校数据
@@ -256,7 +414,6 @@ export const SchoolDetailScreen: React.FC = () => {
       } else if (dataScope === 'self') {
         // Staff员工：只能查看自己的数据
         console.log('📊 Staff权限：只获取个人志愿者数据');
-        // 为Staff用户设置特殊过滤：只显示自己
         filters = { userId: userInfo?.userId };
       } else {
         console.log('📊 无数据访问权限');
@@ -265,11 +422,67 @@ export const SchoolDetailScreen: React.FC = () => {
         return;
       }
       
-      const [recordsResult, hoursResult, userListResult] = await Promise.all([
-        getVolunteerRecords(filters),
-        getVolunteerHours(filters),
-        getUserList(),
-      ]);
+      setLoadingMessage('正在获取基础数据...');
+      setLoadingProgress(20);
+      
+      
+      let recordsResult, hoursResult, userListResult;
+      
+      try {
+        recordsResult = await getVolunteerRecords(filters);
+      } catch (error) {
+        recordsResult = { code: 500, msg: 'API调用失败', rows: [] };
+      }
+      
+      try {
+        hoursResult = await getVolunteerHours(filters);
+      } catch (error) {
+        hoursResult = { code: 500, msg: 'API调用失败', rows: [] };
+      }
+      
+      try {
+        // 🚨 直接API调用，避免getUserList函数的复杂逻辑
+        const token = await getCurrentToken();
+        if (!token) {
+          throw new Error('未获取到token');
+        }
+        
+        // 根据权限级别决定API调用方式
+        const dataScope = permissions.getDataScope();
+        if (dataScope === 'all') {
+          // 总管理员：需要动态pageSize获取完整数据
+          const initialResponse = await fetch(`http://106.14.165.234:8085/system/user/list`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+          const initialData = await initialResponse.json();
+          
+          if (initialData.code === 200 && initialData.rows?.length < initialData.total) {
+            const fullResponse = await fetch(`http://106.14.165.234:8085/system/user/list?pageSize=${initialData.total}`, {
+              headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const fullData = await fullResponse.json();
+            userListResult = { code: fullData.code, msg: fullData.msg, data: fullData.rows };
+          } else {
+            userListResult = { code: initialData.code, msg: initialData.msg, data: initialData.rows };
+          }
+        } else {
+          // 分管理员：直接使用默认API（后端已过滤）
+          const response = await fetch(`http://106.14.165.234:8085/system/user/list`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+          const data = await response.json();
+          userListResult = { code: data.code, msg: data.msg, data: data.rows };
+        }
+        
+        console.log(`📊 [DIRECT-API] ${dataScope}权限用户获取: ${userListResult.data?.length || 0}个用户`);
+        
+      } catch (error) {
+        console.error('直接API调用失败:', error);
+        userListResult = { code: 500, msg: 'API调用失败', data: [] };
+      }
+      
+      setLoadingProgress(40);
+      setLoadingMessage('正在处理志愿者信息...');
 
       console.log('📊 API调用结果:', {
         recordsResult: {
@@ -285,110 +498,238 @@ export const SchoolDetailScreen: React.FC = () => {
         userListResult: {
           code: userListResult?.code,
           msg: userListResult?.msg,
-          total: userListResult?.total || 0,
+          total: (userListResult as any)?.total || 0,
           dataLength: userListResult?.data?.length || 0
         },
       });
 
-      // 新策略：基于用户列表获取该学校的管理员和内部员工，然后关联工时数据
+      // 🚀 性能优化：基于用户列表获取学校管理员和内部员工，使用并行处理
       if (userListResult?.code === 200 && userListResult?.data) {
-        console.log('📊 从用户列表获取学校管理员和内部员工');
+        console.log('📊 从用户列表获取学校管理员和内部员工 (优化版本)');
         const allUsers = userListResult.data;
-        const schoolStaff = [];
         
-        // 根据权限过滤用户列表
-        for (const user of allUsers) {
+        
+        
+        const schoolDistribution: Record<string, number> = {};
+        allUsers.forEach(user => {
+          const deptId = user.deptId;
+          const key = `${deptId}`;
+          schoolDistribution[key] = (schoolDistribution[key] || 0) + 1;
+        });
+        
+        // 第一步：快速过滤符合条件的用户（强制按学校过滤）
+        const eligibleUsers = allUsers.filter(user => {
           // Staff权限：只显示自己
           if (permissions.getDataScope() === 'self' && user.userId !== userInfo?.userId) {
-            continue;
+            console.log(`🔍 [FILTER] Staff权限过滤: 用户${user.userName}不是当前用户，已过滤`);
+            return false;
           }
           
-          // 分管理员权限：只显示本校用户
-          if (permissions.getDataScope() === 'school' && user.deptId !== school?.deptId) {
-            console.log(`⚠️ 用户${user.userName}(deptId:${user.deptId})不属于当前学校(deptId:${school?.deptId})，已过滤`);
-            continue;
+          // 🚨 CRITICAL FIX: 所有权限级别都必须按学校过滤
+          // 即使是总管理员，在查看特定学校时也只显示该学校的志愿者
+          if (user.deptId !== school?.deptId) {
+            console.log(`🔍 [FILTER] 学校过滤: 用户${user.userName}(deptId:${user.deptId})不属于当前学校${getSchoolDisplayInfo().title}(deptId:${school?.deptId})，已过滤`);
+            return false;
           }
           
-          // 总管理员：显示所有用户（无额外过滤）
-          
+          console.log(`✅ [FILTER] 用户${user.userName}(deptId:${user.deptId})属于学校${getSchoolDisplayInfo().title}，通过过滤`);
+          return true; // 只有属于当前学校的用户才显示
+        });
+        
+        console.log(`🚀 [PERFORMANCE] 过滤后的用户数量: ${eligibleUsers.length} (原始: ${allUsers.length})`);
+        
+        
+        // 第二步：并行处理所有API调用
+        console.time('⚡ 并行API处理时间');
+        setLoadingProgress(60);
+        setLoadingMessage(`正在并行处理 ${eligibleUsers.length} 个志愿者信息...`);
+        
+        const userProcessingPromises = eligibleUsers.map(async (user, index) => {
           try {
-            // 获取完整的用户权限信息
-            const fullUserInfo = await pomeloXAPI.getUserInfo(user.userId);
+            
+            // 🚨 HERMES FIX: 顺序执行API调用，避免Promise.all兼容性问题
+            let fullUserInfo, realtimeRecord;
+            
+            try {
+              fullUserInfo = await apiCache.cachedCall(
+                `userInfo:${user.userId}`,
+                () => pomeloXAPI.getUserInfo(user.userId),
+                CacheTTL.USER_INFO
+              );
+            } catch (error) {
+              return null;
+            }
+            
+            try {
+              realtimeRecord = await apiCache.cachedCall(
+                `volunteerRecord:${user.userId}`,
+                () => getLastVolunteerRecord(user.userId),
+                CacheTTL.VOLUNTEER_RECORDS
+              );
+            } catch (error) {
+              // 志愿者记录失败不是致命的，继续处理
+              realtimeRecord = { code: 500, data: null };
+            }
+            
             if (fullUserInfo.code !== 200 || !fullUserInfo.data) {
               console.warn(`⚠️ 无法获取用户${user.userName}的完整信息`);
-              continue;
+              return null;
             }
             
             const userData = fullUserInfo.data;
             
-            // 检查用户是否为管理员或内部员工（基于完整权限信息）
-            const isStaff = isUserStaffOrAdmin(userData);
-            if (!isStaff) {
-              console.log(`⚠️ 用户${user.userName}非管理员/内部员工角色，已过滤`, {
-                admin: userData.admin,
-                roles: userData.roles?.map((r: any) => r.roleKey),
-                roleIds: userData.roleIds
-              });
-              continue;
-            }
-            
             // 查找该用户的工时记录
             const hourRecord = hoursResult?.rows?.find((h: any) => h.userId === user.userId);
             
-            // 🚨 CRITICAL FIX: 优先使用实时记录，确保状态准确性
+            // 处理志愿者记录
             let userRecord = null;
-            
-            // Step 1: 尝试从recordsResult获取（可能是最新的）
             const cachedRecord = recordsResult?.rows?.find((r: any) => r.userId === user.userId);
             
-            // Step 2: 实时获取最新记录进行对比
-            try {
-              const realtimeRecord = await getLastVolunteerRecord(user.userId);
-              if (realtimeRecord.code === 200 && realtimeRecord.data) {
-                userRecord = realtimeRecord.data;
-                
-                // 检查是否有更新的记录
-                const isNewerRecord = !cachedRecord || 
-                  (userRecord.id > cachedRecord.id) || 
-                  (userRecord.startTime > cachedRecord.startTime);
-                
-                if (isNewerRecord) {
-                  console.log(`🔄 [REALTIME-NEWER] 用户${user.userName}使用更新的实时记录:`, {
-                    realtimeId: userRecord.id,
-                    cachedId: cachedRecord?.id || 'none',
-                    startTime: userRecord.startTime,
-                    endTime: userRecord.endTime
-                  });
-                } else {
-                  console.log(`📋 [REALTIME-SAME] 用户${user.userName}实时记录与缓存一致`);
-                }
-              } else {
-                // 实时获取失败，使用缓存
-                userRecord = cachedRecord;
-                console.log(`📋 [CACHE-FALLBACK] 用户${user.userName}使用缓存记录:`, !!userRecord);
-              }
-            } catch (e) {
+            if (realtimeRecord.code === 200 && realtimeRecord.data) {
+              userRecord = realtimeRecord.data;
+              console.log(`🔄 [PARALLEL] 用户${user.userName}实时记录获取成功`);
+            } else {
               userRecord = cachedRecord;
-              console.warn(`⚠️ 获取用户${user.userName}实时记录失败，使用缓存:`, e);
+              console.log(`📋 [PARALLEL] 用户${user.userName}使用缓存记录`);
             }
             
+            // 🎯 HERMES FIX: 极简化权限判断，避免复杂对象操作
+            let positionInfo = null;
+            
+            try {
+              // 🚨 修复：使用权限系统统一判断，而不是直接检查roles数组
+              // 因为API返回的管理员用户roles为空数组，但有posts信息
+              
+              console.log(`🔍 [USER-ANALYSIS] 分析用户${user.userName}的权限信息:`, {
+                userId: user.userId,
+                userName: user.userName,
+                legalName: userData.legalName,
+                admin: userData.admin,
+                rolesCount: userData.roles?.length || 0,
+                postsCount: userData.posts?.length || 0,
+                posts: userData.posts?.map((p: any) => p.postCode) || []
+              });
+              
+              // 🚨 使用统一的权限判断逻辑
+              const userPermissionLevel = getUserPermissionLevel(userData);
+              
+              console.log(`🔍 [PERMISSION-RESULT] 用户${user.userName}权限级别:`, userPermissionLevel);
+              
+              // 只有管理员、分管理员、内部员工才显示在志愿者列表中
+              const isVolunteerRole = ['manage', 'part_manage', 'staff'].includes(userPermissionLevel);
+              
+              if (!isVolunteerRole) {
+                console.log(`⚠️ 用户${user.userName}权限级别为${userPermissionLevel}，不显示在志愿者列表中`);
+                return null;
+              }
+              
+              // 根据权限级别确定显示信息
+              let level = '';
+              let major = '';
+              
+              switch (userPermissionLevel) {
+                case 'manage':
+                  level = 'President';
+                  major = '总管理员';
+                  break;
+                case 'part_manage':
+                  level = 'Vice President';
+                  major = '分管理员';
+                  break;
+                case 'staff':
+                  level = 'EB';
+                  major = '内部员工';
+                  break;
+                default:
+                  return null;
+              }
+              
+              positionInfo = { level: level, major: major };
+              console.log(`✅ 用户${user.userName}岗位信息:`, positionInfo);
+              
+            } catch (error) {
+              console.error(`❌ 用户${user.userName}权限分析失败:`, error);
+              return null;
+            }
+            
+            console.log(`🔍 [POSITION-CHECK] 用户${user.userName}岗位检查:`, {
+              userId: user.userId,
+              userName: user.userName,
+              legalName: userData.legalName,
+              hasPosition: !!positionInfo,
+              positionLevel: positionInfo?.level,
+              positionMajor: positionInfo?.major,
+              roles: userData.roles?.map((r: any) => `${r.key || r.roleKey}(${r.roleName || r.name})`) || [],
+              isCurrentUser: user.userId === userInfo?.userId,
+              currentUserId: userInfo?.userId,
+              result: positionInfo ? '显示在列表中' : '不显示'
+            });
+            
+            // 🚨 NEW: 如果没有岗位信息，不显示在志愿者列表中
+            if (!positionInfo) {
+              console.log(`⚠️ 用户${user.userName}无岗位分配，不显示在志愿者列表中`);
+              return null;
+            }
+            
+            return { user, userData, userRecord, hourRecord, positionInfo };
+            
+          } catch (error) {
+            console.error(`❌ [CRITICAL-ERROR] 用户${user.userName}处理完全崩溃:`, error);
+            return null;
+          }
+        });
+        
+        
+        // 等待所有用户数据并行处理完成
+        const processedUsers = await Promise.all(userProcessingPromises);
+        console.timeEnd('⚡ 并行API处理时间');
+        
+        
+        const processingResults = {
+          totalUsers: eligibleUsers.length,
+          processedCount: processedUsers.length,
+          validResults: processedUsers.filter(r => r !== null).length,
+          processedDetails: processedUsers.map((result, index) => ({
+            index,
+            user: eligibleUsers[index]?.userName,
+            userId: eligibleUsers[index]?.userId,
+            hasResult: !!result,
+            positionLevel: result?.positionInfo?.level,
+            roleKey: result?.userData?.roles?.[0]?.roleKey || 'none',
+            reason: result ? '有岗位信息' : '被过滤'
+          }))
+        };
+        
+        console.log('🔍 [PROCESSING-RESULTS] 用户处理结果分析:', processingResults);
+        
+        
+        setLoadingProgress(80);
+        setLoadingMessage('正在构建志愿者列表...');
+        
+        // 第三步：构建志愿者对象（快速同步处理）
+        const schoolStaff = processedUsers
+          .filter(result => result !== null) // 过滤失败的处理结果
+          .map(({ user, userData, userRecord, hourRecord, positionInfo }) => {
+            
             // 详细检测用户的签到记录状态
+            // 🚨 修复：正确处理userRecord可能是数组或单个记录的情况
+            const actualRecord = Array.isArray(userRecord) ? userRecord[0] : userRecord;
             console.log(`🔍 [DATA-CHECK] 用户${user.userName}的最终记录详情:`, {
               userId: user.userId,
               hasHourRecord: !!hourRecord,
-              hasUserRecord: !!userRecord,
-              isRealtimeData: !!userRecord && userRecord.id,
-              userRecord: userRecord ? {
-                startTime: userRecord.startTime,
-                endTime: userRecord.endTime,
-                recordId: userRecord.id
+              hasUserRecord: !!actualRecord,
+              isRealtimeData: !!actualRecord && actualRecord.id,
+              userRecord: actualRecord ? {
+                startTime: actualRecord.startTime,
+                endTime: actualRecord.endTime,
+                recordId: actualRecord.id
               } : null
             });
             
             // 🚨 CRITICAL FIX: 根据后端记录正确设置初始状态
             let initialCheckInStatus = 'not_checked_in';
-            if (userRecord) {
-              const recordStatus = getVolunteerStatus(userRecord);
+            if (actualRecord) {
+              const recordStatus = getVolunteerStatus(actualRecord);
               switch (recordStatus) {
                 case 'signed_in':
                   initialCheckInStatus = 'checked_in';
@@ -403,47 +744,60 @@ export const SchoolDetailScreen: React.FC = () => {
             }
             
             console.log(`🔍 [INITIAL-STATE] 用户${user.userName}初始状态设置:`, {
-              hasRecord: !!userRecord,
-              recordStatus: userRecord ? getVolunteerStatus(userRecord) : 'no_record',
+              hasRecord: !!actualRecord,
+              recordStatus: actualRecord ? getVolunteerStatus(actualRecord) : 'no_record',
               finalStatus: initialCheckInStatus,
-              startTime: userRecord?.startTime,
-              endTime: userRecord?.endTime
+              startTime: actualRecord?.startTime,
+              endTime: actualRecord?.endTime
             });
             
+            // 🚨 HERMES FIX: 简化对象构建，避免复杂的条件表达式
+            let volunteerName = '管理员';
+            if (userData.legalName) {
+              volunteerName = userData.legalName;
+            } else if (userData.nickName) {
+              volunteerName = userData.nickName;
+            } else if (userData.userName) {
+              volunteerName = userData.userName;
+            }
+            
+            let volunteerHours = 0;
+            if (hourRecord && hourRecord.totalMinutes) {
+              volunteerHours = Math.max(0, Math.round(hourRecord.totalMinutes / 60));
+            }
+            
+            // 🚨 HERMES SAFE: 简单对象构建，正确设置历史时间
             const volunteer = {
-              id: user.userId.toString(),
-              name: userData.legalName || userData.nickName || userData.userName || '管理员',
+              id: String(user.userId),
+              name: volunteerName,
+              legalName: userData.legalName,
+              userName: userData.userName,
+              phoneNumber: userData.phonenumber, // 添加手机号用于搜索
               avatar: null,
-              hours: hourRecord ? Math.max(0, Math.round(hourRecord.totalMinutes / 60)) : 0,
-              level: getUserLevel(userData),
-              major: getUserMajor(userData),
-              checkInStatus: initialCheckInStatus, // 根据后端记录设置正确状态
-              checkInTime: userRecord?.startTime,
-              checkOutTime: userRecord?.endTime,
-              totalHours: hourRecord ? Math.max(0, hourRecord.totalMinutes / 60) : 0,
-              lastCheckInTime: userRecord?.startTime,
-              lastCheckOutTime: userRecord?.endTime,
+              hours: volunteerHours,
+              level: positionInfo.level,
+              major: positionInfo.major,
+              checkInStatus: initialCheckInStatus,
+              checkInTime: (initialCheckInStatus === 'checked_in' && actualRecord?.startTime) ? actualRecord.startTime : null,
+              checkOutTime: (initialCheckInStatus === 'not_checked_in' && actualRecord?.endTime) ? actualRecord.endTime : null,
+              totalHours: volunteerHours,
+              // 🚀 正确设置历史时间：如果当前已签退，显示最后一次的签到和签退时间
+              lastCheckInTime: actualRecord?.startTime || null,
+              lastCheckOutTime: (actualRecord?.endTime && initialCheckInStatus === 'not_checked_in') ? actualRecord.endTime : null,
               userId: user.userId,
             };
             
-            // 移除自动状态检查 - 强制保持未签到状态
-            console.log('🔄 [FORCE-CLEAR] 用户状态强制设置为未签到:', volunteer.name);
-            
-            schoolStaff.push(volunteer);
-            console.log(`✅ 管理员/内部员工${user.userName}已添加到${school?.deptName}`, {
-              userId: user.userId,
-              level: volunteer.level,
-              major: volunteer.major,
-              hasHours: !!hourRecord,
-              totalHours: volunteer.totalHours,
-              roles: userData.roles?.map((r: any) => r.roleKey)
-            });
-          } catch (error) {
-            console.warn(`⚠️ 处理用户${user.userName}时出错:`, error);
-          }
-        }
-
-        console.log('✅ 学校管理员和内部员工列表:', schoolStaff.length, '个');
+            return volunteer;
+          });
+        
+        setLoadingProgress(100);
+        setLoadingMessage('加载完成');
+        
+        console.log(`🚀 [PERFORMANCE] 志愿者数据构建完成，总数: ${schoolStaff.length}`);
+        
+        
+        
+        
         setVolunteers(schoolStaff);
       } else {
         console.log('⚠️ 无法获取用户列表，显示空列表');
@@ -451,6 +805,8 @@ export const SchoolDetailScreen: React.FC = () => {
       }
     } catch (error) {
       console.error('加载志愿者数据失败:', error);
+      
+      
       // API失败时显示空列表，不使用mock数据
       setVolunteers([]);
     } finally {
@@ -458,73 +814,13 @@ export const SchoolDetailScreen: React.FC = () => {
     }
   };
 
-  // 基于学校创建默认的志愿者显示数据
-  const createDefaultVolunteersForSchool = (school: any) => {
-    const schoolVolunteers = [];
-    
-    console.log('🏫 创建学校默认志愿者数据:', {
-      school: school,
-      deptId: school?.deptId,
-      deptIdType: typeof school?.deptId,
-      schoolName: school?.nameCN || school?.name,
-      schoolId: school?.id
-    });
-    
-    // 根据学校ID判断应该显示哪些用户 - 同时检查字符串和数字类型
-    const deptId = school?.deptId;
-    if (deptId === 223 || deptId === '223' || school?.id === '223') {
-      // CU总部 - 显示admin和EB-1
-      schoolVolunteers.push(
-        {
-          id: 'admin',
-          name: '管理员',
-          avatar: null,
-          hours: 0,
-          level: 'Admin',
-          status: 'online',
-          major: '管理',
-          checkInStatus: 'not_checked_in',
-          totalHours: 0,
-          userId: 102,
-        },
-        {
-          id: 'eb1',
-          name: '内部员工',
-          avatar: null,
-          hours: 0,
-          level: 'Staff',
-          status: 'online',
-          major: '运营',
-          checkInStatus: 'not_checked_in',
-          totalHours: 0,
-          userId: 122,
-        }
-      );
-    } else if (deptId === 211 || deptId === '211' || school?.id === '211') {
-      // UCB - 显示admin-bracnh
-      schoolVolunteers.push({
-        id: 'admin-bracnh',
-        name: '分管理员',
-        avatar: null,
-        hours: 0,
-        level: 'Manager',
-        status: 'online',
-        major: '管理',
-        checkInStatus: 'not_checked_in',
-        totalHours: 0,
-        userId: 121,
-      });
-    }
-    // 其他学校暂无志愿者
-    
-    console.log(`🎯 学校${school?.nameCN || school?.name}最终志愿者数量:`, schoolVolunteers.length);
-    return schoolVolunteers;
-  };
   
   if (!school) {
+    console.error('❌ 学校信息缺失');
+    
     return (
-      <SafeAreaView style={styles.container}>
-        <Text>{t('school.not_found_message')}</Text>
+      <SafeAreaView style={[styles.container, dmStyles.page.safeArea]}>
+        <Text style={dmStyles.text.primary}>{t('school.not_found_message')}</Text>
       </SafeAreaView>
     );
   }
@@ -545,17 +841,6 @@ export const SchoolDetailScreen: React.FC = () => {
       console.warn('[DUPLICATE-CLICK] 签到操作进行中，忽略重复点击');
       return;
     }
-    
-    // 验证签到条件 - 先调试志愿者对象结构
-    console.log('🔍 [CHECKIN-VALIDATION] 签到前志愿者对象结构:', {
-      volunteerId: volunteer.id,
-      volunteerName: volunteer.name,
-      userId: volunteer.userId,
-      status: (volunteer as any).status,
-      checkInStatus: (volunteer as any).checkInStatus,
-      checkInTime: volunteer.checkInTime,
-      checkOutTime: volunteer.checkOutTime
-    });
     
     const validation = VolunteerStateService.validateCheckInConditions(volunteer as VolunteerInfo);
     if (!validation.isValid) {
@@ -588,20 +873,43 @@ export const SchoolDetailScreen: React.FC = () => {
       const operateUserId = currentUser?.userId;
       const operateLegalName = currentUser?.legalName;
       
-      // 移除自动检测逻辑 - 每次签到都创建新记录
-      console.log('[INFO] 开始新的签到操作，不检查历史记录');
-
-      // 生成签到时间（使用统一时间服务）
-      const checkInTime = getAPITimeFormat();
-
-      // 调用后端API进行签到（严格按接口文档）
-      const apiResult = await volunteerSignRecord(
-        userId,
-        1, // 1表示签到
+      // 🚨 关键修复：参数验证防止undefined错误
+      if (!operateUserId || !operateLegalName) {
+        console.error('❌ [VALIDATION] 操作用户信息缺失:', {
+          hasCurrentUser: !!currentUser,
+          operateUserId,
+          operateLegalName,
+          userInfoLoaded: !!userInfo
+        });
+        Alert.alert('签到失败', '无法获取操作用户信息，请重新登录或刷新页面');
+        return;
+      }
+      
+      console.log('✅ [VALIDATION] 操作用户信息验证通过:', {
         operateUserId,
         operateLegalName,
-        checkInTime // startTime
-      );
+        targetUserId: userId
+      });
+
+      // 生产环境简化参数日志
+      if (__DEV__) {
+        console.log('🧪 [PARAMS] API调用参数:', { userId, operateUserId, operateLegalName });
+      }
+
+      // 🎉 JSC引擎下直接使用JavaScript实现
+      let apiResult;
+      try {
+        console.log('📱 [JSC-API] 使用JavaScript签到 (JSC引擎)');
+        apiResult = await performVolunteerCheckIn(
+          userId,
+          operateUserId,
+          operateLegalName
+        );
+      } catch (apiError) {
+        console.error('🚨 [API-ERROR] JavaScript签到失败:', apiError);
+        Alert.alert('签到失败', '网络错误，请稍后重试');
+        return;
+      }
 
       if (apiResult && (apiResult.code === 200 || (apiResult as any).success === true)) {
         const newState = {
@@ -609,6 +917,7 @@ export const SchoolDetailScreen: React.FC = () => {
           checkInTime: getFrontendTimeFormat(),
           checkOutTime: null,
           lastCheckInTime: getFrontendTimeFormat(), // 更新上次签到时间
+          // 签到时不清除上次签退时间，保持历史记录
         };
         
         setVolunteers(prev => prev.map(v => 
@@ -617,20 +926,8 @@ export const SchoolDetailScreen: React.FC = () => {
             : v
         ));
 
-        // 持久化本次签到开始时间用于常驻计时
-        await persistCheckinTime(userId, checkInTime);
-        
-        // 🔄 更新历史记录缓存 - 签到成功后创建新记录缓存
-        const newSignInRecord = {
-          id: null, // API返回的新记录ID暂时未知，下次获取时会更新
-          userId,
-          startTime: checkInTime,
-          endTime: null,
-          type: 1,
-          legalName: volunteerName
-        };
-        lastRecordCacheRef.current.set(userId, newSignInRecord);
-        console.log(`🔄 [CACHE-UPDATE] 签到成功后更新用户${userId}历史记录缓存，新的开始时间: ${checkInTime}`);
+        // 清理缓存，强制下次重新获取
+        lastRecordCacheRef.current.delete(userId);
         
         console.log('[SUCCESS] 志愿者签到成功 (API):', volunteerName);
       } else {
@@ -653,7 +950,7 @@ export const SchoolDetailScreen: React.FC = () => {
                   ? { ...v, checkInStatus: 'checked_in', checkInTime: lastData.startTime, checkOutTime: null }
                   : v
               ));
-              await persistCheckinTime(userId, lastData.startTime);
+              // 移除持久化逻辑
               console.log('[AUTO-SYNC] 已自动同步为签到状态，用户现在可以点击签退');
               
               Alert.alert('状态已同步', '检测到您已处于签到状态，现在可以进行签退操作');
@@ -664,7 +961,7 @@ export const SchoolDetailScreen: React.FC = () => {
             Alert.alert('状态同步失败', '无法同步后端状态，请重新加载页面');
           }
         } else {
-          // 其他错误的正常处理
+          // 其他错误的正常处理 - 改进用户体验
           try {
             const last = await getLastVolunteerRecord(userId);
             const lastData: any = last?.data;
@@ -675,13 +972,30 @@ export const SchoolDetailScreen: React.FC = () => {
                   ? { ...v, checkInStatus: 'checked_in', checkInTime: lastData.startTime, checkOutTime: null }
                   : v
               ));
-              await persistCheckinTime(userId, lastData.startTime);
               console.log('[RECOVERY] 后端返回失败但状态为已签到，已根据最后记录修复');
             } else {
-              Alert.alert('签到失败', String(errorMsg || '未知错误'));
+              // 🚀 改进错误处理：提供更用户友好的错误信息
+              let userFriendlyMessage = '签到失败，请稍后重试';
+              
+              if (errorMsg.includes('权限') || errorMsg.includes('permission')) {
+                userFriendlyMessage = '权限不足，请联系管理员';
+              } else if (errorMsg.includes('网络') || errorMsg.includes('timeout')) {
+                userFriendlyMessage = '网络连接异常，请检查网络后重试';
+              } else if (errorMsg.includes('重复') || errorMsg.includes('duplicate')) {
+                userFriendlyMessage = '检测到重复操作，请稍后重试';
+              }
+              
+              Alert.alert(
+                '签到失败',
+                userFriendlyMessage,
+                [
+                  { text: '刷新页面', onPress: () => loadVolunteerData(true) },
+                  { text: '确定', style: 'cancel' }
+                ]
+              );
             }
           } catch (e) {
-            Alert.alert('签到失败', String(errorMsg || '未知错误'));
+            Alert.alert('签到失败', '操作异常，请刷新页面后重试');
           }
         }
       }
@@ -719,17 +1033,6 @@ export const SchoolDetailScreen: React.FC = () => {
       return;
     }
     
-    // 验证签退条件 - 先调试志愿者对象结构
-    console.log('🔍 [CHECKOUT-VALIDATION] 签退前志愿者对象结构:', {
-      volunteerId: volunteer.id,
-      volunteerName: volunteer.name,
-      userId: volunteer.userId,
-      status: (volunteer as any).status,
-      checkInStatus: (volunteer as any).checkInStatus,
-      checkInTime: volunteer.checkInTime,
-      checkOutTime: volunteer.checkOutTime
-    });
-    
     const validation = VolunteerStateService.validateCheckOutConditions(volunteer as VolunteerInfo);
     if (!validation.isValid) {
       console.error('❌ [CHECKOUT-VALIDATION] 验证失败:', validation.error);
@@ -756,78 +1059,48 @@ export const SchoolDetailScreen: React.FC = () => {
         return;
       }
       
-      // 先获取最后的签到记录以获取记录ID
-      const lastRecord = await getLastVolunteerRecord(userId);
-      console.log(`🔍 [CHECKOUT-DEBUG] 用户${volunteerName}(${userId})的最后记录:`, {
-        apiCode: lastRecord?.code,
-        apiMsg: lastRecord?.msg,
-        hasData: !!lastRecord?.data,
-        recordDetails: lastRecord?.data ? {
-          id: lastRecord.data.id,
-          userId: lastRecord.data.userId,
-          startTime: lastRecord.data.startTime,
-          endTime: lastRecord.data.endTime,
-          type: lastRecord.data.type,
-          legalName: lastRecord.data.legalName
-        } : null
-      });
-      
-      if (lastRecord.code !== 200 || !lastRecord.data) {
-        Alert.alert('签退失败', '没有找到对应的签到记录');
-        return;
-      }
-      
-      // 检查是否为有效的未签退记录
-      if (!lastRecord.data.startTime || lastRecord.data.endTime) {
-        Alert.alert('签退失败', '没有找到有效的签到记录，或该记录已签退');
-        return;
-      }
-      
-      const recordId = lastRecord.data.id;
-      
-      // 验证记录ID
-      if (!recordId || typeof recordId !== 'number') {
-        Alert.alert('签退失败', '无法找到有效的签到记录ID');
-        return;
-      }
-      
       // 获取当前操作用户信息
       const currentUser = userInfo;
       const operateUserId = currentUser?.userId;
       const operateLegalName = currentUser?.legalName;
-      
-      // 生成签退时间（使用统一时间服务）
-      const checkOutTime = getAPITimeFormat();
 
-      console.log(`🔍 [CHECKOUT-API] 准备调用签退API:`, {
-        targetUser: volunteerName,
-        targetUserId: userId,
-        recordId: recordId,
-        recordIdType: typeof recordId,
-        operateUserId: operateUserId,
-        operateLegalName: operateLegalName,
-        checkOutTime: checkOutTime,
-        apiParams: {
-          userId,
-          type: 2,
+      // 🚨 关键修复：参数验证防止undefined错误
+      if (!operateUserId || !operateLegalName) {
+        console.error('❌ [VALIDATION] 操作用户信息缺失:', {
+          hasCurrentUser: !!currentUser,
           operateUserId,
           operateLegalName,
-          startTime: undefined,
-          endTime: checkOutTime,
-          recordId
-        }
-      });
-
-      // 调用后端API进行签退（严格按接口文档）
-      const apiResult = await volunteerSignRecord(
-        userId,
-        2, // 2表示签退
+          userInfoLoaded: !!userInfo
+        });
+        Alert.alert('签退失败', '无法获取操作用户信息，请重新登录或刷新页面');
+        return;
+      }
+      
+      console.log('✅ [VALIDATION] 操作用户信息验证通过:', {
         operateUserId,
         operateLegalName,
-        undefined, // startTime - 签退不需要
-        checkOutTime, // endTime
-        recordId // 记录ID
-      );
+        targetUserId: userId
+      });
+
+      // 生产环境简化参数日志
+      if (__DEV__) {
+        console.log('🧪 [PARAMS] API调用参数:', { userId, operateUserId, operateLegalName });
+      }
+
+      // 🎉 JSC引擎下直接使用JavaScript实现
+      let apiResult;
+      try {
+        console.log('📱 [JSC-API] 使用JavaScript签退 (JSC引擎)');
+        apiResult = await performVolunteerCheckOut(
+          userId,
+          operateUserId,
+          operateLegalName
+        );
+      } catch (apiError) {
+        console.error('🚨 [API-ERROR] JavaScript签退失败:', apiError);
+        Alert.alert('签退失败', '网络错误，请稍后重试');
+        return;
+      }
       
       console.log(`🔍 [CHECKOUT-API] 签退API响应:`, {
         user: volunteerName,
@@ -837,12 +1110,43 @@ export const SchoolDetailScreen: React.FC = () => {
       });
 
       if (apiResult && (apiResult.code === 200 || (apiResult as any).success === true)) {
-        // 签退成功：直接更新前端状态，不依赖lastRecordList验证
+        // 🚀 签退成功：计算工作时长并发送通知
+        const currentVolunteer = volunteers.find(v => v.userId === userId);
+        const actualStartTime = currentVolunteer?.checkInTime;
+        
+        if (actualStartTime) {
+          // 计算实际工作时长用于通知
+          const startDate = new Date(actualStartTime);
+          const endDate = new Date();
+          const durationMs = endDate.getTime() - startDate.getTime();
+          
+          if (durationMs > 0) {
+            const hours = Math.floor(durationMs / (1000 * 60 * 60));
+            const minutes = Math.floor((durationMs % (1000 * 60 * 60)) / (1000 * 60));
+            const durationText = hours > 0 
+              ? (minutes > 0 ? 
+                  (i18n.language === 'en-US' ? `${hours} hours ${minutes} minutes` : `${hours}小时${minutes}分钟`) :
+                  (i18n.language === 'en-US' ? `${hours} hours` : `${hours}小时`))
+              : (i18n.language === 'en-US' ? `${Math.max(1, minutes)} minutes` : `${Math.max(1, minutes)}分钟`);
+            
+            console.log('🕐 [LOCAL-DURATION] 计算本地工作时长:', {
+              startTime: actualStartTime,
+              endTime: endDate.toISOString(),
+              duration: durationText
+            });
+            
+            // 简化通知处理
+            console.log('✅ 签退成功，工作时长:', durationText);
+          }
+        }
+        
+        // 更新前端状态 - 添加上次签到和签退时间
         const newState = {
           checkInStatus: 'not_checked_in',
           checkInTime: null,
           checkOutTime: getFrontendTimeFormat(),
-          lastCheckOutTime: getFrontendTimeFormat(), // 更新上次签退时间
+          lastCheckInTime: currentVolunteer?.checkInTime, // 保存当前签到时间作为上次签到
+          lastCheckOutTime: getFrontendTimeFormat(), // 设置当前时间为上次签退时间
         };
         
         setVolunteers(prev => prev.map(v => 
@@ -851,20 +1155,19 @@ export const SchoolDetailScreen: React.FC = () => {
             : v
         ));
 
-        // 清除持久化的签到时间
-        await persistCheckinTime(userId, null);
+        // 移除持久化逻辑
         
         // 🔄 更新历史记录缓存 - 签退成功后更新记录缓存
         const cachedRecord = lastRecordCacheRef.current.get(userId);
         if (cachedRecord) {
           const updatedRecord = {
             ...cachedRecord,
-            id: recordId, // 使用实际的记录ID
-            endTime: checkOutTime,
+            id: userId, // 使用userId作为标识
+            endTime: getFrontendTimeFormat(),
             type: 2 // 标记为签退记录
           };
           lastRecordCacheRef.current.set(userId, updatedRecord);
-          console.log(`🔄 [CACHE-UPDATE] 签退成功后更新用户${userId}历史记录缓存，结束时间: ${checkOutTime}`);
+          console.log(`🔄 [CACHE-UPDATE] 签退成功后更新用户${userId}历史记录缓存，结束时间: ${getFrontendTimeFormat()}`);
         }
         
         console.log('[SUCCESS] 志愿者签退成功，状态已更新:', volunteerName);
@@ -886,7 +1189,28 @@ export const SchoolDetailScreen: React.FC = () => {
       } else {
         const errorMsg = apiResult?.msg || (apiResult as any)?.message || `code=${apiResult?.code ?? 'N/A'}`;
         console.error('[ERROR] 志愿者签退API调用失败:', apiResult);
-        Alert.alert('签退失败', `操作失败：${errorMsg}`);
+        
+        // 🚀 改进错误处理：提供更用户友好的错误信息
+        let userFriendlyMessage = '操作失败，请稍后重试';
+        
+        if (errorMsg.includes('12小时') || errorMsg.includes('超时')) {
+          userFriendlyMessage = '工作时间过长，请联系管理员处理签退';
+        } else if (errorMsg.includes('权限') || errorMsg.includes('permission')) {
+          userFriendlyMessage = '权限不足，请联系管理员';
+        } else if (errorMsg.includes('网络') || errorMsg.includes('timeout')) {
+          userFriendlyMessage = '网络连接异常，请检查网络后重试';
+        } else if (errorMsg.includes('记录') || errorMsg.includes('record')) {
+          userFriendlyMessage = '签到记录异常，请刷新页面后重试';
+        }
+        
+        Alert.alert(
+          '签退失败',
+          userFriendlyMessage,
+          [
+            { text: '刷新页面', onPress: () => loadVolunteerData(true) },
+            { text: '确定', style: 'cancel' }
+          ]
+        );
       }
     } catch (error) {
       console.error('[ERROR] 志愿者签退失败:', error);
@@ -907,16 +1231,36 @@ export const SchoolDetailScreen: React.FC = () => {
     await operationPromise;
   };
 
-  // 使用统一的时间格式化服务
+  // 简单的时间格式化函数
   const formatChineseDateTime = (timeString: string) => {
-    return VolunteerStateService.formatChineseDateTime(timeString);
+    try {
+      if (!timeString) return '--:--';
+      
+      // 简单解析，保持原始时区信息
+      const date = new Date(timeString);
+      if (isNaN(date.getTime())) return '--:--';
+      
+      const now = new Date();
+      const isToday = date.toDateString() === now.toDateString();
+      
+      // 使用设备本地时区显示时间
+      const time = date.toLocaleTimeString([], {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false
+      });
+      
+      return isToday ? 
+        (i18n.language === 'en-US' ? `Today ${time}` : `今日 ${time}`) : 
+        `${date.getMonth() + 1}/${date.getDate()} ${time}`;
+    } catch (error) {
+      console.warn('时间格式化失败:', error);
+      return '--:--';
+    }
   };
 
-  const formatTime = (timeString: string) => {
-    return formatChineseDateTime(timeString);
-  };
-
-  // 判断用户是否为管理员或内部员工（混合判断策略）
+  // 🚨 DEPRECATED: 旧的员工判断函数，现在使用岗位服务代替
+  /*
   const isUserStaffOrAdmin = (userData: any): boolean => {
     // 1. 检查admin字段
     if (userData?.admin === true) {
@@ -927,113 +1271,34 @@ export const SchoolDetailScreen: React.FC = () => {
     const roles = userData?.roles || [];
     if (Array.isArray(roles) && roles.length > 0) {
       const hasAdminRole = roles.some((role: any) => {
-        const roleKey = role.roleKey;
+        const roleKey = role.key || role.roleKey;
         return roleKey === 'manage' ||        // 总管理员
                roleKey === 'part_manage' ||   // 分管理员  
-               roleKey === 'staff' ||         // 内部员工
-               roleKey === 'admin';           // 管理员
+               roleKey === 'staff';           // 内部员工
       });
       if (hasAdminRole) return true;
     }
     
-    // 3. 检查roleIds数组
+    // 3. 检查roleIds数组（仅管理员角色）
     const roleIds = userData?.roleIds || [];
     if (Array.isArray(roleIds) && roleIds.length > 0) {
-      const hasAdminRoleId = roleIds.some((id: number) => [1, 2, 3, 4].includes(id));
+      const hasAdminRoleId = roleIds.some((id: number) => [1, 2, 3].includes(id)); // 移除4，更严格
       if (hasAdminRoleId) return true;
     }
     
-    // 4. 兼容方案：基于用户名和法定姓名（用于权限未分配的管理员账户）
+    // 4. 严格的用户名检查（移除过于宽松的模式匹配）
     const userName = userData?.userName?.toLowerCase() || '';
-    const legalName = userData?.legalName || '';
     
-    // 基于用户名模式
-    if (userName.includes('admin') || userName.includes('eb-') || userName.includes('org') || 
-        userName.includes('sms') || userName.includes('invite') || userName.includes('manager')) {
+    // 只有明确的管理员用户名才通过
+    if (userName === 'admin' || userName.startsWith('admin-') || userName.startsWith('eb-')) {
       return true;
     }
     
-    // 基于法定姓名
-    if (legalName.includes('管理员') || legalName.includes('内部员工') || legalName.includes('分管理员') ||
-        legalName.includes('用户') && (legalName.includes('短信') || legalName.includes('组织') || legalName.includes('邀请'))) {
-      return true;
-    }
+    // 移除法定姓名的模糊匹配，避免误判
     
     return false;
   };
-
-  // 根据用户权限字段确定级别（混合策略）
-  const getUserLevel = (userData: any): string => {
-    // 1. 基于roles数组中的roleKey（优先使用）
-    const roles = userData?.roles || [];
-    if (Array.isArray(roles) && roles.length > 0) {
-      const roleKey = roles[0]?.roleKey;
-      switch (roleKey) {
-        case 'manage':
-          return 'Super Admin';
-        case 'part_manage':
-          return 'Manager';
-        case 'staff':
-          return 'Staff';
-        case 'admin':
-          return 'Admin';
-        default:
-          return roles[0]?.roleName || 'Member';
-      }
-    }
-    
-    // 2. 检查admin字段
-    if (userData?.admin === true) {
-      return 'Super Admin';
-    }
-    
-    // 3. 兼容方案：基于用户名（用于权限未分配的账户）
-    const userName = userData?.userName?.toLowerCase() || '';
-    if (userName.includes('admin')) {
-      return userName === 'admin' ? 'Super Admin' : 'Manager';
-    } else if (userName.includes('eb-')) {
-      return 'Staff';
-    } else if (userName.includes('org') || userName.includes('sms') || userName.includes('invite')) {
-      return 'Staff';
-    }
-    
-    return 'Member';
-  };
-
-  // 根据用户权限字段确定专业/职位（混合策略）
-  const getUserMajor = (userData: any): string => {
-    // 1. 基于roles数组中的roleName（优先使用）
-    const roles = userData?.roles || [];
-    if (Array.isArray(roles) && roles.length > 0) {
-      return roles[0]?.roleName || '志愿服务';
-    }
-    
-    // 2. 基于admin字段
-    if (userData?.admin === true) {
-      return '系统管理';
-    }
-    
-    // 3. 兼容方案：基于用户名和法定姓名
-    const userName = userData?.userName?.toLowerCase() || '';
-    const legalName = userData?.legalName || '';
-    
-    if (userName === 'admin') return '总管理';
-    if (userName.includes('admin')) return '分管理';
-    if (userName.includes('eb-')) return '运营';
-    if (userName.includes('org')) return '组织管理';
-    if (userName.includes('sms')) return '通讯管理';
-    if (userName.includes('invite')) return '邀请管理';
-    
-    // 4. 基于法定姓名
-    if (legalName.includes('管理员')) return '管理';
-    if (legalName.includes('短信')) return '通讯管理';
-    if (legalName.includes('组织')) return '组织管理';
-    if (legalName.includes('邀请')) return '邀请管理';
-    
-    // 5. 默认
-    return userData?.dept?.deptName || '志愿服务';
-  };
-
+  */
 
 
   // 加载学校活动数量
@@ -1056,15 +1321,29 @@ export const SchoolDetailScreen: React.FC = () => {
     }
   };
 
-  const renderVolunteerItem = ({ item }: { item: any }) => {
-    // 临时简化的渲染，避免Text渲染错误
+  const renderVolunteerItem = ({ item, index }: { item: any; index: number }) => {
+    // 检查是否为搜索结果高亮
+    const isSearchResult = searchResultIndex === index;
+    
     return (
       <View style={styles.volunteerItemContainer}>
         <TouchableOpacity 
-          style={styles.volunteerItem}
+          style={[
+            styles.volunteerItem,
+            isSearchResult && styles.searchHighlight // 搜索结果高亮
+          ]}
           onPress={() => {
-            console.log('[VOLUNTEER-CLICK] 点击志愿者:', String(item.name || '未知'));
-            setExpandedVolunteer(expandedVolunteer === item.id ? null : item.id);
+            try {
+              console.log('[VOLUNTEER-CLICK] 点击志愿者:', String(item.name || '未知'));
+              const itemId = String(item.id || '');
+              setExpandedVolunteer(expandedVolunteer === itemId ? null : itemId);
+              // 清除搜索高亮
+              if (isSearchResult) {
+                setSearchResultIndex(null);
+              }
+            } catch (clickError) {
+              console.error('志愿者点击处理错误:', clickError);
+            }
           }}
           activeOpacity={0.8}
         >
@@ -1072,9 +1351,9 @@ export const SchoolDetailScreen: React.FC = () => {
             {/* 简化的信息显示 */}
             <View style={styles.volunteerInfo}>
               <Text style={styles.volunteerName}>{String(item.name || '志愿者')}</Text>
-              <Text style={styles.volunteerMajor}>{String(item.major || '专业信息')}</Text>
+              <Text style={styles.volunteerMajor}>{String(item.level || '岗位')}</Text>
               <Text style={styles.volunteerHours}>
-                {String(item.hours || 0)}小时 • {String(item.level || '志愿者')}
+                {String(item.hours || 0)}{t('wellbeing.volunteer.hours_unit')}
               </Text>
             </View>
 
@@ -1109,7 +1388,7 @@ export const SchoolDetailScreen: React.FC = () => {
                 <View style={styles.checkInInfo}>
                   {/* 1. 签到状态 */}
                   <View style={styles.statusRow}>
-                    <Text style={styles.statusLabel}>{t('volunteer_status.check_in_time_label')}</Text>
+                    <Text style={styles.statusLabel}>签到状态:</Text>
                     <Text style={[
                       styles.statusValue,
                       { color: 
@@ -1124,29 +1403,12 @@ export const SchoolDetailScreen: React.FC = () => {
                     </Text>
                   </View>
 
-                  {/* 2. 本次工作时长 - 实时计时器（仅已签到状态显示） */}
-                  {item.checkInStatus === 'checked_in' && !!(item.checkInTime || persistedCheckins[item.userId]) && (
+                  {/* 2. 工作状态简单显示 */}
+                  {item.checkInStatus === 'checked_in' && (
                     <View style={styles.statusRow}>
-                      <Text style={styles.statusLabel}>本次工作时长:</Text>
-                      <Text style={[styles.statusValue, styles.workingDurationValue]}>
-                        {(() => {
-                          try {
-                            const checkInTime = new Date(item.checkInTime || persistedCheckins[item.userId]);
-                            const now = currentTime;
-                            const diffMs = now.getTime() - checkInTime.getTime();
-                            
-                            if (diffMs > 0) {
-                              const hours = Math.floor(diffMs / (1000 * 60 * 60));
-                              const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
-                              const seconds = Math.floor((diffMs % (1000 * 60)) / 1000);
-                              return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-                            } else {
-                              return '00:00:00';
-                            }
-                          } catch (error) {
-                            return '--:--:--';
-                          }
-                        })()}
+                      <Text style={styles.statusLabel}>{t('wellbeing.volunteer.work_status')}:</Text>
+                      <Text style={[styles.statusValue, { color: '#34D399' }]}>
+                        {t('wellbeing.volunteer.currently_working')}
                       </Text>
                     </View>
                   )}
@@ -1155,53 +1417,65 @@ export const SchoolDetailScreen: React.FC = () => {
                   <View style={styles.statusRow}>
                     <Text style={styles.statusLabel}>{t('volunteer_status.total_duration_label')}</Text>
                     <Text style={styles.statusValue}>
-                      {`${Math.max(0, item.totalHours || 0).toFixed(1)}小时`}
+                      {`${Math.max(0, item.totalHours || 0).toFixed(1)} ${t('wellbeing.volunteer.hours_unit')}`}
                     </Text>
                   </View>
 
-                  {/* 4. 今日签到时间（持久化计时回显） */}
-                  {!!(item.checkInTime || persistedCheckins[item.userId]) && (
+                  {/* 4. 今日签到时间 */}
+                  {!!item.checkInTime && (
                     <View style={styles.statusRow}>
-                      <Text style={styles.statusLabel}>{t('volunteer_status.check_in_time_label')}</Text>
-                      <Text style={styles.statusValue}>{formatChineseDateTime(item.checkInTime || persistedCheckins[item.userId])}</Text>
+                      <Text style={styles.statusLabel}>{t('volunteer_status.check_in_time_label') || '签到时间:'}</Text>
+                      <Text style={styles.statusValue}>{formatChineseDateTime(item.checkInTime)}</Text>
                     </View>
                   )}
 
                   {/* 5. 今日签退时间 */}
                   {!!item.checkOutTime && (
                     <View style={styles.statusRow}>
-                      <Text style={styles.statusLabel}>{t('volunteer_status.check_out_time_label')}</Text>
+                      <Text style={styles.statusLabel}>{t('volunteer_status.check_out_time_label') || '签退时间:'}</Text>
                       <Text style={styles.statusValue}>{formatChineseDateTime(item.checkOutTime)}</Text>
                     </View>
                   )}
 
-                  {/* 6-7. 历史记录：上次签到/签退（来自lastRecord缓存） */}
-                  {(() => {
-                    const last: any = lastRecordCacheRef.current.get(item.userId);
-                    if (!last) return null;
-                    return (
-                      <>
-                        {last.startTime && (
-                          <View style={styles.statusRow}>
-                            <Text style={[styles.statusLabel, { color: '#666' }]}>上次签到</Text>
-                            <Text style={[styles.statusValue, { color: '#666' }]}>{formatChineseDateTime(last.startTime)}</Text>
-                          </View>
-                        )}
-                        {last.endTime && (
-                          <View style={styles.statusRow}>
-                            <Text style={[styles.statusLabel, { color: '#666' }]}>上次签退</Text>
-                            <Text style={[styles.statusValue, { color: '#666' }]}>{formatChineseDateTime(last.endTime)}</Text>
-                          </View>
-                        )}
-                      </>
-                    );
-                  })()}
+                  {/* 6. 上次签到时间 - 仅当用户未签到且有历史签到记录时显示 */}
+                  {item.checkInStatus === 'not_checked_in' && item.lastCheckInTime && !item.checkInTime && (
+                    <View style={styles.statusRow}>
+                      <Text style={[styles.statusLabel, { color: '#666' }]}>
+                        {t('volunteer_status.last_check_in_label') || '上次签到:'}
+                      </Text>
+                      <Text style={[styles.statusValue, { color: '#666' }]}>
+                        {formatChineseDateTime(item.lastCheckInTime)}
+                      </Text>
+                    </View>
+                  )}
+
+                  {/* 7. 上次签退时间 - 仅当用户未签到且有历史签退记录时显示（不重复显示当前签退时间） */}
+                  {item.checkInStatus === 'not_checked_in' && item.lastCheckOutTime && !item.checkOutTime && (
+                    <View style={styles.statusRow}>
+                      <Text style={[styles.statusLabel, { color: '#666' }]}>
+                        {t('volunteer_status.last_check_out_label') || '上次签退:'}
+                      </Text>
+                      <Text style={[styles.statusValue, { color: '#666' }]}>
+                        {formatChineseDateTime(item.lastCheckOutTime)}
+                      </Text>
+                    </View>
+                  )}
+
+                  {/* 8. 当前工作时长 - 仅在已签到时显示 */}
+                  {item.checkInStatus === 'checked_in' && item.checkInTime && (
+                    <View style={styles.statusRow}>
+                      <Text style={styles.statusLabel}>当前工作时长:</Text>
+                      <Text style={[styles.statusValue, { color: '#059669', fontWeight: '700' }]}>
+                        {formatDuration(getCurrentDurationMinutes(item))}
+                      </Text>
+                    </View>
+                  )}
                 </View>
 
                 {/* 签到签退按钮 - 根据权限显示 */}
                 <View style={styles.actionButtons}>
-                  {/* 权限检查：只有管理员才能操作签到，且不能给自己操作 */}
-                  {permissions.canCheckInOut() && item?.userId !== userInfo?.userId && (
+                  {/* 权限检查：简单的roleKey权限控制 */}
+                  {permissions.canCheckInOut() && (
                     <>
                       {(item?.checkInStatus === 'not_checked_in' || item?.checkInStatus === 'checked_out') && (
                         <TouchableOpacity 
@@ -1245,15 +1519,13 @@ export const SchoolDetailScreen: React.FC = () => {
                     </>
                   )}
                   
-                  {/* 权限提示信息 */}
-                  {(!permissions.canCheckInOut() || item?.userId === userInfo?.userId) && (
+                  {/* 权限提示信息 - 只有内部员工显示无权限提示 */}
+                  {!permissions.canCheckInOut() && (
                     <View style={styles.noPermissionHint}>
                       <Text style={styles.hintText}>
-                        {item?.userId === userInfo?.userId ? 
-                          '不能给自己签到' : 
-                          permissions.isStaff() ? 
-                            '内部员工仅可查看，无签到权限' : 
-                            '仅查看模式'
+                        {permissions.isStaff() ? 
+                          '内部员工仅可查看，无签到权限' : 
+                          '仅查看模式'
                         }
                       </Text>
                     </View>
@@ -1267,11 +1539,53 @@ export const SchoolDetailScreen: React.FC = () => {
     );
   };
 
+  // 用户登录检查 - 修复登出后仍能访问志愿者模块的问题
+  if (!isAuthenticated || !userInfo) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <LinearGradient
+          colors={[Glass.pageBgTop, Glass.pageBgBottom, '#F8F9FA', '#F1F3F4']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 0, y: 1 }}
+          style={StyleSheet.absoluteFill}
+          locations={[0, 0.3, 0.7, 1]}
+        />
+        
+        {/* Header */}
+        <View style={styles.header}>
+          <TouchableOpacity 
+            style={styles.backButton}
+            onPress={() => navigation.goBack()}
+          >
+            <Ionicons name="arrow-back-ios" size={20} color="#000" />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>{school?.deptName || t('wellbeing.school_detail')}</Text>
+          <View style={styles.headerPlaceholder} />
+        </View>
+        
+        {/* 未登录提示 */}
+        <View style={styles.emptyContainer}>
+          <View style={styles.emptyIconContainer}>
+            <Ionicons name="person-outline" size={48} color="#9CA3AF" />
+          </View>
+          <Text style={styles.emptyTitle}>{t('auth.login_required')}</Text>
+          <Text style={styles.emptyMessage}>{t('auth.volunteer_login_required_message')}</Text>
+          <TouchableOpacity 
+            style={styles.loginButton}
+            onPress={() => navigation.navigate('Login')}
+          >
+            <Text style={styles.loginButtonText}>{t('auth.login.login')}</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, dmStyles.page.safeArea]}>
       {/* 背景渐变 */}
       <LinearGradient
-        colors={[Glass.pageBgTop, Glass.pageBgBottom, '#F8F9FA', '#F1F3F4']}
+        colors={isDarkMode ? ['#000000', '#1C1C1E', '#2C2C2E'] : [Glass.pageBgTop, Glass.pageBgBottom, '#F8F9FA', '#F1F3F4']}
         start={{ x: 0, y: 0 }}
         end={{ x: 0, y: 1 }}
         style={StyleSheet.absoluteFill}
@@ -1285,16 +1599,16 @@ export const SchoolDetailScreen: React.FC = () => {
             style={styles.backButton}
             onPress={() => navigation.goBack()}
           >
-            <Ionicons name="chevron-back" size={24} color={Glass.textMain} />
+            <Ionicons name="chevron-back" size={24} color={dmIcons.primary} />
           </TouchableOpacity>
           
-          <Text style={styles.headerTitle}>{t('school.volunteer_details_title')}</Text>
+          <Text style={[styles.headerTitle, dmStyles.text.title]}>{t('school.volunteer_details_title')}</Text>
           <View style={{ width: 24 }} />
         </View>
 
         {/* 学校信息卡片 */}
         <View style={styles.schoolCard}>
-          <BlurView intensity={Glass.blur} tint="light" style={styles.schoolCardBlur}>
+          <BlurView intensity={dmBlur.intensity} tint={dmBlur.tint} style={styles.schoolCardBlur}>
             <LinearGradient 
               colors={[Glass.hairlineFrom, Glass.hairlineTo]}
               start={{ x: 0, y: 0 }} 
@@ -1318,14 +1632,16 @@ export const SchoolDetailScreen: React.FC = () => {
                     resizeMode="cover"
                   />
                 ) : (
-                  <Text style={styles.logoText}>{school.shortName}</Text>
+                  <Text style={styles.logoText}>{school?.aprName || school?.deptName?.substring(0, 2) || 'S'}</Text>
                 )}
               </View>
 
               <View style={styles.schoolTextInfo}>
-                <Text style={styles.schoolNameCN}>{school.nameCN}</Text>
-                <Text style={styles.schoolNameEN}>{school.nameEN}</Text>
-                <Text style={styles.schoolLocation}>{school.city}, {school.state}</Text>
+                <Text style={styles.schoolNameCN}>{getSchoolDisplayInfo().title}</Text>
+                {getSchoolDisplayInfo().subtitle ? (
+                  <Text style={styles.schoolNameEN}>{getSchoolDisplayInfo().subtitle}</Text>
+                ) : null}
+                {/* 根据用户要求移除城市地址显示 */}
               </View>
             </View>
           </BlurView>
@@ -1341,22 +1657,102 @@ export const SchoolDetailScreen: React.FC = () => {
           />
         </View>
 
+
         {/* 志愿者列表 */}
         <View style={styles.volunteersSection}>
           <Text style={styles.sectionTitle}>{t('school.active_volunteers_title')}</Text>
           <Text style={styles.sectionSubtitle}>{t('school.click_volunteer_instruction')}</Text>
           
+          {/* 志愿者搜索功能 */}
+          <View style={styles.searchSection}>
+            <View style={styles.searchInputContainer}>
+              <Ionicons name="search" size={20} color="#8E8E93" style={styles.searchInputIcon} />
+              <TextInput
+                style={[styles.searchInput, dmStyles.text.primary]}
+                value={searchQuery}
+                onChangeText={handleSearchInput}
+                onSubmitEditing={searchVolunteer}
+                placeholder="搜索志愿者姓名或手机号"
+                placeholderTextColor="#8E8E93"
+                keyboardType="default"  // 允许输入中英文
+                autoCapitalize="none"
+                autoCorrect={false}
+                returnKeyType="search"
+                clearButtonMode="while-editing"  // iOS清除按钮
+              />
+              {isSearching && (
+                <Ionicons name="sync" size={16} color="#FF6B35" style={styles.searchLoadingIcon} />
+              )}
+            </View>
+            
+            {/* 搜索错误提示 */}
+            {searchError ? (
+              <View style={styles.searchErrorContainer}>
+                <Ionicons name="alert-circle" size={14} color="#F59E0B" />
+                <Text style={styles.searchErrorText}>{searchError}</Text>
+              </View>
+            ) : null}
+            
+            {/* 搜索结果提示 */}
+            {searchResultIndex !== null && (
+              <View style={styles.searchResultInfo}>
+                <Ionicons name="checkmark-circle" size={16} color="#34D399" />
+                <Text style={styles.searchResultText}>
+                  已定位到志愿者 ({searchResultIndex + 1}/{volunteers.length})
+                </Text>
+                <TouchableOpacity 
+                  style={styles.clearSearchButton}
+                  onPress={() => {
+                    setSearchQuery('');
+                    setSearchResultIndex(null);
+                    setExpandedVolunteer(null);
+                  }}
+                >
+                  <Text style={styles.clearSearchText}>清除</Text>
+                </TouchableOpacity>
+              </View>
+            )}
+          </View>
+          
           <FlatList
+            ref={flatListRef}
             data={volunteers}
             renderItem={renderVolunteerItem}
             keyExtractor={(item) => String(item.id || Math.random())}
             scrollEnabled={false}
             ItemSeparatorComponent={() => <View style={{ height: 8 }} />}
+            onScrollToIndexFailed={(info) => {
+              console.warn('滚动到索引失败:', info);
+              // 降级处理：等待渲染完成后重试
+              setTimeout(() => {
+                try {
+                  flatListRef.current?.scrollToIndex({
+                    index: Math.min(info.index, volunteers.length - 1),
+                    animated: true,
+                  });
+                } catch (e) {
+                  console.warn('重试滚动也失败:', e);
+                }
+              }, 100);
+            }}
+            onRefresh={() => {
+              loadVolunteerData(true);
+            }}
+            refreshing={loading}
             ListEmptyComponent={
-              loading ? null : (
+              loading ? (
+                <View style={styles.loadingContainer}>
+                  <View style={styles.progressBarContainer}>
+                    <View style={[styles.progressBar, { width: `${loadingProgress}%` }]} />
+                  </View>
+                  <Text style={styles.loadingText}>{loadingMessage}</Text>
+                  <Text style={styles.loadingProgress}>{loadingProgress}%</Text>
+                </View>
+              ) : (
                 <View style={styles.emptyState}>
-                  <Text style={styles.emptyText}>该学校暂无活跃志愿者</Text>
-                  <Text style={styles.emptySubtext}>只有进行过志愿活动的用户才会显示在这里</Text>
+                  <Text style={styles.emptyText}>{t('volunteer.empty_state.title') || '该学校暂无活跃志愿者'}</Text>
+                  <Text style={styles.emptySubtext}>{t('volunteer.empty_state.subtitle') || '只有进行过志愿活动的用户才会显示在这里'}</Text>
+                  
                 </View>
               )
             }
@@ -1370,7 +1766,6 @@ export const SchoolDetailScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: 'rgba(255, 255, 255, 0.001)', // Nearly invisible but solid for shadow calculation
   },
 
   header: {
@@ -1393,7 +1788,6 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: Glass.textMain,
   },
 
   // 学校信息卡片
@@ -1475,6 +1869,97 @@ const styles = StyleSheet.create({
   volunteersSection: {
     paddingHorizontal: Glass.touch.spacing.sectionMargin,
     marginBottom: 40,
+  },
+
+  // 搜索区域
+  searchSection: {
+    marginBottom: 16,
+  },
+
+  // 搜索输入容器
+  searchInputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 24,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+
+  searchInputIcon: {
+    marginRight: 8,
+  },
+
+  searchInput: {
+    flex: 1,
+    fontSize: 16,
+    color: '#000000',
+    paddingVertical: 0,
+  },
+
+  searchLoadingIcon: {
+    marginLeft: 8,
+  },
+
+  // 搜索错误提示
+  searchErrorContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 8,
+    paddingHorizontal: 16,
+  },
+
+  searchErrorText: {
+    fontSize: 13,
+    color: '#F59E0B',
+    marginLeft: 4,
+    fontWeight: '500',
+  },
+
+  // 搜索结果高亮
+  searchHighlight: {
+    borderWidth: 2,
+    borderColor: '#FF6B35',
+    backgroundColor: 'rgba(255, 107, 53, 0.1)',
+  },
+
+  // 搜索结果信息
+  searchResultInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(52, 211, 153, 0.1)',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+    marginTop: 8,
+  },
+
+  searchResultText: {
+    fontSize: 14,
+    color: '#059669',
+    marginLeft: 6,
+    flex: 1,
+    fontWeight: '500',
+  },
+
+  clearSearchButton: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    backgroundColor: 'rgba(107, 114, 128, 0.1)',
+    borderRadius: 4,
+  },
+
+  clearSearchText: {
+    fontSize: 12,
+    color: '#6B7280',
+    fontWeight: '500',
   },
 
   sectionHeaderWithButton: {
@@ -1685,6 +2170,99 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: Glass.textWeak,
     textAlign: 'center',
+  },
+
+  // 加载进度样式
+  loadingContainer: {
+    paddingVertical: 40,
+    alignItems: 'center',
+  },
+
+  progressBarContainer: {
+    width: '80%',
+    height: 4,
+    backgroundColor: '#E5E7EB',
+    borderRadius: 2,
+    overflow: 'hidden',
+    marginBottom: 16,
+  },
+
+  progressBar: {
+    height: '100%',
+    backgroundColor: '#059669',
+    borderRadius: 2,
+  },
+
+  loadingText: {
+    fontSize: 16,
+    color: Glass.textMain,
+    textAlign: 'center',
+    marginBottom: 8,
+  },
+
+  loadingProgress: {
+    fontSize: 14,
+    color: Glass.textWeak,
+    textAlign: 'center',
+    fontWeight: '600',
+  },
+
+
+  // 未登录状态样式
+  emptyContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 32,
+  },
+
+  emptyIconContainer: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: 'rgba(156, 163, 175, 0.1)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 20,
+  },
+
+  emptyTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#374151',
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+
+  emptyMessage: {
+    fontSize: 14,
+    color: '#6B7280',
+    textAlign: 'center',
+    lineHeight: 20,
+    marginBottom: 32,
+  },
+
+  loginButton: {
+    backgroundColor: '#FF6B35',
+    paddingHorizontal: 32,
+    paddingVertical: 12,
+    borderRadius: 24,
+    shadowColor: '#FF6B35',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+
+  loginButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#FFFFFF',
+  },
+
+  headerPlaceholder: {
+    width: 44,
+    height: 44,
   },
 
 });

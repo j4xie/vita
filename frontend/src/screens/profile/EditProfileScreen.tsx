@@ -8,18 +8,23 @@ import {
   ScrollView,
   TextInput,
   Platform,
-  useColorScheme,
   Alert,
   Keyboard,
+  Image,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { useNavigation } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
+import * as ImagePicker from 'expo-image-picker';
 
 import { theme } from '../../theme';
+import { useTheme } from '../../context/ThemeContext';
 import { useTabBarHide } from '../../hooks/useTabBarHide';
+import { useUser } from '../../context/UserContext';
+import { uploadAvatar, getUserAvatarUrl, checkAvatarExists } from '../../services/imageUploadService';
+import { updateUserProfile } from '../../services/authAPI';
 
 interface FormFieldProps {
   label: string;
@@ -40,8 +45,8 @@ const FormField: React.FC<FormFieldProps> = ({
   editable = true,
   multiline = false,
 }) => {
-  const colorScheme = useColorScheme();
-  const isDarkMode = colorScheme === 'dark';
+  const themeContext = useTheme();
+  const isDarkMode = themeContext.isDarkMode;
 
   const fieldStyles = StyleSheet.create({
     fieldContainer: {
@@ -91,24 +96,149 @@ const FormField: React.FC<FormFieldProps> = ({
 export const EditProfileScreen: React.FC = () => {
   const { t } = useTranslation();
   const navigation = useNavigation();
-  const colorScheme = useColorScheme();
-  const isDarkMode = colorScheme === 'dark';
+  const themeContext = useTheme();
+  const isDarkMode = themeContext.isDarkMode;
   const insets = useSafeAreaInsets();
+  const { user, refreshUserInfo } = useUser();
 
-  // Form state - 这里使用模拟数据，实际应用中应该从用户context或props获取
+  // 如果用户未登录，返回登录页面
+  if (!user) {
+    Alert.alert(
+      t('auth.login_required'),
+      t('auth.login_required_message'),
+      [
+        {
+          text: t('alerts.go_login'),
+          onPress: () => navigation.navigate('Login' as never),
+        },
+      ]
+    );
+    return null;
+  }
+
+  // Form state - 使用真实用户数据
   const [formData, setFormData] = useState({
-    name: t('userInfo.user'),
-    email: 'user@example.com',
-    phone: '+86 138 0013 8000',
-    university: 'UCLA',
+    name: user?.legalName || '',
+    email: user?.email || '',
+    phone: user?.phonenumber || '',
+    university: user?.dept?.deptName || '',
     bio: '',
-    location: 'Los Angeles, CA',
+    location: '',
   });
 
   const [isLoading, setIsLoading] = useState(false);
+  const [avatarUri, setAvatarUri] = useState<string | null>(null);
 
   // 使用统一的TabBar隐藏Hook
   useTabBarHide();
+
+  // 当用户数据加载后更新表单
+  useEffect(() => {
+    if (user) {
+      setFormData({
+        name: user.legalName || '',
+        email: user.email || '',
+        phone: user.phonenumber || '',
+        university: user.dept?.deptName || '',
+        bio: '',
+        location: '',
+      });
+    }
+  }, [user]);
+
+  // 初始化时检查用户是否有头像
+  useEffect(() => {
+    const loadUserAvatar = async () => {
+      if (user?.userId) {
+        const avatarUrl = getUserAvatarUrl(user.userId);
+        const exists = await checkAvatarExists(avatarUrl);
+        if (exists) {
+          setAvatarUri(avatarUrl);
+        }
+      }
+    };
+    
+    loadUserAvatar();
+  }, [user?.userId]);
+
+  const handleChangeAvatar = async () => {
+    try {
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      
+      if (status !== 'granted') {
+        Alert.alert(
+          t('common.error'),
+          'Sorry, we need camera roll permissions to upload avatar!'
+        );
+        return;
+      }
+
+      const options: ImagePicker.ImagePickerOptions = {
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.8,
+        base64: false,
+      };
+
+      Alert.alert(
+        t('profile.edit.changeAvatar'),
+        'Choose avatar source',
+        [
+          {
+            text: t('common.cancel'),
+            style: 'cancel',
+          },
+          {
+            text: 'Camera',
+            onPress: async () => {
+              const cameraPermission = await ImagePicker.requestCameraPermissionsAsync();
+              if (cameraPermission.status === 'granted') {
+                const result = await ImagePicker.launchCameraAsync(options);
+                if (!result.canceled && result.assets[0] && user?.userId) {
+                  const localUri = result.assets[0].uri;
+                  setAvatarUri(localUri); // 先显示本地图片
+                  
+                  // 上传到Cloudflare R2
+                  const uploadResult = await uploadAvatar(localUri, user.userId);
+                  if (uploadResult.success && uploadResult.url) {
+                    setAvatarUri(uploadResult.url);
+                    Alert.alert(t('common.success'), 'Avatar uploaded successfully!');
+                  } else {
+                    Alert.alert(t('common.error'), uploadResult.error || 'Upload failed');
+                    setAvatarUri(null); // 上传失败则清除
+                  }
+                }
+              }
+            },
+          },
+          {
+            text: 'Photo Library',
+            onPress: async () => {
+              const result = await ImagePicker.launchImageLibraryAsync(options);
+              if (!result.canceled && result.assets[0] && user?.userId) {
+                const localUri = result.assets[0].uri;
+                setAvatarUri(localUri); // 先显示本地图片
+                
+                // 上传到Cloudflare R2
+                const uploadResult = await uploadAvatar(localUri, user.userId);
+                if (uploadResult.success && uploadResult.url) {
+                  setAvatarUri(uploadResult.url);
+                  Alert.alert(t('common.success'), 'Avatar uploaded successfully!');
+                } else {
+                  Alert.alert(t('common.error'), uploadResult.error || 'Upload failed');
+                  setAvatarUri(null); // 上传失败则清除
+                }
+              }
+            },
+          },
+        ]
+      );
+    } catch (error) {
+      console.error('头像选择失败:', error);
+      Alert.alert(t('common.error'), 'Failed to select avatar');
+    }
+  };
 
   const handleSave = async () => {
     if (Platform.OS === 'ios') {
@@ -117,20 +247,46 @@ export const EditProfileScreen: React.FC = () => {
 
     setIsLoading(true);
 
-    // 模拟保存过程
-    setTimeout(() => {
-      setIsLoading(false);
+    try {
+      // 准备更新数据
+      const updateData = {
+        legalName: formData.name,
+        nickName: formData.name, // 使用相同名称作为昵称
+        phonenumber: formData.phone,
+        bio: formData.bio,
+        location: formData.location,
+        avatar: avatarUri || undefined,
+      };
+
+      // 调用API更新用户资料
+      const response = await updateUserProfile(updateData);
+      
+      if (response.code === 200) {
+        // 刷新用户信息
+        await refreshUserInfo();
+        
+        Alert.alert(
+          t('profile.edit.saveSuccess'),
+          t('profile.edit.saveSuccessMessage'),
+          [
+            {
+              text: t('profile.edit.confirm'),
+              onPress: () => navigation.goBack(),
+            },
+          ]
+        );
+      } else {
+        throw new Error(response.msg || 'Update failed');
+      }
+    } catch (error) {
+      console.error('保存用户资料失败:', error);
       Alert.alert(
-        t('profile.edit.saveSuccess'),
-        t('profile.edit.saveSuccessMessage'),
-        [
-          {
-            text: t('profile.edit.confirm'),
-            onPress: () => navigation.goBack(),
-          },
-        ]
+        t('common.error'),
+        error instanceof Error ? error.message : 'Save failed'
       );
-    }, 1000);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleCancel = () => {
@@ -215,6 +371,12 @@ export const EditProfileScreen: React.FC = () => {
       alignItems: 'center',
       justifyContent: 'center',
       marginBottom: 16,
+      overflow: 'hidden',
+    },
+    avatar: {
+      width: 100,
+      height: 100,
+      borderRadius: 50,
     },
     avatarChangeButton: {
       paddingHorizontal: 16,
@@ -273,15 +435,23 @@ export const EditProfileScreen: React.FC = () => {
           {/* Avatar Section */}
           <View style={styles.avatarSection}>
             <View style={styles.avatarContainer}>
-              <Ionicons
-                name="person"
-                size={50}
-                color={theme.colors.text.inverse}
-              />
+              {avatarUri ? (
+                <Image
+                  source={{ uri: avatarUri }}
+                  style={styles.avatar}
+                  resizeMode="cover"
+                />
+              ) : (
+                <Ionicons
+                  name="person"
+                  size={50}
+                  color={theme.colors.text.inverse}
+                />
+              )}
             </View>
             <TouchableOpacity
               style={styles.avatarChangeButton}
-              onPress={() => Alert.alert(t('profile.edit.changeAvatar'), t('profile.edit.changeAvatarMessage'))}
+              onPress={handleChangeAvatar}
               activeOpacity={0.6}
             >
               <Text style={styles.avatarChangeText}>{t('profile.edit.changeAvatar')}</Text>

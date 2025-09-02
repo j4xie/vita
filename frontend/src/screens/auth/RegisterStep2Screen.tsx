@@ -220,9 +220,13 @@ export const RegisterStep2Screen: React.FC = () => {
 
     setLoading(true);
     try {
+      console.log('🔥 开始发送验证码，手机号:', step1Data.phoneNumber);
       const response = await sendSMSVerificationCode(step1Data.phoneNumber);
       
+      console.log('📱 短信接口响应:', response);
+      
       if (response.code === 'OK' && response.bizId) {
+        console.log('✅ 验证码发送成功, bizId:', response.bizId);
         setBizId(response.bizId);
         setSmsCodeSent(true);
         
@@ -246,16 +250,17 @@ export const RegisterStep2Screen: React.FC = () => {
           });
         }, 1000);
       } else {
+        console.error('❌ 验证码发送失败 - 响应异常:', response);
         Alert.alert(
           t('auth.register.sms.send_failed_title'), 
-          t('auth.register.sms.send_failed_message')
+          `${t('auth.register.sms.send_failed_message')}\n错误: ${response.message || '未知错误'}`
         );
       }
     } catch (error) {
-      console.error('发送验证码失败:', error);
+      console.error('❌ 发送验证码网络错误:', error);
       Alert.alert(
         t('auth.register.sms.send_failed_title'), 
-        t('auth.register.sms.send_failed_message')
+        `网络连接失败，请检查网络设置\n错误: ${(error as Error).message}`
       );
     } finally {
       setLoading(false);

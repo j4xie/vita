@@ -3,6 +3,9 @@
  * 解决多个页面重复时间管理导致的冲突问题
  */
 
+import { useState, useEffect } from 'react';
+import { Platform } from 'react-native';
+
 class TimeManagerService {
   private static instance: TimeManagerService;
   private listeners: Set<(time: Date) => void> = new Set();
@@ -152,6 +155,9 @@ class TimeManagerService {
     try {
       const deviceTime = new Date();
       
+      // 🚨 检查是否在模拟器环境
+      const isSimulator = __DEV__ && Platform.OS === 'ios';
+      
       // 基本的时间合理性检查
       const currentYear = deviceTime.getFullYear();
       const currentMonth = deviceTime.getMonth() + 1;
@@ -173,17 +179,35 @@ class TimeManagerService {
         };
       }
       
-      // 获取时区信息（仅供显示，不作为验证条件）
-      const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-      const offset = deviceTime.getTimezoneOffset();
-      const offsetHours = Math.abs(offset / 60);
-      const offsetSign = offset <= 0 ? '+' : '-';
+      // 🚨 将时区检测包装在独立的try-catch中
+      let timezoneInfo = '';
+      try {
+        const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        const offset = deviceTime.getTimezoneOffset();
+        const offsetHours = Math.abs(offset / 60);
+        const offsetSign = offset <= 0 ? '+' : '-';
+        timezoneInfo = `设备时区: ${timezone} (UTC${offsetSign}${offsetHours})`;
+      } catch (timezoneError) {
+        console.warn('⚠️ [TIME-VALIDATION] 时区检测失败，但不影响基础验证:', timezoneError);
+        timezoneInfo = isSimulator ? '模拟器环境，跳过时区检测' : '时区检测失败';
+      }
       
       return { 
         isValid: true,
-        info: `设备时区: ${timezone} (UTC${offsetSign}${offsetHours}), 当前时间: ${this.getAPITimeFormat(deviceTime)}`
+        info: `${timezoneInfo}, 当前时间: ${TimeManagerService.getAPITimeFormat(deviceTime)}`
       };
     } catch (error) {
+      console.error('🚨 [TIME-VALIDATION] 时间验证异常:', error);
+      
+      // 🚨 在模拟器环境下更宽松的处理
+      if (__DEV__ && Platform.OS === 'ios') {
+        console.log('📱 [TIME-VALIDATION] 模拟器环境，跳过严格时间验证');
+        return {
+          isValid: true,
+          info: '模拟器环境，时间验证已跳过'
+        };
+      }
+      
       return {
         isValid: false,
         warning: '无法验证设备时间，请检查系统时间设置'
@@ -208,8 +232,6 @@ export const timeManager = TimeManagerService.getInstance();
 export const { getAPITimeFormat, getFrontendTimeFormat, getTimeDifferenceMinutes, formatDuration, validateDeviceTime } = TimeManagerService;
 
 // React Hook for time management
-import { useState, useEffect } from 'react';
-
 export const useGlobalTime = () => {
   const [currentTime, setCurrentTime] = useState(timeManager.getCurrentTime());
 

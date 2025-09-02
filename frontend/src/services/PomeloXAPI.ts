@@ -1,8 +1,40 @@
 // PomeloX Backend API Service
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getCurrentToken } from './authAPI';
+import { Platform, DeviceEventEmitter } from 'react-native';
+import { notifyRegistrationSuccess, scheduleActivityReminder } from './smartAlertSystem';
 
 const BASE_URL = 'http://106.14.165.234:8085';
+
+// 检测是否为iOS模拟器
+const isIOSSimulator = Platform.OS === 'ios' && __DEV__;
+
+// 🚀 性能优化：智能网络重试工具
+const fetchWithRetry = async (url: string, options: RequestInit, maxRetries: number = 2): Promise<Response> => {
+  for (let i = 0; i < maxRetries; i++) {
+    try {
+      console.log(`🔄 尝试请求 (第${i + 1}/${maxRetries}次): ${url}`);
+      const response = await fetch(url, options);
+      return response;
+    } catch (error: any) {
+      console.warn(`⚠️ 第${i + 1}次请求失败:`, error.message);
+      
+      // 🚀 智能重试判断：某些错误不值得重试
+      const shouldRetry = !error.message.includes('AbortError') && 
+                         !error.message.includes('AUTH') &&
+                         i < maxRetries - 1;
+      
+      if (!shouldRetry) {
+        throw error;
+      }
+      
+      // 🚀 优化重试延迟：使用指数退避但上限更低 (500ms, 1s)
+      const delay = Math.min(500 * Math.pow(2, i), 1000);
+      await new Promise(resolve => setTimeout(resolve, delay));
+    }
+  }
+  throw new Error('所有重试都失败了');
+};
 
 interface ApiResponse<T = any> {
   msg: string;
@@ -18,7 +50,7 @@ interface RegisterData {
   phonenumber: string;
   email: string;
   sex: string;
-  deptId: string;
+  deptId?: string; // 可选字段，不传则用户默认角色为common
   verCode?: string;
   invCode?: string;
   bizId?: string;
@@ -30,7 +62,7 @@ interface LoginData {
   password: string;
 }
 
-interface School {
+interface APISchoolData {
   createBy?: string;
   createTime?: string;
   updateBy?: string | null;
@@ -50,7 +82,7 @@ interface School {
   logo?: string | null;
   engName?: string | null;
   aprName?: string | null;
-  children: School[];
+  children: APISchoolData[];
 }
 
 interface SMSResponse {
@@ -129,7 +161,7 @@ class PomeloXAPI {
   /**
    * 获取学校列表 (公开接口，无需认证)
    */
-  async getSchoolList(): Promise<ApiResponse<School[]>> {
+  async getSchoolList(): Promise<ApiResponse<APISchoolData[]>> {
     const response = await fetch(`${BASE_URL}/app/dept/list`, {
       method: 'GET',
       headers: {
@@ -149,6 +181,13 @@ class PomeloXAPI {
    * 用户注册
    */
   async register(data: RegisterData): Promise<ApiResponse> {
+    console.log('📝 PomeloXAPI.register 接收到的数据:', {
+      ...data,
+      password: '[HIDDEN]',
+      deptId: data.deptId,
+      deptIdType: typeof data.deptId
+    });
+    
     // 使用form-urlencoded格式
     const formData = new URLSearchParams();
     formData.append('userName', data.userName);
@@ -158,12 +197,24 @@ class PomeloXAPI {
     formData.append('phonenumber', data.phonenumber);
     formData.append('email', data.email);
     formData.append('sex', data.sex);
-    formData.append('deptId', data.deptId);
+    
+    // 只有提供deptId时才添加，不传则用户默认角色为common
+    if (data.deptId) {
+      formData.append('deptId', data.deptId);
+      console.log('✅ deptId已添加到请求:', data.deptId);
+    } else {
+      console.log('⚠️ deptId为空，用户将没有学校关联');
+    }
     
     if (data.verCode) formData.append('verCode', data.verCode);
     if (data.invCode) formData.append('invCode', data.invCode);
     if (data.bizId) formData.append('bizId', data.bizId);
     if (data.orgId) formData.append('orgId', data.orgId);
+    
+    console.log('🌐 发送到后端的最终参数:', [...formData.entries()].reduce((acc, [key, value]) => {
+      acc[key] = key === 'password' ? '[HIDDEN]' : value;
+      return acc;
+    }, {} as any));
     
     const response = await fetch(`${BASE_URL}/app/user/add`, {
       method: 'POST',
@@ -188,10 +239,14 @@ class PomeloXAPI {
     userId: number;
     token: string;
   }>> {
+    console.log('🔐 PomeloXAPI.login 调用参数:', { userName: data.userName, password: '[HIDDEN]' });
+    
     // 使用form-urlencoded格式，不是JSON
     const formData = new URLSearchParams();
     formData.append('username', data.userName);
     formData.append('password', data.password);
+    
+    console.log('📝 发送到后端的参数:', { username: data.userName, password: '[HIDDEN]' });
     
     const response = await fetch(`${BASE_URL}/app/login`, {
       method: 'POST',
@@ -369,11 +424,12 @@ class PomeloXAPI {
     });
     
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 15000); // 15秒超时
+    const timeoutId = setTimeout(() => controller.abort(), 8000); // 🚀 优化：8秒超时
     
     const headers: Record<string, string> = {
       'Accept': 'application/json',
       'Content-Type': 'application/json',
+      'User-Agent': 'PomeloX/1.0.0 (iOS)', // 添加User-Agent
     };
     
     // 如果用户已登录，添加认证头获取个性化数据
@@ -381,15 +437,71 @@ class PomeloXAPI {
       headers['Authorization'] = `Bearer ${token}`;
     }
     
-    const response = await fetch(`${BASE_URL}${endpoint}`, {
+    console.log(`🌐 发起网络请求:`, { 
+      url: `${BASE_URL}${endpoint}`,
       method: 'GET',
-      headers,
-      signal: controller.signal,
+      headers: Object.keys(headers),
     });
     
-    clearTimeout(timeoutId);
-    
-    console.log(`API响应状态: ${response.status}`);
+    let response;
+    try {
+      // 🚨 iOS模拟器网络兼容性修复
+      const fetchOptions: RequestInit = {
+        method: 'GET',
+        headers,
+        signal: controller.signal,
+        credentials: 'omit',
+        // 添加iOS模拟器特定配置
+        cache: 'no-cache',
+        mode: 'cors',
+        redirect: 'follow',
+      };
+      
+      // iOS模拟器特殊处理
+      if (isIOSSimulator) {
+        console.log('🍎 检测到iOS模拟器，使用兼容性网络配置');
+        // 移除可能导致问题的配置
+        delete (fetchOptions as any).mode;
+        delete (fetchOptions as any).credentials;
+        
+        // 增加超时时间
+        clearTimeout(timeoutId);
+        const newTimeoutId = setTimeout(() => controller.abort(), 30000); // 30秒超时
+      }
+      
+      console.log('📡 最终请求配置:', {
+        url: `${BASE_URL}${endpoint}`,
+        options: {
+          ...fetchOptions,
+          signal: '[AbortController]'
+        }
+      });
+      
+      response = await fetchWithRetry(`${BASE_URL}${endpoint}`, fetchOptions, 3);
+      
+      clearTimeout(timeoutId);
+      console.log(`✅ API响应成功: ${response.status}`);
+      
+    } catch (fetchError: any) {
+      clearTimeout(timeoutId);
+      console.error(`❌ 网络请求失败:`, {
+        name: fetchError.name,
+        message: fetchError.message,
+        cause: fetchError.cause,
+        stack: fetchError.stack?.split('\n')[0] // 只显示第一行堆栈
+      });
+      
+      // 根据错误类型提供更具体的错误信息
+      if (fetchError.name === 'AbortError') {
+        throw new Error('请求超时，请检查网络连接');
+      } else if (fetchError.message?.includes('Network request failed')) {
+        throw new Error('网络连接失败，请检查网络设置或切换网络');
+      } else if (fetchError.message?.includes('timeout')) {
+        throw new Error('网络超时，请稍后重试');
+      } else {
+        throw new Error(`网络错误: ${fetchError.message}`);
+      }
+    }
     
     if (!response.ok) {
       const errorText = await response.text();
@@ -425,9 +537,38 @@ class PomeloXAPI {
    * 活动报名
    */
   async enrollActivity(activityId: number, userId: number): Promise<ApiResponse<number>> {
-    return this.request(`/app/activity/enroll?activityId=${activityId}&userId=${userId}`, {
-      method: 'GET',
-    });
+    try {
+      const response = await this.request(`/app/activity/enroll?activityId=${activityId}&userId=${userId}`, {
+        method: 'GET',
+      });
+
+      // 报名成功后发送本地通知
+      if (response.code === 200) {
+        // 获取活动信息用于通知
+        try {
+          const activityResponse = await this.getActivityList(1, 10, userId);
+          const activity = activityResponse.data?.rows?.find((a: any) => a.id === activityId);
+          
+          if (activity) {
+            // 发送即时成功通知
+            await notifyRegistrationSuccess(activity.name);
+            
+            // 安排活动提醒
+            await scheduleActivityReminder(activity);
+          }
+        } catch (notificationError) {
+          console.error('发送报名通知失败:', notificationError);
+          // 不影响报名流程
+        }
+
+        // 发送事件给其他组件刷新数据
+        DeviceEventEmitter.emit('activityRegistered', { activityId, userId });
+      }
+
+      return response;
+    } catch (error) {
+      throw error;
+    }
   }
 
   /**
@@ -613,6 +754,25 @@ class PomeloXAPI {
   async isAuthenticated(): Promise<boolean> {
     const token = await getCurrentToken();
     return !!token;
+  }
+
+  /**
+   * 获取职位/岗位列表
+   */
+  async getPostList(): Promise<ApiResponse<Array<{
+    postId: number;
+    postCode: string;
+    postName: string;
+    postSort: number;
+    status: string;
+    createBy?: string;
+    createTime?: string;
+    updateBy?: string;
+    updateTime?: string;
+    remark?: string;
+  }>>> {
+    console.log('🔍 获取职位列表 API调用');
+    return this.request('/app/post/list', { method: 'GET' });
   }
 }
 

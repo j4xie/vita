@@ -137,8 +137,8 @@ export const useSmartGesture = (
   // PanResponder 配置
   const panResponder = useRef(
     PanResponder.create({
-      // 决定是否响应手势开始 - 改为false，让容器的滚动优先
-      onStartShouldSetPanResponder: () => false,
+      // 决定是否响应手势开始 - 允许接收触摸事件来检测点击
+      onStartShouldSetPanResponder: () => true,
       onStartShouldSetPanResponderCapture: () => false,
       
       // 决定是否响应手势移动 - 仅在确实是水平滑动时才接管

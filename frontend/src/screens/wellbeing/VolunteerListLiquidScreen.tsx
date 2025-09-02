@@ -30,6 +30,8 @@ import { SegmentedGlass } from '../../ui/glass/SegmentedGlass';
 import { GlassSearchBar } from '../../ui/glass/GlassSearchBar';
 import { LiquidGlassListItem } from '../../ui/glass/LiquidGlassListItem';
 import { Glass } from '../../ui/glass/GlassTheme';
+import { useAllDarkModeStyles } from '../../hooks/useDarkModeStyles';
+import { i18n } from '../../utils/i18n';
 
 // Mock schools data removed - using real API data only
 
@@ -39,11 +41,18 @@ export const VolunteerListLiquidScreen: React.FC = () => {
   const insets = useSafeAreaInsets();
   const { permissions, user } = useUser(); // 获取用户权限和用户信息
   
+  const darkModeSystem = useAllDarkModeStyles();
+  const { isDarkMode, styles: dmStyles, gradients: dmGradients, blur: dmBlur, icons: dmIcons } = darkModeSystem;
+  
   // 状态管理
   const [searchQuery, setSearchQuery] = useState('');
   const [refreshing, setRefreshing] = useState(false);
   const [schools, setSchools] = useState<any[]>([]); // 初始为空，避免显示Mock数据
   const [loading, setLoading] = useState(true); // 显示loading状态
+  
+  // 🚀 滚动状态管理防止误触
+  const [isScrolling, setIsScrolling] = useState(false);
+  const scrollTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
   
   // 学校卡片放大跳转动画系统 - v2方案
   const [cardLayouts, setCardLayouts] = useState<Map<string, any>>(new Map());
@@ -78,17 +87,22 @@ export const VolunteerListLiquidScreen: React.FC = () => {
           }
         }
         
-        // 将学校数据转换为组件需要的格式
+        // 🌍 FIXED: 将学校数据转换为组件需要的格式，保留API原始字段
         const realSchools = filteredSchools.map(school => ({
             id: school.deptId.toString(),
-            nameCN: getSchoolDisplayName(school.deptName),
-            nameEN: school.deptName,
+            // 🚨 FIX: 保留API原始字段，让接收组件根据语言选择显示
+            deptId: school.deptId,
+            deptName: school.deptName,      // 中文名称
+            engName: school.engName,        // 英文名称  
+            aprName: school.aprName,        // 缩写名称
+            // 🔄 向后兼容：提供nameCN/nameEN字段
+            nameCN: school.deptName,
+            nameEN: school.engName || school.deptName,
+            // 🗑️ 根据用户要求移除位置显示，但保留数据用于搜索
             city: getSchoolCity(school.deptName),
             state: getSchoolState(school.deptName),
             volunteers: 0, // 将通过API获取真实数据
             tint: getSchoolColor(school.deptName),
-            deptId: school.deptId,
-            deptName: school.deptName,
           }));
         
         // 为每个学校获取真实的用户统计数据（包括各角色）
@@ -190,13 +204,15 @@ export const VolunteerListLiquidScreen: React.FC = () => {
     opacity: cardOpacity.value,
   }));
 
-  // 过滤学校数据
+  // 🌍 FIXED: 过滤学校数据 - 使用正确的字段名
   const filteredSchools = schools.filter(school => {
     if (!searchQuery) return true;
+    const query = searchQuery.toLowerCase();
     return (
-      school.nameCN.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      school.nameEN.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      school.city.toLowerCase().includes(searchQuery.toLowerCase())
+      school.deptName?.toLowerCase().includes(query) ||
+      school.engName?.toLowerCase().includes(query) ||
+      school.aprName?.toLowerCase().includes(query) ||
+      school.city?.toLowerCase().includes(query)
     );
   });
 
@@ -246,6 +262,46 @@ export const VolunteerListLiquidScreen: React.FC = () => {
       startMorphAnimation(school, cardLayout);
     }, 100);
   }, [isTransitioning, cardLayouts, navigation]);
+
+  // 🚀 滚动状态处理函数
+  const handleScrollBegin = () => {
+    setIsScrolling(true);
+    console.log('📜 [VOLUNTEER-LIQUID] 开始滚动，禁用学校卡片点击');
+    
+    if (scrollTimeoutRef.current) {
+      clearTimeout(scrollTimeoutRef.current);
+    }
+  };
+
+  const handleScrollEnd = () => {
+    scrollTimeoutRef.current = setTimeout(() => {
+      setIsScrolling(false);
+      console.log('📜 [VOLUNTEER-LIQUID] 滚动结束，重新启用学校卡片点击');
+    }, 100); // 缩短到100ms，更快恢复点击
+  };
+
+  const handleScrollEvent = () => {
+    if (!isScrolling) {
+      setIsScrolling(true);
+    }
+    
+    if (scrollTimeoutRef.current) {
+      clearTimeout(scrollTimeoutRef.current);
+    }
+    
+    scrollTimeoutRef.current = setTimeout(() => {
+      setIsScrolling(false);
+    }, 100); // 缩短到100ms，更快恢复点击
+  };
+
+  // 🧹 清理滚动定时器
+  React.useEffect(() => {
+    return () => {
+      if (scrollTimeoutRef.current) {
+        clearTimeout(scrollTimeoutRef.current);
+      }
+    };
+  }, []);
   
   // Morph-to-Header动画执行
   const startMorphAnimation = useCallback((school: any, layout: any) => {
@@ -309,7 +365,7 @@ export const VolunteerListLiquidScreen: React.FC = () => {
     }, 500);
   }, [insets.top, navigation]);
 
-  // 渲染列表项 - Hook修复版
+  // 🌍 FIXED: 渲染列表项 - 传递正确的API字段给组件
   const renderSchoolItem = ({ item }: { item: any }) => {
     const isAnimatingCard = selectedSchoolId === item.id;
     
@@ -321,6 +377,9 @@ export const VolunteerListLiquidScreen: React.FC = () => {
               id={item.id}
               nameCN={item.nameCN}
               nameEN={item.nameEN}
+              deptName={item.deptName}
+              engName={item.engName}
+              aprName={item.aprName}
               city={item.city}
               state={item.state}
               volunteers={item.volunteers}
@@ -328,6 +387,7 @@ export const VolunteerListLiquidScreen: React.FC = () => {
               schoolId={item.id}
               onPress={() => handleSchoolPress(item)}
               disabled={isTransitioning}
+              isScrolling={isScrolling}  // 🚀 传递滚动状态
             />
           </Animated.View>
         ) : (
@@ -335,6 +395,9 @@ export const VolunteerListLiquidScreen: React.FC = () => {
             id={item.id}
             nameCN={item.nameCN}
             nameEN={item.nameEN}
+            deptName={item.deptName}
+            engName={item.engName}
+            aprName={item.aprName}
             city={item.city}
             state={item.state}
             volunteers={item.volunteers}
@@ -342,6 +405,7 @@ export const VolunteerListLiquidScreen: React.FC = () => {
             schoolId={item.id}
             onPress={() => handleSchoolPress(item)}
             disabled={isTransitioning}
+            isScrolling={isScrolling}  // 🚀 传递滚动状态
           />
         )}
       </View>
@@ -357,7 +421,7 @@ export const VolunteerListLiquidScreen: React.FC = () => {
   );
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, dmStyles.page.container]}>
       {/* 移除背景渐变，由父组件WellbeingScreen提供 */}
 
       <View style={styles.content}>
@@ -377,6 +441,12 @@ export const VolunteerListLiquidScreen: React.FC = () => {
             renderItem={renderSchoolItem}
             keyExtractor={(item) => item.id}
             showsVerticalScrollIndicator={false}
+            onScrollBeginDrag={handleScrollBegin}     // 开始拖动滚动
+            onScrollEndDrag={handleScrollEnd}         // 拖动结束
+            onMomentumScrollBegin={handleScrollBegin} // 惯性滚动开始
+            onMomentumScrollEnd={handleScrollEnd}     // 惯性滚动结束
+            onScroll={handleScrollEvent}              // 任何滚动变化
+            scrollEventThrottle={1}                   // 高频检测
             refreshControl={
               <RefreshControl
                 refreshing={refreshing}
@@ -412,7 +482,6 @@ export const VolunteerListLiquidScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: 'rgba(255, 255, 255, 0.001)', // Nearly invisible but solid for shadow calculation
   },
 
   content: {

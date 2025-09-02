@@ -18,6 +18,7 @@ import * as Haptics from 'expo-haptics';
 import { useTranslation } from 'react-i18next';
 import { theme } from '../../theme';
 import { LIQUID_GLASS_LAYERS, DAWN_GRADIENTS } from '../../theme/core';
+import { useAllDarkModeStyles } from '../../hooks/useDarkModeStyles';
 import { getSchoolLogo } from '../../utils/schoolLogos';
 import { SchoolLogo } from '../../components/common/SchoolLogo';
 import { ConsultingDevModal, SchoolInfo } from '../../components/modals/ConsultingDevModal';
@@ -43,8 +44,8 @@ export const ConsultingScreen: React.FC = () => {
   const { t } = useTranslation();
   const navigation = useNavigation<any>();
   const insets = useSafeAreaInsets();
-  
-  // V2.0 简化升级，直接使用硬编码样式
+  const darkModeSystem = useAllDarkModeStyles();
+  const { isDarkMode, styles: dmStyles, gradients: dmGradients } = darkModeSystem;
   
   // Modal state
   const [showModal, setShowModal] = useState(false);
@@ -54,9 +55,6 @@ export const ConsultingScreen: React.FC = () => {
   // Animation state
   const scrollY = useSharedValue(0);
   const cardScale = useSharedValue(1);
-  
-  // 简单的深色模式检测（可以后续扩展）
-  const isDarkMode = false; // 暂时设为false，后续可接入系统设置
 
   const handleSchoolSelect = (schoolId: string) => {
     // 触觉反馈
@@ -99,10 +97,13 @@ export const ConsultingScreen: React.FC = () => {
   // 移除renderNotDevelopedMessage函数，不再需要单独的页面
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[
+      styles.container,
+      { backgroundColor: isDarkMode ? dmStyles.page.safeArea.backgroundColor : 'rgba(255, 255, 255, 0.001)' }
+    ]}>
       {/* iOS风格Header背景：增强对比的暖色渐变 */}
       <LinearGradient
-        colors={[
+        colors={isDarkMode ? dmGradients.page.background : [
           Glass.pageBgTop,     // 更深的暖色
           Glass.pageBgBottom,  // 明显对比
           '#F8F9FA',          // 渐变到浅灰

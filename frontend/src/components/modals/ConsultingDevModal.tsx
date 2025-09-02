@@ -5,7 +5,6 @@ import {
   TouchableOpacity,
   StyleSheet,
   Platform,
-  useColorScheme,
   Animated,
   Modal,
   Dimensions,
@@ -19,6 +18,7 @@ import * as Haptics from 'expo-haptics';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { theme } from '../../theme';
+import { useTheme } from '../../context/ThemeContext';
 import { LIQUID_GLASS_LAYERS, DAWN_GRADIENTS } from '../../theme/core';
 
 export interface SchoolInfo {
@@ -42,8 +42,8 @@ export const ConsultingDevModal: React.FC<ConsultingDevModalProps> = ({
   onClose,
 }) => {
   const { t } = useTranslation();
-  const colorScheme = useColorScheme();
-  const isDarkMode = colorScheme === 'dark';
+  const themeContext = useTheme();
+  const isDarkMode = themeContext.isDarkMode;
   const insets = useSafeAreaInsets();
 
   // Animation values

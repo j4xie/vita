@@ -8,7 +8,6 @@ import {
   ScrollView,
   Alert,
   Platform,
-  useColorScheme,
   AccessibilityInfo,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -17,10 +16,12 @@ import { useNavigation } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { DeviceEventEmitter } from 'react-native';
 
 import { theme } from '../../theme';
 import { useLanguage } from '../../context/LanguageContext';
 import { useTheme } from '../../context/ThemeContext';
+import { useAllDarkModeStyles } from '../../hooks/useDarkModeStyles';
 import { ThemeSelectionModal } from '../../components/common/ThemeSelectionModal';
 
 interface SettingRowProps {
@@ -38,8 +39,8 @@ const SettingRow: React.FC<SettingRowProps> = ({
   value,
   isLast = false,
 }) => {
-  const colorScheme = useColorScheme();
-  const isDarkMode = colorScheme === 'dark';
+  const themeContext = useTheme();
+  const isDarkMode = themeContext.isDarkMode;
 
   const handlePress = () => {
     if (Platform.OS === 'ios') {
@@ -75,7 +76,7 @@ const SettingRow: React.FC<SettingRowProps> = ({
     settingText: {
       fontSize: 17,
       fontWeight: '400',
-      color: isDarkMode ? '#ffffff' : '#000000',
+      color: '#000000', // Default light color
       flex: 1,
     },
     settingTextDark: {
@@ -87,7 +88,7 @@ const SettingRow: React.FC<SettingRowProps> = ({
     },
     settingValue: {
       fontSize: 15,
-      color: isDarkMode ? '#8e8e93' : '#8e8e93',
+      color: '#8e8e93',
       marginRight: 8,
     },
     settingValueDark: {
@@ -119,6 +120,7 @@ const SettingRow: React.FC<SettingRowProps> = ({
           style={[
             rowStyles.settingText,
             isDarkMode && rowStyles.settingTextDark,
+            { color: isDarkMode ? '#ffffff' : '#000000' }
           ]}
           allowFontScaling={true}
           maxFontSizeMultiplier={1.4}
@@ -152,8 +154,8 @@ const SettingRow: React.FC<SettingRowProps> = ({
 export const GeneralScreen: React.FC = () => {
   const { t } = useTranslation();
   const navigation = useNavigation<any>();
-  const colorScheme = useColorScheme();
-  const isDarkMode = colorScheme === 'dark';
+  const darkModeSystem = useAllDarkModeStyles();
+  const { isDarkMode, styles: dmStyles, gradients: dmGradients } = darkModeSystem;
   const insets = useSafeAreaInsets();
   const { currentLanguage, getLanguageDisplayName } = useLanguage();
   const { themeMode, getThemeModeDisplayName } = useTheme();
@@ -166,6 +168,9 @@ export const GeneralScreen: React.FC = () => {
 
   // Accessibility states
   const [isReduceMotionEnabled, setIsReduceMotionEnabled] = useState(false);
+  
+  // Activity layout preference state
+  const [activityLayout, setActivityLayout] = useState<'list' | 'grid'>('list');
 
   useEffect(() => {
     const checkAccessibility = async () => {
@@ -176,6 +181,18 @@ export const GeneralScreen: React.FC = () => {
     
     // Calculate cache size
     calculateCacheSize();
+    
+    // Load activity layout preference
+    loadActivityLayoutPreference();
+    
+    // 监听布局变化事件
+    const layoutSubscription = DeviceEventEmitter.addListener('activityLayoutChanged', (newLayout: 'list' | 'grid') => {
+      setActivityLayout(newLayout);
+    });
+
+    return () => {
+      layoutSubscription?.remove();
+    };
   }, []);
 
   const calculateCacheSize = async () => {
@@ -210,6 +227,30 @@ export const GeneralScreen: React.FC = () => {
 
   const handleAppearancePress = () => {
     setShowThemeModal(true);
+  };
+  
+  // Load activity layout preference
+  const loadActivityLayoutPreference = async () => {
+    try {
+      const savedLayout = await AsyncStorage.getItem('activity_view_layout');
+      if (savedLayout && (savedLayout === 'list' || savedLayout === 'grid')) {
+        setActivityLayout(savedLayout);
+      }
+    } catch (error) {
+      console.warn('Failed to load activity layout preference:', error);
+    }
+  };
+  
+  // Handle activity layout change - 导航到简洁的选择页面
+  const handleActivityLayoutPress = () => {
+    navigation.navigate('ActivityLayoutSelection', {
+      currentLayout: activityLayout,
+      // 不传递function，避免React Navigation warning
+    });
+  };
+  
+  const getActivityLayoutDisplayName = () => {
+    return activityLayout === 'list' ? t('common.listView') : t('common.gridView');
   };
 
   const handleDataPress = () => {
@@ -266,7 +307,7 @@ export const GeneralScreen: React.FC = () => {
   };
 
   const getAppearanceValue = () => {
-    return getThemeModeDisplayName(themeMode);
+    return getThemeModeDisplayName(themeMode, t);
   };
 
   const displayItems = [
@@ -291,6 +332,13 @@ export const GeneralScreen: React.FC = () => {
       value: getAppearanceValue(),
       onPress: handleAppearancePress,
     },
+    {
+      id: 'activity-layout',
+      title: t('profile.general.activityLayout', '活动布局'),
+      icon: 'grid-outline' as keyof typeof Ionicons.glyphMap,
+      value: getActivityLayoutDisplayName(),
+      onPress: handleActivityLayoutPress,
+    },
   ];
 
   const storageItems = [
@@ -306,7 +354,7 @@ export const GeneralScreen: React.FC = () => {
   const styles = StyleSheet.create({
     container: {
       flex: 1,
-      backgroundColor: isDarkMode ? '#000000' : '#f2f2f7',
+      backgroundColor: '#f2f2f7', // Default light background
     },
     safeArea: {
       flex: 1,
@@ -325,13 +373,13 @@ export const GeneralScreen: React.FC = () => {
     groupTitle: {
       fontSize: 13,
       fontWeight: '400',
-      color: isDarkMode ? '#8e8e93' : '#8e8e93',
+      color: '#8e8e93', // Default light color
       textTransform: 'uppercase',
       marginBottom: 8,
       marginLeft: 16,
     },
     listContainer: {
-      backgroundColor: isDarkMode ? '#1c1c1e' : '#ffffff',
+      backgroundColor: '#ffffff', // Default white background
       borderRadius: 14,
       overflow: 'hidden',
       ...Platform.select({
@@ -349,7 +397,10 @@ export const GeneralScreen: React.FC = () => {
   });
 
   return (
-    <View style={styles.container}>
+    <View style={[
+      styles.container,
+      { backgroundColor: isDarkMode ? dmStyles.page.safeArea.backgroundColor : '#f2f2f7' }
+    ]}>
       <SafeAreaView style={styles.safeArea}>
         <ScrollView
           style={styles.scrollView}
@@ -358,8 +409,14 @@ export const GeneralScreen: React.FC = () => {
         >
           {/* 显示与外观 */}
           <View style={styles.groupContainer}>
-            <Text style={styles.groupTitle}>{t('profile.general.sectionDisplayAppearance')}</Text>
-            <View style={styles.listContainer}>
+            <Text style={[
+              styles.groupTitle,
+              { color: isDarkMode ? dmStyles.text.secondary.color : '#8e8e93' }
+            ]}>{t('profile.general.sectionDisplayAppearance')}</Text>
+            <View style={[
+              styles.listContainer,
+              { backgroundColor: isDarkMode ? dmStyles.card.contentSection.backgroundColor : '#ffffff' }
+            ]}>
               {displayItems.map((item, index) => (
                 <SettingRow
                   key={item.id}
@@ -375,8 +432,14 @@ export const GeneralScreen: React.FC = () => {
 
           {/* 存储与性能 */}
           <View style={styles.groupContainer}>
-            <Text style={styles.groupTitle}>{t('profile.general.sectionStoragePerformance')}</Text>
-            <View style={styles.listContainer}>
+            <Text style={[
+              styles.groupTitle,
+              { color: isDarkMode ? dmStyles.text.secondary.color : '#8e8e93' }
+            ]}>{t('profile.general.sectionStoragePerformance')}</Text>
+            <View style={[
+              styles.listContainer,
+              { backgroundColor: isDarkMode ? dmStyles.card.contentSection.backgroundColor : '#ffffff' }
+            ]}>
               {storageItems.map((item, index) => (
                 <SettingRow
                   key={item.id}

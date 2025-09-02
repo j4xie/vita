@@ -7,7 +7,6 @@ import {
   SafeAreaView,
   ScrollView,
   Platform,
-  useColorScheme,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
@@ -16,6 +15,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 
 import { theme } from '../../theme';
+import { useTheme } from '../../context/ThemeContext';
 import { useLanguage } from '../../context/LanguageContext';
 import { SupportedLanguage, SUPPORTED_LANGUAGES } from '../../utils/i18n';
 
@@ -39,8 +39,8 @@ const LanguageRow: React.FC<LanguageRowProps> = ({
   onPress,
   isLast = false,
 }) => {
-  const colorScheme = useColorScheme();
-  const isDarkMode = colorScheme === 'dark';
+  const themeContext = useTheme();
+  const isDarkMode = themeContext.isDarkMode;
 
   const handlePress = () => {
     if (Platform.OS === 'ios') {
@@ -148,8 +148,8 @@ const LanguageRow: React.FC<LanguageRowProps> = ({
 export const LanguageSelectionScreen: React.FC = () => {
   const { t } = useTranslation();
   const navigation = useNavigation();
-  const colorScheme = useColorScheme();
-  const isDarkMode = colorScheme === 'dark';
+  const themeContext = useTheme();
+  const isDarkMode = themeContext.isDarkMode;
   const insets = useSafeAreaInsets();
   const { currentLanguage, changeLanguage } = useLanguage();
 

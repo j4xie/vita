@@ -17,6 +17,7 @@ import { GlassCapsule } from '../../components/consulting/GlassCapsule';
 import { SchoolGrid } from '../../components/common/SchoolGrid';
 import { useSchoolData } from '../../hooks/useSchoolData';
 import { Glass } from '../../ui/glass/GlassTheme';
+import { useAllDarkModeStyles } from '../../hooks/useDarkModeStyles';
 
 
 export const CommunityScreen: React.FC = () => {
@@ -26,12 +27,28 @@ export const CommunityScreen: React.FC = () => {
   
   const { schools, loading, loadSchools } = useSchoolData();
   
+  // 🌙 Dark Mode Support
+  const darkModeSystem = useAllDarkModeStyles();
+  const { isDarkMode, styles: dmStyles, gradients: dmGradients } = darkModeSystem;
+  
   const [showModal, setShowModal] = useState(false);
   const [selectedSchool, setSelectedSchool] = useState<SchoolInfo | null>(null);
   const [selectedSchoolId, setSelectedSchoolId] = useState<string | null>(null);
+  
+  // 🚀 滚动状态追踪 - 防止滚动时误触卡片
+  const [isScrolling, setIsScrolling] = useState(false);
+  const scrollTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
 
 
   const handleSchoolSelect = (schoolId: string) => {
+    // 🚨 关键修复：如果正在滚动，忽略点击事件
+    if (isScrolling) {
+      console.log('🚫 [SCROLL-PROTECTION] 正在滚动，忽略学校卡片点击');
+      return;
+    }
+    
+    console.log('✅ [SCHOOL-CLICK] 学校点击有效:', schoolId);
+    
     // 触觉反馈
     if (Platform.OS === 'ios') {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -50,17 +67,70 @@ export const CommunityScreen: React.FC = () => {
     }
   };
 
+  // 🚀 滚动状态处理函数 - 更激进的保护
+  const handleScrollBegin = () => {
+    setIsScrolling(true);
+    console.log('📜 [SCROLL-START] 开始滚动，禁用卡片点击，时间:', new Date().toISOString());
+    
+    // 清除之前的计时器
+    if (scrollTimeoutRef.current) {
+      clearTimeout(scrollTimeoutRef.current);
+    }
+  };
+
+  const handleScrollEnd = () => {
+    // 滚动结束后等待更长时间再启用点击，确保用户手指完全离开
+    scrollTimeoutRef.current = setTimeout(() => {
+      setIsScrolling(false);
+      console.log('📜 [SCROLL-END] 滚动结束，重新启用卡片点击');
+    }, 800); // 延长到800ms，与卡片延迟时间匹配
+  };
+
+  // 🚀 即时滚动检测 - 监听任何滚动变化
+  const handleScroll = () => {
+    // 立即设置滚动状态，不等待
+    if (!isScrolling) {
+      console.log('📜 [SCROLL-DETECT] 检测到滚动，立即禁用点击，时间:', new Date().toISOString());
+    }
+    setIsScrolling(true);
+    
+    // 清除并重新设置计时器
+    if (scrollTimeoutRef.current) {
+      clearTimeout(scrollTimeoutRef.current);
+    }
+    
+    // 滚动停止后等待更长时间
+    scrollTimeoutRef.current = setTimeout(() => {
+      setIsScrolling(false);
+      console.log('📜 [SCROLL-IDLE] 滚动完全停止，重新启用点击，时间:', new Date().toISOString());
+    }, 800);
+  };
+
   const handleCloseModal = () => {
     setShowModal(false);
     setSelectedSchool(null);
     setSelectedSchoolId(null);
   };
 
+  // 🧹 清理定时器
+  React.useEffect(() => {
+    return () => {
+      if (scrollTimeoutRef.current) {
+        clearTimeout(scrollTimeoutRef.current);
+      }
+    };
+  }, []);
+
   return (
-    <SafeAreaView style={styles.container}>
-      {/* iOS风格Header背景：增强对比的暖色渐变 */}
+    <SafeAreaView style={[styles.container, dmStyles.page.safeArea]}>
+      {/* iOS风格Header背景：增强对比的暖色渐变 - 🌙 Dark Mode适配 */}
       <LinearGradient
-        colors={[
+        colors={isDarkMode ? [
+          '#000000',   // 纯黑顶部
+          '#1C1C1E',   // Apple系统深灰  
+          '#2C2C2E',   // 渐变到更浅深灰
+          '#1C1C1E'    // 底部回到系统深灰
+        ] : [
           Glass.pageBgTop,     // 更深的暖色
           Glass.pageBgBottom,  // 明显对比
           '#F8F9FA',          // 渐变到浅灰
@@ -82,6 +152,12 @@ export const CommunityScreen: React.FC = () => {
             paddingBottom: insets.bottom + 80 
           }
         ]}
+        onScrollBeginDrag={handleScrollBegin}         // 开始拖动滚动
+        onScrollEndDrag={handleScrollEnd}             // 拖动结束
+        onMomentumScrollBegin={handleScrollBegin}     // 惯性滚动开始
+        onMomentumScrollEnd={handleScrollEnd}         // 惯性滚动结束
+        onScroll={handleScroll}                       // 任何滚动变化
+        scrollEventThrottle={1}                       // 更高频率的滚动检测
       >
         {/* Header - iOS风格大标题 */}
         <View style={styles.header}>
@@ -116,6 +192,7 @@ export const CommunityScreen: React.FC = () => {
           loading={loading}
           onSchoolSelect={handleSchoolSelect}
           onRetry={loadSchools}
+          isScrolling={isScrolling}  // 🚀 传递滚动状态给SchoolGrid
         />
       </ScrollView>
 

@@ -36,8 +36,13 @@
     "estimated_development_time": "Estimated development time: 2-3 weeks",
     "will_notify_when_ready": "You will be notified when ready",
     "got_it": "Got it",
+    "iKnow": "I Know",
     "api_error": "API Error",
-    "network_connection_error": "Network connection failed, please check network settings"
+    "network_connection_error": "Network connection failed, please check network settings",
+    "list": "List",
+    "grid": "Grid",
+    "listView": "List View",
+    "gridView": "Grid View"
   },
   "language": {
     "selection": {
@@ -184,6 +189,10 @@
       "and": "and",
       "success_title": "Registration Successful",
       "success_message": "Congratulations! You have successfully registered. Welcome to PomeloX",
+      "auto_login_success": "Registration successful and auto-logged in! Welcome to PomeloX",
+      "success_please_login": "Registration successful! Please go to the login page to sign in with your account",
+      "processing_registration": "Processing registration...",
+      "auto_login_processing": "Auto-login in progress...",
       "error_title": "Registration Failed",
       "error_message": "An error occurred during registration. Please try again later",
       "privacy": {
@@ -261,7 +270,7 @@
         "loading_organizations": "Loading organizations...",
         "email_help": "This email will be your login account",
         "email_label": "Email *",
-        "email_placeholder": "Enter your email address",
+        "email_placeholder": "example@university.edu",
         "school_label": "School *",
         "school_placeholder": "Select your school",
         "gender_male": "Male",
@@ -342,7 +351,8 @@
       "verify_and_register": "Verify and Register"
     },
     "login_required": "Please login first",
-    "login_required_message": "Login to bookmark and track activities"
+    "login_required_message": "Login to bookmark and track activities",
+    "volunteer_login_required_message": "Login required to view volunteer information and manage check-ins"
   },
   "navigation": {
     "tabs": {
@@ -374,6 +384,19 @@
     "searchPlaceholder": "Search activities...",
     "empty": "No activities available",
     "pullToRefresh": "Pull to refresh",
+    "layout": {
+      "list_view": "List View",
+      "grid_view": "Grid View", 
+      "switch_to_grid": "Switch to Grid View",
+      "switch_to_list": "Switch to List View",
+      "selection_title": "Home Layout Toggle",
+      "grid_description": "Grid mode, more info",
+      "list_description": "List mode, detailed info"
+    },
+    "urgency": {
+      "today": "Starting Today", 
+      "upcoming": "Starting Soon"
+    },
     "filters": {
       "all": "All",
       "ongoing": "Ongoing",
@@ -428,7 +451,17 @@
       "logout": "Logout",
       "logoutConfirm": "Confirm Logout",
       "logoutMessage": "Are you sure you want to logout?",
-      "cancel": "Cancel"
+      "cancel": "Cancel",
+      "sectionAccountInfo": "Account Information",
+      "sectionPrivacySecurity": "Privacy & Security",
+      "personalProfile": "Personal Profile",
+      "personalProfileMessage": "Personal profile feature coming soon",
+      "loginSecurity": "Login & Security",
+      "loginSecurityMessage": "Login & security feature coming soon",
+      "privacyPermissions": "Privacy Permissions",
+      "privacyPermissionsMessage": "Privacy permissions feature coming soon",
+      "thirdPartyAccounts": "Third Party Accounts",
+      "thirdPartyAccountsMessage": "Third party accounts feature coming soon"
     },
     "settings": "Settings",
     "language": "Language",
@@ -440,10 +473,10 @@
     "region": "Region",
     "my_activities": "My Activities",
     "view_all": "View All",
-    "not_participated": "Not Checked In",
-    "participated": "Checked In",
-    "bookmarked": "Favored",
-    "pending_review": "To Review",
+    "not_participated": "Registered",
+    "participated": "Attended",
+    "bookmarked": "Saved",
+    "pending_review": "Review",
     "my_membership": "My Membership",
     "membership_title": "Membership",
     "membership_regular": "Regular",
@@ -492,6 +525,9 @@
       "sectionStoragePerformance": "Storage & Performance",
       "regionTimezoneMessage": "Coming soon",
       "darkModePattern": "Dark Mode Pattern",
+      "activityLayout": "Activity Layout",
+      "layoutChanged": "Layout Changed",
+      "layoutChangeMessage": "Activity layout has been changed to {{layout}} view",
       "light_mode": "Light Mode",
       "dark_mode": "Dark Mode",
       "auto_mode": "Follow System",
@@ -520,9 +556,51 @@
       "saveSuccessMessage": "Profile updated",
       "confirm": "OK"
     },
-    "about": "About Us",
-    "notifications": "Notifications",
-    "appearance": "Appearance",
+    "about": {
+      "sectionAppInfo": "App Information",
+      "sectionSupportFeedback": "Support & Feedback",
+      "sectionLegalTerms": "Legal Terms", 
+      "sectionAdvancedSettings": "Advanced Settings",
+      "aboutApp": "About App",
+      "feedbackHelp": "Feedback & Help",
+      "githubRepo": "GitHub Repo",
+      "privacyPolicy": "Privacy Policy",
+      "termsOfService": "Terms of Service",
+      "openSourceLicenses": "Open Source Licenses",
+      "diagnosticLogs": "Diagnostic Logs",
+      "appInfoDetails": "PomeloX is a comprehensive service platform designed for international students to help them better adapt to overseas life.",
+      "confirmAppInfo": "Got it",
+      "feedbackHelpMessage": "Feedback feature coming soon. You'll be able to send us feedback and suggestions directly.",
+      "openSourceLicensesMessage": "Open source licenses feature coming soon. You'll be able to view all open source component information.",
+      "diagnosticLogsMessage": "Diagnostic logs feature coming soon, helping us better resolve technical issues.",
+      "error": "Error",
+      "cannotOpenLink": "Cannot open link"
+    },
+    "notifications": {
+      "sectionPushPermissions": "Push Permissions",
+      "sectionNotificationTypes": "Notification Types",
+      "sectionAdvancedSettings": "Advanced Settings", 
+      "pushPermissions": "Push Permissions",
+      "pushPermissionsSubtitle": "Smart notification system enabled (tap to test)",
+      "activityUpdates": "Activity Updates",
+      "activityUpdatesSubtitle": "Get notified about new activities and updates", 
+      "registrationSuccess": "Registration Success",
+      "registrationSuccessSubtitle": "Receive confirmation when registration is complete",
+      "commentsMessages": "Comments Messages",
+      "commentsMessagesSubtitle": "Notifications for comments and messages",
+      "testAlertTitle": "🧪 Test Alert",
+      "testAlertMessage": "Smart notification system is working! This is a test message.",
+      "doNotDisturb": "Do Not Disturb",
+      "doNotDisturbTime": "Do Not Disturb On",
+      "doNotDisturbOff": "Off",
+      "doNotDisturbMessage": "Do not disturb feature coming soon",
+      "notificationSummary": "Summary", 
+      "notificationSummaryOff": "Off",
+      "notificationSummaryMessage": "Notification summary feature coming soon",
+      "cannotOpenSettings": "Cannot Open Settings",
+      "cannotOpenSettingsMessage": "Unable to open system settings, please go manually"
+    },
+    "appearance": "Appearance", 
     "feedback": "Feedback"
   },
   "ai": {
@@ -596,14 +674,14 @@
     "developingDescription": "Building a warm student community",
     "upcomingFeatures": "Upcoming Features",
     "features": {
-      "discussions": "Topic Discussions",
-      "discussionsDescription": "Share experiences",
-      "events": "Community Events",
-      "eventsDescription": "Organize meetups",
-      "achievements": "Achievement System",
-      "achievementsDescription": "Share resources",
-      "support": "Mutual Support",
-      "supportDescription": "Track achievements"
+      "merchantOffers": "Merchant Offers",
+      "merchantOffersDescription": "Exclusive discounts and coupons",
+      "secondHand": "Second-hand Market",
+      "secondHandDescription": "Trade items between students",
+      "career": "Career Development",
+      "careerDescription": "Job guidance and career planning",
+      "alumni": "Alumni Network",
+      "alumniDescription": "Connect with alumni and share experiences"
     },
     "comingSoon": "Coming Soon",
     "no_schools_available": "No schools available",
@@ -620,6 +698,7 @@
         "medical": "Health Guidance"
       },
       "developing": "Under Development",
+      "developing_subtitle": "More wellbeing features are under development, please stay tuned",
       "welcome_title": "Welcome to Wellbeing Plan",
       "welcome_subtitle": "We are committed to providing comprehensive safety and mental health support for international students",
       "emergency_contacts": "Emergency Contacts",
@@ -669,6 +748,13 @@
       "lastCheckOutTime": "Last Check-out Time",
       "volunteersCount": " volunteers",
       "hours": "h",
+      "hours_unit": "Hours",
+      "total_hours": "Total Hours",
+      "today": "Today",
+      "last_checkin": "Last Check-in",
+      "last_checkout": "Last Check-out",
+      "work_status": "Work Status",
+      "currently_working": "Currently Working",
       "minutes": "minutes",
       "thisVolunteerService": "This volunteer service",
       "timeRange": "Time Range",
@@ -688,6 +774,14 @@
     "tabs": {
       "plan": "Wellbeing Plan",
       "volunteer": "Volunteer Features"
+    },
+    "position": {
+      "president": "President",
+      "vice_president": "Vice President",
+      "eb": "Executive Board",
+      "officer": "Officer",
+      "hq_member": "HQ Member",
+      "manager": "Manager"
     }
   },
   "location": {
@@ -709,6 +803,12 @@
   "qr": {
     "scanning": {
       "title": "Scan Referral Code",
+      "register_title": "Scan Referral Code",
+      "membership_title": "Scan Merchant QR Code",
+      "user_identity_title": "Scan User Identity Code",
+      "activity_signin_title": "Scan Activity QR Code",
+      "verify_title": "Scan Verification Code",
+      "general_title": "Scan QR Code",
       "instruction": "Place QR code in the frame",
       "user_identity_instruction": "Place user identity QR code in the frame\nto view user information",
       "merchant_instruction": "Place merchant QR code in the frame\nto get exclusive membership card",
@@ -759,8 +859,11 @@
       "share": "Share"
     },
     "identity": {
-      "title": "My Identity Code",
-      "scan_instruction": "Scan QR code to view my information"
+      "title": "My Identity Code", 
+      "scan_instruction": "Scan QR code to view my information",
+      "organization_label": "Organization",
+      "school_label": "School",
+      "position_label": "Position"
     },
     "save": {
       "permission_denied_title": "Permission Denied",
@@ -830,7 +933,11 @@
     "checkin_failed": "Check-in failed",
     "checkin_failed_retry": "Check-in failed, please retry",
     "checkout_failed": "Check-out failed",
-    "checkout_failed_retry": "Check-out failed, please retry"
+    "checkout_failed_retry": "Check-out failed, please retry",
+    "empty_state": {
+      "title": "No active volunteers at this school",
+      "subtitle": "Only users who have participated in volunteer activities will appear here"
+    }
   },
   "school": {
     "not_found_message": "School information not found",
@@ -853,7 +960,8 @@
     "last_check_in_label": "Last Check-in:",
     "last_check_out_label": "Last Check-out:",
     "check_in_button": "Check In",
-    "check_out_button": "Check Out"
+    "check_out_button": "Check Out",
+    "check_in_records_count": "Check-in Records"
   },
   "userInfo": {
     "roles": {
@@ -951,6 +1059,20 @@
       "signingOut": "Signing Out...",
       "minutes": "min"
     },
+    "checkout": {
+      "success_title": "✅ Volunteer Check-out Successful",
+      "success_message": "Volunteer service duration: {{duration}}, thank you for your contribution!"
+    },
+    "unknown_duration": "Unknown duration",
+    "total_hours": "Total Hours",
+    "hours_unit": "Hours",
+    "recent_work_record": "Recent Work Record",
+    "checkin_time": "Check-in Time",
+    "checkout_time": "Check-out Time",
+    "checkout": {
+      "success_title": "✅ Volunteer Check-out Successful",
+      "success_message": "Volunteer service duration: {{duration}}, thank you for your contribution!"
+    },
     "alerts": {
       "hint": "Hint",
       "phoneRequired": "Please enter phone number",
@@ -977,6 +1099,7 @@
     "apply": "Apply",
     "categories": {
       "all": "All Categories",
+      "all_categories": "All",
       "academic": "Academic",
       "social": "Social", 
       "career": "Career",

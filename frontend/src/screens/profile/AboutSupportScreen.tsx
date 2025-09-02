@@ -8,15 +8,16 @@ import {
   ScrollView,
   Alert,
   Platform,
-  useColorScheme,
   Linking,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
+import { useNavigation } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 
 import { theme } from '../../theme';
+import { useTheme } from '../../context/ThemeContext';
 
 interface SettingRowProps {
   title: string;
@@ -35,8 +36,8 @@ const SettingRow: React.FC<SettingRowProps> = ({
   isLast = false,
   isExternal = false,
 }) => {
-  const colorScheme = useColorScheme();
-  const isDarkMode = colorScheme === 'dark';
+  const themeContext = useTheme();
+  const isDarkMode = themeContext.isDarkMode;
 
   const handlePress = () => {
     if (Platform.OS === 'ios') {
@@ -148,8 +149,9 @@ const SettingRow: React.FC<SettingRowProps> = ({
 
 export const AboutSupportScreen: React.FC = () => {
   const { t } = useTranslation();
-  const colorScheme = useColorScheme();
-  const isDarkMode = colorScheme === 'dark';
+  const navigation = useNavigation<any>();
+  const themeContext = useTheme();
+  const isDarkMode = themeContext.isDarkMode;
   const insets = useSafeAreaInsets();
 
   const handleAppInfo = () => {
@@ -160,38 +162,12 @@ export const AboutSupportScreen: React.FC = () => {
     );
   };
 
-  const handleFeedback = () => {
-    Alert.alert(t('profile.about.feedbackHelp'), t('profile.about.feedbackHelpMessage'));
-  };
-
   const handlePrivacyPolicy = () => {
-    const url = 'https://pomelox.github.io/privacy-policy';
-    Linking.canOpenURL(url).then(supported => {
-      if (supported) {
-        Linking.openURL(url);
-      } else {
-        Alert.alert(t('profile.about.privacyPolicyError'), t('profile.about.privacyPolicyErrorMessage'));
-      }
-    });
+    navigation.navigate('Terms', { type: 'privacy' });
   };
 
   const handleTermsOfService = () => {
-    const url = 'https://pomelox.github.io/terms-of-service';
-    Linking.canOpenURL(url).then(supported => {
-      if (supported) {
-        Linking.openURL(url);
-      } else {
-        Alert.alert(t('profile.about.termsOfServiceError'), t('profile.about.termsOfServiceErrorMessage'));
-      }
-    });
-  };
-
-  const handleOpenSource = () => {
-    Alert.alert(t('profile.about.openSourceLicenses'), t('profile.about.openSourceLicensesMessage'));
-  };
-
-  const handleDiagnostics = () => {
-    Alert.alert(t('profile.about.diagnosticLogs'), t('profile.about.diagnosticLogsMessage'));
+    navigation.navigate('Terms', { type: 'terms' });
   };
 
   const handleGitHub = () => {
@@ -211,18 +187,12 @@ export const AboutSupportScreen: React.FC = () => {
       id: 'app-info',
       title: t('profile.about.aboutApp'),
       icon: 'information-circle-outline' as keyof typeof Ionicons.glyphMap,
-      value: 'v1.0.0',
+      value: 'v1.0.24',
       onPress: handleAppInfo,
     },
   ];
 
   const supportItems = [
-    {
-      id: 'feedback',
-      title: t('profile.about.feedbackHelp'),
-      icon: 'chatbubble-outline' as keyof typeof Ionicons.glyphMap,
-      onPress: handleFeedback,
-    },
     {
       id: 'github',
       title: t('profile.about.githubRepo'),
@@ -238,31 +208,17 @@ export const AboutSupportScreen: React.FC = () => {
       title: t('profile.about.privacyPolicy'),
       icon: 'shield-checkmark-outline' as keyof typeof Ionicons.glyphMap,
       onPress: handlePrivacyPolicy,
-      isExternal: true,
+      isExternal: false,
     },
     {
       id: 'terms',
       title: t('profile.about.termsOfService'),
       icon: 'document-text-outline' as keyof typeof Ionicons.glyphMap,
       onPress: handleTermsOfService,
-      isExternal: true,
-    },
-    {
-      id: 'opensource',
-      title: t('profile.about.openSourceLicenses'),
-      icon: 'code-outline' as keyof typeof Ionicons.glyphMap,
-      onPress: handleOpenSource,
+      isExternal: false,
     },
   ];
 
-  const advancedItems = [
-    {
-      id: 'diagnostics',
-      title: t('profile.about.diagnosticLogs'),
-      icon: 'bug-outline' as keyof typeof Ionicons.glyphMap,
-      onPress: handleDiagnostics,
-    },
-  ];
 
   const styles = StyleSheet.create({
     container: {
@@ -384,26 +340,11 @@ export const AboutSupportScreen: React.FC = () => {
             </View>
           </View>
 
-          {/* 高级设置 */}
-          <View style={styles.groupContainer}>
-            <Text style={styles.groupTitle}>{t('profile.about.sectionAdvancedSettings')}</Text>
-            <View style={styles.listContainer}>
-              {advancedItems.map((item, index) => (
-                <SettingRow
-                  key={item.id}
-                  title={item.title}
-                  icon={item.icon}
-                  onPress={item.onPress}
-                  isLast={index === advancedItems.length - 1}
-                />
-              ))}
-            </View>
-          </View>
 
           {/* Version Footer */}
           <View style={styles.versionFooter}>
             <Text style={styles.versionText}>
-              PomeloX v1.0.0 Build 1
+              PomeloX v1.0.24 Build 25
             </Text>
             <Text style={styles.copyrightText}>
               © 2025 PomeloX. All rights reserved.

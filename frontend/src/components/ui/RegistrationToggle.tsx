@@ -5,7 +5,6 @@ import {
   StyleSheet,
   Vibration,
   Platform,
-  useColorScheme,
 } from 'react-native';
 import Animated, {
   useAnimatedStyle,
@@ -17,6 +16,7 @@ import Animated, {
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { theme } from '../../theme';
+import { useTheme } from '../../context/ThemeContext';
 
 interface RegistrationToggleProps {
   isActive: boolean;
@@ -34,8 +34,8 @@ export const RegistrationToggle: React.FC<RegistrationToggleProps> = ({
   showIcon = true,
 }) => {
   const { t } = useTranslation();
-  const colorScheme = useColorScheme();
-  const isDarkMode = colorScheme === 'dark';
+  const themeContext = useTheme();
+  const isDarkMode = themeContext.isDarkMode;
   
   // 动画值
   const scaleAnim = useSharedValue(1);

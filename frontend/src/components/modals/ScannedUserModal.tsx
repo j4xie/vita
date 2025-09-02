@@ -7,7 +7,6 @@ import {
   StyleSheet,
   ScrollView,
   Dimensions,
-  useColorScheme,
   Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -15,6 +14,8 @@ import { useTranslation } from 'react-i18next';
 import * as Haptics from 'expo-haptics';
 
 import { theme } from '../../theme';
+import { useTheme } from '../../context/ThemeContext';
+import { useAllDarkModeStyles } from '../../hooks/useDarkModeStyles';
 import { ScannedUserModalProps, ScannedUserInfo } from '../../types/userIdentity';
 
 const { width: screenWidth } = Dimensions.get('window');
@@ -26,8 +27,9 @@ export const ScannedUserModal: React.FC<ScannedUserModalProps> = ({
   scannerOrganization,
 }) => {
   const { t } = useTranslation();
-  const colorScheme = useColorScheme();
-  const isDarkMode = colorScheme === 'dark';
+  const themeContext = useTheme();
+  const darkModeSystem = useAllDarkModeStyles();
+  const { isDarkMode, styles: dmStyles, gradients: dmGradients, blur: dmBlur, icons: dmIcons } = darkModeSystem;
 
   const handleClose = () => {
     if (Platform.OS === 'ios') {
@@ -58,10 +60,10 @@ export const ScannedUserModal: React.FC<ScannedUserModalProps> = ({
         animationType="fade"
         onRequestClose={handleClose}
       >
-        <View style={styles.overlay}>
-          <View style={[styles.container, isDarkMode && styles.containerDark]}>
+        <View style={[styles.overlay, dmStyles.modal.overlay]}>
+          <View style={[styles.container, dmStyles.modal.container]}>
             <View style={styles.header}>
-              <Text style={[styles.title, isDarkMode && styles.titleDark]}>
+              <Text style={[styles.title, dmStyles.text.title]}>
                 {t('qr.user.error_title', '扫描失败')}
               </Text>
               <TouchableOpacity
@@ -72,15 +74,15 @@ export const ScannedUserModal: React.FC<ScannedUserModalProps> = ({
                 <Ionicons
                   name="close"
                   size={20}
-                  color={isDarkMode ? '#FFFFFF' : theme.colors.text.secondary}
+                  color={dmIcons.secondary}
                 />
               </TouchableOpacity>
             </View>
-            <Text style={[styles.errorText, isDarkMode && styles.errorTextDark]}>
+            <Text style={[styles.errorText, dmStyles.text.secondary]}>
               {userInfo.error || t('qr.user.unknown_error', '无法读取用户信息')}
             </Text>
             <TouchableOpacity
-              style={[styles.actionButton, styles.primaryButton]}
+              style={[styles.actionButton, dmStyles.button.primary]}
               onPress={handleClose}
               activeOpacity={0.7}
             >
@@ -102,21 +104,16 @@ export const ScannedUserModal: React.FC<ScannedUserModalProps> = ({
   const styles = StyleSheet.create({
     overlay: {
       flex: 1,
-      backgroundColor: 'rgba(0, 0, 0, 0.5)',
       justifyContent: 'center',
       alignItems: 'center',
       paddingHorizontal: 20,
     },
     container: {
-      backgroundColor: '#FFFFFF',
       borderRadius: 20,
       padding: 24,
       maxWidth: screenWidth - 40,
       width: '100%',
       maxHeight: '80%',
-    },
-    containerDark: {
-      backgroundColor: '#1F2937',
     },
     header: {
       flexDirection: 'row',
@@ -127,11 +124,7 @@ export const ScannedUserModal: React.FC<ScannedUserModalProps> = ({
     title: {
       fontSize: 18,
       fontWeight: '600',
-      color: theme.colors.text.primary,
       flex: 1,
-    },
-    titleDark: {
-      color: '#FFFFFF',
     },
     closeButton: {
       width: 32,
@@ -139,7 +132,6 @@ export const ScannedUserModal: React.FC<ScannedUserModalProps> = ({
       alignItems: 'center',
       justifyContent: 'center',
       borderRadius: 16,
-      backgroundColor: 'rgba(0, 0, 0, 0.05)',
     },
     
     // 用户信息区域
@@ -151,71 +143,49 @@ export const ScannedUserModal: React.FC<ScannedUserModalProps> = ({
       width: 80,
       height: 80,
       borderRadius: 40,
-      backgroundColor: '#F3F4F6',
+      backgroundColor: isDarkMode ? '#374151' : '#F3F4F6',
       alignItems: 'center',
       justifyContent: 'center',
       marginBottom: 16,
       borderWidth: 3,
-      borderColor: 'rgba(255, 107, 53, 0.2)',
-    },
-    avatarDark: {
-      backgroundColor: '#374151',
-      borderColor: 'rgba(255, 107, 53, 0.3)',
+      borderColor: isDarkMode ? 'rgba(255, 138, 101, 0.3)' : 'rgba(255, 107, 53, 0.2)',
     },
     userName: {
       fontSize: 20,
       fontWeight: '600',
-      color: '#111827',
+      color: isDarkMode ? '#FFFFFF' : '#111827',
       marginBottom: 4,
       textAlign: 'center',
     },
-    userNameDark: {
-      color: '#FFFFFF',
-    },
     userNickName: {
       fontSize: 16,
-      color: '#6B7280',
+      color: isDarkMode ? '#9CA3AF' : '#6B7280',
       marginBottom: 8,
       textAlign: 'center',
     },
-    userNickNameDark: {
-      color: '#9CA3AF',
-    },
     userEmail: {
       fontSize: 14,
-      color: '#9CA3AF',
+      color: isDarkMode ? '#D1D5DB' : '#9CA3AF',
       textAlign: 'center',
-    },
-    userEmailDark: {
-      color: '#D1D5DB',
     },
     
     // 组织信息
     organizationSection: {
-      backgroundColor: '#F9FAFB',
+      backgroundColor: isDarkMode ? '#374151' : '#F9FAFB',
       borderRadius: 12,
       padding: 16,
       marginBottom: 20,
     },
-    organizationSectionDark: {
-      backgroundColor: '#374151',
-    },
     organizationTitle: {
       fontSize: 14,
       fontWeight: '600',
-      color: '#374151',
+      color: isDarkMode ? '#D1D5DB' : '#374151',
       marginBottom: 8,
-    },
-    organizationTitleDark: {
-      color: '#D1D5DB',
     },
     organizationName: {
       fontSize: 16,
       fontWeight: '500',
-      color: '#111827',
-    },
-    organizationNameDark: {
-      color: '#FFFFFF',
+      color: isDarkMode ? '#FFFFFF' : '#111827',
     },
     
     // 统计数据
@@ -225,21 +195,15 @@ export const ScannedUserModal: React.FC<ScannedUserModalProps> = ({
     sectionTitle: {
       fontSize: 16,
       fontWeight: '600',
-      color: '#111827',
+      color: isDarkMode ? '#FFFFFF' : '#111827',
       marginBottom: 12,
-    },
-    sectionTitleDark: {
-      color: '#FFFFFF',
     },
     statsGrid: {
       flexDirection: 'row',
       justifyContent: 'space-around',
-      backgroundColor: '#F9FAFB',
+      backgroundColor: isDarkMode ? '#374151' : '#F9FAFB',
       borderRadius: 12,
       padding: 16,
-    },
-    statsGridDark: {
-      backgroundColor: '#374151',
     },
     statItem: {
       alignItems: 'center',
@@ -247,16 +211,13 @@ export const ScannedUserModal: React.FC<ScannedUserModalProps> = ({
     statNumber: {
       fontSize: 18,
       fontWeight: '600',
-      color: '#FF6B35',
+      color: isDarkMode ? dmIcons.brand : '#FF6B35',
       marginBottom: 4,
     },
     statLabel: {
       fontSize: 12,
-      color: '#6B7280',
+      color: isDarkMode ? '#9CA3AF' : '#6B7280',
       textAlign: 'center',
-    },
-    statLabelDark: {
-      color: '#9CA3AF',
     },
     
     // 最近活动
@@ -268,18 +229,15 @@ export const ScannedUserModal: React.FC<ScannedUserModalProps> = ({
       alignItems: 'center',
       paddingVertical: 12,
       paddingHorizontal: 16,
-      backgroundColor: '#F9FAFB',
+      backgroundColor: isDarkMode ? '#374151' : '#F9FAFB',
       borderRadius: 8,
       marginBottom: 8,
-    },
-    activityItemDark: {
-      backgroundColor: '#374151',
     },
     activityIcon: {
       width: 36,
       height: 36,
       borderRadius: 18,
-      backgroundColor: 'rgba(255, 107, 53, 0.1)',
+      backgroundColor: isDarkMode ? 'rgba(255, 138, 101, 0.16)' : 'rgba(255, 107, 53, 0.1)',
       alignItems: 'center',
       justifyContent: 'center',
       marginRight: 12,
@@ -290,37 +248,25 @@ export const ScannedUserModal: React.FC<ScannedUserModalProps> = ({
     activityTitle: {
       fontSize: 14,
       fontWeight: '500',
-      color: '#111827',
+      color: isDarkMode ? '#FFFFFF' : '#111827',
       marginBottom: 2,
-    },
-    activityTitleDark: {
-      color: '#FFFFFF',
     },
     activityDate: {
       fontSize: 12,
-      color: '#6B7280',
-    },
-    activityDateDark: {
-      color: '#9CA3AF',
+      color: isDarkMode ? '#9CA3AF' : '#6B7280',
     },
     
     // 权限提示
     permissionNotice: {
-      backgroundColor: '#FEF3C7',
+      backgroundColor: isDarkMode ? '#451A03' : '#FEF3C7',
       borderRadius: 8,
       padding: 12,
       marginBottom: 20,
     },
-    permissionNoticeDark: {
-      backgroundColor: '#451A03',
-    },
     permissionNoticeText: {
       fontSize: 14,
-      color: '#92400E',
+      color: isDarkMode ? '#FCD34D' : '#92400E',
       textAlign: 'center',
-    },
-    permissionNoticeTextDark: {
-      color: '#FCD34D',
     },
     
     // 操作按钮
@@ -339,16 +285,12 @@ export const ScannedUserModal: React.FC<ScannedUserModalProps> = ({
       gap: 6,
     },
     primaryButton: {
-      backgroundColor: '#FF6B35',
+      backgroundColor: theme.colors.primary,
     },
     secondaryButton: {
-      backgroundColor: '#F3F4F6',
+      backgroundColor: isDarkMode ? '#374151' : '#F3F4F6',
       borderWidth: 1,
-      borderColor: '#E5E7EB',
-    },
-    secondaryButtonDark: {
-      backgroundColor: '#374151',
-      borderColor: '#4B5563',
+      borderColor: isDarkMode ? '#4B5563' : '#E5E7EB',
     },
     disabledButton: {
       backgroundColor: '#F3F4F6',
@@ -362,21 +304,15 @@ export const ScannedUserModal: React.FC<ScannedUserModalProps> = ({
     secondaryButtonText: {
       fontSize: 14,
       fontWeight: '600',
-      color: '#374151',
-    },
-    secondaryButtonTextDark: {
-      color: '#FFFFFF',
+      color: isDarkMode ? '#FFFFFF' : '#374151',
     },
     
     // 错误状态
     errorText: {
       fontSize: 16,
-      color: '#DC2626',
+      color: isDarkMode ? '#F87171' : '#DC2626',
       textAlign: 'center',
       marginBottom: 20,
-    },
-    errorTextDark: {
-      color: '#F87171',
     },
   });
 
@@ -387,12 +323,12 @@ export const ScannedUserModal: React.FC<ScannedUserModalProps> = ({
       animationType="fade"
       onRequestClose={handleClose}
     >
-      <View style={styles.overlay}>
-        <View style={[styles.container, isDarkMode && styles.containerDark]}>
+      <View style={[styles.overlay, dmStyles.modal.overlay]}>
+        <View style={[styles.container, dmStyles.modal.container]}>
           <ScrollView showsVerticalScrollIndicator={false}>
             {/* Header */}
             <View style={styles.header}>
-              <Text style={[styles.title, isDarkMode && styles.titleDark]}>
+              <Text style={[styles.title, dmStyles.text.title]}>
                 {t('qr.user.profile_title', '用户信息')}
               </Text>
               <TouchableOpacity
@@ -403,29 +339,29 @@ export const ScannedUserModal: React.FC<ScannedUserModalProps> = ({
                 <Ionicons
                   name="close"
                   size={20}
-                  color={isDarkMode ? '#FFFFFF' : theme.colors.text.secondary}
+                  color={dmIcons.secondary}
                 />
               </TouchableOpacity>
             </View>
 
             {/* User Info */}
             <View style={styles.userSection}>
-              <View style={[styles.avatar, isDarkMode && styles.avatarDark]}>
+              <View style={styles.avatar}>
                 {user.avatarUrl ? (
                   // TODO: 显示实际头像
-                  <Ionicons name="person" size={32} color="#9CA3AF" />
+                  <Ionicons name="person" size={32} color={dmIcons.tertiary} />
                 ) : (
-                  <Ionicons name="person" size={32} color="#9CA3AF" />
+                  <Ionicons name="person" size={32} color={dmIcons.tertiary} />
                 )}
               </View>
-              <Text style={[styles.userName, isDarkMode && styles.userNameDark]}>
+              <Text style={styles.userName}>
                 {user.legalName}
               </Text>
-              <Text style={[styles.userNickName, isDarkMode && styles.userNickNameDark]}>
+              <Text style={styles.userNickName}>
                 {user.nickName}
               </Text>
               {canViewContact && (
-                <Text style={[styles.userEmail, isDarkMode && styles.userEmailDark]}>
+                <Text style={styles.userEmail}>
                   {user.email}
                 </Text>
               )}
@@ -433,11 +369,11 @@ export const ScannedUserModal: React.FC<ScannedUserModalProps> = ({
 
             {/* Organization Info */}
             {user.currentOrganization && (
-              <View style={[styles.organizationSection, isDarkMode && styles.organizationSectionDark]}>
-                <Text style={[styles.organizationTitle, isDarkMode && styles.organizationTitleDark]}>
+              <View style={styles.organizationSection}>
+                <Text style={styles.organizationTitle}>
                   {t('qr.user.organization', '所属组织')}
                 </Text>
-                <Text style={[styles.organizationName, isDarkMode && styles.organizationNameDark]}>
+                <Text style={styles.organizationName}>
                   {user.currentOrganization.displayNameZh}
                 </Text>
               </View>
@@ -446,25 +382,25 @@ export const ScannedUserModal: React.FC<ScannedUserModalProps> = ({
             {/* Activity Stats */}
             {canViewDetails && user.activityStats && (
               <View style={styles.statsSection}>
-                <Text style={[styles.sectionTitle, isDarkMode && styles.sectionTitleDark]}>
+                <Text style={styles.sectionTitle}>
                   {t('qr.user.activity_stats', '活动统计')}
                 </Text>
-                <View style={[styles.statsGrid, isDarkMode && styles.statsGridDark]}>
+                <View style={styles.statsGrid}>
                   <View style={styles.statItem}>
                     <Text style={styles.statNumber}>{user.activityStats.totalParticipated}</Text>
-                    <Text style={[styles.statLabel, isDarkMode && styles.statLabelDark]}>
+                    <Text style={styles.statLabel}>
                       {t('qr.user.participated', '参与活动')}
                     </Text>
                   </View>
                   <View style={styles.statItem}>
                     <Text style={styles.statNumber}>{user.activityStats.volunteeredHours}h</Text>
-                    <Text style={[styles.statLabel, isDarkMode && styles.statLabelDark]}>
+                    <Text style={styles.statLabel}>
                       {t('qr.user.volunteer_hours', '志愿时长')}
                     </Text>
                   </View>
                   <View style={styles.statItem}>
                     <Text style={styles.statNumber}>{user.activityStats.points}</Text>
-                    <Text style={[styles.statLabel, isDarkMode && styles.statLabelDark]}>
+                    <Text style={styles.statLabel}>
                       {t('qr.user.points', '积分')}
                     </Text>
                   </View>
@@ -475,26 +411,26 @@ export const ScannedUserModal: React.FC<ScannedUserModalProps> = ({
             {/* Recent Activities */}
             {canViewActivities && recentActivities && recentActivities.length > 0 && (
               <View style={styles.activitiesSection}>
-                <Text style={[styles.sectionTitle, isDarkMode && styles.sectionTitleDark]}>
+                <Text style={styles.sectionTitle}>
                   {t('qr.user.recent_activities', '最近活动')}
                 </Text>
                 {recentActivities.slice(0, 3).map((activity, index) => (
                   <View 
                     key={activity.id}
-                    style={[styles.activityItem, isDarkMode && styles.activityItemDark]}
+                    style={styles.activityItem}
                   >
                     <View style={styles.activityIcon}>
                       <Ionicons 
                         name={activity.role === 'organizer' ? 'star' : 'calendar'} 
                         size={16} 
-                        color="#FF6B35" 
+                        color={dmIcons.brand} 
                       />
                     </View>
                     <View style={styles.activityInfo}>
-                      <Text style={[styles.activityTitle, isDarkMode && styles.activityTitleDark]}>
+                      <Text style={styles.activityTitle}>
                         {activity.title}
                       </Text>
-                      <Text style={[styles.activityDate, isDarkMode && styles.activityDateDark]}>
+                      <Text style={styles.activityDate}>
                         {new Date(activity.participatedAt).toLocaleDateString('zh-CN')}
                       </Text>
                     </View>
@@ -505,8 +441,8 @@ export const ScannedUserModal: React.FC<ScannedUserModalProps> = ({
 
             {/* Permission Notice */}
             {!canViewDetails && (
-              <View style={[styles.permissionNotice, isDarkMode && styles.permissionNoticeDark]}>
-                <Text style={[styles.permissionNoticeText, isDarkMode && styles.permissionNoticeTextDark]}>
+              <View style={styles.permissionNotice}>
+                <Text style={styles.permissionNoticeText}>
                   {t('qr.user.limited_access', '权限有限，部分信息不可见')}
                 </Text>
               </View>
@@ -517,16 +453,16 @@ export const ScannedUserModal: React.FC<ScannedUserModalProps> = ({
           <View style={styles.actions}>
             {canViewContact && (
               <TouchableOpacity
-                style={[styles.actionButton, styles.secondaryButton, isDarkMode && styles.secondaryButtonDark]}
+                style={[styles.actionButton, styles.secondaryButton]}
                 onPress={handleViewContact}
                 activeOpacity={0.7}
               >
                 <Ionicons 
                   name="person-add-outline" 
                   size={16} 
-                  color={isDarkMode ? '#FFFFFF' : '#374151'} 
+                  color={dmIcons.primary} 
                 />
-                <Text style={[styles.secondaryButtonText, isDarkMode && styles.secondaryButtonTextDark]}>
+                <Text style={styles.secondaryButtonText}>
                   {t('qr.user.add_contact', '添加联系')}
                 </Text>
               </TouchableOpacity>

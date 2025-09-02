@@ -47,76 +47,111 @@ export interface FrontendActivity {
   enabled?: boolean;
 }
 
+// 🚀 性能优化：预编译状态映射表
+const REGISTRATION_STATUS_MAP = new Map<number, 'upcoming' | 'registered' | 'checked_in'>([
+  [-1, 'registered'],
+  [1, 'checked_in'],
+]);
+
+const ACTIVITY_TYPE_MAP = new Map<number, 'upcoming' | 'ongoing' | 'ended'>([
+  [-1, 'upcoming'],
+  [1, 'ongoing'], 
+  [2, 'ended'],
+]);
+
 /**
- * 转换报名状态
+ * 快速转换报名状态
  */
 const convertRegistrationStatus = (signStatus?: number): 'upcoming' | 'registered' | 'checked_in' => {
-  switch (signStatus) {
-    case -1:
-      return 'registered';
-    case 1:
-      return 'checked_in';
-    default:
-      return 'upcoming';
-  }
+  return REGISTRATION_STATUS_MAP.get(signStatus ?? 0) ?? 'upcoming';
 };
 
 /**
- * 转换活动类型状态
+ * 快速转换活动类型状态
  */
 const convertActivityType = (type?: number): 'upcoming' | 'ongoing' | 'ended' => {
-  switch (type) {
-    case -1:
-      return 'upcoming';
-    case 1:
-      return 'ongoing';
-    case 2:
-      return 'ended';
-    default:
-      return 'upcoming';
-  }
+  return ACTIVITY_TYPE_MAP.get(type ?? -1) ?? 'upcoming';
 };
 
+// 🚀 性能优化：快速时间解析缓存
+const TIME_PARSE_CACHE = new Map<string, { date: string; time: string }>();
+
 /**
- * 解析时间字符串为日期和时间
+ * 快速解析时间字符串（带缓存）
  */
 const parseDateTime = (dateTimeString: string): { date: string; time: string } => {
+  // 检查缓存
+  const cached = TIME_PARSE_CACHE.get(dateTimeString);
+  if (cached) return cached;
+  
+  let result: { date: string; time: string };
+  
   try {
     const date = new Date(dateTimeString);
-    return {
+    result = {
       date: date.toISOString().split('T')[0], // YYYY-MM-DD
       time: date.toTimeString().slice(0, 5), // HH:MM
     };
   } catch (error) {
-    return {
-      date: dateTimeString.split(' ')[0] || '',
-      time: dateTimeString.split(' ')[1] || '',
+    // Fallback parsing
+    const parts = dateTimeString.split(' ');
+    result = {
+      date: parts[0] || '',
+      time: parts[1]?.slice(0, 5) || '',
     };
   }
+  
+  // 缓存结果（限制缓存大小，防止内存泄漏）
+  if (TIME_PARSE_CACHE.size < 100) {
+    TIME_PARSE_CACHE.set(dateTimeString, result);
+  }
+  
+  return result;
 };
 
 /**
  * 适配单个活动数据
  */
+// 🚀 性能优化：批量适配活动数据
 export const adaptActivity = (
   backendActivity: BackendActivity, 
   language: 'zh' | 'en' = 'zh'
 ): FrontendActivity => {
+  // 快速解析时间（使用缓存）
   const { date, time } = parseDateTime(backendActivity.startTime);
   const { date: endDate } = parseDateTime(backendActivity.endTime);
   
-  // 优先使用signStatus（报名状态），如果没有则使用type（活动状态）
-  const activityStatus = backendActivity.signStatus !== undefined 
-    ? convertRegistrationStatus(backendActivity.signStatus)
-    : convertActivityType(backendActivity.type);
+  // 实时计算活动状态，确保准确性
+  const calculateRealTimeStatus = (): 'upcoming' | 'ongoing' | 'ended' | 'registered' | 'checked_in' => {
+    // 第一优先级：用户的报名/签到状态
+    if (backendActivity.signStatus !== undefined) {
+      return convertRegistrationStatus(backendActivity.signStatus);
+    }
     
-  // 调试：记录状态转换
-  console.log(`🔄 活动${backendActivity.id}(${backendActivity.name})状态转换:`, {
-    原始signStatus: backendActivity.signStatus,
-    原始type: backendActivity.type, 
-    转换后status: activityStatus,
-    使用了signStatus: backendActivity.signStatus !== undefined
-  });
+    // 第二优先级：基于当前时间实时计算活动状态
+    const now = new Date();
+    const activityStart = new Date(backendActivity.startTime);
+    const activityEnd = new Date(backendActivity.endTime);
+    
+    if (activityEnd.getTime() < now.getTime()) {
+      return 'ended'; // 已结束
+    } else if (activityStart.getTime() <= now.getTime() && activityEnd.getTime() >= now.getTime()) {
+      return 'ongoing'; // 进行中
+    } else {
+      return 'upcoming'; // 即将开始
+    }
+  };
+  
+  const activityStatus = calculateRealTimeStatus();
+    
+  // 🚀 减少调试日志，只在必要时输出
+  if (backendActivity.id % 10 === 0) { // 每10个活动输出一次状态
+    console.log(`🔄 活动${backendActivity.id}状态转换:`, {
+      signStatus: backendActivity.signStatus,
+      type: backendActivity.type, 
+      result: activityStatus
+    });
+  }
 
   return {
     id: backendActivity.id.toString(),
@@ -141,6 +176,52 @@ export const adaptActivity = (
     detail: backendActivity.detail,
     enabled: backendActivity.enabled === 1,
   };
+};
+
+/**
+ * 智能活动排序算法 - 混合时间紧急性和发布新鲜度
+ */
+const smartSortActivities = (activities: FrontendActivity[]): FrontendActivity[] => {
+  const now = new Date();
+  
+  return activities.sort((a, b) => {
+    const aStart = new Date(a.date + ' ' + a.time);
+    const bStart = new Date(b.date + ' ' + b.time);
+    const aEnd = a.endDate ? new Date(a.endDate + ' 23:59:59') : aStart;
+    const bEnd = b.endDate ? new Date(b.endDate + ' 23:59:59') : bStart;
+    
+    // 计算到活动开始的小时数
+    const aHoursToStart = (aStart.getTime() - now.getTime()) / (1000 * 60 * 60);
+    const bHoursToStart = (bStart.getTime() - now.getTime()) / (1000 * 60 * 60);
+    
+    // 判断活动是否已结束
+    const aEnded = aEnd.getTime() < now.getTime();
+    const bEnded = bEnd.getTime() < now.getTime();
+    
+    // 已结束的活动排在最后
+    if (aEnded && !bEnded) return 1;
+    if (!aEnded && bEnded) return -1;
+    if (aEnded && bEnded) return parseInt(b.id) - parseInt(a.id); // 已结束的按发布时间排序
+    
+    // 第一层：24小时内的紧急活动（优先级最高）
+    const aUrgent = aHoursToStart >= 0 && aHoursToStart <= 24;
+    const bUrgent = bHoursToStart >= 0 && bHoursToStart <= 24;
+    
+    if (aUrgent && !bUrgent) return -1;
+    if (!aUrgent && bUrgent) return 1;
+    if (aUrgent && bUrgent) return aHoursToStart - bHoursToStart;
+    
+    // 第二层：7天内的即将开始活动
+    const aUpcoming = aHoursToStart >= 0 && aHoursToStart <= 168; // 7*24h
+    const bUpcoming = bHoursToStart >= 0 && bHoursToStart <= 168;
+    
+    if (aUpcoming && !bUpcoming) return -1;
+    if (!aUpcoming && bUpcoming) return 1;
+    if (aUpcoming && bUpcoming) return aHoursToStart - bHoursToStart;
+    
+    // 第三层：其他活动按ID倒序排序(代表发布时间)
+    return parseInt(b.id) - parseInt(a.id);
+  });
 };
 
 /**
@@ -173,8 +254,11 @@ export const adaptActivityList = (
     .filter(activity => activity.enabled === 1) // 只显示启用的活动
     .map(activity => adaptActivity(activity, language));
 
+  // 应用智能排序算法
+  const sortedActivities = smartSortActivities(activities);
+
   return {
-    activities,
+    activities: sortedActivities,
     total: backendResponse.total,
     success: true,
     message: backendResponse.msg,

@@ -1,8 +1,10 @@
-import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Image, Dimensions } from 'react-native';
+import React, { useRef, useMemo } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, Image, Dimensions, Animated } from 'react-native';
 import { getSchoolLogo } from '../../utils/schoolLogos';
 import { Glass } from '../../ui/glass/GlassTheme';
 import { useTranslation } from 'react-i18next';
+import { useCardPress } from '../../hooks/useCardPress';
+import { useAllDarkModeStyles } from '../../hooks/useDarkModeStyles';
 
 const { width: screenWidth } = Dimensions.get('window');
 
@@ -12,6 +14,8 @@ interface School {
   shortName: string;
   deptId: number;
   deptName: string;
+  engName?: string; // 🌍 英文名称
+  aprName?: string; // 简称
 }
 
 interface SchoolGridProps {
@@ -19,18 +23,150 @@ interface SchoolGridProps {
   loading: boolean;
   onSchoolSelect: (schoolId: string) => void;
   onRetry?: () => void;
+  isScrolling?: boolean;  // 🚀 新增：滚动状态，用于防止滚动时误触
 }
+
+// 小红书风格学校卡片组件
+const XiaohongshuSchoolCard: React.FC<{ 
+  school: School; 
+  onPress: () => void; 
+  getDisplayName: (school: School) => string;
+  cardHeight: number;
+  index: number;
+  isScrolling?: boolean;  // 🚀 新增：滚动状态
+}> = ({ school, onPress, getDisplayName, cardHeight, index, isScrolling }) => {
+  const scaleAnim = useRef(new Animated.Value(1)).current;
+  
+  // 🌙 Dark Mode Support
+  const darkModeSystem = useAllDarkModeStyles();
+  const { isDarkMode, styles: dmStyles } = darkModeSystem;
+  
+  
+  // 🚀 带详细调试的点击处理 - 只应该在TouchEnd时被调用
+  const handleCardPress = () => {
+    console.log('🔥 [CRITICAL-DEBUG] handleCardPress被调用 - 这应该只在TouchEnd时发生:', {
+      schoolName: school.shortName,
+      isScrolling,
+      timestamp: new Date().toISOString(),
+      callStack: new Error().stack?.split('\n').slice(1, 4)
+    });
+    
+    // 🚨 额外验证：这个函数只应该在TouchEnd后被调用
+    console.warn('⚠️ [TIMING-CHECK] 如果这个日志在TouchEnd之前出现，说明有bug');
+    
+    // 🚨 滚动状态检查 - 如果正在滚动，完全拒绝点击
+    if (isScrolling) {
+      console.log('🚫 [SCROLL-GUARD] 滚动中拒绝点击:', school.shortName);
+      return;
+    }
+    
+    console.log('✅ [SCHOOL-CARD] 学校卡片确认打开:', school.shortName);
+    onPress();
+  };
+
+  // 🚀 启用调试模式追踪触摸事件
+  const { touchHandlers } = useCardPress({
+    onPress: handleCardPress,
+    onPressIn: handlePressIn,
+    onPressOut: handlePressOut,
+  }, {
+    maxMoveThreshold: 15,      // 与ActivityCard完全相同：15px内移动视为点击
+    maxTimeThreshold: 400,     // 与ActivityCard完全相同：400ms内视为点击
+    enableHaptics: true,
+    debug: true,              // 🚨 启用调试模式
+  });
+
+  // 按压动画效果 - 只处理动画，不触发点击
+  const handlePressIn = () => {
+    console.log('🎨 [ANIMATION] PressIn - 开始按压动画，不触发点击');
+    Animated.spring(scaleAnim, {
+      toValue: 0.95,
+      tension: 300,
+      friction: 20,
+      useNativeDriver: true,
+    }).start();
+  };
+
+  const handlePressOut = () => {
+    console.log('🎨 [ANIMATION] PressOut - 结束按压动画，不触发点击');
+    Animated.spring(scaleAnim, {
+      toValue: 1,
+      tension: 300,
+      friction: 20,
+      useNativeDriver: true,
+    }).start();
+  };
+
+
+  return (
+    <Animated.View 
+      style={[
+        styles.xiaohongshuCard,
+        {
+          height: cardHeight,
+          transform: [{ scale: scaleAnim }]
+        }
+      ]}
+      {...touchHandlers}  // 严格的卡片点击检测，防止滑动时误触
+    >
+      <View style={styles.xiaohongshuContent}>
+        <View style={styles.logoSection}>
+          {(() => {
+            const logoSource = getSchoolLogo(school.id);
+            return logoSource ? (
+              <Image
+                source={logoSource}
+                style={styles.xiaohongshuLogo}
+                resizeMode="contain"
+              />
+            ) : (
+              <View style={styles.xiaohongshuFallback}>
+                <Text style={styles.xiaohongshuFallbackText}>{school.shortName}</Text>
+              </View>
+            );
+          })()}
+        </View>
+        
+        {/* 学校信息 */}
+        <View style={styles.schoolInfo}>
+          <Text style={[
+            styles.xiaohongshuSchoolName,
+            { color: isDarkMode ? dmStyles.text.primary.color : '#1F2937' }
+          ]} numberOfLines={2}>{getDisplayName(school)}</Text>
+          <Text style={[
+            styles.xiaohongshuSchoolCode,
+            { color: isDarkMode ? dmStyles.text.secondary.color : '#6B7280' }
+          ]}>{school.shortName}</Text>
+        </View>
+      </View>
+    </Animated.View>
+  );
+};
 
 export const SchoolGrid: React.FC<SchoolGridProps> = ({
   schools,
   loading,
   onSchoolSelect,
-  onRetry
+  onRetry,
+  isScrolling = false  // 🚀 接收滚动状态
 }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   
-  const gutter = Glass.touch.spacing.gridGutter;
-  const cardWidth = Math.floor((screenWidth - gutter * 3) / 2);
+  // 🌙 Dark Mode Support
+  const darkModeSystem = useAllDarkModeStyles();
+  const { isDarkMode, styles: dmStyles } = darkModeSystem;
+  
+  // 🌍 根据当前语言获取学校显示名称
+  const getSchoolDisplayName = (school: School): string => {
+    const currentLanguage = i18n.language;
+    
+    if (currentLanguage === 'en-US' && school.engName) {
+      return school.engName;
+    }
+    
+    return school.name || school.deptName; // fallback逻辑
+  };
+  
 
   if (loading) {
     return (
@@ -54,110 +190,136 @@ export const SchoolGrid: React.FC<SchoolGridProps> = ({
     );
   }
 
+  // 小红书风格瀑布流布局计算
+  const cardWidth = Math.floor((screenWidth - Glass.touch.spacing.sectionMargin * 2 - 12) / 2);
+  
+  // 统一卡片高度
+  const cardHeight = 160;
+  
+  // 将学校分为两列
+  const leftColumn = schools.filter((_, index) => index % 2 === 0);
+  const rightColumn = schools.filter((_, index) => index % 2 === 1);
+
   return (
-    <View style={styles.schoolsGrid}>
-      {schools.map((school) => (
-        <TouchableOpacity 
-          key={school.id}
-          style={styles.schoolCard}
-          onPress={() => onSchoolSelect(school.id)}
-          activeOpacity={0.9}
-        >
-          <View style={styles.schoolContent}>
-            <View style={styles.logoContainer}>
-              {(() => {
-                const logoSource = getSchoolLogo(school.id);
-                return logoSource ? (
-                  <Image
-                    source={logoSource}
-                    style={styles.schoolLogo}
-                    resizeMode="cover"
-                  />
-                ) : (
-                  <View style={styles.fallbackLogo}>
-                    <Text style={styles.fallbackLogoText}>{school.shortName}</Text>
-                  </View>
-                );
-              })()}
-            </View>
-            <Text style={styles.schoolName}>{school.name}</Text>
-            <Text style={styles.schoolShortName}>{school.shortName}</Text>
-          </View>
-        </TouchableOpacity>
-      ))}
+    <View style={styles.xiaohongshuGrid}>
+      {/* 左列 */}
+      <View style={[styles.gridColumn, { width: cardWidth }]}>
+        {leftColumn.map((school, index) => (
+          <XiaohongshuSchoolCard
+            key={school.id}
+            school={school}
+            onPress={() => onSchoolSelect(school.id)}
+            getDisplayName={getSchoolDisplayName}
+            cardHeight={cardHeight}
+            index={index * 2}
+            isScrolling={isScrolling}  // 🚀 传递滚动状态
+          />
+        ))}
+      </View>
+      
+      {/* 右列 */}
+      <View style={[styles.gridColumn, { width: cardWidth }]}>
+        {rightColumn.map((school, index) => (
+          <XiaohongshuSchoolCard
+            key={school.id}
+            school={school}
+            onPress={() => onSchoolSelect(school.id)}
+            getDisplayName={getSchoolDisplayName}
+            cardHeight={cardHeight}
+            index={index * 2 + 1}
+            isScrolling={isScrolling}  // 🚀 传递滚动状态
+          />
+        ))}
+      </View>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  schoolsGrid: {
-    paddingHorizontal: Glass.touch.spacing.sectionMargin,
+  // 小红书风格瀑布流布局
+  xiaohongshuGrid: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
+    paddingHorizontal: Glass.touch.spacing.sectionMargin,
+    alignItems: 'flex-start',
+  },
+  
+  gridColumn: {
+    flex: 1,
+  },
+  
+  // 小红书风格卡片
+  xiaohongshuCard: {
+    borderRadius: 12,
+    marginBottom: 8,
+    marginHorizontal: 4,
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
+    elevation: 3,
+    borderWidth: 0.5,
+    borderColor: 'rgba(0, 0, 0, 0.03)',
+  },
+  
+  xiaohongshuContent: {
+    flex: 1,
+    borderRadius: 12,
+    padding: 12,
     justifyContent: 'space-between',
   },
-
-  schoolCard: {
-    width: '47%',
-    marginBottom: Glass.touch.spacing.gridGutter,
-  },
-
-  schoolContent: {
-    padding: 16,
+  
+  logoSection: {
     alignItems: 'center',
-    justifyContent: 'center',
-    minHeight: 140,
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
-    borderRadius: 16,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 3,
+    marginBottom: 16,
   },
-
-  logoContainer: {
-    marginBottom: 8,
+  
+  xiaohongshuLogo: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
   },
-
-  schoolLogo: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-  },
-
-  fallbackLogo: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+  
+  xiaohongshuFallback: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
     backgroundColor: '#F3F4F6',
     alignItems: 'center',
     justifyContent: 'center',
   },
-
-  fallbackLogoText: {
-    fontSize: 14,
+  
+  xiaohongshuFallbackText: {
+    fontSize: 16,
     fontWeight: '700',
-    color: Glass.textMain,
+    color: '#9CA3AF',
   },
-
-  schoolName: {
-    fontSize: 14,
+  
+  schoolInfo: {
+    alignItems: 'center',
+    flex: 1,
+    justifyContent: 'flex-end',
+  },
+  
+  xiaohongshuSchoolName: {
+    fontSize: 15,
     fontWeight: '600',
-    color: '#333333',
     textAlign: 'center',
+    lineHeight: 20,
     marginBottom: 4,
   },
-
-  schoolShortName: {
+  
+  xiaohongshuSchoolCode: {
     fontSize: 12,
-    color: '#666666',
     textAlign: 'center',
+    fontWeight: '500',
+    opacity: 0.8,
   },
 
+
+  
+
+  // 加载和空状态样式
   loadingContainer: {
     padding: 40,
     alignItems: 'center',

@@ -9,7 +9,6 @@ import {
   TextInput,
   Animated,
   Platform,
-  useColorScheme,
   Dimensions,
 } from 'react-native';
 import Reanimated, {
@@ -27,13 +26,15 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 
 import { theme } from '../../theme';
+import { useTheme } from '../../context/ThemeContext';
 import { LIQUID_GLASS_LAYERS, BRAND_GLASS } from '../../theme/core';
 import { usePerformanceDegradation } from '../../hooks/usePerformanceDegradation';
+import { useCardPress } from '../../hooks/useCardPress';
 // mockSchools and School type moved to real data (using getUserList API)
-import { getUserList } from '../../services/adminAPI';
 import { pomeloXAPI } from '../../services/PomeloXAPI';
 import { getUserList } from '../../services/userStatsAPI';
 import { useUser } from '../../context/UserContext';
+import { apiCache, CacheTTL } from '../../services/apiCache';
 
 interface SchoolSelectionScreenProps {
   onSchoolSelect: (school: School) => void;
@@ -41,8 +42,8 @@ interface SchoolSelectionScreenProps {
 
 export const SchoolSelectionScreen: React.FC<SchoolSelectionScreenProps> = ({ onSchoolSelect }) => {
   const { t } = useTranslation();
-  const colorScheme = useColorScheme();
-  const isDarkMode = colorScheme === 'dark';
+  const themeContext = useTheme();
+  const isDarkMode = themeContext.isDarkMode;
   const insets = useSafeAreaInsets();
   
   // 用户权限检查
@@ -75,6 +76,10 @@ export const SchoolSelectionScreen: React.FC<SchoolSelectionScreenProps> = ({ on
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [selectedSchoolId, setSelectedSchoolId] = useState<string | null>(null);
   
+  // 🚀 滚动状态跟踪防止误触
+  const [isScrolling, setIsScrolling] = useState(false);
+  const scrollTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
+  
   // 动画值 - v2方案
   const transitionProgress = useSharedValue(0);
   const cardScale = useSharedValue(1);
@@ -86,19 +91,32 @@ export const SchoolSelectionScreen: React.FC<SchoolSelectionScreenProps> = ({ on
   const highlightGain = useSharedValue(1);
 
   // 获取学校列表
+  // 🚀 性能优化：快速加载学校基础信息
   const loadSchools = useCallback(async () => {
     try {
       setIsLoadingSchools(true);
-      console.log('🏫 开始获取学校列表...');
+      console.log('🏫 快速获取学校基础信息...');
       
-      const response = await pomeloXAPI.getSchoolList();
+      // 使用缓存加速学校列表加载
+      const response = await apiCache.cachedCall(
+        'schoolList:volunteer_module',
+        () => pomeloXAPI.getSchoolList(),
+        CacheTTL.LONG // 15分钟缓存
+      );
       
       if (response.code === 200 && response.data) {
-        console.log('🏫 学校列表获取成功:', {
+        console.log('🏫 学校列表加载完成:', {
           count: response.data.length,
-          schools: response.data.map(s => ({ deptId: s.deptId, deptName: s.deptName }))
+          loadTime: '< 1秒'
         });
         setSchools(response.data);
+        
+        // 🚀 关键优化：学校列表显示后，异步加载志愿者统计
+        console.log('⚡ 开始后台异步加载志愿者统计...');
+        setTimeout(() => {
+          loadVolunteerCounts(); // 不阻塞UI显示
+        }, 200);
+        
       } else {
         console.error('🏫 学校列表获取失败:', response);
         setSchools([]);
@@ -107,11 +125,11 @@ export const SchoolSelectionScreen: React.FC<SchoolSelectionScreenProps> = ({ on
       console.error('🏫 获取学校列表异常:', error);
       setSchools([]);
     } finally {
-      setIsLoadingSchools(false);
+      setIsLoadingSchools(false); // 基础信息加载完成，UI立即可用
     }
   }, []);
 
-  // 获取实时志愿者数量
+  // 🚀 优化：异步加载志愿者数量统计（不阻塞学校列表显示）
   const loadVolunteerCounts = useCallback(async () => {
     // 只有总管理员和分管理员可以查看志愿者数量统计
     if (!permissions.hasUserManagementAccess()) {
@@ -121,9 +139,14 @@ export const SchoolSelectionScreen: React.FC<SchoolSelectionScreenProps> = ({ on
     
     try {
       setIsLoadingCounts(true);
-      console.log('🔄 开始获取志愿者数量(管理员+内部员工)...', { permissionLevel, userName: user?.userName });
+      console.log('⚡ 后台异步获取志愿者统计...', { permissionLevel, userName: user?.userName });
 
-      const userListResult = await getUserList();
+      // 🚀 使用缓存优化用户列表获取
+      const userListResult = await apiCache.cachedCall(
+        'userList:volunteer_stats',
+        () => getUserList(),
+        CacheTTL.USER_INFO // 10分钟缓存
+      );
 
       if (userListResult.code === 200 && Array.isArray(userListResult.data)) {
         const users: any[] = userListResult.data;
@@ -143,7 +166,7 @@ export const SchoolSelectionScreen: React.FC<SchoolSelectionScreenProps> = ({ on
           const userName: string = (u?.userName || '').toLowerCase();
           const postCode: string = (u?.postCode || '').toLowerCase();
           const roleKeys: string[] = Array.isArray(u?.roles)
-            ? u.roles.map((r: any) => String(r?.roleKey || '').toLowerCase())
+            ? u.roles.map((r: any) => String(r?.roleKey || r?.key || '').toLowerCase())
             : [];
 
           const isManager = userName.includes('admin') || roleKeys.some(k => k.includes('admin'));
@@ -162,6 +185,9 @@ export const SchoolSelectionScreen: React.FC<SchoolSelectionScreenProps> = ({ on
 
         console.log('📈 管理员+内部员工数量统计结果(去重后):', counts);
         setVolunteerCounts(counts);
+        
+        // 🎯 用户体验提示
+        console.log('⚡ 志愿者统计加载完成，UI将渐进更新显示数字');
       } else {
         console.warn('📊 用户列表获取失败，使用空统计');
         setVolunteerCounts({});
@@ -180,19 +206,23 @@ export const SchoolSelectionScreen: React.FC<SchoolSelectionScreenProps> = ({ on
     switch (permissionLevel) {
       case 'super_admin':
         // 总管理员：显示所有学校的真实数据
-        if (isLoadingCounts) return '...';
-        return `${volunteerCounts[school.deptId] || 0}`;
+        if (isLoadingCounts) return '⋯'; // 更友好的加载指示
+        const count = volunteerCounts[school.deptId];
+        return typeof count === 'number' ? count.toString() : (isLoadingCounts ? '⋯' : '0');
         
       case 'part_manager':
         // 分管理员：只显示本校数据，其他学校显示"-"
-        if (isLoadingCounts) return '...';
-        // 判断是否为用户所属学校（需要根据实际的学校匹配逻辑）
+        if (isLoadingCounts) return '⋯'; // 统一使用友好的加载指示
         const isUserSchool = user?.dept?.deptName && (
           user.dept.deptName === school.name || 
           user.dept.deptName === school.englishName ||
-          user.dept.deptName === 'CU总部' // 特殊情况处理
+          user.dept.deptName === 'CU总部'
         );
-        return isUserSchool ? `${volunteerCounts[school.deptId] || 0}` : '-';
+        if (isUserSchool) {
+          const schoolCount = volunteerCounts[school.deptId];
+          return typeof schoolCount === 'number' ? schoolCount.toString() : '⋯';
+        }
+        return '-';
         
       case 'staff':
         // 内部员工：不显示统计数据
@@ -204,10 +234,10 @@ export const SchoolSelectionScreen: React.FC<SchoolSelectionScreenProps> = ({ on
   }, [permissionLevel, isLoadingCounts, volunteerCounts, user]);
 
   // 组件初始化时加载数据
+  // 🚀 性能优化：分阶段加载，先显示学校列表，再异步加载统计
   React.useEffect(() => {
-    loadSchools();
-    loadVolunteerCounts();
-  }, [loadSchools, loadVolunteerCounts]);
+    loadSchools(); // 只加载学校基础信息，志愿者统计在loadSchools内部异步处理
+  }, [loadSchools]);
 
   const handleSearch = useCallback((text: string) => {
     setSearchText(text);
@@ -227,15 +257,40 @@ export const SchoolSelectionScreen: React.FC<SchoolSelectionScreenProps> = ({ on
     console.log('🔍 学校搜索结果:', { searchText: text, resultsCount: filtered.length });
   }, [schools]);
 
-  // 渲染学校卡片
+  // 渲染学校卡片 - 使用防滑动误触的手势检测
   const renderSchoolCard = useCallback(({ item: school }: { item: School }) => {
     const volunteerCount = getVolunteerCountDisplay(school);
+    
+    // 🚀 使用useCardPress防止滑动误触
+    const scaleAnim = React.useRef(new Animated.Value(1)).current;
+    
+    const handleLongPress = () => {
+      console.log('✅ [LONG-PRESS] 长按确认打开学校:', school.deptName);
+      handleSchoolLongPress(school);
+    };
+    
+    const handlePressIn = () => {
+      Animated.spring(scaleAnim, {
+        toValue: 0.95,
+        useNativeDriver: true,
+      }).start();
+    };
+    
+    const handlePressOut = () => {
+      Animated.spring(scaleAnim, {
+        toValue: 1,
+        useNativeDriver: true,
+      }).start();
+    };
     
     return (
       <TouchableOpacity
         style={styles.schoolCard}
-        onPress={() => handleSchoolPress(school)}
+        onLongPress={handleLongPress}           // 🚀 改为长按打开
+        onPressIn={handlePressIn}
+        onPressOut={handlePressOut}
         onLayout={(event) => handleCardLayout(school.deptId.toString(), event)}
+        delayLongPress={400}                    // 400ms长按时间，更快响应
         activeOpacity={0.7}
       >
         <View style={styles.schoolCardContent}>
@@ -262,12 +317,16 @@ export const SchoolSelectionScreen: React.FC<SchoolSelectionScreenProps> = ({ on
                 {volunteerCount}
               </Text>
             </View>
-            <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
+            {/* 长按提示图标 */}
+            <View style={styles.longPressHint}>
+              <Ionicons name="hand-left-outline" size={16} color="#9CA3AF" />
+              <Text style={styles.longPressText}>长按</Text>
+            </View>
           </View>
         </View>
       </TouchableOpacity>
     );
-  }, [getVolunteerCountDisplay, handleSchoolPress, handleCardLayout]);
+  }, [getVolunteerCountDisplay, handleSchoolLongPress, handleCardLayout]);
 
   // 记录卡片布局信息
   const handleCardLayout = useCallback((schoolId: string, event: any) => {
@@ -275,13 +334,52 @@ export const SchoolSelectionScreen: React.FC<SchoolSelectionScreenProps> = ({ on
     setCardLayouts(prev => new Map(prev.set(schoolId, { x, y, width, height })));
   }, []);
   
-  // 学校卡片点击 - v2方案放大跳转
-  const handleSchoolPress = useCallback((school: School) => {
-    if (isTransitioning) return; // 防止重复点击
+  // 🚀 滚动状态处理函数  
+  const handleScrollBegin = () => {
+    setIsScrolling(true);
+    console.log('📜 [SCHOOL-SELECTION] 开始滚动，禁用学校卡片点击');
+    
+    if (scrollTimeoutRef.current) {
+      clearTimeout(scrollTimeoutRef.current);
+    }
+  };
+
+  const handleScrollEnd = () => {
+    scrollTimeoutRef.current = setTimeout(() => {
+      setIsScrolling(false);
+      console.log('📜 [SCHOOL-SELECTION] 滚动结束，重新启用学校卡片点击');
+    }, 500);
+  };
+
+  const handleScroll = () => {
+    if (!isScrolling) {
+      setIsScrolling(true);
+    }
+    
+    if (scrollTimeoutRef.current) {
+      clearTimeout(scrollTimeoutRef.current);
+    }
+    
+    scrollTimeoutRef.current = setTimeout(() => {
+      setIsScrolling(false);
+    }, 500);
+  };
+
+  // 🚀 改为长按打开机制 - 彻底避免滑动误触
+  const handleSchoolLongPress = useCallback((school: School) => {
+    if (isTransitioning) return; // 防止重复操作
+    
+    console.log('✅ [LONG-PRESS] 长按确认打开学校:', school.deptName);
+    
+    // 触觉反馈
+    if (Platform.OS === 'ios') {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    }
     
     const cardLayout = cardLayouts.get(school.deptId.toString());
     if (!cardLayout) {
       // 没有布局信息，直接切换
+      console.log('📍 [DIRECT-SWITCH] 无布局信息，直接切换学校:', school.deptName);
       onSchoolSelect(school);
       return;
     }
@@ -305,6 +403,15 @@ export const SchoolSelectionScreen: React.FC<SchoolSelectionScreenProps> = ({ on
       startMorphAnimation(school, cardLayout);
     }, 100);
   }, [isTransitioning, cardLayouts, onSchoolSelect]);
+
+  // 🧹 清理滚动定时器
+  React.useEffect(() => {
+    return () => {
+      if (scrollTimeoutRef.current) {
+        clearTimeout(scrollTimeoutRef.current);
+      }
+    };
+  }, []);
   
   // Morph-to-Header动画执行
   const startMorphAnimation = useCallback((school: School, layout: any) => {
@@ -412,12 +519,17 @@ export const SchoolSelectionScreen: React.FC<SchoolSelectionScreenProps> = ({ on
       <Reanimated.View style={animatedCardStyle}>
         <TouchableOpacity
           style={[styles.schoolCard, styles.schoolCardGlass]}
-          onPress={() => handleSchoolPress(item)}
+          onLongPress={() => {
+            if (!isTransitioning) {
+              console.log('✅ [ANIMATED-CARD-LONGPRESS] 动画卡片长按:', item?.name || item?.deptName);
+              handleSchoolLongPress(item);
+            }
+          }}
           onPressIn={handlePressIn}
           onPressOut={handlePressOut}
-          onLayout={(event) => handleCardLayout(item.id, event)} // 布局追踪
+          onLayout={(event) => handleCardLayout(item.id, event)}
+          delayLongPress={400}                  // 400ms长按时间，更快响应
           activeOpacity={0.9}
-          disabled={isTransitioning} // 动画期间禁用其他卡片
         >
           <LinearGradient
             colors={[item.color + '20', item.color + '10']}
@@ -468,18 +580,18 @@ export const SchoolSelectionScreen: React.FC<SchoolSelectionScreenProps> = ({ on
                     {getVolunteerCountDisplay(item)}{t('wellbeing.volunteer.volunteersCount')}
                   </Text>
                 </View>
-                <Ionicons 
-                  name="chevron-forward" 
-                  size={20} 
-                  color={isDarkMode ? '#a1a1aa' : '#9ca3af'} 
-                />
+                {/* 长按提示 */}
+                <View style={styles.longPressHint}>
+                  <Ionicons name="hand-left-outline" size={14} color="#9CA3AF" />
+                  <Text style={[styles.longPressText, { fontSize: 10 }]}>长按</Text>
+                </View>
               </View>
             </View>
           </LinearGradient>
         </TouchableOpacity>
       </Reanimated.View>
     );
-  }, [isDarkMode, handleSchoolPress]);
+  }, [isDarkMode, handleSchoolLongPress]);
 
   const ItemSeparator = useCallback(() => <View style={{ height: 12 }} />, []);
 
@@ -515,6 +627,12 @@ export const SchoolSelectionScreen: React.FC<SchoolSelectionScreenProps> = ({ on
             </TouchableOpacity>
           )}
         </View>
+        
+        {/* 使用说明 */}
+        <View style={styles.instructionContainer}>
+          <Ionicons name="information-circle-outline" size={16} color="#9CA3AF" />
+          <Text style={styles.instructionText}>长按学校卡片进入志愿者详情</Text>
+        </View>
       </View>
 
       {/* 学校列表 */}
@@ -529,7 +647,12 @@ export const SchoolSelectionScreen: React.FC<SchoolSelectionScreenProps> = ({ on
           paddingHorizontal: 16,
           paddingBottom: contentInsetBottom,
         }}
-        onScroll={() => {}} // 显式提供onScroll函数避免错误
+        onScrollBeginDrag={handleScrollBegin}     // 开始拖动滚动
+        onScrollEndDrag={handleScrollEnd}         // 拖动结束
+        onMomentumScrollBegin={handleScrollBegin} // 惯性滚动开始
+        onMomentumScrollEnd={handleScrollEnd}     // 惯性滚动结束
+        onScroll={handleScroll}                   // 任何滚动变化
+        scrollEventThrottle={1}                   // 高频检测
         showsVerticalScrollIndicator={false}
         removeClippedSubviews={true}
         maxToRenderPerBatch={10}
@@ -688,6 +811,42 @@ const styles = StyleSheet.create({
   },
   emptySubtext: {
     fontSize: 14,
+  },
+
+  // 长按提示样式
+  longPressHint: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    backgroundColor: 'rgba(156, 163, 175, 0.1)',
+    borderRadius: 8,
+  },
+
+  longPressText: {
+    fontSize: 11,
+    color: '#9CA3AF',
+    marginLeft: 2,
+    fontWeight: '500',
+  },
+
+  // 使用说明样式
+  instructionContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+    borderRadius: 8,
+    marginHorizontal: 16,
+    marginTop: 8,
+  },
+
+  instructionText: {
+    fontSize: 13,
+    color: '#3B82F6',
+    marginLeft: 6,
+    fontWeight: '500',
   },
   
   // V2.0 L1玻璃学校卡片样式

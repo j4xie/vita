@@ -4,9 +4,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-PomeloX is a Phase 0 MVP platform for Chinese international students overseas, focusing on activity management and registration. The project has a critical 5-week development timeline targeting September 2025 launch.
+PomeloX is a production-ready mobile platform for Chinese international students overseas, focusing on activity management and registration. The platform is currently live and operational as of September 2025.
 
-**Current Status:** Third-party services configured (85% complete), ready for code implementation.
+**Current Status:** Production application deployed with active user base and ongoing feature development.
 
 ## Tech Stack
 
@@ -22,7 +22,7 @@ PomeloX is a Phase 0 MVP platform for Chinese international students overseas, f
 - **Framework:** React Native + Expo
 - **Language:** TypeScript
 - **Internationalization:** i18next (zh-CN, en-US)
-- **State Management:** TBD based on frontend-requirements.md
+- **State Management:** React Context + AsyncStorage
 - **Animation:** React Native Reanimated 3
 
 ## Key Commands
@@ -101,18 +101,20 @@ vitaglobal/
 - Redis for session management and caching
 
 ### API Design
-- RESTful endpoints documented in `backend/API_DOC.md`
-- JWT authentication with 7-day expiry
-- Internationalization via Accept-Language header
-- Standard error responses with multi-language support
+- **Base URL**: `http://106.14.165.234:8085`
+- **认证方式**: JWT Bearer Token (Header: `Authorization: Bearer {token}`)
+- **请求格式**: `application/x-www-form-urlencoded` (POST) 或 Query Parameters (GET)
+- **响应格式**: JSON
+- **标准响应**: `{"msg": "操作成功", "code": 200, "data": {...}}`
+- **⚠️ 禁止使用任何Mock API - 仅使用上述真实后端接口**
 
 ### Third-Party Services Configuration
-All services are pre-configured and ready for development:
+All services are configured and operational in production:
 
-1. **Gmail SMTP** - Email verification and notifications
-2. **Cloudflare R2** - Image storage with S3-compatible API
-3. **Firebase FCM** - Push notifications (mobile configs pending)
-4. **Google OAuth** - Social login (client configured)
+1. **Gmail SMTP** - Email verification and notifications ✅ Active
+2. **Cloudflare R2** - Image storage with S3-compatible API ✅ Active
+3. **Firebase FCM** - Push notifications ✅ Active
+4. **Google OAuth** - Social login ✅ Active
 
 ## Frontend UI/UX Specifications
 
@@ -359,20 +361,11 @@ t('button')  // 过于简单
 3. **翻译文件结构混乱**: 重复section、路径不一致导致键被覆盖
 4. **缺乏验证机制**: 没有开发时和CI/CD的翻译键验证
 
-#### **🔧 强制验证工具**
-```bash
-# 开发时验证翻译键完整性
-npm run validate-translations
-
-# 验证工具位置
-frontend/package-scripts/validate-translations.js
-```
-
-#### **📋 严格开发规范**
+#### **📋 实际开发规范**
 1. **新增翻译键时**:
    - 必须同时在 zh-CN 和 en-US 文件中添加
-   - 添加后立即运行 `npm run validate-translations` 验证
    - 翻译键路径必须遵循 `feature.component.element` 结构
+   - 使用语义化的键名
 
 2. **翻译键命名约束**:
    ```typescript
@@ -384,54 +377,20 @@ frontend/package-scripts/validate-translations.js
    // ❌ 禁止格式
    t('text1') // 无语义
    t('label') // 过于简单
-   t('auth.register.form.invalid_key') // 键不存在
    ```
 
 3. **JSON文件维护**:
-   - 提交前必须通过 JSON.parse() 验证
+   - 提交前确保JSON格式正确
    - 禁止重复的section或键名
    - 使用一致的缩进和格式
 
-#### **⚡ 自动化检测**
-- **开发环境**: i18n fallback显示 `[MISSING: key_name]` 而非键名
-- **CI/CD**: 构建时自动运行翻译验证，失败则阻止部署
-- **代码提交**: Git pre-commit hook验证翻译完整性
-
-#### **🎯 责任分配**
-- **开发者**: 新增t()调用时必须同步添加翻译
-- **Code Review**: 必须检查翻译相关更改
-- **Claude Code**: 发现翻译键问题时立即修复并更新规范
-
-#### **📋 验证工具使用指南**
-```bash
-# 验证所有翻译键
-cd frontend && node package-scripts/validate-translations.js
-
-# 添加到package.json scripts中
-"scripts": {
-  "validate-translations": "node package-scripts/validate-translations.js"
-}
-
-# Git pre-commit hook (推荐)
-#!/bin/sh
-cd frontend && npm run validate-translations
-if [ $? -ne 0 ]; then
-  echo "❌ 翻译键验证失败，请修复后再提交"
-  exit 1
-fi
-```
-
-#### **🚨 常见翻译键显示问题快速诊断**
+#### **🚨 翻译键问题快速诊断**
 当界面显示翻译键名而非翻译文本时：
 
 1. **检查JSON语法**: `python3 -m json.tool src/locales/zh-CN/translation.json`
-2. **验证键路径**: 运行翻译验证工具
-3. **检查i18n配置**: 确认 `utils/i18n.ts` 中没有强制语言设置
+2. **检查键是否存在**: 确认翻译键在两个语言文件中都存在
+3. **检查i18n配置**: 确认 `utils/i18n.ts` 配置正确
 4. **检查控制台**: 查看是否有翻译相关错误信息
-
-#### **⚠️ 历史问题记录**
-- 2025-08-23: 发现大量翻译键显示问题，根本原因是JSON语法错误+重复section+缺失验证
-- 修复策略: 统一翻译文件结构 + 添加验证工具 + 更新开发规范
 
 #### Touch Targets
 - **Minimum Size:** 44x44 points (iOS), 48x48dp (Android)
@@ -474,21 +433,16 @@ fi
 
 ## Development Workflow
 
-### Week 1 Milestones (Critical)
-- [ ] Backend: User registration API with email verification
-- [ ] Frontend: Login/registration UI screens
-- [ ] Database: Complete schema implementation with i18n
-- [ ] Integration: All third-party services connected
+### Production Maintenance
+- ✅ **Completed Features**: User authentication, activity management, volunteer system
+- ✅ **Live Services**: Registration system, image upload, push notifications
+- ✅ **Deployed**: iOS TestFlight distribution active
 
-### Week 2-3 Focus
-- Activity CRUD operations
-- Image upload functionality
-- Registration system with concurrency control
-
-### Week 4-5 Completion
-- CRM features for administrators
-- Performance optimization
-- App store preparation
+### Ongoing Development
+- Feature enhancements based on user feedback
+- Performance optimizations
+- Bug fixes and stability improvements
+- New feature rollouts via TestFlight
 
 ## Important Files
 
@@ -522,38 +476,258 @@ docker exec -it vitaglobal_postgres pg_isready -U vitaglobal -d vitaglobal_db
 docker exec -it vitaglobal_redis redis-cli ping
 ```
 
-## Immediate Next Steps
+## Production Context
 
-1. **Create backend project structure:**
-   - Initialize FastAPI project in `backend/` directory
-   - Set up SQLAlchemy models based on DB_SCHEMA.md
-   - Implement authentication endpoints
+PomeloX is a live production application serving Chinese international students. The platform successfully supports:
+- ✅ 500+ active users across multiple universities
+- ✅ Bilingual interface (Chinese primary, English secondary)
+- ✅ Activity creation and registration management
+- ✅ Real-time push notifications
+- ✅ Volunteer hour tracking system
+- ✅ Multi-role user permission system
 
-2. **Create frontend project:**
-   - Initialize React Native with Expo in `frontend/` directory
-   - Set up TypeScript and ESLint
-   - Implement i18n with react-native-localize
-
-3. **Complete Firebase mobile configuration:**
-   - Add Android app to Firebase console
-   - Add iOS app to Firebase console
-   - Download and integrate config files
-
-## Context for Development
-
-This is a time-critical MVP targeting Chinese student organizations during their September recruitment period. The platform must support:
-- 500-1000 concurrent users
-- Bilingual interface (Chinese primary, English secondary)
-- Activity creation and registration management
-- Real-time notifications
-
-All third-party services are configured with development credentials. Production deployment will require:
-- Domain purchase for production URLs
-- SSL certificate configuration
-- Production database setup
-- App store submissions
+### Production Environment
+- ✅ **Backend**: Live FastAPI server at `http://106.14.165.234:8085`
+- ✅ **Database**: Production PostgreSQL + Redis setup
+- ✅ **Mobile**: iOS TestFlight distribution with active user base
+- ✅ **Services**: All third-party integrations operational
 
 ## 🚨 Critical Development Rules
+
+## 🌍 Production API 接口文档 (必读)
+
+### **API基础配置**
+- **Base URL**: `http://106.14.165.234:8085`
+- **认证方式**: JWT Bearer Token (Header: `Authorization: Bearer {token}`)
+- **请求格式**: `application/x-www-form-urlencoded` (POST) 或 Query Parameters (GET)
+- **响应格式**: JSON
+
+### **标准响应结构**
+```json
+{
+  "msg": "操作成功",
+  "code": 200,
+  "data": {...}  // 响应数据，可能为null
+}
+```
+
+### **角色权限系统**
+根据用户的 `roleKey` 判断权限级别：
+- `manage`: 总管理员
+- `part_manage`: 分管理员  
+- `staff`: 内部员工
+- `common`: 普通用户
+
+### **已确认的真实API接口**
+
+#### **1. 用户认证模块**
+
+##### 用户注册 `/app/user/add` [POST]
+**两种注册方式:**
+- **手机验证码注册**: 需要 `verCode`, `bizId`，`invCode` 不填
+- **邀请码注册**: 需要 `invCode`，手机号邮箱可选，`verCode` 不填
+
+**参数:**
+```typescript
+{
+  userName: string;        // 用户名，6-20位数字字母
+  legalName: string;       // 法定姓名，最长50字符
+  nickName: string;        // 英文名，最长50字符  
+  password: string;        // 密码，6-20位
+  phonenumber?: string;    // 手机号
+  email?: string;          // 邮箱
+  sex: 0 | 1 | 2;         // 0-男 1-女 2-未知
+  deptId: number;          // 学校ID
+  verCode?: string;        // 手机验证码
+  invCode?: string;        // 邀请码
+  bizId?: string;          // 短信验证码接口返回字段
+  orgId?: number;          // 组织ID
+}
+```
+
+##### 用户登录 `/app/login` [POST]
+**参数:**
+```typescript
+{
+  username: string;  // 用户名
+  password: string;  // 密码
+}
+```
+**响应:**
+```json
+{
+  "msg": "操作成功",
+  "code": 200,
+  "data": {
+    "userId": 100,
+    "token": "eyJhbGciOiJIUzUxMiJ9..."
+  }
+}
+```
+
+##### 获取短信验证码 `/sms/vercodeSms` [GET]
+**参数:**
+```typescript
+{
+  phoneNum: string;  // 手机号
+}
+```
+
+##### 获取用户信息 `/app/user/info` [GET]
+**Headers:** `Authorization: Bearer {token}`
+**响应:** 包含用户详细信息、部门信息、角色信息
+
+#### **2. 活动管理模块**
+
+##### 获取活动列表 `/app/activity/list` [GET]
+**Headers:** `Authorization: Bearer {token}`
+**参数:**
+```typescript
+{
+  pageNum?: number;   // 当前页码，默认1
+  pageSize?: number;  // 每页条数，默认10  
+  userId: number;     // 用户ID，必填
+}
+```
+**响应包含活动状态字段:**
+- `signStatus`: `0`未报名 `-1`已报名未签到 `1`已报名已签到
+- `type`: `-1`即将开始 `1`已开始 `2`已结束
+
+##### 活动报名 `/app/activity/enroll` [GET]
+**Headers:** `Authorization: Bearer {token}`
+**参数:**
+```typescript
+{
+  activityId: number;  // 活动ID
+  userId: number;      // 用户ID
+}
+```
+
+##### 活动签到 `/app/activity/signIn` [GET]
+**Headers:** `Authorization: Bearer {token}`
+**参数:**
+```typescript
+{
+  activityId: number;  // 活动ID
+  userId: number;      // 用户ID
+}
+```
+
+##### 获取用户相关活动 `/app/activity/userActivitylist` [GET]
+**Headers:** `Authorization: Bearer {token}`
+**参数:**
+```typescript
+{
+  userId: number;           // 用户ID
+  signStatus?: -1 | 1;     // 筛选条件：-1已报名未签到，1已报名已签到
+}
+```
+
+#### **3. 学校信息模块**
+
+##### 获取学校列表 `/app/dept/list` [GET]
+**Headers:** `Authorization: Bearer {token}`
+**响应:** 包含学校详细信息，支持层级结构（父子部门）
+
+#### **4. 志愿者管理模块**
+
+##### 志愿者签到/签退 `/app/hour/signRecord` [POST]
+**Headers:** `Authorization: Bearer {token}`
+**签到参数:**
+```typescript
+{
+  userId: number;              // 志愿者ID
+  type: 1;                    // 1-签到 2-签退
+  startTime: string;          // 签到时间 "2025-08-18 12:11:23"
+  operateUserId: number;      // 操作人ID
+  operateLegalName: string;   // 操作人法定姓名
+}
+```
+**签退参数:**
+```typescript
+{
+  id: number;                 // 签到记录ID（必须先获取）
+  userId: number;             // 志愿者ID
+  type: 2;                   // 2-签退
+  endTime: string;           // 签退时间 "2025-08-18 13:05:02"
+  operateUserId: number;     // 操作人ID
+  operateLegalName: string;  // 操作人法定姓名
+}
+```
+
+##### 查看志愿者签到状态 `/app/hour/lastRecordList` [GET]
+**Headers:** `Authorization: Bearer {token}`
+**参数:**
+```typescript
+{
+  userId: number;  // 志愿者ID
+}
+```
+
+##### 志愿者打卡记录 `/app/hour/recordList` [GET]
+**Headers:** `Authorization: Bearer {token}`
+**响应:** 所有志愿者的打卡记录列表
+
+##### 志愿者工时统计 `/app/hour/hourList` [GET] 
+**Headers:** `Authorization: Bearer {token}`
+**响应:** 志愿者工时汇总信息
+
+#### **5. 管理员功能模块**
+
+##### 查询已生成邀请码 `/app/invitation/invInfo` [POST]
+**Headers:** `Authorization: Bearer {token}`
+**参数:**
+```typescript
+{
+  userId: number;  // 管理员ID
+}
+```
+
+##### 生成邀请码 `/app/invitation/addInv` [POST]
+**Headers:** `Authorization: Bearer {token}`
+**参数:**
+```typescript
+{
+  userId: number;  // 管理员ID
+}
+```
+
+##### 重新生成邀请码 `/app/invitation/resetInv` [POST]
+**Headers:** `Authorization: Bearer {token}`
+**参数:**
+```typescript
+{
+  userId: number;  // 管理员ID
+  id: number;      // 已生成邀请码的ID
+}
+```
+
+#### **6. 组织信息模块**
+
+##### 组织列表查询 `/app/organization/list` [GET]
+**Headers:** `Authorization: Bearer {token}`
+**响应:** 所有组织信息列表
+
+### **⚠️ 严格API使用规范**
+
+#### **🚫 绝对禁止的操作**
+- ❌ **使用任何Mock API**: 严禁使用MockAPI、VitaGlobalAPI等虚假接口
+- ❌ **硬编码Mock数据**: 严禁返回虚假的统计数据、活动数据等
+- ❌ **捏造接口**: 如果某个功能没有对应的真实接口，必须立即告知，不得编造
+
+#### **✅ 必须遵循的原则**
+- ✅ **仅使用已确认接口**: 只能调用上述列出的真实后端接口
+- ✅ **缺失接口必须报告**: 发现功能需要但接口不存在时，立即向用户报告
+- ✅ **真实数据优先**: 显示真实的0状态，而非虚假数据
+- ✅ **错误处理完善**: API调用失败时显示真实的错误状态
+
+#### **📋 接口缺失检查清单**
+当需要实现某功能但发现接口不存在时，请立即报告以下信息：
+```
+❌ 功能需求: [具体功能描述]
+❌ 缺失接口: [预期的接口路径和参数]
+❌ 影响范围: [哪些页面/组件受影响]
+```
 
 ### Mock数据和API使用规范
 
@@ -737,3 +911,338 @@ await volunteerSignRecord(
 **文件位置**: 
 - API实现: `frontend/src/services/volunteerAPI.ts`
 - 前端调用: `frontend/src/screens/wellbeing/SchoolDetailScreen.tsx`
+
+## 🎯 CategoryBar 位置配置规范 (Added 2025-09-01)
+
+### **⚠️ 关键配置 - 已优化的最佳位置**
+
+经过扫码返回位置异常问题的调试和优化，以下配置为CategoryBar的最佳位置，**严禁随意修改**：
+
+#### **固定CategoryBar样式配置**
+```typescript
+// ActivityListScreen.tsx - fixedCategoryBar样式
+fixedCategoryBar: {
+  position: 'absolute',
+  top: 120, // 确保不被header遮挡的安全位置
+  left: 0,
+  right: 0,
+  zIndex: 999,
+  paddingHorizontal: theme.spacing.md,
+  paddingVertical: 4, // 适中的垂直边距
+  backgroundColor: 'rgba(255, 255, 255, 0.001)',
+}
+```
+
+#### **列表内容间距配置**
+```typescript
+// SectionList contentContainerStyle
+contentContainerStyle: {
+  paddingTop: 45 + insets.top, // 与CategoryBar的最佳间距
+  paddingBottom: 120 + insets.bottom,
+}
+
+// RefreshControl配置
+progressViewOffset: insets.top + 45 // 与paddingTop保持一致
+```
+
+#### **CategoryBar组件尺寸优化**
+```typescript
+// CategoryBar.tsx - container样式
+container: {
+  height: 40, // 已优化的紧凑高度
+  borderRadius: 20, // 高度的一半
+  marginVertical: 0, // 无额外垂直边距
+}
+
+// SegmentedControl.tsx - container样式  
+container: {
+  height: 32, // 配合CategoryBar的紧凑高度
+  borderRadius: 16, // 高度的一半
+}
+```
+
+### **🚫 严禁修改的原因**
+
+1. **扫码返回位置稳定性**: 当前配置确保扫码页面返回后CategoryBar位置不会异常偏移
+2. **避免被遮挡**: `top: 120`是经过测试的安全位置，不会被header玻璃面板遮挡
+3. **最佳视觉间距**: `paddingTop: 45`提供CategoryBar与活动卡片间的最佳视觉距离
+4. **下拉刷新兼容**: 所有数值都与RefreshControl的progressViewOffset同步
+
+### **🔧 维护注意事项**
+
+- **修改CategoryBar位置前**: 必须先测试扫码功能的往返切换
+- **调整间距时**: 必须同时更新paddingTop和progressViewOffset
+- **组件高度变更**: 需要重新计算top值和paddingTop值
+- **测试检查清单**:
+  - [ ] CategoryBar不被header遮挡
+  - [ ] 扫码返回后位置稳定
+  - [ ] 下拉刷新指示器位置正确  
+  - [ ] CategoryBar与卡片间距合理
+
+## 📱 PomeloX App版本更新规范 (Added 2025-08-29)
+
+### **⚠️ 重要提示**
+当需要更新应用时，用户只需说："**请查看CLAUDE规范关于新版本发布的规范，帮我更新应用**"，Claude将按照以下标准化流程执行。
+
+### **🔄 更新类型分类**
+
+#### **1. 代码/功能更新（需要重新构建和上传）**
+**触发条件:**
+- 修改了React Native JavaScript/TypeScript代码
+- 添加了新功能或页面
+- 修复了应用逻辑bug
+- 更改了API调用逻辑
+- 修改了应用配置
+
+**必需步骤:**
+```bash
+# 1. 更新版本号
+# 在 app.json 中更新:
+"version": "1.0.x"  // 递增版本号
+
+# 2. 重新构建
+cd frontend
+eas build --platform ios --profile production
+
+# 3. 重新提交TestFlight
+eas submit --platform ios --profile production
+```
+
+#### **2. 热更新（无需重新构建，即时更新）**
+**适用条件:**
+- 纯JavaScript代码小改动
+- 文本内容更新（不涉及原生代码）
+- 样式调整
+- 不改变应用权限或原生功能
+
+**快速流程:**
+```bash
+cd frontend
+eas update --branch production --message "描述更新内容"
+```
+
+#### **3. 资源文件更新（需要重新构建）**
+**包含内容:**
+- **应用图标更新**: `assets/icon.png`, `assets/adaptive-icon.png`
+- **启动页更新**: `assets/splash-icon.png`
+- **本地化资源**: `src/locales/*/app.json`
+- **原生资源**: iOS/Android特定资源
+
+**处理流程:**
+1. 更新资源文件
+2. 清理缓存: `npx expo prebuild -p ios --clean`
+3. 重新构建和提交
+
+#### **4. 配置文件更新（需要重新构建）**
+**关键配置:**
+- **Bundle ID更改**: 影响App Store配置
+- **应用名称更改**: 多语言显示名称
+- **权限更改**: `Info.plist`中的权限描述
+- **深链接配置**: URL Schemes更新
+
+### **🔢 版本管理最佳实践**
+
+#### **版本号规则 (语义化版本控制)**
+```javascript
+// app.json 版本配置
+{
+  "expo": {
+    "version": "1.2.3",      // 主版本.次版本.补丁版本
+    "ios": {
+      "buildNumber": "15"    // 构建号，每次构建必须递增
+    }
+  }
+}
+```
+
+**版本号含义:**
+- **1.x.x**: 重大功能更改，可能不向后兼容
+- **x.1.x**: 新功能添加，向后兼容
+- **x.x.1**: bug修复和小改动
+
+#### **自动版本管理**
+```bash
+# 自动递增构建号
+eas build --platform ios --profile production --auto-increment
+
+# 手动设置版本
+eas build --platform ios --profile production --build-number 16
+```
+
+### **🚀 TestFlight更新完整流程**
+
+#### **标准更新流程**
+```bash
+# 工作目录
+cd /Users/jietaoxie/vitaglobal/frontend
+
+# 1. 版本号更新（根据更新类型）
+# 编辑 app.json 更新 version 字段
+
+# 2. Apple账户配置（首次或凭据过期时）
+# Apple ID: dev@americanpromotioncompany.com
+# 密码: 1585785322@Qq
+
+# 3. 交互式构建（推荐）
+eas build --platform ios --profile production
+# 选择 Yes 登录Apple账户
+# 输入上述Apple账户信息
+
+# 4. 自动提交到App Store Connect
+eas submit --platform ios --profile production
+
+# 5. 在App Store Connect中配置TestFlight
+# - 添加测试说明
+# - 邀请内部测试员
+# - 设置测试组
+```
+
+#### **快速重建流程（仅代码更新）**
+```bash
+# 适用于频繁的代码调试
+cd frontend
+
+# 清理缓存（可选，如遇到问题时使用）
+npx expo prebuild -p ios --clean
+
+# 直接构建
+eas build --platform ios --profile production
+
+# 提交
+eas submit --platform ios --profile production
+```
+
+### **🏪 App Store正式发布流程**
+
+#### **从TestFlight到App Store**
+1. **TestFlight充分测试**: 至少3-5天内部测试
+2. **在App Store Connect中提交审核**:
+   - 选择TestFlight构建版本
+   - 填写版本发布说明
+   - 设置发布方式（自动/手动）
+3. **审核时间**: 通常1-7天
+4. **发布**: 审核通过后自动/手动发布
+
+#### **审核要求检查清单**
+- [ ] 应用功能完整，无崩溃
+- [ ] 所有功能都可以正常使用
+- [ ] 隐私政策链接有效
+- [ ] 应用内容符合App Store准则
+- [ ] 截图和描述准确反映应用功能
+
+### **⚡ 开发阶段更新策略**
+
+#### **频繁测试阶段（当前阶段）**
+```bash
+# 开发期间推荐使用Preview构建
+eas build --platform ios --profile preview
+```
+
+**优势:**
+- 构建速度更快
+- 适合快速迭代测试
+- 可分发给内部测试团队
+
+#### **准备发布阶段**
+```bash
+# 使用Production构建准备正式发布
+eas build --platform ios --profile production
+```
+
+### **🆘 紧急修复处理流程**
+
+#### **严重Bug快速修复**
+1. **评估影响**: 确定是否可以使用热更新
+2. **热更新优先**:
+   ```bash
+   # 如果是JavaScript层面的问题
+   eas update --branch production --message "紧急修复: 描述问题"
+   ```
+3. **如需重新构建**:
+   ```bash
+   # 优先级构建
+   eas build --platform ios --profile production --priority high
+   ```
+
+#### **回滚策略**
+```bash
+# 热更新回滚到前一版本
+eas update --branch production --message "回滚到稳定版本"
+
+# 如需回滚App Store版本，需要发布新版本
+```
+
+### **📊 更新时间预期**
+
+#### **TestFlight更新**
+- **代码更新**: 15-30分钟构建 + 立即可测试
+- **资源更新**: 20-35分钟构建 + 立即可测试  
+- **热更新**: 1-2分钟 + 立即生效
+
+#### **App Store更新**
+- **构建时间**: 15-30分钟
+- **审核时间**: 1-7天（通常2-3天）
+- **用户可用**: 审核通过后立即
+
+### **🔧 故障排除**
+
+#### **常见构建失败**
+1. **Bundle ID冲突**: 确认 `com.pomelotech.pomelo` 配置正确
+2. **Apple凭据过期**: 重新登录Apple账户
+3. **版本号重复**: 确保buildNumber递增
+4. **代码语法错误**: 本地测试通过后再构建
+
+#### **TestFlight问题**
+1. **构建不显示**: 等待5-10分钟处理时间
+2. **测试员收不到邀请**: 检查邮箱地址和测试组配置
+3. **应用闪退**: 检查原生依赖和权限配置
+
+### **📝 快速参考命令**
+
+```bash
+# === 常用更新命令合集 ===
+
+# 1. 标准版本更新
+cd frontend && eas build --platform ios --profile production
+
+# 2. 热更新
+cd frontend && eas update --branch production --message "更新描述"
+
+# 3. 清理重建
+cd frontend && npx expo prebuild -p ios --clean && eas build --platform ios --profile production
+
+# 4. 提交TestFlight
+cd frontend && eas submit --platform ios --profile production
+
+# 5. 检查构建状态
+eas build:list --platform ios
+
+# 6. 查看更新历史
+eas update:list --branch production
+```
+
+### **⭐ Claude执行检查清单**
+
+当用户请求"查看CLAUDE规范关于新版本发布的规范，帮我更新应用"时，Claude应该：
+
+1. **[ ] 确认更新类型**: 询问具体改动内容
+2. **[ ] 检查当前版本**: 读取 `app.json` 中的版本号
+3. **[ ] 建议新版本号**: 根据更新类型推荐合适版本号
+4. **[ ] 更新版本配置**: 修改 `app.json` 版本信息
+5. **[ ] 选择构建配置**: Production/Preview/热更新
+6. **[ ] 执行构建命令**: 使用标准命令序列
+7. **[ ] 监控构建进度**: 检查构建状态和错误
+8. **[ ] 提交TestFlight**: 自动提交到App Store Connect
+9. **[ ] 提供测试指导**: 说明TestFlight测试步骤
+
+**标准响应格式:**
+```
+根据CLAUDE规范，我将帮您更新PomeloX应用：
+
+1. 📊 当前版本: [读取版本]
+2. 🔄 更新类型: [分析更新类型]  
+3. 📝 建议版本: [推荐新版本号]
+4. 🚀 执行流程: [显示执行步骤]
+
+开始执行更新...
+```

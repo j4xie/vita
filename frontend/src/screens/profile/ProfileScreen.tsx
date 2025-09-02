@@ -22,18 +22,27 @@ import * as Haptics from 'expo-haptics';
 import { theme } from '../../theme';
 import { LIQUID_GLASS_LAYERS } from '../../theme/core';
 import { useLanguage } from '../../context/LanguageContext';
+import { useUser } from '../../context/UserContext';
+import { useTheme as useThemeContext } from '../../context/ThemeContext';
+import { PermissionDebugModal } from '../../components/debug/PermissionDebugModal';
+// import { DarkModeTest } from '../../components/debug/DarkModeTest'; // 已注释以修复渲染错误
 
 export const ProfileScreen: React.FC = () => {
   const { t } = useTranslation();
   const navigation = useNavigation<any>();
   const { currentLanguage, getLanguageDisplayName } = useLanguage();
+  const { logout } = useUser();
   const insets = useSafeAreaInsets();
-  const colorScheme = useColorScheme();
-  const isDarkMode = colorScheme === 'dark';
+  const themeContext = useThemeContext();
+  const isDarkMode = themeContext.isDarkMode;
   
   // Accessibility states
   const [isReduceMotionEnabled, setIsReduceMotionEnabled] = useState(false);
   const [isScreenReaderEnabled, setIsScreenReaderEnabled] = useState(false);
+  
+  // Debug modal state
+  const [showPermissionDebug, setShowPermissionDebug] = useState(false);
+  const [debugTapCount, setDebugTapCount] = useState(0);
   
   useEffect(() => {
     const checkAccessibility = async () => {
@@ -82,7 +91,10 @@ export const ProfileScreen: React.FC = () => {
   
   const performLogout = async () => {
     try {
-      await AsyncStorage.clear();
+      // 使用 UserContext 的 logout 方法来正确清理所有状态
+      await logout();
+      
+      // 在状态清理后，重置导航到认证页面
       navigation.reset({
         index: 0,
         routes: [{ name: 'Auth' }],
@@ -102,13 +114,30 @@ export const ProfileScreen: React.FC = () => {
   // Handle edit profile
   const handleEditProfile = () => {
     triggerHaptic();
-    Alert.alert(t('common.confirm'), t('alerts.feature_not_implemented'));
+    Alert.alert(
+      t('common.feature_developing'), 
+      '个人资料编辑功能正在开发中，请等待后续版本更新。',
+      [{ text: t('common.got_it') }]
+    );
   };
   
   // Handle language selection
   const handleLanguagePress = () => {
     triggerHaptic();
     Alert.alert(t('common.confirm'), t('alerts.feature_not_implemented'));
+  };
+
+  // Debug permission trigger (hidden feature)
+  const handleDebugTap = () => {
+    setDebugTapCount(prev => {
+      const newCount = prev + 1;
+      if (newCount >= 7) {
+        setShowPermissionDebug(true);
+        setDebugTapCount(0);
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      }
+      return newCount;
+    });
   };
   
   // Group 1: Account & Security
@@ -298,6 +327,9 @@ export const ProfileScreen: React.FC = () => {
           onScroll={() => {}} // Explicit empty handler to prevent propagation issues
           scrollEventThrottle={16}
         >
+        {/* 🌙 Dark Mode Debug Component - 临时调试 - 已注释以修复渲染错误 */}
+        {/* <DarkModeTest /> */}
+        
         {/* Avatar Card - Clickable for Edit Profile */}
         <TouchableOpacity 
           style={[
@@ -305,6 +337,7 @@ export const ProfileScreen: React.FC = () => {
             styles.avatarCardGlass
           ]}
           onPress={handleEditProfile}
+          onLongPress={handleDebugTap}
           activeOpacity={0.6}
           accessibilityRole="button"
           accessibilityLabel="Edit profile"
@@ -393,11 +426,17 @@ export const ProfileScreen: React.FC = () => {
           allowFontScaling={true}
           maxFontSizeMultiplier={1.2}
           >
-            PomeloX v1.0.0
+            PomeloX v1.0.24
           </Text>
         </View>
         </ScrollView>
       </SafeAreaView>
+      
+      {/* Permission Debug Modal */}
+      <PermissionDebugModal 
+        visible={showPermissionDebug}
+        onClose={() => setShowPermissionDebug(false)}
+      />
     </View>
   );
 };

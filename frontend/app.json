@@ -6,13 +6,13 @@
     },
     "name": "PomeloX",
     "slug": "vitaglobal",
-    "version": "1.0.3",
-    "owner": "stevenj4",
+    "version": "1.0.24",
+    "owner": "pomelox",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": false,
-    "jsEngine": "hermes",
+    "jsEngine": "jsc",
     "locales": {
       "zh-CN": "./src/locales/zh-CN/app.json",
       "en-US": "./src/locales/en-US/app.json"
@@ -25,7 +25,8 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.pomelotech.pomelo",
-      "buildNumber": "2",
+      "buildNumber": "25",
+      "deploymentTarget": "13.0",
       "infoPlist": {
         "NSAppTransportSecurity": {
           "NSAllowsArbitraryLoads": true,
@@ -41,12 +42,19 @@
               "NSExceptionMinimumTLSVersion": "TLSv1.0",
               "NSIncludesSubdomains": true
             },
+            "100.110.227.118": {
+              "NSExceptionAllowsInsecureHTTPLoads": true,
+              "NSExceptionMinimumTLSVersion": "TLSv1.0",
+              "NSIncludesSubdomains": true
+            },
             "localhost": {
               "NSExceptionAllowsInsecureHTTPLoads": true,
               "NSExceptionMinimumTLSVersion": "TLSv1.0"
             }
           }
-        }
+        },
+        "NSPhotoLibraryUsageDescription": "This app needs access to your photo library to let you select photos for your profile.",
+        "NSCameraUsageDescription": "This app needs access to your camera to let you take photos for your profile."
       }
     },
     "android": {
@@ -61,21 +69,34 @@
         "android.permission.RECORD_AUDIO",
         "android.permission.VIBRATE",
         "android.permission.USE_FINGERPRINT",
-        "com.android.vending.BILLING"
+        "com.android.vending.BILLING",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+        "android.permission.READ_MEDIA_IMAGES"
       ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
     },
-    "plugins": [],
+    "plugins": [
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "The app accesses your photos to let you share them.",
+          "cameraPermission": "The app accesses your camera to let you take photos.",
+          "mediaLibraryPermission": "The app accesses your photo library to let you select photos."
+        }
+      ]
+    ],
     "extra": {
       "eas": {
-        "projectId": "fc3f2447-eea3-4c1d-8aed-ba0452fc2198"
+        "projectId": "ced41bbb-a08b-440d-b873-0a43814ddbba"
       }
     },
     "runtimeVersion": "1.0.0",
     "updates": {
-      "url": "https://u.expo.dev/fc3f2447-eea3-4c1d-8aed-ba0452fc2198"
+      "enabled": true,
+      "url": "https://u.expo.dev/ced41bbb-a08b-440d-b873-0a43814ddbba"
     }
   }
 }

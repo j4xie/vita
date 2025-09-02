@@ -1,5 +1,5 @@
 import React, { useRef, useEffect } from 'react';
-import { View, TextInput, TouchableOpacity, StyleSheet, useColorScheme } from 'react-native';
+import { View, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useTranslation } from 'react-i18next';
 import Reanimated, {
@@ -14,6 +14,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 
 import { useTheme } from '../../theme';
+import { useTheme as useThemeContext } from '../../context/ThemeContext';
 
 interface AnimatedSearchBarProps {
   searchText: string;
@@ -29,10 +30,10 @@ const AnimatedSearchBar: React.FC<AnimatedSearchBarProps> = ({
   placeholder,
 }) => {
   const { t } = useTranslation();
-  const theme = useTheme();
+  const theme = useStaticTheme();
   const insets = useSafeAreaInsets();
-  const colorScheme = useColorScheme();
-  const isDarkMode = colorScheme === 'dark';
+  const themeContext = useThemeContext();
+  const isDarkMode = themeContext.isDarkMode;
   const inputRef = useRef<TextInput>(null);
 
   // Animation thresholds (as specified in requirements)

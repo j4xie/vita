@@ -15,6 +15,9 @@ import { theme } from '../../theme';
 import { BRAND_GLASS, BRAND_INTERACTIONS, BRAND_GRADIENT } from '../../theme/core';
 import { scaleIn, scaleOut, bounce } from '../../utils/animations';
 import { usePerformanceDegradation } from '../../hooks/usePerformanceDegradation';
+import { useMemoizedDarkMode } from '../../hooks/useDarkMode';
+import { useAllDarkModeStyles } from '../../hooks/useDarkModeStyles';
+import { useTheme } from '../../context/ThemeContext';
 import { analytics, Events } from '../../analytics/EventTracker';
 import { useSmartGesture } from '../../hooks/useSmartGesture';
 import { useCardPress } from '../../hooks/useCardPress';
@@ -87,6 +90,10 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({
   const { t } = useTranslation();
   // v1.2 性能降级策略
   const { getLiquidGlassConfig, getOptimizedStyles, isPerformanceDegraded } = usePerformanceDegradation();
+  
+  // 🌙 Dark Mode Support - 使用全局样式管理器
+  const darkModeStyles = useAllDarkModeStyles();
+  const { isDarkMode, styles: dmStyles, gradients: dmGradients, icons: dmIcons } = darkModeStyles;
   // 确保activity对象存在
   if (!activity || typeof activity !== 'object') {
     return null;
@@ -332,6 +339,56 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({
     transform: [{ scale: favoriteScaleAnim }],
   };
 
+  // Static styles (dynamic styles will be applied inline)
+  const staticStyles = StyleSheet.create({
+    shadowContainer: {
+      borderRadius: theme.borderRadius.lg,
+      shadowColor: '#000000',
+      shadowOffset: { width: 0, height: 4 },
+    },
+    
+    touchableContainer: {
+      borderRadius: theme.borderRadius.lg,
+      overflow: 'hidden' as const,
+      borderWidth: 1.5,
+    },
+    
+    actionContainer: {
+      flexDirection: 'row' as const,
+      justifyContent: 'space-between' as const,
+      alignItems: 'center' as const,
+      padding: theme.spacing.md,
+      borderTopWidth: 1.5,
+      borderBottomLeftRadius: theme.borderRadius.md,
+      borderBottomRightRadius: theme.borderRadius.md,
+    },
+    
+    titleText: {
+      fontSize: theme.typography.fontSize['2xl'],
+      fontWeight: theme.typography.fontWeight.bold,
+      lineHeight: 28,
+      textShadowOffset: { width: 0, height: 1 },
+      textShadowRadius: 2,
+    },
+    
+    participantText: {
+      fontSize: theme.typography.fontSize.sm,
+      fontWeight: theme.typography.fontWeight.medium,
+      marginLeft: theme.spacing.xs,
+    },
+    
+    availableText: {
+      fontSize: theme.typography.fontSize.sm,
+      fontWeight: theme.typography.fontWeight.medium,
+    },
+    
+    metaText: {
+      fontSize: theme.typography.fontSize.sm,
+      fontWeight: theme.typography.fontWeight.regular,
+      marginLeft: theme.spacing.xs,
+    },
+  });
+
   return (
     <View style={styles.swipeContainer}>
       {/* 左滑操作按钮 (右侧显示) */}
@@ -377,12 +434,12 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({
       >
         {/* Shadow容器 - solid background用于阴影优化 */}
         <View style={[
-          styles.shadowContainer,
+          dmStyles.card.shadowContainer,
           isPerformanceDegraded && { ...theme.shadows.none } // 性能降级时移除阴影
         ]}>
           <Animated.View
             style={[
-              styles.touchableContainer,
+              dmStyles.card.touchableContainer,
               {
                 backgroundColor: liquidGlassConfig.background,
                 borderColor: liquidGlassConfig.border,
@@ -398,13 +455,9 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({
           resizeMode="cover"
         />
         
-        {/* PomeloX 对比度增强渐变遮罩 */}
+        {/* PomeloX 对比度增强渐变遮罩 - 🌙 Dark Mode适配 */}
         <LinearGradient
-          colors={[
-            'rgba(255, 107, 53, 0.05)',   // PomeloX 橙色轻微遮罩
-            'rgba(255, 71, 87, 0.15)',    // PomeloX 珊瑚红深度
-            'rgba(26, 26, 26, 0.75)'      // 底部暗层确保文字对比度
-          ]}
+          colors={dmGradients.overlayGradient}
           style={styles.gradientOverlay}
           start={{ x: 0, y: 0 }}
           end={{ x: 0, y: 1 }}
@@ -448,8 +501,8 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({
               </View>
             )}
             
-            {/* Activity Title */}
-            <Text style={styles.title} numberOfLines={2}>
+            {/* Activity Title - 🌙 Dark Mode适配 */}
+            <Text style={dmStyles.text.title} numberOfLines={2}>
               {safeActivity.title}
             </Text>
             
@@ -458,19 +511,28 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({
             <View style={styles.metaContainer}>
               <View style={styles.metaRow}>
                 <View style={styles.metaItem}>
-                  <Ionicons name="calendar-outline" size={14} color={theme.colors.text.secondary} />
-                  <Text style={styles.metaText}>{formatDate(safeActivity.date)}</Text>
+                  <Ionicons name="calendar-outline" size={14} color={dmIcons.secondary} />
+                  <Text style={[
+                    staticStyles.metaText,
+                    { color: isDarkMode ? dmStyles.text.secondary.color : theme.colors.text.secondary }
+                  ]}>{formatDate(safeActivity.date)}</Text>
                 </View>
                 <View style={styles.metaItem}>
-                  <Ionicons name="time-outline" size={14} color={theme.colors.text.secondary} />
-                  <Text style={styles.metaText}>{safeActivity.time}</Text>
+                  <Ionicons name="time-outline" size={14} color={dmIcons.secondary} />
+                  <Text style={[
+                    staticStyles.metaText,
+                    { color: isDarkMode ? dmStyles.text.secondary.color : theme.colors.text.secondary }
+                  ]}>{safeActivity.time}</Text>
                 </View>
               </View>
               
               <View style={styles.metaRow}>
                 <View style={styles.metaItem}>
-                  <Ionicons name="location-outline" size={14} color={theme.colors.text.secondary} />
-                  <Text style={styles.metaText} numberOfLines={1}>{safeActivity.location}</Text>
+                  <Ionicons name="location-outline" size={14} color={dmIcons.secondary} />
+                  <Text style={[
+                    staticStyles.metaText,
+                    { color: isDarkMode ? dmStyles.text.secondary.color : theme.colors.text.secondary }
+                  ]} numberOfLines={1}>{safeActivity.location}</Text>
                 </View>
               </View>
             </View>
@@ -478,8 +540,14 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({
         </LinearGradient>
       </View>
 
-      {/* Bottom Action Section */}
-      <View style={styles.actionContainer}>
+      {/* Bottom Action Section - 🌙 Dark Mode适配 */}
+      <View style={[
+        staticStyles.actionContainer,
+        {
+          backgroundColor: isDarkMode ? dmStyles.card.contentSection.backgroundColor : 'rgba(255, 255, 255, 0.95)',
+          borderTopColor: isDarkMode ? 'rgba(84, 84, 88, 0.4)' : 'rgba(255, 255, 255, 0.6)',
+        }
+      ]}>
         {/* Glass Shimmer Effect */}
         <View style={styles.glassShimmer} />
         {/* v1.2 Dynamic Dark Overlay for Better Contrast */}
@@ -489,15 +557,19 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({
         ]} />
         <View style={styles.participantInfo}>
           <View style={styles.participantRow}>
-            <Ionicons name="people-outline" size={18} color={theme.colors.text.secondary} />
-            <Text style={styles.participantText}>
+            <Ionicons name="people-outline" size={18} color={dmIcons.secondary} />
+            <Text style={[
+              staticStyles.participantText,
+              { color: isDarkMode ? dmStyles.text.secondary.color : theme.colors.text.secondary }
+            ]}>
               {safeString(safeActivity.attendees)}/{safeString(safeActivity.maxAttendees)} people
             </Text>
             
           </View>
           
           <Text style={[
-            styles.availableText,
+            staticStyles.availableText,
+            { color: isDarkMode ? dmStyles.text.tertiary.color : theme.colors.text.tertiary },
             isAlmostFull && styles.urgentText
           ]}>
             {availableSpots > 0 

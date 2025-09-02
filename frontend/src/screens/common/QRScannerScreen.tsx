@@ -34,9 +34,15 @@ export const QRScannerScreen: React.FC = () => {
   const route = useRoute<any>();
   const purpose = route.params?.purpose || 'scan'; // 'register' | 'verify' | 'scan' | 'membership_card' | 'user_identity' | 'activity_signin'
   const returnScreen = route.params?.returnScreen;
-  const onScanSuccess = route.params?.onScanSuccess; // 扫码成功回调
-  const onScanError = route.params?.onScanError; // 扫码失败回调
   const activity = route.params?.activity; // 活动信息
+  const callbackId = route.params?.callbackId; // 回调函数标识符
+  
+  // 获取注册的回调函数
+  const getRegisteredCallback = (type: 'onScanSuccess' | 'onScanError') => {
+    const state = (navigation as any).getParent()?.getState();
+    const callbacks = state?.qrScannerCallbacks;
+    return callbacks?.[callbackId]?.[type];
+  };
   
   const [permission, requestPermission] = useCameraPermissions();
   const [scanned, setScanned] = useState(false);
@@ -216,7 +222,10 @@ export const QRScannerScreen: React.FC = () => {
   };
 
   const handleActivitySignInScan = async (qrData: string) => {
-    // 如果有自定义回调函数（来自ActivityDetailScreen），使用回调
+    // 如果有注册的回调函数，使用回调
+    const onScanSuccess = getRegisteredCallback('onScanSuccess');
+    const onScanError = getRegisteredCallback('onScanError');
+    
     if (onScanSuccess) {
       try {
         // 验证扫码数据的有效性
@@ -771,6 +780,24 @@ export const QRScannerScreen: React.FC = () => {
     }
   };
 
+  // 根据purpose获取对应的扫描标题
+  const getQRScannerTitle = (purpose: string): string => {
+    switch (purpose) {
+      case 'register':
+        return t('qr.scanning.register_title');
+      case 'membership_card':
+        return t('qr.scanning.membership_title');
+      case 'user_identity':
+        return t('qr.scanning.user_identity_title');
+      case 'activity_signin':
+        return t('qr.scanning.activity_signin_title');
+      case 'verify':
+        return t('qr.scanning.verify_title');
+      default:
+        return t('qr.scanning.general_title');
+    }
+  };
+
   if (!permission) {
     return (
       <View style={styles.container}>
@@ -815,7 +842,7 @@ export const QRScannerScreen: React.FC = () => {
             <Ionicons name="close" size={28} color={theme.colors.text.inverse} />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>
-            {purpose === 'register' ? t('qr.scanning.title') : t('qr.scanning.title')}
+            {getQRScannerTitle(purpose)}
           </Text>
           <TouchableOpacity onPress={toggleTorch} style={styles.headerButton}>
             <Ionicons 

@@ -5,6 +5,10 @@
   "scripts": {
     "validate-translations": "node package-scripts/validate-translations.js",
     "start": "expo start",
+    "dev": "./scripts/dev-server-manager.sh start",
+    "dev:clean": "./scripts/dev-server-manager.sh cleanup && expo start --clear",
+    "dev:check": "./scripts/dev-server-manager.sh check",
+    "dev:restart": "./scripts/dev-server-manager.sh restart",
     "android": "expo run:android",
     "ios": "expo run:ios",
     "web": "expo start --web",
@@ -15,7 +19,14 @@
     "clean:ios": "rm -rf ios && npm run sync:ios && npm run pods",
     "lint": "eslint . --ext .ts,.tsx,.js,.jsx --max-warnings 0",
     "lint:fix": "eslint . --ext .ts,.tsx,.js,.jsx --fix",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "version:patch": "node scripts/update-version.js patch",
+    "version:minor": "node scripts/update-version.js minor",
+    "version:major": "node scripts/update-version.js major",
+    "release:quick": "eas workflow:run quick-release",
+    "release:production": "eas workflow:run production-release",
+    "build:ios": "eas build --platform ios --profile production",
+    "submit:ios": "eas submit --platform ios --profile production --latest"
   },
   "dependencies": {
     "@expo/metro-runtime": "~4.0.1",
@@ -51,10 +62,13 @@
     "react-native-safe-area-context": "4.12.0",
     "react-native-screens": "~4.4.0",
     "react-native-svg": "15.8.0",
-    "react-native-web": "~0.19.13"
+    "react-native-web": "~0.19.13",
+    "text-encoding": "^0.7.0",
+    "expo-image-picker": "~16.0.6"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",
+    "@expo/config-plugins": "~9.0.0",
     "@types/react": "~18.3.12",
     "@typescript-eslint/eslint-plugin": "^8.39.1",
     "@typescript-eslint/parser": "^8.39.1",

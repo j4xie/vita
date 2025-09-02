@@ -8,7 +8,7 @@ export interface BackendUserInfo {
   updateTime: string | null;
   remark: string | null;
   userId: number;
-  deptId: number;
+  deptId: number | null;
   legalName: string;
   userName: string;
   nickName: string;
@@ -144,7 +144,7 @@ const convertGender = (sex: string): 'male' | 'female' | 'unknown' => {
  * 解析用户权限
  */
 const parsePermissions = (roles: BackendUserInfo['roles'], isAdmin: boolean) => {
-  const hasRole = (roleKey: string) => roles.some(role => role.roleKey === roleKey);
+  const hasRole = (roleKey: string) => roles.some(role => role.key === roleKey);
   
   return {
     isAdmin,
@@ -188,24 +188,24 @@ export const adaptUserInfo = (backendUser: BackendUserInfo): FrontendUser => {
     lastLoginTime: formatDateTime(backendUser.loginDate),
     createTime: formatDateTime(backendUser.createTime),
     
-    // 学校信息
+    // 学校信息 - 处理deptId为null的情况
     school: {
-      id: backendUser.deptId.toString(),
-      name: backendUser.dept.deptName,
-      parentId: backendUser.dept.parentId,
-      ancestors: backendUser.dept.ancestors,
+      id: backendUser.deptId ? backendUser.deptId.toString() : '0',
+      name: backendUser.dept?.deptName || '未设置学校',
+      parentId: backendUser.dept?.parentId || 0,
+      ancestors: backendUser.dept?.ancestors || '',
     },
     dept: { // 兼容字段
-      deptId: backendUser.deptId,
-      deptName: backendUser.dept.deptName,
+      deptId: backendUser.deptId || 0,
+      deptName: backendUser.dept?.deptName || '未设置学校',
     },
-    deptId: backendUser.deptId, // 兼容字段
+    deptId: backendUser.deptId || 0, // 兼容字段
     
     // 角色信息
     roles: backendUser.roles.map(role => ({
       id: role.roleId,
       name: role.roleName,
-      key: role.roleKey,
+      key: role.key || role.roleKey,
       isAdmin: role.admin,
     })),
     

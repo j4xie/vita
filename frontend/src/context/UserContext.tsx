@@ -35,6 +35,8 @@ interface UserContextType {
   // 新增权限检查功能
   permissions: PermissionChecker;
   permissionLevel: PermissionLevel;
+  // 新增强制刷新权限方法
+  forceRefreshPermissions: () => Promise<void>;
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
@@ -77,6 +79,14 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const adaptedData = adaptUserInfoResponse(response);
       
       if (adaptedData.success && adaptedData.user) {
+        console.log('✅ 用户信息获取成功:', {
+          userName: adaptedData.user.userName,
+          legalName: adaptedData.user.legalName,
+          school: adaptedData.user.school,
+          deptId: adaptedData.user.deptId,
+          roles: adaptedData.user.roles
+        });
+        
         setUser(adaptedData.user);
         // 更新权限信息
         updateUserPermissions(adaptedData.user);
@@ -138,7 +148,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
         canCheckInOut: checker.canCheckInOut(),
         rawUserData: {
           admin: userData.admin,
-          roles: userData.roles?.map((r: any) => ({ roleKey: r.roleKey, roleName: r.roleName })),
+          roles: userData.roles?.map((r: any) => ({ roleKey: r.key || r.roleKey, roleName: r.roleName || r.name })),
           posts: userData.posts?.map((p: any) => ({ postCode: p.postCode, postName: p.postName }))
         }
       });
@@ -170,6 +180,20 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return user?.permissions[permission] ?? false;
   };
 
+  // 强制刷新权限（用于权限被后端修改后的更新）
+  const forceRefreshPermissions = async () => {
+    console.log('🔄 [PERMISSION] 强制刷新用户权限...');
+    try {
+      // 清除本地缓存
+      await AsyncStorage.removeItem('userData');
+      // 重新获取用户信息
+      await refreshUserInfo();
+      console.log('✅ [PERMISSION] 权限刷新成功');
+    } catch (error) {
+      console.error('❌ [PERMISSION] 权限刷新失败:', error);
+    }
+  };
+
   const contextValue: UserContextType = {
     user,
     isAuthenticated: !!user,
@@ -181,6 +205,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // 新增权限相关
     permissions,
     permissionLevel,
+    forceRefreshPermissions,
   };
 
   return (

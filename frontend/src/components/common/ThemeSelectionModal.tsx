@@ -6,7 +6,6 @@ import {
   StyleSheet,
   Modal,
   Platform,
-  useColorScheme,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
@@ -32,8 +31,8 @@ const ThemeOption: React.FC<ThemeOptionProps> = ({
   onPress,
   isLast = false,
 }) => {
-  const colorScheme = useColorScheme();
-  const isDarkMode = colorScheme === 'dark';
+  const themeContext = useTheme();
+  const isDarkMode = themeContext.isDarkMode;
 
   const handlePress = () => {
     if (Platform.OS === 'ios') {
@@ -108,8 +107,8 @@ export const ThemeSelectionModal: React.FC<ThemeSelectionModalProps> = ({
   onClose,
 }) => {
   const { t } = useTranslation();
-  const colorScheme = useColorScheme();
-  const isDarkMode = colorScheme === 'dark';
+  const themeContext = useTheme();
+  const isDarkMode = themeContext.isDarkMode;
   const { themeMode, changeThemeMode } = useTheme();
 
   const themeOptions: Array<{

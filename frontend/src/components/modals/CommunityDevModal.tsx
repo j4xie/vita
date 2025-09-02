@@ -15,6 +15,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { Glass } from '../../ui/glass/GlassTheme';
 import { getSchoolLogo } from '../../utils/schoolLogos';
+import { useAllDarkModeStyles } from '../../hooks/useDarkModeStyles';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
@@ -36,6 +37,10 @@ export const CommunityDevModal: React.FC<CommunityDevModalProps> = ({
   onClose,
 }) => {
   const { t } = useTranslation();
+  
+  // 🌙 Dark Mode Support
+  const darkModeSystem = useAllDarkModeStyles();
+  const { isDarkMode, styles: dmStyles, blur: dmBlur } = darkModeSystem;
 
   if (!school) return null;
 
@@ -48,17 +53,20 @@ export const CommunityDevModal: React.FC<CommunityDevModalProps> = ({
       animationType="fade"
       statusBarTranslucent
     >
-      <BlurView intensity={50} style={styles.backdrop}>
+      <BlurView intensity={dmBlur.intensity} tint={dmBlur.tint} style={[styles.backdrop, dmStyles.modal.overlay]}>
         <SafeAreaView style={styles.container}>
-          <View style={styles.modalContainer}>
+          <View style={dmStyles.modal.container}>
             <LinearGradient
-              colors={['rgba(255, 255, 255, 0.95)', 'rgba(255, 255, 255, 0.85)']}
+              colors={isDarkMode 
+                ? ['rgba(44, 44, 46, 0.95)', 'rgba(28, 28, 30, 0.85)']  // 深色模式渐变
+                : ['rgba(255, 255, 255, 0.95)', 'rgba(255, 255, 255, 0.85)'] // 浅色模式渐变
+              }
               style={styles.modalContent}
             >
               {/* Header with close button */}
               <View style={styles.header}>
                 <TouchableOpacity style={styles.closeButton} onPress={onClose}>
-                  <Ionicons name="close" size={24} color="#666666" />
+                  <Ionicons name="close" size={24} color={isDarkMode ? dmStyles.text.secondary.color : "#666666"} />
                 </TouchableOpacity>
               </View>
 
@@ -93,31 +101,31 @@ export const CommunityDevModal: React.FC<CommunityDevModalProps> = ({
                 <Text style={styles.featuresTitle}>{t('community.upcomingFeatures')}</Text>
                 <View style={styles.featuresList}>
                   <FeatureItem
-                    icon="chatbubbles-outline"
-                    title={t('community.features.discussions')}
-                    description={t('community.features.discussionsDescription')}
+                    icon="storefront-outline"
+                    title={t('community.features.merchantOffers')}
+                    description={t('community.features.merchantOffersDescription')}
                   />
                   <FeatureItem
-                    icon="calendar-outline"
-                    title={t('community.features.events')}
-                    description={t('community.features.eventsDescription')}
+                    icon="swap-horizontal-outline"
+                    title={t('community.features.secondHand')}
+                    description={t('community.features.secondHandDescription')}
                   />
                   <FeatureItem
-                    icon="trophy-outline"
-                    title={t('community.features.achievements')}
-                    description={t('community.features.achievementsDescription')}
+                    icon="briefcase-outline"
+                    title={t('community.features.career')}
+                    description={t('community.features.careerDescription')}
                   />
                   <FeatureItem
-                    icon="heart-outline"
-                    title={t('community.features.support')}
-                    description={t('community.features.supportDescription')}
+                    icon="people-circle-outline"
+                    title={t('community.features.alumni')}
+                    description={t('community.features.alumniDescription')}
                   />
                 </View>
               </View>
 
               {/* Close button */}
               <TouchableOpacity style={styles.closeActionButton} onPress={onClose}>
-                <Text style={styles.closeActionText}>{t('consulting.iKnow')}</Text>
+                <Text style={styles.closeActionText}>{t('common.iKnow')}</Text>
               </TouchableOpacity>
             </LinearGradient>
           </View>

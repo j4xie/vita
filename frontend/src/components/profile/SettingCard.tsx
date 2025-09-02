@@ -4,13 +4,14 @@ import {
   Text,
   StyleSheet,
   Platform,
-  useColorScheme,
   Animated,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 
 import { theme } from '../../theme';
+import { useTheme } from '../../context/ThemeContext';
+import { useAllDarkModeStyles } from '../../hooks/useDarkModeStyles';
 
 interface SettingCardProps {
   title: string;
@@ -31,9 +32,12 @@ export const SettingCard: React.FC<SettingCardProps> = ({
   hasNotification = false,
   testID,
 }) => {
-  const colorScheme = useColorScheme();
-  const isDarkMode = colorScheme === 'dark';
+  const themeContext = useTheme();
+  const { isDarkMode } = themeContext;
   const scaleValue = useRef(new Animated.Value(1)).current;
+  
+  const darkModeSystem = useAllDarkModeStyles();
+  const { styles: dmStyles, gradients: dmGradients, blur: dmBlur, icons: dmIcons } = darkModeSystem;
 
   const handlePress = () => {
     // Haptic feedback
@@ -62,7 +66,6 @@ export const SettingCard: React.FC<SettingCardProps> = ({
     container: {
       flex: 1,
       aspectRatio: 1, // Square cards
-      backgroundColor: isDarkMode ? '#1c1c1e' : '#ffffff',
       borderRadius: 18,
       padding: 16,
       justifyContent: 'center',
@@ -84,8 +87,8 @@ export const SettingCard: React.FC<SettingCardProps> = ({
       height: 48,
       borderRadius: 24,
       backgroundColor: isDarkMode 
-        ? 'rgba(120, 120, 128, 0.16)' 
-        : 'rgba(120, 120, 128, 0.08)',
+        ? 'rgba(255, 138, 101, 0.16)' 
+        : 'rgba(255, 107, 53, 0.08)',
       alignItems: 'center',
       justifyContent: 'center',
       marginBottom: 12,
@@ -93,14 +96,12 @@ export const SettingCard: React.FC<SettingCardProps> = ({
     title: {
       fontSize: 17,
       fontWeight: '600',
-      color: isDarkMode ? '#ffffff' : '#000000',
       textAlign: 'center',
       marginBottom: 4,
       numberOfLines: 1,
     },
     subtitle: {
       fontSize: 13,
-      color: isDarkMode ? '#8e8e93' : '#8e8e93',
       textAlign: 'center',
       numberOfLines: 1,
     },
@@ -135,7 +136,7 @@ export const SettingCard: React.FC<SettingCardProps> = ({
   return (
     <Animated.View style={{ transform: [{ scale: scaleValue }] }}>
       <TouchableOpacity
-        style={styles.container}
+        style={[styles.container, dmStyles.card.contentSection]}
         onPress={handlePress}
         activeOpacity={0.8}
         accessibilityRole="button"
@@ -148,12 +149,12 @@ export const SettingCard: React.FC<SettingCardProps> = ({
           <Ionicons
             name={icon}
             size={30}
-            color={isDarkMode ? theme.colors.primary : theme.colors.primary}
+            color={dmIcons.brand}
           />
         </Animated.View>
         
         <Text 
-          style={styles.title}
+          style={[styles.title, dmStyles.text.primary]}
           allowFontScaling={true}
           maxFontSizeMultiplier={1.4}
         >
@@ -162,7 +163,7 @@ export const SettingCard: React.FC<SettingCardProps> = ({
         
         {subtitle && (
           <Text 
-            style={styles.subtitle}
+            style={[styles.subtitle, dmStyles.text.secondary]}
             allowFontScaling={true}
             maxFontSizeMultiplier={1.3}
           >

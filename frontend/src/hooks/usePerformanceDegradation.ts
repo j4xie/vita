@@ -6,6 +6,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { Platform } from 'react-native';
+// 🎉 JSC引擎下恢复Reanimated支持
 import { useSharedValue } from 'react-native-reanimated';
 // 稳健的主题获取，避免循环依赖
 let _themeCache: any = null;
@@ -404,7 +405,7 @@ export const usePerformanceDegradation = () => {
 };
 
 /**
- * Shared Value版本的性能降级Hook
+ * 🎉 JSC引擎下恢复完整的Reanimated性能降级Hook
  * 用于Reanimated动画中的性能优化
  */
 export const useReanimatedPerformanceDegradation = () => {

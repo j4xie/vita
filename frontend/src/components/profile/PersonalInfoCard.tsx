@@ -1,25 +1,27 @@
-import React, { useRef } from 'react';
+import React from 'react';
 import {
   TouchableOpacity,
   Text,
   View,
   StyleSheet,
   Platform,
-  useColorScheme,
-  Animated,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import * as Haptics from 'expo-haptics';
 import { useTranslation } from 'react-i18next';
 
 import { theme } from '../../theme';
+import { useTheme } from '../../context/ThemeContext';
+import { useAllDarkModeStyles } from '../../hooks/useDarkModeStyles';
 import { LIQUID_GLASS_LAYERS, DAWN_GRADIENTS } from '../../theme/core';
 import { usePerformanceDegradation } from '../../hooks/usePerformanceDegradation';
 
 interface PersonalInfoCardProps {
   name: string;
-  email: string;
+  email?: string; // 改为可选，保持兼容性
+  school?: string; // 学校名称
+  organization?: string; // 组织名称
+  position?: string; // 岗位信息
   avatarUrl?: string;
   onPress: () => void;
   testID?: string;
@@ -36,6 +38,9 @@ interface PersonalInfoCardProps {
 export const PersonalInfoCard: React.FC<PersonalInfoCardProps> = ({
   name,
   email,
+  school,
+  organization,
+  position,
   avatarUrl,
   onPress,
   testID,
@@ -44,42 +49,23 @@ export const PersonalInfoCard: React.FC<PersonalInfoCardProps> = ({
   onQRCodePress,
 }) => {
   const { t } = useTranslation();
-  const colorScheme = useColorScheme();
-  const isDarkMode = colorScheme === 'dark';
-  const scaleValue = useRef(new Animated.Value(1)).current;
+  const themeContext = useTheme();
+  const { isDarkMode } = themeContext;
+  
+  const darkModeSystem = useAllDarkModeStyles();
+  const { styles: dmStyles, gradients: dmGradients, blur: dmBlur, icons: dmIcons } = darkModeSystem;
   
   // V2.0 获取分层配置
   const { getLayerConfig } = usePerformanceDegradation();
   const L2Config = getLayerConfig('L2', isDarkMode);
 
-  const handlePress = () => {
-    // Haptic feedback
-    if (Platform.OS === 'ios') {
-      Haptics.selectionAsync();
-    }
-
-    // Press animation
-    Animated.sequence([
-      Animated.timing(scaleValue, {
-        toValue: 0.98,
-        duration: 100,
-        useNativeDriver: true,
-      }),
-      Animated.timing(scaleValue, {
-        toValue: 1,
-        duration: 100,
-        useNativeDriver: true,
-      }),
-    ]).start();
-
-    onPress();
-  };
+  // 个人资料编辑功能已禁用，等待后端API支持
+  // const handlePress = () => { ... };
 
   const styles = StyleSheet.create({
     container: {
       flexDirection: 'row',
       alignItems: 'center',
-      backgroundColor: '#FFFFFF', // 小红书风格纯白背景
       borderWidth: 0, // 去掉边框，更简洁
       borderRadius: 0, // 去掉圆角，由外层容器处理
       paddingHorizontal: 20,
@@ -92,9 +78,7 @@ export const PersonalInfoCard: React.FC<PersonalInfoCardProps> = ({
       alignItems: 'center',
       justifyContent: 'center',
       marginRight: 16,
-      backgroundColor: '#F5F6F7', // 简洁的浅灰色背景
       borderWidth: 2, // Dawn渐变描边
-      borderColor: 'rgba(255, 171, 145, 0.3)', // 1pt Dawn→透明渐变描边
     },
     avatarPlaceholder: {
       // For when we don't have an avatar image
@@ -106,12 +90,31 @@ export const PersonalInfoCard: React.FC<PersonalInfoCardProps> = ({
     name: {
       fontSize: 20,
       fontWeight: '600',
-      color: theme.colors.text.primary,
       marginBottom: 4,
     },
     email: {
       fontSize: 15, // 稍微小一点，更符合小红书
-      color: '#9CA3AF', // 使用中性灰色
+      flex: 1, // 在同行布局中占据剩余空间
+    },
+    position: {
+      fontSize: 11,
+      fontWeight: '500',
+      color: '#374151', // 深灰色文字
+      textAlign: 'center',
+    },
+    positionBadge: {
+      backgroundColor: '#F3F4F6', // 中性浅灰色背景
+      paddingHorizontal: 10,
+      paddingVertical: 3,
+      borderRadius: 12,
+      alignSelf: 'flex-start', // 让徽章贴合内容大小
+      marginLeft: 8, // 与左侧文字的间距
+    },
+    organizationRow: {
+      flexDirection: 'row',
+      alignItems: 'center', // 垂直居中对齐
+      marginBottom: 8, // 与下方统计数据的间距
+      justifyContent: 'flex-start', // 左对齐
     },
     chevron: {
       marginLeft: 8,
@@ -121,7 +124,7 @@ export const PersonalInfoCard: React.FC<PersonalInfoCardProps> = ({
     nameRow: {
       flexDirection: 'row',
       alignItems: 'center',
-      marginBottom: 4,
+      marginBottom: 6, // 与组织行的间距保持一致
     },
     
     // 会员标识
@@ -201,29 +204,30 @@ export const PersonalInfoCard: React.FC<PersonalInfoCardProps> = ({
   });
 
   return (
-    <Animated.View style={{ transform: [{ scale: scaleValue }] }}>
-      <TouchableOpacity
-        style={[styles.container]}
-        onPress={handlePress}
-        activeOpacity={0.8}
-        accessibilityRole="button"
-        accessibilityLabel={`Edit profile for ${name}`}
-        accessibilityHint="Double tap to edit your profile information"
+    <View>
+      <View
+        style={[styles.container, dmStyles.card.contentSection]}
         testID={testID}
       >
         {/* 小红书风格简洁头像 */}
-        <View style={styles.avatarContainer}>
+        <View style={[
+          styles.avatarContainer,
+          {
+            backgroundColor: isDarkMode ? '#374151' : '#F5F6F7',
+            borderColor: isDarkMode ? 'rgba(255, 138, 101, 0.4)' : 'rgba(255, 171, 145, 0.3)'
+          }
+        ]}>
           <Ionicons
             name="person"
             size={24}
-            color="#9CA3AF" // 中性灰色，简洁风格
+            color={dmIcons.tertiary}
           />
         </View>
         
         <View style={styles.infoContainer}>
           <View style={styles.nameRow}>
             <Text 
-              style={styles.name}
+              style={[styles.name, dmStyles.text.title]}
               allowFontScaling={true}
               maxFontSizeMultiplier={1.4}
               numberOfLines={1}
@@ -242,26 +246,60 @@ export const PersonalInfoCard: React.FC<PersonalInfoCardProps> = ({
             )}
           </View>
           
-          <Text 
-            style={styles.email}
-            allowFontScaling={true}
-            maxFontSizeMultiplier={1.3}
-            numberOfLines={1}
-          >
-            {email}
-          </Text>
+          {/* 学校 • 组织信息 与 岗位徽章同行显示 */}
+          {(school || organization || position) && (
+            <View style={styles.organizationRow}>
+              {/* 学校组织信息 */}
+              {(school || organization) && (
+                <Text 
+                  style={[styles.email, dmStyles.text.secondary]}
+                  allowFontScaling={true}
+                  maxFontSizeMultiplier={1.3}
+                  numberOfLines={1}
+                >
+                  {school && organization ? `${school} • ${organization}` : (school || organization)}
+                </Text>
+              )}
+              
+              {/* 岗位徽章 */}
+              {position && (
+                <View style={styles.positionBadge}>
+                  <Text 
+                    style={styles.position}
+                    allowFontScaling={true}
+                    maxFontSizeMultiplier={1.1}
+                    numberOfLines={1}
+                  >
+                    {position}
+                  </Text>
+                </View>
+              )}
+            </View>
+          )}
+          
+          {/* 兜底显示邮箱（如果没有学校和组织信息） */}
+          {!school && !organization && email && (
+            <Text 
+              style={[styles.email, dmStyles.text.secondary]}
+              allowFontScaling={true}
+              maxFontSizeMultiplier={1.3}
+              numberOfLines={1}
+            >
+              {email}
+            </Text>
+          )}
           
           {/* 精简统计数据 - 仅2项KPI */}
           {stats && (
             <View style={styles.statsRow}>
               <View style={styles.statItem}>
-                <Text style={styles.statNumber}>{stats.volunteerHours}h</Text>
-                <Text style={styles.statLabel}>{t('profile.volunteer_hours_label')}</Text>
+                <Text style={[styles.statNumber, dmStyles.text.primary]}>{stats.volunteerHours}h</Text>
+                <Text style={[styles.statLabel, dmStyles.text.secondary]}>{t('profile.volunteer_hours_label')}</Text>
               </View>
               <View style={styles.statDivider} />
               <View style={styles.statItem}>
-                <Text style={styles.statNumber}>{stats.points > 1000 ? `${(stats.points/1000).toFixed(1)}k` : stats.points}</Text>
-                <Text style={styles.statLabel}>{t('profile.points_label')}</Text>
+                <Text style={[styles.statNumber, dmStyles.text.primary]}>{stats.points > 1000 ? `${(stats.points/1000).toFixed(1)}k` : stats.points}</Text>
+                <Text style={[styles.statLabel, dmStyles.text.secondary]}>{t('profile.points_label')}</Text>
               </View>
             </View>
           )}
@@ -274,11 +312,11 @@ export const PersonalInfoCard: React.FC<PersonalInfoCardProps> = ({
             onPress={onQRCodePress}
             activeOpacity={0.8}
           >
-            <Ionicons name="qr-code" size={20} color="#000000" />
+            <Ionicons name="qr-code" size={20} color={dmIcons.primary} />
           </TouchableOpacity>
         )}
-      </TouchableOpacity>
-    </Animated.View>
+      </View>
+    </View>
   );
 };
 

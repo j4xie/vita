@@ -5,11 +5,28 @@
   "build": {
     "development": {
       "developmentClient": true,
-      "distribution": "internal"
+      "distribution": "internal",
+      "channel": "development"
     },
     "preview": {
-      "distribution": "internal"
+      "distribution": "internal",
+      "channel": "preview"
     },
-    "production": {}
+    "production": {
+      "distribution": "store",
+      "channel": "production",
+      "ios": {
+        "simulator": false
+      }
+    }
+  },
+  "submit": {
+    "production": {
+      "ios": {
+        "appleId": "dev@americanpromotioncompany.com",
+        "ascAppId": "6751477195",
+        "appleTeamId": "5RYR7K29A7"
+      }
+    }
   }
 }

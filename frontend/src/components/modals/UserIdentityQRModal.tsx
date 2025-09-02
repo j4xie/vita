@@ -9,7 +9,6 @@ import {
   Share,
   Platform,
   Dimensions,
-  useColorScheme,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import QRCode from 'react-native-qrcode-svg';
@@ -20,6 +19,7 @@ import { useTranslation } from 'react-i18next';
 import * as Haptics from 'expo-haptics';
 
 import { theme } from '../../theme';
+import { useTheme } from '../../context/ThemeContext';
 import { UserIdentityData, IdentityQRCodeProps } from '../../types/userIdentity';
 import { generateUserQRContent } from '../../utils/userIdentityMapper';
 
@@ -32,15 +32,29 @@ export const UserIdentityQRModal: React.FC<IdentityQRCodeProps> = ({
   userData,
 }) => {
   const { t } = useTranslation();
-  const colorScheme = useColorScheme();
-  const isDarkMode = colorScheme === 'dark';
+  const themeContext = useTheme();
+  const isDarkMode = themeContext.isDarkMode;
   
   const [qrRef, setQrRef] = useState<any>(null);
   const [isSaving, setIsSaving] = useState(false);
 
   // 生成QR码内容 - 使用优化的生成函数
   const generateQRContent = (): string => {
-    return generateUserQRContent(userData);
+    try {
+      if (!userData) {
+        return 'VG_USER_NO_DATA';
+      }
+      
+      // 检查是否为访客用户，不生成二维码
+      if (userData.userId === 'guest' || userData.userName === 'guest') {
+        return 'VG_GUEST_NO_QR';
+      }
+      
+      return generateUserQRContent(userData);
+    } catch (error) {
+      console.error('QR码内容生成失败:', error);
+      return `VG_USER_${userData?.userId || 'unknown'}_${Date.now()}`;
+    }
   };
 
   const handleSaveQRCode = async () => {
@@ -172,15 +186,60 @@ export const UserIdentityQRModal: React.FC<IdentityQRCodeProps> = ({
       color: isDarkMode ? '#9CA3AF' : '#6B7280',
       textAlign: 'center',
     },
+    orgSchoolInfo: {
+      alignItems: 'center',
+      marginBottom: 12,
+    },
+    combinedOrgSchoolText: {
+      fontSize: 14,
+      fontWeight: '500',
+      color: isDarkMode ? '#D1D5DB' : '#374151',
+      textAlign: 'center',
+    },
+    separator: {
+      fontSize: 14,
+      fontWeight: '400',
+      color: isDarkMode ? '#9CA3AF' : '#9CA3AF',
+    },
+    schoolNameInline: {
+      fontSize: 14,
+      fontWeight: '400',
+      color: isDarkMode ? '#9CA3AF' : '#6B7280',
+    },
     organizationInfo: {
       alignItems: 'center',
-      marginBottom: 20,
+      marginBottom: 12,
     },
     organizationName: {
       fontSize: 14,
       fontWeight: '500',
       color: isDarkMode ? '#D1D5DB' : '#374151',
       textAlign: 'center',
+    },
+    schoolInfo: {
+      alignItems: 'center',
+      marginBottom: 12,
+    },
+    schoolName: {
+      fontSize: 13,
+      fontWeight: '400',
+      color: isDarkMode ? '#9CA3AF' : '#6B7280',
+      textAlign: 'center',
+    },
+    positionInfo: {
+      alignItems: 'center',
+      marginBottom: 20,
+    },
+    positionName: {
+      fontSize: 12,
+      fontWeight: '600',
+      color: '#FF6B35',
+      textAlign: 'center',
+      backgroundColor: isDarkMode ? 'rgba(255, 107, 53, 0.1)' : 'rgba(255, 107, 53, 0.1)',
+      paddingHorizontal: 12,
+      paddingVertical: 4,
+      borderRadius: 12,
+      overflow: 'hidden',
     },
     qrCodeWrapper: {
       padding: 16,
@@ -278,27 +337,62 @@ export const UserIdentityQRModal: React.FC<IdentityQRCodeProps> = ({
               </Text>
             </View>
 
-            {/* Organization Info */}
-            {userData.currentOrganization && (
-              <View style={styles.organizationInfo}>
+            {/* Organization & School Info - Combined */}
+            <View style={styles.orgSchoolInfo}>
+              {userData.currentOrganization && userData.school ? (
+                <Text style={styles.combinedOrgSchoolText}>
+                  {userData.currentOrganization.displayNameZh}
+                  <Text style={styles.separator}> • </Text>
+                  <Text style={styles.schoolNameInline}>
+                    {userData.school.name}
+                  </Text>
+                </Text>
+              ) : userData.currentOrganization ? (
                 <Text style={styles.organizationName}>
                   {userData.currentOrganization.displayNameZh}
+                </Text>
+              ) : userData.school ? (
+                <Text style={styles.schoolName}>
+                  {userData.school.name}
+                </Text>
+              ) : null}
+            </View>
+
+            {/* Position Info */}
+            {userData.position && (
+              <View style={styles.positionInfo}>
+                <Text style={styles.positionName}>
+                  {userData.position.displayName}
                 </Text>
               </View>
             )}
 
             {/* QR Code */}
             <View style={styles.qrCodeWrapper}>
-              <QRCode
-                value={generateQRContent()}
-                size={qrSize}
-                backgroundColor="#FFFFFF"
-                color="#000000"
-                logoSize={qrSize * 0.2}
-                logoMargin={2}
-                logoBorderRadius={8}
-                quietZone={10}
-              />
+              {(() => {
+                try {
+                  return (
+                    <QRCode
+                      value={generateQRContent()}
+                      size={qrSize}
+                      backgroundColor="#FFFFFF"
+                      color="#000000"
+                      logoSize={qrSize * 0.2}
+                      logoMargin={2}
+                      logoBorderRadius={8}
+                      quietZone={10}
+                    />
+                  );
+                } catch (error) {
+                  console.error('QRCode组件渲染失败:', error);
+                  return (
+                    <View style={{ width: qrSize, height: qrSize, backgroundColor: '#F3F4F6', alignItems: 'center', justifyContent: 'center' }}>
+                      <Ionicons name="qr-code-outline" size={qrSize * 0.5} color="#9CA3AF" />
+                      <Text style={{ fontSize: 12, color: '#6B7280', marginTop: 8 }}>二维码生成失败</Text>
+                    </View>
+                  );
+                }
+              })()}
               <View style={styles.qrInfo}>
                 <Text style={styles.qrLabel}>
                   {t('qr.identity.scan_instruction', '扫描二维码查看我的信息')}

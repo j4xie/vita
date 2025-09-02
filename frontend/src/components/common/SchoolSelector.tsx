@@ -19,6 +19,8 @@ import { pomeloXAPI } from '../../services/PomeloXAPI';
 interface School {
   deptId: number;
   deptName: string;
+  engName?: string; // 🌍 添加英文名称支持
+  aprName?: string; // 简称
   parentId: number;
   ancestors: string;
   orderNum: number;
@@ -40,8 +42,19 @@ export const SchoolSelector: React.FC<SchoolSelectorProps> = ({
   placeholder,
   error,
 }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const defaultPlaceholder = placeholder || t('common.select_school');
+  
+  // 🌍 根据当前语言获取学校显示名称
+  const getSchoolDisplayName = (school: School): string => {
+    const currentLanguage = i18n.language;
+    
+    if (currentLanguage === 'en-US' && school.engName) {
+      return school.engName;
+    }
+    
+    return school.deptName; // 默认使用中文名称
+  };
   const [modalVisible, setModalVisible] = useState(false);
   const [schools, setSchools] = useState<School[]>([]);
   const [filteredSchools, setFilteredSchools] = useState<School[]>([]);
@@ -54,11 +67,10 @@ export const SchoolSelector: React.FC<SchoolSelectorProps> = ({
       const result = await pomeloXAPI.getSchoolList();
       
       if (result.code === 200 && result.data) {
-        // 过滤出实际的学校（排除测试数据和非学校部门）
+        // 过滤出实际的学校（排除测试数据）
         const actualSchools = result.data.filter((school: School) => 
           school.deptName !== '学校A' && 
-          school.deptName !== '学校B' && 
-          school.deptName !== 'CU总部'
+          school.deptName !== '学校B'
         );
         
         setSchools(actualSchools);
@@ -84,9 +96,17 @@ export const SchoolSelector: React.FC<SchoolSelectorProps> = ({
     if (searchText.trim() === '') {
       setFilteredSchools(schools);
     } else {
-      const filtered = schools.filter(school =>
-        school.deptName.toLowerCase().includes(searchText.toLowerCase())
-      );
+      // 🌍 支持中英文双语搜索
+      const searchLower = searchText.toLowerCase();
+      const filtered = schools.filter(school => {
+        const chineseName = school.deptName.toLowerCase();
+        const englishName = school.engName?.toLowerCase() || '';
+        const shortName = school.aprName?.toLowerCase() || '';
+        
+        return chineseName.includes(searchLower) || 
+               englishName.includes(searchLower) ||
+               shortName.includes(searchLower);
+      });
       setFilteredSchools(filtered);
     }
   }, [searchText, schools]);
@@ -105,12 +125,25 @@ export const SchoolSelector: React.FC<SchoolSelectorProps> = ({
       ]}
       onPress={() => handleSelectSchool(item)}
     >
-      <Text style={[
-        styles.schoolName,
-        selectedId === item.deptId.toString() && styles.schoolNameSelected
-      ]}>
-        {item.deptName}
-      </Text>
+      <View style={{ flex: 1 }}>
+        <Text style={[
+          styles.schoolName,
+          selectedId === item.deptId.toString() && styles.schoolNameSelected
+        ]}>
+          {getSchoolDisplayName(item)}
+        </Text>
+        {/* 🌍 双语显示：显示另一种语言作为副标题 */}
+        {i18n.language === 'en-US' && item.deptName !== getSchoolDisplayName(item) && (
+          <Text style={styles.schoolSubName}>
+            {item.deptName}
+          </Text>
+        )}
+        {i18n.language === 'zh-CN' && item.engName && (
+          <Text style={styles.schoolSubName}>
+            {item.engName}
+          </Text>
+        )}
+      </View>
       {selectedId === item.deptId.toString() && (
         <Ionicons 
           name="checkmark" 
@@ -296,5 +329,10 @@ const styles = StyleSheet.create({
   schoolNameSelected: {
     color: theme.colors.primary,
     fontWeight: theme.typography.fontWeight.medium,
+  },
+  schoolSubName: {
+    fontSize: theme.typography.fontSize.xs,
+    color: theme.colors.text.tertiary,
+    marginTop: 2,
   },
 });

@@ -6,17 +6,17 @@
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "displayName": "PomeloX",
+      "displayName": "西柚Pomelo",
       "localizedResources": {
-        "CFBundleDisplayName": "PomeloX",
-        "CFBundleName": "PomeloX",
+        "CFBundleDisplayName": "西柚Pomelo",
+        "CFBundleName": "西柚Pomelo",
         "NSCameraUsageDescription": "此应用需要访问摄像头来扫描二维码",
         "NSMicrophoneUsageDescription": "此应用需要访问麦克风来录制音频",
         "NSPhotoLibraryUsageDescription": "此应用需要访问相册来上传照片"
       }
     },
     "android": {
-      "displayName": "PomeloX",
+      "displayName": "西柚Pomelo",
       "permissions": [
         "android.permission.CAMERA",
         "android.permission.RECORD_AUDIO",

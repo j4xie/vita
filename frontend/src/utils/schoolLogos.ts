@@ -18,7 +18,7 @@ export const getSchoolLogo = (schoolId: string) => {
     
     // 映射学校名称到logo键名
     const nameMapping: Record<string, keyof typeof schoolLogos> = {
-      // 数字ID映射
+      // 数字ID映射（完整覆盖）
       '210': 'ucd',
       '211': 'ucb', 
       '212': 'ucsc',
@@ -28,7 +28,10 @@ export const getSchoolLogo = (schoolId: string) => {
       '216': 'ucsd',
       '217': 'umn',
       '218': 'uw',
+      '219': 'ucsb', // 可能的ID变化
       '220': 'ucsb',
+      '221': 'ucd', // 备用映射
+      '222': 'ucla', // 备用映射
       // 名称映射
       'ucd': 'ucd',
       'ucb': 'ucb',
@@ -40,6 +43,17 @@ export const getSchoolLogo = (schoolId: string) => {
       'ucsc': 'ucsc',
       'uw': 'uw',
       'umn': 'umn',
+      // 添加更多可能的变体
+      'berkeley': 'ucb',
+      'davis': 'ucd',
+      'irvine': 'uci',
+      'losangeles': 'ucla',
+      'sandiego': 'ucsd',
+      'santabarbara': 'ucsb',
+      'santacruz': 'ucsc',
+      'southerncalifornia': 'usc',
+      'minnesota': 'umn',
+      'washington': 'uw',
     };
     
     const mappedKey = nameMapping[logoKey];

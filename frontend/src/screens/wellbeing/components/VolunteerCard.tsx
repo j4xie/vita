@@ -5,7 +5,6 @@ import {
   TouchableOpacity,
   StyleSheet,
   Platform,
-  useColorScheme,
   AccessibilityInfo,
   Animated,
 } from 'react-native';
@@ -14,6 +13,8 @@ import { useTranslation } from 'react-i18next';
 import * as Haptics from 'expo-haptics';
 
 import { theme } from '../../../theme';
+import { useTheme } from '../../../context/ThemeContext';
+// 🎉 JSC引擎下恢复完整的主题和性能系统
 import { LIQUID_GLASS_LAYERS, BRAND_GLASS, BRAND_INTERACTIONS } from '../../../theme/core';
 import { usePerformanceDegradation } from '../../../hooks/usePerformanceDegradation';
 import { formatTime, formatDuration, formatHours } from '../utils/timeFormatter';
@@ -21,13 +22,18 @@ import { i18n } from '../../../utils/i18n';
 import { SafeText } from '../../../components/common/SafeText';
 // mockSchools removed - using real school data
 
+// 扩展API的VolunteerRecord以包含UI需要的字段
 export interface VolunteerRecord {
   id: string;
   phone: string;
   name: string;
   school: string;
+  userId?: number; // API字段
+  legalName?: string; // API字段
   checkInTime?: string;
   checkOutTime?: string;
+  startTime?: string; // API字段
+  endTime?: string | null; // API字段
   status: 'not_checked_in' | 'checked_in';
   duration?: number; // 分钟
   totalHours?: number; // 总志愿时长（小时）
@@ -59,10 +65,10 @@ export const VolunteerCard: React.FC<VolunteerCardProps> = ({
   loading = false,
 }) => {
   const { t } = useTranslation();
-  const colorScheme = useColorScheme();
-  const isDarkMode = colorScheme === 'dark';
+  const themeContext = useTheme();
+  const isDarkMode = themeContext.isDarkMode;
   
-  // V2.0 获取分层配置
+  // 🎉 JSC引擎下恢复性能监控和分层配置
   const { getLayerConfig } = usePerformanceDegradation();
   const L1Config = getLayerConfig('L1', isDarkMode);
   
@@ -74,7 +80,7 @@ export const VolunteerCard: React.FC<VolunteerCardProps> = ({
     if ((volunteer as any).checkInStatus === 'checked_in' && volunteer.checkInTime) {
       const updateDuration = () => {
         try {
-          const checkInTime = new Date(volunteer.checkInTime);
+          const checkInTime = new Date(volunteer.checkInTime!);
           const now = new Date();
           const diffMs = now.getTime() - checkInTime.getTime();
           
@@ -110,7 +116,7 @@ export const VolunteerCard: React.FC<VolunteerCardProps> = ({
     return schoolName;
   };
   
-  // 动画值
+  // 🎉 JSC引擎下恢复完整动画
   const heightAnim = useRef(new Animated.Value(COLLAPSED_HEIGHT)).current;
   const opacityAnim = useRef(new Animated.Value(0)).current;
   
@@ -125,7 +131,7 @@ export const VolunteerCard: React.FC<VolunteerCardProps> = ({
     checkReduceMotion();
   }, []);
 
-  // 展开/收起动画
+  // 🎉 JSC引擎下恢复展开/收起动画
   useEffect(() => {
     const duration = reduceMotionEnabled ? 120 : ANIMATION_DURATION;
     
@@ -241,7 +247,7 @@ export const VolunteerCard: React.FC<VolunteerCardProps> = ({
       <TouchableOpacity
         style={[
           styles.card,
-          styles.cardGlass, // 应用L1玻璃样式
+          styles.cardGlass, // 🎉 恢复玻璃效果（JSC引擎下安全）
           isExpanded && styles.cardExpanded,
         ]}
         onPress={handleCardPress}
@@ -345,7 +351,7 @@ export const VolunteerCard: React.FC<VolunteerCardProps> = ({
                 {t('wellbeing.volunteer.totalHours')}
               </Text>
               <SafeText style={[styles.timeValue, { color: theme.colors.text.primary }]} fallback="0小时">
-                {Math.max(0, volunteer.totalHours || 0).toFixed(1)} {t('wellbeing.volunteer.hours')}
+                {Math.max(0, volunteer.totalHours || 0).toFixed(1)} {t('wellbeing.volunteer.hours_unit')}
               </SafeText>
             </View>
           </View>
@@ -485,7 +491,7 @@ const styles = StyleSheet.create({
     marginLeft: 8,
   },
   
-  // V2.0 L1玻璃志愿者卡片样式
+  // 🎉 JSC引擎下恢复完整的玻璃效果
   cardGlass: {
     backgroundColor: LIQUID_GLASS_LAYERS.L1.background.light,
     borderWidth: LIQUID_GLASS_LAYERS.L1.border.width,

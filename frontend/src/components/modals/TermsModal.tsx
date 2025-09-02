@@ -14,6 +14,7 @@ import { BlurView } from 'expo-blur';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { theme } from '../../theme';
+import { useAllDarkModeStyles } from '../../hooks/useDarkModeStyles';
 import { LIQUID_GLASS_LAYERS } from '../../theme/core';
 
 interface TermsModalProps {
@@ -30,6 +31,9 @@ export const TermsModal: React.FC<TermsModalProps> = ({
   const { t } = useTranslation();
   const [scrollProgress, setScrollProgress] = useState(0);
   const scrollViewRef = useRef<ScrollView>(null);
+  
+  const darkModeSystem = useAllDarkModeStyles();
+  const { isDarkMode, styles: dmStyles, gradients: dmGradients, blur: dmBlur, icons: dmIcons } = darkModeSystem;
 
   const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
     const { contentOffset, contentSize, layoutMeasurement } = event.nativeEvent;
@@ -47,6 +51,10 @@ export const TermsModal: React.FC<TermsModalProps> = ({
   const isTerms = type === 'terms';
   const title = isTerms ? t('legal.terms.title') : t('legal.privacy.title');
   const content = isTerms ? t('legal.terms.full_content') : t('legal.privacy.full_content');
+  
+  const legalContent = isTerms ? 
+    t('legal.terms.full_content') :
+    t('legal.privacy.full_content');
 
   return (
     <Modal
@@ -56,25 +64,28 @@ export const TermsModal: React.FC<TermsModalProps> = ({
       statusBarTranslucent={true}
       onShow={handleModalShow}
     >
-      <BlurView intensity={20} style={StyleSheet.absoluteFill}>
+      <BlurView intensity={dmBlur.intensity} tint={dmBlur.tint} style={StyleSheet.absoluteFill}>
         <SafeAreaView style={styles.container}>
           <View style={styles.overlay}>
-            <View style={styles.modalContainer}>
+            <View style={[styles.modalContainer, dmStyles.modal.container]}>
               {/* Header */}
-              <View style={styles.header}>
-                <View style={styles.iconContainer}>
+              <View style={[styles.header, dmStyles.modal.header]}>
+                <View style={[
+                  styles.iconContainer,
+                  { backgroundColor: isDarkMode ? 'rgba(255, 138, 101, 0.16)' : 'rgba(255, 107, 53, 0.15)' }
+                ]}>
                   <Ionicons 
                     name={isTerms ? "document-text" : "shield-checkmark"} 
                     size={24} 
-                    color={theme.colors.primary} 
+                    color={dmIcons.brand} 
                   />
                 </View>
-                <Text style={styles.title}>{title}</Text>
+                <Text style={[styles.title, dmStyles.text.title]}>{title}</Text>
                 <TouchableOpacity 
                   style={styles.closeButton}
                   onPress={onClose}
                 >
-                  <Ionicons name="close" size={24} color={theme.colors.text.secondary} />
+                  <Ionicons name="close" size={24} color={dmIcons.secondary} />
                 </TouchableOpacity>
               </View>
 
@@ -86,23 +97,16 @@ export const TermsModal: React.FC<TermsModalProps> = ({
               </View>
 
               {/* Content */}
-              <ScrollView 
-                ref={scrollViewRef}
-                style={styles.contentScrollView}
-                contentContainerStyle={styles.contentContainer}
-                showsVerticalScrollIndicator={true}
-                onScroll={handleScroll}
-                scrollEventThrottle={16}
-              >
-                <Text style={styles.contentText}>
-                  {content}
+              <View style={[styles.contentScrollView, dmStyles.modal.content]}>
+                <Text style={[styles.contentText, dmStyles.text.primary]}>
+                  {legalContent}
                 </Text>
-              </ScrollView>
+              </View>
 
               {/* Close Button */}
               <View style={styles.buttonContainer}>
                 <TouchableOpacity
-                  style={styles.closeActionButton}
+                  style={[styles.closeActionButton, dmStyles.button.primary]}
                   onPress={onClose}
                   activeOpacity={0.8}
                 >
@@ -133,10 +137,7 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: 420,
     maxHeight: '85%',
-    backgroundColor: LIQUID_GLASS_LAYERS.L1.background.light,
     borderRadius: LIQUID_GLASS_LAYERS.L1.borderRadius.card,
-    borderWidth: LIQUID_GLASS_LAYERS.L1.border.width,
-    borderColor: LIQUID_GLASS_LAYERS.L1.border.color.light,
     overflow: 'hidden',
     ...theme.shadows.lg,
   },
@@ -145,14 +146,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    borderBottomWidth: 1,
-    borderBottomColor: theme.colors.border.primary,
   },
   iconContainer: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: theme.colors.primary + '15',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -160,7 +158,6 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: theme.typography.fontSize.xl,
     fontWeight: theme.typography.fontWeight.bold,
-    color: theme.colors.text.primary,
     textAlign: 'center',
     marginHorizontal: theme.spacing[4],
   },
@@ -168,28 +165,26 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: theme.colors.background.secondary,
     alignItems: 'center',
     justifyContent: 'center',
   },
   contentScrollView: {
     flex: 1,
+    padding: theme.spacing[4],
   },
   contentContainer: {
     padding: theme.spacing[6],
   },
   contentText: {
-    fontSize: theme.typography.fontSize.sm,
-    color: theme.colors.text.primary,
-    lineHeight: theme.typography.fontSize.sm * 1.6,
+    fontSize: theme.typography.fontSize.base,
+    lineHeight: theme.typography.fontSize.base * 1.6,
+    padding: theme.spacing[2],
+    marginVertical: theme.spacing[1],
   },
   buttonContainer: {
     padding: theme.spacing[6],
-    borderTopWidth: 1,
-    borderTopColor: theme.colors.border.primary,
   },
   closeActionButton: {
-    backgroundColor: theme.colors.primary,
     paddingVertical: theme.spacing[4],
     borderRadius: theme.borderRadius.lg,
     alignItems: 'center',
@@ -203,8 +198,6 @@ const styles = StyleSheet.create({
   progressIndicatorContainer: {
     paddingHorizontal: theme.spacing[6],
     paddingVertical: theme.spacing[3],
-    borderBottomWidth: 1,
-    borderBottomColor: theme.colors.border.primary,
   },
   progressIndicator: {
     height: 3,
@@ -216,5 +209,10 @@ const styles = StyleSheet.create({
     height: '100%',
     backgroundColor: theme.colors.primary,
     borderRadius: 2,
+  },
+  debugText: {
+    fontSize: theme.typography.fontSize.sm,
+    marginTop: theme.spacing[2],
+    padding: theme.spacing[1],
   },
 });

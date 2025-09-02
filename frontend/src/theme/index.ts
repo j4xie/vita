@@ -43,8 +43,10 @@ export const theme = {
 
 /**
  * 简化的主题Hook - 直接返回静态对象
+ * 向后兼容：保留useTheme导出用于静态主题
  */
 export const useTheme = () => theme;
+export const useStaticTheme = () => theme;  // 别名，保持兼容
 
 /**
  * 主题性能优化工具（Hermes 优化版）

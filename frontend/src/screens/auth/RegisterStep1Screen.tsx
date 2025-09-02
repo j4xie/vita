@@ -27,9 +27,9 @@ import {
 import { 
   SchoolData, 
   createSchoolDataFromBackend,
-  generateEmailAddress,
   validateEduEmail 
 } from '../../utils/schoolData';
+import SchoolEmailService from '../../services/schoolEmailService';
 import { 
   fetchSchoolList,
   validatePhoneNumber 
@@ -68,7 +68,9 @@ export const RegisterStep1Screen: React.FC = () => {
   // 生成邮箱地址
   useEffect(() => {
     if (emailUsername && formData.selectedSchool) {
-      const generatedEmail = generateEmailAddress(emailUsername, formData.selectedSchool.abbreviation);
+      // 使用统一的邮箱域名服务生成邮箱地址
+      const emailDomain = formData.selectedSchool.emailDomain;
+      const generatedEmail = emailDomain ? `${emailUsername}@${emailDomain}` : '';
       setFormData(prev => ({ ...prev, generatedEmail }));
     } else {
       setFormData(prev => ({ ...prev, generatedEmail: '' }));

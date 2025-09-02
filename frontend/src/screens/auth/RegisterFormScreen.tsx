@@ -18,25 +18,13 @@ import { useTranslation } from 'react-i18next';
 import { LinearGradient } from 'expo-linear-gradient';
 import { theme } from '../../theme';
 import { LIQUID_GLASS_LAYERS, DAWN_GRADIENTS } from '../../theme/core';
+import { useAllDarkModeStyles } from '../../hooks/useDarkModeStyles';
 import { SchoolSelector } from '../../components/common/SchoolSelector';
 import { OrganizationSelector } from '../../components/common/OrganizationSelector';
 import { pomeloXAPI } from '../../services/PomeloXAPI';
-import { TermsModal } from '../../components/modals/TermsModal';
-
-// 学校名称到邮箱域名的映射表
-const SCHOOL_EMAIL_DOMAINS: Record<string, string> = {
-  'UC Berkeley': 'berkeley.edu',
-  'UC Santa Cruz': 'ucsc.edu',  
-  'U Southern California': 'usc.edu',
-  'UC Los Angeles': 'ucla.edu',
-  'UC Irvine': 'uci.edu',
-  'UC San Diego': 'ucsd.edu',
-  'U of Minnesota Twin Cities': 'umn.edu',
-  'University of Washington': 'uw.edu',
-  'U Berklee Music': 'berklee.edu',
-  'UC Santa Barbara': 'ucsb.edu',
-  'UC Davis': 'ucdavis.edu',
-};
+import { useUser } from '../../context/UserContext';
+import { login } from '../../services/authAPI';
+import SchoolEmailService, { APISchoolData } from '../../services/schoolEmailService';
 
 interface FormData {
   userName: string;
@@ -61,19 +49,21 @@ interface FormData {
 export const RegisterFormScreen: React.FC = () => {
   const navigation = useNavigation<any>();
   const route = useRoute<any>();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const scrollRef = useRef<ScrollView>(null);
+  const { login: userLogin } = useUser();
+  const darkModeSystem = useAllDarkModeStyles();
+  const { isDarkMode, styles: dmStyles, gradients: dmGradients } = darkModeSystem;
   
   const referralCode = route.params?.referralCode;
   const hasReferralCode = route.params?.hasReferralCode ?? !!referralCode;
 
   const [currentStep, setCurrentStep] = useState(1);
   const [loading, setLoading] = useState(false);
+  const [loadingMessage, setLoadingMessage] = useState('');
   const [verificationCode, setVerificationCode] = useState('');
   const [countdown, setCountdown] = useState(0);
   const [agreedToTerms, setAgreedToTerms] = useState(false);
-  const [termsModalVisible, setTermsModalVisible] = useState(false);
-  const [termsModalType, setTermsModalType] = useState<'terms' | 'privacy'>('terms');
   
   const [formData, setFormData] = useState<FormData>({
     userName: '',
@@ -143,7 +133,7 @@ export const RegisterFormScreen: React.FC = () => {
     if (!formData.email) {
       newErrors.email = t('validation.email_required');
     } else {
-      const domain = SCHOOL_EMAIL_DOMAINS[formData.university];
+      const domain = SchoolEmailService.getEmailDomainByName(formData.university);
       if (domain) {
         // 对于有固定域名的学校，验证前缀是否为空
         if (!formData.emailPrefix) {
@@ -298,7 +288,13 @@ export const RegisterFormScreen: React.FC = () => {
 
   // 根据学校更新邮箱域名
   const handleSchoolSelect = (school: any) => {
-    updateFormData('university', school.deptName);
+    // 🌍 根据当前语言保存对应的学校名称，确保邮箱域名映射正确
+    const isEnglish = i18n.language === 'en-US';
+    const schoolName = (isEnglish && school.engName) 
+      ? school.engName 
+      : school.deptName;
+    
+    updateFormData('university', schoolName);
     updateFormData('universityId', school.deptId.toString());
     
     // 清空之前的邮箱数据
@@ -310,7 +306,7 @@ export const RegisterFormScreen: React.FC = () => {
   const handleEmailPrefixChange = (prefix: string) => {
     updateFormData('emailPrefix', prefix);
     
-    const domain = SCHOOL_EMAIL_DOMAINS[formData.university];
+    const domain = SchoolEmailService.getEmailDomainByName(formData.university);
     if (domain && prefix) {
       updateFormData('email', `${prefix}@${domain}`);
     } else {
@@ -320,8 +316,7 @@ export const RegisterFormScreen: React.FC = () => {
 
   // 处理条款和隐私政策点击
   const handleTermsPress = (type: 'terms' | 'privacy') => {
-    setTermsModalType(type);
-    setTermsModalVisible(true);
+    navigation.navigate('Terms', { type });
   };
 
   // 解析注册错误为用户友好提示
@@ -338,6 +333,7 @@ export const RegisterFormScreen: React.FC = () => {
   // 完成注册（推荐码用户）
   const completeRegistration = async () => {
     setLoading(true);
+    setLoadingMessage(t('auth.register.processing_registration'));
     try {
       const phoneNumber = formData.phoneType === 'CN' 
         ? formData.phoneNumber // 中国手机号直接使用11位格式
@@ -351,27 +347,72 @@ export const RegisterFormScreen: React.FC = () => {
         phonenumber: phoneNumber,
         email: formData.email,
         sex: formData.sex,
-        deptId: formData.universityId,
+        deptId: formData.universityId, // 传递学校ID，确保用户关联正确的学校
         orgId: formData.organizationId,
         invCode: formData.referralCode,
       };
 
+      console.log('📋 邀请码注册数据:', {
+        ...registrationData,
+        password: '[HIDDEN]',
+        selectedSchool: formData.university,
+        deptId: formData.universityId
+      });
+
       const result = await pomeloXAPI.register(registrationData);
       
       if (result.code === 200) {
-        Alert.alert(
-          t('auth.register.success_title'),
-          t('auth.register.success_message'),
-          [{
-            text: t('common.confirm'),
-            onPress: () => navigation.dispatch(
-              CommonActions.reset({
-                index: 0,
-                routes: [{ name: 'Main' }],
-              })
-            )
-          }]
-        );
+        // 注册成功后自动登录
+        try {
+          console.log('注册成功，开始自动登录...');
+          setLoadingMessage(t('auth.register.auto_login_processing'));
+          
+          // 使用注册时的凭据进行登录
+          const loginResult = await login({
+            username: formData.userName, // 注意：登录API使用的是username而不是userName
+            password: formData.password,
+          });
+          
+          if (loginResult.code === 200 && loginResult.data) {
+            // 登录成功，更新用户状态
+            await userLogin(loginResult.data.token);
+            
+            Alert.alert(
+              t('auth.register.success_title'),
+              t('auth.register.auto_login_success'),
+              [{
+                text: t('common.confirm'),
+                onPress: () => navigation.dispatch(
+                  CommonActions.reset({
+                    index: 0,
+                    routes: [{ name: 'Main' }],
+                  })
+                )
+              }]
+            );
+          } else {
+            // 登录失败，但注册成功
+            Alert.alert(
+              t('auth.register.success_title'),
+              t('auth.register.success_please_login'),
+              [{
+                text: t('common.confirm'),
+                onPress: () => navigation.navigate('Login')
+              }]
+            );
+          }
+        } catch (loginError) {
+          console.error('自动登录失败:', loginError);
+          // 登录失败，但注册成功
+          Alert.alert(
+            t('auth.register.success_title'),
+            t('auth.register.success_please_login'),
+            [{
+              text: t('common.confirm'),
+              onPress: () => navigation.navigate('Login')
+            }]
+          );
+        }
       } else {
         const friendlyError = parseRegistrationError(result.msg || '');
         Alert.alert(t('auth.register.error_title'), friendlyError);
@@ -382,6 +423,7 @@ export const RegisterFormScreen: React.FC = () => {
       Alert.alert(t('auth.register.error_title'), friendlyError);
     } finally {
       setLoading(false);
+      setLoadingMessage('');
     }
   };
 
@@ -486,7 +528,7 @@ export const RegisterFormScreen: React.FC = () => {
 
       <View style={styles.inputContainer}>
         <Text style={styles.label}>{t('auth.register.form.email_label')}</Text>
-        {SCHOOL_EMAIL_DOMAINS[formData.university] ? (
+        {SchoolEmailService.getEmailDomainByName(formData.university) ? (
           <View style={styles.emailInputWrapper}>
             <TextInput
               style={[styles.emailPrefixInput, errors.email && styles.inputError]}
@@ -500,12 +542,12 @@ export const RegisterFormScreen: React.FC = () => {
               textContentType="emailAddress"
               autoComplete="email"
             />
-            <Text style={styles.emailDomain}>@{SCHOOL_EMAIL_DOMAINS[formData.university]}</Text>
+            <Text style={styles.emailDomain}>@{SchoolEmailService.getEmailDomainByName(formData.university)}</Text>
           </View>
         ) : (
           <TextInput
             style={[styles.input, errors.email && styles.inputError]}
-            placeholder="example@university.edu"
+            placeholder={t('auth.register.form.email_placeholder')}
             value={formData.email}
             onChangeText={(text) => updateFormData('email', text)}
             keyboardType="email-address"
@@ -665,9 +707,10 @@ export const RegisterFormScreen: React.FC = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <LinearGradient colors={DAWN_GRADIENTS.skyCool} style={StyleSheet.absoluteFill} />
+      <LinearGradient colors={isDarkMode ? dmGradients.page.background : DAWN_GRADIENTS.skyCool} style={StyleSheet.absoluteFill} />
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 0}
         style={styles.keyboardView}
       >
         {/* Header */}
@@ -688,6 +731,7 @@ export const RegisterFormScreen: React.FC = () => {
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
+          contentInsetAdjustmentBehavior="automatic"
         >
           <View style={styles.formContainer}>
             {renderStepContent()}
@@ -706,7 +750,12 @@ export const RegisterFormScreen: React.FC = () => {
             disabled={loading || (currentStep === 3 && !agreedToTerms)}
           >
             {loading ? (
-              <ActivityIndicator color={theme.colors.text.inverse} />
+              <View style={styles.loadingContainer}>
+                <ActivityIndicator color={theme.colors.text.inverse} />
+                {loadingMessage && (
+                  <Text style={styles.loadingText}>{loadingMessage}</Text>
+                )}
+              </View>
             ) : (
               <Text style={styles.nextButtonText}>
                 {currentStep === 3 
@@ -717,12 +766,6 @@ export const RegisterFormScreen: React.FC = () => {
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
-      
-      <TermsModal
-        visible={termsModalVisible}
-        type={termsModalType}
-        onClose={() => setTermsModalVisible(false)}
-      />
     </SafeAreaView>
   );
 };
@@ -791,6 +834,7 @@ const styles = StyleSheet.create({
   scrollContent: {
     flexGrow: 1,
     paddingHorizontal: theme.spacing[6],
+    paddingBottom: 120, // 为底部按钮留出空间，避免被键盘遮挡
   },
   formContainer: {
     backgroundColor: LIQUID_GLASS_LAYERS.L1.background.light,
@@ -1002,5 +1046,16 @@ const styles = StyleSheet.create({
     fontSize: theme.typography.fontSize.lg,
     fontWeight: theme.typography.fontWeight.semibold,
     color: theme.colors.text.inverse,
+  },
+  loadingContainer: {
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  loadingText: {
+    fontSize: theme.typography.fontSize.sm,
+    color: theme.colors.text.inverse,
+    marginTop: theme.spacing[2],
+    textAlign: 'center',
   },
 });

@@ -5,7 +5,6 @@ import {
   TouchableOpacity,
   StyleSheet,
   Platform,
-  useColorScheme,
   Animated,
   Modal,
   Dimensions,
@@ -16,6 +15,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 
 import { theme } from '../../../theme';
+import { useTheme } from '../../../context/ThemeContext';
 import { VolunteerRecord } from './VolunteerCard';
 import { SafeText } from '../../../components/common/SafeText';
 
@@ -37,8 +37,8 @@ export const SignOutBottomSheet: React.FC<SignOutBottomSheetProps> = ({
   loading = false,
 }) => {
   const { t } = useTranslation();
-  const colorScheme = useColorScheme();
-  const isDarkMode = colorScheme === 'dark';
+  const themeContext = useTheme();
+  const isDarkMode = themeContext.isDarkMode;
   const insets = useSafeAreaInsets();
   
   // 动画值

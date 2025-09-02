@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Modal,
   View,
@@ -7,19 +7,23 @@ import {
   StyleSheet,
   ScrollView,
   Dimensions,
-  useColorScheme,
   ActivityIndicator,
   Alert,
+  Animated,
+  Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
+import * as Haptics from 'expo-haptics';
 
 import { theme } from '../../theme';
 import { LIQUID_GLASS_LAYERS } from '../../theme/core';
 import { pomeloXAPI } from '../../services/PomeloXAPI';
 import { useUser } from '../../context/UserContext';
+import { useTheme } from '../../context/ThemeContext';
+import { useAllDarkModeStyles } from '../../hooks/useDarkModeStyles';
 import UserActivityCard from '../cards/UserActivityCard';
 
 interface UserActivityModalProps {
@@ -49,14 +53,20 @@ export const UserActivityModal: React.FC<UserActivityModalProps> = ({
 }) => {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
-  const colorScheme = useColorScheme();
+  const themeContext = useTheme();
   const navigation = useNavigation<any>();
   const { user } = useUser();
   
   const [activities, setActivities] = useState<UserActivity[]>([]);
   const [loading, setLoading] = useState(false);
   
-  const isDarkMode = colorScheme === 'dark';
+  // 动画值
+  const backdropOpacity = useRef(new Animated.Value(0)).current;
+  const translateY = useRef(new Animated.Value(screenHeight)).current;
+  
+  const darkModeSystem = useAllDarkModeStyles();
+  const { isDarkMode, styles: dmStyles, gradients: dmGradients, blur: dmBlur, icons: dmIcons } = darkModeSystem;
+  const { isDarkMode: legacyDarkMode } = themeContext;
 
   // 获取用户相关活动
   const fetchUserActivities = async () => {
@@ -99,6 +109,48 @@ export const UserActivityModal: React.FC<UserActivityModalProps> = ({
     }
   }, [visible, activityType]);
 
+  // 显示/隐藏动画
+  useEffect(() => {
+    if (visible) {
+      // 显示动画
+      Animated.parallel([
+        Animated.timing(backdropOpacity, {
+          toValue: 1,
+          duration: 250,
+          useNativeDriver: true,
+        }),
+        Animated.spring(translateY, {
+          toValue: 0,
+          tension: 100,
+          friction: 8,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    } else {
+      // 隐藏动画
+      Animated.parallel([
+        Animated.timing(backdropOpacity, {
+          toValue: 0,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+        Animated.timing(translateY, {
+          toValue: screenHeight,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    }
+  }, [visible]);
+
+  // 处理背景点击
+  const handleBackdropPress = () => {
+    if (Platform.OS === 'ios') {
+      Haptics.selectionAsync();
+    }
+    onClose();
+  };
+
   // 处理扫码签到
   const handleScanPress = (activityId: number) => {
     // 关闭modal
@@ -106,15 +158,38 @@ export const UserActivityModal: React.FC<UserActivityModalProps> = ({
     
     // 延迟跳转，确保modal动画完成
     setTimeout(() => {
+      // 生成唯一的回调ID
+      const callbackId = `user_activity_signin_${Date.now()}`;
+      
+      // 注册回调函数到导航状态
+      const parentNavigator = (navigation as any).getParent();
+      if (parentNavigator) {
+        const state = parentNavigator.getState();
+        if (!state.qrScannerCallbacks) {
+          state.qrScannerCallbacks = {};
+        }
+        
+        state.qrScannerCallbacks[callbackId] = {
+          onScanSuccess: () => {
+            // 签到成功后刷新统计
+            if (onRefreshStats) {
+              onRefreshStats();
+            }
+            // 清理回调函数
+            delete state.qrScannerCallbacks[callbackId];
+          },
+          onScanError: (error: string) => {
+            console.error('扫码失败:', error);
+            // 清理回调函数
+            delete state.qrScannerCallbacks[callbackId];
+          }
+        };
+      }
+      
       navigation.navigate('QRScanner', {
         scanType: 'activity_signin',
         activityId: activityId.toString(),
-        onScanSuccess: () => {
-          // 签到成功后刷新统计
-          if (onRefreshStats) {
-            onRefreshStats();
-          }
-        }
+        callbackId: callbackId // 传递回调ID而不是函数
       });
     }, 300);
   };
@@ -139,112 +214,153 @@ export const UserActivityModal: React.FC<UserActivityModalProps> = ({
     <Modal
       visible={visible}
       transparent
-      animationType="slide"
+      animationType="none"
+      statusBarTranslucent
       onRequestClose={onClose}
     >
-      <View style={styles.overlay}>
-        <View style={[
-          styles.container,
-          isDarkMode && styles.containerDark,
-          { paddingBottom: insets.bottom + 20 }
-        ]}>
-          {/* 头部 */}
-          <View style={styles.header}>
-            <Text style={[styles.title, isDarkMode && styles.titleDark]}>
-              {getModalTitle()}
-            </Text>
-            <TouchableOpacity
-              style={styles.closeButton}
-              onPress={onClose}
-              activeOpacity={0.7}
-            >
-              <Ionicons
-                name="close"
-                size={24}
-                color={isDarkMode ? '#FFFFFF' : '#6B7280'}
-              />
-            </TouchableOpacity>
-          </View>
+      {/* 背景遮罩 */}
+      <Animated.View
+        style={[styles.backdrop, { opacity: backdropOpacity }]}
+      >
+        <TouchableOpacity
+          style={StyleSheet.absoluteFill}
+          onPress={handleBackdropPress}
+          activeOpacity={1}
+        />
+      </Animated.View>
 
-          {/* 内容区域 */}
-          <ScrollView 
-            style={styles.content}
-            showsVerticalScrollIndicator={false}
-          >
-            {loading ? (
-              <View style={styles.loadingContainer}>
-                <ActivityIndicator size="large" color={theme.colors.primary} />
-                <Text style={[styles.loadingText, isDarkMode && styles.loadingTextDark]}>
-                  {t('common.loading', '加载中...')}
-                </Text>
-              </View>
-            ) : activities.length > 0 ? (
-              <View style={styles.activitiesContainer}>
-                {activities.map((activity) => (
-                  <UserActivityCard
-                    key={activity.id}
-                    activity={activity}
-                    onScanPress={handleScanPress}
-                  />
-                ))}
-              </View>
-            ) : (
-              <View style={styles.emptyContainer}>
-                <Ionicons 
-                  name={activityType === 'not_checked_in' ? 'time-outline' : 'checkmark-circle-outline'} 
-                  size={48} 
-                  color="#D1D5DB" 
-                />
-                <Text style={[styles.emptyText, isDarkMode && styles.emptyTextDark]}>
-                  {getEmptyMessage()}
-                </Text>
-              </View>
-            )}
-          </ScrollView>
+      {/* 底部弹层 */}
+      <Animated.View
+        style={[
+          styles.bottomSheet,
+          {
+            backgroundColor: isDarkMode ? '#1c1c1e' : '#ffffff',
+            paddingBottom: insets.bottom + 16,
+            transform: [{ translateY }],
+          },
+        ]}
+      >
+        {/* 拖拽指示器 */}
+        <View style={styles.dragIndicator}>
+          <View
+            style={[
+              styles.dragBar,
+              { backgroundColor: isDarkMode ? '#48484a' : '#c6c6c8' },
+            ]}
+          />
         </View>
-      </View>
+
+        {/* 头部标题 */}
+        <View style={styles.header}>
+          <Text style={[styles.title, { color: isDarkMode ? '#ffffff' : '#000000' }]}>
+            {getModalTitle()}
+          </Text>
+          <TouchableOpacity
+            style={styles.closeButton}
+            onPress={onClose}
+            activeOpacity={0.7}
+          >
+            <Ionicons
+              name="close"
+              size={24}
+              color={isDarkMode ? '#8e8e93' : '#8e8e93'}
+            />
+          </TouchableOpacity>
+        </View>
+
+        {/* 内容区域 */}
+        <ScrollView 
+          style={styles.content}
+          showsVerticalScrollIndicator={false}
+        >
+          {loading ? (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="large" color={theme.colors.primary} />
+              <Text style={[styles.loadingText, { color: isDarkMode ? '#8e8e93' : '#8e8e93' }]}>
+                {t('common.loading', '加载中...')}
+              </Text>
+            </View>
+          ) : activities.length > 0 ? (
+            <View style={styles.activitiesContainer}>
+              {activities.map((activity) => (
+                <UserActivityCard
+                  key={activity.id}
+                  activity={activity}
+                  onScanPress={handleScanPress}
+                />
+              ))}
+            </View>
+          ) : (
+            <View style={styles.emptyContainer}>
+              <Ionicons 
+                name={activityType === 'not_checked_in' ? 'time-outline' : 'checkmark-circle-outline'} 
+                size={48} 
+                color={isDarkMode ? '#48484a' : '#c6c6c8'} 
+              />
+              <Text style={[styles.emptyText, { color: isDarkMode ? '#8e8e93' : '#8e8e93' }]}>
+                {getEmptyMessage()}
+              </Text>
+            </View>
+          )}
+        </ScrollView>
+      </Animated.View>
     </Modal>
   );
 };
 
 const styles = StyleSheet.create({
-  overlay: {
-    flex: 1,
+  backdrop: {
+    ...StyleSheet.absoluteFillObject,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'flex-end',
   },
   
-  container: {
-    backgroundColor: '#FFFFFF',
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    maxHeight: screenHeight * 0.8,
+  bottomSheet: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    maxHeight: screenHeight * 0.7,
     minHeight: screenHeight * 0.4,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000000',
+        shadowOffset: { width: 0, height: -4 },
+        shadowOpacity: 0.15,
+        shadowRadius: 20,
+      },
+      android: {
+        elevation: 16,
+      },
+    }),
   },
   
-  containerDark: {
-    backgroundColor: '#1F2937',
+  dragIndicator: {
+    alignItems: 'center',
+    paddingVertical: 12,
+  },
+  
+  dragBar: {
+    width: 36,
+    height: 4,
+    borderRadius: 2,
   },
   
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingVertical: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(0, 0, 0, 0.1)',
+    paddingHorizontal: 24,
+    paddingBottom: 16,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: 'rgba(0, 0, 0, 0.06)',
   },
   
   title: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: '600',
-    color: '#111827',
     flex: 1,
-  },
-  
-  titleDark: {
-    color: '#FFFFFF',
   },
   
   closeButton: {
@@ -253,16 +369,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: 20,
-    backgroundColor: 'rgba(0, 0, 0, 0.05)',
   },
   
   content: {
     flex: 1,
-    paddingHorizontal: 20,
+    paddingHorizontal: 24,
   },
   
   loadingContainer: {
-    flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 60,
@@ -270,12 +384,7 @@ const styles = StyleSheet.create({
   
   loadingText: {
     fontSize: 16,
-    color: '#6B7280',
     marginTop: 12,
-  },
-  
-  loadingTextDark: {
-    color: '#9CA3AF',
   },
   
   activitiesContainer: {
@@ -283,7 +392,6 @@ const styles = StyleSheet.create({
   },
   
   emptyContainer: {
-    flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 60,
@@ -291,13 +399,8 @@ const styles = StyleSheet.create({
   
   emptyText: {
     fontSize: 16,
-    color: '#9CA3AF',
     marginTop: 16,
     textAlign: 'center',
-  },
-  
-  emptyTextDark: {
-    color: '#6B7280',
   },
 });
 

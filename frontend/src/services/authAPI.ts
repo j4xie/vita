@@ -162,6 +162,63 @@ export const getUserInfo = async (token?: string, userId?: number): Promise<APIR
 };
 
 /**
+ * 更新用户资料
+ * @param profileData 用户资料数据
+ * @returns API响应
+ */
+export const updateUserProfile = async (profileData: {
+  legalName?: string;
+  nickName?: string;
+  phonenumber?: string;
+  email?: string;
+  bio?: string;
+  location?: string;
+  avatar?: string;
+}): Promise<APIResponse<any>> => {
+  try {
+    const authToken = await AsyncStorage.getItem(STORAGE_KEYS.TOKEN);
+    if (!authToken) {
+      throw new Error('No auth token found');
+    }
+
+    const userId = await AsyncStorage.getItem(STORAGE_KEYS.USER_ID);
+    if (!userId) {
+      throw new Error('No user ID found');
+    }
+
+    // ⚠️ 注意：后端暂无用户资料更新接口，此API路径为预期接口
+    // 需要后端团队实现 /app/user/update 接口
+    const response = await fetch(`${BASE_URL}/app/user/update`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'Authorization': `Bearer ${authToken}`,
+      },
+      body: new URLSearchParams({
+        userId: userId,
+        ...profileData,
+      }).toString(),
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    
+    // 如果更新成功，刷新本地用户信息
+    if (data.code === 200) {
+      await getUserInfo(authToken);
+    }
+    
+    return data;
+  } catch (error) {
+    console.error('更新用户资料失败:', error);
+    throw error;
+  }
+};
+
+/**
  * 保存用户会话信息
  * @param loginData 登录返回的数据
  */
@@ -171,6 +228,7 @@ export const saveUserSession = async (loginData: LoginResponse): Promise<void> =
       AsyncStorage.setItem(STORAGE_KEYS.TOKEN, loginData.token),
       AsyncStorage.setItem(STORAGE_KEYS.USER_ID, loginData.userId.toString()),
     ]);
+    
   } catch (error) {
     console.error('保存用户会话失败:', error);
     throw error;
@@ -187,6 +245,7 @@ export const clearUserSession = async (): Promise<void> => {
       AsyncStorage.removeItem(STORAGE_KEYS.USER_ID),
       AsyncStorage.removeItem(STORAGE_KEYS.USER_INFO),
     ]);
+    
   } catch (error) {
     console.error('清除用户会话失败:', error);
     throw error;

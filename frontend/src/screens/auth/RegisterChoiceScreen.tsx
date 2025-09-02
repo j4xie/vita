@@ -15,14 +15,11 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { theme } from '../../theme';
 import { LIQUID_GLASS_LAYERS, DAWN_GRADIENTS } from '../../theme/core';
 import { PrivacyAgreementModal } from '../../components/modals/PrivacyAgreementModal';
-import { TermsModal } from '../../components/modals/TermsModal';
 
 export const RegisterChoiceScreen: React.FC = () => {
   const navigation = useNavigation<any>();
   const { t } = useTranslation();
   const [showPrivacyModal, setShowPrivacyModal] = useState(false);
-  const [termsModalVisible, setTermsModalVisible] = useState(false);
-  const [termsModalType, setTermsModalType] = useState<'terms' | 'privacy'>('terms');
 
   const handleBack = () => {
     navigation.goBack();
@@ -55,8 +52,7 @@ export const RegisterChoiceScreen: React.FC = () => {
 
   // 处理条款和隐私政策点击
   const handleTermsPress = (type: 'terms' | 'privacy') => {
-    setTermsModalType(type);
-    setTermsModalVisible(true);
+    navigation.navigate('Terms', { type });
   };
 
   return (
@@ -176,12 +172,6 @@ export const RegisterChoiceScreen: React.FC = () => {
         visible={showPrivacyModal}
         onAccept={handlePrivacyAccept}
         onDecline={handlePrivacyDecline}
-      />
-      
-      <TermsModal
-        visible={termsModalVisible}
-        type={termsModalType}
-        onClose={() => setTermsModalVisible(false)}
       />
     </SafeAreaView>
   );

@@ -22,6 +22,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useTranslation } from 'react-i18next';
 import { theme } from '../../theme';
 import { LIQUID_GLASS_LAYERS, DAWN_GRADIENTS } from '../../theme/core';
+import { useAllDarkModeStyles } from '../../hooks/useDarkModeStyles';
 import { fadeIn, slideInFromBottom } from '../../utils/animations';
 import { pomeloXAPI } from '../../services/PomeloXAPI';
 import { useUser } from '../../context/UserContext';
@@ -32,6 +33,8 @@ export const LoginScreen: React.FC = () => {
   const { t } = useTranslation();
   const navigation = useNavigation<any>();
   const { login: userLogin } = useUser();
+  const darkModeSystem = useAllDarkModeStyles();
+  const { isDarkMode, styles: dmStyles, gradients: dmGradients } = darkModeSystem;
   
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -88,9 +91,9 @@ export const LoginScreen: React.FC = () => {
     try {
       console.log('尝试登录:', { userName: email, password: '[HIDDEN]' }); // 调试信息
       
-      // 调用PomeloX登录API，后端需要userName字段
+      // 调用PomeloX登录API，后端需要username字段（注意不是userName）
       const result = await pomeloXAPI.login({
-        userName: email, // 后端接受邮箱作为userName
+        userName: email, // PomeloXAPI会将此字段映射为username
         password: password,
       });
       
@@ -163,7 +166,7 @@ export const LoginScreen: React.FC = () => {
 
   return (
     <LinearGradient
-      colors={DAWN_GRADIENTS.skyCool}
+      colors={isDarkMode ? dmGradients.page.background : DAWN_GRADIENTS.skyCool}
       style={styles.container}
     >
       <SafeAreaView style={styles.safeArea}>

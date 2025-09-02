@@ -6,7 +6,6 @@ import {
   TouchableOpacity,
   StyleSheet,
   Dimensions,
-  useColorScheme,
   Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -14,6 +13,8 @@ import { useTranslation } from 'react-i18next';
 import * as Haptics from 'expo-haptics';
 
 import { LIQUID_GLASS_LAYERS, CORE_COLORS, CORE_SPACING, CORE_BORDER_RADIUS, CORE_SHADOWS } from '../../theme/core';
+import { useTheme } from '../../context/ThemeContext';
+import { useAllDarkModeStyles } from '../../hooks/useDarkModeStyles';
 
 interface LoginRequiredModalProps {
   visible: boolean;
@@ -33,8 +34,9 @@ export const LoginRequiredModal: React.FC<LoginRequiredModalProps> = ({
   message,
 }) => {
   const { t } = useTranslation();
-  const colorScheme = useColorScheme();
-  const isDarkMode = colorScheme === 'dark';
+  const themeContext = useTheme();
+  const darkModeSystem = useAllDarkModeStyles();
+  const { isDarkMode, styles: dmStyles, gradients: dmGradients, blur: dmBlur, icons: dmIcons } = darkModeSystem;
 
   const handleClose = () => {
     if (Platform.OS === 'ios') {
@@ -53,7 +55,6 @@ export const LoginRequiredModal: React.FC<LoginRequiredModalProps> = ({
   const styles = StyleSheet.create({
     overlay: {
       flex: 1,
-      backgroundColor: 'rgba(0, 0, 0, 0.5)',
       justifyContent: 'center',
       alignItems: 'center',
       paddingHorizontal: CORE_SPACING['5'], // 20px
@@ -61,9 +62,6 @@ export const LoginRequiredModal: React.FC<LoginRequiredModalProps> = ({
     
     // Liquid Glass 容器
     container: {
-      backgroundColor: LIQUID_GLASS_LAYERS.L1.background.light,
-      borderWidth: LIQUID_GLASS_LAYERS.L1.border.width,
-      borderColor: LIQUID_GLASS_LAYERS.L1.border.color.light,
       borderRadius: CORE_BORDER_RADIUS.modal, // 24px
       padding: CORE_SPACING['6'], // 24px
       maxWidth: 320,
@@ -78,7 +76,6 @@ export const LoginRequiredModal: React.FC<LoginRequiredModalProps> = ({
       width: 64,
       height: 64,
       borderRadius: 32,
-      backgroundColor: 'rgba(255, 107, 53, 0.10)', // PomeloX 橙色背景，10% 透明度
       alignItems: 'center',
       justifyContent: 'center',
       marginBottom: CORE_SPACING['4'], // 16px
@@ -88,7 +85,6 @@ export const LoginRequiredModal: React.FC<LoginRequiredModalProps> = ({
     title: {
       fontSize: 18,
       fontWeight: '600',
-      color: CORE_COLORS.text.primary,
       textAlign: 'center',
       marginBottom: CORE_SPACING['2'], // 8px
     },
@@ -96,7 +92,6 @@ export const LoginRequiredModal: React.FC<LoginRequiredModalProps> = ({
     // 描述文字
     message: {
       fontSize: 15,
-      color: CORE_COLORS.text.secondary,
       textAlign: 'center',
       lineHeight: 20,
       marginBottom: CORE_SPACING['6'], // 24px
@@ -112,7 +107,6 @@ export const LoginRequiredModal: React.FC<LoginRequiredModalProps> = ({
     
     // 主按钮 (登录)
     primaryButton: {
-      backgroundColor: CORE_COLORS.primary, // PomeloX 橙色
       borderRadius: CORE_BORDER_RADIUS.button, // 12px
       paddingVertical: CORE_SPACING['3'], // 12px
       paddingHorizontal: CORE_SPACING['6'], // 24px
@@ -130,9 +124,6 @@ export const LoginRequiredModal: React.FC<LoginRequiredModalProps> = ({
     
     // 次要按钮 (取消)
     secondaryButton: {
-      backgroundColor: 'rgba(107, 114, 128, 0.1)', // 中性灰背景
-      borderWidth: 1,
-      borderColor: 'rgba(107, 114, 128, 0.2)', // 中性灰边框
       borderRadius: CORE_BORDER_RADIUS.button, // 12px
       paddingVertical: CORE_SPACING['3'], // 12px
       paddingHorizontal: CORE_SPACING['6'], // 24px
@@ -143,31 +134,8 @@ export const LoginRequiredModal: React.FC<LoginRequiredModalProps> = ({
     secondaryButtonText: {
       fontSize: 16,
       fontWeight: '500',
-      color: CORE_COLORS.text.secondary,
     },
     
-    // 深色模式适配
-    containerDark: {
-      backgroundColor: LIQUID_GLASS_LAYERS.L1.background.dark,
-      borderColor: LIQUID_GLASS_LAYERS.L1.border.color.dark,
-    },
-    
-    titleDark: {
-      color: '#FFFFFF',
-    },
-    
-    messageDark: {
-      color: '#D1D5DB',
-    },
-    
-    secondaryButtonDark: {
-      backgroundColor: 'rgba(255, 255, 255, 0.1)',
-      borderColor: 'rgba(255, 255, 255, 0.2)',
-    },
-    
-    secondaryButtonTextDark: {
-      color: '#D1D5DB',
-    },
   });
 
   return (
@@ -178,24 +146,27 @@ export const LoginRequiredModal: React.FC<LoginRequiredModalProps> = ({
       statusBarTranslucent={true}
       onRequestClose={handleClose}
     >
-      <View style={styles.overlay}>
+      <View style={[styles.overlay, dmStyles.modal.overlay]}>
         <View style={[
           styles.container,
-          isDarkMode && styles.containerDark
+          dmStyles.modal.container
         ]}>
           {/* 顶部图标 */}
-          <View style={styles.iconContainer}>
+          <View style={[
+            styles.iconContainer,
+            { backgroundColor: isDarkMode ? 'rgba(255, 138, 101, 0.16)' : 'rgba(255, 107, 53, 0.10)' }
+          ]}>
             <Ionicons 
               name="lock-closed-outline" 
               size={28} 
-              color={CORE_COLORS.primary} 
+              color={dmIcons.brand} 
             />
           </View>
           
           {/* 标题 */}
           <Text style={[
             styles.title,
-            isDarkMode && styles.titleDark
+            dmStyles.text.title
           ]}>
             {title || t('alerts.login_required_title')}
           </Text>
@@ -203,7 +174,7 @@ export const LoginRequiredModal: React.FC<LoginRequiredModalProps> = ({
           {/* 描述消息 */}
           <Text style={[
             styles.message,
-            isDarkMode && styles.messageDark
+            dmStyles.text.secondary
           ]}>
             {message || t('alerts.login_required_activity_message')}
           </Text>
@@ -212,7 +183,7 @@ export const LoginRequiredModal: React.FC<LoginRequiredModalProps> = ({
           <View style={styles.buttonContainer}>
             {/* 主按钮 - 去登录 */}
             <TouchableOpacity
-              style={styles.primaryButton}
+              style={[styles.primaryButton, dmStyles.button.primary]}
               onPress={handleLogin}
               activeOpacity={0.8}
               accessibilityRole="button"
@@ -227,7 +198,7 @@ export const LoginRequiredModal: React.FC<LoginRequiredModalProps> = ({
             <TouchableOpacity
               style={[
                 styles.secondaryButton,
-                isDarkMode && styles.secondaryButtonDark
+                dmStyles.button.outline
               ]}
               onPress={handleClose}
               activeOpacity={0.7}
@@ -236,7 +207,7 @@ export const LoginRequiredModal: React.FC<LoginRequiredModalProps> = ({
             >
               <Text style={[
                 styles.secondaryButtonText,
-                isDarkMode && styles.secondaryButtonTextDark
+                dmStyles.text.primary
               ]}>
                 {t('common.cancel')}
               </Text>

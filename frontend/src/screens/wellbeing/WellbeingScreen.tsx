@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -7,6 +7,7 @@ import {
   SafeAreaView,
   Dimensions,
   Animated,
+  ScrollView,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -15,6 +16,7 @@ import { useRoute, useNavigation } from '@react-navigation/native';
 import { theme } from '../../theme';
 import { LIQUID_GLASS_LAYERS, DAWN_GRADIENTS } from '../../theme/core';
 import { usePerformanceDegradation } from '../../hooks/usePerformanceDegradation';
+import { useAllDarkModeStyles } from '../../hooks/useDarkModeStyles';
 import { useUser } from '../../context/UserContext';
 import { VolunteerListScreen } from './VolunteerListScreen';
 import { SchoolSelectionScreen } from './SchoolSelectionScreen';
@@ -24,6 +26,7 @@ import { WellbeingPlanContent } from '../../components/wellbeing/WellbeingPlanCo
 import { SegmentedGlass } from '../../ui/glass/SegmentedGlass';
 import { Glass } from '../../ui/glass/GlassTheme';
 import { getVolunteerHours, getVolunteerRecords } from '../../services/volunteerAPI';
+import { pomeloXAPI } from '../../services/PomeloXAPI';
 
 // 临时School类型定义
 interface School {
@@ -41,10 +44,24 @@ const PersonalVolunteerData: React.FC = () => {
   const { t } = useTranslation();
   const [personalData, setPersonalData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [showHistory, setShowHistory] = useState(false);
+  const [historyRecords, setHistoryRecords] = useState<any[]>([]);
 
   React.useEffect(() => {
     loadPersonalData();
   }, [user]);
+
+  // 计算工作时长（分钟）
+  const calculateWorkDuration = (startTime: string, endTime: string | null): number => {
+    if (!startTime || !endTime) return 0;
+    try {
+      const start = new Date(startTime);
+      const end = new Date(endTime);
+      return Math.max(0, Math.floor((end.getTime() - start.getTime()) / (1000 * 60)));
+    } catch {
+      return 0;
+    }
+  };
 
   const loadPersonalData = async () => {
     try {
@@ -54,24 +71,77 @@ const PersonalVolunteerData: React.FC = () => {
         return;
       }
 
-      // 获取个人工时统计
-      const hoursResult = await getVolunteerHours({ userId: user.userId });
-      // 获取个人签到记录  
-      const recordsResult = await getVolunteerRecords({ userId: user.userId });
-      
-      const myHourRecord = hoursResult?.rows?.find((h: any) => h.userId === user.userId);
-      const myRecords = recordsResult?.rows?.filter((r: any) => r.userId === user.userId) || [];
-      
-      setPersonalData({
-        totalHours: myHourRecord ? myHourRecord.totalMinutes / 60 : 0,
-        totalRecords: myRecords.length,
-        recentRecord: myRecords[0] || null,
-        user: {
-          name: user.legalName || user.userName,
-          department: user.dept?.deptName || '未知部门',
-          level: 'Staff',
+      console.log('🔍 Staff用户获取个人志愿者数据:', { userId: user.userId, userName: user.userName });
+
+      let totalWorkMinutes = 0;
+      let recordsCount = 0;
+      let lastRecord = null;
+      let personalRecords: any[] = [];
+
+      try {
+        // 1. 获取个人签到记录 (使用真实API)
+        const recordsResult = await getVolunteerRecords({ userId: parseInt(user.userId) });
+        
+        if (recordsResult.code === 200 && recordsResult.rows && Array.isArray(recordsResult.rows)) {
+          personalRecords = recordsResult.rows;
+          recordsCount = personalRecords.length;
+          
+          // 计算总工时 (只统计已完成的记录，即有endTime的记录)
+          totalWorkMinutes = personalRecords
+            .filter(record => record.endTime)
+            .reduce((sum, record) => {
+              const duration = calculateWorkDuration(record.startTime, record.endTime);
+              return sum + duration;
+            }, 0);
+          
+          console.log('✅ 个人记录统计:', { 
+            recordsCount, 
+            totalWorkMinutes, 
+            totalHours: Math.floor(totalWorkMinutes / 60)
+          });
         }
-      });
+
+        // 2. 获取最新记录状态
+        const lastRecordResult = await getLastVolunteerRecord(parseInt(user.userId));
+        if (lastRecordResult.code === 200 && lastRecordResult.data) {
+          lastRecord = lastRecordResult.data;
+        }
+
+        // 3. 设置个人数据
+        setPersonalData({
+          totalMinutes: totalWorkMinutes,
+          totalHours: Math.floor(totalWorkMinutes / 60),
+          totalRecords: recordsCount,
+          recentRecord: lastRecord,
+          allRecords: personalRecords,
+          currentStatus: lastRecord && !lastRecord.endTime ? 'signed_in' : 'signed_out',
+          user: {
+            name: user.legalName || user.userName,
+            department: user.dept?.deptName || '未知部门',
+            level: 'Staff',
+          }
+        });
+        
+        setHistoryRecords(personalRecords);
+        
+      } catch (apiError) {
+        console.log('📝 Staff用户获取志愿者API数据失败，显示空状态:', apiError);
+        setPersonalData({
+          totalMinutes: 0,
+          totalHours: 0,
+          totalRecords: 0,
+          recentRecord: null,
+          allRecords: [],
+          currentStatus: 'no_records',
+          user: {
+            name: user.legalName || user.userName,
+            department: user.dept?.deptName || '未知部门',
+            level: 'Staff',
+          },
+          message: '暂无志愿者工作记录'
+        });
+        setHistoryRecords([]);
+      }
     } catch (error) {
       console.error('获取个人志愿者数据失败:', error);
       setPersonalData(null);
@@ -102,37 +172,160 @@ const PersonalVolunteerData: React.FC = () => {
       <View style={styles.personalInfoCard}>
         <Text style={styles.personalName}>{personalData.user.name}</Text>
         <Text style={styles.personalRole}>{personalData.user.level} • {personalData.user.department}</Text>
+        
+        {/* 当前状态指示器 */}
+        <View style={styles.statusIndicator}>
+          <View style={[
+            styles.statusDot, 
+            personalData.currentStatus === 'signed_in' ? styles.statusActive : styles.statusInactive
+          ]} />
+          <Text style={styles.statusText}>
+            {personalData.currentStatus === 'signed_in' ? '当前已签到' : 
+             personalData.currentStatus === 'signed_out' ? '当前未签到' : '无记录'}
+          </Text>
+        </View>
       </View>
 
-      {/* 工作统计 */}
+      {/* 增强的工作统计 */}
       <View style={styles.statsCard}>
         <View style={styles.statItem}>
-          <Text style={styles.statValue}>{personalData.totalHours.toFixed(1)}</Text>
-          <Text style={styles.statLabel}>总工作时长 (小时)</Text>
+          <Text style={styles.statValue}>
+            {personalData.totalHours}h {personalData.totalMinutes % 60}m
+          </Text>
+          <Text style={styles.statLabel}>总志愿工作时长</Text>
         </View>
         <View style={styles.statItem}>
           <Text style={styles.statValue}>{personalData.totalRecords}</Text>
-          <Text style={styles.statLabel}>签到记录数</Text>
+          <Text style={styles.statLabel}>签到记录总数</Text>
         </View>
       </View>
 
       {/* 最近记录 */}
-      {personalData.recentRecord && (
+      {personalData.recentRecord ? (
         <View style={styles.recentRecordCard}>
           <Text style={styles.recentRecordTitle}>最近工作记录</Text>
           <View style={styles.recordRow}>
             <Text style={styles.recordLabel}>签到时间:</Text>
             <Text style={styles.recordValue}>
-              {new Date(personalData.recentRecord.startTime).toLocaleString('zh-CN')}
+              {new Date(personalData.recentRecord.startTime).toLocaleString('zh-CN', {
+                year: 'numeric',
+                month: '2-digit', 
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit'
+              })}
             </Text>
           </View>
-          {personalData.recentRecord.endTime && (
+          {personalData.recentRecord.endTime ? (
+            <>
+              <View style={styles.recordRow}>
+                <Text style={styles.recordLabel}>签退时间:</Text>
+                <Text style={styles.recordValue}>
+                  {new Date(personalData.recentRecord.endTime).toLocaleString('zh-CN', {
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit', 
+                    hour: '2-digit',
+                    minute: '2-digit'
+                  })}
+                </Text>
+              </View>
+              <View style={styles.recordRow}>
+                <Text style={styles.recordLabel}>工作时长:</Text>
+                <Text style={styles.recordValue}>
+                  {(() => {
+                    const duration = calculateWorkDuration(personalData.recentRecord.startTime, personalData.recentRecord.endTime);
+                    const hours = Math.floor(duration / 60);
+                    const minutes = duration % 60;
+                    return hours > 0 ? `${hours}小时${minutes}分钟` : `${minutes}分钟`;
+                  })()} 
+                </Text>
+              </View>
+            </>
+          ) : (
             <View style={styles.recordRow}>
-              <Text style={styles.recordLabel}>签退时间:</Text>
-              <Text style={styles.recordValue}>
-                {new Date(personalData.recentRecord.endTime).toLocaleString('zh-CN')}
+              <Text style={[styles.recordLabel, { color: theme.colors.primary }]}>状态:</Text>
+              <Text style={[styles.recordValue, { color: theme.colors.primary, fontWeight: '600' }]}>
+                正在工作中...
               </Text>
             </View>
+          )}
+        </View>
+      ) : (
+        <View style={styles.emptyRecordCard}>
+          <Ionicons name="time-outline" size={32} color={theme.colors.textSecondary} />
+          <Text style={styles.emptyRecordText}>暂无志愿者工作记录</Text>
+        </View>
+      )}
+
+      {/* 历史记录按钮 */}
+      {personalData.totalRecords > 1 && (
+        <TouchableOpacity
+          style={styles.historyButton}
+          onPress={() => setShowHistory(!showHistory)}
+          activeOpacity={0.8}
+        >
+          <Ionicons 
+            name={showHistory ? "chevron-up-outline" : "list-outline"} 
+            size={20} 
+            color={theme.colors.primary} 
+          />
+          <Text style={styles.historyButtonText}>
+            {showHistory ? '收起历史记录' : `查看历史记录 (${personalData.totalRecords - 1}条)`}
+          </Text>
+        </TouchableOpacity>
+      )}
+
+      {/* 历史记录列表 */}
+      {showHistory && historyRecords.length > 1 && (
+        <View style={styles.historyContainer}>
+          <Text style={styles.historyTitle}>历史工作记录</Text>
+          {historyRecords.slice(1, 6).map((record, index) => (
+            <View key={record.id} style={styles.historyItem}>
+              <View style={styles.historyDateColumn}>
+                <Text style={styles.historyDate}>
+                  {new Date(record.startTime).toLocaleDateString('zh-CN', {
+                    month: '2-digit',
+                    day: '2-digit'
+                  })}
+                </Text>
+                <Text style={styles.historyTime}>
+                  {new Date(record.startTime).toLocaleTimeString('zh-CN', {
+                    hour: '2-digit',
+                    minute: '2-digit'
+                  })}
+                </Text>
+              </View>
+              <View style={styles.historyDetailsColumn}>
+                {record.endTime ? (
+                  <>
+                    <Text style={styles.historyDuration}>
+                      工作时长: {(() => {
+                        const duration = calculateWorkDuration(record.startTime, record.endTime);
+                        const hours = Math.floor(duration / 60);
+                        const minutes = duration % 60;
+                        return hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`;
+                      })()}
+                    </Text>
+                    <Text style={styles.historyEndTime}>
+                      至 {new Date(record.endTime).toLocaleTimeString('zh-CN', {
+                        hour: '2-digit',
+                        minute: '2-digit'
+                      })}
+                    </Text>
+                  </>
+                ) : (
+                  <Text style={[styles.historyStatus, { color: theme.colors.warning }]}>
+                    未签退
+                  </Text>
+                )}
+              </View>
+            </View>
+          ))}
+          {historyRecords.length > 6 && (
+            <Text style={styles.moreRecordsHint}>
+              还有 {historyRecords.length - 6} 条记录...
+            </Text>
           )}
         </View>
       )}
@@ -155,9 +348,17 @@ export const WellbeingScreen: React.FC = () => {
   const navigation = useNavigation();
   const { permissions, user } = useUser(); // 获取用户权限和用户信息
   
+  // 🌙 Dark Mode Support
+  const darkModeSystem = useAllDarkModeStyles();
+  const { isDarkMode, styles: dmStyles, gradients: dmGradients } = darkModeSystem;
+  
   const [activeTab, setActiveTab] = useState('wellbeing-plan'); // 默认选中安心计划
   const [selectedSchool, setSelectedSchool] = useState<School | null>(null);
   const [showSchoolSelection, setShowSchoolSelection] = useState(false);
+  
+  // 🚀 Animation values for smooth tab transitions
+  const wellbeingOpacity = useRef(new Animated.Value(1)).current;
+  const volunteerOpacity = useRef(new Animated.Value(0)).current;
   
   // V2.0 获取分层配置
   const { getLayerConfig } = usePerformanceDegradation();
@@ -185,8 +386,8 @@ export const WellbeingScreen: React.FC = () => {
     }
   }, [route.params, navigation]);
   
-  // 权限调试日志
-  console.log('🔍 [WELLBEING-PERMISSION] 权限检查详情:', {
+  // 权限调试日志和状态检查
+  const permissionDebugInfo = {
     userName: user?.userName,
     legalName: user?.legalName,
     permissionLevel: permissions.getPermissionLevel(),
@@ -194,8 +395,12 @@ export const WellbeingScreen: React.FC = () => {
     isStaff: permissions.isStaff(),
     isPartManager: permissions.isPartManager(),
     isAdmin: permissions.isAdmin(),
-    fallbackCondition: user?.userName === 'admin' || user?.legalName?.includes('管理员')
-  });
+    roles: user?.roles?.map((r: any) => ({ key: r.key, roleKey: r.roleKey, name: r.name })),
+    rawUser: user ? { id: user.id, deptId: user.deptId } : null
+  };
+  
+  console.log('🔍 [WELLBEING-PERMISSION] 权限检查详情:', permissionDebugInfo);
+  
 
   // 根据用户权限动态生成tabs
   const tabs: TabItem[] = [
@@ -205,9 +410,8 @@ export const WellbeingScreen: React.FC = () => {
       icon: 'shield-outline',
       enabled: true, // 所有用户都能看到安心计划
     },
-    // 只有管理员才能看到志愿者管理 - 调试模式强制显示admin用户
-    ...(permissions.hasVolunteerManagementAccess() || 
-        (user?.userName === 'admin' || user?.legalName?.includes('管理员')) ? [{
+    // 只有管理员和内部员工才能看到志愿者管理（严格基于权限判断）
+    ...(permissions.hasVolunteerManagementAccess() ? [{
       id: 'volunteer',
       title: t('wellbeing.tabs.volunteer'),
       icon: 'people-outline',
@@ -217,11 +421,43 @@ export const WellbeingScreen: React.FC = () => {
 
   console.log('🔍 [WELLBEING-TABS] 生成的tabs数量:', tabs.length, tabs.map(t => t.id));
 
+  // 🚀 Enhanced tab press with smooth animations
   const handleTabPress = (tabId: string, enabled: boolean) => {
-    if (enabled) {
+    if (enabled && tabId !== activeTab) {
+      // Immediate state update for instant feedback
       setActiveTab(tabId);
-      if (tabId === 'volunteer' && !selectedSchool) {
-        setShowSchoolSelection(true);
+      
+      // Smooth fade transition between tabs
+      if (tabId === 'volunteer') {
+        Animated.parallel([
+          Animated.timing(wellbeingOpacity, {
+            toValue: 0,
+            duration: 200,
+            useNativeDriver: true,
+          }),
+          Animated.timing(volunteerOpacity, {
+            toValue: 1,
+            duration: 250,
+            useNativeDriver: true,
+          }),
+        ]).start();
+        
+        if (!selectedSchool) {
+          setShowSchoolSelection(true);
+        }
+      } else {
+        Animated.parallel([
+          Animated.timing(volunteerOpacity, {
+            toValue: 0,
+            duration: 200,
+            useNativeDriver: true,
+          }),
+          Animated.timing(wellbeingOpacity, {
+            toValue: 1,
+            duration: 250,
+            useNativeDriver: true,
+          }),
+        ]).start();
       }
     }
   };
@@ -307,48 +543,60 @@ export const WellbeingScreen: React.FC = () => {
     </View>
   );
 
+  // 🚀 Performance: Pre-render components and use visibility control
   const renderContent = () => {
     // 如果是普通用户，直接显示安心计划内容，不显示切换
     if (permissions.isRegularUser()) {
       return <WellbeingPlanContent />;
     }
 
-    // 管理员用户：根据选择的tab显示不同内容
-    switch (activeTab) {
-      case 'wellbeing-plan':
-        return <WellbeingPlanContent />;
-      case 'volunteer':
-        // 根据权限显示不同的志愿者界面
-        if (permissions.getDataScope() === 'self') {
-          // Staff：只显示自己的志愿者工作记录
-          return (
+    // 🚀 管理员用户：使用visibility控制而非条件渲染，避免组件重新创建
+    return (
+      <>
+        {/* Wellbeing Plan Content - Always mounted */}
+        <Animated.View style={[
+          styles.tabContent,
+          { opacity: wellbeingOpacity }
+        ]} pointerEvents={activeTab === 'wellbeing-plan' ? 'auto' : 'none'}>
+          <WellbeingPlanContent />
+        </Animated.View>
+
+        {/* Volunteer Content - Always mounted */}
+        <Animated.View style={[
+          styles.tabContent,
+          { opacity: volunteerOpacity }
+        ]} pointerEvents={activeTab === 'volunteer' ? 'auto' : 'none'}>
+          {permissions.getDataScope() === 'self' ? (
+            // Staff：只显示自己的志愿者工作记录
             <View style={styles.volunteerContent}>
               <Text style={styles.staffTitle}>我的志愿者工作记录</Text>
               <Text style={styles.staffSubtitle}>内部员工只能查看个人工作时长和记录</Text>
               <PersonalVolunteerData />
             </View>
-          );
-        } else {
-          // 总管理员和分管理员：显示学校管理界面
-          return (
+          ) : (
+            // 总管理员和分管理员：显示学校管理界面
             <View style={styles.volunteerContent}>
               <VolunteerListLiquidScreen />
             </View>
-          );
-        }
-      default:
-        return <WellbeingPlanContent />;
-    }
+          )}
+        </Animated.View>
+      </>
+    );
   };
 
   // 只有管理员才显示tab header，普通用户直接显示内容
   const shouldShowTabHeader = !permissions.isRegularUser() && (showSchoolSelection || !selectedSchool || tabs.length > 1);
 
   return (
-    <SafeAreaView style={styles.container}>
-      {/* 修正：上半部分温暖渐变背景 */}
+    <SafeAreaView style={[styles.container, dmStyles.page.safeArea]}>
+      {/* 修正：上半部分温暖渐变背景 - 🌙 Dark Mode适配 */}
       <LinearGradient 
-        colors={[
+        colors={isDarkMode ? [
+          '#000000',  // 上部分：纯黑
+          '#1C1C1E',  // Apple系统深灰
+          '#2C2C2E',  // 下部分：更浅的深灰
+          '#1C1C1E'   // 底部：回到系统深灰
+        ] : [
           '#FFF8E1', // 上部分：极淡奶橘色
           '#FFFEF7', // 渐变到奶白
           '#F8F9FA', // 下部分：回到中性灰
@@ -357,8 +605,14 @@ export const WellbeingScreen: React.FC = () => {
         style={StyleSheet.absoluteFill}
         locations={[0, 0.3, 0.6, 1]} // 确保上半部分是温暖色
       />
+      
+      
       {shouldShowTabHeader && renderTabHeader()}
-      {renderContent()}
+      
+      {/* 🚀 Content container for proper positioning */}
+      <View style={styles.contentContainer}>
+        {renderContent()}
+      </View>
     </SafeAreaView>
   );
 };
@@ -367,6 +621,12 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: theme.colors.background.secondary,
+  },
+  
+  // 🚀 Content positioning container
+  contentContainer: {
+    flex: 1,
+    position: 'relative',
   },
 
   // Tab Header
@@ -450,6 +710,16 @@ const styles = StyleSheet.create({
     fontSize: 8,
     color: 'white',
     fontWeight: theme.typography.fontWeight.semibold,
+  },
+
+  // 🚀 Tab Content Persistence
+  tabContent: {
+    flex: 1,
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
   },
 
   // Content Areas
@@ -643,4 +913,120 @@ const styles = StyleSheet.create({
     color: '#1F2937',
     fontWeight: '500',
   },
+
+  // 新增的个人数据增强样式
+  statusIndicator: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    backgroundColor: 'rgba(249, 250, 251, 0.8)',
+    borderRadius: 20,
+  },
+  statusDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    marginRight: 8,
+  },
+  statusActive: {
+    backgroundColor: '#10B981',
+  },
+  statusInactive: {
+    backgroundColor: '#9CA3AF',
+  },
+  statusText: {
+    fontSize: 12,
+    fontWeight: '500',
+    color: '#374151',
+  },
+  emptyRecordCard: {
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    borderRadius: 12,
+    padding: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  emptyRecordText: {
+    fontSize: 14,
+    color: '#9CA3AF',
+    marginTop: 8,
+    textAlign: 'center',
+  },
+  historyButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+    borderRadius: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    marginTop: 16,
+  },
+  historyButtonText: {
+    fontSize: 14,
+    color: theme.colors.primary,
+    fontWeight: '500',
+    marginLeft: 8,
+  },
+  historyContainer: {
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    borderRadius: 12,
+    padding: 16,
+    marginTop: 16,
+  },
+  historyTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1F2937',
+    marginBottom: 16,
+  },
+  historyItem: {
+    flexDirection: 'row',
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(229, 231, 235, 0.5)',
+  },
+  historyDateColumn: {
+    width: 80,
+    alignItems: 'center',
+  },
+  historyDate: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#6B7280',
+  },
+  historyTime: {
+    fontSize: 11,
+    color: '#9CA3AF',
+    marginTop: 2,
+  },
+  historyDetailsColumn: {
+    flex: 1,
+    marginLeft: 12,
+    justifyContent: 'center',
+  },
+  historyDuration: {
+    fontSize: 13,
+    fontWeight: '500',
+    color: '#059669',
+  },
+  historyEndTime: {
+    fontSize: 11,
+    color: '#6B7280',
+    marginTop: 2,
+  },
+  historyStatus: {
+    fontSize: 12,
+    fontWeight: '500',
+  },
+  moreRecordsHint: {
+    fontSize: 12,
+    color: '#9CA3AF',
+    textAlign: 'center',
+    marginTop: 12,
+    fontStyle: 'italic',
+  },
+  
 });

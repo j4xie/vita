@@ -18,6 +18,7 @@ import { useTranslation } from 'react-i18next';
 import { DeviceEventEmitter } from 'react-native';
 import { theme } from '../../theme';
 import { LIQUID_GLASS_LAYERS } from '../../theme/core';
+import { useAllDarkModeStyles } from '../../hooks/useDarkModeStyles';
 // import RenderHtml from 'react-native-render-html'; // 暂时注释掉，避免兼容性问题
 import { pomeloXAPI } from '../../services/PomeloXAPI';
 import { FrontendActivity } from '../../utils/activityAdapter';
@@ -30,6 +31,10 @@ export const ActivityDetailScreen: React.FC = () => {
   const navigation = useNavigation<any>();
   const route = useRoute<any>();
   const insets = useSafeAreaInsets();
+  
+  const darkModeSystem = useAllDarkModeStyles();
+  const { isDarkMode, styles: dmStyles, gradients: dmGradients, blur: dmBlur, icons: dmIcons } = darkModeSystem;
+  
   const activity = route.params?.activity || {};
   const { user, isAuthenticated } = useUser();
   
@@ -167,68 +172,100 @@ export const ActivityDetailScreen: React.FC = () => {
     try {
       console.log('开始活动签到流程:', { activityId: activity.id, activityName: activity.name });
       
-      // 导航到扫码页面，传递活动信息和签到回调
+      // 生成唯一的回调ID
+      const callbackId = `activity_signin_${Date.now()}`;
+      
+      // 注册回调函数到导航状态
+      const parentNavigator = (navigation as any).getParent();
+      if (!parentNavigator) {
+        throw new Error('无法获取父级导航器');
+      }
+      
+      const state = parentNavigator.getState();
+      if (!state) {
+        throw new Error('无法获取导航状态');
+      }
+      
+      if (!state.qrScannerCallbacks) {
+        state.qrScannerCallbacks = {};
+      }
+      
+      if (state.qrScannerCallbacks) {
+          state.qrScannerCallbacks[callbackId] = {
+          onScanSuccess: async (scannedData: string) => {
+            // 扫码成功后的处理
+            console.log('扫码成功，开始签到:', scannedData);
+            
+            try {
+              setLoading(true);
+              // 调用活动签到API
+              const result = await pomeloXAPI.signInActivity(parseInt(activity.id), user?.id ? parseInt(user.id) : 0);
+              
+              console.log('签到结果:', result);
+              
+              if (result.code === 200 && result.data && result.data > 0) {
+                setRegistrationStatus('checked_in');
+                
+                // 发送签到成功事件，更新活动列表
+                DeviceEventEmitter.emit('activitySignedIn', { activityId: activity.id });
+                
+                Alert.alert(
+                  t('activityDetail.checkin_success'), 
+                  t('activityDetail.checkin_success_message')
+                );
+                
+                // 返回活动详情页面
+                navigation.goBack();
+              } else {
+                // 详细的错误处理
+                let errorMessage = result.msg || t('activityDetail.checkin_failed_message');
+                
+                if (result.code === 500) {
+                  if (errorMessage.includes('已签到')) {
+                    errorMessage = '您已经签到过这个活动了';
+                    setRegistrationStatus('checked_in');
+                  } else if (errorMessage.includes('时间')) {
+                    errorMessage = '签到时间未到或已过期';
+                  } else if (errorMessage.includes('未报名')) {
+                    errorMessage = '您尚未报名此活动，无法签到';
+                  } else {
+                    errorMessage = '签到失败，请稍后重试';
+                  }
+                }
+                
+                Alert.alert(t('activityDetail.checkin_failed'), errorMessage);
+              }
+            } catch (error) {
+              console.error('Activity sign in error:', error);
+              Alert.alert(t('activityDetail.checkin_failed'), t('common.network_error'));
+            } finally {
+              setLoading(false);
+              // 清理回调函数
+              if (state && state.qrScannerCallbacks && state.qrScannerCallbacks[callbackId]) {
+                delete state.qrScannerCallbacks[callbackId];
+              }
+            }
+          },
+          onScanError: (error: string) => {
+            // 扫码失败的处理
+            console.error('扫码失败:', error);
+            Alert.alert(
+              '扫码失败',
+              '请重新扫描活动签到二维码'
+            );
+            // 清理回调函数
+            if (state && state.qrScannerCallbacks && state.qrScannerCallbacks[callbackId]) {
+              delete state.qrScannerCallbacks[callbackId];
+            }
+          }
+        };
+      }
+      
+      // 导航到扫码页面，只传递序列化参数
       navigation.navigate('QRScanner', {
         purpose: 'activity_signin', // 扫码目的：活动签到
         activity: activity, // 传递活动信息
-        onScanSuccess: async (scannedData: string) => {
-          // 扫码成功后的处理
-          console.log('扫码成功，开始签到:', scannedData);
-          
-          try {
-            setLoading(true);
-            // 调用活动签到API
-            const result = await pomeloXAPI.signInActivity(parseInt(activity.id), user?.id ? parseInt(user.id) : 0);
-            
-            console.log('签到结果:', result);
-            
-            if (result.code === 200 && result.data && result.data > 0) {
-              setRegistrationStatus('checked_in');
-              
-              // 发送签到成功事件，更新活动列表
-              DeviceEventEmitter.emit('activitySignedIn', { activityId: activity.id });
-              
-              Alert.alert(
-                t('activityDetail.checkin_success'), 
-                t('activityDetail.checkin_success_message')
-              );
-              
-              // 返回活动详情页面
-              navigation.goBack();
-            } else {
-              // 详细的错误处理
-              let errorMessage = result.msg || t('activityDetail.checkin_failed_message');
-              
-              if (result.code === 500) {
-                if (errorMessage.includes('已签到')) {
-                  errorMessage = '您已经签到过这个活动了';
-                  setRegistrationStatus('checked_in');
-                } else if (errorMessage.includes('时间')) {
-                  errorMessage = '签到时间未到或已过期';
-                } else if (errorMessage.includes('未报名')) {
-                  errorMessage = '您尚未报名此活动，无法签到';
-                } else {
-                  errorMessage = '签到失败，请稍后重试';
-                }
-              }
-              
-              Alert.alert(t('activityDetail.checkin_failed'), errorMessage);
-            }
-          } catch (error) {
-            console.error('Activity sign in error:', error);
-            Alert.alert(t('activityDetail.checkin_failed'), t('common.network_error'));
-          } finally {
-            setLoading(false);
-          }
-        },
-        onScanError: (error: string) => {
-          // 扫码失败的处理
-          console.error('扫码失败:', error);
-          Alert.alert(
-            '扫码失败',
-            '请重新扫描活动签到二维码'
-          );
-        }
+        callbackId: callbackId // 传递回调ID而不是函数
       });
     } catch (error) {
       console.error('打开扫码页面失败:', error);
@@ -282,14 +319,14 @@ export const ActivityDetailScreen: React.FC = () => {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, dmStyles.page.safeArea]}>
       {/* 固定在顶部的按钮 */}
       <View style={[styles.fixedHeader, { top: insets.top }]}>
         <TouchableOpacity
           style={styles.fixedBackButton}
           onPress={handleBack}
         >
-          <Ionicons name="arrow-back" size={24} color={theme.colors.text.inverse} />
+          <Ionicons name="arrow-back" size={24} color="white" />
         </TouchableOpacity>
 
         <View style={styles.fixedActionButtons}>
@@ -443,7 +480,6 @@ export const ActivityDetailScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: theme.colors.background,
   },
   // 固定在顶部的按钮样式
   fixedHeader: {

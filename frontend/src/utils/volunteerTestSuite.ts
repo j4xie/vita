@@ -82,6 +82,9 @@ export class VolunteerTestSuite {
     try {
       const { userId, userName, legalName } = testUser;
       const operateUserId = await getCurrentUserId();
+      if (!operateUserId) {
+        throw new Error('无法获取当前用户ID，请重新登录');
+      }
       const operateLegalName = '自动测试';
       
       console.log(`👤 开始测试用户 ${userName}(${userId}) 的签到签退流程`);
@@ -395,6 +398,9 @@ export class VolunteerTestSuite {
     const testUser = TEST_USERS[0]; // 使用admin用户
     const { userId } = testUser;
     const operateUserId = await getCurrentUserId();
+    if (!operateUserId) {
+      throw new Error('无法获取当前用户ID，请重新登录');
+    }
     const operateLegalName = '压力测试';
     
     console.log('⚡ 开始快速压力测试...');

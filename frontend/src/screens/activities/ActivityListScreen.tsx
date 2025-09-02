@@ -33,13 +33,14 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
 import { Platform, DeviceEventEmitter } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useTranslation } from 'react-i18next';
 import { theme } from '../../theme';
 import { BRAND_GLASS, BRAND_INTERACTIONS, BRAND_GRADIENT, LIQUID_GLASS_LAYERS, DAWN_GRADIENTS, DAWN_OVERLAYS } from '../../theme/core';
 import { SimpleActivityCard } from '../../components/cards/SimpleActivityCard';
+import { GridActivityCard } from '../../components/cards/GridActivityCard';
 import { LiquidGlassTab } from '../../components/ui/LiquidGlassTab';
 import { FilterBottomSheet } from '../../components/ui/FilterBottomSheet';
-import CategoryBar from '../../components/ui/CategoryBar';
 import { ListSkeleton } from '../../components/ui/SkeletonScreen';
 import { pomeloXAPI } from '../../services/PomeloXAPI';
 import { adaptActivityList, FrontendActivity } from '../../utils/activityAdapter';
@@ -79,6 +80,7 @@ export const ActivityListScreen: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [activeFilter, setActiveFilter] = useState(0); // Changed to index for CategoryBar
   const [searchText, setSearchText] = useState(''); // 搜索文本状态
+  const [viewLayout, setViewLayout] = useState<'list' | 'grid'>('list'); // 布局模式状态
   
   // V1.1 规范: BottomSheet 过滤器状态
   const [showFilterBottomSheet, setShowFilterBottomSheet] = useState(false);
@@ -178,6 +180,19 @@ export const ActivityListScreen: React.FC = () => {
     AccessibilityInfo.isReduceMotionEnabled().then(setIsReduceMotionEnabled);
   }, []);
   
+  // 监听布局切换事件
+  useEffect(() => {
+    const layoutChangeSubscription = DeviceEventEmitter.addListener('activityLayoutChanged', (newLayout: 'list' | 'grid') => {
+      console.log(`📱 收到布局切换事件: ${newLayout}`);
+      console.log(`📱 当前布局: ${viewLayout} -> 新布局: ${newLayout}`);
+      setViewLayout(newLayout);
+    });
+
+    return () => {
+      layoutChangeSubscription?.remove();
+    };
+  }, []);
+
   // 监听TabBar的滚动到顶部和刷新事件
   useEffect(() => {
     const subscription = DeviceEventEmitter.addListener('scrollToTopAndRefresh', () => {
@@ -202,24 +217,24 @@ export const ActivityListScreen: React.FC = () => {
   // 修改为基于时间的3个状态 - 使用翻译函数
   const filterTabs = ['all', 'upcoming', 'ended'];
   const segmentLabels = [
-    t('filters.status.all', '全部'),
-    t('filters.status.upcoming', '即将开始'),
-    t('filters.status.ended', '已结束'),
+    t('filters.status.all') || '全部',
+    t('filters.status.upcoming') || '即将开始',
+    t('filters.status.ended') || '已结束',
   ];
 
   // V1.1 规范: BottomSheet 过滤器选项配置 - 使用翻译系统
   const categoryFilters = [
-    { id: 'academic', label: t('filters.categories.academic', '学术'), icon: 'school-outline', count: 0, color: theme.colors.primary },
-    { id: 'social', label: t('filters.categories.social', '社交'), icon: 'people-outline', count: 0, color: theme.colors.secondary },
-    { id: 'career', label: t('filters.categories.career', '职业'), icon: 'briefcase-outline', count: 0, color: theme.colors.success },
-    { id: 'sports', label: t('filters.categories.sports', '运动'), icon: 'fitness-outline', count: 0, color: theme.colors.warning },
-    { id: 'culture', label: t('filters.categories.culture', '文化'), icon: 'library-outline', count: 0, color: theme.colors.primary },
-    { id: 'volunteer', label: t('filters.categories.volunteer', '志愿'), icon: 'heart-outline', count: 0, color: theme.colors.danger },
+    { id: 'academic', label: t('filters.categories.academic') || '学术', icon: 'school-outline', count: 0, color: theme.colors.primary },
+    { id: 'social', label: t('filters.categories.social') || '社交', icon: 'people-outline', count: 0, color: theme.colors.secondary },
+    { id: 'career', label: t('filters.categories.career') || '职业', icon: 'briefcase-outline', count: 0, color: theme.colors.success },
+    { id: 'sports', label: t('filters.categories.sports') || '运动', icon: 'fitness-outline', count: 0, color: theme.colors.warning },
+    { id: 'culture', label: t('filters.categories.culture') || '文化', icon: 'library-outline', count: 0, color: theme.colors.primary },
+    { id: 'volunteer', label: t('filters.categories.volunteer') || '志愿', icon: 'heart-outline', count: 0, color: theme.colors.danger },
   ];
 
   const statusFilters = [
-    { id: 'upcoming', label: t('filters.status.upcoming', '即将开始'), icon: 'time-outline' },
-    { id: 'ended', label: t('filters.status.ended', '已结束'), icon: 'close-circle-outline' },
+    { id: 'upcoming', label: t('filters.status.upcoming') || '即将开始', icon: 'time-outline' },
+    { id: 'ended', label: t('filters.status.ended') || '已结束', icon: 'close-circle-outline' },
   ];
 
   const locationFilters = [];
@@ -391,6 +406,22 @@ export const ActivityListScreen: React.FC = () => {
     }
   }, [loading, hasMore, currentPage, fetchActivities]);
 
+  // 加载用户布局偏好
+  useEffect(() => {
+    const loadLayoutPreference = async () => {
+      try {
+        const savedLayout = await AsyncStorage.getItem('activity_view_layout');
+        if (savedLayout && (savedLayout === 'list' || savedLayout === 'grid')) {
+          setViewLayout(savedLayout);
+        }
+      } catch (error) {
+        console.warn('Failed to load layout preference:', error);
+      }
+    };
+    
+    loadLayoutPreference();
+  }, []);
+
   // 初始加载数据
   useEffect(() => {
     fetchActivities(1);
@@ -425,10 +456,15 @@ export const ActivityListScreen: React.FC = () => {
         }
         // 状态过滤 - 使用后端type字段（高效）
         if (statusFilters.some(f => f.id === filterId)) {
+          // 使用相同的前端实时计算逻辑
+          const now = new Date();
+          const activityStart = new Date(activity.date + ' ' + (activity.time || '00:00'));
+          const activityEnd = activity.endDate ? new Date(activity.endDate + ' 23:59:59') : activityStart;
+          
           if (filterId === 'upcoming') {
-            return activity.status === 'upcoming';
+            return activityStart.getTime() > now.getTime();
           } else if (filterId === 'ended') {
-            return activity.status === 'ended';
+            return activityEnd.getTime() < now.getTime();
           }
           return false;
         }
@@ -479,21 +515,24 @@ export const ActivityListScreen: React.FC = () => {
       activity.title.toLowerCase().includes(searchText.toLowerCase()) ||
       activity.location.toLowerCase().includes(searchText.toLowerCase());
     
-    // 基于时间的状态匹配
+    // 基于时间的状态匹配 - 前端实时计算确保准确性
     const currentFilterKey = filterTabs[activeFilter];
     let matchesFilter = true;
     
     if (currentFilterKey !== 'all') {
       const now = new Date();
-      const activityEndTime = new Date(activity.endDate || activity.date);
+      const activityStart = new Date(activity.date + ' ' + (activity.time || '00:00'));
+      const activityEnd = activity.endDate ? new Date(activity.endDate + ' 23:59:59') : activityStart;
       
-      // 使用后端状态字段，无需时间计算
+      // 前端实时计算活动状态，不依赖后端可能过时的状态
       switch(currentFilterKey) {
         case 'upcoming':
-          matchesFilter = activity.status === 'upcoming';
+          // 即将开始：活动开始时间在现在之后
+          matchesFilter = activityStart.getTime() > now.getTime();
           break;
         case 'ended':
-          matchesFilter = activity.status === 'ended';
+          // 已结束：活动结束时间在现在之前
+          matchesFilter = activityEnd.getTime() < now.getTime();
           break;
         default:
           matchesFilter = true;
@@ -507,10 +546,15 @@ export const ActivityListScreen: React.FC = () => {
           return activity.category === filterId;
         }
         if (statusFilters.some(f => f.id === filterId)) {
+          // 使用相同的前端实时计算逻辑
+          const now = new Date();
+          const activityStart = new Date(activity.date + ' ' + (activity.time || '00:00'));
+          const activityEnd = activity.endDate ? new Date(activity.endDate + ' 23:59:59') : activityStart;
+          
           if (filterId === 'upcoming') {
-            return activity.status === 'upcoming';
+            return activityStart.getTime() > now.getTime();
           } else if (filterId === 'ended') {
-            return activity.status === 'ended';
+            return activityEnd.getTime() < now.getTime();
           }
           return false;
         }
@@ -593,29 +637,84 @@ export const ActivityListScreen: React.FC = () => {
     setSearchText(text);
   };
 
+  // 布局切换处理函数
+  const handleLayoutChange = async (layout: 'list' | 'grid') => {
+    console.log(`🔄 布局切换: ${viewLayout} -> ${layout}`);
+    setViewLayout(layout);
+    
+    // 保存用户偏好
+    try {
+      await AsyncStorage.setItem('activity_view_layout', layout);
+      console.log(`💾 布局偏好已保存: ${layout}`);
+    } catch (error) {
+      console.warn('Failed to save layout preference:', error);
+    }
+  };
+
   // CategoryBar - SectionHeader (仅包含CategoryBar)
   const renderListHeader = () => null;
 
-  // CategoryBar - SectionHeader (sticky)
-  const renderSectionHeader = () => (
-    <View style={styles.categoryBarContainer}>
-      <CategoryBar
-        selectedSegment={activeFilter}
-        onSegmentChange={handleSegmentChange}
-        onFilterPress={handleShowFilters}
-        hasActiveFilters={activeFilters.length > 0}
-        activeFiltersCount={activeFilters.length}
-      />
+  // 移除CategoryBar - 现在所有功能都在header中
+  const renderSectionHeader = () => null;
+
+  // 计算活动卡片的动态高度（用于瀑布流）
+  const calculateActivityHeight = (activity: FrontendActivity) => {
+    const baseHeight = 180; // 基础高度
+    const titleLength = activity.title.length;
+    const locationLength = activity.location.length;
+    
+    // 标题长度影响高度
+    const titleHeightAddition = titleLength > 20 ? 25 : 
+                               titleLength > 15 ? 15 : 
+                               titleLength > 10 ? 10 : 0;
+    
+    // 地点长度影响高度
+    const locationHeightAddition = locationLength > 15 ? 20 : 
+                                  locationLength > 10 ? 10 : 0;
+    
+    // 基于活动ID的随机变化（确保一致性）
+    const seed = parseInt(activity.id) % 7; // 0-6
+    const randomAddition = seed * 15; // 0-90的高度变化
+    
+    return Math.min(300, Math.max(160, baseHeight + titleHeightAddition + locationHeightAddition + randomAddition));
+  };
+
+  // 瀑布流布局算法 - 分配到高度较低的列
+  const formatWaterfallData = (activities: FrontendActivity[]) => {
+    const leftColumn: FrontendActivity[] = [];
+    const rightColumn: FrontendActivity[] = [];
+    let leftHeight = 0;
+    let rightHeight = 0;
+    
+    activities.forEach(activity => {
+      const cardHeight = calculateActivityHeight(activity);
       
-      {/* 附近筛选chip暂时禁用，等定位功能就绪后启用 */}
-    </View>
-  );
+      // 将卡片分配到较矮的列
+      if (leftHeight <= rightHeight) {
+        leftColumn.push(activity);
+        leftHeight += cardHeight;
+      } else {
+        rightColumn.push(activity);
+        rightHeight += cardHeight;
+      }
+    });
+    
+    return { leftColumn, rightColumn };
+  };
+
+  // 获取瀑布流列数据
+  const waterfallData = viewLayout === 'grid' ? formatWaterfallData(filteredActivities) : null;
 
   // 为 SectionList 格式化数据
-  const sectionData = [{
-    title: 'activities',
-    data: filteredActivities,
-  }];
+  const sectionData = viewLayout === 'grid' 
+    ? [{
+        title: 'activities',
+        data: waterfallData ? [{ type: 'waterfall', columns: waterfallData }] : [],
+      }]
+    : [{
+        title: 'activities',
+        data: filteredActivities,
+      }];
 
   return (
     <SafeAreaView style={styles.container}>
@@ -634,28 +733,35 @@ export const ActivityListScreen: React.FC = () => {
         {/* V2.0 页头朝霞氛围背景层 - 已移除背景色 */}
         
         <View style={[styles.header, styles.headerGlass]}>
-          <View style={styles.headerLeft}>
-            {/* 临时隐藏地点选择功能 - 第一期产品暂不需要定位功能 */}
-            {/*
-            <TouchableOpacity 
-              style={styles.locationSelector}
-              onPress={() => {
-                setShowLocationSelector(true);
-                setCurrentStep('state'); // 从州开始选择
-                DeviceEventEmitter.emit('hideTabBar', true); // 隐藏TabBar
-              }}
-              activeOpacity={0.7}
-            >
-              <Ionicons name="location-outline" size={18} color="#F9A889" />
-              <Text style={styles.locationText}>{selectedCity}</Text>
-              <Ionicons name="chevron-down" size={16} color="#9CA3AF" />
+          <View style={styles.headerContent}>
+            {/* 状态筛选按钮组 */}
+            <View style={styles.filterButtonsContainer}>
+              {segmentLabels.map((label, index) => (
+                <TouchableOpacity
+                  key={index}
+                  style={styles.filterButton}
+                  onPress={() => handleSegmentChange(index)}
+                  activeOpacity={0.7}
+                >
+                  <Text style={[
+                    styles.filterButtonText,
+                    activeFilter === index && styles.filterButtonTextActive
+                  ]}>
+                    {label}
+                  </Text>
+                  {/* 底部指示器 */}
+                  {activeFilter === index && (
+                    <View style={styles.filterButtonIndicator} />
+                  )}
+                </TouchableOpacity>
+              ))}
+            </View>
+            
+            {/* 扫码按钮 */}
+            <TouchableOpacity onPress={handleScan} style={styles.scanButton}>
+              <Ionicons name="scan-outline" size={20} color="#F9A889" />
             </TouchableOpacity>
-            */}
           </View>
-          {/* Scan Button - 线条样式 */}
-          <TouchableOpacity onPress={handleScan} style={styles.scanButton}>
-            <Ionicons name="scan-outline" size={24} color="#F9A889" />
-          </TouchableOpacity>
         </View>
       </Reanimated.View>
 
@@ -675,21 +781,65 @@ export const ActivityListScreen: React.FC = () => {
       <SectionList
         ref={sectionListRef}
         sections={sectionData}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item, index }) => (
-          <SimpleActivityCard
-            activity={item}
-            onPress={() => handleActivityPress(item)}
-          />
-        )}
+        keyExtractor={(item: any) => {
+          if (viewLayout === 'grid' && item.type === 'waterfall') {
+            return 'waterfall-grid';
+          }
+          return item.id;
+        }}
+        renderItem={({ item, index }) => {
+          if (viewLayout === 'grid' && item.type === 'waterfall') {
+            // 瀑布流布局 - 渲染两列
+            const { leftColumn, rightColumn } = item.columns;
+            return (
+              <View style={styles.waterfallContainer}>
+                {/* 左列 */}
+                <View style={styles.waterfallColumn}>
+                  {leftColumn.map((activity: FrontendActivity) => (
+                    <View key={activity.id} style={styles.waterfallItem}>
+                      <GridActivityCard
+                        activity={activity}
+                        onPress={() => handleActivityPress(activity)}
+                        onBookmark={user?.id ? handleBookmark : undefined}
+                        isBookmarked={false}
+                      />
+                    </View>
+                  ))}
+                </View>
+                
+                {/* 右列 */}
+                <View style={styles.waterfallColumn}>
+                  {rightColumn.map((activity: FrontendActivity) => (
+                    <View key={activity.id} style={styles.waterfallItem}>
+                      <GridActivityCard
+                        activity={activity}
+                        onPress={() => handleActivityPress(activity)}
+                        onBookmark={user?.id ? handleBookmark : undefined}
+                        isBookmarked={false}
+                      />
+                    </View>
+                  ))}
+                </View>
+              </View>
+            );
+          } else {
+            // 列表布局
+            return (
+              <SimpleActivityCard
+                activity={item}
+                onPress={() => handleActivityPress(item)}
+              />
+            );
+          }
+        }}
         renderSectionHeader={renderSectionHeader}
         stickySectionHeadersEnabled={true}
         ListHeaderComponent={renderListHeader}
         contentContainerStyle={[
           styles.listContent,
           { 
-            paddingTop: 23 + insets.top, // 从25减少2px到23，精确微调顶部间距
-            paddingBottom: 120 + insets.bottom, // 从100增加到120+安全区域，防止TabBar遮挡
+            paddingTop: 60 + insets.top, // 调整为适配新的header设计
+            paddingBottom: 120 + insets.bottom,
           }
         ]}
         ItemSeparatorComponent={() => <View style={{ height: -14 }} />} // 再减少5px，总计-14px，卡片会有更明显的重叠
@@ -795,8 +945,8 @@ export const ActivityListScreen: React.FC = () => {
               )}
               <Text style={styles.locationModalTitle}>
                 {currentStep === 'state' 
-                  ? t('location.select_state', '选择州') 
-                  : t('location.select_city_in_state', '选择城市 - {{state}}', { state: selectedState })
+                  ? (t('location.select_state') || '选择州') 
+                  : (t('location.select_city_in_state', { state: selectedState }) || `选择城市 - ${selectedState}`)
                 }
               </Text>
               <TouchableOpacity onPress={() => {
@@ -927,11 +1077,11 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center', // 确保垂直居中对齐
+    alignItems: 'center',
     paddingHorizontal: theme.spacing[4],
-    paddingVertical: 12, // 使用统一的垂直内边距确保对齐
+    paddingVertical: 8,
     borderBottomWidth: 0,
-    height: 56, // 固定高度确保对齐
+    height: 60, // 增加高度以容纳按钮组
   },
   
   // V2.0 朝霞氛围背景层
@@ -969,24 +1119,70 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     zIndex: 1, // 置于氛围层之上
   },
-  // CategoryBar 容器 - 完全匹配headerGlass的边距
-  categoryBarContainer: {
-    marginTop: -19.5, // 再向下移动5px，从-24.5改为-19.5
-    paddingTop: 0, // 进一步减少上Header间距，从4改为0
-    paddingBottom: 16, // 恢复原来的底部间距
-    backgroundColor: 'rgba(255, 255, 255, 0.001)', // Nearly invisible but solid for shadow calculation // 透明背景，使用页面的渐变背景
-    paddingHorizontal: 0, // 移除padding，让CategoryBar自己控制边距
-    marginHorizontal: theme.spacing.md - 18, // 进一步加宽给filter按钮更多移动空间
-  },
+  // 移除categoryBarContainer样式，不再需要
   nearbyChipContainer: {
     paddingHorizontal: 12,
     paddingTop: 8,
     alignItems: 'flex-start',
   },
-  headerLeft: {
+  headerContent: {
     flex: 1,
-    justifyContent: 'center', // 垂直居中
-    alignItems: 'flex-start', // 水平靠左对齐
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  filterButtonsContainer: {
+    flexDirection: 'row',
+    flex: 1,
+    justifyContent: 'space-evenly', // 更均匀的分布
+    alignItems: 'center',
+    marginRight: 12, // 增加与扫码按钮的间距
+  },
+  filterButton: {
+    paddingHorizontal: 4,
+    paddingVertical: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative',
+    flex: 1, // 让每个按钮均匀占据空间
+  },
+  filterButtonActive: {
+    // 移除背景色，使用底部指示器
+  },
+  filterButtonText: {
+    fontSize: 14,
+    color: '#8E8E93', // 未选中状态的灰色
+    fontWeight: '500',
+    textAlign: 'center',
+  },
+  filterButtonTextActive: {
+    color: '#1D1D1F', // 选中状态的深色
+    fontWeight: '600',
+  },
+  filterButtonIndicator: {
+    position: 'absolute',
+    bottom: 0,
+    left: '50%',
+    marginLeft: -9, // 宽度的一半，实现居中
+    height: 3,
+    width: 18,
+    backgroundColor: '#F9A889',
+    borderRadius: 1.5,
+  },
+  scanButton: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    borderWidth: 1.5,
+    borderColor: '#F9A889',
+    backgroundColor: 'rgba(249, 168, 137, 0.08)', // 添加微妙的橙色背景
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#F9A889',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 3,
+    elevation: 3,
   },
   // 地理位置选择器 - 精确触发区域
   locationSelector: {
@@ -1007,23 +1203,7 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   
-  scanButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22, // 圆形按钮
-    borderWidth: 2, // 2px橙色边框
-    borderColor: '#F9A889', // 适中饱和度的橙色边框
-    backgroundColor: 'transparent', // 透明背景
-    alignItems: 'center',
-    justifyContent: 'center',
-    alignSelf: 'center', // 确保在父容器中垂直居中
-    // 微妙阴影增强立体感
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
-  },
+  // scanButton样式已在上面定义
   
   
   // List Container
@@ -1036,8 +1216,8 @@ const styles = StyleSheet.create({
   // 列表内容样式
   listContent: {
     paddingHorizontal: theme.spacing[4],
-    paddingTop: -94.5, // 再向上移动15px，从-79.5改为-94.5
-    paddingBottom: 120, // 从100增加到120，基础值会被动态覆盖以适配安全区域
+    paddingTop: 0, // 重置为0，由contentContainerStyle控制
+    paddingBottom: 120,
   },
   loadingFooter: {
     paddingVertical: theme.spacing[4],
@@ -1146,5 +1326,20 @@ const styles = StyleSheet.create({
     color: theme.colors.text.inverse,
     fontSize: theme.typography.fontSize.base,
     fontWeight: theme.typography.fontWeight.semibold,
+  },
+  
+  // 瀑布流布局样式
+  waterfallContainer: {
+    flexDirection: 'row',
+    alignItems: 'flex-start', // 重要：让两列顶部对齐，允许不同高度
+    justifyContent: 'space-between',
+    paddingHorizontal: 4,
+  },
+  waterfallColumn: {
+    width: '48%', // 两列各占48%，留2%间距
+  },
+  waterfallItem: {
+    width: '100%',
+    marginBottom: 8, // 卡片间距
   },
 });

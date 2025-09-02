@@ -205,6 +205,12 @@ const resources = {
 
 // 初始化i18next
 const initI18next = async () => {
+  // 🚨 防止重复初始化
+  if (i18n.isInitialized) {
+    console.log('[I18N] i18next已初始化，跳过重复初始化');
+    return i18n;
+  }
+  
   // 尝试获取已保存的语言偏好
   const savedLanguage = await getSavedLanguage();
   const deviceLanguage = detectDeviceLanguage();
@@ -242,13 +248,6 @@ const initI18next = async () => {
       missingKeyHandler: (lng: readonly string[], ns: string, key: string, fallbackValue: string, updateMissing: boolean, options: any) => {
         const smartFallback = generateSmartFallback(key, lng[0]);
         console.warn(`🔄 翻译键缺失，使用智能fallback: ${key} → ${smartFallback}`);
-      },
-      
-      // 解析错误处理
-      parseMissingKeyHandler: (key: string) => {
-        const smartFallback = generateSmartFallback(key);
-        console.warn(`⚠️  翻译解析失败，使用智能fallback: ${key} → ${smartFallback}`);
-        return smartFallback;
       },
     });
 };

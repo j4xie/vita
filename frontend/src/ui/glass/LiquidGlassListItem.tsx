@@ -12,24 +12,32 @@ import Animated, {
 import * as Haptics from 'expo-haptics';
 import { Glass } from './GlassTheme';
 import { getSchoolLogo } from '../../utils/schoolLogos';
+import { i18n } from '../../utils/i18n';
 
 interface LiquidGlassListItemProps {
   id: string;
-  nameCN: string;
-  nameEN: string;
-  city: string;
-  state: string;
+  nameCN: string;        // For backward compatibility 
+  nameEN: string;        // For backward compatibility
+  deptName?: string;     // API: Chinese full name
+  engName?: string;      // API: English full name  
+  aprName?: string;      // API: Abbreviation/short name
+  city?: string;         // Will be removed from display
+  state?: string;        // Will be removed from display
   volunteers: number;
   tint: string;
-  schoolId: string; // 新增schoolId获取校徽
+  schoolId: string;
   onPress: () => void;
   disabled?: boolean;
+  isScrolling?: boolean; // 🚀 新增：滚动状态，用于防止滚动时误触
 }
 
 export const LiquidGlassListItem: React.FC<LiquidGlassListItemProps> = ({
   id,
   nameCN,
   nameEN,
+  deptName,
+  engName,
+  aprName,
   city,
   state,
   volunteers,
@@ -37,9 +45,31 @@ export const LiquidGlassListItem: React.FC<LiquidGlassListItemProps> = ({
   schoolId,
   onPress,
   disabled = false,
+  isScrolling = false, // 🚀 接收滚动状态
 }) => {
   const pressed = useSharedValue(0);
   const logoSource = getSchoolLogo(schoolId);
+  
+  // 🌍 NEW: 根据用户要求和语言获取正确的标题和副标题
+  const getDisplayInfo = () => {
+    const isEnglish = i18n.language === 'en-US';
+    
+    if (isEnglish) {
+      // 英文界面：标题=aprName(短名称)，副标题=engName(完整英文名)
+      return {
+        title: aprName || nameCN || deptName || '未知学校',
+        subtitle: engName || nameEN || '学校'
+      };
+    } else {
+      // 中文界面：标题=deptName(中文全名)，副标题=aprName(缩写)  
+      return {
+        title: deptName || nameCN || '未知学校',
+        subtitle: aprName || nameEN || '学校'
+      };
+    }
+  };
+  
+  const displayInfo = getDisplayInfo();
   
   // 添加滑动容忍度
   const [touchStart, setTouchStart] = React.useState<{x: number, y: number} | null>(null);
@@ -65,17 +95,26 @@ export const LiquidGlassListItem: React.FC<LiquidGlassListItemProps> = ({
     
     pressed.value = withSpring(0, Glass.animation.springConfig);
     
-    // 检查是否是滑动操作
+    // 🚨 第一重保护：滚动状态检查
+    if (isScrolling) {
+      console.log('🚫 [SCROLL-GUARD] 滚动中拒绝点击，重置状态');
+      setTouchStart(null);
+      return;
+    }
+    
+    // 🚨 第二重保护：滑动距离检查
     if (touchStart) {
       const deltaX = Math.abs(event.nativeEvent.pageX - touchStart.x);
       const deltaY = Math.abs(event.nativeEvent.pageY - touchStart.y);
-      const threshold = 10; // 10像素的滑动容忍度
+      const threshold = 15; // 🚀 调整到15像素的滑动容忍度，平衡防误触和响应速度
       
       // 如果滑动距离超过阈值，不触发点击
       if (deltaX > threshold || deltaY > threshold) {
-        console.log('检测到滑动操作，取消点击事件');
+        console.log('🚫 [SWIPE-CANCEL] 检测到滑动操作，取消点击事件，距离:', Math.max(deltaX, deltaY));
         setTouchStart(null);
         return;
+      } else {
+        console.log('✅ [CLICK-VALID] 滑动距离在阈值内，确认点击，距离:', Math.max(deltaX, deltaY));
       }
     }
     
@@ -84,6 +123,7 @@ export const LiquidGlassListItem: React.FC<LiquidGlassListItemProps> = ({
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
     
+    console.log('🎯 [LIQUID-GLASS] 确认触发点击事件');
     setTouchStart(null);
     onPress();
   };
@@ -141,28 +181,16 @@ export const LiquidGlassListItem: React.FC<LiquidGlassListItemProps> = ({
             )}
           </View>
 
-          {/* 中部信息 */}
+          {/* 🌍 FIXED: 中部信息 - 使用新的显示逻辑，移除位置信息 */}
           <View style={styles.infoContainer}>
-            {/* 中英双行 */}
+            {/* 标题和副标题 - 根据语言和用户要求显示 */}
             <Text style={styles.primaryTitle} numberOfLines={1}>
-              {nameCN}
+              {displayInfo.title}
             </Text>
             <Text style={styles.secondaryTitle} numberOfLines={1}>
-              {nameEN}
+              {displayInfo.subtitle}
             </Text>
-            
-            {/* 位置行 */}
-            <View style={styles.locationRow}>
-              <Ionicons
-                name="location-outline"
-                size={12}
-                color={Glass.textWeak}
-                style={styles.locationIcon}
-              />
-              <Text style={styles.locationText} numberOfLines={1}>
-                {city}, {state}
-              </Text>
-            </View>
+            {/* 🗑️ REMOVED: 位置信息根据用户要求完全移除 */}
           </View>
 
           {/* 右侧徽章和chevron */}

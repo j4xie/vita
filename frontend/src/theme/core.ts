@@ -621,12 +621,12 @@ export const BRAND_INTERACTIONS = {
   },
 } as const;
 
-// V2.0 Liquid Glass 分层系统 - L1/L2/L3架构
+// V2.0 Liquid Glass 分层系统 - L1/L2/L3架构 (Dark Mode完整支持)
 export const LIQUID_GLASS_LAYERS = {
   // L0 基础背景层 - 系统级背景
   L0: {
     light: '#F2F2F7',      // 浅色模式系统浅灰
-    dark: '#000000',       // 深色模式纯黑
+    dark: '#000000',       // 深色模式纯黑 - Apple标准
     blur: 0,
     shadow: 'none' as const,
     borderRadius: 0,
@@ -636,17 +636,23 @@ export const LIQUID_GLASS_LAYERS = {
   L1: {
     background: {
       light: 'rgba(255, 255, 255, 0.85)',     // 浅色模式85%白玻璃
-      dark: 'rgba(28, 28, 30, 0.55)',         // 深色模式55%黑玻璃 (按您的规范)
+      dark: 'rgba(28, 28, 30, 0.85)',         // 深色模式85%系统深灰玻璃 (Apple标准)
     },
     blur: {
-      ios: 20,          // iOS原生模糊强度
-      android: 12,      // Android优化模糊强度
-      fallback: 0,      // 降级时无模糊
+      ios: {
+        light: 20,        // 浅色模式iOS原生模糊
+        dark: 25,         // 深色模式稍强模糊增强层次感
+      },
+      android: {
+        light: 12,        // Android浅色模式优化模糊
+        dark: 15,         // Android深色模式稍强模糊
+      },
+      fallback: 0,        // 降级时无模糊
     },
     border: {
       color: {
         light: 'rgba(255, 255, 255, 0.30)',
-        dark: 'rgba(255, 255, 255, 0.15)',
+        dark: 'rgba(84, 84, 88, 0.65)',      // Apple标准深色边框 (更强对比)
       },
       width: 1,
     },
@@ -655,7 +661,10 @@ export const LIQUID_GLASS_LAYERS = {
       surface: 20,      // 大型表面圆角
       compact: 12,      // 紧凑组件圆角
     },
-    shadow: 'xs' as const,
+    shadow: {
+      light: 'xs' as const,
+      dark: 'sm' as const,    // 深色模式需要更强阴影
+    },
     opacity: {
       normal: 0.85,     // 正常透明度
       high: 0.95,       // 高透明度(需要更好可读性时)
@@ -666,19 +675,27 @@ export const LIQUID_GLASS_LAYERS = {
   L2: {
     background: {
       light: 'rgba(255, 107, 53, 0.14)',      // 浅色模式Dawn Warm轻染14%
-      dark: 'rgba(255, 107, 53, 0.14)',       // 深色模式同样14%轻染 (在55%黑玻璃基础上)
+      dark: 'rgba(255, 138, 101, 0.16)',      // 深色模式使用适配品牌色+稍强透明度
       coral: 'rgba(255, 77, 94, 0.12)',       // 珊瑚红变体
+      darkCoral: 'rgba(255, 107, 117, 0.14)', // 深色模式珊瑚红适配版
     },
     blur: {
-      ios: 20,
-      android: 12,
+      ios: {
+        light: 20,
+        dark: 25,         // 深色模式稍强模糊
+      },
+      android: {
+        light: 12,
+        dark: 15,
+      },
       fallback: 0,
     },
     border: {
       color: {
         light: 'rgba(255, 107, 53, 0.22)',    // PomeloX橙色描边
-        dark: 'rgba(255, 107, 53, 0.18)',
+        dark: 'rgba(255, 138, 101, 0.25)',    // 深色模式适配品牌色描边
         coral: 'rgba(255, 77, 94, 0.18)',     // 珊瑚红描边
+        darkCoral: 'rgba(255, 107, 117, 0.22)', // 深色珊瑚红描边
       },
       width: 1,
     },
@@ -688,11 +705,20 @@ export const LIQUID_GLASS_LAYERS = {
       compact: 12,
       pill: 24,         // 药丸形状(如标签)
     },
-    shadow: 'xs' as const,
-    // 品牌色发光效果(iOS)
+    shadow: {
+      light: 'xs' as const,
+      dark: 'sm' as const,    // 深色模式增强阴影
+    },
+    // 品牌色发光效果(iOS) - 深色模式优化
     glow: {
-      color: 'rgba(255, 107, 53, 0.3)',
-      radius: 4,
+      light: {
+        color: 'rgba(255, 107, 53, 0.3)',
+        radius: 4,
+      },
+      dark: {
+        color: 'rgba(255, 138, 101, 0.4)',  // 深色模式稍强发光
+        radius: 5,
+      },
     },
   },
   
@@ -700,17 +726,23 @@ export const LIQUID_GLASS_LAYERS = {
   L3: {
     background: {
       light: 'rgba(255, 255, 255, 0.90)',     // 浅色模式90%白玻璃
-      dark: 'rgba(28, 28, 30, 0.65)',         // 深色模式65%黑玻璃 (按您的规范)
+      dark: 'rgba(44, 44, 46, 0.90)',         // 深色模式90%三级背景玻璃 (Apple标准)
     },
     blur: {
-      ios: 30,          // 更强模糊营造浮层感
-      android: 18,
+      ios: {
+        light: 30,        // 浅色模式更强模糊营造浮层感
+        dark: 35,         // 深色模式最强模糊
+      },
+      android: {
+        light: 18,
+        dark: 22,         // Android深色模式增强模糊
+      },
       fallback: 0,
     },
     border: {
       color: {
         light: 'rgba(255, 255, 255, 0.30)',
-        dark: 'rgba(255, 255, 255, 0.20)',
+        dark: 'rgba(84, 84, 88, 0.75)',      // Apple标准深色边框加强版
       },
       width: 1,
     },
@@ -719,12 +751,18 @@ export const LIQUID_GLASS_LAYERS = {
       tooltip: 16,      // 工具提示圆角
       fab: 28,          // 浮动按钮圆角
     },
-    shadow: 'sm' as const,
-    // 背景遮罩配置
+    shadow: {
+      light: 'sm' as const,
+      dark: 'md' as const,    // 深色模式需要更强阴影营造浮层感
+    },
+    // 背景遮罩配置 - 深色模式优化
     backdrop: {
       light: 'rgba(0, 0, 0, 0.15)',
-      dark: 'rgba(0, 0, 0, 0.30)',
-      blur: 15,
+      dark: 'rgba(0, 0, 0, 0.50)',           // 深色模式更强背景遮罩
+      blur: {
+        light: 15,
+        dark: 20,         // 深色模式背景遮罩更强模糊
+      },
     },
   },
 } as const;
@@ -942,6 +980,163 @@ export const RESTRAINED_COLORS = {
     maxShadow: 'sm' as const,
   },
 } as const;
+
+// ========================
+// 🌙 Dark Mode System Materials - Apple标准材质映射  
+// ========================
+
+export const SYSTEM_MATERIALS = {
+  // 标准系统材质 - 完整light/dark支持
+  regular: {
+    light: {
+      background: 'rgba(255, 255, 255, 0.85)',
+      border: 'rgba(255, 255, 255, 0.30)', 
+      blur: 20,
+      shadow: 'xs' as const,
+    },
+    dark: {
+      background: 'rgba(28, 28, 30, 0.85)',
+      border: 'rgba(84, 84, 88, 0.65)',
+      blur: 25,
+      shadow: 'sm' as const,
+    },
+  },
+  
+  // 厚材质 - 模态框和重要界面
+  thick: {
+    light: {
+      background: 'rgba(255, 255, 255, 0.92)',
+      border: 'rgba(255, 255, 255, 0.30)',
+      blur: 30,
+      shadow: 'sm' as const,
+    },
+    dark: {
+      background: 'rgba(44, 44, 46, 0.92)',
+      border: 'rgba(84, 84, 88, 0.75)',
+      blur: 35,
+      shadow: 'md' as const,
+    },
+  },
+  
+  // 薄材质 - 轻量浮层和提示
+  thin: {
+    light: {
+      background: 'rgba(255, 255, 255, 0.75)',
+      border: 'rgba(255, 255, 255, 0.25)',
+      blur: 15,
+      shadow: 'xs' as const,
+    },
+    dark: {
+      background: 'rgba(28, 28, 30, 0.75)',
+      border: 'rgba(84, 84, 88, 0.55)',
+      blur: 18,
+      shadow: 'xs' as const,
+    },
+  },
+  
+  // 超薄材质 - Toast和快速提示
+  ultraThin: {
+    light: {
+      background: 'rgba(255, 255, 255, 0.65)',
+      border: 'rgba(255, 255, 255, 0.20)',
+      blur: 10,
+      shadow: 'xs' as const,
+    },
+    dark: {
+      background: 'rgba(28, 28, 30, 0.65)',
+      border: 'rgba(84, 84, 88, 0.45)',
+      blur: 12,
+      shadow: 'xs' as const,
+    },
+  },
+  
+  // Chrome材质 - 系统chrome和控制栏
+  chrome: {
+    light: {
+      background: 'rgba(255, 255, 255, 0.98)',
+      border: 'rgba(255, 255, 255, 0.35)',
+      blur: 40,
+      shadow: 'md' as const,
+    },
+    dark: {
+      background: 'rgba(58, 58, 60, 0.98)',
+      border: 'rgba(84, 84, 88, 0.85)',
+      blur: 45,
+      shadow: 'lg' as const,
+    },
+  },
+} as const;
+
+// ========================
+// 🎨 Dark Mode Utilities - 统一样式工具
+// ========================
+
+// Dark Mode 动态样式获取工具
+export const getDynamicStyle = (lightValue: any, darkValue: any, isDarkMode: boolean) => {
+  return isDarkMode ? darkValue : lightValue;
+};
+
+// Dark Mode 材质获取工具  
+export const getMaterialConfig = (materialType: keyof typeof SYSTEM_MATERIALS, isDarkMode: boolean) => {
+  return SYSTEM_MATERIALS[materialType][isDarkMode ? 'dark' : 'light'];
+};
+
+// Dark Mode 分层配置获取工具
+export const getLayerConfig = (layerType: 'L1' | 'L2' | 'L3', isDarkMode: boolean) => {
+  const layer = LIQUID_GLASS_LAYERS[layerType];
+  return {
+    background: layer.background[isDarkMode ? 'dark' : 'light'],
+    border: layer.border.color[isDarkMode ? 'dark' : 'light'],
+    blur: typeof layer.blur === 'object' && 'ios' in layer.blur 
+      ? layer.blur.ios[isDarkMode ? 'dark' : 'light']
+      : layer.blur,
+    shadow: typeof layer.shadow === 'object' && 'dark' in layer.shadow
+      ? layer.shadow[isDarkMode ? 'dark' : 'light'] 
+      : layer.shadow,
+  };
+};
+
+// Dark Mode 文本色获取工具
+export const getTextColor = (level: 'primary' | 'secondary' | 'tertiary' | 'quaternary', isDarkMode: boolean) => {
+  if (isDarkMode) {
+    switch (level) {
+      case 'primary': return '#FFFFFF';
+      case 'secondary': return '#EBEBF599';
+      case 'tertiary': return '#EBEBF54D';
+      case 'quaternary': return '#EBEBF530';
+      default: return '#FFFFFF';
+    }
+  } else {
+    switch (level) {
+      case 'primary': return '#111827';
+      case 'secondary': return '#4B5563';
+      case 'tertiary': return '#9CA3AF';
+      case 'quaternary': return '#D1D5DB';
+      default: return '#111827';
+    }
+  }
+};
+
+// Dark Mode 背景色获取工具
+export const getBackgroundColor = (level: 'system' | 'secondary' | 'tertiary' | 'elevated', isDarkMode: boolean) => {
+  if (isDarkMode) {
+    switch (level) {
+      case 'system': return '#000000';
+      case 'secondary': return '#1C1C1E';
+      case 'tertiary': return '#2C2C2E';
+      case 'elevated': return '#3A3A3C';
+      default: return '#000000';
+    }
+  } else {
+    switch (level) {
+      case 'system': return '#FFFFFF';
+      case 'secondary': return '#F9FAFB';
+      case 'tertiary': return '#F3F4F6';
+      case 'elevated': return '#FFFFFF';
+      default: return '#FFFFFF';
+    }
+  }
+};
 
 // 导出类型定义
 export type CoreColors = typeof CORE_COLORS;
