@@ -376,7 +376,19 @@ export const VolunteerCheckInScreen: React.FC = () => {
               
               // 调用真实的签到API（带 startTime）
               const startTime = new Date().toISOString().replace('T', ' ').substring(0, 19);
-              const result = await volunteerSignRecord(currentUser.userId!, 1, undefined, undefined, startTime);
+              
+              // 🚨 必需参数：operateUserId和operateLegalName
+              if (!user?.id || !user?.legalName) {
+                throw new Error('操作用户信息缺失，无法执行签到');
+              }
+              
+              const result = await volunteerSignRecord(
+                currentUser.userId!, 
+                1, // 签到
+                user.id, // operateUserId - 必需
+                user.legalName, // operateLegalName - 必需  
+                startTime // startTime
+              );
               
               if (result.code === 200) {
                 const checkInTimeISO = new Date().toISOString();
@@ -445,14 +457,20 @@ export const VolunteerCheckInScreen: React.FC = () => {
               
               // 调用真实的签退API（带 endTime 和 recordId）
               const endTime = checkOutTime.toISOString().replace('T', ' ').substring(0, 19);
+              
+              // 🚨 必需参数：operateUserId和operateLegalName
+              if (!user?.id || !user?.legalName) {
+                throw new Error('操作用户信息缺失，无法执行签退');
+              }
+              
               const result = await volunteerSignRecord(
                 currentUser.userId!, 
                 2, // 2表示签退
-                undefined, 
-                undefined, 
+                user.id, // operateUserId - 必需
+                user.legalName, // operateLegalName - 必需
                 undefined, // startTime (签退时不需要)
-                endTime,
-                currentUser.currentRecordId // 当前记录ID
+                endTime, // endTime - 必需
+                currentUser.currentRecordId // recordId - 必需
               ); 
               
               if (result.code === 200) {

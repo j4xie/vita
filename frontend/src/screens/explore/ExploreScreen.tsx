@@ -22,6 +22,7 @@ import { useUnimplementedFeature } from '../../components/common/UnimplementedFe
 import { useTabBarShow } from '../../hooks/useTabBarHide';
 import { pomeloXAPI } from '../../services/PomeloXAPI';
 import { adaptActivityList, FrontendActivity } from '../../utils/activityAdapter';
+import { useUser } from '../../context/UserContext';
 
 const { width: screenWidth } = Dimensions.get('window');
 
@@ -31,6 +32,7 @@ const { width: screenWidth } = Dimensions.get('window');
 export const ExploreScreen: React.FC = () => {
   const { t } = useTranslation();
   const navigation = useNavigation<any>();
+  const { user } = useUser(); // 🆕 新增用户上下文
   const [selectedSchool, setSelectedSchool] = useState('all');
 
   // 确保主页面显示TabBar
@@ -93,10 +95,19 @@ export const ExploreScreen: React.FC = () => {
       
       console.log('🔍 加载活动数据:', { searchQuery });
       
+      // 🔧 支持访客模式浏览 - userId可选
+      const isLoggedIn = !!(user?.id);
+      
       const result = await pomeloXAPI.getActivityList({
         pageNum: 1,
         pageSize: 20,
+        userId: isLoggedIn ? parseInt(user.id) : undefined, // 🔧 可选参数
         name: searchQuery, // 使用name字段进行搜索
+      });
+      
+      console.log('🌍 Explore模式:', {
+        mode: isLoggedIn ? '个性化浏览' : '访客浏览',
+        searchQuery
       });
       
       console.log('📊 活动数据响应:', {

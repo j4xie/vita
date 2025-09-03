@@ -34,7 +34,7 @@ import { mapUserToIdentityData } from '../../utils/userIdentityMapper';
 import { activityStatsService, UserActivityStats } from '../../services/activityStatsService';
 import { pomeloXAPI } from '../../services/PomeloXAPI';
 import { getCurrentToken } from '../../services/authAPI';
-import { getVolunteerHours, VolunteerHours } from '../../services/volunteerAPI';
+import { getVolunteerHours, VolunteerHours, getPersonalVolunteerHours } from '../../services/volunteerAPI';
 
 interface SettingRowProps {
   title: string;
@@ -194,7 +194,7 @@ export const ProfileHomeScreen: React.FC = () => {
   // 志愿者统计状态
   const [volunteerStats, setVolunteerStats] = useState({
     volunteerHours: 0,
-    points: 0, // 积分暂无API，保持为0
+    points: 0, // 积分系统暂未实现
   });
   const [isLoadingVolunteerStats, setIsLoadingVolunteerStats] = useState(false);
   
@@ -227,41 +227,52 @@ export const ProfileHomeScreen: React.FC = () => {
     return mapUserToIdentityData(user);
   };
 
-  // 获取用户组织信息
+  // 获取用户组织信息 - 🆕 支持最新API的role和post字段
   const getUserOrganizationInfo = () => {
     if (!user || !isAuthenticated) return { school: '', organization: '', position: '' };
     
-    // 获取用户角色信息
-    
-    // 学校信息
+    // 🆕 学校信息 - 支持完整的dept结构
     const school = user.school?.name || user.dept?.deptName || '';
+    const department = user.dept?.childrenDept?.deptName; // 🆕 子部门信息
     
-    // 组织信息 - 基于学校信息设置，如果是CU总部则组织也是CU总部
+    // 🆕 组织信息 - 基于学校信息设置
     let organization = '';
     if (school) {
-      // 对于CU总部，组织就是CU总部本身
       if (school.includes('CU总部') || school === 'CU总部') {
         organization = 'CU总部';
       } else {
-        // 其他学校可以设置为对应的学联组织
         organization = '学联组织';
       }
     }
     
-    // 岗位信息 - 只有非普通用户才显示
+    // 🆕 完整的岗位信息显示 - 结合role和post
     let position = '';
-    if (user.roles && user.roles.length > 0) {
-      const roleKey = user.roles[0]?.key || 'common';
-      
-      if (roleKey !== 'common') {
-        const positionMapping: Record<string, string> = {
-          'manage': '总部成员',
-          'part_manage': '分管理员',
-          'staff': '内部员工'
-        };
-        position = positionMapping[roleKey] || '';
-      }
+    
+    // 优先显示具体岗位(post)
+    if (user.post?.postName) {
+      position = user.post.postName;
+    } else if (user.role?.roleName) {
+      // 如果没有具体岗位，显示角色名称
+      position = user.role.roleName;
+    } else if (user.roles && user.roles.length > 0) {
+      // 兼容旧格式：从roles数组获取
+      position = user.roles[0].roleName;
     }
+    
+    // 🆕 如果有部门信息，添加到位置描述中
+    if (department && position) {
+      position = `${department} · ${position}`;
+    }
+    
+    console.log('👤 [PROFILE] 用户组织信息:', {
+      school,
+      department, 
+      organization,
+      position,
+      rawRole: user.role,
+      rawPost: user.post,
+      rawDept: user.dept
+    });
     
     return { school, organization, position };
   };
@@ -364,41 +375,66 @@ export const ProfileHomeScreen: React.FC = () => {
         isAuthenticated
       });
       
-      // 调用志愿者工时API
-      const response = await getVolunteerHours({ userId: userIdToUse });
-      
-      if (response.code === 200 && response.rows) {
-        // 增强的类型验证
-        const volunteerData = Array.isArray(response.rows) ? response.rows as VolunteerHours[] : [];
+      // 🆕 使用接口19：个人工时统计API - 仅限staff及以上权限
+      try {
+        const personalResponse = await getPersonalVolunteerHours(userIdToUse);
         
-        // 计算当前用户的总工时，增加数据验证
-        const userHours = volunteerData.find(v => 
-          v && 
-          typeof v === 'object' && 
-          typeof v.userId === 'number' && 
-          v.userId === userIdToUse
-        );
+        if (personalResponse.code === 200 && personalResponse.data) {
+          const totalMinutes = personalResponse.data.totalMinutes || 0;
+          
+          // 数据验证：确保totalMinutes是合法数字
+          const validMinutes = typeof totalMinutes === 'number' && !isNaN(totalMinutes) && totalMinutes >= 0 ? totalMinutes : 0;
+          const hours = Math.floor(validMinutes / 60);
+          
+          setVolunteerStats({
+            volunteerHours: hours,
+            points: 0, // 积分接口暂无，保持为0
+          });
+          
+          console.log('✅ [PERSONAL-HOURS] 个人工时统计加载成功:', { totalMinutes: validMinutes, hours });
+          return;
+        } else {
+          throw new Error('个人工时API返回无效数据');
+        }
+      } catch (personalError: any) {
+        console.warn('⚠️ [PERSONAL-HOURS] 个人工时API调用失败，fallback到管理员API:', personalError.message);
         
-        const totalMinutes = userHours?.totalMinutes || 0;
+        // Fallback: 使用原来的管理员工时API（向后兼容）
+        const response = await getVolunteerHours({ userId: userIdToUse });
         
-        // 数据验证：确保totalMinutes是合法数字
-        const validMinutes = typeof totalMinutes === 'number' && !isNaN(totalMinutes) && totalMinutes >= 0 ? totalMinutes : 0;
-        const hours = Math.floor(validMinutes / 60);
-        
-        setVolunteerStats({
-          volunteerHours: hours,
-          points: 0, // 积分接口暂无，保持为0
-        });
-        
-        console.log('🔍 ✅ 志愿者统计加载成功:', { totalMinutes: validMinutes, hours });
-      } else {
-        console.log('🔍 志愿者统计无数据或接口失败:', response.msg || '未知错误');
-        // API失败时重置为默认值，确保数据一致性
-        setVolunteerStats({
-          volunteerHours: 0,
-          points: 0,
-        });
-      }
+        if (response.code === 200 && response.rows) {
+          // 增强的类型验证
+          const volunteerData = Array.isArray(response.rows) ? response.rows as VolunteerHours[] : [];
+          
+          // 计算当前用户的总工时，增加数据验证
+          const userHours = volunteerData.find(v => 
+            v && 
+            typeof v === 'object' && 
+            typeof v.userId === 'number' && 
+            v.userId === userIdToUse
+          );
+          
+          const totalMinutes = userHours?.totalMinutes || 0;
+          
+          // 数据验证：确保totalMinutes是合法数字
+          const validMinutes = typeof totalMinutes === 'number' && !isNaN(totalMinutes) && totalMinutes >= 0 ? totalMinutes : 0;
+          const hours = Math.floor(validMinutes / 60);
+          
+          setVolunteerStats({
+            volunteerHours: hours,
+            points: 0, // 积分接口暂无，保持为0
+          });
+          
+          console.log('🔍 ✅ 志愿者统计加载成功(fallback):', { totalMinutes: validMinutes, hours });
+        } else {
+          console.log('🔍 志愿者统计无数据或接口失败:', response.msg || '未知错误');
+          // API失败时重置为默认值，确保数据一致性
+          setVolunteerStats({
+            volunteerHours: 0,
+            points: 0,
+          });
+        }
+      } // 🔧 关闭personalError的catch块
     } catch (error) {
       console.error('🔍 ❌ 加载志愿者统计失败:', {
         error: error instanceof Error ? error.message : error,

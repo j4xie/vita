@@ -4,36 +4,32 @@ import { getCurrentToken } from './authAPI';
 import { Platform, DeviceEventEmitter } from 'react-native';
 import { notifyRegistrationSuccess, scheduleActivityReminder } from './smartAlertSystem';
 
-const BASE_URL = 'http://106.14.165.234:8085';
+const BASE_URL = 'https://www.vitaglobal.icu';
 
 // 检测是否为iOS模拟器
 const isIOSSimulator = Platform.OS === 'ios' && __DEV__;
 
-// 🚀 性能优化：智能网络重试工具
+// 🚀 基本网络重试工具
 const fetchWithRetry = async (url: string, options: RequestInit, maxRetries: number = 2): Promise<Response> => {
   for (let i = 0; i < maxRetries; i++) {
     try {
-      console.log(`🔄 尝试请求 (第${i + 1}/${maxRetries}次): ${url}`);
       const response = await fetch(url, options);
       return response;
     } catch (error: any) {
       console.warn(`⚠️ 第${i + 1}次请求失败:`, error.message);
       
-      // 🚀 智能重试判断：某些错误不值得重试
-      const shouldRetry = !error.message.includes('AbortError') && 
-                         !error.message.includes('AUTH') &&
-                         i < maxRetries - 1;
+      // 基本重试逻辑：非中止错误且未达到最大重试次数
+      const shouldRetry = !error.message.includes('AbortError') && i < maxRetries - 1;
       
       if (!shouldRetry) {
         throw error;
       }
       
-      // 🚀 优化重试延迟：使用指数退避但上限更低 (500ms, 1s)
-      const delay = Math.min(500 * Math.pow(2, i), 1000);
-      await new Promise(resolve => setTimeout(resolve, delay));
+      // 简单的重试延迟
+      await new Promise(resolve => setTimeout(resolve, 500 * (i + 1)));
     }
   }
-  throw new Error('所有重试都失败了');
+  throw new Error('网络请求失败');
 };
 
 interface ApiResponse<T = any> {
@@ -82,6 +78,7 @@ interface APISchoolData {
   logo?: string | null;
   engName?: string | null;
   aprName?: string | null;
+  mailDomain?: string | null; // 🆕 新增邮箱后缀字段
   children: APISchoolData[];
 }
 
@@ -99,7 +96,7 @@ class PomeloXAPI {
   ): Promise<ApiResponse<T>> {
     const token = await getCurrentToken(); // 使用统一的token获取函数
     
-    const headers: HeadersInit = {
+    const headers: Record<string, string> = {
       'Accept': 'application/json',
       'Content-Type': 'application/json',
       ...options.headers,
@@ -114,14 +111,14 @@ class PomeloXAPI {
     }
 
     try {
-      const response = await fetch(`${BASE_URL}${endpoint}`, {
+      const response = await fetchWithRetry(`${BASE_URL}${endpoint}`, {
         ...options,
         headers,
       });
 
       const data = await response.json();
       return data;
-    } catch (error) {
+    } catch (error: any) {
       console.error('API Request Error:', error);
       throw new Error('网络连接失败');
     }
@@ -144,7 +141,7 @@ class PomeloXAPI {
    * 发送短信验证码
    */
   async sendSMSVerification(phone: string): Promise<SMSResponse> {
-    const response = await fetch(`${BASE_URL}/sms/vercodeSms?phoneNum=${phone}`, {
+    const response = await fetchWithRetry(`${BASE_URL}/sms/vercodeSms?phoneNum=${phone}`, {
       method: 'GET',
       headers: {
         'Accept': 'application/json',
@@ -162,7 +159,7 @@ class PomeloXAPI {
    * 获取学校列表 (公开接口，无需认证)
    */
   async getSchoolList(): Promise<ApiResponse<APISchoolData[]>> {
-    const response = await fetch(`${BASE_URL}/app/dept/list`, {
+    const response = await fetchWithRetry(`${BASE_URL}/app/dept/list`, {
       method: 'GET',
       headers: {
         'Accept': 'application/json',
@@ -216,7 +213,7 @@ class PomeloXAPI {
       return acc;
     }, {} as any));
     
-    const response = await fetch(`${BASE_URL}/app/user/add`, {
+    const response = await fetchWithRetry(`${BASE_URL}/app/user/add`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
@@ -248,7 +245,7 @@ class PomeloXAPI {
     
     console.log('📝 发送到后端的参数:', { username: data.userName, password: '[HIDDEN]' });
     
-    const response = await fetch(`${BASE_URL}/app/login`, {
+    const response = await fetchWithRetry(`${BASE_URL}/app/login`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
@@ -313,6 +310,8 @@ class PomeloXAPI {
     loginIp: string;
     loginDate: string;
     pwdUpdateDate: string | null;
+    admin: boolean; // 🆕 管理员标识
+    orgId: number | null; // 🆕 组织ID
     dept: {
       createBy: string | null;
       createTime: string | null;
@@ -330,6 +329,10 @@ class PomeloXAPI {
       status: string;
       delFlag: string | null;
       parentName: string | null;
+      engName?: string | null; // 🆕 英文名
+      aprName?: string | null; // 🆕 缩写
+      mailDomain?: string | null; // 🆕 邮箱后缀
+      childrenDept?: any | null; // 🆕 子部门
       children: any[];
     };
     roles: Array<{
@@ -353,14 +356,24 @@ class PomeloXAPI {
       permissions: string | null;
       admin: boolean;
     }>;
+    role?: { // 🆕 单个角色对象
+      roleId: number;
+      roleName: string;
+      roleKey: string;
+      admin: boolean;
+    };
+    post?: { // 🆕 岗位信息
+      postId: number;
+      postCode: string;
+      postName: string;
+      postSort: number;
+    };
     roleIds: number[] | null;
     postIds: number[] | null;
     roleId: number | null;
     verCode: string | null;
     invCode: string | null;
     bizId: string | null;
-    orgId: string | null;
-    admin: boolean;
   }>> {
     // 如果提供了userId，添加查询参数
     const endpoint = userId ? `/app/user/info?userId=${userId}` : '/app/user/info';
@@ -368,11 +381,13 @@ class PomeloXAPI {
   }
 
   /**
-   * 获取活动列表（公开接口，无需认证）
+   * 获取活动列表 - 支持访客模式和登录模式
+   * @param params.userId 可选 - 提供时返回个性化数据，不提供时返回基础列表
    */
-  async getActivityList(params?: {
+  async getActivityList(params: {
     pageNum?: number;
     pageSize?: number;
+    userId?: number; // 🔧 改为可选参数，支持访客模式
     name?: string;
     status?: number;
     categoryId?: number;
@@ -397,29 +412,40 @@ class PomeloXAPI {
       createNickName: string;
       signStatus?: number; // 0-未报名，-1-已报名未签到，1-已签到
       type?: number; // -1-即将开始，1-已开始，2-已结束
+      timeZone?: string; // 🆕 时区信息
     }>;
   }>> {
     // 构建查询参数
     const queryParams = new URLSearchParams();
-    if (params) {
-      if (params.pageNum) queryParams.append('pageNum', params.pageNum.toString());
-      if (params.pageSize) queryParams.append('pageSize', params.pageSize.toString());
-      if (params.name) queryParams.append('name', params.name);
-      if (params.status) queryParams.append('status', params.status.toString());
-      if (params.categoryId) queryParams.append('categoryId', params.categoryId.toString());
-      if (params.startTime) queryParams.append('startTime', params.startTime);
-      if (params.endTime) queryParams.append('endTime', params.endTime);
+    
+    // 🔧 userId现在是可选参数 - 支持访客模式
+    if (params.userId) {
+      queryParams.append('userId', params.userId.toString());
+      console.log('🔐 个性化活动列表模式:', { userId: params.userId });
+    } else {
+      console.log('👤 访客模式活动列表');
     }
+    
+    if (params.pageNum) queryParams.append('pageNum', params.pageNum.toString());
+    if (params.pageSize) queryParams.append('pageSize', params.pageSize.toString());
+    if (params.name) queryParams.append('name', params.name);
+    if (params.status) queryParams.append('status', params.status.toString());
+    if (params.categoryId) queryParams.append('categoryId', params.categoryId.toString());
+    if (params.startTime) queryParams.append('startTime', params.startTime);
+    if (params.endTime) queryParams.append('endTime', params.endTime);
     
     const queryString = queryParams.toString();
     const endpoint = queryString ? `/app/activity/list?${queryString}` : '/app/activity/list';
     
-    // 尝试获取用户token以获取个性化数据（如报名状态）
+    // 🔧 灵活的token处理 - 支持访客模式
     const token = await getCurrentToken();
+    const isGuestMode = !params.userId || !token;
+    
     console.log(`🔐 活动列表API调用:`, { 
       endpoint: `${BASE_URL}${endpoint}`,
+      mode: isGuestMode ? '访客模式' : '个性化模式',
       hasToken: !!token,
-      tokenLength: token?.length || 0,
+      hasUserId: !!params.userId,
       tokenPreview: token ? `${token.substring(0, 20)}...` : 'null'
     });
     
@@ -432,8 +458,8 @@ class PomeloXAPI {
       'User-Agent': 'PomeloX/1.0.0 (iOS)', // 添加User-Agent
     };
     
-    // 如果用户已登录，添加认证头获取个性化数据
-    if (token) {
+    // 只有在个性化模式下才添加认证头
+    if (!isGuestMode && token) {
       headers['Authorization'] = `Bearer ${token}`;
     }
     
@@ -510,6 +536,39 @@ class PomeloXAPI {
     }
     
     const result = await response.json();
+    
+    // 🚨 处理后端SQL查询错误的fallback机制
+    if (result.code === 500 && result.msg?.includes('Subquery returns more than 1 row')) {
+      console.warn('⚠️ [FALLBACK] 个性化活动列表查询失败，fallback到基础列表:', result.msg);
+      
+      // Fallback: 调用不带userId的基础活动列表
+      const fallbackEndpoint = '/app/activity/list' + 
+        (params.pageNum || params.pageSize || params.name || params.categoryId || params.startTime || params.endTime 
+          ? '?' + new URLSearchParams(Object.fromEntries(Object.entries({
+              pageNum: params.pageNum?.toString(),
+              pageSize: params.pageSize?.toString(), 
+              name: params.name,
+              categoryId: params.categoryId?.toString(),
+              startTime: params.startTime,
+              endTime: params.endTime
+            }).filter(([_, v]) => v !== undefined))) 
+          : '');
+      
+      const fallbackResponse = await fetchWithRetry(`${BASE_URL}${fallbackEndpoint}`, {
+        method: 'GET',
+        headers: headers,
+        signal: controller.signal,
+      });
+      
+      if (fallbackResponse.ok) {
+        const fallbackResult = await fallbackResponse.json();
+        console.log('✅ [FALLBACK] 基础活动列表获取成功，无个性化数据');
+        return fallbackResult;
+      } else {
+        throw new Error('Fallback API also failed');
+      }
+    }
+    
     console.log('📥 活动列表API响应:', {
       code: result.code,
       msg: result.msg,
@@ -546,7 +605,11 @@ class PomeloXAPI {
       if (response.code === 200) {
         // 获取活动信息用于通知
         try {
-          const activityResponse = await this.getActivityList(1, 10, userId);
+          const activityResponse = await this.getActivityList({ 
+            pageNum: 1, 
+            pageSize: 10, 
+            userId: userId 
+          });
           const activity = activityResponse.data?.rows?.find((a: any) => a.id === activityId);
           
           if (activity) {

@@ -29,11 +29,13 @@ import { useAllDarkModeStyles } from '../../hooks/useDarkModeStyles';
 import { SimpleActivityCard } from '../../components/cards/SimpleActivityCard';
 import { pomeloXAPI } from '../../services/PomeloXAPI';
 import { adaptActivity } from '../../utils/activityAdapter';
+import { useUser } from '../../context/UserContext';
 
 export const SearchScreen: React.FC = ({ route }: any) => {
   const { t } = useTranslation();
   const navigation = useNavigation<any>();
   const insets = useSafeAreaInsets();
+  const { user } = useUser(); // 🆕 新增用户上下文
   
   const darkModeSystem = useAllDarkModeStyles();
   const { isDarkMode, styles: dmStyles, gradients: dmGradients, blur: dmBlur, icons: dmIcons } = darkModeSystem;
@@ -80,11 +82,19 @@ export const SearchScreen: React.FC = ({ route }: any) => {
       setIsLoading(true);
       console.log('🔍 [SearchScreen] 开始搜索:', { searchText: text });
       
-      // 修复API调用方式
+      // 🔧 支持访客模式搜索 - userId可选
+      const isLoggedIn = !!(user?.id);
+      
       const response = await pomeloXAPI.getActivityList({ 
         pageNum: 1, 
         pageSize: 20, 
+        userId: isLoggedIn ? parseInt(user.id) : undefined, // 🔧 可选参数
         name: text 
+      });
+      
+      console.log('🔍 搜索模式:', { 
+        mode: isLoggedIn ? '个性化搜索' : '访客搜索',
+        searchText: text 
       });
       
       console.log('🔍 [SearchScreen] API响应:', { 

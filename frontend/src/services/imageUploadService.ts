@@ -5,7 +5,7 @@ const R2_CONFIG = {
   endpoint: process.env.EXPO_PUBLIC_R2_ENDPOINT || 'https://your-account-id.r2.cloudflarestorage.com',
   accessKeyId: process.env.EXPO_PUBLIC_R2_ACCESS_KEY_ID || '',
   secretAccessKey: process.env.EXPO_PUBLIC_R2_SECRET_ACCESS_KEY || '',
-  bucket: process.env.EXPO_PUBLIC_R2_BUCKET_NAME || 'vitaglobal-images',
+  bucket: process.env.EXPO_PUBLIC_R2_BUCKET_NAME || 'pomeloX-images',
   region: 'auto',
 };
 
@@ -43,7 +43,7 @@ export const uploadAvatar = async (imageUri: string, userId: number): Promise<Up
     // 需要后端团队实现 /app/upload/avatar 接口，集成Cloudflare R2
     
     // 临时方案：通过后端代理上传
-    const response = await fetch('http://106.14.165.234:8085/app/upload/avatar', {
+    const response = await fetch('https://www.vitaglobal.icu/app/upload/avatar', {
       method: 'POST',
       body: formData,
       headers: {
@@ -84,7 +84,7 @@ export const uploadAvatar = async (imageUri: string, userId: number): Promise<Up
  */
 export const getUserAvatarUrl = (userId: number): string | null => {
   // 构建Cloudflare R2公开访问URL
-  const publicUrl = process.env.EXPO_PUBLIC_R2_PUBLIC_URL || 'https://images.vitaglobal.app';
+  const publicUrl = process.env.EXPO_PUBLIC_R2_PUBLIC_URL || 'https://images.pomeloX.app';
   return `${publicUrl}/avatars/user_${userId}.jpg`;
 };
 

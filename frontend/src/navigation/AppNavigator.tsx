@@ -371,8 +371,18 @@ const ProfileNavigator = () => {
   );
 };
 
-// Tab Navigator with new 5-tab layout
+// Tab Navigator with permission-based layout
 const TabNavigator = () => {
+  const { permissions, user } = useUser();
+  
+  console.log('🔍 [TABS] 渲染Tab导航，用户权限:', {
+    hasUser: !!user,
+    permissionLevel: permissions.getPermissionLevel(),
+    hasVolunteerAccess: permissions.hasVolunteerManagementAccess(),
+    isAdmin: permissions.isAdmin(),
+    isStaff: permissions.isStaff()
+  });
+  
   return (
     <FilterProvider>
       <GlobalTouchHandler>
@@ -386,7 +396,7 @@ const TabNavigator = () => {
             tabBarInactiveTintColor: theme.colors.text.tertiary,
           }}
         >
-        {/* 探索 - 原活动内容 */}
+        {/* 探索 - 所有用户都可以访问 */}
         <Tab.Screen 
           name="Explore" 
           component={HomeNavigator}
@@ -400,22 +410,27 @@ const TabNavigator = () => {
             };
           }}
         />
-        {/* 社区咨询 - 合并咨询功能 */}
+        
+        {/* 社区咨询 - 所有用户都可以访问 */}
         <Tab.Screen 
           name="Community" 
           component={CommunityScreen}
         />
-        {/* 安心 - 原志愿者位置，集成志愿者功能 */}
-        <Tab.Screen 
-          name="Wellbeing" 
-          component={WellbeingNavigator}
-          options={({ route }) => ({
-            tabBarStyle: {
-              display: getFocusedRouteNameFromRoute(route) === 'SchoolDetail' ? 'none' : 'flex',
-            },
-          })}
-        />
-        {/* 个人 - 重构为2×2卡片布局 */}
+        
+        {/* 安心/志愿者 - 仅staff及以上可以访问 */}
+        {permissions.hasVolunteerManagementAccess() && (
+          <Tab.Screen 
+            name="Wellbeing" 
+            component={WellbeingNavigator}
+            options={({ route }) => ({
+              tabBarStyle: {
+                display: getFocusedRouteNameFromRoute(route) === 'SchoolDetail' ? 'none' : 'flex',
+              },
+            })}
+          />
+        )}
+        
+        {/* 个人 - 所有用户都可以访问 */}
         <Tab.Screen 
           name="Profile" 
           component={ProfileNavigator}

@@ -317,12 +317,21 @@ export const ActivityListScreen: React.FC = () => {
 
       const selectedCategory = activeFilter > 0 ? ACTIVITY_CATEGORIES[activeFilter - 1] : null;
       
-      // 使用带token的完整API请求以获取用户报名状态
+      // 🔧 支持访客模式和个性化模式
+      const isLoggedIn = !!(user?.id);
+      
       const result = await pomeloXAPI.getActivityList({
         pageNum: page,
         pageSize: 20,
+        userId: isLoggedIn ? parseInt(user.id) : undefined, // 🔧 可选参数，访客模式时不传
         name: searchText || undefined,
         categoryId: selectedCategory?.id || undefined,
+      });
+      
+      console.log('📋 活动列表模式:', {
+        mode: isLoggedIn ? '个性化模式' : '访客模式',
+        userId: isLoggedIn ? user.id : 'guest',
+        hasPersonalizedData: result.data?.rows?.[0]?.signStatus !== undefined
       });
 
       const adaptedData = adaptActivityList(result, currentLanguage);

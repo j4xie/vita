@@ -8,7 +8,7 @@ import {
 } from '../types/registration';
 
 // API基础URL配置
-const BASE_URL = 'http://106.14.165.234:8085';
+const BASE_URL = 'https://www.vitaglobal.icu';
 
 /**
  * 发送短信验证码

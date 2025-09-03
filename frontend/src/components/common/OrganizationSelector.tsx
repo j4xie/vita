@@ -45,7 +45,7 @@ export const OrganizationSelector: React.FC<OrganizationSelectorProps> = ({
   const fetchOrganizations = async () => {
     setLoading(true);
     try {
-      const response = await fetch('http://106.14.165.234:8085/app/organization/list', {
+      const response = await fetch('https://www.vitaglobal.icu/app/organization/list', {
         method: 'GET',
         headers: {
           'Accept': 'application/json',

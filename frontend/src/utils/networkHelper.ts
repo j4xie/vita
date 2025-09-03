@@ -1,6 +1,6 @@
 // 网络请求助手 - 专门处理PomeloX API调用
 
-const BASE_URL = 'http://106.14.165.234:8085';
+const BASE_URL = 'https://www.vitaglobal.icu';
 
 /**
  * 简化的网络请求方法，专门针对React Native优化

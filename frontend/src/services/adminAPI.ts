@@ -4,7 +4,7 @@
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const BASE_URL = 'http://106.14.165.234:8085';
+const BASE_URL = 'https://www.vitaglobal.icu';
 
 // 存储键名
 const ADMIN_STORAGE_KEYS = {

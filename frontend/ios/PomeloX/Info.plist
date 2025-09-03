@@ -33,7 +33,7 @@
       <dict>
         <key>CFBundleURLSchemes</key>
         <array>
-          <string>exp+vitaglobal</string>
+          <string>exp+pomeloX</string>
         </array>
       </dict>
     </array>
@@ -47,6 +47,10 @@
     <dict>
       <key>NSAllowsArbitraryLoads</key>
       <true/>
+      <key>NSAllowsArbitraryLoadsForMedia</key>
+      <true/>
+      <key>NSAllowsArbitraryLoadsInWebContent</key>
+      <true/>
       <key>NSAllowsLocalNetworking</key>
       <true/>
       <key>NSExceptionDomains</key>
@@ -59,6 +63,19 @@
           <string>TLSv1.0</string>
           <key>NSIncludesSubdomains</key>
           <true/>
+        </dict>
+        <key>www.vitaglobal.icu</key>
+        <dict>
+          <key>NSExceptionAllowsInsecureHTTPLoads</key>
+          <true/>
+          <key>NSExceptionRequiresForwardSecrecy</key>
+          <false/>
+          <key>NSExceptionMinimumTLSVersion</key>
+          <string>TLSv1.0</string>
+          <key>NSIncludesSubdomains</key>
+          <true/>
+          <key>NSThirdPartyExceptionRequiresForwardSecrecy</key>
+          <false/>
         </dict>
         <key>100.110.80.184</key>
         <dict>
@@ -75,6 +92,15 @@
           <true/>
           <key>NSExceptionMinimumTLSVersion</key>
           <string>TLSv1.0</string>
+        </dict>
+        <key>100.110.227.118</key>
+        <dict>
+          <key>NSExceptionAllowsInsecureHTTPLoads</key>
+          <true/>
+          <key>NSExceptionMinimumTLSVersion</key>
+          <string>TLSv1.0</string>
+          <key>NSIncludesSubdomains</key>
+          <true/>
         </dict>
       </dict>
     </dict>

@@ -451,13 +451,13 @@ export const SchoolDetailScreen: React.FC = () => {
         const dataScope = permissions.getDataScope();
         if (dataScope === 'all') {
           // 总管理员：需要动态pageSize获取完整数据
-          const initialResponse = await fetch(`http://106.14.165.234:8085/system/user/list`, {
+          const initialResponse = await fetch(`https://www.vitaglobal.icu/system/user/list`, {
             headers: { 'Authorization': `Bearer ${token}` }
           });
           const initialData = await initialResponse.json();
           
           if (initialData.code === 200 && initialData.rows?.length < initialData.total) {
-            const fullResponse = await fetch(`http://106.14.165.234:8085/system/user/list?pageSize=${initialData.total}`, {
+            const fullResponse = await fetch(`https://www.vitaglobal.icu/system/user/list?pageSize=${initialData.total}`, {
               headers: { 'Authorization': `Bearer ${token}` }
             });
             const fullData = await fullResponse.json();
@@ -467,7 +467,7 @@ export const SchoolDetailScreen: React.FC = () => {
           }
         } else {
           // 分管理员：直接使用默认API（后端已过滤）
-          const response = await fetch(`http://106.14.165.234:8085/system/user/list`, {
+          const response = await fetch(`https://www.vitaglobal.icu/system/user/list`, {
             headers: { 'Authorization': `Bearer ${token}` }
           });
           const data = await response.json();
@@ -1305,14 +1305,21 @@ export const SchoolDetailScreen: React.FC = () => {
   const loadSchoolActivitiesCount = async () => {
     try {
       // 获取所有活动，然后统计该学校相关的活动数量
+      // 🔧 支持访客统计模式
+      const isLoggedIn = !!(userInfo?.id);
+      
       const response = await pomeloXAPI.getActivityList({
         pageNum: 1,
         pageSize: 100, // 获取更多数据来统计
+        userId: isLoggedIn ? parseInt(userInfo.id) : undefined, // 🔧 可选参数
+      });
+      
+      console.log('🏫 学校活动统计模式:', {
+        mode: isLoggedIn ? '个性化统计' : '基础统计'
       });
       
       if (response.code === 200 && response.data) {
-        // 由于API不支持按学校过滤，这里显示总活动数
-        // TODO: 等后端支持按学校过滤后再优化
+        // 显示总活动数(当前API返回所有活动)
         setActivitiesCount(response.data.total);
       }
     } catch (error) {

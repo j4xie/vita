@@ -5,7 +5,7 @@
       "showDeveloperMenu": false
     },
     "name": "PomeloX",
-    "slug": "vitaglobal",
+    "slug": "pomeloX",
     "version": "1.0.24",
     "owner": "pomelox",
     "orientation": "portrait",
@@ -30,12 +30,21 @@
       "infoPlist": {
         "NSAppTransportSecurity": {
           "NSAllowsArbitraryLoads": true,
+          "NSAllowsArbitraryLoadsForMedia": true,
+          "NSAllowsArbitraryLoadsInWebContent": true,  
           "NSAllowsLocalNetworking": true,
           "NSExceptionDomains": {
             "106.14.165.234": {
               "NSExceptionAllowsInsecureHTTPLoads": true,
               "NSExceptionMinimumTLSVersion": "TLSv1.0",
               "NSIncludesSubdomains": true
+            },
+            "www.vitaglobal.icu": {
+              "NSExceptionAllowsInsecureHTTPLoads": true,
+              "NSExceptionRequiresForwardSecrecy": false,
+              "NSExceptionMinimumTLSVersion": "TLSv1.0",
+              "NSIncludesSubdomains": true,
+              "NSThirdPartyExceptionRequiresForwardSecrecy": false
             },
             "100.110.80.184": {
               "NSExceptionAllowsInsecureHTTPLoads": true,

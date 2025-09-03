@@ -4,7 +4,7 @@
 
 import { getCurrentToken } from './authAPI';
 
-const BASE_URL = 'http://106.14.165.234:8085';
+const BASE_URL = 'https://www.vitaglobal.icu';
 
 /**
  * 获取用户列表（需要管理员权限）

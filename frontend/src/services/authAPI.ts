@@ -6,7 +6,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { APIResponse } from '../types/registration';
 
 // API基础URL配置
-const BASE_URL = 'http://106.14.165.234:8085';
+const BASE_URL = 'https://www.vitaglobal.icu';
 
 // 存储键名
 const STORAGE_KEYS = {
@@ -29,7 +29,7 @@ export interface LoginResponse {
   token: string;
 }
 
-// 用户信息
+// 用户信息 - 更新为最新API返回结构
 export interface UserInfo {
   userId: number;
   deptId: number;
@@ -42,6 +42,8 @@ export interface UserInfo {
   avatar: string;
   status: string;
   loginDate: string;
+  admin: boolean; // 🆕 管理员标识
+  orgId?: number; // 🆕 组织ID
   dept: {
     deptId: number;
     deptName: string;
@@ -49,13 +51,35 @@ export interface UserInfo {
     ancestors: string;
     orderNum: number;
     status: string;
+    engName?: string; // 🆕 英文名
+    aprName?: string; // 🆕 缩写
+    mailDomain?: string; // 🆕 邮箱后缀
+    childrenDept?: { // 🆕 子部门
+      deptId: number;
+      deptName: string;
+      parentId: number;
+    };
   };
   roles: Array<{
     roleId: number;
     roleName: string;
+    roleKey: string; // 🚨 关键字段：manage/part_manage/staff/common
+    admin: boolean;
+    roleSort?: number;
+    dataScope?: string;
+  }>;
+  role?: { // 🆕 单个角色对象
+    roleId: number;
+    roleName: string;
     roleKey: string;
     admin: boolean;
-  }>;
+  };
+  post?: { // 🆕 岗位信息
+    postId: number;
+    postCode: string;
+    postName: string;
+    postSort: number;
+  };
 }
 
 /**

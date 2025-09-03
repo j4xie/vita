@@ -5,7 +5,7 @@
 import { getCurrentToken } from './authAPI';
 import { notifyVolunteerCheckIn, notifyVolunteerCheckOut } from './smartAlertSystem';
 
-const BASE_URL = 'http://106.14.165.234:8085';
+const BASE_URL = 'https://www.vitaglobal.icu';
 
 // 根据API文档第10-13条定义的志愿者打卡记录类型
 export interface VolunteerRecord {
@@ -832,6 +832,102 @@ export const getVolunteerStatus = (lastRecord: VolunteerRecord | null): 'not_sig
   }
   
   return 'not_signed_in';
+};
+
+/**
+ * 🆕 接口19: 获取志愿者个人总工时 - 仅限staff及以上权限
+ * URL: /app/hour/userHour
+ * @param userId 志愿者用户ID
+ * @returns 个人工时统计
+ */
+export const getPersonalVolunteerHours = async (userId: number): Promise<APIResponse<{
+  userId: number;
+  totalMinutes: number;
+  legalName: string | null;
+}>> => {
+  try {
+    const token = await getCurrentToken();
+    
+    if (!token) {
+      throw new Error('用户未登录');
+    }
+
+    console.log('🔍 [PERSONAL-HOURS] 获取个人工时:', { userId });
+
+    const response = await fetch(`${BASE_URL}/app/hour/userHour?userId=${userId}`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      if (response.status === 401 || response.status === 403) {
+        throw new Error('无权限访问志愿者工时数据');
+      }
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    
+    console.log('📊 [PERSONAL-HOURS] 个人工时API响应:', {
+      code: data.code,
+      totalMinutes: data.data?.totalMinutes,
+      userId: data.data?.userId
+    });
+    
+    return data;
+  } catch (error) {
+    console.error('获取个人志愿者工时失败:', error);
+    throw error;
+  }
+};
+
+/**
+ * 🆕 获取志愿者个人打卡记录 - 仅限staff及以上权限
+ * 使用接口10，传入userId参数实现个人化查询
+ * @param userId 志愿者用户ID
+ * @returns 个人打卡记录列表
+ */
+export const getPersonalVolunteerRecords = async (userId: number): Promise<APIResponse<VolunteerRecord[]>> => {
+  try {
+    const token = await getCurrentToken();
+    
+    if (!token) {
+      throw new Error('用户未登录');
+    }
+
+    console.log('🔍 [PERSONAL-RECORDS] 获取个人打卡记录:', { userId });
+
+    const response = await fetch(`${BASE_URL}/app/hour/recordList?userId=${userId}`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      if (response.status === 401 || response.status === 403) {
+        throw new Error('无权限访问个人打卡记录');
+      }
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    
+    console.log('📋 [PERSONAL-RECORDS] 个人记录API响应:', {
+      code: data.code,
+      total: data.total,
+      recordsCount: data.rows?.length || 0
+    });
+    
+    return data;
+  } catch (error) {
+    console.error('获取个人打卡记录失败:', error);
+    throw error;
+  }
 };
 
 /**
