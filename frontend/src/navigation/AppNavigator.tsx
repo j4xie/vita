@@ -12,10 +12,12 @@ import { theme } from '../theme';
 import { CustomTabBar } from '../components/navigation/CustomTabBar';
 import { SimpleSearchTabBar } from '../components/navigation/SimpleSearchTabBar';
 import { useUser, UserProvider } from '../context/UserContext';
+import { createPermissionChecker } from '../types/userPermissions';
 import { pageTransitions } from '../utils/animations';
 import { LanguageProvider } from '../context/LanguageContext';
 import { ThemeProvider } from '../context/ThemeContext';
 import { FilterProvider } from '../context/FilterContext';
+import { shouldShowTabBar, mustHideTabBar } from '../config/tabBarConfig';
 
 // Screens
 import { ActivityListScreen } from '../screens/activities/ActivityListScreen';
@@ -28,6 +30,7 @@ import { RegisterStep1Screen } from '../screens/auth/RegisterStep1Screen';
 import { RegisterStep2Screen } from '../screens/auth/RegisterStep2Screen';
 import { VerificationScreen } from '../screens/auth/VerificationScreen';
 import { QRScannerScreen } from '../screens/common/QRScannerScreen';
+import { QRScanResultScreen } from '../screens/common/QRScanResultScreen';
 // Profile Screens
 import { ProfileHomeScreen } from '../screens/profile/ProfileHomeScreen';
 // import { AccountSecurityScreen } from '../screens/profile/AccountSecurityScreen'; // 文件已删除
@@ -64,6 +67,8 @@ const Tab = createBottomTabNavigator();
 
 // Auth Stack Navigator
 const AuthNavigator = () => {
+  const { t } = useTranslation();
+  
   return (
     <AuthStack.Navigator
       screenOptions={{
@@ -126,7 +131,7 @@ const AuthNavigator = () => {
         component={TermsScreen}
         options={({ route }) => ({
           headerShown: true,
-          title: (route.params as any)?.type === 'privacy' ? '隐私政策' : '服务条款',
+          title: (route.params as any)?.type === 'privacy' ? t('navigation.headers.privacy_policy') : t('navigation.headers.terms_of_service'),
           headerStyle: {
             backgroundColor: '#f2f2f7',
             shadowOpacity: 0,
@@ -136,7 +141,7 @@ const AuthNavigator = () => {
             fontSize: 17,
             fontWeight: '600',
           },
-          headerBackTitle: '返回',
+          headerBackTitle: t('navigation.headers.back'),
           ...pageTransitions.slideFromRight,
         })}
       />
@@ -259,8 +264,7 @@ const QRScannerScreenWithProvider = () => {
 
 // Profile Stack Navigator
 const ProfileNavigator = () => {
-  // 移除Provider外部的翻译调用
-  // const { t } = useTranslation();
+  const { t } = useTranslation();
   
   return (
     <ProfileStack.Navigator
@@ -275,7 +279,7 @@ const ProfileNavigator = () => {
           fontSize: 17,
           fontWeight: '600',
         },
-        headerBackTitle: '返回',
+        headerBackTitle: t('navigation.headers.back'),
         ...pageTransitions.slideFromRight,
         transitionSpec: {
           open: {
@@ -313,42 +317,42 @@ const ProfileNavigator = () => {
         name="Notifications" 
         component={NotificationScreen}
         options={{
-          title: '通知设置',
+          title: t('navigation.headers.notifications'),
         }}
       />
       <ProfileStack.Screen 
         name="General" 
         component={GeneralScreen}
         options={{
-          title: '通用设置',
+          title: t('navigation.headers.general'),
         }}
       />
       <ProfileStack.Screen 
         name="AboutSupport" 
         component={AboutSupportScreen}
         options={{
-          title: '关于和支持',
+          title: t('navigation.headers.aboutSupport'),
         }}
       />
       <ProfileStack.Screen 
         name="LanguageSelection" 
         component={LanguageSelectionScreen}
         options={{
-          title: '语言设置',
+          title: t('navigation.headers.language'),
         }}
       />
       <ProfileStack.Screen 
         name="EditProfile" 
         component={EditProfileScreen}
         options={{
-          title: '编辑资料',
+          title: t('navigation.headers.edit_profile'),
         }}
       />
       <ProfileStack.Screen 
         name="ActivityLayoutSelection" 
         component={ActivityLayoutSelectionScreen}
         options={{
-          title: '布局选择',
+          title: t('navigation.headers.layout_selection'),
           headerShown: false,
         }}
       />
@@ -363,7 +367,7 @@ const ProfileNavigator = () => {
         name="Terms" 
         component={TermsScreen}
         options={({ route }) => ({
-          title: (route.params as any)?.type === 'privacy' ? '隐私政策' : '服务条款',
+          title: (route.params as any)?.type === 'privacy' ? t('navigation.headers.privacy_policy') : t('navigation.headers.terms_of_service'),
           ...pageTransitions.slideFromRight,
         })}
       />
@@ -373,15 +377,26 @@ const ProfileNavigator = () => {
 
 // Tab Navigator with permission-based layout
 const TabNavigator = () => {
-  const { permissions, user } = useUser();
+  // 🚨 安全检查：防止UserProvider初始化问题
+  let permissions, user;
+  try {
+    const userContext = useUser();
+    permissions = userContext.permissions;
+    user = userContext.user;
   
-  console.log('🔍 [TABS] 渲染Tab导航，用户权限:', {
-    hasUser: !!user,
-    permissionLevel: permissions.getPermissionLevel(),
-    hasVolunteerAccess: permissions.hasVolunteerManagementAccess(),
-    isAdmin: permissions.isAdmin(),
-    isStaff: permissions.isStaff()
-  });
+    console.log('🔍 [TABS] 渲染Tab导航，用户权限:', {
+      hasUser: !!user,
+      permissionLevel: permissions.getPermissionLevel(),
+      hasVolunteerAccess: permissions.hasVolunteerManagementAccess(),
+      isAdmin: permissions.isAdmin(),
+      isStaff: permissions.isStaff()
+    });
+  } catch (error) {
+    console.error('🚨 [TAB-NAVIGATOR] UserProvider错误:', error);
+    // 降级处理：使用默认权限
+    permissions = createPermissionChecker(null);
+    user = null;
+  }
   
   return (
     <FilterProvider>
@@ -401,11 +416,22 @@ const TabNavigator = () => {
           name="Explore" 
           component={HomeNavigator}
           options={({ route }) => {
-            const routeName = getFocusedRouteNameFromRoute(route);
-            console.log('Current route name:', routeName); // 调试信息
+            const routeName = getFocusedRouteNameFromRoute(route) ?? 'ActivityList';
+            
+            // 🛡️ 双重保护：先检查是否必须隐藏，再检查是否应该显示
+            const mustHide = mustHideTabBar(routeName);
+            const shouldShow = !mustHide && shouldShowTabBar(routeName);
+            
+            console.log('📱 [TAB-CONTROL] Explore Tab:', { 
+              routeName, 
+              mustHide, 
+              shouldShow, 
+              finalDisplay: shouldShow ? 'flex' : 'none' 
+            });
+            
             return {
               tabBarStyle: {
-                display: routeName === 'ActivityDetail' ? 'none' : 'flex',
+                display: shouldShow ? 'flex' : 'none',
               },
             };
           }}
@@ -415,30 +441,71 @@ const TabNavigator = () => {
         <Tab.Screen 
           name="Community" 
           component={CommunityScreen}
+          options={() => {
+            const routeName = 'Community';
+            const mustHide = mustHideTabBar(routeName);
+            const shouldShow = !mustHide && shouldShowTabBar(routeName);
+            
+            console.log('📱 [TAB-CONTROL] Community Tab:', { routeName, mustHide, shouldShow });
+            
+            return {
+              tabBarStyle: {
+                display: shouldShow ? 'flex' : 'none',
+              },
+            };
+          }}
         />
         
-        {/* 安心/志愿者 - 仅staff及以上可以访问 */}
-        {permissions.hasVolunteerManagementAccess() && (
-          <Tab.Screen 
-            name="Wellbeing" 
-            component={WellbeingNavigator}
-            options={({ route }) => ({
+        {/* 安心 - 所有用户都可以访问，内部根据权限显示不同功能 */}
+        <Tab.Screen 
+          name="Wellbeing" 
+          component={WellbeingNavigator}
+          options={({ route }) => {
+            const routeName = getFocusedRouteNameFromRoute(route) ?? 'WellbeingHome';
+            
+            // 🛡️ 双重保护：防止意外显示TabBar
+            const mustHide = mustHideTabBar(routeName);
+            const shouldShow = !mustHide && shouldShowTabBar(routeName);
+            
+            console.log('📱 [TAB-CONTROL] Wellbeing Tab:', { 
+              routeName, 
+              mustHide, 
+              shouldShow,
+              finalDisplay: shouldShow ? 'flex' : 'none'
+            });
+            
+            return {
               tabBarStyle: {
-                display: getFocusedRouteNameFromRoute(route) === 'SchoolDetail' ? 'none' : 'flex',
+                display: shouldShow ? 'flex' : 'none',
               },
-            })}
-          />
-        )}
+            };
+          }}
+        />
         
         {/* 个人 - 所有用户都可以访问 */}
         <Tab.Screen 
           name="Profile" 
           component={ProfileNavigator}
-          options={({ route }) => ({
-            tabBarStyle: {
-              display: getFocusedRouteNameFromRoute(route) === 'ProfileHome' ? 'flex' : 'none',
-            },
-          })}
+          options={({ route }) => {
+            const routeName = getFocusedRouteNameFromRoute(route) ?? 'ProfileHome';
+            
+            // 🛡️ 关键保护：Profile子页面绝对不能显示TabBar
+            const mustHide = mustHideTabBar(routeName);
+            const shouldShow = !mustHide && shouldShowTabBar(routeName);
+            
+            console.log('📱 [TAB-CONTROL] Profile Tab:', { 
+              routeName, 
+              mustHide, 
+              shouldShow,
+              finalDisplay: shouldShow ? 'flex' : 'none'
+            });
+            
+            return {
+              tabBarStyle: {
+                display: shouldShow ? 'flex' : 'none',
+              },
+            };
+          }}
         />
         </Tab.Navigator>
         
@@ -517,6 +584,15 @@ export const AppNavigator = () => {
             }}
           />
           
+          <RootStack.Screen
+            name="QRScanResult"
+            component={QRScanResultScreen}
+            options={{
+              headerShown: false,
+              ...pageTransitions.slideFromRight,
+            }}
+          />
+          
           {/* Search Screen - 独立搜索页面 */}
           <RootStack.Screen 
             name="Search" 
@@ -526,21 +602,6 @@ export const AppNavigator = () => {
             }}
           />
           
-          {/* Global Activity Screens - 可以从任何地方访问的活动页面 */}
-          <RootStack.Screen 
-            name="ActivityDetail" 
-            component={ActivityDetailScreen}
-            options={{
-              ...pageTransitions.slideFromRight,
-            }}
-          />
-          <RootStack.Screen 
-            name="ActivityRegistrationForm" 
-            component={ActivityRegistrationFormScreen}
-            options={{
-              ...pageTransitions.slideFromRight,
-            }}
-          />
           
           {/* Global Auth Screens - 可以从任何地方访问的认证页面 */}
           <RootStack.Screen 
@@ -562,6 +623,20 @@ export const AppNavigator = () => {
             component={RegisterFormScreen}
             options={{
               ...pageTransitions.fade,
+            }}
+          />
+          <RootStack.Screen 
+            name="RegisterStep1" 
+            component={RegisterStep1Screen}
+            options={{
+              ...pageTransitions.slideFromRight,
+            }}
+          />
+          <RootStack.Screen 
+            name="RegisterStep2" 
+            component={RegisterStep2Screen}
+            options={{
+              ...pageTransitions.slideFromRight,
             }}
           />
           <RootStack.Screen 

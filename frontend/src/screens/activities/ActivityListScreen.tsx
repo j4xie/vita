@@ -48,6 +48,7 @@ import { ACTIVITY_CATEGORIES, getCategoryName } from '../../data/activityCategor
 // import { getActivityListSimple } from '../../utils/networkHelper'; // 废弃：不带token的简化版本
 import { usePerformanceDegradation } from '../../hooks/usePerformanceDegradation';
 import { useFilter } from '../../context/FilterContext';
+import { useTabBarVerification } from '../../hooks/useTabBarStateGuard';
 // import { OrganizationProvider, useOrganization } from '../../context/OrganizationContext'; // 移除组织功能
 // import { OrganizationSwitcher } from '../../components/organization/OrganizationSwitcher'; // 移除组织切换器
 import { activityStatsService } from '../../services/activityStatsService';
@@ -65,6 +66,9 @@ export const ActivityListScreen: React.FC = () => {
   const navigation = useNavigation<any>();
   const insets = useSafeAreaInsets();
   const { setIsFilterOpen } = useFilter();
+  
+  // 🛡️ TabBar状态守护：确保返回到活动列表页面时TabBar正确显示
+  useTabBarVerification('ActivityList');
   // V2.0 性能降级策略和分层配置
   const { handleScrollEvent: performanceScrollHandler, isPerformanceDegraded, getLayerConfig } = usePerformanceDegradation();
   const L1Config = getLayerConfig('L1', false); // 假设浅色模式
