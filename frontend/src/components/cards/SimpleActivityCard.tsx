@@ -111,30 +111,21 @@ const SimpleActivityCardComponent: React.FC<SimpleActivityCardProps> = ({
   
   // ✅ 增强稳定性的活动状态标签获取逻辑
   const getActivityLabel = () => {
-    // ✅ 详细调试：打印所有相关信息
-    console.log('🏷️ [SimpleActivityCard] 获取活动标签信息:', {
-      activityId: activity?.id,
-      title: activity?.title,
-      status: activity?.status,
-      hasActivity: !!activity,
-      statusType: typeof activity?.status
-    });
+    // ✅ 只在有重要状态时打印调试信息，减少器湘
+    if (activity?.status === 'registered' || activity?.status === 'checked_in') {
+      console.log('🏷️ [SimpleActivityCard] 显示重要状态标签:', {
+        activityId: activity?.id,
+        title: activity?.title?.substring(0, 15) + '...',
+        status: activity?.status,
+        timestamp: new Date().toLocaleTimeString()
+      });
+    }
     
     // ✅ 第一优先级：用户的报名/签到状态（严格校验）
     if (activity?.status === 'registered') {
-      console.log('✅ [SimpleActivityCard] 显示已报名标签:', {
-        activityId: activity.id,
-        title: activity.title,
-        status: activity.status
-      });
       return { type: 'registered', label: t('activities.status.registered') || '已报名' };
     }
     if (activity?.status === 'checked_in') {
-      console.log('✅ [SimpleActivityCard] 显示已签到标签:', {
-        activityId: activity.id,
-        title: activity.title,
-        status: activity.status
-      });
       return { type: 'checked_in', label: t('activities.status.checked_in') || '已签到' };
     }
     

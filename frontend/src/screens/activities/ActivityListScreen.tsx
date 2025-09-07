@@ -570,26 +570,47 @@ export const ActivityListScreen: React.FC = () => {
             willApplyCache: !!(cachedStatus && cachedStatus !== 'upcoming')
           });
           
+          // ✅ 关键修复：优先级判断 - 缓存状态 > API状态
+          let finalStatus = activity.status;
+          
+          // 如果有缓存状态且不是upcoming，优先使用缓存
           if (cachedStatus && cachedStatus !== 'upcoming') {
+            finalStatus = cachedStatus;
             console.log('✅ [FETCH-ACTIVITIES] 应用缓存状态:', {
               activityId: activity.id,
               title: activity.title,
               originalStatus: activity.status,
               cachedStatus: cachedStatus,
-              finalStatus: cachedStatus
+              finalStatus: finalStatus
             });
-            return { ...activity, status: cachedStatus };
-          } else {
+          } 
+          // 如果没有缓存但API返回了报名状态，也要缓存起来
+          else if (activity.status === 'registered' || activity.status === 'checked_in') {
+            setActivityStatusCache(prev => {
+              const newCache = new Map(prev);
+              newCache.set(activity.id, activity.status as 'registered' | 'checked_in');
+              console.log('✅ [FETCH-ACTIVITIES] 缓存API状态:', {
+                activityId: activity.id,
+                status: activity.status,
+                cacheSize: newCache.size
+              });
+              return newCache;
+            });
+            finalStatus = activity.status;
+          } 
+          else {
             // 调试：记录未应用缓存的情况
             console.log('🔍 [FETCH-ACTIVITIES] 未应用缓存:', {
               activityId: activity.id,
               title: activity.title,
               originalStatus: activity.status,
               cachedStatus: cachedStatus,
+              finalStatus: finalStatus,
               reason: !cachedStatus ? '无缓存状态' : cachedStatus === 'upcoming' ? '缓存状态为upcoming' : '未知原因'
             });
           }
-          return activity;
+          
+          return { ...activity, status: finalStatus };
         });
         
         if (page === 1 || isRefresh) {
