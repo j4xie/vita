@@ -51,6 +51,7 @@ interface RegisterData {
   invCode?: string;
   bizId?: string;
   orgId?: string;
+  area?: string; // 地域选择：zh-中国，en-美国
 }
 
 interface LoginData {
@@ -413,6 +414,7 @@ class PomeloXAPI {
       signStatus?: number; // 0-未报名，-1-已报名未签到，1-已签到
       type?: number; // -1-即将开始，1-已开始，2-已结束
       timeZone?: string; // 🆕 时区信息
+      registerCount?: number; // 🆕 活动已报名人数
     }>;
   }>> {
     // 构建查询参数
@@ -449,13 +451,11 @@ class PomeloXAPI {
       tokenPreview: token ? `${token.substring(0, 20)}...` : 'null'
     });
     
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 8000); // 🚀 优化：8秒超时
-    
+    // 🔧 简化网络请求，移除AbortController超时机制
     const headers: Record<string, string> = {
       'Accept': 'application/json',
       'Content-Type': 'application/json',
-      'User-Agent': 'PomeloX/1.0.0 (iOS)', // 添加User-Agent
+      'User-Agent': 'PomeloX/1.0.0 (iOS)',
     };
     
     // 只有在个性化模式下才添加认证头
@@ -466,55 +466,29 @@ class PomeloXAPI {
     console.log(`🌐 发起网络请求:`, { 
       url: `${BASE_URL}${endpoint}`,
       method: 'GET',
-      headers: Object.keys(headers),
+      mode: isGuestMode ? '访客模式' : '个性化模式'
     });
     
     let response;
     try {
-      // 🚨 iOS模拟器网络兼容性修复
+      // 🔧 简化的网络请求配置
       const fetchOptions: RequestInit = {
         method: 'GET',
         headers,
-        signal: controller.signal,
-        credentials: 'omit',
-        // 添加iOS模拟器特定配置
-        cache: 'no-cache',
-        mode: 'cors',
-        redirect: 'follow',
+        // 移除AbortController，让系统处理超时
       };
       
-      // iOS模拟器特殊处理
-      if (isIOSSimulator) {
-        console.log('🍎 检测到iOS模拟器，使用兼容性网络配置');
-        // 移除可能导致问题的配置
-        delete (fetchOptions as any).mode;
-        delete (fetchOptions as any).credentials;
-        
-        // 增加超时时间
-        clearTimeout(timeoutId);
-        const newTimeoutId = setTimeout(() => controller.abort(), 30000); // 30秒超时
-      }
-      
-      console.log('📡 最终请求配置:', {
-        url: `${BASE_URL}${endpoint}`,
-        options: {
-          ...fetchOptions,
-          signal: '[AbortController]'
-        }
-      });
+      console.log('📡 发起网络请求:', { url: `${BASE_URL}${endpoint}` });
       
       response = await fetchWithRetry(`${BASE_URL}${endpoint}`, fetchOptions, 3);
       
-      clearTimeout(timeoutId);
       console.log(`✅ API响应成功: ${response.status}`);
       
     } catch (fetchError: any) {
-      clearTimeout(timeoutId);
       console.error(`❌ 网络请求失败:`, {
         name: fetchError.name,
         message: fetchError.message,
-        cause: fetchError.cause,
-        stack: fetchError.stack?.split('\n')[0] // 只显示第一行堆栈
+        cause: fetchError.cause
       });
       
       // 根据错误类型提供更具体的错误信息
@@ -557,12 +531,93 @@ class PomeloXAPI {
       const fallbackResponse = await fetchWithRetry(`${BASE_URL}${fallbackEndpoint}`, {
         method: 'GET',
         headers: headers,
-        signal: controller.signal,
       });
       
       if (fallbackResponse.ok) {
         const fallbackResult = await fallbackResponse.json();
-        console.log('✅ [FALLBACK] 基础活动列表获取成功，无个性化数据');
+        console.log('✅ [FALLBACK] 基础活动列表获取成功，开始补充个性化状态数据');
+        
+        // 🔧 关键修复：如果有用户ID，为每个活动补充signStatus状态
+        if (params.userId && fallbackResult.code === 200 && fallbackResult.rows) {
+          console.log('🔍 [FALLBACK] 开始为用户补充活动状态:', { 
+            userId: params.userId, 
+            activitiesCount: fallbackResult.rows.length 
+          });
+          
+          try {
+            // 🔧 性能优化：限制并发数量，避免过多同时请求
+            const batchSize = 5; // 每次最多5个并发请求
+            const statusResults: Array<{activityId: number, signStatus: number | null}> = [];
+            
+            for (let i = 0; i < fallbackResult.rows.length; i += batchSize) {
+              const batch = fallbackResult.rows.slice(i, i + batchSize);
+              const batchPromises = batch.map(async (activity: any) => {
+                try {
+                  const signInfo = await this.getSignInfo(activity.id, params.userId!);
+                  return {
+                    activityId: activity.id,
+                    signStatus: signInfo.code === 200 ? signInfo.data : null // ✅ 失败时返回null而不是0
+                  };
+                } catch (error) {
+                  console.warn(`获取活动${activity.id}状态失败:`, error);
+                  return {
+                    activityId: activity.id,
+                    signStatus: null // ✅ 异常时也返回null，保持原状态
+                  };
+                }
+              });
+              
+              const batchResults = await Promise.allSettled(batchPromises); // ✅ 使用allSettled避免单个失败影响整批
+              
+              // ✅ 处理Promise.allSettled的结果
+              batchResults.forEach((result, index) => {
+                if (result.status === 'fulfilled') {
+                  statusResults.push(result.value);
+                } else {
+                  console.warn(`批量获取状态失败:`, result.reason);
+                  statusResults.push({
+                    activityId: batch[index].id,
+                    signStatus: null
+                  });
+                }
+              });
+              
+              // 🔧 添加小延迟避免服务器压力
+              if (i + batchSize < fallbackResult.rows.length) {
+                await new Promise(resolve => setTimeout(resolve, 100));
+              }
+            }
+            
+            // ✅ 构建状态映射，只更新成功获取的状态
+            const statusMap = new Map();
+            statusResults.forEach(result => {
+              if (result.signStatus !== null) {
+                statusMap.set(result.activityId, result.signStatus);
+              }
+            });
+            
+            // 将状态数据合并到活动列表中，只覆盖成功获取的状态
+            fallbackResult.rows = fallbackResult.rows.map((activity: any) => {
+              const currentSignStatus = statusMap.get(activity.id);
+              return {
+                ...activity,
+                signStatus: currentSignStatus !== undefined ? currentSignStatus : (activity.signStatus || 0)
+              };
+            });
+            
+            console.log('✅ [FALLBACK] 个性化状态数据补充完成:', {
+              successfulUpdates: statusMap.size,
+              failedUpdates: statusResults.length - statusMap.size,
+              totalActivities: fallbackResult.rows.length,
+              statusSample: Array.from(statusMap.entries()).slice(0, 3)
+            });
+            
+          } catch (error) {
+            console.error('❌ [FALLBACK] 补充状态数据失败:', error);
+            // 即使状态补充失败，也返回基础数据，不影响主功能
+          }
+        }
+        
         return fallbackResult;
       } else {
         throw new Error('Fallback API also failed');
@@ -575,15 +630,20 @@ class PomeloXAPI {
       total: result.total || 0,
       rowsCount: result.rows?.length || 0,
       firstActivitySignStatus: result.rows?.[0]?.signStatus,
-      hasPersonalizedData: result.rows?.some((activity: any) => activity.signStatus !== undefined)
+      firstActivityRegisterCount: result.rows?.[0]?.registerCount,
+      hasPersonalizedData: result.rows?.some((activity: any) => activity.signStatus !== undefined),
+      hasRegisterCountData: result.rows?.some((activity: any) => activity.registerCount !== undefined)
     });
     
-    // 详细记录每个活动的signStatus（仅前3个）
+    // 详细记录每个活动的完整数据（仅前3个）
     if (result.rows && result.rows.length > 0) {
       const sampleActivities = result.rows.slice(0, 3);
-      console.log('📋 活动signStatus样本:', sampleActivities.map((activity: any) => ({
+      console.log('📋 活动完整数据样本:', sampleActivities.map((activity: any) => ({
         id: activity.id,
         name: activity.name,
+        enrollment: activity.enrollment,
+        registerCount: activity.registerCount,
+        timeZone: activity.timeZone,
         signStatus: activity.signStatus,
         type: activity.type
       })));
@@ -597,8 +657,20 @@ class PomeloXAPI {
    */
   async enrollActivity(activityId: number, userId: number): Promise<ApiResponse<number>> {
     try {
+      console.log('🌐 [PomeloXAPI] 发起活动报名请求:', {
+        url: `/app/activity/enroll?activityId=${activityId}&userId=${userId}`,
+        method: 'GET',
+        timestamp: new Date().toISOString()
+      });
+      
       const response = await this.request(`/app/activity/enroll?activityId=${activityId}&userId=${userId}`, {
         method: 'GET',
+      });
+      
+      console.log('📡 [PomeloXAPI] 活动报名响应:', {
+        response,
+        success: response.code === 200,
+        timestamp: new Date().toISOString()
       });
 
       // 报名成功后发送本地通知

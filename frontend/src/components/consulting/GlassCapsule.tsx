@@ -58,7 +58,11 @@ export const GlassCapsule: React.FC<GlassCapsuleProps> = ({ items }) => {
         Glass.shadows.sm.ios,
         { elevation: Glass.shadows.sm.android.elevation }
       ]}>
-        <BlurView intensity={performance.blurIntensity} tint="light" style={styles.wrap}>
+        <BlurView intensity={80} tint="extraLight" style={styles.wrap}>
+          {/* 多层次的液体玻璃效果 */}
+          <View style={styles.glassBase} />
+          <View style={styles.glassHighlight} />
+          <View style={styles.glassBorder} />
           {containerContent}
         </BlurView>
       </View>
@@ -69,9 +73,9 @@ export const GlassCapsule: React.FC<GlassCapsuleProps> = ({ items }) => {
       <View style={[
         styles.wrap, 
         { 
-          backgroundColor: performance.fallbackBackground,
+          backgroundColor: '#FFFFFF',
           borderWidth: 1,
-          borderColor: performance.fallbackBorder,
+          borderColor: 'rgba(255, 255, 255, 0.3)',
         },
         // Android也添加阴影
         { elevation: Glass.shadows.sm.android.elevation }
@@ -85,13 +89,52 @@ export const GlassCapsule: React.FC<GlassCapsuleProps> = ({ items }) => {
 const styles = StyleSheet.create({
   shadowContainer: {
     borderRadius: Glass.radius.capsule,
-    backgroundColor: 'rgba(255, 255, 255, 0.001)', // Nearly invisible but solid for shadow calculation
+    backgroundColor: 'rgba(255, 255, 255, 0.02)',
+    // 增强阴影效果
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.15,
+    shadowRadius: 16,
+    elevation: 8,
   },
   
   wrap: { 
     borderRadius: Glass.radius.capsule, 
     overflow: 'hidden',
-    backgroundColor: '#FFFFFF', // 白色背景确保阴影渲染
+    backgroundColor: 'transparent', // 透明，让模糊效果显示
+  },
+
+  // 多层次液体玻璃效果
+  glassBase: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(255, 255, 255, 0.75)',
+    borderRadius: Glass.radius.capsule,
+  },
+
+  glassHighlight: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: '50%',
+    backgroundColor: 'rgba(255, 255, 255, 0.25)',
+    borderTopLeftRadius: Glass.radius.capsule,
+    borderTopRightRadius: Glass.radius.capsule,
+  },
+
+  glassBorder: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.4)',
+    borderRadius: Glass.radius.capsule,
   },
   
   hairline: { 

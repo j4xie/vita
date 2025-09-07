@@ -99,7 +99,7 @@ export const ConsultingScreen: React.FC = () => {
   return (
     <SafeAreaView style={[
       styles.container,
-      { backgroundColor: isDarkMode ? dmStyles.page.safeArea.backgroundColor : 'rgba(255, 255, 255, 0.001)' }
+      { backgroundColor: isDarkMode ? dmStyles.page.safeArea.backgroundColor : 'rgba(255, 255, 255, 0.02)' }
     ]}>
       {/* iOS风格Header背景：增强对比的暖色渐变 */}
       <LinearGradient
@@ -170,7 +170,7 @@ export const ConsultingScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: 'rgba(255, 255, 255, 0.001)', // Nearly invisible but solid for shadow calculation
+    backgroundColor: 'rgba(255, 255, 255, 0.02)', // Nearly invisible but solid for shadow calculation
   },
   
   scrollView: {

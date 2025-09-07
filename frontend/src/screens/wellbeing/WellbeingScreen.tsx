@@ -25,7 +25,7 @@ import { VolunteerListLiquidScreen } from './VolunteerListLiquidScreen';
 import { WellbeingPlanContent } from '../../components/wellbeing/WellbeingPlanContent';
 import { SegmentedGlass } from '../../ui/glass/SegmentedGlass';
 import { Glass } from '../../ui/glass/GlassTheme';
-import { getVolunteerHours, getVolunteerRecords } from '../../services/volunteerAPI';
+import { getVolunteerHours, getVolunteerRecords, getLastVolunteerRecord } from '../../services/volunteerAPI';
 import { pomeloXAPI } from '../../services/PomeloXAPI';
 
 // 临时School类型定义
@@ -153,7 +153,7 @@ const PersonalVolunteerData: React.FC = () => {
   if (loading) {
     return (
       <View style={styles.selfDataView}>
-        <Text>加载中...</Text>
+        <Text>{t('wellbeing.personal.loading')}</Text>
       </View>
     );
   }
@@ -161,7 +161,7 @@ const PersonalVolunteerData: React.FC = () => {
   if (!personalData) {
     return (
       <View style={styles.selfDataView}>
-        <Text>暂无志愿者工作记录</Text>
+        <Text>{t('wellbeing.personal.no_data')}</Text>
       </View>
     );
   }
@@ -180,8 +180,8 @@ const PersonalVolunteerData: React.FC = () => {
             personalData.currentStatus === 'signed_in' ? styles.statusActive : styles.statusInactive
           ]} />
           <Text style={styles.statusText}>
-            {personalData.currentStatus === 'signed_in' ? '当前已签到' : 
-             personalData.currentStatus === 'signed_out' ? '当前未签到' : '无记录'}
+            {personalData.currentStatus === 'signed_in' ? t('wellbeing.personal.current_status.signed_in') : 
+             personalData.currentStatus === 'signed_out' ? t('wellbeing.personal.current_status.signed_out') : t('wellbeing.personal.current_status.no_records')}
           </Text>
         </View>
       </View>
@@ -192,20 +192,20 @@ const PersonalVolunteerData: React.FC = () => {
           <Text style={styles.statValue}>
             {personalData.totalHours}h {personalData.totalMinutes % 60}m
           </Text>
-          <Text style={styles.statLabel}>总志愿工作时长</Text>
+          <Text style={styles.statLabel}>{t('wellbeing.personal.stats.total_work_hours')}</Text>
         </View>
         <View style={styles.statItem}>
           <Text style={styles.statValue}>{personalData.totalRecords}</Text>
-          <Text style={styles.statLabel}>签到记录总数</Text>
+          <Text style={styles.statLabel}>{t('wellbeing.personal.stats.total_records')}</Text>
         </View>
       </View>
 
       {/* 最近记录 */}
       {personalData.recentRecord ? (
         <View style={styles.recentRecordCard}>
-          <Text style={styles.recentRecordTitle}>最近工作记录</Text>
+          <Text style={styles.recentRecordTitle}>{t('wellbeing.personal.recent_record.title')}</Text>
           <View style={styles.recordRow}>
-            <Text style={styles.recordLabel}>签到时间:</Text>
+            <Text style={styles.recordLabel}>{t('wellbeing.personal.recent_record.checkin_time')}</Text>
             <Text style={styles.recordValue}>
               {new Date(personalData.recentRecord.startTime).toLocaleString('zh-CN', {
                 year: 'numeric',
@@ -219,7 +219,7 @@ const PersonalVolunteerData: React.FC = () => {
           {personalData.recentRecord.endTime ? (
             <>
               <View style={styles.recordRow}>
-                <Text style={styles.recordLabel}>签退时间:</Text>
+                <Text style={styles.recordLabel}>{t('wellbeing.personal.recent_record.checkout_time')}</Text>
                 <Text style={styles.recordValue}>
                   {new Date(personalData.recentRecord.endTime).toLocaleString('zh-CN', {
                     year: 'numeric',
@@ -231,22 +231,22 @@ const PersonalVolunteerData: React.FC = () => {
                 </Text>
               </View>
               <View style={styles.recordRow}>
-                <Text style={styles.recordLabel}>工作时长:</Text>
+                <Text style={styles.recordLabel}>{t('wellbeing.personal.recent_record.work_duration')}</Text>
                 <Text style={styles.recordValue}>
                   {(() => {
                     const duration = calculateWorkDuration(personalData.recentRecord.startTime, personalData.recentRecord.endTime);
                     const hours = Math.floor(duration / 60);
                     const minutes = duration % 60;
-                    return hours > 0 ? `${hours}小时${minutes}分钟` : `${minutes}分钟`;
+                    return hours > 0 ? `${hours} ${t('wellbeing.personal.recent_record.hours')} ${minutes} ${t('wellbeing.personal.recent_record.minutes')}` : `${minutes} ${t('wellbeing.personal.recent_record.minutes')}`;
                   })()} 
                 </Text>
               </View>
             </>
           ) : (
             <View style={styles.recordRow}>
-              <Text style={[styles.recordLabel, { color: theme.colors.primary }]}>状态:</Text>
+              <Text style={[styles.recordLabel, { color: theme.colors.primary }]}>{t('wellbeing.personal.recent_record.status')}</Text>
               <Text style={[styles.recordValue, { color: theme.colors.primary, fontWeight: '600' }]}>
-                正在工作中...
+                {t('wellbeing.personal.recent_record.working')}
               </Text>
             </View>
           )}
@@ -254,7 +254,7 @@ const PersonalVolunteerData: React.FC = () => {
       ) : (
         <View style={styles.emptyRecordCard}>
           <Ionicons name="time-outline" size={32} color={theme.colors.textSecondary} />
-          <Text style={styles.emptyRecordText}>暂无志愿者工作记录</Text>
+          <Text style={styles.emptyRecordText}>{t('wellbeing.personal.no_data')}</Text>
         </View>
       )}
 
@@ -271,7 +271,7 @@ const PersonalVolunteerData: React.FC = () => {
             color={theme.colors.primary} 
           />
           <Text style={styles.historyButtonText}>
-            {showHistory ? '收起历史记录' : `查看历史记录 (${personalData.totalRecords - 1}条)`}
+            {showHistory ? t('wellbeing.personal.history.hide') : t('wellbeing.personal.history.show_more', { count: personalData.totalRecords - 1 })}
           </Text>
         </TouchableOpacity>
       )}
@@ -279,7 +279,7 @@ const PersonalVolunteerData: React.FC = () => {
       {/* 历史记录列表 */}
       {showHistory && historyRecords.length > 1 && (
         <View style={styles.historyContainer}>
-          <Text style={styles.historyTitle}>历史工作记录</Text>
+          <Text style={styles.historyTitle}>{t('wellbeing.personal.history.title')}</Text>
           {historyRecords.slice(1, 6).map((record, index) => (
             <View key={record.id} style={styles.historyItem}>
               <View style={styles.historyDateColumn}>
@@ -300,7 +300,7 @@ const PersonalVolunteerData: React.FC = () => {
                 {record.endTime ? (
                   <>
                     <Text style={styles.historyDuration}>
-                      工作时长: {(() => {
+                      {t('wellbeing.personal.history.work_duration_label')} {(() => {
                         const duration = calculateWorkDuration(record.startTime, record.endTime);
                         const hours = Math.floor(duration / 60);
                         const minutes = duration % 60;
@@ -308,7 +308,7 @@ const PersonalVolunteerData: React.FC = () => {
                       })()}
                     </Text>
                     <Text style={styles.historyEndTime}>
-                      至 {new Date(record.endTime).toLocaleTimeString('zh-CN', {
+                      {t('wellbeing.personal.history.end_time_until')} {new Date(record.endTime).toLocaleTimeString('zh-CN', {
                         hour: '2-digit',
                         minute: '2-digit'
                       })}
@@ -316,7 +316,7 @@ const PersonalVolunteerData: React.FC = () => {
                   </>
                 ) : (
                   <Text style={[styles.historyStatus, { color: theme.colors.warning }]}>
-                    未签退
+                    {t('wellbeing.personal.history.not_checked_out')}
                   </Text>
                 )}
               </View>
@@ -324,7 +324,7 @@ const PersonalVolunteerData: React.FC = () => {
           ))}
           {historyRecords.length > 6 && (
             <Text style={styles.moreRecordsHint}>
-              还有 {historyRecords.length - 6} 条记录...
+              {t('wellbeing.personal.history.more_records_hint', { count: historyRecords.length - 6 })}
             </Text>
           )}
         </View>
@@ -569,8 +569,8 @@ export const WellbeingScreen: React.FC = () => {
           {permissions.getDataScope() === 'self' ? (
             // Staff：只显示自己的志愿者工作记录
             <View style={styles.volunteerContent}>
-              <Text style={styles.staffTitle}>我的志愿者工作记录</Text>
-              <Text style={styles.staffSubtitle}>内部员工只能查看个人工作时长和记录</Text>
+              <Text style={styles.staffTitle}>{t('wellbeing.personal.title')}</Text>
+              <Text style={styles.staffSubtitle}>{t('wellbeing.personal.subtitle')}</Text>
               <PersonalVolunteerData />
             </View>
           ) : (
@@ -597,8 +597,8 @@ export const WellbeingScreen: React.FC = () => {
           '#2C2C2E',  // 下部分：更浅的深灰
           '#1C1C1E'   // 底部：回到系统深灰
         ] : [
-          '#FFF8E1', // 上部分：极淡奶橘色
-          '#FFFEF7', // 渐变到奶白
+          '#FFFFFF', // 上部分：纯白色
+          '#F8F9FA', // 渐变到浅灰
           '#F8F9FA', // 下部分：回到中性灰
           '#F1F3F4'  // 底部：灰色
         ]}
@@ -638,7 +638,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingTop: 12,
     paddingBottom: 4,
-    backgroundColor: 'rgba(255, 255, 255, 0.001)', // Nearly invisible but solid for shadow calculation
+    backgroundColor: 'rgba(255, 255, 255, 0.02)', // Nearly invisible but solid for shadow calculation
   },
   tabsWrapper: {
     flexDirection: 'row',
@@ -656,7 +656,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   tabActive: {
-    backgroundColor: 'rgba(255, 255, 255, 0.001)', // Nearly invisible but solid for shadow calculation
+    backgroundColor: 'rgba(255, 255, 255, 0.02)', // Nearly invisible but solid for shadow calculation
     borderBottomWidth: 2, // 底部横线
     borderBottomColor: '#F9A889', // 柔和奶橘色横线
     paddingBottom: 2, // 轻微底部间距

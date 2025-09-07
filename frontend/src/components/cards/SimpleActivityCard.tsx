@@ -1,12 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, memo } from 'react';
 import {
   View,
   Text,
   StyleSheet,
+  TouchableOpacity,
+  Platform,
   Image,
   ActivityIndicator,
-  Platform,
-  TouchableOpacity,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
@@ -26,6 +26,7 @@ import { LIQUID_GLASS_LAYERS, DAWN_OVERLAYS, RESTRAINED_COLORS } from '../../the
 import { useCardPress } from '../../hooks/useCardPress';
 import { useMemoizedDarkMode } from '../../hooks/useDarkMode';
 import { useTheme } from '../../context/ThemeContext';
+import { formatActivityDateWithTimezone, FrontendActivity } from '../../utils/activityAdapter';
 
 interface SimpleActivityCardProps {
   activity: {
@@ -37,9 +38,11 @@ interface SimpleActivityCardProps {
     time: string;
     attendees: number;
     maxAttendees: number;
+    registeredCount: number; // 已报名人数
     status?: string;
     image?: string;
     category?: string;
+    timeZone?: string; // 时区
   } | null;
   onPress: () => void;
   // 滚动视差动画支持
@@ -50,7 +53,7 @@ interface SimpleActivityCardProps {
   isBookmarked?: boolean;
 }
 
-export const SimpleActivityCard: React.FC<SimpleActivityCardProps> = ({
+const SimpleActivityCardComponent: React.FC<SimpleActivityCardProps> = ({
   activity,
   onPress,
   scrollY,
@@ -106,25 +109,62 @@ export const SimpleActivityCard: React.FC<SimpleActivityCardProps> = ({
 
   const statusConfig = getStatusConfig();
   
-  // 获取活动状态标签 - 与GridActivityCard保持一致
+  // ✅ 增强稳定性的活动状态标签获取逻辑
   const getActivityLabel = () => {
-    // 第一优先级：用户的报名/签到状态
-    if (activity.status === 'registered') {
-      return { type: 'registered', label: t('activities.status.registered', '已报名') };
+    // ✅ 详细调试：打印所有相关信息
+    console.log('🏷️ [SimpleActivityCard] 获取活动标签信息:', {
+      activityId: activity?.id,
+      title: activity?.title,
+      status: activity?.status,
+      hasActivity: !!activity,
+      statusType: typeof activity?.status
+    });
+    
+    // ✅ 第一优先级：用户的报名/签到状态（严格校验）
+    if (activity?.status === 'registered') {
+      console.log('✅ [SimpleActivityCard] 显示已报名标签:', {
+        activityId: activity.id,
+        title: activity.title,
+        status: activity.status
+      });
+      return { type: 'registered', label: t('activities.status.registered') || '已报名' };
     }
-    if (activity.status === 'checked_in') {
-      return { type: 'checked_in', label: t('activities.status.checked_in', '已签到') };
+    if (activity?.status === 'checked_in') {
+      console.log('✅ [SimpleActivityCard] 显示已签到标签:', {
+        activityId: activity.id,
+        title: activity.title,
+        status: activity.status
+      });
+      return { type: 'checked_in', label: t('activities.status.checked_in') || '已签到' };
     }
     
-    // 第二优先级：时间紧急程度
-    const now = new Date();
-    const activityStart = new Date(activity.date + ' ' + activity.time);
-    const hoursToStart = (activityStart.getTime() - now.getTime()) / (1000 * 60 * 60);
-    
-    if (hoursToStart >= 0 && hoursToStart <= 24) {
-      return { type: 'today', label: t('activities.urgency.today', '今日开始') };
-    } else if (hoursToStart >= 0 && hoursToStart <= 168) {
-      return { type: 'upcoming', label: t('activities.urgency.upcoming', '即将开始') };
+    // ✅ 第二优先级：时间紧急程度（增加容错处理）
+    try {
+      if (!activity?.date || !activity?.time) {
+        return null;
+      }
+      
+      const now = new Date();
+      const activityStart = new Date(activity.date + ' ' + activity.time);
+      
+      // ✅ 检查日期是否有效
+      if (isNaN(activityStart.getTime())) {
+        console.warn('⚠️ [SimpleActivityCard] 无效的活动时间:', {
+          date: activity.date,
+          time: activity.time
+        });
+        return null;
+      }
+      
+      const hoursToStart = (activityStart.getTime() - now.getTime()) / (1000 * 60 * 60);
+      
+      if (hoursToStart >= 0 && hoursToStart <= 24) {
+        return { type: 'today', label: t('activities.urgency.today') || '今日开始' };
+      } else if (hoursToStart >= 0 && hoursToStart <= 168) {
+        return { type: 'upcoming', label: t('activities.urgency.upcoming') || '即将开始' };
+      }
+    } catch (error) {
+      console.warn('⚠️ [SimpleActivityCard] 计算时间标签失败:', error);
     }
     
     return null; // 不显示标签
@@ -380,8 +420,8 @@ export const SimpleActivityCard: React.FC<SimpleActivityCardProps> = ({
         style={styles.overlayGradient}
       />
 
-      {/* 活动状态标识 */}
-      {activityLabel && (
+      {/* ✅ 增强稳定性的活动状态标识 */}
+      {activityLabel && activityLabel.label && (
         <View style={[
           styles.activityBadge,
           activityLabel.type === 'registered' ? styles.registeredBadge :
@@ -389,7 +429,7 @@ export const SimpleActivityCard: React.FC<SimpleActivityCardProps> = ({
           activityLabel.type === 'today' ? styles.todayBadge : styles.upcomingBadge
         ]}>
           <Text style={styles.badgeText}>
-            {activityLabel.label}
+            {String(activityLabel.label)}
           </Text>
         </View>
       )}
@@ -400,6 +440,9 @@ export const SimpleActivityCard: React.FC<SimpleActivityCardProps> = ({
           style={styles.bookmarkButton}
           onPress={() => onBookmark(activity)}
           hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          accessibilityRole="button"
+          accessibilityLabel={isBookmarked ? "取消收藏活动" : "收藏活动"}
+          accessibilityHint={isBookmarked ? "点击取消收藏此活动" : "点击收藏此活动"}
         >
           <Ionicons 
             name={isBookmarked ? "heart" : "heart-outline"} 
@@ -444,7 +487,7 @@ export const SimpleActivityCard: React.FC<SimpleActivityCardProps> = ({
           </View>
           
           <Text style={styles.time}>
-            {formatDateRange()}
+            {formatActivityDateWithTimezone(activity as FrontendActivity, i18n.language as 'zh' | 'en')}
           </Text>
         </View>
       </View>
@@ -452,6 +495,18 @@ export const SimpleActivityCard: React.FC<SimpleActivityCardProps> = ({
     </Animated.View>
   );
 };
+
+// 🚀 性能优化：使用React.memo防止不必要的重新渲染
+export const SimpleActivityCard = memo(SimpleActivityCardComponent, (prevProps, nextProps) => {
+  // 仅在这些关键属性改变时才重新渲染
+  return (
+    prevProps.activity?.id === nextProps.activity?.id &&
+    prevProps.activity?.attendees === nextProps.activity?.attendees &&
+    prevProps.activity?.registeredCount === nextProps.activity?.registeredCount &&
+    prevProps.activity?.status === nextProps.activity?.status &&
+    prevProps.isBookmarked === nextProps.isBookmarked
+  );
+});
 
 const styles = StyleSheet.create({
   container: {

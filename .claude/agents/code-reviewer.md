@@ -41,7 +41,7 @@ When reviewing code, you will:
 - Find commented-out code that should be removed
 
 **Project-Specific Checks:**
-- Verify adherence to VitaGlobal coding standards from CLAUDE.md
+- Verify adherence to PomeloX coding standards from CLAUDE.md
 - Check for proper internationalization (i18n) implementation
 - Validate React Native Reanimated usage (avoid useAnimatedScrollHandler with lists)
 - Ensure proper error boundaries and safety checks

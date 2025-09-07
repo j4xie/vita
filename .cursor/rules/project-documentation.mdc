@@ -3,7 +3,7 @@ description:
 globs: 
 alwaysApply: true
 ---
-# VitaGlobal 项目文档规范
+# PomeloX 项目文档规范
 
 ## 文档体系结构
 
@@ -15,7 +15,7 @@ alwaysApply: true
 - [PRD.md](mdc:PRD.md) - 产品需求文档，面向开发团队
 - [API_DOC.md](mdc:API_DOC.md) - 接口文档，前后端开发必读
 - [DB_SCHEMA.md](mdc:DB_SCHEMA.md) - 数据库设计，后端开发必读
-- [vitaglobal.md](mdc:vitaglobal.md) - 原始项目规划文档
+- [pomeloX.md](mdc:pomeloX.md) - 原始项目规划文档
 
 ## 文档阅读顺序
 

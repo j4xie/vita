@@ -38,6 +38,7 @@ import * as Haptics from 'expo-haptics';
 import { theme } from '../../theme';
 import { useFilter } from '../../context/FilterContext';
 import { Glass } from '../../ui/glass/GlassTheme';
+import { shouldShowTabBar } from '../../config/tabBarConfig';
 
 interface CustomTabBarProps extends BottomTabBarProps {
   // 可以添加额外的自定义属性
@@ -58,8 +59,20 @@ export const CustomTabBar: React.FC<CustomTabBarProps> = ({
   const isExplorePage = currentRoute?.name === 'Explore';
   const showSearchButton = isExplorePage;
   
+  // 🔄 实时获取当前路由的嵌套路由名称
+  const getFocusedRouteName = (route: any): string => {
+    if (route.state) {
+      const nestedRoute = route.state.routes[route.state.index];
+      return getFocusedRouteName(nestedRoute);
+    }
+    return route.name;
+  };
+  
+  const focusedRouteName = getFocusedRouteName(currentRoute);
+  
   console.log('🔍 TabBar页面检测:', {
-    currentRouteName: currentRoute?.name,
+    tabRouteName: currentRoute?.name,
+    focusedRouteName,
     isExplorePage,
     showSearchButton,
     stateIndex: state.index
@@ -164,7 +177,11 @@ export const CustomTabBar: React.FC<CustomTabBarProps> = ({
     console.log('🔍 搜索按钮被点击，当前模式:', searchMode);
     
     if (Platform.OS === 'ios') {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      try {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      } catch (error) {
+        console.warn('Haptics not available:', error);
+      }
     }
 
     if (searchMode === 'default') {
@@ -204,10 +221,33 @@ export const CustomTabBar: React.FC<CustomTabBarProps> = ({
     }
   }, [searchMode]);
 
+  // 新增：只清空搜索内容的函数
+  const handleSearchClear = useCallback(() => {
+    console.log('🔍 [TABBAR] 清空搜索内容');
+    setSearchText('');
+    
+    // 发送清空搜索事件到ActivityListScreen
+    console.log('🔍 [TABBAR] 发送清空搜索事件到ActivityListScreen');
+    DeviceEventEmitter.emit('searchTextChanged', { 
+      searchText: '',
+      timestamp: Date.now()
+    });
+    
+    // 保持搜索模式，不退出
+    // 搜索框保持焦点，用户可以继续输入
+  }, []);
+
   const handleSearchCancel = useCallback(() => {
     console.log('❌ 取消搜索，当前模式:', searchMode);
     setSearchMode('default');
     setSearchText('');
+    
+    // 发送清空搜索事件到ActivityListScreen
+    console.log('🔍 [TABBAR] 发送清空搜索事件到ActivityListScreen');
+    DeviceEventEmitter.emit('searchTextChanged', { 
+      searchText: '',
+      timestamp: Date.now()
+    });
     
     Keyboard.dismiss();
     
@@ -282,7 +322,11 @@ export const CustomTabBar: React.FC<CustomTabBarProps> = ({
       // 触觉反馈
       runOnJS(() => {
         if (Platform.OS === 'ios') {
-          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+          try {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+          } catch (error) {
+            console.warn('Haptics not available:', error);
+          }
         }
       })();
     },
@@ -336,7 +380,11 @@ export const CustomTabBar: React.FC<CustomTabBarProps> = ({
           setPreviewTabIndex(clampedIndex);
           console.log('🫧 预览Tab:', clampedIndex);
           if (Platform.OS === 'ios') {
-            Haptics.selectionAsync();
+            try {
+              Haptics.selectionAsync();
+            } catch (error) {
+              console.warn('Haptics not available:', error);
+            }
           }
         })();
       }
@@ -417,7 +465,11 @@ export const CustomTabBar: React.FC<CustomTabBarProps> = ({
     
     // iOS Haptic反馈
     if (Platform.OS === 'ios') {
-      Haptics.selectionAsync();
+      try {
+        Haptics.selectionAsync();
+      } catch (error) {
+        console.warn('Haptics not available:', error);
+      }
     }
     
     const event = navigation.emit({
@@ -430,7 +482,13 @@ export const CustomTabBar: React.FC<CustomTabBarProps> = ({
       console.log('🚀 Navigating to:', route.name);
       
       // 简化Tab切换 - 只保留触觉反馈
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      if (Platform.OS !== 'web') {
+        try {
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        } catch (error) {
+          console.warn('Haptics not available:', error);
+        }
+      }
       console.log('🔥 Tab切换:', route.name);
       
       navigation.navigate(route.name, route.params);
@@ -448,14 +506,38 @@ export const CustomTabBar: React.FC<CustomTabBarProps> = ({
     });
   }, [isFilterOpen, isReduceMotionEnabled]);
 
-  // Keyboard handlers
+  // 🎯 智能键盘处理：只在应该显示TabBar的页面响应键盘事件
   useEffect(() => {
     const keyboardWillShow = (e: KeyboardEvent) => {
-      tabBarTranslateY.value = withTiming(120, { duration: 250 });
+      // 🔍 获取当前页面路由名
+      const currentRoute = state.routes[state.index];
+      const currentRouteName = currentRoute?.name || 'unknown';
+      
+      console.log('⌨️ [KEYBOARD] 键盘弹出，当前页面:', currentRouteName);
+      
+      // 🛡️ 只有在应该显示TabBar的页面才隐藏TabBar（避免在已隐藏的页面重复操作）
+      if (shouldShowTabBar(currentRouteName)) {
+        console.log('⌨️ [KEYBOARD] 隐藏TabBar');
+        tabBarTranslateY.value = withTiming(120, { duration: 250 });
+      } else {
+        console.log('⌨️ [KEYBOARD] 页面已隐藏TabBar，无需处理');
+      }
     };
     
     const keyboardWillHide = () => {
-      tabBarTranslateY.value = withTiming(0, { duration: 250 });
+      // 🔍 获取当前页面路由名
+      const currentRoute = state.routes[state.index];
+      const currentRouteName = currentRoute?.name || 'unknown';
+      
+      console.log('⌨️ [KEYBOARD] 键盘收起，当前页面:', currentRouteName);
+      
+      // 🛡️ 只有在应该显示TabBar的页面才恢复TabBar
+      if (shouldShowTabBar(currentRouteName)) {
+        console.log('⌨️ [KEYBOARD] 恢复TabBar');
+        tabBarTranslateY.value = withTiming(0, { duration: 250 });
+      } else {
+        console.log('⌨️ [KEYBOARD] 页面应隐藏TabBar，保持隐藏状态');
+      }
     };
     
     const showSubscription = Keyboard.addListener(
@@ -471,22 +553,8 @@ export const CustomTabBar: React.FC<CustomTabBarProps> = ({
       showSubscription?.remove();
       hideSubscription?.remove();
     };
-  }, []);
+  }, [state]); // 添加state依赖，确保获取最新路由
 
-  // TabBar隐藏事件
-  useEffect(() => {
-    const subscription = DeviceEventEmitter.addListener('hideTabBar', (shouldHide: boolean) => {
-      if (shouldHide) {
-        tabBarTranslateY.value = withTiming(100, { duration: 300 });
-      } else {
-        tabBarTranslateY.value = withTiming(0, { duration: 300 });
-      }
-    });
-
-    return () => {
-      subscription?.remove();
-    };
-  }, []);
 
   const getIconName = (routeName: string, focused: boolean): keyof typeof Ionicons.glyphMap => {
     switch (routeName) {
@@ -589,6 +657,28 @@ export const CustomTabBar: React.FC<CustomTabBarProps> = ({
     return null;
   }
 
+  // 🚨 检查tabBarStyle.display，如果设置为none则不渲染TabBar
+  const tabBarStyle = descriptors[currentRoute?.key]?.options?.tabBarStyle;
+  const shouldHideByStyle = tabBarStyle && typeof tabBarStyle === 'object' && 'display' in tabBarStyle && tabBarStyle.display === 'none';
+  
+  // 🛡️ 双重保护：使用实际焦点路由名称检查是否应该显示TabBar
+  const shouldShowByConfig = shouldShowTabBar(focusedRouteName);
+  
+  console.log('🔍 [CUSTOM-TABBAR] TabBar渲染检查:', {
+    tabRouteName: currentRoute?.name,
+    focusedRouteName,
+    shouldHideByStyle,
+    shouldShowByConfig,
+    finalDecision: shouldHideByStyle ? 'style-hide' : (shouldShowByConfig ? 'show' : 'config-hide'),
+    tabBarStyle
+  });
+  
+  // 🚨 最终决策：样式隐藏 OR 配置不允许显示 = 隐藏
+  if (shouldHideByStyle || !shouldShowByConfig) {
+    console.log('🚫 [CUSTOM-TABBAR] TabBar隐藏 -', shouldHideByStyle ? 'Style隐藏' : `配置不允许显示(${focusedRouteName})`);
+    return null;
+  }
+
   return (
     <Animated.View style={[
       styles.container, 
@@ -600,7 +690,7 @@ export const CustomTabBar: React.FC<CustomTabBarProps> = ({
       <View style={styles.liquidGlassContainer}>
         {/* 背景模糊层 */}
         <BlurView
-          intensity={Platform.OS === 'android' ? 16 : Glass.blur}
+          intensity={Platform.OS === 'android' ? 22 : Glass.blur}
           style={styles.blurBackground}
           tint="light"
         />
@@ -775,29 +865,25 @@ export const CustomTabBar: React.FC<CustomTabBarProps> = ({
                 console.log('🔍 [TABBAR] 搜索文本输入:', { oldText: searchText, newText: text, currentMode: searchMode });
                 setSearchText(text);
                 
-                // 简化跳转逻辑：任何有意义的输入都跳转到SearchScreen
-                if (text.trim().length > 0) {
-                  console.log('🔍 [TABBAR] 用户开始输入，跳转到SearchScreen');
-                  navigation.navigate('Search', { initialSearchText: text });
-                  
-                  // 重置TabBar状态
-                  setSearchMode('default');
-                  setSearchText('');
-                  searchInputOpacity.value = withTiming(0, { duration: 150 });
-                  searchOverlayWidth.value = withTiming(0, { duration: 250 });
-                  compactButtonOpacity.value = withTiming(0, { duration: 200 });
-                  tabsOpacity.value = withDelay(200, withTiming(1, { duration: 200 }));
-                }
+                // 发送搜索事件到ActivityListScreen进行当前页面内筛选
+                console.log('🔍 [TABBAR] 发送搜索事件到ActivityListScreen:', text);
+                DeviceEventEmitter.emit('searchTextChanged', { 
+                  searchText: text.trim(),
+                  timestamp: Date.now()
+                });
               }}
               autoCapitalize="none"
               autoCorrect={false}
             />
-            <TouchableOpacity
-              style={styles.searchOverlayClear}
-              onPress={handleSearchCancel}
-            >
-              <Ionicons name="close" size={18} color="#666666" />
-            </TouchableOpacity>
+            {/* 条件显示叉叉按钮 - 只有当搜索框有内容时才显示 */}
+            {searchText.length > 0 && (
+              <TouchableOpacity
+                style={styles.searchOverlayClear}
+                onPress={handleSearchClear}
+              >
+                <Ionicons name="close" size={18} color="#666666" />
+              </TouchableOpacity>
+            )}
           </View>
         </Animated.View>
         
@@ -894,12 +980,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16, // 添加水平内边距，让Tab不贴边
   },
 
-  // 紧凑圆形按钮 - 匹配参考图
+  // 紧凑圆形按钮 - 修复垂直对齐
   compactButton: {
     position: 'absolute',
     left: 8,
     top: '50%',
-    marginTop: -18, // 向下调整4px，更接近参考图位置
+    marginTop: -25, // 调整为-25，与搜索框完美对齐
     width: 50, // 稍微增大，匹配参考图
     height: 50,
     alignItems: 'center',

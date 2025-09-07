@@ -4,10 +4,10 @@
 
 ### 1.1 检查项目目录
 ```bash
-cd /Users/jietaoxie/vitaglobal/frontend
+cd /Users/jietaoxie/pomeloX/frontend
 pwd
 ```
-**期望输出：** `/Users/jietaoxie/vitaglobal/frontend`
+**期望输出：** `/Users/jietaoxie/pomeloX/frontend`
 
 ### 1.2 检查当前版本
 ```bash
@@ -113,7 +113,7 @@ Build is about to start
 ### 3.4 记录构建ID
 **从输出中找到：**
 ```
-See logs: https://expo.dev/accounts/stevenj4/projects/vitaglobal/builds/[BUILD_ID]
+See logs: https://expo.dev/accounts/stevenj4/projects/pomeloX/builds/[BUILD_ID]
 ```
 **复制BUILD_ID用于下一步**
 
@@ -139,7 +139,7 @@ eas submit --platform ios --profile production --id [BUILD_ID]
 **成功标志：**
 ```
 ✔ Scheduled iOS submission
-Submission details: https://expo.dev/accounts/stevenj4/projects/vitaglobal/submissions/[SUBMISSION_ID]
+Submission details: https://expo.dev/accounts/stevenj4/projects/pomeloX/submissions/[SUBMISSION_ID]
 ✔ iOS submission successful
 ```
 
@@ -147,7 +147,7 @@ Submission details: https://expo.dev/accounts/stevenj4/projects/vitaglobal/submi
 
 ### 5.1 回到项目根目录
 ```bash
-cd /Users/jietaoxie/vitaglobal
+cd /Users/jietaoxie/pomeloX
 ```
 
 ### 5.2 添加版本文件
@@ -178,7 +178,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>"
 
 ### 6.1 检查提交状态
 ```bash
-cd /Users/jietaoxie/vitaglobal/frontend
+cd /Users/jietaoxie/pomeloX/frontend
 eas submission:list --platform ios --limit 1
 ```
 
@@ -240,7 +240,7 @@ eas submission:list --platform ios --limit 1
 
 ### 一键检查状态
 ```bash
-cd /Users/jietaoxie/vitaglobal/frontend && \
+cd /Users/jietaoxie/pomeloX/frontend && \
 echo "=== 当前版本 ===" && \
 grep '"version"' app.json && \
 echo "=== 最新构建 ===" && \
@@ -252,7 +252,7 @@ eas submission:list --platform ios --limit 1
 ### 当前可用的立即操作
 **如果你想立即提交刚完成的构建到TestFlight：**
 ```bash
-cd /Users/jietaoxie/vitaglobal/frontend
+cd /Users/jietaoxie/pomeloX/frontend
 eas submit --platform ios --profile production --id 38c8812b-f310-43fb-8721-3141fa2ec106
 ```
 

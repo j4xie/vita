@@ -183,7 +183,7 @@ export const AnimatedButton: React.FC<AnimatedButtonProps> = ({
     } : {},
     {
       borderRadius: sizeConfig.borderRadius,
-      backgroundColor: 'rgba(255, 255, 255, 0.001)', // Nearly invisible but solid for shadow calculation
+      backgroundColor: 'rgba(255, 255, 255, 0.02)', // Nearly invisible but solid for shadow calculation
     }
   ];
 

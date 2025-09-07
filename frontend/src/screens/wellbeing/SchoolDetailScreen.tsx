@@ -27,13 +27,19 @@ import { getUserList } from '../../services/userStatsAPI';
 import { pomeloXAPI } from '../../services/PomeloXAPI';
 import { getUserPermissionLevel } from '../../types/userPermissions';
 import { useUser } from '../../context/UserContext';
-import { SafeText } from '../../components/common/SafeText';
+import { 
+  VolunteerRecord, 
+  VolunteerHours, 
+  UserData, 
+  VolunteerStatusUpdate,
+  APIResponse 
+} from '../../types/volunteer';
 import { getCurrentToken } from '../../services/authAPI';
-import { getAPITimeFormat, getFrontendTimeFormat } from '../../services/timeManager';
+import { getFrontendTimeFormat } from '../../services/timeManager';
 import { apiCache, CacheTTL } from '../../services/apiCache';
 import { i18n } from '../../utils/i18n';
-import { positionService } from '../../services/positionService';
 import { useAllDarkModeStyles } from '../../hooks/useDarkModeStyles';
+import VolunteerHistoryBottomSheet from '../../components/volunteer/VolunteerHistoryBottomSheet';
 // 移除SearchBar导入，改为使用内置搜索组件
 
 
@@ -54,6 +60,10 @@ export const SchoolDetailScreen: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [loadingProgress, setLoadingProgress] = useState(0);
   const [loadingMessage, setLoadingMessage] = useState('正在加载...');
+  
+  // 历史记录弹窗状态
+  const [showHistoryModal, setShowHistoryModal] = useState(false);
+  const [selectedHistoryUser, setSelectedHistoryUser] = useState<{userId: number, name: string} | null>(null);
   const [expandedVolunteer, setExpandedVolunteer] = useState<string | null>(null);
   
   // 搜索功能状态
@@ -65,32 +75,31 @@ export const SchoolDetailScreen: React.FC = () => {
   // 移除全局时间管理
   const [activitiesCount, setActivitiesCount] = useState<number>(0);
   const [operationInProgress, setOperationInProgress] = useState<Record<string, boolean>>({});
-  // 移除持久化计时功能
-  // 操作防重复锁 - 增强版本
-  const operationLockRef = React.useRef<Set<number>>(new Set());
-  const pendingOperationsRef = React.useRef<Map<string, Promise<any>>>(new Map());
-  // 缓存每个用户的最后一条记录（用于展示"上次签到/签出时间"）
-  const lastRecordCacheRef = React.useRef<Map<number, any>>(new Map());
-  
-  // FlatList引用用于滚动控制
-  const flatListRef = React.useRef<FlatList>(null);
+  // 🚀 内存优化：统一refs管理，避免内存泄漏
+  const screenStateRef = React.useRef({
+    operationLocks: new Set<number>(),
+    pendingOperations: new Map<string, Promise<any>>(),
+    recordCache: new Map<number, any>(),
+    flatList: null as FlatList | null,
+  });
 
 
   // 移除独立计时器 - 现在使用全局时间管理
 
-  // 初始化志愿者状态服务 - 强制清理状态
+  // 🚀 内存优化：简化初始化和cleanup逻辑
   React.useEffect(() => {
-    VolunteerStateService.cleanup(); // 先清理
-    VolunteerStateService.initialize(); // 再初始化
-    console.log('🔄 [FORCE-CLEAR] 已重置志愿者状态服务');
+    VolunteerStateService.cleanup();
+    VolunteerStateService.initialize();
+    console.log('🔄 [INIT] 志愿者状态服务已重置');
     
     return () => {
-      // 🚨 CRITICAL FIX: Comprehensive cleanup to prevent memory leaks
+      // 🧹 统一内存清理，避免内存泄漏
       VolunteerStateService.cleanup();
-      operationLockRef.current.clear();
-      pendingOperationsRef.current.clear();
-      lastRecordCacheRef.current.clear();
-      console.log('🧹 [CLEANUP] 已清理所有内存引用');
+      screenStateRef.current.operationLocks.clear();
+      screenStateRef.current.pendingOperations.clear();
+      screenStateRef.current.recordCache.clear();
+      screenStateRef.current.flatList = null;
+      console.log('🧹 [CLEANUP] 所有内存引用已清理');
     };
   }, []);
 
@@ -109,7 +118,7 @@ export const SchoolDetailScreen: React.FC = () => {
         if (!vid) return;
         const v = volunteersRef.current.find(x => x.id === vid);
         if (!v?.userId) return;
-        if (lastRecordCacheRef.current.has(v.userId)) {
+        if (screenStateRef.current.recordCache.has(v.userId)) {
           console.log(`📋 [CACHE-HIT] 用户${v.name}记录已缓存，跳过重新获取`);
           return;
         }
@@ -118,7 +127,7 @@ export const SchoolDetailScreen: React.FC = () => {
         const last = await getLastVolunteerRecord(v.userId);
         
         if (last?.code === 200 && last?.data) {
-          lastRecordCacheRef.current.set(v.userId, last.data);
+          screenStateRef.current.recordCache.set(v.userId, last.data);
           
           const backendRecord = last.data;
           const currentStatus = getVolunteerStatus(backendRecord);
@@ -142,7 +151,7 @@ export const SchoolDetailScreen: React.FC = () => {
             setVolunteers(prev => prev.map(vol => {
               if (vol.userId !== v.userId) return vol;
               
-              const updates: any = { checkInStatus: expectedStatus };
+              const updates: Partial<VolunteerStatusUpdate> = { checkInStatus: expectedStatus };
               
               if (currentStatus === 'signed_in') {
                 updates.checkInTime = backendRecord.startTime;
@@ -171,7 +180,7 @@ export const SchoolDetailScreen: React.FC = () => {
   }, [expandedVolunteer]); // 只依赖expandedVolunteer，避免循环依赖
 
   // 使用统一的状态服务计算时长
-  const getCurrentDurationMinutes = (vol: any) => {
+  const getCurrentDurationMinutes = (vol: VolunteerInfo) => {
     return VolunteerStateService.getCurrentDurationMinutes(vol as VolunteerInfo, new Date());
   };
 
@@ -287,7 +296,7 @@ export const SchoolDetailScreen: React.FC = () => {
   const scrollToVolunteer = (index: number, volunteerId: string) => {
     try {
       // 滚动到指定位置
-      flatListRef.current?.scrollToIndex({
+      screenStateRef.current.flatList?.scrollToIndex({
         index,
         animated: true,
         viewPosition: 0.5, // 居中显示
@@ -579,11 +588,11 @@ export const SchoolDetailScreen: React.FC = () => {
             const userData = fullUserInfo.data;
             
             // 查找该用户的工时记录
-            const hourRecord = hoursResult?.rows?.find((h: any) => h.userId === user.userId);
+            const hourRecord = hoursResult?.rows?.find((h: VolunteerHours) => h.userId === user.userId);
             
             // 处理志愿者记录
             let userRecord = null;
-            const cachedRecord = recordsResult?.rows?.find((r: any) => r.userId === user.userId);
+            const cachedRecord = recordsResult?.rows?.find((r: VolunteerRecord) => r.userId === user.userId);
             
             if (realtimeRecord.code === 200 && realtimeRecord.data) {
               userRecord = realtimeRecord.data;
@@ -607,7 +616,7 @@ export const SchoolDetailScreen: React.FC = () => {
                 admin: userData.admin,
                 rolesCount: userData.roles?.length || 0,
                 postsCount: userData.posts?.length || 0,
-                posts: userData.posts?.map((p: any) => p.postCode) || []
+                posts: userData.posts?.map((p: UserPost) => p.postCode) || []
               });
               
               // 🚨 使用统一的权限判断逻辑
@@ -659,7 +668,7 @@ export const SchoolDetailScreen: React.FC = () => {
               hasPosition: !!positionInfo,
               positionLevel: positionInfo?.level,
               positionMajor: positionInfo?.major,
-              roles: userData.roles?.map((r: any) => `${r.key || r.roleKey}(${r.roleName || r.name})`) || [],
+              roles: userData.roles?.map((r: UserRole) => `${r.key || r.roleKey}(${r.roleName || r.name})`) || [],
               isCurrentUser: user.userId === userInfo?.userId,
               currentUserId: userInfo?.userId,
               result: positionInfo ? '显示在列表中' : '不显示'
@@ -827,6 +836,32 @@ export const SchoolDetailScreen: React.FC = () => {
 
   const logoSource = getSchoolLogo(school.id);
 
+  // 处理查看志愿者历史记录
+  const handleViewVolunteerHistory = (volunteer: any) => {
+    console.log('🔍 [HISTORY] 查看志愿者历史记录:', {
+      志愿者: volunteer.name,
+      userId: volunteer.userId,
+      权限级别: permissions.getPermissionLevel()
+    });
+    
+    if (!volunteer.userId) {
+      console.error('❌ [HISTORY] 志愿者userId缺失');
+      return;
+    }
+    
+    setSelectedHistoryUser({
+      userId: volunteer.userId,
+      name: volunteer.name || '志愿者'
+    });
+    setShowHistoryModal(true);
+  };
+
+  // 关闭历史记录弹窗
+  const handleCloseHistoryModal = () => {
+    setShowHistoryModal(false);
+    setSelectedHistoryUser(null);
+  };
+
   // 处理志愿者签到
   const handleCheckIn = async (volunteerId: string) => {
     const volunteer = volunteers.find(v => v.id === volunteerId);
@@ -836,8 +871,8 @@ export const SchoolDetailScreen: React.FC = () => {
     
     // 🚨 ENHANCED: 三重保护防止重复操作
     if (operationInProgress[volunteerId] || 
-        operationLockRef.current.has(volunteer.userId) ||
-        pendingOperationsRef.current.has(operationKey)) {
+        screenStateRef.current.operationLocks.has(volunteer.userId) ||
+        screenStateRef.current.pendingOperations.has(operationKey)) {
       console.warn('[DUPLICATE-CLICK] 签到操作进行中，忽略重复点击');
       return;
     }
@@ -853,7 +888,7 @@ export const SchoolDetailScreen: React.FC = () => {
     
     // 设置操作状态和锁
     setOperationInProgress(prev => ({ ...prev, [volunteerId]: true }));
-    operationLockRef.current.add(volunteer.userId);
+    screenStateRef.current.operationLocks.add(volunteer.userId);
     
     // 创建操作promise并缓存，防止重复执行
     const operationPromise = (async () => {
@@ -927,7 +962,7 @@ export const SchoolDetailScreen: React.FC = () => {
         ));
 
         // 清理缓存，强制下次重新获取
-        lastRecordCacheRef.current.delete(userId);
+        screenStateRef.current.recordCache.delete(userId);
         
         console.log('[SUCCESS] 志愿者签到成功 (API):', volunteerName);
       } else {
@@ -941,7 +976,7 @@ export const SchoolDetailScreen: React.FC = () => {
           // 自动修复：获取后端记录并同步状态
           try {
             const last = await getLastVolunteerRecord(userId);
-            const lastData: any = last?.data;
+            const lastData: VolunteerRecord = last?.data;
             
             if (last?.code === 200 && lastData && lastData.startTime && !lastData.endTime) {
               // 后端确实处于签到状态，同步到前端
@@ -964,7 +999,7 @@ export const SchoolDetailScreen: React.FC = () => {
           // 其他错误的正常处理 - 改进用户体验
           try {
             const last = await getLastVolunteerRecord(userId);
-            const lastData: any = last?.data;
+            const lastData: VolunteerRecord = last?.data;
             const isActuallyCheckedIn = last?.code === 200 && lastData && lastData.userId === userId && lastData.startTime && !lastData.endTime;
             if (isActuallyCheckedIn) {
               setVolunteers(prev => prev.map(v => 
@@ -1008,13 +1043,13 @@ export const SchoolDetailScreen: React.FC = () => {
         delete newState[volunteerId];
         return newState;
       });
-      operationLockRef.current.delete(volunteer.userId);
-      pendingOperationsRef.current.delete(operationKey);
+      screenStateRef.current.operationLocks.delete(volunteer.userId);
+      screenStateRef.current.pendingOperations.delete(operationKey);
     }
     })();
     
     // 缓存操作promise
-    pendingOperationsRef.current.set(operationKey, operationPromise);
+    screenStateRef.current.pendingOperations.set(operationKey, operationPromise);
     await operationPromise;
   };
 
@@ -1027,8 +1062,8 @@ export const SchoolDetailScreen: React.FC = () => {
     
     // 🚨 ENHANCED: 三重保护防止重复操作
     if (operationInProgress[volunteerId] || 
-        operationLockRef.current.has(volunteer.userId) ||
-        pendingOperationsRef.current.has(operationKey)) {
+        screenStateRef.current.operationLocks.has(volunteer.userId) ||
+        screenStateRef.current.pendingOperations.has(operationKey)) {
       console.warn('[DUPLICATE-CLICK] 签退操作进行中，忽略重复点击');
       return;
     }
@@ -1044,7 +1079,7 @@ export const SchoolDetailScreen: React.FC = () => {
     
     // 设置操作状态和锁
     setOperationInProgress(prev => ({ ...prev, [volunteerId]: true }));
-    operationLockRef.current.add(volunteer.userId);
+    screenStateRef.current.operationLocks.add(volunteer.userId);
     
     // 创建操作promise并缓存
     const operationPromise = (async () => {
@@ -1158,7 +1193,7 @@ export const SchoolDetailScreen: React.FC = () => {
         // 移除持久化逻辑
         
         // 🔄 更新历史记录缓存 - 签退成功后更新记录缓存
-        const cachedRecord = lastRecordCacheRef.current.get(userId);
+        const cachedRecord = screenStateRef.current.recordCache.get(userId);
         if (cachedRecord) {
           const updatedRecord = {
             ...cachedRecord,
@@ -1166,7 +1201,7 @@ export const SchoolDetailScreen: React.FC = () => {
             endTime: getFrontendTimeFormat(),
             type: 2 // 标记为签退记录
           };
-          lastRecordCacheRef.current.set(userId, updatedRecord);
+          screenStateRef.current.recordCache.set(userId, updatedRecord);
           console.log(`🔄 [CACHE-UPDATE] 签退成功后更新用户${userId}历史记录缓存，结束时间: ${getFrontendTimeFormat()}`);
         }
         
@@ -1221,13 +1256,13 @@ export const SchoolDetailScreen: React.FC = () => {
         delete newState[volunteerId];
         return newState;
       });
-      operationLockRef.current.delete(volunteer.userId);
-      pendingOperationsRef.current.delete(operationKey);
+      screenStateRef.current.operationLocks.delete(volunteer.userId);
+      screenStateRef.current.pendingOperations.delete(operationKey);
     }
     })();
     
     // 缓存操作promise
-    pendingOperationsRef.current.set(operationKey, operationPromise);
+    screenStateRef.current.pendingOperations.set(operationKey, operationPromise);
     await operationPromise;
   };
 
@@ -1261,7 +1296,7 @@ export const SchoolDetailScreen: React.FC = () => {
 
   // 🚨 DEPRECATED: 旧的员工判断函数，现在使用岗位服务代替
   /*
-  const isUserStaffOrAdmin = (userData: any): boolean => {
+  const isUserStaffOrAdmin = (userData: UserData): boolean => {
     // 1. 检查admin字段
     if (userData?.admin === true) {
       return true;
@@ -1270,7 +1305,7 @@ export const SchoolDetailScreen: React.FC = () => {
     // 2. 检查roles数组中的roleKey（优先使用）
     const roles = userData?.roles || [];
     if (Array.isArray(roles) && roles.length > 0) {
-      const hasAdminRole = roles.some((role: any) => {
+      const hasAdminRole = roles.some((role: UserRole) => {
         const roleKey = role.key || role.roleKey;
         return roleKey === 'manage' ||        // 总管理员
                roleKey === 'part_manage' ||   // 分管理员  
@@ -1395,7 +1430,7 @@ export const SchoolDetailScreen: React.FC = () => {
                 <View style={styles.checkInInfo}>
                   {/* 1. 签到状态 */}
                   <View style={styles.statusRow}>
-                    <Text style={styles.statusLabel}>签到状态:</Text>
+                    <Text style={styles.statusLabel}>{t('volunteer_status.check_status_label') || '签到状态:'}</Text>
                     <Text style={[
                       styles.statusValue,
                       { color: 
@@ -1471,7 +1506,7 @@ export const SchoolDetailScreen: React.FC = () => {
                   {/* 8. 当前工作时长 - 仅在已签到时显示 */}
                   {item.checkInStatus === 'checked_in' && item.checkInTime && (
                     <View style={styles.statusRow}>
-                      <Text style={styles.statusLabel}>当前工作时长:</Text>
+                      <Text style={styles.statusLabel}>{t('volunteer_status.current_duration_label') || '当前工作时长:'}</Text>
                       <Text style={[styles.statusValue, { color: '#059669', fontWeight: '700' }]}>
                         {formatDuration(getCurrentDurationMinutes(item))}
                       </Text>
@@ -1493,6 +1528,10 @@ export const SchoolDetailScreen: React.FC = () => {
                           ]}
                           onPress={() => handleCheckIn(item?.id)}
                           disabled={operationInProgress[item?.id]}
+                          accessibilityRole="button"
+                          accessibilityLabel={`为志愿者${item.name}签到`}
+                          accessibilityHint="点击为此志愿者执行签到操作"
+                          accessibilityState={{ disabled: operationInProgress[item?.id] }}
                         >
                           {operationInProgress[item?.id] ? (
                             <Text style={styles.actionButtonText}>签到中...</Text>
@@ -1513,6 +1552,10 @@ export const SchoolDetailScreen: React.FC = () => {
                           ]}
                           onPress={() => handleCheckOut(item?.id)}
                           disabled={operationInProgress[item?.id]}
+                          accessibilityRole="button"
+                          accessibilityLabel={`为志愿者${item.name}签退`}
+                          accessibilityHint="点击为此志愿者执行签退操作"
+                          accessibilityState={{ disabled: operationInProgress[item?.id] }}
                         >
                           {operationInProgress[item?.id] ? (
                             <Text style={styles.actionButtonText}>签退中...</Text>
@@ -1525,14 +1568,29 @@ export const SchoolDetailScreen: React.FC = () => {
                       )}
                     </>
                   )}
+
+                  {/* 历史记录按钮 - 管理员可查看志愿者历史，与签到按钮同行 */}
+                  {['manage', 'part_manage'].includes(permissions.getPermissionLevel()) && (
+                    <TouchableOpacity
+                      style={[styles.actionButton, styles.historyBtn]} // 使用统一的actionButton基础样式
+                      onPress={() => handleViewVolunteerHistory(item)}
+                      accessibilityRole="button"
+                      accessibilityLabel={`查看${item.name}的历史记录`}
+                      accessibilityHint="点击查看此志愿者的打卡历史记录"
+                    >
+                      <Text style={[styles.actionButtonText, { color: '#FF6B35' }]}>
+                        {t('wellbeing.volunteer.viewHistory')}
+                      </Text>
+                    </TouchableOpacity>
+                  )}
                   
                   {/* 权限提示信息 - 只有内部员工显示无权限提示 */}
                   {!permissions.canCheckInOut() && (
                     <View style={styles.noPermissionHint}>
                       <Text style={styles.hintText}>
                         {permissions.isStaff() ? 
-                          '内部员工仅可查看，无签到权限' : 
-                          '仅查看模式'
+                          t('wellbeing.volunteer.staffViewHint') : 
+                          t('wellbeing.volunteer.viewOnly')
                         }
                       </Text>
                     </View>
@@ -1564,7 +1622,7 @@ export const SchoolDetailScreen: React.FC = () => {
             style={styles.backButton}
             onPress={() => navigation.goBack()}
           >
-            <Ionicons name="arrow-back-ios" size={20} color="#000" />
+            <Ionicons name="chevron-back" size={20} color="#000" />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>{school?.deptName || t('wellbeing.school_detail')}</Text>
           <View style={styles.headerPlaceholder} />
@@ -1679,7 +1737,7 @@ export const SchoolDetailScreen: React.FC = () => {
                 value={searchQuery}
                 onChangeText={handleSearchInput}
                 onSubmitEditing={searchVolunteer}
-                placeholder="搜索志愿者姓名或手机号"
+                placeholder={t('wellbeing.volunteer.searchVolunteers')}
                 placeholderTextColor="#8E8E93"
                 keyboardType="default"  // 允许输入中英文
                 autoCapitalize="none"
@@ -1722,7 +1780,7 @@ export const SchoolDetailScreen: React.FC = () => {
           </View>
           
           <FlatList
-            ref={flatListRef}
+            ref={(ref) => { screenStateRef.current.flatList = ref; }}
             data={volunteers}
             renderItem={renderVolunteerItem}
             keyExtractor={(item) => String(item.id || Math.random())}
@@ -1733,7 +1791,7 @@ export const SchoolDetailScreen: React.FC = () => {
               // 降级处理：等待渲染完成后重试
               setTimeout(() => {
                 try {
-                  flatListRef.current?.scrollToIndex({
+                  screenStateRef.current.flatList?.scrollToIndex({
                     index: Math.min(info.index, volunteers.length - 1),
                     animated: true,
                   });
@@ -1766,6 +1824,18 @@ export const SchoolDetailScreen: React.FC = () => {
           />
         </View>
       </ScrollView>
+      
+      {/* 历史记录弹窗 */}
+      {selectedHistoryUser && (
+        <VolunteerHistoryBottomSheet
+          visible={showHistoryModal}
+          onClose={handleCloseHistoryModal}
+          userId={selectedHistoryUser.userId}
+          userName={selectedHistoryUser.name}
+          userPermission={permissions.getPermissionLevel()}
+          currentUser={userInfo}
+        />
+      )}
     </SafeAreaView>
   );
 };
@@ -2109,6 +2179,8 @@ const styles = StyleSheet.create({
   actionButtons: {
     flexDirection: 'row',
     justifyContent: 'center',
+    flexWrap: 'wrap', // 允许换行
+    gap: 8, // 按钮之间的间距
   },
 
   actionButton: {
@@ -2270,6 +2342,13 @@ const styles = StyleSheet.create({
   headerPlaceholder: {
     width: 44,
     height: 44,
+  },
+
+  // 历史记录按钮特殊样式 - 继承actionButton，只修改颜色
+  historyBtn: {
+    borderWidth: 1,
+    borderColor: '#FF6B35',
+    backgroundColor: '#FFFFFF',
   },
 
 });

@@ -23,6 +23,8 @@ import { useLanguage } from '../../context/LanguageContext';
 import { useTheme } from '../../context/ThemeContext';
 import { useAllDarkModeStyles } from '../../hooks/useDarkModeStyles';
 import { ThemeSelectionModal } from '../../components/common/ThemeSelectionModal';
+import { RegionSwitchModal } from '../../components/modals/RegionSwitchModal';
+import UserRegionPreferences, { UserRegionCode } from '../../services/UserRegionPreferences';
 
 interface SettingRowProps {
   title: string;
@@ -162,9 +164,13 @@ export const GeneralScreen: React.FC = () => {
 
   // Modal states
   const [showThemeModal, setShowThemeModal] = useState(false);
+  const [showRegionModal, setShowRegionModal] = useState(false);
 
   // Cache states
   const [cacheSize, setCacheSize] = useState('');
+
+  // Region states
+  const [currentRegion, setCurrentRegion] = useState<UserRegionCode>('china');
 
   // Accessibility states
   const [isReduceMotionEnabled, setIsReduceMotionEnabled] = useState(false);
@@ -184,6 +190,9 @@ export const GeneralScreen: React.FC = () => {
     
     // Load activity layout preference
     loadActivityLayoutPreference();
+    
+    // Load current region
+    loadCurrentRegion();
     
     // 监听布局变化事件
     const layoutSubscription = DeviceEventEmitter.addListener('activityLayoutChanged', (newLayout: 'list' | 'grid') => {
@@ -221,8 +230,46 @@ export const GeneralScreen: React.FC = () => {
     navigation.navigate('LanguageSelection');
   };
 
+  // Load current region from preferences
+  const loadCurrentRegion = async () => {
+    try {
+      // 确保偏好设置已初始化
+      let preferences = await UserRegionPreferences.getPreferences();
+      if (!preferences) {
+        console.log('初始化区域偏好设置...');
+        preferences = await UserRegionPreferences.initializePreferences();
+      }
+      
+      const region = await UserRegionPreferences.getCurrentRegion();
+      setCurrentRegion(region);
+    } catch (error) {
+      console.warn('Failed to load current region:', error);
+      // 设置默认值
+      setCurrentRegion('china');
+    }
+  };
+
   const handleRegionPress = () => {
-    Alert.alert(t('profile.general.regionAndTimezone'), t('profile.general.regionTimezoneMessage'));
+    setShowRegionModal(true);
+  };
+
+  const handleRegionChanged = async (newRegion: UserRegionCode) => {
+    try {
+      setCurrentRegion(newRegion);
+      
+      // Show success message
+      const regionName = UserRegionPreferences.getRegionDisplayName(newRegion, 'zh');
+      Alert.alert(
+        t('profile.region_updated_successfully', '地区已更新'),
+        t('profile.region_updated_message', `地区已更新为 ${regionName}`),
+      );
+    } catch (error) {
+      console.error('Region change failed:', error);
+      Alert.alert(
+        t('profile.region_update_failed', '更新失败'),
+        t('profile.region_update_error', '地区更新失败，请稍后重试')
+      );
+    }
   };
 
   const handleAppearancePress = () => {
@@ -322,7 +369,7 @@ export const GeneralScreen: React.FC = () => {
       id: 'region',
       title: t('profile.general.regionAndTimezone'),
       icon: 'location-outline' as keyof typeof Ionicons.glyphMap,
-      value: t('profile.general.chinaMainland'),
+      value: `${UserRegionPreferences.getRegionIcon(currentRegion)} ${UserRegionPreferences.getRegionDisplayName(currentRegion, 'zh')}`,
       onPress: handleRegionPress,
     },
     {
@@ -459,6 +506,13 @@ export const GeneralScreen: React.FC = () => {
       <ThemeSelectionModal
         visible={showThemeModal}
         onClose={() => setShowThemeModal(false)}
+      />
+
+      {/* Region Switch Modal */}
+      <RegionSwitchModal
+        visible={showRegionModal}
+        onClose={() => setShowRegionModal(false)}
+        onRegionChanged={handleRegionChanged}
       />
     </View>
   );

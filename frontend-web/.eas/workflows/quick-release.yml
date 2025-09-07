@@ -1,0 +1,20 @@
+name: Quick TestFlight Release
+description: 快速构建并发布到TestFlight (无版本递增)
+
+on:
+  workflow_dispatch: {} # 手动触发，无参数
+
+jobs:
+  quick_ios_release:
+    name: 快速iOS发布
+    runs-on: eas-build-medium
+    steps:
+      - name: 构建iOS应用
+        run: eas build --platform ios --profile production --non-interactive --wait
+        env:
+          EXPO_APPLE_ID: dev@americanpromotioncompany.com
+          
+      - name: 自动提交到TestFlight
+        run: eas submit --platform ios --profile production --latest --non-interactive
+        env:
+          EXPO_APPLE_ID: dev@americanpromotioncompany.com

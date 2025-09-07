@@ -1,4 +1,4 @@
-# VitaGlobal 国际化实施方案
+# PomeloX 国际化实施方案
 
 ## 📋 实施概述
 
@@ -26,7 +26,7 @@
 
 #### 1. 本地化文件结构
 ```
-/VitaGlobal
+/PomeloX
   /Resources
     /Localizations
       /zh-Hans.lproj          # 简体中文

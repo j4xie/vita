@@ -11,6 +11,7 @@ import {
   Alert,
   Keyboard,
   Image,
+  TouchableWithoutFeedback,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
@@ -21,7 +22,6 @@ import * as ImagePicker from 'expo-image-picker';
 
 import { theme } from '../../theme';
 import { useTheme } from '../../context/ThemeContext';
-import { useTabBarHide } from '../../hooks/useTabBarHide';
 import { useUser } from '../../context/UserContext';
 import { uploadAvatar, getUserAvatarUrl, checkAvatarExists } from '../../services/imageUploadService';
 import { updateUserProfile } from '../../services/authAPI';
@@ -129,8 +129,6 @@ export const EditProfileScreen: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [avatarUri, setAvatarUri] = useState<string | null>(null);
 
-  // 使用统一的TabBar隐藏Hook
-  useTabBarHide();
 
   // 当用户数据加载后更新表单
   useEffect(() => {
@@ -427,11 +425,14 @@ export const EditProfileScreen: React.FC = () => {
   return (
     <View style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
-        <ScrollView
-          style={styles.scrollView}
-          contentContainerStyle={styles.contentContainer}
-          showsVerticalScrollIndicator={false}
-        >
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+          <ScrollView
+            style={styles.scrollView}
+            contentContainerStyle={styles.contentContainer}
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+            keyboardDismissMode="on-drag"
+          >
           {/* Avatar Section */}
           <View style={styles.avatarSection}>
             <View style={styles.avatarContainer}>
@@ -543,7 +544,8 @@ export const EditProfileScreen: React.FC = () => {
               </Text>
             </TouchableOpacity>
           </View>
-        </ScrollView>
+          </ScrollView>
+        </TouchableWithoutFeedback>
       </SafeAreaView>
     </View>
   );

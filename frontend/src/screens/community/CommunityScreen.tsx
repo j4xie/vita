@@ -131,10 +131,10 @@ export const CommunityScreen: React.FC = () => {
           '#2C2C2E',   // 渐变到更浅深灰
           '#1C1C1E'    // 底部回到系统深灰
         ] : [
-          Glass.pageBgTop,     // 更深的暖色
-          Glass.pageBgBottom,  // 明显对比
-          '#F8F9FA',          // 渐变到浅灰
-          '#F1F3F4'           // 底部中性灰
+          '#FFE4C4',    // 恢复原来的暖色
+          '#FFF0E6',    // 恢复原来的浅桃色
+          '#F8F9FA',    // 渐变到浅灰
+          '#F1F3F4'     // 底部中性灰
         ]}
         start={{ x: 0, y: 0 }} 
         end={{ x: 0, y: 1 }}
@@ -209,7 +209,7 @@ export const CommunityScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: 'rgba(255, 255, 255, 0.001)',
+    backgroundColor: 'rgba(255, 255, 255, 0.02)',
   },
   
   scrollView: {

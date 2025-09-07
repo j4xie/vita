@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { useColorScheme, Appearance } from 'react-native';
+import { useColorScheme, Appearance, Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useTranslation } from 'react-i18next';
 
@@ -45,17 +45,22 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
   useEffect(() => {
     let actualDarkMode = false;
     
-    switch (themeMode) {
-      case 'dark':
-        actualDarkMode = true;
-        break;
-      case 'light':
-        actualDarkMode = false;
-        break;
-      case 'auto':
-      default:
-        actualDarkMode = systemColorScheme === 'dark';
-        break;
+    // 🌐 Web端强制使用浅色模式，移动端保持原有功能  
+    if (Platform.OS === 'web') {
+      actualDarkMode = false; // Force light mode on web
+    } else {
+      switch (themeMode) {
+        case 'dark':
+          actualDarkMode = true;
+          break;
+        case 'light':
+          actualDarkMode = false;
+          break;
+        case 'auto':
+        default:
+          actualDarkMode = systemColorScheme === 'dark';
+          break;
+      }
     }
     
     setIsDarkMode(actualDarkMode);

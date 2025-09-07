@@ -4,7 +4,7 @@
 
 ### **第一步：版本号更新**
 ```bash
-cd /Users/jietaoxie/vitaglobal/frontend
+cd /Users/jietaoxie/pomeloX/frontend
 ```
 
 编辑 `app.json`，更新版本号：
@@ -30,7 +30,7 @@ cd /Users/jietaoxie/vitaglobal/frontend
 ### **第二步：构建应用**
 ```bash
 # 进入前端目录
-cd /Users/jietaoxie/vitaglobal/frontend
+cd /Users/jietaoxie/pomeloX/frontend
 
 # 启动构建（交互式，需要Apple账户）
 eas build --platform ios --profile production
@@ -56,7 +56,7 @@ eas submit --platform ios --profile production --id [BUILD_ID]
 
 ### **第四步：提交更改到Git**
 ```bash
-cd /Users/jietaoxie/vitaglobal
+cd /Users/jietaoxie/pomeloX
 
 # 添加版本更改
 git add frontend/app.json frontend/ios/PomeloX/Info.plist
@@ -75,7 +75,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>"
 # === 完整TestFlight更新流程 ===
 
 # 1. 进入项目目录
-cd /Users/jietaoxie/vitaglobal/frontend
+cd /Users/jietaoxie/pomeloX/frontend
 
 # 2. 检查当前版本
 grep -A2 '"version"' app.json
@@ -91,7 +91,7 @@ eas build:list --platform ios --limit 1
 eas submit --platform ios --profile production
 
 # 6. 提交到Git
-cd /Users/jietaoxie/vitaglobal
+cd /Users/jietaoxie/pomeloX
 git add frontend/app.json frontend/ios/PomeloX/Info.plist
 git commit -m "feat: 版本更新 - [描述更新内容]"
 ```
@@ -126,7 +126,7 @@ eas build:list --platform ios --limit 3
 eas submission:list --platform ios --limit 3
 
 # 查看构建日志（替换BUILD_ID）
-open https://expo.dev/accounts/stevenj4/projects/vitaglobal/builds/[BUILD_ID]
+open https://expo.dev/accounts/stevenj4/projects/pomeloX/builds/[BUILD_ID]
 
 # 检查App Store Connect
 open https://appstoreconnect.apple.com

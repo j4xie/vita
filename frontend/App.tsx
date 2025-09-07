@@ -11,12 +11,17 @@ import { theme } from './src/theme';
 import initI18next, { i18n } from './src/utils/i18n';
 import { AppNavigator } from './src/navigation/AppNavigator';
 import { ToastManager } from './src/components/common/ToastManager';
+import { LocationMismatchAlert } from './src/components/modals/LocationMismatchAlert';
+import { useLocationMismatchDetection } from './src/hooks/useLocationMismatchDetection';
 
 // 导入时间管理服务
 import { timeManager, validateDeviceTime } from './src/services/timeManager';
 
 // 导入智能提醒系统
 import { initializeSmartAlerts } from './src/services/smartAlertSystem';
+
+// 导入地理检测服务
+import RegionDetectionService from './src/services/RegionDetectionService';
 
 
 // 开发环境导入测试工具
@@ -25,16 +30,44 @@ if (__DEV__) {
   require('./src/utils/volunteerTestSuite');
   // 导入时间冲突检测器
   require('./src/utils/timeConflictDetector');
+  // 导入地理区域功能测试套件
+  require('./src/utils/regionFeatureTest');
   console.log('🧪 测试工具已加载');
 }
 
 function MainApp() {
+  // 位置不匹配检测
+  const {
+    shouldShowAlert,
+    currentRegion,
+    settingsRegion,
+    dismissAlert,
+  } = useLocationMismatchDetection(true, true);
+
+  const handleGoToSettings = () => {
+    // TODO: 导航到设置页面的region设置
+    // 这里需要与导航系统集成，暂时先输出日志
+    console.log('用户选择去设置页面修改region');
+  };
+
   return (
     <SafeAreaProvider>
       <StatusBar style="auto" />
       <AppNavigator />
+      
       {/* 🎨 全局Toast管理器 */}
       <ToastManager />
+      
+      {/* 📍 位置不匹配提醒 */}
+      {shouldShowAlert && currentRegion && settingsRegion && (
+        <LocationMismatchAlert
+          visible={shouldShowAlert}
+          onClose={dismissAlert}
+          onGoToSettings={handleGoToSettings}
+          currentRegion={currentRegion}
+          settingsRegion={settingsRegion}
+        />
+      )}
     </SafeAreaProvider>
   );
 }
@@ -68,6 +101,14 @@ export default function App() {
         console.log('[ALERT] 初始化智能提醒系统...');
         const alertSystemInitialized = await initializeSmartAlerts();
         console.log('[ALERT]', alertSystemInitialized ? '✅ 智能提醒系统启用' : '❌ 智能提醒系统失败');
+        
+        // 5. 启动地理检测预检测（后台运行，不阻塞启动）
+        console.log('[REGION] 启动地理检测预检测...');
+        RegionDetectionService.preDetect().then(() => {
+          console.log('[REGION] ✅ 地理检测预检测完成，结果已缓存');
+        }).catch((error) => {
+          console.warn('[REGION] ⚠️ 地理检测预检测失败，不影响主流程:', error.message);
+        });
         
         setIsI18nReady(true);
       } catch (error) {

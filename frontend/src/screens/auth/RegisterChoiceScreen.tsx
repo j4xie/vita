@@ -7,19 +7,24 @@ import {
   SafeAreaView,
   Image,
   Alert,
+  ActivityIndicator,
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, CommonActions } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { LinearGradient } from 'expo-linear-gradient';
 import { theme } from '../../theme';
 import { LIQUID_GLASS_LAYERS, DAWN_GRADIENTS } from '../../theme/core';
 import { PrivacyAgreementModal } from '../../components/modals/PrivacyAgreementModal';
+import RegionDetectionService, { RegionCode, RegionDetectionResult } from '../../services/RegionDetectionService';
 
 export const RegisterChoiceScreen: React.FC = () => {
   const navigation = useNavigation<any>();
   const { t } = useTranslation();
   const [showPrivacyModal, setShowPrivacyModal] = useState(false);
+  const [detectingLocation, setDetectingLocation] = useState(false);
+  const [detectedRegion, setDetectedRegion] = useState<RegionCode | null>(null);
+  const [detectionResult, setDetectionResult] = useState<RegionDetectionResult | null>(null);
 
   const handleBack = () => {
     navigation.goBack();
@@ -29,15 +34,60 @@ export const RegisterChoiceScreen: React.FC = () => {
     navigation.navigate('QRScanner', { purpose: 'register' });
   };
 
-  const handleNormalRegister = () => {
-    // 显示隐私协议弹窗
-    setShowPrivacyModal(true);
+  const handleNormalRegister = async () => {
+    // 先检测用户地理位置，再显示相应版本的隐私协议
+    setDetectingLocation(true);
+    
+    try {
+      // 添加最小loading时间，确保用户能看到检测过程
+      const [result] = await Promise.all([
+        RegionDetectionService.detectRegion(),
+        new Promise(resolve => setTimeout(resolve, 2000)) // 最少2秒loading
+      ]);
+      
+      setDetectionResult(result);
+      setDetectedRegion(result.region);
+      setShowPrivacyModal(true);
+    } catch (error) {
+      console.error('地理位置检测失败:', error);
+      
+      // 检测失败时给用户选择
+      Alert.alert(
+        t('common.error'),
+        '无法自动检测您的地理位置，请手动选择：',
+        [
+          {
+            text: '🇨🇳 中国用户',
+            onPress: () => {
+              setDetectedRegion('zh');
+              setShowPrivacyModal(true);
+            }
+          },
+          {
+            text: '🇺🇸 美国用户', 
+            onPress: () => {
+              setDetectedRegion('en');
+              setShowPrivacyModal(true);
+            }
+          },
+          {
+            text: '取消',
+            style: 'cancel'
+          }
+        ]
+      );
+    } finally {
+      setDetectingLocation(false);
+    }
   };
 
   const handlePrivacyAccept = () => {
     setShowPrivacyModal(false);
-    // 用户同意隐私协议后才能进入注册表单
-    navigation.navigate('RegisterForm');
+    // 用户同意隐私协议后才能进入注册表单，传递地理检测结果
+    navigation.navigate('RegisterForm', {
+      detectedRegion: detectedRegion,
+      detectionResult: detectionResult
+    });
   };
 
   const handlePrivacyDecline = () => {
@@ -47,7 +97,13 @@ export const RegisterChoiceScreen: React.FC = () => {
   };
 
   const handleSkip = () => {
-    navigation.navigate('Main');
+    // 重置导航栈，避免页面叠加问题
+    navigation.dispatch(
+      CommonActions.reset({
+        index: 0,
+        routes: [{ name: 'Main' }],
+      })
+    );
   };
 
   // 处理条款和隐私政策点击
@@ -110,9 +166,10 @@ export const RegisterChoiceScreen: React.FC = () => {
 
           {/* Normal Registration */}
           <TouchableOpacity
-            style={[styles.optionCard, styles.secondaryCard]}
+            style={[styles.optionCard, styles.secondaryCard, detectingLocation && styles.optionCardDisabled]}
             onPress={handleNormalRegister}
-            activeOpacity={0.9}
+            activeOpacity={detectingLocation ? 1 : 0.9}
+            disabled={detectingLocation}
           >
             <View style={styles.cardContent}>
               <View style={[styles.iconContainer, styles.secondaryIconContainer]}>
@@ -172,7 +229,23 @@ export const RegisterChoiceScreen: React.FC = () => {
         visible={showPrivacyModal}
         onAccept={handlePrivacyAccept}
         onDecline={handlePrivacyDecline}
+        userArea={detectedRegion || 'zh'} // 使用检测到的区域，默认中国
+        allowRegionSwitch={false} // 禁止用户手动切换地域，作为只读显示
       />
+
+      {/* Location Detection Loading Overlay */}
+      {detectingLocation && (
+        <View style={styles.loadingOverlay}>
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color={theme.colors.primary} />
+            <Text style={styles.loadingText}>🌍 {t('auth.register.form.area_detecting')}</Text>
+            <Text style={styles.loadingSubtext}>{t('auth.register.privacy.subtitle')}</Text>
+            <Text style={styles.loadingDebug}>
+              {t('common.retry_later')}
+            </Text>
+          </View>
+        </View>
+      )}
     </SafeAreaView>
   );
 };
@@ -180,7 +253,7 @@ export const RegisterChoiceScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: 'rgba(255, 255, 255, 0.001)', // Nearly invisible but solid for shadow calculation
+    backgroundColor: 'rgba(255, 255, 255, 0.02)', // Nearly invisible but solid for shadow calculation
   },
   header: {
     flexDirection: 'row',
@@ -197,7 +270,7 @@ const styles = StyleSheet.create({
   skipButton: {
     paddingVertical: theme.spacing.sm,
     paddingHorizontal: theme.spacing.md,
-    backgroundColor: 'rgba(255, 255, 255, 0.001)', // Nearly invisible but solid for shadow calculation
+    backgroundColor: 'rgba(255, 255, 255, 0.02)', // Nearly invisible but solid for shadow calculation
     borderRadius: 20,
     borderWidth: 1.5,
     borderColor: LIQUID_GLASS_LAYERS.L2.border.color.light,
@@ -340,5 +413,48 @@ const styles = StyleSheet.create({
   termsLink: {
     color: theme.colors.primary,
     fontWeight: theme.typography.fontWeight.medium,
+  },
+  // 地理位置检测加载样式
+  loadingOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1000,
+  },
+  loadingContainer: {
+    backgroundColor: theme.colors.background.primary,
+    borderRadius: theme.borderRadius.xl,
+    padding: theme.spacing[8],
+    alignItems: 'center',
+    marginHorizontal: theme.spacing[6],
+    ...theme.shadows.lg,
+  },
+  loadingText: {
+    fontSize: theme.typography.fontSize.base,
+    fontWeight: theme.typography.fontWeight.medium,
+    color: theme.colors.text.primary,
+    marginTop: theme.spacing[4],
+    textAlign: 'center',
+  },
+  loadingSubtext: {
+    fontSize: theme.typography.fontSize.sm,
+    color: theme.colors.text.secondary,
+    marginTop: theme.spacing[2],
+    textAlign: 'center',
+  },
+  loadingDebug: {
+    fontSize: theme.typography.fontSize.xs,
+    color: theme.colors.text.tertiary,
+    marginTop: theme.spacing[1],
+    textAlign: 'center',
+    fontStyle: 'italic',
+  },
+  optionCardDisabled: {
+    opacity: 0.6,
   },
 });

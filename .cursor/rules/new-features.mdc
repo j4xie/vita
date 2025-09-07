@@ -1,12 +1,12 @@
 ---
-description: VitaGlobal新增功能模块开发指南
+description: PomeloX新增功能模块开发指南
 ---
 
-# VitaGlobal 新增功能模块开发规范
+# PomeloX 新增功能模块开发规范
 
 ## 新增功能模块概览
 
-基于最新产品思路，VitaGlobal增加了以下核心功能模块：
+基于最新产品思路，PomeloX增加了以下核心功能模块：
 
 ### 核心新增模块
 1. **本地生活折扣系统** - 商家合作和优惠券核销

@@ -9,19 +9,22 @@ import {
   Alert,
   ActivityIndicator,
 } from 'react-native';
-import { useNavigation, useRoute } from '@react-navigation/native';
+import { useNavigation, useRoute, CommonActions } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { LinearGradient } from 'expo-linear-gradient';
 import { theme } from '../../theme';
 import { LIQUID_GLASS_LAYERS, DAWN_GRADIENTS } from '../../theme/core';
 import { pomeloXAPI } from '../../services/PomeloXAPI';
+import { useUser } from '../../context/UserContext';
+import { login } from '../../services/authAPI';
 
 export const VerificationScreen: React.FC = () => {
   const navigation = useNavigation<any>();
   const route = useRoute<any>();
   const { t } = useTranslation();
   const inputRefs = useRef<(TextInput | null)[]>([]);
+  const { login: userLogin } = useUser();
   
   const { formData, phoneNumber, phoneType } = route.params;
   const [verificationCode, setVerificationCode] = useState(['', '', '', '', '', '']);
@@ -80,24 +83,97 @@ export const VerificationScreen: React.FC = () => {
       });
 
       const result = await pomeloXAPI.register(registerData);
+      
+      console.log('🔍 [注册] API返回结果:', {
+        code: result.code,
+        msg: result.msg,
+        hasData: !!result.data,
+        fullResult: result
+      });
 
       if (result.code === 200) {
-        Alert.alert(
-          '注册成功',
-          '恭喜您注册成功！',
-          [
-            {
-              text: '确定',
-              onPress: () => navigation.navigate('Login'),
-            },
-          ]
-        );
+        // 注册成功后自动登录
+        try {
+          console.log('注册成功，开始自动登录...');
+          
+          // 使用注册时的凭据进行登录
+          const loginResult = await login({
+            username: formData.userName, // 注意：登录API使用的是username而不是userName
+            password: formData.password,
+          });
+          
+          if (loginResult.code === 200 && loginResult.data) {
+            // 登录成功，更新用户状态
+            await userLogin(loginResult.data.token);
+            
+            Alert.alert(
+              t('auth.register.success_title'),
+              t('auth.register.auto_login_success'),
+              [{
+                text: t('common.confirm'),
+                onPress: () => navigation.dispatch(
+                  CommonActions.reset({
+                    index: 0,
+                    routes: [{ name: 'Main' }],
+                  })
+                )
+              }]
+            );
+          } else {
+            // 登录失败，但注册成功
+            Alert.alert(
+              t('auth.register.success_title'),
+              t('auth.register.success_please_login'),
+              [{
+                text: t('common.confirm'),
+                onPress: () => navigation.dispatch(
+                  CommonActions.reset({
+                    index: 0,
+                    routes: [{ name: 'Login' }],
+                  })
+                )
+              }]
+            );
+          }
+        } catch (loginError) {
+          console.error('自动登录失败:', loginError);
+          // 登录失败，但注册成功
+          Alert.alert(
+            t('auth.register.success_title'),
+            t('auth.register.success_please_login'),
+            [{
+              text: t('common.confirm'),
+              onPress: () => navigation.dispatch(
+                CommonActions.reset({
+                  index: 0,
+                  routes: [{ name: 'Login' }],
+                })
+              )
+            }]
+          );
+        }
       } else {
-        Alert.alert(t('auth.register.errors.register_failed'), result.msg || t('auth.register.errors.register_failed_message'));
+        console.error('❌ [注册] API返回错误:', {
+          code: result.code,
+          msg: result.msg,
+          timestamp: new Date().toISOString()
+        });
+        Alert.alert(
+          t('auth.register.errors.register_failed'), 
+          `错误代码: ${result.code}\n${result.msg || t('auth.register.errors.register_failed_message')}`
+        );
       }
-    } catch (error) {
-      console.error('注册错误:', error);
-      Alert.alert(t('auth.register.errors.register_failed'), t('common.network_error'));
+    } catch (error: any) {
+      console.error('❌ [注册] 网络/系统错误:', {
+        message: error.message,
+        name: error.name,
+        stack: error.stack,
+        timestamp: new Date().toISOString()
+      });
+      Alert.alert(
+        t('auth.register.errors.register_failed'), 
+        `网络错误: ${error.message || t('common.network_error')}\n请检查网络连接后重试`
+      );
     } finally {
       setLoading(false);
     }
@@ -158,7 +234,10 @@ export const VerificationScreen: React.FC = () => {
         <View style={styles.formContainer}>
           <Text style={styles.title}>{t('auth.verification.verify_phone')}</Text>
           <Text style={styles.subtitle}>
-            我们已向 +{phoneType === 'CN' ? '86' : '1'} {phoneNumber} 发送验证码
+            {t('auth.verification.code_sent_to', { 
+              countryCode: phoneType === 'CN' ? '86' : '1', 
+              phone: phoneNumber 
+            })}
           </Text>
 
           <View style={styles.codeContainer}>
@@ -187,8 +266,8 @@ export const VerificationScreen: React.FC = () => {
               resendCountdown > 0 && styles.resendTextDisabled
             ]}>
               {resendCountdown > 0 
-                ? `重新发送 (${resendCountdown}s)`
-                : '重新发送验证码'
+                ? t('auth.verification.resend_countdown', { seconds: resendCountdown })
+                : t('auth.verification.resend_code')
               }
             </Text>
           </TouchableOpacity>

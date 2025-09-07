@@ -25,6 +25,8 @@ import { useLanguage } from '../../context/LanguageContext';
 import { useUser } from '../../context/UserContext';
 import { useTheme as useThemeContext } from '../../context/ThemeContext';
 import { PermissionDebugModal } from '../../components/debug/PermissionDebugModal';
+import UserRegionPreferences, { UserRegionCode } from '../../services/UserRegionPreferences';
+import { RegionSwitchModal } from '../../components/modals/RegionSwitchModal';
 // import { DarkModeTest } from '../../components/debug/DarkModeTest'; // 已注释以修复渲染错误
 
 export const ProfileScreen: React.FC = () => {
@@ -44,6 +46,11 @@ export const ProfileScreen: React.FC = () => {
   const [showPermissionDebug, setShowPermissionDebug] = useState(false);
   const [debugTapCount, setDebugTapCount] = useState(0);
   
+  // Region states
+  const [currentRegion, setCurrentRegion] = useState<UserRegionCode>('china');
+  const [regionLoading, setRegionLoading] = useState(false);
+  const [showRegionModal, setShowRegionModal] = useState(false);
+  
   useEffect(() => {
     const checkAccessibility = async () => {
       const [reduceMotion, screenReader] = await Promise.all([
@@ -55,6 +62,21 @@ export const ProfileScreen: React.FC = () => {
     };
     checkAccessibility();
   }, []);
+
+  // 加载用户区域设置
+  useEffect(() => {
+    loadCurrentRegion();
+  }, []);
+
+  const loadCurrentRegion = async () => {
+    try {
+      const region = await UserRegionPreferences.getCurrentRegion();
+      setCurrentRegion(region);
+    } catch (error) {
+      console.error('加载用户区域设置失败:', error);
+      // 使用默认值，不显示错误给用户
+    }
+  };
 
   const handleLogout = () => {
     // Haptic feedback
@@ -127,6 +149,35 @@ export const ProfileScreen: React.FC = () => {
     Alert.alert(t('common.confirm'), t('alerts.feature_not_implemented'));
   };
 
+  // Handle region selection
+  const handleRegionPress = () => {
+    triggerHaptic();
+    setShowRegionModal(true);
+  };
+
+  // Handle region change
+  const handleRegionChange = async (newRegion: UserRegionCode) => {
+    try {
+      setRegionLoading(true);
+      await UserRegionPreferences.updateCurrentRegion(newRegion);
+      setCurrentRegion(newRegion);
+      setShowRegionModal(false);
+      
+      // 显示成功提示
+      Alert.alert(
+        t('common.success'),
+        t('profile.region_updated_successfully', { 
+          region: UserRegionPreferences.getRegionDisplayName(newRegion, currentLanguage)
+        })
+      );
+    } catch (error) {
+      console.error('更新用户区域失败:', error);
+      Alert.alert(t('common.error'), t('profile.region_update_failed'));
+    } finally {
+      setRegionLoading(false);
+    }
+  };
+
   // Debug permission trigger (hidden feature)
   const handleDebugTap = () => {
     setDebugTapCount(prev => {
@@ -157,7 +208,7 @@ export const ProfileScreen: React.FC = () => {
       icon: 'shield-checkmark-outline' as keyof typeof Ionicons.glyphMap,
       onPress: () => {
         triggerHaptic();
-        Alert.alert(t('common.confirm'), t('alerts.feature_not_implemented'));
+        navigation.navigate('Terms', { type: 'privacy' });
       },
     },
   ];
@@ -184,10 +235,8 @@ export const ProfileScreen: React.FC = () => {
       id: 'region',
       title: t('profile.region'),
       icon: 'location-outline' as keyof typeof Ionicons.glyphMap,
-      onPress: () => {
-        triggerHaptic();
-        Alert.alert(t('common.confirm'), t('alerts.feature_not_implemented'));
-      },
+      value: `${UserRegionPreferences.getRegionIcon(currentRegion)} ${UserRegionPreferences.getRegionDisplayName(currentRegion, currentLanguage)}`,
+      onPress: handleRegionPress,
     },
     {
       id: 'appearance',
@@ -226,7 +275,7 @@ export const ProfileScreen: React.FC = () => {
       icon: 'document-text-outline' as keyof typeof Ionicons.glyphMap,
       onPress: () => {
         triggerHaptic();
-        Alert.alert(t('common.confirm'), t('alerts.feature_not_implemented'));
+        navigation.navigate('Terms', { type: 'terms' });
       },
     },
   ];
@@ -436,6 +485,13 @@ export const ProfileScreen: React.FC = () => {
       <PermissionDebugModal 
         visible={showPermissionDebug}
         onClose={() => setShowPermissionDebug(false)}
+      />
+      
+      {/* Region Switch Modal */}
+      <RegionSwitchModal
+        visible={showRegionModal}
+        onClose={() => setShowRegionModal(false)}
+        onRegionChanged={handleRegionChange}
       />
     </View>
   );

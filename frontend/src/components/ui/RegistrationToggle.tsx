@@ -118,7 +118,7 @@ export const RegistrationToggle: React.FC<RegistrationToggleProps> = ({
         <Animated.View style={styles.content}>
           {showIcon && (
             <Ionicons
-              name={isActive ? "checkmark-circle" : "radio-button-off"}
+              name={isActive ? "checkmark-circle" : "ellipse-outline"}
               size={14}
               color={
                 isActive

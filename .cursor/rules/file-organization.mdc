@@ -1,4 +1,4 @@
-# VitaGlobal 文件组织规范
+# PomeloX 文件组织规范
 
 ## 项目根目录文件
 
@@ -8,7 +8,7 @@
 - [PRD.md](mdc:PRD.md) - 产品需求，开发指南
 - [API_DOC.md](mdc:API_DOC.md) - 接口规范，前后端契约
 - [DB_SCHEMA.md](mdc:DB_SCHEMA.md) - 数据库设计，后端开发参考
-- [vitaglobal.md](mdc:vitaglobal.md) - 原始需求文档，历史记录
+- [pomeloX.md](mdc:pomeloX.md) - 原始需求文档，历史记录
 
 ## 推荐的项目结构
 
@@ -43,7 +43,7 @@
 ### 前端项目结构 (iOS)
 ```
 /ios
-  /VitaGlobal
+  /PomeloX
     /Views          # SwiftUI 视图
       /Auth         # 认证相关视图
       /Home         # 主页视图

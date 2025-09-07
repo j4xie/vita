@@ -16,6 +16,7 @@
     "done": "完成",
     "retry": "重试",
     "close": "关闭",
+    "privacy_policy": "隐私政策",
     "brand_name": "PomeloX",
     "filter": "筛选，已选 {{count}} 项",
     "filterHint": "可点按打开筛选面板",
@@ -27,12 +28,38 @@
     "select_school": "选择学校",
     "select_organization": "选择组织",
     "search_schools": "搜索学校...",
+    "permission_refreshed": "权限已刷新",
+    "permission_refresh_success_msg": "用户权限信息已重新获取",
+    "refresh_failed": "刷新失败",
+    "refresh_error": "错误: {{error}}",
+    "signin_failed": "签到失败",
+    "signout_failed": "签退失败",
+    "permission_denied": "权限不足",
+    "user_info_incomplete": "用户信息不完整，请重新登录",
+    "no_permission_for_user": "您没有权限操作该用户",
+    "network_error_retry": "网络错误，请检查连接后重试",
+    "try_again_later": "请稍后重试",
+    "cannot_identify_user": "无法识别用户身份，请重试或联系管理员",
+    "cannot_get_operator_info": "无法获取操作用户信息，请重新登录或刷新页面",
+    "network_error_try_later": "网络错误，请稍后重试",
+    "status_synced": "状态已同步",
+    "status_sync_msg": "检测到您已处于签到状态，现在可以进行签退操作",
+    "status_abnormal": "状态异常",
+    "backend_data_error": "后端数据异常，请联系管理员",
+    "status_sync_failed": "状态同步失败",
+    "status_sync_failed_msg": "无法同步后端状态，请重新加载页面",
+    "operation_error": "操作异常，请刷新页面后重试",
+    "condition_not_met": "{{operation}}条件不满足",
+    "unknown": "未知",
     "network_timeout": "网络请求超时，请重试",
     "server_connection_failed": "服务器连接失败，请稍后重试",
     "load_failed": "加载失败，请检查网络后重试",
     "operation_failed": "操作失败",
     "retry_later": "请稍后重试",
     "feature_developing": "功能开发中",
+    "pull_to_refresh": "下拉刷新",
+    "refreshing": "正在刷新...",
+    "refresh_completed": "✓ 刷新完成",
     "estimated_development_time": "预计开发时间：2-3周",
     "will_notify_when_ready": "完成后将通过推送通知",
     "got_it": "我知道了",
@@ -42,7 +69,15 @@
     "list": "列表",
     "grid": "网格",
     "listView": "列表视图",
-    "gridView": "网格视图"
+    "gridView": "网格视图",
+    "gps_location": "GPS定位",
+    "ip_address": "IP地址",
+    "high_confidence": "高置信度",
+    "medium_confidence": "中等置信度",
+    "scroll_to_submit": "滑动到底部提交",
+    "english_name": "英文名",
+    "organization": "组织",
+    "school": "学校"
   },
   "language": {
     "selection": {
@@ -151,6 +186,7 @@
       "register_link": "立即注册",
       "skip": "跳过"
     },
+    "guest_prompt": "点击访问完整功能",
     "register": {
       "choice_title": "选择注册方式",
       "join_pomelo": "加入 PomeloX",
@@ -178,7 +214,7 @@
       "and": "和",
       "success_title": "注册成功",
       "success_message": "恭喜您注册成功！欢迎加入PomeloX",
-      "auto_login_success": "注册成功并已自动登录！欢迎加入PomeloX",
+      "auto_login_success": "注册成功！欢迎使用PomeloX",
       "success_please_login": "注册成功！请前往登录页面使用您的账号登录",
       "processing_registration": "正在处理注册信息...",
       "auto_login_processing": "正在自动登录...",
@@ -187,11 +223,13 @@
       "privacy": {
         "title": "隐私协议",
         "subtitle": "请仔细阅读以下隐私政策，了解我们如何收集和使用您的个人信息",
+        "subtitle_simple": "隐私政策",
         "accept_button": "我同意并继续",
+        "accept_simple": "同意",
         "decline_button": "不同意",
-        "content": "欢迎使用 PomeloX 应用程序。我们非常重视您的隐私权。本隐私政策旨在向您说明我们如何收集、使用、存储和保护您的个人信息。\n\n## 我们收集的信息\n\n为了为您提供最佳的服务体验，我们需要收集以下个人信息：\n\n• **身份信息**：法定姓名、英文昵称，用于身份验证和个性化服务\n• **联系信息**：电子邮箱地址和手机号码，用于账户验证、重要通知和安全提醒\n• **学籍信息**：所属大学，用于匹配相关活动和服务\n• **基本资料**：性别等基础信息，用于提供个性化推荐\n\n## 信息使用目的\n\n您的个人信息将仅用于以下合法目的：\n\n• 创建和管理您的用户账户\n• 为您提供活动报名和管理服务\n• 发送重要的服务通知和安全提醒\n• 改进我们的服务质量和用户体验\n• 确保平台安全和防止欺诈行为\n\n## 第三方服务\n\n为了提供完整的服务，我们可能使用以下第三方服务：\n\n• **Firebase Cloud Messaging**：用于推送重要活动通知\n• **阿里云**：用于短信验证码发送服务\n• **Cloudflare**：用于安全存储用户上传的图片和文件\n\n这些服务提供商均遵循严格的数据保护标准，我们不会向其提供超出服务必需的个人信息。",
+        "content": "欢迎使用 PomeloX 应用程序。我们非常重视您的隐私权。本隐私政策旨在向您说明我们如何收集、使用、存储和保护您的个人信息。\n\n## 服务提供方信息\n\n**中国境内服务提供者：** 上海西柚智联科技有限公司\n**境外协同主体：** American Promotion Company, Inc.（作为境外协同方）\n\n## 我们收集的信息\n\n为了为您提供最佳的服务体验，我们需要收集以下个人信息：\n\n• **身份信息**：法定姓名、英文昵称，用于身份验证和个性化服务\n• **联系信息**：电子邮箱地址和手机号码，用于账户验证、重要通知和安全提醒\n• **学籍信息**：所属大学，用于匹配相关活动和服务\n• **基本资料**：性别等基础信息，用于提供个性化推荐\n• **活动信息**：活动报名、签到签退、志愿者服务记录等\n\n## 信息使用目的\n\n您的个人信息将仅用于以下合法目的：\n\n• 创建和管理您的用户账户\n• 为您提供活动报名和管理服务\n• 发送重要的服务通知和安全提醒\n• 改进我们的服务质量和用户体验\n• 确保平台安全和防止欺诈行为\n• AI智能问答和留学攻略服务\n• 安心计划和志愿者协同服务\n\n## 第三方服务\n\n为了提供完整的服务，我们可能使用以下第三方服务：\n\n• **Gmail SMTP**：用于发送验证邮件和活动通知\n• **Cloudflare R2**：用于安全存储活动图片和用户头像\n• **Firebase FCM**：用于推送重要活动提醒\n• **Google OAuth**：可选的第三方登录方式\n\n这些服务提供商均遵循严格的数据保护标准，我们不会向其提供超出服务必需的个人信息。",
         "data_usage_highlight": "您的法定姓名、电话和邮箱仅用于身份验证和必要通知，我们承诺不会将这些敏感信息用于营销目的或与第三方分享。",
-        "data_protection": "## 数据保护承诺\n\n我们采用业界标准的安全措施保护您的个人信息：\n\n• 所有数据传输均采用 HTTPS 加密\n• 密码使用安全哈希算法存储\n• 定期进行安全审计和漏洞检测\n• 严格限制内部人员对个人信息的访问权限\n\n## 您的权利\n\n根据相关法律法规，您对个人信息享有以下权利：\n\n• **查看权**：随时查看我们收集的您的个人信息\n• **修改权**：更正不准确或过时的个人信息\n• **删除权**：要求删除您的个人信息和账户\n• **限制处理权**：限制我们对您信息的处理方式\n• **数据可移植权**：获取您个人信息的副本\n\n## 数据保留\n\n• **账户信息**：在您使用服务期间保留\n• **活动记录**：保留2年用于服务改进\n• **通信记录**：保留1年用于客服支持\n• **已删除数据**：30天内从所有系统中永久删除\n\n## 联系我们\n\n如有任何隐私相关问题，请通过以下方式联系我们：\n\n• 邮箱：info@americanpromotioncompany.com\n• 客服支持：通过应用内客服联系\n\n继续注册即表示您已理解并同意上述隐私政策条款。",
+        "data_protection": "## 跨境数据传输\n\n为了提供服务，您的个人信息可能传输至境外协同方American Promotion Company, Inc.（美国）。传输目的包括：服务交付、客服技术支持、备份与安全。我们将依据《个人信息保护法》等规定采取适当保护措施。\n\n## 数据保护承诺\n\n我们采用业界标准的安全措施保护您的个人信息：\n\n• 所有数据传输均采用 HTTPS 加密\n• 密码使用安全哈希算法存储\n• 定期进行安全审计和漏洞检测\n• 严格限制内部人员对个人信息的访问权限\n• 数据加密存储和访问控制\n\n## 您的权利\n\n根据相关法律法规，您对个人信息享有以下权利：\n\n• **知情权**：了解个人信息处理情况\n• **查看权**：随时查看我们收集的您的个人信息\n• **修改权**：更正不准确或过时的个人信息\n• **删除权**：要求删除您的个人信息和账户\n• **限制处理权**：限制我们对您信息的处理方式\n• **数据可移植权**：获取您个人信息的副本\n• **撤回同意权**：撤回对个人信息处理的同意\n\n## 数据保留\n\n• **账户信息**：在您使用服务期间保留\n• **活动记录**：保留24个月用于服务改进\n• **交易记录**：按法定期限保留\n• **已删除数据**：30天内从所有系统中永久删除\n\n## 未成年人保护\n\n• 14岁以下用户需监护人明示同意\n• 对14-18岁用户给予适当保护\n• 采用更严格的安全措施\n\n## 联系我们\n\n如有任何隐私相关问题，请通过以下方式联系我们：\n\n• **客服技术**：info@americanpromotioncompany.com\n• **法律合规**：dev@americanpromotioncompany.com\n• 客服时间：周一至周五 9:00-18:00（北京时间）\n\n继续注册即表示您已理解并同意上述隐私政策条款。",
         "please_scroll": "请滚动阅读完整协议",
         "read_complete": "已阅读完成",
         "scroll_to_accept": "请先阅读完整协议"
@@ -199,12 +237,25 @@
       "verification": {
         "title": "短信验证",
         "verify_phone": "验证您的手机号",
-        "verify_and_register": "验证并注册"
+        "verify_and_register": "验证并注册",
+        "code_sent_to": "我们已向 +{{countryCode}} {{phone}} 发送验证码",
+        "resend_code": "重新发送验证码",
+        "resend_countdown": "重新发送 ({{seconds}}s)"
       },
       "form": {
         "progress": "第 {{current}} 步，共 {{total}} 步",
         "basic_info": "基本信息",
         "basic_info_desc": "请填写您的基本信息",
+        "area_detection_label": "地域检测",
+        "area_detecting": "正在检测您的位置...",
+        "area_detected_china": "已检测到您位于中国",
+        "area_detected_usa": "已检测到您位于美国",
+        "area_detection_method": "通过{{method}}检测，{{confidence}}",
+        "area_change_manual": "手动修改",
+        "area_manual_select": "请手动选择您的地域：",
+        "area_detection_failed": "无法自动检测地域，请手动选择：",
+        "area_china": "中国",
+        "area_usa": "美国",
         "account_setup": "账号设置",
         "account_setup_desc": "设置您的登录账号和密码",
         "contact_info": "联系方式",
@@ -341,6 +392,7 @@
     },
     "login_required": "请先登录",
     "login_required_message": "需要登录后才能收藏活动",
+    "login_required_to_view_count": "请登录后查看报名人数",
     "volunteer_login_required_message": "需要登录后才能查看志愿者信息和签到签退"
   },
   "navigation": {
@@ -361,11 +413,14 @@
     "headers": {
       "back": "返回",
       "accountSecurity": "账户与安全",
-      "notifications": "通知",
-      "general": "通用",
-      "aboutSupport": "关于与支持",
-      "language": "语言",
-      "edit_profile": "编辑资料"
+      "notifications": "通知设置",
+      "general": "通用设置",
+      "aboutSupport": "关于和支持",
+      "language": "语言设置",
+      "edit_profile": "编辑资料",
+      "layout_selection": "布局选择",
+      "privacy_policy": "隐私政策",
+      "terms_of_service": "服务条款"
     }
   },
   "activities": {
@@ -394,10 +449,14 @@
       "available": "可报名",
       "availableOnly": "仅显示可报名活动"
     },
+    "peopleRegistered": "人已报名",
+    "peopleRegisteredUnlimited": "人已报名",
     "list": {
       "title": "精彩活动",
       "empty": "暂无活动",
-      "refresh": "下拉刷新"
+      "refresh": "下拉刷新",
+      "refreshing": "正在刷新...",
+      "refresh_complete": "✓ 刷新完成"
     },
     "detail": {
       "register": "立即报名",
@@ -429,6 +488,16 @@
   "profile": {
     "title": "个人中心",
     "username": "用户名",
+    "region": "地区与时区",
+    "region_updated_successfully": "地区已更新为 {{region}}",
+    "region_update_failed": "地区更新失败，请稍后重试",
+    "region_switch": {
+      "title": "选择地区",
+      "subtitle": "切换到不同地区将使用相应的隐私政策",
+      "privacy_notice": "切换地区时如未签署相应隐私政策，将需要重新签署",
+      "privacy_signed": "已签署",
+      "loading": "处理中..."
+    },
     "sections": {
       "accountSecurity": "账户与安全",
       "notificationsGeneral": "通知与通用",
@@ -714,6 +783,34 @@
       "peer_support_desc": "与其他学生建立联系和相互支持"
     },
     "volunteer": {
+      "history": {
+        "title": "志愿者历史记录",
+        "subtitle": "查看 {{userName}} 的打卡记录",
+        "selectTimeRange": "选择时间范围",
+        "recordsList": "打卡记录",
+        "recordsFound": "共{{count}}条记录",
+        "loading": "加载中...",
+        "loadFailed": "加载失败",
+        "loadError": "加载出错",
+        "noRecords": "暂无打卡记录",
+        "completed": "已完成",
+        "inProgress": "进行中",
+        "checkInTime": "签到时间",
+        "checkOutTime": "签退时间",
+        "workDuration": "工作时长",
+        "operator": "操作人",
+        "timeRange": {
+          "1day": "1天",
+          "3days": "3天",
+          "7days": "7天",
+          "30days": "30天"
+        },
+        "overtime": {
+          "warning": "可能有问题",
+          "abnormal": "异常记录",
+          "overHours": "超过12小时"
+        }
+      },
       "searchPlaceholder": "请输入手机号码",
       "phoneRequired": "请输入手机号码",
       "phoneFormatError": "请输入正确的手机号格式",
@@ -754,7 +851,12 @@
       "serviceDuration": "服务时长",
       "signOutNote": "感谢您的志愿服务",
       "signingOut": "签出中...",
-      "rating": "评分"
+      "rating": "评分",
+      "staffViewHint": "内部员工仅可查看个人数据，无法执行签到签退操作",
+      "viewOnly": "仅查看",
+      "noPermission": "无权限操作",
+      "historyRecords": "历史记录",
+      "viewHistory": "查询"
     },
     "checkout": {
       "success_title": "✅ 志愿者签退成功",
@@ -781,6 +883,40 @@
     "scanQRCode": "扫描二维码",
     "scanComingSoon": "扫码功能即将上线",
     "searchFor": "搜索 \"{{phone}}\"",
+    "personal": {
+      "title": "我的志愿者工作记录",
+      "subtitle": "内部员工只能查看个人工作时长和记录",
+      "loading": "加载中...",
+      "no_data": "暂无志愿者工作记录",
+      "current_status": {
+        "signed_in": "当前已签到",
+        "signed_out": "当前未签到",
+        "no_records": "无记录"
+      },
+      "stats": {
+        "total_work_hours": "总志愿工作时长",
+        "total_records": "签到记录总数"
+      },
+      "recent_record": {
+        "title": "最近工作记录",
+        "checkin_time": "签到时间:",
+        "checkout_time": "签退时间:",
+        "work_duration": "工作时长:",
+        "status": "状态:",
+        "working": "正在工作中...",
+        "hours": "小时",
+        "minutes": "分钟"
+      },
+      "history": {
+        "show_more": "查看历史记录 ({{count}}条)",
+        "hide": "收起历史记录",
+        "title": "历史工作记录",
+        "more_records_hint": "还有 {{count}} 条记录...",
+        "work_duration_label": "工作时长:",
+        "end_time_until": "至",
+        "not_checked_out": "未签退"
+      }
+    },
     "subtitle": "全方位守护海外学子安全",
     "tabs": {
       "plan": "安心计划",
@@ -793,7 +929,26 @@
     "go_to_settings": "去设置",
     "android_permission_instruction": "请在设置 > 应用权限 > 位置信息中开启定位权限",
     "check_in_now": "立即签到",
-    "permission_denied": "定位权限被拒绝"
+    "permission_denied": "定位权限被拒绝",
+    "mismatch": {
+      "title": "位置变化提醒",
+      "subtitle": "检测到您的位置发生了变化",
+      "current_location": "检测到的位置",
+      "settings_region": "当前设置",
+      "recommendation": "建议更新地区设置以获得最佳体验和相应的隐私保护",
+      "ignore": "先忽略",
+      "go_to_settings": "去设置"
+    }
+  },
+  "regions": {
+    "china": {
+      "name": "中国",
+      "description": "适用中华人民共和国相关法律法规"
+    },
+    "usa": {
+      "name": "美国", 
+      "description": "适用美国联邦和州相关法律法规"
+    }
   },
   "qr": {
     "scanning": {
@@ -845,8 +1000,35 @@
       "already_signed_in_title": "已签到",
       "already_signed_in_message": "您已经签到过该活动了",
       "invalid_activity_qr_message": "无效的活动二维码",
+      "user_scan_select_operation": "选择操作",
+      "volunteer_checkin_checkout": "志愿者签到/签退",
+      "activity_checkin": "活动签到",
+      "user_identity_info": "用户身份信息",
+      "select_activity_prompt": "请选择一个活动",
+      "select_activity_hint": "提示",
+      "volunteer_checkin_success": "签到成功",
+      "volunteer_checkout_success": "签退成功", 
+      "volunteer_checkin_failed": "签到失败",
+      "volunteer_checkout_failed": "签退失败",
+      "volunteer_already_checkedin": "该志愿者已经签到，请先签退",
+      "volunteer_not_checkedin": "该志愿者尚未签到，无法签退",
+      "network_error_retry": "网络错误，请重试",
+      "volunteer_checkin_success_msg": "{{name}} 签到成功\\n时间：{{time}}",
+      "volunteer_checkout_success_msg": "{{name}} 签退成功\\n工作时长：{{duration}}\\n签退时间：{{time}}",
+      "volunteer_checkin_failed_msg": "网络错误，请重试",
+      "volunteer_checkout_failed_msg": "网络错误，请重试",
+      "activity_signin_success": "{{name}} 已成功签到活动：{{activity}}",
+      "activity_signin_failed_msg": "网络错误，请重试",
       "unknown_status_message": "未知的报名状态",
-      "check_status_failed": "检查报名状态失败"
+      "check_status_failed": "检查报名状态失败",
+      "user_scan_result": "扫码结果",
+      "available_actions": "可用操作",
+      "manage_volunteer_hours": "管理志愿者工时",
+      "checkin_for_activity": "为用户签到活动",
+      "no_actions_available": "暂无可用操作",
+      "contact_admin_for_permissions": "如需更多权限，请联系管理员",
+      "continue_scanning": "继续扫描",
+      "scan_success": "扫码成功"
     },
     "actions": {
       "save": "保存",
@@ -907,7 +1089,9 @@
       "creation_failed": "创建失败",
       "card_creation_error": "创建会员卡时发生错误",
       "switch_failed": "切换失败",
-      "organization_switch_error": "切换组织时发生错误"
+      "organization_switch_error": "切换组织时发生错误",
+      "permission_denied": "权限不足",
+      "admin_only_feature": "只有管理员可以扫描用户身份码"
     }
   },
   "volunteer": {
@@ -946,10 +1130,12 @@
     "checked_in": "已签到",
     "checked_out": "已签退",
     "not_checked_in": "未签到",
+    "check_status_label": "签到状态:",
     "check_in_time_label": "签到时间:",
     "check_out_time_label": "签退时间:",
     "today_duration_label": "今日时长:",
     "total_duration_label": "总计时长:",
+    "current_duration_label": "当前工作时长:",
     "last_check_in_label": "上次签到:",
     "last_check_out_label": "上次签退:",
     "check_in_button": "签到",
@@ -998,7 +1184,6 @@
     "people": "人"
   },
   "activityDetail": {
-    "peopleRegistered": "人已报名",
     "activityTime": "活动时间",
     "activityLocation": "活动地点",
     "activityDetails": "活动详情",
@@ -1023,7 +1208,15 @@
     "checkin_failed_message": "签到失败，请稍后重试",
     "checkin_now": "立即签到",
     "checked_in": "已签到",
-    "unavailable": "不可用"
+    "unavailable": "不可用",
+    "login_required_to_register": "请登录后进行报名",
+    "already_checked_in": "您已经签到过这个活动了",
+    "checkin_time_invalid": "签到时间未到或已过期",
+    "not_registered_cannot_checkin": "您尚未报名此活动，无法签到",
+    "scan_failed": "扫码失败",
+    "scan_failed_message": "请重新扫描活动签到二维码",
+    "open_scanner_failed": "打开扫码失败",
+    "open_scanner_failed_message": "无法启动扫码功能，请检查相机权限"
   },
   "volunteerCheckIn": {
     "searchVolunteer": "查询志愿者",
@@ -1225,11 +1418,50 @@
   "legal": {
     "terms": {
       "title": "服务条款",
-      "full_content": "西柚-PomeloX 服务条款\n\n生效日期：2025年8月15日\n版本：v1.0\n\n1. 服务概述\n\n欢迎使用西柚-PomeloX！我们是专为赴美留学生和家长打造的一站式服务与安全平台。从行前准备到在地生活，从活动报名到紧急协同，我们致力于为留学全周期提供专业服务。\n\n2. 服务范围\n\n核心功能：\n• AI智能问答：留学攻略、签证选课租房指南\n• 安心计划：失联应急响应、志愿者协查\n• 接机新生服务：免费大巴预约、付费接送机\n• 本地生活折扣：商家优惠券、积分体系\n• 二手求职平台：信息流发布、聊天撮合\n• 校友圈：邮箱验证、高信用内推\n• 活动管理：活动发布、报名管理、二维码核销\n• 志愿者管理：签到签出、工时统计\n\n3. 用户注册与责任\n\n注册要求：\n• 年满14周岁（14周岁以下需监护人同意）\n• 提供真实、准确、完整的注册信息\n• 拥有有效的学校邮箱或推荐码\n• 接受本服务条款和隐私政策\n\n用户责任：\n• 保护账户密码安全，不得向他人透露\n• 对账户下的所有活动承担责任\n• 及时更新账户信息，确保信息准确性\n\n4. 行为规范\n\n您承诺：\n• 遵守中华人民共和国法律法规\n• 尊重他人的合法权益和隐私\n• 提供真实、准确的个人信息\n• 不进行任何可能损害平台或其他用户的行为\n\n禁止行为：\n• 发布违法、有害、威胁或不当的内容\n• 传播虚假信息、谣言或误导性内容\n• 侵犯他人知识产权、隐私权\n• 尝试破解、攻击或干扰系统\n• 未经授权进行商业宣传\n\n5. 知识产权\n\n西柚-PomeloX 平台的所有内容，包括软件代码、界面设计、商标标识等，均受知识产权法保护，归西柚-PomeloX所有。\n\n6. 免责声明\n\n服务现状：\n• 服务按现状提供，不保证完全无中断、无错误\n• 不保证第三方活动的质量或安全性\n• 不承担用户因使用服务造成的间接损失\n\n责任限制：\n在法律允许的最大范围内，我们的赔偿责任不超过您直接遭受的实际损失，且总额不超过100美元。\n\n7. 争议解决\n\n如有争议，建议通过以下方式解决：\n• 发送邮件至：info@americanpromotioncompany.com\n• 通过应用内客服系统联系\n• 协商不成的，可向有管辖权的人民法院提起诉讼\n\n8. 条款变更\n\n我们可能根据业务发展修改本条款，重要变更将提前30天通知您。继续使用服务即视为接受新条款。\n\n9. 联系方式\n\n技术支持：info@americanpromotioncompany.com\n法律事务：dev@americanpromotioncompany.com\n客服时间：周一至周五 9:00-18:00 (北京时间)\n\n---\n\n感谢您选择 西柚-PomeloX\n\n本服务条款受中华人民共和国法律管辖。我们致力于为海外中国学生提供优质的服务体验。"
+      "full_content": "西柚-PomeloX 服务条款与隐私政策（合订版）\n\n版本：v1.1 | 生效日期：2025年9月3日\n\n【合同相对方信息】\n\n服务提供者（中国）：上海西柚智联科技有限公司\n境外协同主体（美国）：American Promotion Company, Inc.（作为境外协同方）\n\n\n第一部分：服务条款\n\n1. 定义与适用范围\n\n本平台为\"西柚-PomeloX\"及其运营主体，提供信息与协同服务，不直接提供警务、医疗与公共安全服务。遇紧急危险请联系当地紧急电话（110/120/911）。\n\n2. 服务功能\n\n• AI 智能问答：留学攻略、签证/选课/租房信息建议（仅供参考）\n• 安心计划：失联应急协同、志愿者线索收集与联络\n• 接机与用车：免费大巴预约、付费接送机/合乘\n• 活动管理：活动发布、报名管理、签到签退与二维码核销\n• 志愿者管理：签到签出、工时统计与证明\n• 本地生活折扣：商家优惠、积分与兑换\n• 二手/求职撮合：信息发布与聊天撮合\n• 校友圈：邮箱验证、信誉内推\n\n3. 注册与资格\n\n• 年满14周岁方可自行注册；不满14周岁须由监护人代理\n• 提供真实、准确、完整的注册信息\n• 持有有效学校邮箱或推荐码\n• 妥善保管账号与密码\n\n4. 用户行为规范\n\n禁止行为：\n• 发布违法、有害、诽谤、仇恨、歧视内容\n• 侵害他人知识产权、隐私权等合法权益\n• 进行逆向工程、批量爬取、恶意扫描\n• 未经授权商业推广、群发广告\n• 危及活动安全，违反治安与交通管理规则\n\n\n第二部分：隐私政策\n\n1. 信息收集\n\n收集的信息类别：\n• 账号与身份：姓名/昵称、头像、学校邮箱/手机号\n• 行程与活动：航班信息、接机预约、活动报名记录\n• 应急与协同：紧急联系人、失联线索、志愿者联络\n• 设备与日志：设备标识符、IP、操作日志\n• 交易与支付：订单、金额、支付流水号\n• 用户内容：聊天、评论、图片/视频\n\n2. 使用目的\n\n• 创建和管理用户账户\n• 提供活动报名和志愿者管理服务\n• 发送重要通知和安全提醒\n• AI智能问答和留学攻略服务\n• 安心计划和志愿者协同服务\n• 改进服务质量和用户体验\n\n3. 跨境传输\n\n境外接收方：American Promotion Company, Inc.（作为境外协同方，美国）\n传输目的：服务交付、客服/技术支持、备份与安全\n合规措施：依据《个人信息保护法》等规定采取适当保护措施\n\n4. 您的权利\n\n• 知情权：了解个人信息处理情况\n• 访问权：查看我们收集的个人信息\n• 更正权：更正不准确的个人信息\n• 删除权：要求删除个人信息和账户\n• 限制处理权：限制信息处理方式\n• 数据可携带权：获取个人信息副本\n\n5. 未成年人保护\n\n• 14岁以下须监护人明示同意\n• 对14-18岁青少年给予适当保护\n• 采用更严格的安全措施\n\n6. 数据安全\n\n• 数据传输HTTPS加密\n• 密码安全哈希算法存储\n• 严格访问控制与权限管理\n• 定期安全审计和漏洞检测\n• 数据加密存储和访问控制\n\n争议解决\n\n中国境内用户：适用中国法律，由有管辖权的人民法院管辖\n美国境内用户：适用居住州或加利福尼亚州法律，采用仲裁方式解决争议\n\n联系我们\n\n• 客服/技术：info@americanpromotioncompany.com\n• 法律/合规：dev@americanpromotioncompany.com\n• 服务时间：周一至周五 9:00-18:00（北京时间）\n\n\n感谢您选择西柚-PomeloX\n\n我们致力于为中国留学生提供安全、可靠的服务平台，严格遵守法律法规，保护您的合法权益。"
     },
     "privacy": {
       "title": "隐私政策", 
-      "full_content": "西柚-PomeloX 隐私政策\n\n生效日期：2025年8月15日\n版本：v1.0\n\n1. 政策概述\n\n欢迎使用西柚-PomeloX！我们深知个人信息保护的重要性，承诺严格遵守《中华人民共和国个人信息保护法》等相关法律法规。\n\n2. 信息收集\n\n您主动提供的信息：\n• 注册信息：法定姓名、英文昵称、所属学校、学校邮箱\n• 联系信息：中国或美国电话号码\n• 身份验证：推荐码信息、短信验证码\n• 活动相关：活动报名信息、个人偏好设置\n• 志愿服务：志愿活动参与记录、签到时间\n\n自动收集的信息：\n• 设备信息：设备型号、操作系统版本、应用版本\n• 使用数据：应用使用统计、功能点击记录\n• 网络信息：IP地址（仅用于技术支持和安全防护）\n• 推送信息：设备推送token（用于发送通知）\n\n3. 信息使用目的\n\n我们收集您的个人信息仅用于：\n• 创建和管理您的用户账户\n• 处理活动报名和志愿者管理\n• 提供AI智能问答和留学攻略服务\n• 发送重要的服务通知和安全提醒\n• 分析用户行为，改进产品功能\n• 防范欺诈和滥用行为，保护用户安全\n\n4. 第三方服务集成\n\n为提供完整服务，我们集成以下第三方服务：\n• Gmail SMTP：用于发送验证邮件和通知\n• Cloudflare R2：安全存储活动图片和用户头像\n• Firebase FCM：发送重要通知和活动提醒\n• Google OAuth：可选的第三方登录方式\n\n5. 用户权利\n\n根据法律法规，您享有以下权利：\n• 知情权：了解我们收集的个人信息类型和使用目的\n• 访问权：查看我们收集的关于您的个人信息\n• 更正权：更正不准确的个人信息\n• 删除权：请求删除您的个人信息和账户\n• 限制处理权：限制某些个人信息的处理\n• 数据携带权：以结构化格式获取个人数据\n\n6. 未成年人保护\n\n• 14岁以下：必须获得监护人同意\n• 14-18岁：建议在监护人指导下使用\n• 18岁以上：可独立使用所有功能\n\n我们对未成年人信息采用更严格的安全措施。\n\n7. 数据安全措施\n\n技术安全：\n• 采用AES-256加密算法保护敏感数据\n• 全站HTTPS加密传输\n• 严格的权限管理和身份验证\n• 24/7安全监控和异常检测\n\n管理安全：\n• 员工仅能访问工作必需的数据\n• 记录所有数据访问和操作\n• 定期进行安全风险评估\n\n8. 数据存储\n\n• 存储位置：主要存储在中国境内服务器\n• 存储期限：仅在必要期间内保存\n• 删除机制：超出期限后自动删除或匿名化\n\n9. 联系我们\n\n如有隐私相关问题，请联系：\n• 邮箱：info@americanpromotioncompany.com\n• 数据保护负责人：dev@americanpromotioncompany.com\n• 客服时间：周一至周五 9:00-18:00 (北京时间)\n\n10. 政策更新\n\n我们可能根据法律变化或业务发展修改本政策，重要更新将通过应用内通知、邮件等方式通知您。\n\n---\n\n感谢您的信任\n\n保护您的隐私是我们的责任，也是我们与您建立信任关系的基础。如有任何建议或意见，欢迎反馈。"
+      "full_content": "西柚-PomeloX 隐私政策\n\n生效日期：2025年8月15日\n版本：v1.0\n\n1. 政策概述\n\n欢迎使用西柚-PomeloX！我们深知个人信息保护的重要性，承诺严格遵守《中华人民共和国个人信息保护法》等相关法律法规。\n\n2. 信息收集\n\n您主动提供的信息：\n• 注册信息：法定姓名、英文昵称、所属学校、学校邮箱\n• 联系信息：中国或美国电话号码\n• 身份验证：推荐码信息、短信验证码\n• 活动相关：活动报名信息、个人偏好设置\n• 志愿服务：志愿活动参与记录、签到时间\n\n自动收集的信息：\n• 设备信息：设备型号、操作系统版本、应用版本\n• 使用数据：应用使用统计、功能点击记录\n• 网络信息：IP地址（仅用于技术支持和安全防护）\n• 推送信息：设备推送token（用于发送通知）\n\n3. 信息使用目的\n\n我们收集您的个人信息仅用于：\n• 创建和管理您的用户账户\n• 处理活动报名和志愿者管理\n• 提供AI智能问答和留学攻略服务\n• 发送重要的服务通知和安全提醒\n• 分析用户行为，改进产品功能\n• 防范欺诈和滥用行为，保护用户安全\n\n4. 第三方服务集成\n\n为提供完整服务，我们集成以下第三方服务：\n• Gmail SMTP：用于发送验证邮件和通知\n• Cloudflare R2：安全存储活动图片和用户头像\n• Firebase FCM：发送重要通知和活动提醒\n• Google OAuth：可选的第三方登录方式\n\n5. 用户权利\n\n根据法律法规，您享有以下权利：\n• 知情权：了解我们收集的个人信息类型和使用目的\n• 访问权：查看我们收集的关于您的个人信息\n• 更正权：更正不准确的个人信息\n• 删除权：请求删除您的个人信息和账户\n• 限制处理权：限制某些个人信息的处理\n• 数据携带权：以结构化格式获取个人数据\n\n6. 未成年人保护\n\n• 14岁以下：必须获得监护人同意\n• 14-18岁：建议在监护人指导下使用\n• 18岁以上：可独立使用所有功能\n\n我们对未成年人信息采用更严格的安全措施。\n\n7. 数据安全措施\n\n技术安全：\n• 采用AES-256加密算法保护敏感数据\n• 全站HTTPS加密传输\n• 严格的权限管理和身份验证\n• 24/7安全监控和异常检测\n\n管理安全：\n• 员工仅能访问工作必需的数据\n• 记录所有数据访问和操作\n• 定期进行安全风险评估\n\n8. 数据存储\n\n• 存储位置：主要存储在中国境内服务器\n• 存储期限：仅在必要期间内保存\n• 删除机制：超出期限后自动删除或匿名化\n\n9. 联系我们\n\n如有隐私相关问题，请联系：\n• 邮箱：info@americanpromotioncompany.com\n• 数据保护负责人：dev@americanpromotioncompany.com\n• 客服时间：周一至周五 9:00-18:00 (北京时间)\n\n10. 政策更新\n\n我们可能根据法律变化或业务发展修改本政策，重要更新将通过应用内通知、邮件等方式通知您。\n\n---\n\n感谢您的信任\n\n保护您的隐私是我们的责任，也是我们与您建立信任关系的基础。如有任何建议或意见，欢迎反馈。",
+      "content_china": "西柚-PomeloX 隐私政策（中国版）\n\n生效日期：2025年9月3日\n版本：v1.1\n\n服务提供者：上海西柚智联科技有限公司\n统一社会信用代码：91310112MAEQURTF0X\n注册地址：上海市闵行区春申路1955号13幢5层513室\n\n1. 政策概述\n\n我们严格遵守《中华人民共和国个人信息保护法》、《网络安全法》、《数据安全法》等相关法律法规，采用合法、正当、必要、诚信原则处理您的个人信息。\n\n2. 个人信息收集\n\n账号与身份信息：\n• 姓名/昵称、头像、学校邮箱/手机号\n• 学校/年级/专业、推荐码\n• 身份验证/邮箱验证结果\n\n活动与行程信息：\n• 航班/到站信息、接机预约\n• 活动报名、签到签退、核销记录\n\n志愿服务信息：\n• 签到签出、工时统计记录\n• 志愿者联络/反馈信息\n\n设备与日志信息：\n• 设备标识符、IP地址\n• 操作/安全/崩溃日志\n• Cookie/本地存储数据\n\n3. 个人信息使用目的及法律依据\n\n基于您的同意：\n• 创建和管理用户账户\n• 提供AI智能问答服务\n• 发送活动通知和提醒\n\n基于合同履行：\n• 处理活动报名和志愿者管理\n• 提供接机和用车服务\n• 处理本地生活折扣服务\n\n基于法定义务：\n• 网络安全防护和风险监控\n• 配合执法部门调查（依法进行）\n\n基于合法利益：\n• 改进产品功能和用户体验\n• 防范欺诈和恶意行为\n\n4. 个人信息共享与委托处理\n\n第三方服务集成（仅在必要范围内）：\n• Gmail SMTP：发送验证邮件\n• Cloudflare R2：存储图片和文件\n• Firebase FCM：推送通知服务\n\n跨境传输：\n向境外协同方（American Promotion Company, Inc.）传输个人信息用于技术支持时，将依据PIPL采取适当保护措施，包括签署标准合同条款和进行安全评估。\n\n5. 您的个人信息权利\n\n• 知情权：了解个人信息处理情况\n• 决定权：同意或撤回同意个人信息处理\n• 查阅权：查看我们处理的个人信息\n• 更正权：更正不准确的个人信息\n• 删除权：要求删除个人信息\n• 限制处理权：限制个人信息处理方式\n• 可携带权：获取个人信息副本\n\n权利行使方式：\n发送邮件至 info@americanpromotioncompany.com 或通过应用内联系我们。\n\n6. 未成年人个人信息保护\n\n• 不满14周岁：必须获得监护人明示同意\n• 14-18周岁：给予适当保护，建议监护人指导\n• 采用更严格的安全技术和管理措施\n\n7. 个人信息安全保护措施\n\n技术措施：\n• AES-256加密算法保护敏感数据\n• HTTPS加密传输\n• 访问权限控制和身份验证\n• 24小时安全监控\n\n管理措施：\n• 员工最小权限原则\n• 定期安全培训和审计\n• 数据访问日志记录\n• 安全事件应急响应机制\n\n8. 个人信息存储\n\n• 存储位置：主要在中国境内\n• 存储期限：为实现处理目的所必需的最短时间\n• 超期处理：自动删除或匿名化处理\n\n9. 联系我们\n\n如有个人信息保护相关问题，请联系：\n• 客服邮箱：info@americanpromotioncompany.com\n• 数据保护负责人：dev@americanpromotioncompany.com\n• 服务时间：周一至周五 9:00-18:00（北京时间）\n• 通讯地址：上海市闵行区春申路1955号13幢5层513室\n\n10. 政策更新\n\n如需修改本政策，我们将通过应用内通知、官网公告等方式告知您，重大变更将征求您的同意。\n\n本政策受中华人民共和国法律管辖。",
+      "content_usa": "PomeloX Privacy Policy (USA Version)\n\nEffective Date: September 3, 2025\nVersion: v1.1\n\nService Provider: American Promotion Company, Inc.\nAddress: 8988 CAMINITO FRESCO, LA JOLLA, CA 92037\n\n1. Policy Overview\n\nWe comply with applicable US federal and state privacy laws, including the California Consumer Privacy Act (CCPA), California Privacy Rights Act (CPRA), and Children's Online Privacy Protection Act (COPPA).\n\n2. Information We Collect\n\nPersonal Information:\n• Name/nickname, avatar, school email/phone\n• School/grade/major, referral codes\n• Identity verification results\n\nActivity & Travel Information:\n• Flight/arrival information, pickup reservations\n• Activity registrations, check-in/check-out records\n\nVolunteer Service Information:\n• Check-in/out records, hour tracking\n• Volunteer coordination feedback\n\nDevice & Usage Information:\n• Device identifiers, IP addresses\n• Operation/security/crash logs\n• Cookies/local storage data\n\n3. How We Use Your Information\n\nWith Your Consent:\n• Account creation and management\n• AI Q&A services\n• Activity notifications and reminders\n\nFor Contract Performance:\n• Activity registration and volunteer management\n• Airport pickup and transportation services\n• Local discount services\n\nFor Legitimate Interests:\n• Service improvement and user experience\n• Fraud prevention and security\n• Technical support and maintenance\n\n4. Information Sharing\n\nThird-Party Services (limited scope):\n• Gmail SMTP: Email delivery\n• Cloudflare R2: File storage\n• Firebase FCM: Push notifications\n\nWe do not sell your personal information.\n\n5. Your Privacy Rights\n\nUnder California Law (CCPA/CPRA):\n• Right to Know: What personal information we collect\n• Right to Access: Request copies of your personal information\n• Right to Delete: Request deletion of personal information\n• Right to Correct: Correct inaccurate personal information\n• Right to Opt-Out: Opt out of sale/sharing (we don't sell)\n• Right to Non-Discrimination: Equal service regardless of privacy choices\n\nTo exercise your rights:\nEmail us at info@americanpromotioncompany.com or contact us through the app.\n\n6. Children's Privacy (COPPA Compliance)\n\n• Under 13: We do not knowingly collect information from children under 13\n• 13-17: Parental guidance recommended\n• Enhanced protection measures for minors\n\n7. Data Security\n\nTechnical Safeguards:\n• AES-256 encryption for sensitive data\n• HTTPS encrypted transmission\n• Access controls and authentication\n• 24/7 security monitoring\n\nOperational Safeguards:\n• Employee access on need-to-know basis\n• Regular security training and audits\n• Data access logging\n• Incident response procedures\n\n8. Data Retention and Storage\n\n• Location: United States and other regions\n• Retention: Minimum time necessary for purposes\n• Disposal: Secure deletion or anonymization\n\n9. Contact Us\n\nFor privacy-related questions:\n• Email: info@americanpromotioncompany.com\n• Data Protection Officer: dev@americanpromotioncompany.com\n• Address: 8988 CAMINITO FRESCO, LA JOLLA, CA 92037\n• Business Hours: Monday-Friday 9:00-18:00 (Beijing Time)\n\n10. Policy Updates\n\nWe may update this policy and will notify you of material changes through in-app notifications, email, or website notices.\n\nThis policy is governed by applicable US law and the laws of California."
     }
+  },
+  "locations": {
+    "states_cities": {
+      "AL": ["伯明翰", "蒙哥马利", "亨茨维尔", "莫比尔", "图斯卡卢萨", "奥本"],
+      "AZ": ["凤凰城", "图森", "梅萨", "钱德勒", "斯科茨代尔", "坦佩", "格伦代尔"],
+      "CA": ["洛杉矶", "旧金山", "圣地亚哥", "奥克兰", "萨克拉门托", "圣何塞", "弗雷斯诺", "长滩", "安纳海姆", "贝克斯菲尔德", "河滨", "斯托克顿", "欧文", "帕萨迪纳", "伯克利", "戴维斯"],
+      "CO": ["丹佛", "科罗拉多斯普林斯", "奥罗拉", "博尔德", "韦斯敏斯特", "普韦布洛", "阿瓦达"],
+      "CT": ["哈特福德", "纽黑文", "斯坦福德", "布里奇波特", "沃特伯里", "诺沃克"],
+      "FL": ["迈阿密", "奥兰多", "坦帕", "杰克逊维尔", "塔拉哈西", "圣彼得堡", "海厄利亚", "彭布罗克派恩斯", "好莱坞", "盖恩斯维尔", "科勒尔盖布尔斯"],
+      "GA": ["亚特兰大", "萨凡纳", "奥古斯塔", "哥伦布", "雅典", "奥尔巴尼", "梅肯"],
+      "IL": ["芝加哥", "奥罗拉", "洛克福德", "皮奥里亚", "春田", "埃尔金", "尚佩恩", "厄巴纳"],
+      "IN": ["印第安纳波利斯", "韦恩堡", "埃文斯维尔", "南本德", "加里", "布卢明顿", "西拉法叶"],
+      "KY": ["路易斯维尔", "列克星敦", "鲍灵格林", "欧文斯伯勒", "科温顿", "法兰克福"],
+      "LA": ["新奥尔良", "巴吞鲁日", "什里夫波特", "拉斐特", "莱克查尔斯", "门罗"],
+      "MA": ["波士顿", "伍斯特", "春田", "剑桥", "洛厄尔", "布罗克顿", "牛顿", "萨默维尔", "昆西"],
+      "MD": ["巴尔的摩", "安纳波利斯", "弗雷德里克", "盖瑟斯堡", "罗克维尔", "黑格斯敦"],
+      "MI": ["底特律", "大急流城", "安娜堡", "兰辛", "弗林特", "沃伦", "斯特林海茨", "迪尔伯恩"],
+      "MN": ["明尼阿波利斯", "圣保罗", "罗切斯特", "德卢斯", "布卢明顿", "普利茅斯"],
+      "MO": ["堪萨斯城", "圣路易斯", "春田", "哥伦比亚", "独立", "杰斐逊城"],
+      "NC": ["夏洛特", "罗利", "格林斯博罗", "达勒姆", "教堂山", "阿什维尔", "温斯顿-塞勒姆", "费耶特维尔"],
+      "NJ": ["纽瓦克", "泽西城", "帕特森", "伊丽莎白", "普林斯顿", "新不伦瑞克", "特伦顿"],
+      "NV": ["拉斯维加斯", "雷诺", "亨德森", "北拉斯维加斯", "斯帕克斯", "卡森城"],
+      "NY": ["纽约", "布法罗", "罗切斯特", "扬克斯", "锡拉丘兹", "奥尔巴尼", "新罗谢尔", "弗农山", "斯克内克塔迪", "尤蒂卡", "白平原", "伊萨卡"],
+      "OH": ["哥伦布", "克利夫兰", "辛辛那提", "托莱多", "阿克伦", "代顿", "扬斯敦", "阿森斯"],
+      "OK": ["俄克拉荷马城", "塔尔萨", "诺曼", "布罗肯阿罗", "劳顿", "埃德蒙"],
+      "OR": ["波特兰", "尤金", "塞勒姆", "格雷沙姆", "比弗顿", "本德", "科瓦利斯"],
+      "PA": ["费城", "匹兹堡", "艾伦镇", "伊利", "雷丁", "斯克兰顿", "贝思利恒", "哈里斯堡", "兰开斯特", "约克"],
+      "SC": ["哥伦比亚", "查尔斯顿", "格林维尔", "罗克希尔", "萨姆特", "斯帕坦堡"],
+      "TN": ["纳什维尔", "孟菲斯", "诺克斯维尔", "查塔努加", "克拉克斯维尔", "默弗里斯伯勒"],
+      "TX": ["休斯顿", "达拉斯", "奥斯汀", "圣安东尼奥", "沃思堡", "埃尔帕索", "阿灵顿", "科珀斯克里斯蒂", "普莱诺", "拉伯克", "加兰", "欧文", "大学城"],
+      "UT": ["盐湖城", "西瓦利城", "普罗沃", "奥格登", "西约旦", "奥雷姆"],
+      "VA": ["弗吉尼亚海滩", "诺福克", "里士满", "亚历山德里亚", "纽波特纽斯", "朴茨茅斯", "夏洛茨维尔", "布莱克斯堡"],
+      "WA": ["西雅图", "斯波坎", "塔科马", "贝尔维尤", "埃弗里特", "肯特", "伦顿", "普尔曼"],
+      "WI": ["密尔沃基", "麦迪逊", "格林贝", "基诺沙", "拉辛", "阿普尔顿", "奥什科什"]
+    },
+    "default_state": "NY",
+    "default_city": "纽约"
   }
 }

@@ -16,6 +16,7 @@
     "done": "Done",
     "retry": "Retry",
     "close": "Close",
+    "privacy_policy": "Privacy Policy",
     "brand_name": "Pomelo",
     "filter": "Filter, {{count}} selected",
     "filterHint": "Tap to open filter panel",
@@ -27,12 +28,38 @@
     "select_school": "Select School",
     "select_organization": "Select Organization",
     "search_schools": "Search schools...",
+    "permission_refreshed": "Permission Refreshed",
+    "permission_refresh_success_msg": "User permission information has been refreshed",
+    "refresh_failed": "Refresh Failed",
+    "refresh_error": "Error: {{error}}",
+    "signin_failed": "Sign-in Failed",
+    "signout_failed": "Sign-out Failed",
+    "permission_denied": "Permission Denied",
+    "user_info_incomplete": "User information incomplete, please log in again",
+    "no_permission_for_user": "You don't have permission to operate this user",
+    "network_error_retry": "Network error, please check connection and retry",
+    "try_again_later": "Please try again later",
+    "cannot_identify_user": "Cannot identify user, please retry or contact administrator",
+    "cannot_get_operator_info": "Cannot get operator information, please log in again or refresh page",
+    "network_error_try_later": "Network error, please try again later",
+    "status_synced": "Status Synced",
+    "status_sync_msg": "Detected you are already in check-in status, you can now perform check-out operation",
+    "status_abnormal": "Status Abnormal",
+    "backend_data_error": "Backend data error, please contact administrator",
+    "status_sync_failed": "Status Sync Failed",
+    "status_sync_failed_msg": "Cannot sync backend status, please reload the page",
+    "operation_error": "Operation error, please refresh page and retry",
+    "condition_not_met": "{{operation}} condition not met",
+    "unknown": "Unknown",
     "network_timeout": "Network timeout, please retry",
     "server_connection_failed": "Server connection failed, please try again later",
     "load_failed": "Load failed, please check network and retry",
     "operation_failed": "Operation failed",
     "retry_later": "Please try again later",
     "feature_developing": "Feature Under Development",
+    "pull_to_refresh": "Pull to refresh",
+    "refreshing": "Refreshing...",
+    "refresh_completed": "✓ Refresh completed",
     "estimated_development_time": "Estimated development time: 2-3 weeks",
     "will_notify_when_ready": "You will be notified when ready",
     "got_it": "Got it",
@@ -42,7 +69,15 @@
     "list": "List",
     "grid": "Grid",
     "listView": "List View",
-    "gridView": "Grid View"
+    "gridView": "Grid View",
+    "gps_location": "GPS Location",
+    "ip_address": "IP Address",
+    "high_confidence": "High Confidence",
+    "medium_confidence": "Medium Confidence",
+    "scroll_to_submit": "Scroll to submit",
+    "english_name": "English Name",
+    "organization": "Organization",
+    "school": "School"
   },
   "language": {
     "selection": {
@@ -154,10 +189,14 @@
       "register_link": "Sign Up Now",
       "skip": "Skip"
     },
+    "guest_prompt": "Tap to access full features",
     "verification": {
       "title": "SMS Verification",
       "verify_phone": "Verify Your Phone", 
-      "verify_and_register": "Verify and Register"
+      "verify_and_register": "Verify and Register",
+      "code_sent_to": "We sent verification code to +{{countryCode}} {{phone}}",
+      "resend_code": "Resend verification code",
+      "resend_countdown": "Resend ({{seconds}}s)"
     },
     "errors": {
       "not_logged_in": "Not logged in"
@@ -189,7 +228,7 @@
       "and": "and",
       "success_title": "Registration Successful",
       "success_message": "Congratulations! You have successfully registered. Welcome to PomeloX",
-      "auto_login_success": "Registration successful and auto-logged in! Welcome to PomeloX",
+      "auto_login_success": "Welcome to PomeloX!",
       "success_please_login": "Registration successful! Please go to the login page to sign in with your account",
       "processing_registration": "Processing registration...",
       "auto_login_processing": "Auto-login in progress...",
@@ -198,11 +237,13 @@
       "privacy": {
         "title": "Privacy Agreement",
         "subtitle": "Please carefully read the following privacy policy to understand how we collect and use your personal information",
+        "subtitle_simple": "Privacy Policy",
         "accept_button": "I Agree and Continue",
+        "accept_simple": "Agree",
         "decline_button": "Decline",
-        "content": "Welcome to PomeloX application. We highly value your privacy rights. This privacy policy is designed to explain how we collect, use, store, and protect your personal information.\n\n## Information We Collect\n\nTo provide you with the best service experience, we need to collect the following personal information:\n\n• **Identity Information**: Legal name and English nickname for identity verification and personalized services\n• **Contact Information**: Email address and phone number for account verification, important notifications, and security alerts\n• **Academic Information**: University affiliation for matching relevant activities and services\n• **Basic Profile**: Gender and other basic information for personalized recommendations\n\n## Purpose of Information Use\n\nYour personal information will only be used for the following legitimate purposes:\n\n• Create and manage your user account\n• Provide activity registration and management services\n• Send important service notifications and security alerts\n• Improve our service quality and user experience\n• Ensure platform security and prevent fraudulent activities\n\n## Third-Party Services\n\nTo provide complete services, we may use the following third-party services:\n\n• **Firebase Cloud Messaging**: For pushing important activity notifications\n• **Aliyun**: For SMS verification code delivery services\n• **Cloudflare**: For secure storage of user-uploaded images and files\n\nThese service providers all follow strict data protection standards, and we do not provide them with personal information beyond what is necessary for the service.",
+        "content": "Welcome to PomeloX application. We highly value your privacy rights. This privacy policy is designed to explain how we collect, use, store, and protect your personal information.\n\n## Service Provider Information\n\n**Service Provider (China):** Shanghai Grapefruit Smart Technology Co., Ltd.\n**Overseas Collaborative Entity:** American Promotion Company, Inc. (as overseas collaborative partner)\n\n## Information We Collect\n\nTo provide you with the best service experience, we need to collect the following personal information:\n\n• **Identity Information**: Legal name and English nickname for identity verification and personalized services\n• **Contact Information**: Email address and phone number for account verification, important notifications, and security alerts\n• **Academic Information**: University affiliation for matching relevant activities and services\n• **Basic Profile**: Gender and other basic information for personalized recommendations\n• **Activity Information**: Activity registrations, check-in/check-out records, volunteer service records\n\n## Purpose of Information Use\n\nYour personal information will only be used for the following legitimate purposes:\n\n• Create and manage your user account\n• Provide activity registration and management services\n• Send important service notifications and security alerts\n• Improve our service quality and user experience\n• Ensure platform security and prevent fraudulent activities\n• AI Q&A and study abroad guidance services\n• Wellbeing Plan and volunteer coordination services\n\n## Third-Party Services\n\nTo provide complete services, we may use the following third-party services:\n\n• **Gmail SMTP**: For sending verification emails and activity notifications\n• **Cloudflare R2**: For securely storing activity images and user avatars\n• **Firebase FCM**: For pushing important activity reminders\n• **Google OAuth**: Optional third-party login method\n\nThese service providers all follow strict data protection standards, and we do not provide them with personal information beyond what is necessary for the service.",
         "data_usage_highlight": "Your legal name, phone number, and email are only used for identity verification and necessary notifications. We promise not to use this sensitive information for marketing purposes or share it with third parties.",
-        "data_protection": "## Data Protection Commitment\n\nWe use industry-standard security measures to protect your personal information:\n\n• All data transmission uses HTTPS encryption\n• Passwords are stored using secure hashing algorithms\n• Regular security audits and vulnerability assessments\n• Strict access controls for internal personnel to personal information\n\n## Your Rights\n\nUnder relevant laws and regulations, you have the following rights regarding your personal information:\n\n• **Right to Access**: View the personal information we have collected about you at any time\n• **Right to Rectification**: Correct inaccurate or outdated personal information\n• **Right to Erasure**: Request deletion of your personal information and account\n• **Right to Restrict Processing**: Limit how we process your information\n• **Right to Data Portability**: Obtain a copy of your personal information\n\n## Data Retention\n\n• **Account Information**: Retained during your use of the service\n• **Activity Records**: Retained for 2 years for service improvement\n• **Communication Records**: Retained for 1 year for customer support\n• **Deleted Data**: Permanently removed from all systems within 30 days\n\n## Contact Us\n\nFor any privacy-related questions, please contact us through:\n\n• Email: info@americanpromotioncompany.com\n• Customer Support: Contact through in-app customer service\n\nContinuing with registration indicates that you understand and agree to the above privacy policy terms.",
+        "data_protection": "## Cross-border Data Transfer\n\nTo provide services, your personal information may be transferred to our overseas collaborative partner American Promotion Company, Inc. (USA). Transfer purposes include: service delivery, customer service/technical support, backup and security. We will take appropriate protective measures in accordance with the Personal Information Protection Law and other regulations.\n\n## Data Protection Commitment\n\nWe use industry-standard security measures to protect your personal information:\n\n• All data transmission uses HTTPS encryption\n• Passwords are stored using secure hashing algorithms\n• Regular security audits and vulnerability assessments\n• Strict access controls for internal personnel to personal information\n• Data encryption storage and access control\n\n## Your Rights\n\nUnder relevant laws and regulations, you have the following rights regarding your personal information:\n\n• **Right to Know**: Understand personal information processing\n• **Right to Access**: View the personal information we have collected about you at any time\n• **Right to Rectification**: Correct inaccurate or outdated personal information\n• **Right to Erasure**: Request deletion of your personal information and account\n• **Right to Restrict Processing**: Limit how we process your information\n• **Right to Data Portability**: Obtain a copy of your personal information\n• **Right to Withdraw Consent**: Withdraw consent for personal information processing\n\n## Data Retention\n\n• **Account Information**: Retained during your use of the service\n• **Activity Records**: Retained for 24 months for service improvement\n• **Transaction Records**: Retained according to legal requirements\n• **Deleted Data**: Permanently removed from all systems within 30 days\n\n## Minor Protection\n\n• Users under 14 require explicit guardian consent\n• Appropriate protection for users aged 14-18\n• Stricter security measures implemented\n\n## Contact Us\n\nFor any privacy-related questions, please contact us through:\n\n• **Customer Service/Technical**: info@americanpromotioncompany.com\n• **Legal/Compliance**: dev@americanpromotioncompany.com\n• Service Hours: Monday-Friday 9:00-18:00 (Beijing Time)\n\nContinuing with registration indicates that you understand and agree to the above privacy policy terms.",
         "please_scroll": "Please scroll to read the full agreement",
         "read_complete": "Reading completed",
         "scroll_to_accept": "Please read the full agreement first"
@@ -216,6 +257,16 @@
         "progress": "Step {{current}} of {{total}}",
         "basic_info": "Basic Information",
         "basic_info_desc": "Please fill in your basic information",
+        "area_detection_label": "Region Detection",
+        "area_detecting": "Detecting your location...",
+        "area_detected_china": "Detected you are in China",
+        "area_detected_usa": "Detected you are in United States",
+        "area_detection_method": "Detected via {{method}}, {{confidence}}",
+        "area_change_manual": "Change manually",
+        "area_manual_select": "Please manually select your region:",
+        "area_detection_failed": "Unable to auto-detect region, please select manually:",
+        "area_china": "China",
+        "area_usa": "United States",
         "account_setup": "Account Setup",
         "account_setup_desc": "Set up your login account and password",
         "contact_info": "Contact Information",
@@ -372,11 +423,14 @@
     "headers": {
       "back": "Back",
       "accountSecurity": "Account & Security",
-      "notifications": "Notifications",
-      "general": "General",
+      "notifications": "Notification Settings",
+      "general": "General Settings",
       "aboutSupport": "About & Support",
-      "language": "Language",
-      "edit_profile": "Edit Profile"
+      "language": "Language Settings",
+      "edit_profile": "Edit Profile",
+      "layout_selection": "Layout Selection",
+      "privacy_policy": "Privacy Policy",
+      "terms_of_service": "Terms of Service"
     }
   },
   "activities": {
@@ -405,10 +459,14 @@
       "available": "Available",
       "availableOnly": "Available only"
     },
+    "peopleRegistered": "people registered",
+    "peopleRegisteredUnlimited": "people registered",
     "list": {
       "title": "Exciting Activities",
       "empty": "No activities available",
-      "refresh": "Pull to refresh"
+      "refresh": "Pull to refresh",
+      "refreshing": "Refreshing...",
+      "refresh_complete": "✓ Refresh Complete"
     },
     "detail": {
       "register": "Register Now",
@@ -440,6 +498,16 @@
   "profile": {
     "title": "Profile",
     "username": "Username",
+    "region": "Region & Timezone",
+    "region_updated_successfully": "Region updated to {{region}}",
+    "region_update_failed": "Failed to update region, please try again",
+    "region_switch": {
+      "title": "Select Region",
+      "subtitle": "Switching to a different region will use the corresponding privacy policy",
+      "privacy_notice": "If you haven't signed the privacy policy for the region you're switching to, you'll need to sign it again",
+      "privacy_signed": "Signed",
+      "loading": "Processing..."
+    },
     "sections": {
       "accountSecurity": "Account & Security",
       "notificationsGeneral": "Notifications & General",
@@ -698,14 +766,14 @@
         "medical": "Health Guidance"
       },
       "developing": "Under Development",
-      "developing_subtitle": "More wellbeing features are under development, please stay tuned",
-      "welcome_title": "Welcome to Wellbeing Plan",
-      "welcome_subtitle": "We are committed to providing comprehensive safety and mental health support for international students",
+      "developing_subtitle": "More features coming soon",
+      "welcome_title": "Wellbeing",
+      "welcome_subtitle": "Safety & mental health support for students",
       "emergency_contacts": "Emergency Contacts",
       "emergency_911": "Emergency 911",
-      "emergency_911_desc": "Call immediately in case of emergency",
+      "emergency_911_desc": "Call in emergency",
       "crisis_hotline": "Crisis Hotline 988",
-      "crisis_hotline_desc": "24-hour mental health support service",
+      "crisis_hotline_desc": "24/7 mental health support",
       "mental_health": "Mental Health Resources",
       "counseling_services": "Counseling Services",
       "counseling_desc": "Professional mental health counseling and therapy services",
@@ -721,6 +789,34 @@
       "peer_support_desc": "Connect with other students and provide mutual support"
     },
     "volunteer": {
+      "history": {
+        "title": "History",
+        "subtitle": "{{userName}}'s Records",
+        "selectTimeRange": "Time Range",
+        "recordsList": "Records",
+        "recordsFound": "{{count}} found",
+        "loading": "Loading...",
+        "loadFailed": "Failed",
+        "loadError": "Error",
+        "noRecords": "No records",
+        "completed": "Completed",
+        "inProgress": "Active",
+        "checkInTime": "Check In",
+        "checkOutTime": "Check Out",
+        "workDuration": "Duration",
+        "operator": "Operator",
+        "timeRange": {
+          "1day": "1 Day",
+          "3days": "3 Days",
+          "7days": "7 Days",
+          "30days": "30 Days"
+        },
+        "overtime": {
+          "warning": "Alert",
+          "abnormal": "Abnormal",
+          "overHours": "Overtime"
+        }
+      },
       "searchPlaceholder": "Search by phone",
       "phoneRequired": "Please enter phone number",
       "phoneFormatError": "Invalid phone format",
@@ -761,7 +857,12 @@
       "serviceDuration": "Service Duration",
       "signOutNote": "Thank you for your volunteer service",
       "signingOut": "Signing out...",
-      "rating": "Rating"
+      "rating": "Rating",
+      "staffViewHint": "Staff members can only view personal data, unable to perform check-in/out operations", 
+      "viewOnly": "View Only",
+      "noPermission": "No Permission",
+      "historyRecords": "History Records",
+      "viewHistory": "Query"
     },
     "title": "Wellbeing Services",
     "searchVolunteerPhone": "Search volunteer by phone number",
@@ -770,6 +871,40 @@
     "scanQRCode": "Scan QR code",
     "scanComingSoon": "QR code scanning feature coming soon",
     "searchFor": "Search \"{{phone}}\"",
+    "personal": {
+      "title": "My Volunteer Work Records",
+      "subtitle": "Staff members can only view personal work hours and records",
+      "loading": "Loading...",
+      "no_data": "No volunteer work records",
+      "current_status": {
+        "signed_in": "Currently signed in",
+        "signed_out": "Currently signed out",
+        "no_records": "No records"
+      },
+      "stats": {
+        "total_work_hours": "Total volunteer work hours",
+        "total_records": "Total check-in records"
+      },
+      "recent_record": {
+        "title": "Recent Work Record",
+        "checkin_time": "Check-in time:",
+        "checkout_time": "Check-out time:",
+        "work_duration": "Work duration:",
+        "status": "Status:",
+        "working": "Currently working...",
+        "hours": "hours",
+        "minutes": "minutes"
+      },
+      "history": {
+        "show_more": "View history ({{count}} records)",
+        "hide": "Hide history",
+        "title": "Work History",
+        "more_records_hint": "{{count}} more records...",
+        "work_duration_label": "Work duration:",
+        "end_time_until": "until",
+        "not_checked_out": "Not checked out"
+      }
+    },
     "subtitle": "Safety support for students",
     "tabs": {
       "plan": "Wellbeing Plan",
@@ -850,8 +985,35 @@
       "already_signed_in_title": "Already Checked In",
       "already_signed_in_message": "You have already checked into this activity",
       "invalid_activity_qr_message": "Invalid activity QR code",
+      "user_scan_select_operation": "Select Operation",
+      "volunteer_checkin_checkout": "Volunteer Check-in/out",
+      "activity_checkin": "Activity Check-in",
+      "user_identity_info": "User Identity Information",
+      "select_activity_prompt": "Please select an activity",
+      "select_activity_hint": "Hint",
+      "volunteer_checkin_success": "Check-in Successful",
+      "volunteer_checkout_success": "Check-out Successful",
+      "volunteer_checkin_failed": "Check-in Failed", 
+      "volunteer_checkout_failed": "Check-out Failed",
+      "volunteer_already_checkedin": "Volunteer already checked in, please check out first",
+      "volunteer_not_checkedin": "Volunteer not checked in yet, cannot check out",
+      "network_error_retry": "Network error, please retry",
+      "volunteer_checkin_success_msg": "{{name}} checked in successfully\\nTime: {{time}}",
+      "volunteer_checkout_success_msg": "{{name}} checked out successfully\\nWork duration: {{duration}}\\nCheck-out time: {{time}}",
+      "volunteer_checkin_failed_msg": "Network error, please retry",
+      "volunteer_checkout_failed_msg": "Network error, please retry", 
+      "activity_signin_success": "{{name}} successfully checked into activity: {{activity}}",
+      "activity_signin_failed_msg": "Network error, please retry",
       "unknown_status_message": "Unknown registration status",
-      "check_status_failed": "Failed to check registration status"
+      "check_status_failed": "Failed to check registration status",
+      "user_scan_result": "Scan Result",
+      "available_actions": "Available Actions",
+      "manage_volunteer_hours": "Manage volunteer hours",
+      "checkin_for_activity": "Check in for activity",
+      "no_actions_available": "No actions available",
+      "contact_admin_for_permissions": "Contact admin for more permissions",
+      "continue_scanning": "Continue Scanning",
+      "scan_success": "Scan Successful"
     },
     "actions": {
       "save": "Save",
@@ -914,7 +1076,9 @@
       "switch_failed": "Switch failed",
       "organization_switch_error": "Error switching organization",
       "service_unavailable": "Service unavailable",
-      "merchant_permissions_developing": "Merchant permissions under development"
+      "merchant_permissions_developing": "Merchant permissions under development",
+      "permission_denied": "Permission denied",
+      "admin_only_feature": "Only administrators can scan user identity codes"
     }
   },
   "volunteer": {
@@ -953,15 +1117,17 @@
     "checked_in": "Checked In",
     "checked_out": "Checked Out",
     "not_checked_in": "Not Checked In",
-    "check_in_time_label": "Check-in Time:",
-    "check_out_time_label": "Check-out Time:",
-    "today_duration_label": "Today's Duration:",
-    "total_duration_label": "Total Duration:",
-    "last_check_in_label": "Last Check-in:",
-    "last_check_out_label": "Last Check-out:",
+    "check_status_label": "Status:",
+    "check_in_time_label": "Check In:",
+    "check_out_time_label": "Check Out:",
+    "today_duration_label": "Today:",
+    "total_duration_label": "Total:",
+    "current_duration_label": "Current:",
+    "last_check_in_label": "Last In:",
+    "last_check_out_label": "Last Out:",
     "check_in_button": "Check In",
     "check_out_button": "Check Out",
-    "check_in_records_count": "Check-in Records"
+    "check_in_records_count": "Records"
   },
   "userInfo": {
     "roles": {
@@ -1012,7 +1178,15 @@
     "checkin_failed_message": "Check-in failed, please try again later",
     "checkin_now": "Check In Now",
     "checked_in": "Checked In",
-    "unavailable": "Unavailable"
+    "unavailable": "Unavailable",
+    "login_required_to_register": "Login to Register",
+    "already_checked_in": "You have already checked in for this activity",
+    "checkin_time_invalid": "Check-in time is not available or has expired",
+    "not_registered_cannot_checkin": "You must register first before checking in",
+    "scan_failed": "Scan Failed",
+    "scan_failed_message": "Please scan the activity check-in QR code again",
+    "open_scanner_failed": "Cannot Open Scanner",
+    "open_scanner_failed_message": "Unable to start scan function, please check camera permission"
   },
   "volunteerCheckIn": {
     "searchVolunteer": "Search Volunteer",
@@ -1248,11 +1422,71 @@
   "legal": {
     "terms": {
       "title": "Terms of Service",
-      "full_content": "## Grapefruit-PomeloX Terms of Service\n\n**Effective Date:** August 15, 2025\n**Version:** v1.0\n\n### 1. Service Overview\n\nWelcome to Grapefruit-PomeloX! We are a comprehensive service and safety platform designed specifically for Chinese students studying in the US and their parents. From pre-departure preparation to local life, from activity registration to emergency coordination, we are committed to providing professional services throughout the study abroad journey.\n\n### 2. Service Scope\n\n**Core Features:**\n• AI Q&A: Study abroad guides, visa course housing guidance\n• Wellbeing Plan: Emergency response, volunteer assistance\n• Airport pickup services: Free bus reservations, paid transfers\n• Local discounts: Merchant coupons, points system\n• Marketplace: Information posting, job listings\n• Alumni network: Email verification, high-trust referrals\n• Activity management: Event publishing, registration management, QR check-in\n• Volunteer management: Check-in/out, hour tracking\n\n### 3. User Registration & Responsibilities\n\n**Registration Requirements:**\n• At least 14 years old (under 14 requires guardian consent)\n• Provide truthful, accurate, and complete registration information\n• Valid school email or referral code\n• Accept these Terms of Service and Privacy Policy\n\n**User Responsibilities:**\n• Protect account password security, do not share with others\n• Take responsibility for all activities under your account\n• Update account information timely to ensure accuracy\n\n### 4. Code of Conduct\n\n**You promise to:**\n• Comply with laws and regulations of China and your country\n• Respect others' legitimate rights and privacy\n• Provide truthful and accurate personal information\n• Not engage in any behavior that may harm the platform or other users\n\n**Prohibited Behaviors:**\n• Post illegal, harmful, threatening, or inappropriate content\n• Spread false information, rumors, or misleading content\n• Infringe on others' intellectual property or privacy rights\n• Attempt to hack, attack, or interfere with our systems\n• Unauthorized commercial promotion\n\n### 5. Intellectual Property\n\nAll content of the Grapefruit-PomeloX platform, including software code, interface design, trademarks, etc., is protected by intellectual property law and owned by Grapefruit-PomeloX.\n\n### 6. Disclaimer\n\n**Service Status:**\n• Services are provided \"as is\", no guarantee of complete uninterrupted, error-free operation\n• No guarantee of third-party activity quality or safety\n• Not liable for indirect losses caused by service use\n\n**Liability Limitation:**\nTo the maximum extent permitted by law, our liability shall not exceed your direct actual losses, with a total cap of $100.\n\n### 7. Dispute Resolution\n\nFor disputes, we recommend resolution through:\n• Email: info@americanpromotioncompany.com\n• In-app customer service system\n• Legal action in competent courts if negotiation fails\n\n### 8. Terms Changes\n\nWe may modify these terms based on business development. Important changes will be notified 30 days in advance. Continued use indicates acceptance of new terms.\n\n### 9. Contact Information\n\n**Technical Support:** info@americanpromotioncompany.com\n**Legal Affairs:** dev@americanpromotioncompany.com\n**Service Hours:** Monday-Friday 9:00-18:00 (Beijing Time)\n\n---\n\n**Thank you for choosing Grapefruit-PomeloX**\n\nThese Terms of Service are governed by the laws of the People's Republic of China. We are committed to providing quality service to Chinese students overseas."
+      "full_content": "PomeloX Terms of Service & Privacy Policy (Combined Version)\n\nVersion: v1.1 | Effective Date: September 3, 2025\n\nContract Parties Information\n\nService Provider (China): Shanghai Grapefruit Smart Technology Co., Ltd.\nOverseas Collaborative Entity (USA): American Promotion Company, Inc. (as overseas collaborative partner)\n\nPart I: Terms of Service\n\n1. Definitions and Scope\n\nThis platform refers to \"PomeloX\" and its operating entities, providing information and collaborative services, not directly providing police, medical, and public safety services. In case of emergency, please contact local emergency numbers (110/120/911).\n\n2. Service Functions\n\n• AI Q&A: Study abroad guides, visa/course/housing information suggestions (for reference only)\n• Wellbeing Plan: Missing person emergency coordination, volunteer clue collection and liaison\n• Airport Pickup & Transportation: Free bus reservations, paid pickup/rideshare\n• Activity Management: Event publishing, registration management, check-in/check-out and QR code verification\n• Volunteer Management: Check-in/out, hour tracking and certification\n• Local Discounts: Merchant offers, points and redemption\n• Marketplace/Job Matching: Information posting and chat matching\n• Alumni Network: Email verification, trusted referrals\n\n3. Registration and Eligibility\n\n• Must be at least 14 years old to register independently; those under 14 must have guardian representation\n• Provide truthful, accurate, and complete registration information\n• Hold valid school email or referral code\n• Properly safeguard account and password\n\n4. User Conduct Standards\n\nProhibited Behaviors:\n• Publishing illegal, harmful, vulgar, defamatory, hateful, discriminatory content\n• Infringing on others' intellectual property, privacy rights, and other legitimate rights\n• Conducting reverse engineering, bulk crawling, malicious scanning\n• Unauthorized commercial promotion, mass advertising\n• Endangering activity venues, transportation safety, violating public security rules\n\nPart II: Privacy Policy\n\n1. Information Collection\n\nCategories of Information Collected:\n• Account and Identity: Name/nickname, avatar, school email/phone number\n• Travel and Activities: Flight information, airport pickup reservations, activity registration records\n• Emergency and Coordination: Emergency contacts, missing person clues, volunteer liaison\n• Device and Logs: Device identifiers, IP, operation logs\n• Transactions and Payments: Orders, amounts, payment transaction numbers\n• User Content: Chats, comments, images/videos\n\n2. Use Purposes\n\n• Create and manage user accounts\n• Provide activity registration and volunteer management services\n• Send important notifications and security alerts\n• AI Q&A and study abroad guidance services\n• Wellbeing Plan and volunteer coordination services\n• Improve service quality and user experience\n\n3. Cross-border Transfer\n\nOverseas Recipient: American Promotion Company, Inc. (as overseas collaborative partner, USA)\nTransfer Purpose: Service delivery, customer service/technical support, backup and security\nCompliance Measures: Take appropriate protective measures in accordance with Personal Information Protection Law and other regulations\n\n4. Your Rights\n\n• Right to Know: Understand personal information processing\n• Access Right: View personal information we have collected about you\n• Rectification Right: Correct inaccurate personal information\n• Deletion Right: Request deletion of personal information and account\n• Restriction Right: Limit information processing methods\n• Data Portability Right: Obtain copy of personal information\n\n5. Minor Protection\n\n• Users under 14 require explicit guardian consent\n• Appropriate protection for users aged 14-18\n• Stricter security measures implemented\n\n6. Data Security\n\n• HTTPS encryption for data transmission\n• Secure hash algorithm password storage\n• Strict access control and permission management\n• Regular security audits and vulnerability detection\n• Data encryption storage and access control\n\nDispute Resolution\n\nUsers in China: Governed by Chinese law, with jurisdiction by competent people's courts\nUsers in the United States: Governed by state of residence or California law, disputes resolved through arbitration\n\nContact Us\n\n• Customer Service/Technical: info@americanpromotioncompany.com\n• Legal/Compliance: dev@americanpromotioncompany.com\n• Service Hours: Monday-Friday 9:00-18:00 (Beijing Time)\n\nThank you for choosing PomeloX\n\nWe are committed to providing a safe and reliable service platform for Chinese international students, strictly complying with laws and regulations to protect your legitimate rights."
     },
     "privacy": {
       "title": "Privacy Policy",
-      "full_content": "## Grapefruit-PomeloX Privacy Policy\n\n**Effective Date:** August 15, 2025\n**Version:** v1.0\n\n### 1. Policy Overview\n\nWelcome to Grapefruit-PomeloX! We deeply understand the importance of personal information protection and promise to strictly comply with relevant laws and regulations including the Personal Information Protection Law of the People's Republic of China.\n\n### 2. Information Collection\n\n**Information You Actively Provide:**\n• Registration info: Legal name, English nickname, school, school email\n• Contact info: Chinese or US phone number\n• Identity verification: Referral code info, SMS verification code\n• Activity-related: Activity registration info, personal preferences\n• Volunteer service: Volunteer activity records, check-in times\n\n**Automatically Collected Information:**\n• Device info: Device model, OS version, app version\n• Usage data: App usage statistics, feature click records\n• Network info: IP address (only for technical support and security)\n• Push info: Device push tokens (for notifications)\n\n### 3. Information Use Purposes\n\nWe collect your personal information only for:\n• Creating and managing your user account\n• Processing activity registration and volunteer management\n• Providing AI Q&A and study abroad guidance services\n• Sending important service notifications and security alerts\n• Analyzing user behavior to improve product features\n• Preventing fraud and abuse, protecting user security\n\n### 4. Third-Party Service Integration\n\nTo provide complete services, we integrate the following third-party services:\n• **Gmail SMTP**: For sending verification emails and notifications\n• **Cloudflare R2**: Securely store activity images and user avatars\n• **Firebase FCM**: Send important notifications and activity reminders\n• **Google OAuth**: Optional third-party login method\n\n### 5. User Rights\n\nAccording to laws and regulations, you have the following rights:\n• **Right to Know**: Understand the types and purposes of personal information we collect\n• **Access Right**: View personal information we have collected about you\n• **Correction Right**: Correct inaccurate personal information\n• **Deletion Right**: Request deletion of your personal information and account\n• **Restriction Right**: Limit processing of certain personal information\n• **Data Portability Right**: Obtain personal data in structured format\n\n### 6. Minor Protection\n\n• **Under 14**: Must obtain guardian consent\n• **14-18 years**: Recommended use under guardian guidance\n• **Over 18**: Can independently use all functions\n\nWe apply stricter security measures for minor information.\n\n### 7. Data Security Measures\n\n**Technical Security:**\n• Use AES-256 encryption algorithm to protect sensitive data\n• Full-site HTTPS encrypted transmission\n• Strict permission management and identity verification\n• 24/7 security monitoring and anomaly detection\n\n**Management Security:**\n• Employees can only access work-necessary data\n• Record all data access and operations\n• Regular security risk assessments\n\n### 8. Data Storage\n\n• **Storage Location**: Primarily stored on servers in China\n• **Storage Period**: Only retained during necessary periods\n• **Deletion Mechanism**: Automatic deletion or anonymization after expiration\n\n### 9. Contact Us\n\nFor privacy-related questions, please contact:\n• **Email**: info@americanpromotioncompany.com\n• **Data Protection Officer**: dev@americanpromotioncompany.com\n• **Service Hours**: Monday-Friday 9:00-18:00 (Beijing Time)\n\n### 10. Policy Updates\n\nWe may modify this policy based on legal changes or business development. Important updates will be notified through in-app notifications, emails, etc.\n\n---\n\n**Thank you for your trust**\n\nProtecting your privacy is our responsibility and the foundation of building trust with you. We welcome any suggestions or feedback."
+      "full_content": "PomeloX Terms of Service & Privacy Policy (Combined Version)\n\nVersion: v1.1 | Effective Date: September 3, 2025\n\nContract Parties Information\n\nService Provider (China): Shanghai Grapefruit Smart Technology Co., Ltd.\nOverseas Collaborative Entity (USA): American Promotion Company, Inc. (as overseas collaborative partner)\n\nPart I: Terms of Service\n\n1. Definitions and Scope\n\nThis platform refers to \"PomeloX\" and its operating entities, providing information and collaborative services, not directly providing police, medical, and public safety services. In case of emergency, please contact local emergency numbers (110/120/911).\n\n2. Service Functions\n\n• AI Q&A: Study abroad guides, visa/course/housing information suggestions (for reference only)\n• Wellbeing Plan: Missing person emergency coordination, volunteer clue collection and liaison\n• Airport Pickup & Transportation: Free bus reservations, paid pickup/rideshare\n• Activity Management: Event publishing, registration management, check-in/check-out and QR code verification\n• Volunteer Management: Check-in/out, hour tracking and certification\n• Local Discounts: Merchant offers, points and redemption\n• Marketplace/Job Matching: Information posting and chat matching\n• Alumni Network: Email verification, trusted referrals\n\n3. Registration and Eligibility\n\n• Must be at least 14 years old to register independently; those under 14 must have guardian representation\n• Provide truthful, accurate, and complete registration information\n• Hold valid school email or referral code\n• Properly safeguard account and password\n\n4. User Conduct Standards\n\nProhibited Behaviors:\n• Publishing illegal, harmful, vulgar, defamatory, hateful, discriminatory content\n• Infringing on others' intellectual property, privacy rights, and other legitimate rights\n• Conducting reverse engineering, bulk crawling, malicious scanning\n• Unauthorized commercial promotion, mass advertising\n• Endangering activity venues, transportation safety, violating public security rules\n\nPart II: Privacy Policy\n\n1. Information Collection\n\nCategories of Information Collected:\n• Account and Identity: Name/nickname, avatar, school email/phone number\n• Travel and Activities: Flight information, airport pickup reservations, activity registration records\n• Emergency and Coordination: Emergency contacts, missing person clues, volunteer liaison\n• Device and Logs: Device identifiers, IP, operation logs\n• Transactions and Payments: Orders, amounts, payment transaction numbers\n• User Content: Chats, comments, images/videos\n\n2. Use Purposes\n\n• Create and manage user accounts\n• Provide activity registration and volunteer management services\n• Send important notifications and security alerts\n• AI Q&A and study abroad guidance services\n• Wellbeing Plan and volunteer coordination services\n• Improve service quality and user experience\n\n3. Cross-border Transfer\n\nOverseas Recipient: American Promotion Company, Inc. (as overseas collaborative partner, USA)\nTransfer Purpose: Service delivery, customer service/technical support, backup and security\nCompliance Measures: Take appropriate protective measures in accordance with Personal Information Protection Law and other regulations\n\n4. Your Rights\n\n• Right to Know: Understand personal information processing\n• Access Right: View personal information we have collected about you\n• Rectification Right: Correct inaccurate personal information\n• Deletion Right: Request deletion of personal information and account\n• Restriction Right: Limit information processing methods\n• Data Portability Right: Obtain copy of personal information\n\n5. Minor Protection\n\n• Users under 14 require explicit guardian consent\n• Appropriate protection for users aged 14-18\n• Stricter security measures implemented\n\n6. Data Security\n\n• HTTPS encryption for data transmission\n• Secure hash algorithm password storage\n• Strict access control and permission management\n• Regular security audits and vulnerability detection\n• Data encryption storage and access control\n\nDispute Resolution\n\nUsers in China: Governed by Chinese law, with jurisdiction by competent people's courts\nUsers in the United States: Governed by state of residence or California law, disputes resolved through arbitration\n\nContact Us\n\n• Customer Service/Technical: info@americanpromotioncompany.com\n• Legal/Compliance: dev@americanpromotioncompany.com\n• Service Hours: Monday-Friday 9:00-18:00 (Beijing Time)\n\nThank you for your trust\n\nWe are committed to providing safe and reliable services for Chinese international students and their families. Protecting your privacy is our responsibility and the foundation of building trust with you.",
+      "content_china": "PomeloX Privacy Policy (China Version)\n\nEffective Date: September 3, 2025\nVersion: v1.1\n\nService Provider: Shanghai Grapefruit Smart Technology Co., Ltd.\nUnified Social Credit Code: 91310112MAEQURTF0X\nRegistered Address: Room 513, 5th Floor, Building 13, No. 1955 Chunshen Road, Minhang District, Shanghai\n\n1. Policy Overview\n\nWe strictly comply with the Personal Information Protection Law of the People's Republic of China, Cybersecurity Law, Data Security Law and other relevant laws and regulations, and process your personal information in accordance with the principles of legality, legitimacy, necessity and good faith.\n\n2. Personal Information Collection\n\nAccount & Identity Information:\n• Name/nickname, avatar, school email/phone\n• School/grade/major, referral codes\n• Identity verification/email verification results\n\nActivity & Travel Information:\n• Flight/arrival information, pickup reservations\n• Activity registrations, check-in/check-out, verification records\n\nVolunteer Service Information:\n• Check-in/out records, hour tracking\n• Volunteer coordination feedback\n\nDevice & Log Information:\n• Device identifiers, IP addresses\n• Operation/security/crash logs\n• Cookie/local storage data\n\n3. Purpose and Legal Basis for Personal Information Use\n\nBased on your consent:\n• Account creation and management\n• AI Q&A services\n• Activity notifications and reminders\n\nFor contract performance:\n• Activity registration and volunteer management\n• Airport pickup and transportation services\n• Local discount services\n\nFor legal obligations:\n• Network security protection and risk monitoring\n• Cooperation with law enforcement investigations (as required by law)\n\nFor legitimate interests:\n• Service improvement and user experience\n• Fraud prevention and security\n\n4. Personal Information Sharing and Processing Entrustment\n\nThird-party service integration (only within necessary scope):\n• Gmail SMTP: Email delivery\n• Cloudflare R2: File and image storage\n• Firebase FCM: Push notification services\n\nCross-border transfer:\nWhen transferring personal information to overseas collaborative partners (American Promotion Company, Inc.) for technical support, appropriate protective measures will be taken in accordance with PIPL, including signing standard contract clauses and conducting security assessments.\n\n5. Your Personal Information Rights\n\n• Right to Know: Understand personal information processing\n• Right to Decide: Consent to or withdraw consent for personal information processing\n• Right to Access: View personal information we process\n• Right to Rectification: Correct inaccurate personal information\n• Right to Erasure: Request deletion of personal information\n• Right to Restrict Processing: Limit personal information processing methods\n• Right to Portability: Obtain copies of personal information\n\nHow to exercise your rights:\nSend email to info@americanpromotioncompany.com or contact us through the app.\n\n6. Protection of Minors' Personal Information\n\n• Under 14: Must obtain explicit guardian consent\n• 14-18: Appropriate protection, parental guidance recommended\n• Enhanced security technical and management measures\n\n7. Personal Information Security Protection Measures\n\nTechnical measures:\n• AES-256 encryption for sensitive data\n• HTTPS encrypted transmission\n• Access control and authentication\n• 24-hour security monitoring\n\nManagement measures:\n• Minimum permission principle for employees\n• Regular security training and audits\n• Data access logging\n• Security incident emergency response\n\n8. Personal Information Storage\n\n• Storage location: Primarily in mainland China\n• Retention period: Shortest time necessary for processing purposes\n• Overdue processing: Automatic deletion or anonymization\n\n9. Contact Us\n\nFor personal information protection related questions:\n• Customer service: info@americanpromotioncompany.com\n• Data protection officer: dev@americanpromotioncompany.com\n• Service hours: Monday-Friday 9:00-18:00 (Beijing Time)\n• Address: Room 513, 5th Floor, Building 13, No. 1955 Chunshen Road, Minhang District, Shanghai\n\n10. Policy Updates\n\nIf we need to modify this policy, we will notify you through in-app notifications, official website announcements, etc., and seek your consent for major changes.\n\nThis policy is governed by the laws of the People's Republic of China.",
+      "content_usa": "PomeloX Privacy Policy (USA Version)\n\nEffective Date: September 3, 2025\nVersion: v1.1\n\nService Provider: American Promotion Company, Inc.\nAddress: 8988 CAMINITO FRESCO, LA JOLLA, CA 92037\n\n1. Policy Overview\n\nWe comply with applicable US federal and state privacy laws, including the California Consumer Privacy Act (CCPA), California Privacy Rights Act (CPRA), and Children's Online Privacy Protection Act (COPPA).\n\n2. Information We Collect\n\nPersonal Information:\n• Name/nickname, avatar, school email/phone\n• School/grade/major, referral codes\n• Identity verification results\n\nActivity & Travel Information:\n• Flight/arrival information, pickup reservations\n• Activity registrations, check-in/check-out records\n\nVolunteer Service Information:\n• Check-in/out records, hour tracking\n• Volunteer coordination feedback\n\nDevice & Usage Information:\n• Device identifiers, IP addresses\n• Operation/security/crash logs\n• Cookies/local storage data\n\n3. How We Use Your Information\n\nWith Your Consent:\n• Account creation and management\n• AI Q&A services\n• Activity notifications and reminders\n\nFor Contract Performance:\n• Activity registration and volunteer management\n• Airport pickup and transportation services\n• Local discount services\n\nFor Legitimate Interests:\n• Service improvement and user experience\n• Fraud prevention and security\n• Technical support and maintenance\n\n4. Information Sharing\n\nThird-Party Services (limited scope):\n• Gmail SMTP: Email delivery\n• Cloudflare R2: File storage\n• Firebase FCM: Push notifications\n\nWe do not sell your personal information.\n\n5. Your Privacy Rights\n\nUnder California Law (CCPA/CPRA):\n• Right to Know: What personal information we collect\n• Right to Access: Request copies of your personal information\n• Right to Delete: Request deletion of personal information\n• Right to Correct: Correct inaccurate personal information\n• Right to Opt-Out: Opt out of sale/sharing (we don't sell)\n• Right to Non-Discrimination: Equal service regardless of privacy choices\n\nTo exercise your rights:\nEmail us at info@americanpromotioncompany.com or contact us through the app.\n\n6. Children's Privacy (COPPA Compliance)\n\n• Under 13: We do not knowingly collect information from children under 13\n• 13-17: Parental guidance recommended\n• Enhanced protection measures for minors\n\n7. Data Security\n\nTechnical Safeguards:\n• AES-256 encryption for sensitive data\n• HTTPS encrypted transmission\n• Access controls and authentication\n• 24/7 security monitoring\n\nOperational Safeguards:\n• Employee access on need-to-know basis\n• Regular security training and audits\n• Data access logging\n• Incident response procedures\n\n8. Data Retention and Storage\n\n• Location: United States and other regions\n• Retention: Minimum time necessary for purposes\n• Disposal: Secure deletion or anonymization\n\n9. Contact Us\n\nFor privacy-related questions:\n• Email: info@americanpromotioncompany.com\n• Data Protection Officer: dev@americanpromotioncompany.com\n• Address: 8988 CAMINITO FRESCO, LA JOLLA, CA 92037\n• Business Hours: Monday-Friday 9:00-18:00 (Beijing Time)\n\n10. Policy Updates\n\nWe may update this policy and will notify you of material changes through in-app notifications, email, or website notices.\n\nThis policy is governed by applicable US law and the laws of California."
+    }
+  },
+  "locations": {
+    "states_cities": {
+      "AL": ["Birmingham", "Montgomery", "Huntsville", "Mobile", "Tuscaloosa", "Auburn"],
+      "AZ": ["Phoenix", "Tucson", "Mesa", "Chandler", "Scottsdale", "Tempe", "Glendale"],
+      "CA": ["Los Angeles", "San Francisco", "San Diego", "Oakland", "Sacramento", "San Jose", "Fresno", "Long Beach", "Anaheim", "Bakersfield", "Riverside", "Stockton", "Irvine", "Pasadena", "Berkeley", "Davis"],
+      "CO": ["Denver", "Colorado Springs", "Aurora", "Boulder", "Westminster", "Pueblo", "Arvada"],
+      "CT": ["Hartford", "New Haven", "Stamford", "Bridgeport", "Waterbury", "Norwalk"],
+      "FL": ["Miami", "Orlando", "Tampa", "Jacksonville", "Tallahassee", "St. Petersburg", "Hialeah", "Pembroke Pines", "Hollywood", "Gainesville", "Coral Gables"],
+      "GA": ["Atlanta", "Savannah", "Augusta", "Columbus", "Athens", "Albany", "Macon"],
+      "IL": ["Chicago", "Aurora", "Rockford", "Peoria", "Springfield", "Elgin", "Champaign", "Urbana"],
+      "IN": ["Indianapolis", "Fort Wayne", "Evansville", "South Bend", "Gary", "Bloomington", "West Lafayette"],
+      "KY": ["Louisville", "Lexington", "Bowling Green", "Owensboro", "Covington", "Frankfort"],
+      "LA": ["New Orleans", "Baton Rouge", "Shreveport", "Lafayette", "Lake Charles", "Monroe"],
+      "MA": ["Boston", "Worcester", "Springfield", "Cambridge", "Lowell", "Brockton", "Newton", "Somerville", "Quincy"],
+      "MD": ["Baltimore", "Annapolis", "Frederick", "Gaithersburg", "Rockville", "Hagerstown"],
+      "MI": ["Detroit", "Grand Rapids", "Ann Arbor", "Lansing", "Flint", "Warren", "Sterling Heights", "Dearborn"],
+      "MN": ["Minneapolis", "St. Paul", "Rochester", "Duluth", "Bloomington", "Plymouth"],
+      "MO": ["Kansas City", "St. Louis", "Springfield", "Columbia", "Independence", "Jefferson City"],
+      "NC": ["Charlotte", "Raleigh", "Greensboro", "Durham", "Chapel Hill", "Asheville", "Winston-Salem", "Fayetteville"],
+      "NJ": ["Newark", "Jersey City", "Paterson", "Elizabeth", "Princeton", "New Brunswick", "Trenton"],
+      "NV": ["Las Vegas", "Reno", "Henderson", "North Las Vegas", "Sparks", "Carson City"],
+      "NY": ["New York", "Buffalo", "Rochester", "Yonkers", "Syracuse", "Albany", "New Rochelle", "Mount Vernon", "Schenectady", "Utica", "White Plains", "Ithaca"],
+      "OH": ["Columbus", "Cleveland", "Cincinnati", "Toledo", "Akron", "Dayton", "Youngstown", "Athens"],
+      "OK": ["Oklahoma City", "Tulsa", "Norman", "Broken Arrow", "Lawton", "Edmond"],
+      "OR": ["Portland", "Eugene", "Salem", "Gresham", "Beaverton", "Bend", "Corvallis"],
+      "PA": ["Philadelphia", "Pittsburgh", "Allentown", "Erie", "Reading", "Scranton", "Bethlehem", "Harrisburg", "Lancaster", "York"],
+      "SC": ["Columbia", "Charleston", "Greenville", "Rock Hill", "Sumter", "Spartanburg"],
+      "TN": ["Nashville", "Memphis", "Knoxville", "Chattanooga", "Clarksville", "Murfreesboro"],
+      "TX": ["Houston", "Dallas", "Austin", "San Antonio", "Fort Worth", "El Paso", "Arlington", "Corpus Christi", "Plano", "Lubbock", "Garland", "Irving", "College Station"],
+      "UT": ["Salt Lake City", "West Valley City", "Provo", "Ogden", "West Jordan", "Orem"],
+      "VA": ["Virginia Beach", "Norfolk", "Richmond", "Alexandria", "Newport News", "Portsmouth", "Charlottesville", "Blacksburg"],
+      "WA": ["Seattle", "Spokane", "Tacoma", "Bellevue", "Everett", "Kent", "Renton", "Pullman"],
+      "WI": ["Milwaukee", "Madison", "Green Bay", "Kenosha", "Racine", "Appleton", "Oshkosh"]
+    },
+    "default_state": "NY",
+    "default_city": "New York"
+  },
+  "regions": {
+    "china": {
+      "name": "China",
+      "description": "Subject to laws and regulations of the People's Republic of China"
+    },
+    "usa": {
+      "name": "United States",
+      "description": "Subject to U.S. federal and state laws and regulations"
+    }
+  },
+  "location": {
+    "mismatch": {
+      "title": "Location Change Alert",
+      "subtitle": "We detected that your location has changed",
+      "current_location": "Detected Location",
+      "settings_region": "Current Settings",
+      "recommendation": "We recommend updating your region settings for the best experience and appropriate privacy protection",
+      "ignore": "Ignore",
+      "go_to_settings": "Go to Settings"
     }
   }
 }

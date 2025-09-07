@@ -19,7 +19,6 @@ import { theme } from '../../theme';
 import { useUser } from '../../context/UserContext';
 import { SafeText } from '../../components/common/SafeText';
 import { SafeAlert } from '../../utils/SafeAlert';
-import { useTabBarHide } from '../../hooks/useTabBarHide';
 import { 
   getVolunteerRecords, 
   getVolunteerHours, 
@@ -31,6 +30,7 @@ import {
   VolunteerHours
 } from '../../services/volunteerAPI';
 import { VolunteerStateService, VolunteerInfo } from '../../services/volunteerStateService';
+import VolunteerHistoryBottomSheet from '../../components/volunteer/VolunteerHistoryBottomSheet';
 
 // 前端展示用的志愿者记录类型
 interface DisplayVolunteerRecord {
@@ -66,14 +66,15 @@ export const VolunteerCheckInScreen: React.FC = () => {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [volunteerHours, setVolunteerHours] = useState<VolunteerHours[]>([]);
   
+  // Staff历史记录弹窗状态
+  const [showStaffHistoryModal, setShowStaffHistoryModal] = useState(false);
+  
   // 操作防重复锁
   const operationLockRef = useRef<Set<number>>(new Set());
   
   // 缓存历史记录（用于展示"上次签到/签出时间"）
   const lastRecordCacheRef = useRef<Map<number, APIVolunteerRecord>>(new Map());
 
-  // 使用统一的TabBar隐藏Hook
-  useTabBarHide();
 
   // 加载志愿者数据
   useEffect(() => {
@@ -629,6 +630,19 @@ export const VolunteerCheckInScreen: React.FC = () => {
               <Text style={styles.statValue}>{userRecords.length} {t('volunteerCheckIn.records_unit', '条')}</Text>
             </View>
           </View>
+          
+          {/* Staff用户历史记录查询按钮 */}
+          <TouchableOpacity 
+            style={styles.historyButton}
+            onPress={() => setShowStaffHistoryModal(true)}
+            disabled={loading}
+          >
+            <Ionicons name="time-outline" size={18} color={theme.colors.primary} />
+            <Text style={styles.historyButtonText}>
+              {t('wellbeing.volunteer.viewHistory')}
+            </Text>
+            <Ionicons name="chevron-forward" size={16} color={theme.colors.text.tertiary} />
+          </TouchableOpacity>
         </View>
 
         {/* 个人打卡记录列表 */}
@@ -705,6 +719,17 @@ export const VolunteerCheckInScreen: React.FC = () => {
 
           {renderStaffPersonalView()}
         </ScrollView>
+        
+        {/* Staff用户历史记录弹窗 */}
+        {showStaffHistoryModal && user?.userId && (
+          <VolunteerHistoryBottomSheet
+            visible={showStaffHistoryModal}
+            onClose={() => setShowStaffHistoryModal(false)}
+            userId={parseInt(user.userId)}
+            userName={user.legalName || user.userName || t('volunteerCheckIn.currentUser')}
+            userPermission="staff"
+          />
+        )}
       </SafeAreaView>
     );
   }
@@ -1317,6 +1342,26 @@ const styles = StyleSheet.create({
     fontSize: theme.typography.fontSize.xs,
     color: theme.colors.text.secondary,
     marginLeft: theme.spacing[2],
+    flex: 1,
+  },
+  
+  // 历史记录按钮样式
+  historyButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    marginTop: 12,
+    borderRadius: theme.borderRadius.lg,
+    borderWidth: 1,
+    borderColor: theme.colors.border.primary,
+    backgroundColor: theme.colors.background.primary,
+  },
+  historyButtonText: {
+    fontSize: theme.typography.fontSize.base,
+    fontWeight: theme.typography.fontWeight.medium,
+    color: theme.colors.primary,
+    marginLeft: 8,
     flex: 1,
   },
 });

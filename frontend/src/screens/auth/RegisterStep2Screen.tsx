@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -6,17 +6,18 @@ import {
   TouchableOpacity,
   StyleSheet,
   SafeAreaView,
-  KeyboardAvoidingView,
-  Platform,
   ScrollView,
   Alert,
   ActivityIndicator,
+  Modal,
+  FlatList,
+  Keyboard,
+  TouchableWithoutFeedback,
 } from 'react-native';
-import { useNavigation, useRoute } from '@react-navigation/native';
+import { useNavigation, useRoute, CommonActions } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Picker } from '@react-native-picker/picker';
 
 import { theme } from '../../theme';
 import { LIQUID_GLASS_LAYERS, DAWN_GRADIENTS } from '../../theme/core';
@@ -36,24 +37,31 @@ import {
   checkUserNameAvailability,
   checkEmailAvailability
 } from '../../services/registrationAPI';
+import { useUser } from '../../context/UserContext';
+import { login } from '../../services/authAPI';
 
 interface RouteParams {
   step1Data: RegistrationStep1Data & { legalName: string };
   referralCode?: string;
   hasReferralCode?: boolean;
   registrationType?: 'phone' | 'invitation';
+  detectedRegion?: 'zh' | 'en';
+  detectionResult?: any;
 }
 
 export const RegisterStep2Screen: React.FC = () => {
   const navigation = useNavigation<any>();
   const route = useRoute<any>();
   const { t } = useTranslation();
+  const { login: userLogin } = useUser();
   
   const { 
     step1Data, 
     referralCode, 
     hasReferralCode = false, 
-    registrationType = 'phone' 
+    registrationType = 'phone',
+    detectedRegion = 'zh',
+    detectionResult
   } = route.params as RouteParams;
 
   const [loading, setLoading] = useState(false);
@@ -62,6 +70,7 @@ export const RegisterStep2Screen: React.FC = () => {
   const [countdown, setCountdown] = useState(0);
   const [smsCodeSent, setSmsCodeSent] = useState(false);
   const [bizId, setBizId] = useState<string>('');
+  const [organizationModalVisible, setOrganizationModalVisible] = useState(false);
   
   // 实时验证状态
   const [userNameChecking, setUserNameChecking] = useState(false);
@@ -81,6 +90,8 @@ export const RegisterStep2Screen: React.FC = () => {
   });
 
   const [errors, setErrors] = useState<ValidationErrors>({});
+  const scrollViewRef = useRef<ScrollView>(null);
+  const [showScrollHint, setShowScrollHint] = useState(false);
 
   // 加载组织列表
   useEffect(() => {
@@ -271,6 +282,16 @@ export const RegisterStep2Screen: React.FC = () => {
     if (!validateForm()) return;
 
     setLoading(true);
+    console.log('🚀 开始注册流程...');
+    
+    // 显示进度提示
+    Alert.alert(
+      '⏳ 正在注册',
+      '正在创建您的账户，请稍候...',
+      [],
+      { cancelable: false }
+    );
+    
     try {
       // 构建注册请求数据 - 根据注册类型决定字段
       let registrationData: RegistrationAPIRequest;
@@ -286,6 +307,7 @@ export const RegisterStep2Screen: React.FC = () => {
           deptId: parseInt(step1Data.selectedSchool!.id),
           orgId: formData.selectedOrganization!.id,
           invCode: referralCode!, // 邀请码注册必须有invCode
+          area: detectedRegion, // 地理检测结果（只读）
           // 可选字段
           ...(step1Data.phoneNumber && { phonenumber: step1Data.phoneNumber }),
           ...(formData.email && { email: formData.email }),
@@ -303,6 +325,7 @@ export const RegisterStep2Screen: React.FC = () => {
           sex: formData.sex,
           deptId: parseInt(step1Data.selectedSchool!.id),
           orgId: formData.selectedOrganization!.id,
+          area: detectedRegion, // 地理检测结果（只读）
           // 注意：由于短信服务未配置，暂时不包含验证码
           // verCode: formData.verificationCode,
           // bizId: bizId,
@@ -318,69 +341,184 @@ export const RegisterStep2Screen: React.FC = () => {
       console.log('注册响应:', response); // 调试信息
       
       if (response.code === 200) {
-        Alert.alert(
-          t('auth.register.success.title'),
-          t('auth.register.success.message'),
-          [
-            {
-              text: t('common.confirm'),
-              onPress: () => navigation.navigate('Login')
-            }
-          ]
-        );
-      } else {
-        // 详细的错误处理
-        let errorMessage = response.msg || t('auth.register.errors.register_failed_message');
+        console.log('✅ 注册成功！开始自动登录流程...');
         
-        // 如果msg为null或空，根据code处理
+        // 先关闭进度对话框
+        Alert.alert(''); // 关闭之前的进度提示
+        
+        // 显示登录进度
+        Alert.alert(
+          '🔐 自动登录中',
+          '账户创建成功，正在为您自动登录...',
+          [],
+          { cancelable: false }
+        );
+        
+        // 注册成功后自动登录
+        try {
+          console.log('开始自动登录，用户名:', formData.userName);
+          
+          // 使用注册时的凭据进行登录
+          const loginResult = await login({
+            username: formData.userName, // 注意：登录API使用的是username而不是userName
+            password: formData.password,
+          });
+          
+          console.log('登录响应:', loginResult);
+          
+          if (loginResult.code === 200 && loginResult.data) {
+            // 登录成功，更新用户状态
+            await userLogin(loginResult.data.token);
+            console.log('✅ 自动登录成功！');
+            
+            Alert.alert(
+              '🎉 ' + t('auth.register.success.title'),
+              `欢迎加入 PomeloX！\n\n✅ 账户创建成功\n✅ 自动登录成功\n🚀 即将进入应用首页`,
+              [{
+                text: '开始使用',
+                onPress: () => navigation.dispatch(
+                  CommonActions.reset({
+                    index: 0,
+                    routes: [{ name: 'Main' }],
+                  })
+                )
+              }],
+              { cancelable: false }
+            );
+          } else {
+            console.warn('⚠️ 自动登录失败，但注册成功');
+            // 登录失败，但注册成功
+            Alert.alert(
+              '✅ ' + t('auth.register.success.title'),
+              `账户创建成功！\n\n您的用户名：${formData.userName}\n请前往登录页面使用您的账户登录`,
+              [{
+                text: '去登录',
+                onPress: () => navigation.dispatch(
+                  CommonActions.reset({
+                    index: 0,
+                    routes: [{ name: 'Login' }],
+                  })
+                )
+              }]
+            );
+          }
+        } catch (loginError) {
+          console.error('❌ 自动登录失败:', loginError);
+          // 登录失败，但注册成功
+          Alert.alert(
+            '✅ ' + t('auth.register.success.title'),
+            `账户创建成功！\n\n您的用户名：${formData.userName}\n请前往登录页面使用您的账户登录`,
+            [{
+              text: '去登录',
+              onPress: () => navigation.dispatch(
+                CommonActions.reset({
+                  index: 0,
+                  routes: [{ name: 'Login' }],
+                })
+              )
+            }]
+          );
+        }
+      } else {
+        console.error('❌ 注册失败，错误码:', response.code, '错误信息:', response.msg);
+        
+        // 先关闭进度对话框
+        Alert.alert(''); 
+        
+        // 详细的错误处理
+        let errorTitle = '❌ 注册失败';
+        let errorMessage = response.msg || t('auth.register.errors.register_failed_message');
+        let suggestions = [];
+        
+        // 根据错误码和消息提供具体的解决建议
         if (!response.msg) {
           switch (response.code) {
             case 500:
-              errorMessage = '服务器内部错误，请稍后重试或联系管理员';
+              errorTitle = '🔧 服务器错误';
+              errorMessage = '服务器暂时不可用，请稍后重试';
+              suggestions = ['✓ 检查网络连接', '✓ 稍后重试', '✓ 联系客服'];
               break;
             case 400:
+              errorTitle = '📝 信息格式错误';
               errorMessage = '注册信息格式不正确，请检查后重试';
+              suggestions = ['✓ 检查用户名格式(6-20位)', '✓ 检查密码强度', '✓ 确认邮箱格式'];
               break;
             case 409:
-              errorMessage = '用户名或邮箱已存在';
+              errorTitle = '👥 信息已存在';
+              errorMessage = '用户名或邮箱已被使用';
+              suggestions = ['✓ 尝试其他用户名', '✓ 检查邮箱是否已注册', '✓ 联系客服找回账户'];
               break;
             default:
               errorMessage = `注册失败 (错误码: ${response.code})`;
+              suggestions = ['✓ 稍后重试', '✓ 联系客服'];
           }
         } else {
           // 特殊错误消息处理
-          if (errorMessage.includes('注册功能')) {
-            errorMessage = '当前系统暂未开启注册功能，请联系管理员';
+          if (errorMessage.includes('注册功能') || errorMessage.includes('暂未开启')) {
+            errorTitle = '🚫 服务暂停';
+            errorMessage = '注册功能暂未开启';
+            suggestions = ['✓ 联系管理员开启', '✓ 使用推荐码注册'];
           } else if (errorMessage.includes('用户名')) {
+            errorTitle = '👤 用户名问题';
             errorMessage = '用户名已存在或格式不正确';
+            suggestions = ['✓ 尝试其他用户名', '✓ 6-20位字母数字组合'];
           } else if (errorMessage.includes('验证码')) {
+            errorTitle = '📱 验证码错误';
             errorMessage = '验证码错误或已过期';
+            suggestions = ['✓ 重新获取验证码', '✓ 检查短信'];
           } else if (errorMessage.includes('邮箱')) {
+            errorTitle = '📧 邮箱问题';
             errorMessage = '邮箱格式不正确或已被使用';
+            suggestions = ['✓ 检查邮箱格式', '✓ 尝试其他邮箱'];
           }
         }
         
+        const fullMessage = errorMessage + 
+          (suggestions.length > 0 ? '\n\n建议解决方案:\n' + suggestions.join('\n') : '');
+        
         Alert.alert(
-          t('auth.register.errors.register_failed'),
-          errorMessage
+          errorTitle,
+          fullMessage,
+          [
+            { text: '重试', onPress: () => setLoading(false) },
+            { text: t('common.back'), style: 'cancel', onPress: () => navigation.goBack() }
+          ]
         );
       }
     } catch (error) {
-      console.error('注册失败:', error);
+      console.error('❌ 注册网络错误:', error);
+      
+      // 先关闭进度对话框
+      Alert.alert('');
       
       // 网络错误的具体处理
-      let errorMessage = t('auth.register.errors.register_failed_message');
+      let errorTitle = '🌐 网络错误';
+      let errorMessage = '网络连接失败，请检查网络后重试';
+      let suggestions = ['✓ 检查WiFi/数据连接', '✓ 重启网络', '✓ 稍后重试'];
+      
       if (error instanceof Error) {
-        if (error.message.includes('Network')) {
-          errorMessage = '网络连接失败，请检查网络后重试';
+        if (error.message.includes('Network request failed')) {
+          errorMessage = 'SSL证书验证失败或网络不可达';
+          suggestions = ['✓ 检查网络连接', '✓ 尝试切换网络', '✓ 联系客服'];
+        } else if (error.message.includes('timeout')) {
+          errorMessage = '请求超时，服务器响应缓慢';
+          suggestions = ['✓ 稍后重试', '✓ 检查网络速度'];
         } else if (error.message.includes('500')) {
+          errorTitle = '🔧 服务器错误';
           errorMessage = '服务器内部错误，请稍后重试';
+          suggestions = ['✓ 稍后重试', '✓ 联系客服'];
         }
       }
       
+      const fullMessage = errorMessage + '\n\n解决建议:\n' + suggestions.join('\n');
+      
       Alert.alert(
-        t('auth.register.errors.register_failed'),
-        errorMessage
+        errorTitle,
+        fullMessage,
+        [
+          { text: '重试', onPress: () => setLoading(false) },
+          { text: t('common.back'), style: 'cancel', onPress: () => navigation.goBack() }
+        ]
       );
     } finally {
       setLoading(false);
@@ -391,46 +529,32 @@ export const RegisterStep2Screen: React.FC = () => {
     navigation.goBack();
   };
 
-  const renderOrganizationPicker = () => (
+  const renderOrganizationSelector = () => (
     <View style={styles.inputContainer}>
       <Text style={styles.label}>{t('auth.register.form.organization_label')}</Text>
-      <View style={[styles.pickerContainer, errors.selectedOrganization && styles.inputError]}>
+      <TouchableOpacity
+        style={[styles.organizationSelector, errors.selectedOrganization && styles.inputError]}
+        onPress={() => {
+          if (!organizationsLoading && organizations.length > 0) {
+            setOrganizationModalVisible(true);
+          }
+        }}
+        disabled={organizationsLoading}
+      >
         {organizationsLoading ? (
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="small" color={theme.colors.primary} />
             <Text style={styles.loadingText}>{t('auth.register.form.loading_organizations')}</Text>
           </View>
         ) : (
-          <Picker
-            selectedValue={formData.selectedOrganization?.id || ''}
-            onValueChange={(itemValue) => {
-              if (itemValue) {
-                const organization = organizations.find(org => org.id === itemValue);
-                if (organization) {
-                  updateFormData('selectedOrganization', organization);
-                }
-              } else {
-                updateFormData('selectedOrganization', null);
-              }
-            }}
-            style={styles.picker}
-          >
-            <Picker.Item 
-              label={t('auth.register.form.organization_placeholder')} 
-              value="" 
-              color={theme.colors.text.disabled}
-            />
-            {organizations.map((org) => (
-              <Picker.Item
-                key={org.id}
-                label={org.name}
-                value={org.id}
-                color={theme.colors.text.primary}
-              />
-            ))}
-          </Picker>
+          <View style={styles.selectorContent}>
+            <Text style={[styles.selectorText, !formData.selectedOrganization && styles.placeholderText]}>
+              {formData.selectedOrganization?.name || t('auth.register.form.organization_placeholder')}
+            </Text>
+            <Ionicons name="chevron-down" size={20} color={theme.colors.text.secondary} />
+          </View>
         )}
-      </View>
+      </TouchableOpacity>
       {errors.selectedOrganization && <Text style={styles.errorText}>{errors.selectedOrganization}</Text>}
     </View>
   );
@@ -467,14 +591,62 @@ export const RegisterStep2Screen: React.FC = () => {
     </View>
   );
 
+  const renderOrganizationModal = () => (
+    <Modal
+      visible={organizationModalVisible}
+      animationType="slide"
+      transparent={true}
+      onRequestClose={() => setOrganizationModalVisible(false)}
+    >
+      <View style={styles.modalOverlay}>
+        <View style={styles.modalContainer}>
+          <View style={styles.modalHeader}>
+            <Text style={styles.modalTitle}>{t('auth.register.form.organization_label')}</Text>
+            <TouchableOpacity
+              onPress={() => setOrganizationModalVisible(false)}
+              style={styles.modalCloseButton}
+            >
+              <Ionicons name="close" size={24} color={theme.colors.text.primary} />
+            </TouchableOpacity>
+          </View>
+          
+          <FlatList
+            data={organizations}
+            keyExtractor={(item) => item.id.toString()}
+            renderItem={({ item }) => (
+              <TouchableOpacity
+                style={[
+                  styles.organizationItem,
+                  formData.selectedOrganization?.id === item.id && styles.organizationItemSelected
+                ]}
+                onPress={() => {
+                  updateFormData('selectedOrganization', item);
+                  setOrganizationModalVisible(false);
+                }}
+              >
+                <Text style={[
+                  styles.organizationItemText,
+                  formData.selectedOrganization?.id === item.id && styles.organizationItemTextSelected
+                ]}>
+                  {item.name}
+                </Text>
+                {formData.selectedOrganization?.id === item.id && (
+                  <Ionicons name="checkmark" size={20} color={theme.colors.primary} />
+                )}
+              </TouchableOpacity>
+            )}
+            showsVerticalScrollIndicator={false}
+          />
+        </View>
+      </View>
+    </Modal>
+  );
+
   return (
     <SafeAreaView style={styles.container}>
       <LinearGradient colors={DAWN_GRADIENTS.skyCool} style={StyleSheet.absoluteFill} />
       
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={styles.keyboardView}
-      >
+      <View style={styles.contentView}>
         {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity onPress={handleBack} style={styles.backButton}>
@@ -492,11 +664,20 @@ export const RegisterStep2Screen: React.FC = () => {
           <Text style={styles.progressText}>{t('auth.register.form.progress', { current: 2, total: 2 })}</Text>
         </View>
 
-        <ScrollView
-          contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}
-          keyboardShouldPersistTaps="handled"
-        >
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+          <ScrollView
+            ref={scrollViewRef}
+            contentContainerStyle={styles.scrollContent}
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+            keyboardDismissMode="on-drag"
+            onScroll={(event) => {
+              const { contentOffset, contentSize, layoutMeasurement } = event.nativeEvent;
+              const isNearBottom = contentOffset.y + layoutMeasurement.height >= contentSize.height - 100;
+              setShowScrollHint(!isNearBottom && contentSize.height > layoutMeasurement.height + 50);
+            }}
+            scrollEventThrottle={100}
+          >
           <View style={styles.formContainer}>
             <Text style={styles.stepTitle}>{t('auth.register.form.account_setup')}</Text>
             <Text style={styles.stepSubtitle}>
@@ -588,7 +769,7 @@ export const RegisterStep2Screen: React.FC = () => {
             {renderGenderSelector()}
 
             {/* 组织选择 */}
-            {renderOrganizationPicker()}
+            {renderOrganizationSelector()}
 
             {/* 手机验证码 - 暂时隐藏，因为短信服务未配置 */}
             {false && (
@@ -624,26 +805,45 @@ export const RegisterStep2Screen: React.FC = () => {
               {errors.verificationCode && <Text style={styles.errorText}>{errors.verificationCode}</Text>}
             </View>
             )}
+            {/* Register Button - 跟随内容在表单底部 */}
+            <View style={styles.bottomContainer}>
+              <TouchableOpacity
+                style={[styles.registerButton, loading && styles.registerButtonDisabled]}
+                onPress={handleRegister}
+                disabled={loading}
+              >
+                {loading ? (
+                  <ActivityIndicator color={theme.colors.text.inverse} />
+                ) : (
+                  <Text style={styles.registerButtonText}>
+                    {t('auth.register.form.register')}
+                  </Text>
+                )}
+              </TouchableOpacity>
+            </View>
           </View>
-        </ScrollView>
-
-        {/* Bottom Button */}
-        <View style={styles.bottomContainer}>
+          </ScrollView>
+        </TouchableWithoutFeedback>
+      </View>
+      
+      {/* 浮动滚动提示 */}
+      {showScrollHint && (
+        <View style={styles.scrollHintContainer}>
           <TouchableOpacity
-            style={[styles.registerButton, loading && styles.registerButtonDisabled]}
-            onPress={handleRegister}
-            disabled={loading}
+            style={styles.scrollHintButton}
+            onPress={() => {
+              scrollViewRef.current?.scrollToEnd({ animated: true });
+              setShowScrollHint(false);
+            }}
           >
-            {loading ? (
-              <ActivityIndicator color={theme.colors.text.inverse} />
-            ) : (
-              <Text style={styles.registerButtonText}>
-                {t('auth.register.form.register')}
-              </Text>
-            )}
+            <Text style={styles.scrollHintText}>{t('common.scroll_to_submit')}</Text>
+            <Ionicons name="chevron-down" size={16} color={theme.colors.primary} />
           </TouchableOpacity>
         </View>
-      </KeyboardAvoidingView>
+      )}
+      
+      {/* 组织选择Modal */}
+      {renderOrganizationModal()}
     </SafeAreaView>
   );
 };
@@ -653,7 +853,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: 'transparent',
   },
-  keyboardView: {
+  contentView: {
     flex: 1,
   },
   header: {
@@ -702,6 +902,7 @@ const styles = StyleSheet.create({
   scrollContent: {
     flexGrow: 1,
     paddingHorizontal: theme.spacing[6],
+    paddingBottom: theme.spacing[6], // 正常底部间距，按钮在ScrollView内部
   },
   formContainer: {
     backgroundColor: LIQUID_GLASS_LAYERS.L1.background.light,
@@ -775,15 +976,27 @@ const styles = StyleSheet.create({
     color: theme.colors.success,
     marginTop: theme.spacing[1],
   },
-  pickerContainer: {
+  organizationSelector: {
     backgroundColor: theme.colors.background.secondary,
     borderRadius: theme.borderRadius.lg,
     borderWidth: 1,
     borderColor: 'transparent',
-    overflow: 'hidden',
+    paddingHorizontal: theme.spacing[4],
+    paddingVertical: theme.spacing[3],
+    minHeight: 48,
   },
-  picker: {
+  selectorContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  selectorText: {
+    fontSize: theme.typography.fontSize.base,
     color: theme.colors.text.primary,
+    flex: 1,
+  },
+  placeholderText: {
+    color: theme.colors.text.disabled,
   },
   loadingContainer: {
     flexDirection: 'row',
@@ -853,10 +1066,9 @@ const styles = StyleSheet.create({
     color: theme.colors.text.inverse,
   },
   bottomContainer: {
-    padding: theme.spacing[6],
-    backgroundColor: theme.colors.text.inverse,
-    borderTopWidth: 1,
-    borderTopColor: '#E5E7EB',
+    paddingTop: theme.spacing[6],
+    paddingHorizontal: 0, // 已经在scrollContent中设置
+    paddingBottom: theme.spacing[4], // 表单底部留白
   },
   registerButton: {
     backgroundColor: theme.colors.primary,
@@ -886,5 +1098,89 @@ const styles = StyleSheet.create({
     color: theme.colors.primary,
     fontWeight: theme.typography.fontWeight.medium,
     marginLeft: theme.spacing[2],
+  },
+  // Modal样式
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'flex-end',
+  },
+  modalContainer: {
+    backgroundColor: theme.colors.background.primary,
+    borderTopLeftRadius: theme.borderRadius.xl,
+    borderTopRightRadius: theme.borderRadius.xl,
+    maxHeight: '60%',
+    paddingBottom: 20,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: theme.spacing[6],
+    paddingVertical: theme.spacing[4],
+    borderBottomWidth: 1,
+    borderBottomColor: theme.colors.border,
+  },
+  modalTitle: {
+    fontSize: theme.typography.fontSize.lg,
+    fontWeight: theme.typography.fontWeight.semibold,
+    color: theme.colors.text.primary,
+  },
+  modalCloseButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: theme.colors.background.secondary,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  organizationItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: theme.spacing[6],
+    paddingVertical: theme.spacing[4],
+    borderBottomWidth: 1,
+    borderBottomColor: theme.colors.border + '30',
+  },
+  organizationItemSelected: {
+    backgroundColor: theme.colors.primary + '10',
+  },
+  organizationItemText: {
+    fontSize: theme.typography.fontSize.base,
+    color: theme.colors.text.primary,
+    flex: 1,
+  },
+  organizationItemTextSelected: {
+    color: theme.colors.primary,
+    fontWeight: theme.typography.fontWeight.medium,
+  },
+  // 浮动滚动提示样式
+  scrollHintContainer: {
+    position: 'absolute',
+    bottom: 100,
+    right: theme.spacing[4],
+    zIndex: 1000,
+  },
+  scrollHintButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    paddingHorizontal: theme.spacing[3],
+    paddingVertical: theme.spacing[2],
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: theme.colors.primary,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  scrollHintText: {
+    fontSize: theme.typography.fontSize.sm,
+    color: theme.colors.primary,
+    fontWeight: theme.typography.fontWeight.medium,
+    marginRight: theme.spacing[1],
   },
 });

@@ -417,7 +417,7 @@ export const FloatingAIButton: React.FC<FloatingAIButtonProps> = ({
 
   const buttonAnimatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: breathingScale.value * pressScale.value }],
-    borderColor: 'rgba(249, 168, 137, 0.2)', // 温和的橙色边框
+    borderColor: 'rgba(249, 168, 137, 0.4)', // 恢复更明显的橙色边框
   }));
 
   const shimmerAnimatedStyle = useAnimatedStyle(() => ({
@@ -500,9 +500,9 @@ export const FloatingAIButton: React.FC<FloatingAIButtonProps> = ({
               {/* 温和品牌渐变背景 */}
               <LinearGradient
                 colors={[
-                  'rgba(249, 168, 137, 0.45)',  // 降低饱和度的温和橙
-                  'rgba(255, 180, 162, 0.45)',  // 温和珊瑚色
-                  'rgba(249, 168, 137, 0.45)',  // 温和橙色
+                  'rgba(249, 168, 137, 0.85)',  // 恢复原来的橙色强度
+                  'rgba(255, 180, 162, 0.85)',  // 恢复原来的珊瑚色强度
+                  'rgba(249, 168, 137, 0.85)',  // 恢复原来的橙色强度
                 ]}
                 style={styles.gradientBackground}
                 start={{ x: 0, y: 0 }}

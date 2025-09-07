@@ -426,7 +426,7 @@ export const useDarkModeGradients = () => {
       : colors.gradients.vitaflow,
       
     // 覆盖层渐变 (用于图片上的文字保护)
-    overlayGradient: isDarkMode ? [
+    overlayGradient: (isDarkMode ? [
       'rgba(255, 138, 101, 0.05)',  // 深色模式品牌色轻微遮罩
       'rgba(255, 107, 117, 0.12)',  // 中等遮罩
       'rgba(0, 0, 0, 0.8)'           // 底部强遮罩确保文字对比度
@@ -434,7 +434,7 @@ export const useDarkModeGradients = () => {
       'rgba(255, 107, 53, 0.05)',   // 浅色模式品牌色轻微遮罩
       'rgba(255, 71, 87, 0.15)',    // 中等遮罩
       'rgba(26, 26, 26, 0.75)'      // 底部暗层确保文字对比度
-    ],
+    ]) as readonly [string, string, ...string[]],
   };
 };
 

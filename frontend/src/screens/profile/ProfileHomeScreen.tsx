@@ -35,6 +35,7 @@ import { activityStatsService, UserActivityStats } from '../../services/activity
 import { pomeloXAPI } from '../../services/PomeloXAPI';
 import { getCurrentToken } from '../../services/authAPI';
 import { getVolunteerHours, VolunteerHours, getPersonalVolunteerHours } from '../../services/volunteerAPI';
+import VolunteerHistoryBottomSheet from '../../components/volunteer/VolunteerHistoryBottomSheet';
 
 interface SettingRowProps {
   title: string;
@@ -177,10 +178,13 @@ export const ProfileHomeScreen: React.FC = () => {
   const themeContext = useTheme();
   const isDarkMode = themeContext.isDarkMode;
   const insets = useSafeAreaInsets();
-  const { user, isAuthenticated, logout } = useUser();
+  const { user, isAuthenticated, logout, permissions } = useUser();
   
   // 身份二维码状态
   const [showIdentityQR, setShowIdentityQR] = useState(false);
+  
+  // 个人志愿者历史记录弹窗状态
+  const [showPersonalHistoryModal, setShowPersonalHistoryModal] = useState(false);
   
   // 活动统计状态
   const [activityStats, setActivityStats] = useState<UserActivityStats>({
@@ -367,6 +371,19 @@ export const ProfileHomeScreen: React.FC = () => {
       return;
     }
     
+    // 🆕 权限检查：只有staff及以上权限才能访问志愿者功能
+    if (!permissions.hasVolunteerManagementAccess()) {
+      if (__DEV__) {
+        console.log('ℹ️ [VOLUNTEER-STATS] 当前用户无志愿者权限，跳过志愿者数据加载');
+      }
+      // 普通用户不显示志愿者统计，设置为默认值
+      setVolunteerStats({
+        volunteerHours: 0,
+        points: 0,
+      });
+      return;
+    }
+    
     try {
       setIsLoadingVolunteerStats(true);
       console.log('🔍 正在加载志愿者统计，用户信息:', {
@@ -397,7 +414,7 @@ export const ProfileHomeScreen: React.FC = () => {
           throw new Error('个人工时API返回无效数据');
         }
       } catch (personalError: any) {
-        console.warn('⚠️ [PERSONAL-HOURS] 个人工时API调用失败，fallback到管理员API:', personalError.message);
+        console.log('ℹ️ [PERSONAL-HOURS] 个人工时API无数据或调用失败，使用管理员API:', personalError.message);
         
         // Fallback: 使用原来的管理员工时API（向后兼容）
         const response = await getVolunteerHours({ userId: userIdToUse });
@@ -475,10 +492,19 @@ export const ProfileHomeScreen: React.FC = () => {
 
   // 监听活动报名成功事件
   useEffect(() => {
-    const registrationListener = DeviceEventEmitter.addListener('activityRegistered', () => {
-      console.log('📊 收到活动报名成功事件，刷新统计数据');
+    const registrationListener = DeviceEventEmitter.addListener('activityRegistered', (data: { activityId: string }) => {
+      console.log('📊 [ProfileHome] 收到活动报名成功事件，刷新统计数据:', {
+        activityId: data?.activityId,
+        isAuthenticated,
+        userId: user?.id,
+        timestamp: new Date().toISOString()
+      });
+      
       if (isAuthenticated) {
+        console.log('🔄 [ProfileHome] 开始刷新活动统计数据');
         loadActivityStats();
+      } else {
+        console.log('⚠️ [ProfileHome] 用户未认证，跳过统计数据刷新');
       }
     });
 
@@ -486,6 +512,22 @@ export const ProfileHomeScreen: React.FC = () => {
       registrationListener?.remove();
     };
   }, [isAuthenticated]);
+
+  // 处理志愿者小时点击 - 弹出个人历史记录查询
+  const handleVolunteerHoursPress = useCallback(() => {
+    console.log('🔍 [VOLUNTEER-HOURS] 用户点击志愿者小时:', {
+      用户: user?.userName,
+      权限级别: permissions.getPermissionLevel(),
+      志愿者小时: volunteerStats?.volunteerHours
+    });
+    
+    if (Platform.OS === 'ios') {
+      Haptics.selectionAsync();
+    }
+    
+    // 直接弹出个人历史记录弹窗，不进行页面跳转
+    setShowPersonalHistoryModal(true);
+  }, [user, permissions, volunteerStats]);
 
   // Logout handling functions
   const handleLogout = () => {
@@ -590,7 +632,7 @@ export const ProfileHomeScreen: React.FC = () => {
     contentContainer: {
       paddingHorizontal: 16,
       paddingTop: 20,
-      paddingBottom: 56 + 12 + insets.bottom, // Tab bar height + margin + safe area
+      paddingBottom: 56 + 12 + insets.bottom - 20, // Tab bar height + margin + safe area - 20px向上调整
     },
     userSection: {
       marginBottom: 16, // 减少间距，更符合小红书的紧凑设计
@@ -598,7 +640,8 @@ export const ProfileHomeScreen: React.FC = () => {
     listContainer: {
       backgroundColor: '#FFFFFF', // 小红书风格的纯白背景
       borderRadius: 12, // 小红书使用的圆角大小
-      marginVertical: 8, // 上下间距
+      marginTop: 0, // 🔧 设为0，让settingsHeader的marginBottom:2生效
+      marginBottom: 8, // 保持下边距
       overflow: 'hidden',
       // 小红书风格的微妙阴影
       shadowColor: '#000000',
@@ -624,7 +667,7 @@ export const ProfileHomeScreen: React.FC = () => {
     
     // 我的活动区 - 美团风格
     activitySection: {
-      marginVertical: 8,
+      marginVertical: 8, // 恢复原来的间距
     },
     sectionTitle: {
       fontSize: 18,
@@ -709,7 +752,7 @@ export const ProfileHomeScreen: React.FC = () => {
     
     // 会员卡L1玻璃设计
     membershipSection: {
-      marginVertical: 8,
+      marginVertical: 8, // 恢复原来的间距
     },
     membershipCardL1: {
       backgroundColor: 'rgba(255, 255, 255, 0.85)', // L1玻璃背景
@@ -905,9 +948,9 @@ export const ProfileHomeScreen: React.FC = () => {
       textAlign: 'center',
     },
     
-    // 设置区域 - 折叠样式
+    // 设置区域
     settingsSection: {
-      marginVertical: 8,
+      marginTop: 12, // 🔧 增加上边距，与"我的活动"→"我的会员"间距保持一致
       marginBottom: 100, // 为TabBar预留空间
     },
     settingsHeader: {
@@ -916,7 +959,7 @@ export const ProfileHomeScreen: React.FC = () => {
       justifyContent: 'space-between',
       paddingVertical: 12,
       paddingHorizontal: 4,
-      marginBottom: 8,
+      marginBottom: 2, // 🔧 从8减少到2，缩短标题与卡片的距离
     },
     
     // V2.0 中性写评价按钮
@@ -1020,7 +1063,7 @@ export const ProfileHomeScreen: React.FC = () => {
     
     // Logout section styles
     logoutSection: {
-      marginTop: 24,
+      marginTop: 4, // 减少上边距20px，让按钮向上移动
       marginBottom: 20,
       paddingHorizontal: 4,
     },
@@ -1059,7 +1102,7 @@ export const ProfileHomeScreen: React.FC = () => {
           colors={[
             '#F8F9FA', // 顶部中性灰
             '#F5F6F7', // 轻微变化 
-            '#FFFEF7', // 极淡奶色 (微弱温暖，蓝段≤10-12%)
+            '#F1F3F4', // 浅灰色
             '#F8F9FA'  // 回到中性
           ]}
           style={styles.horizonBand}
@@ -1096,17 +1139,17 @@ export const ProfileHomeScreen: React.FC = () => {
                 {...getUserOrganizationInfo()}
                 email={user?.email}
                 avatarUrl={undefined}
-                onPress={() => {
-                  // 个人资料编辑功能暂时禁用，等待后端API支持
-                  Alert.alert(
-                    t('common.feature_developing'), 
-                    '个人资料编辑功能正在开发中，请等待后续版本更新。',
-                    [{ text: t('common.got_it') }]
-                  );
+                onPress={!isAuthenticated ? () => {
+                  // 未登录用户点击个人信息卡片时跳转到登录页面
+                  navigation.navigate('Login');
+                } : () => {
+                  // 已登录用户点击个人信息卡片时不执行任何操作（禁用跳转）
                 }}
                 membershipStatus={membershipStatus}
                 onQRCodePress={user && isAuthenticated ? handleShowIdentityQR : undefined}
-                stats={user ? volunteerStats : undefined}
+                stats={user && permissions.hasVolunteerManagementAccess() ? volunteerStats : undefined}
+                onVolunteerHoursPress={user && isAuthenticated && permissions.hasVolunteerManagementAccess() ? handleVolunteerHoursPress : undefined}
+                isGuest={!isAuthenticated}
               />
             </View>
           </View>
@@ -1363,6 +1406,18 @@ export const ProfileHomeScreen: React.FC = () => {
         onClose={() => setShowLoginModal(false)}
         onLogin={handleLoginFromModal}
       />
+
+      {/* 个人志愿者历史记录弹窗 */}
+      {showPersonalHistoryModal && user?.userId && (
+        <VolunteerHistoryBottomSheet
+          visible={showPersonalHistoryModal}
+          onClose={() => setShowPersonalHistoryModal(false)}
+          userId={parseInt(user.userId)}
+          userName="我" // 个人查询显示"我的志愿者记录"
+          userPermission="staff" // 个人查询使用staff权限，限制为7天内
+          currentUser={user}
+        />
+      )}
     </View>
   );
 };

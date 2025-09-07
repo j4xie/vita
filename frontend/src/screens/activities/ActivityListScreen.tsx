@@ -33,6 +33,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
 import { Platform, DeviceEventEmitter } from 'react-native';
+import * as Haptics from 'expo-haptics';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useTranslation } from 'react-i18next';
 import { theme } from '../../theme';
@@ -66,9 +67,11 @@ export const ActivityListScreen: React.FC = () => {
   const navigation = useNavigation<any>();
   const insets = useSafeAreaInsets();
   const { setIsFilterOpen } = useFilter();
+  const { user } = useUser(); // Fixed user initialization order
   
-  // 🛡️ TabBar状态守护：确保返回到活动列表页面时TabBar正确显示
-  useTabBarVerification('ActivityList');
+  // 🛡️ TabBar状态守护：ActivityList作为Tab根页面，通常由TabNavigator自动管理
+  // 只在需要调试时启用
+  useTabBarVerification('ActivityList', { debugLogs: false });
   // V2.0 性能降级策略和分层配置
   const { handleScrollEvent: performanceScrollHandler, isPerformanceDegraded, getLayerConfig } = usePerformanceDegradation();
   const L1Config = getLayerConfig('L1', false); // 假设浅色模式
@@ -77,6 +80,8 @@ export const ActivityListScreen: React.FC = () => {
   const [activities, setActivities] = useState<FrontendActivity[]>([]);
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const [refreshProgress, setRefreshProgress] = useState(0);
+  const refreshAnimation = useSharedValue(0);
   const [initialLoading, setInitialLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
@@ -84,6 +89,10 @@ export const ActivityListScreen: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [activeFilter, setActiveFilter] = useState(0); // Changed to index for CategoryBar
   const [searchText, setSearchText] = useState(''); // 搜索文本状态
+  const [tabBarSearchText, setTabBarSearchText] = useState(''); // TabBar搜索文本状态
+  // ✅ 状态缓存机制：缓存已确认的报名状态
+  const [activityStatusCache, setActivityStatusCache] = useState<Map<string, 'registered' | 'checked_in'>>(new Map());
+  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [viewLayout, setViewLayout] = useState<'list' | 'grid'>('list'); // 布局模式状态
   
   // V1.1 规范: BottomSheet 过滤器状态
@@ -215,7 +224,174 @@ export const ActivityListScreen: React.FC = () => {
       subscription?.remove();
     };
   }, []);
+
+  // 🆕 监听TabBar搜索事件 - 实现当前页面内搜索
+  useEffect(() => {
+    const searchListener = DeviceEventEmitter.addListener('searchTextChanged', (data: { searchText: string; timestamp: number }) => {
+      console.log('🔍 [ACTIVITY-LIST] 收到TabBar搜索事件:', {
+        searchText: data.searchText,
+        timestamp: data.timestamp,
+        currentSearchText: searchText
+      });
+      
+      setTabBarSearchText(data.searchText);
+      
+      // 搜索防抖：清除之前的延时器，300ms后执行搜索
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
+      
+      searchTimeoutRef.current = setTimeout(() => {
+        console.log('🔍 [ACTIVITY-LIST] 防抖执行搜索:', data.searchText);
+        setSearchText(data.searchText);
+      }, 300);
+    });
+    
+    return () => {
+      searchListener?.remove();
+      // 清理搜索防抖定时器
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+        searchTimeoutRef.current = null;
+      }
+    };
+  }, [searchText]);
+
+  // ✅ 增强状态缓存和同步机制 - 监听报名成功事件
+  useEffect(() => {
+    const registrationListener = DeviceEventEmitter.addListener('activityRegistered', (data: { activityId: string, newRegisteredCount?: number, source?: string }) => {
+      console.log('📋 [ActivityList] 收到活动报名成功事件:', {
+        activityId: data.activityId,
+        newRegisteredCount: data.newRegisteredCount,
+        source: data.source,
+        currentActivitiesCount: activities.length,
+        timestamp: new Date().toISOString(),
+        hasUserLogin: !!(user?.id || user?.userId)
+      });
+      
+      // ✅ 立即更新本地状态缓存
+      setActivityStatusCache(prev => {
+        const newCache = new Map(prev);
+        newCache.set(data.activityId, 'registered');
+        console.log('📋 [ActivityList] 更新状态缓存:', {
+          activityId: data.activityId,
+          newStatus: 'registered',
+          cacheSize: newCache.size
+        });
+        return newCache;
+      });
+      
+      // ✅ 更新活动列表中的数据
+      setActivities(prevActivities => {
+        const updatedActivities = prevActivities.map(activity => {
+          if (activity.id === data.activityId) {
+            const updatedActivity = {
+              ...activity,
+              status: 'registered' as const,
+              // ✅ 如果有新的报名人数，立即更新
+              ...(data.newRegisteredCount !== undefined && {
+                registeredCount: data.newRegisteredCount,
+                attendees: data.newRegisteredCount
+              })
+            };
+            
+            console.log('✅ [ActivityList] 立即更新活动数据:', {
+              id: activity.id,
+              title: activity.title,
+              oldStatus: activity.status,
+              newStatus: updatedActivity.status,
+              oldRegisteredCount: activity.registeredCount,
+              newRegisteredCount: updatedActivity.registeredCount
+            });
+            
+            return updatedActivity;
+          }
+          return activity;
+        });
+        
+        return updatedActivities;
+      });
+      
+      // ✅ 延迟重新获取数据以确保后端状态已同步
+      setTimeout(() => {
+        console.log('🔄 [ActivityList] 延迟重新获取活动数据以确保状态同步');
+        if ((user?.id || user?.userId)) {
+          fetchActivities(1, true); // 强制刷新第一页
+        }
+      }, 2000); // 增加到2秒，给后端更多时间处理
+    });
+
+    // ✅ 监听活动签到成功事件
+    const signinListener = DeviceEventEmitter.addListener('activitySignedIn', (data: { activityId: string }) => {
+      console.log('📋 [ActivityList] 收到活动签到成功事件:', {
+        activityId: data.activityId,
+        timestamp: new Date().toISOString()
+      });
+      
+      // ✅ 更新状态缓存
+      setActivityStatusCache(prev => {
+        const newCache = new Map(prev);
+        newCache.set(data.activityId, 'checked_in');
+        return newCache;
+      });
+      
+      // ✅ 更新本地状态
+      setActivities(prevActivities => 
+        prevActivities.map(activity => 
+          activity.id === data.activityId 
+            ? { ...activity, status: 'checked_in' as const }
+            : activity
+        )
+      );
+      
+      // ✅ 延迟重新获取数据确保同步
+      setTimeout(() => {
+        console.log('🔄 [ActivityList] 延迟重新获取活动数据以确保签到状态同步');
+        if ((user?.id || user?.userId)) {
+          fetchActivities(1, true); // 强制刷新第一页
+        }
+      }, 1000); // 签到操作延迟较短
+    });
+
+    return () => {
+      registrationListener?.remove();
+      signinListener?.remove();
+    };
+  }, [user?.id, user?.userId, activities.length]); // 移除fetchActivities依赖避免循环依赖
   
+
+  // 优化自定义刷新动画样式
+  const refreshAnimatedStyle = useAnimatedStyle(() => {
+    const scale = interpolate(
+      refreshAnimation.value,
+      [0, 0.3, 0.7, 1],
+      [1, 1.15, 1.05, 1],
+      Extrapolate.CLAMP
+    );
+    
+    const opacity = interpolate(
+      refreshAnimation.value,
+      [0, 0.2, 0.8, 1],
+      [0.7, 1, 1, 0.9],
+      Extrapolate.CLAMP
+    );
+    
+    const rotate = interpolate(
+      refreshAnimation.value,
+      [0, 1],
+      [0, 720],
+      Extrapolate.CLAMP
+    );
+    
+    return {
+      transform: [
+        { scale },
+        { rotate: `${rotate}deg` }
+      ],
+      opacity,
+    };
+  });
+
   // Animation now handled by LiquidGlassTab component
   
   // 修改为基于时间的3个状态 - 使用翻译函数
@@ -321,21 +497,43 @@ export const ActivityListScreen: React.FC = () => {
 
       const selectedCategory = activeFilter > 0 ? ACTIVITY_CATEGORIES[activeFilter - 1] : null;
       
-      // 🔧 支持访客模式和个性化模式
-      const isLoggedIn = !!(user?.id);
+      // 🔧 支持访客模式和个性化模式 - 修复用户ID获取逻辑
+      const isLoggedIn = !!(user?.id || user?.userId);
+      const userIdToUse = isLoggedIn ? (user.id || user.userId) : undefined;
+      const parsedUserId = userIdToUse ? parseInt(String(userIdToUse)) : undefined;
+      
+      // 🔧 验证用户ID有效性
+      const isValidUserId = parsedUserId && !isNaN(parsedUserId) && parsedUserId > 0;
+      
+      console.log('📋 [FETCH-ACTIVITIES] 准备获取活动列表:', {
+        page,
+        isRefresh,
+        isLoggedIn,
+        userIdToUse,
+        parsedUserId,
+        isValidUserId,
+        mode: isValidUserId ? '个性化模式' : '访客模式',
+        category: selectedCategory?.name || '全部',
+        searchText: searchText || '无搜索'
+      });
       
       const result = await pomeloXAPI.getActivityList({
         pageNum: page,
         pageSize: 20,
-        userId: isLoggedIn ? parseInt(user.id) : undefined, // 🔧 可选参数，访客模式时不传
+        userId: isValidUserId ? parsedUserId : undefined, // 🔧 修复：确保传递有效的数字ID
         name: searchText || undefined,
         categoryId: selectedCategory?.id || undefined,
       });
       
-      console.log('📋 活动列表模式:', {
-        mode: isLoggedIn ? '个性化模式' : '访客模式',
-        userId: isLoggedIn ? user.id : 'guest',
-        hasPersonalizedData: result.data?.rows?.[0]?.signStatus !== undefined
+      console.log('📋 [FETCH-ACTIVITIES] API响应状态:', {
+        success: result.code === 200,
+        dataLength: result.data?.rows?.length || 0,
+        hasPersonalizedData: result.data?.rows?.[0]?.signStatus !== undefined,
+        sampleActivity: result.data?.rows?.[0] ? {
+          id: result.data.rows[0].id,
+          title: result.data.rows[0].activityName,
+          signStatus: result.data.rows[0].signStatus
+        } : null
       });
 
       const adaptedData = adaptActivityList(result, currentLanguage);
@@ -353,13 +551,60 @@ export const ActivityListScreen: React.FC = () => {
       });
 
       if (adaptedData.success) {
+        // ✅ 应用缓存状态的活动数据 - 增强调试信息
+        console.log('🔍 [FETCH-ACTIVITIES] 当前状态缓存:', {
+          cacheSize: activityStatusCache.size,
+          cachedActivities: Array.from(activityStatusCache.entries()),
+          activitiesCount: adaptedData.activities.length
+        });
+        
+        const activitiesWithCachedStatus = adaptedData.activities.map(activity => {
+          const cachedStatus = activityStatusCache.get(activity.id);
+          
+          // ✅ 详细记录每个活动的处理过程
+          console.log('📊 [FETCH-ACTIVITIES] 处理活动:', {
+            activityId: activity.id,
+            title: activity.title?.substring(0, 10) + '...',
+            originalStatus: activity.status,
+            cachedStatus: cachedStatus,
+            willApplyCache: !!(cachedStatus && cachedStatus !== 'upcoming')
+          });
+          
+          if (cachedStatus && cachedStatus !== 'upcoming') {
+            console.log('✅ [FETCH-ACTIVITIES] 应用缓存状态:', {
+              activityId: activity.id,
+              title: activity.title,
+              originalStatus: activity.status,
+              cachedStatus: cachedStatus,
+              finalStatus: cachedStatus
+            });
+            return { ...activity, status: cachedStatus };
+          } else {
+            // 调试：记录未应用缓存的情况
+            console.log('🔍 [FETCH-ACTIVITIES] 未应用缓存:', {
+              activityId: activity.id,
+              title: activity.title,
+              originalStatus: activity.status,
+              cachedStatus: cachedStatus,
+              reason: !cachedStatus ? '无缓存状态' : cachedStatus === 'upcoming' ? '缓存状态为upcoming' : '未知原因'
+            });
+          }
+          return activity;
+        });
+        
         if (page === 1 || isRefresh) {
-          setActivities(adaptedData.activities);
+          console.log('🔄 [FETCH-ACTIVITIES] 设置活动列表:', {
+            totalActivities: activitiesWithCachedStatus.length,
+            registeredActivities: activitiesWithCachedStatus.filter(a => a.status === 'registered').length,
+            checkedInActivities: activitiesWithCachedStatus.filter(a => a.status === 'checked_in').length,
+            upcomingActivities: activitiesWithCachedStatus.filter(a => a.status === 'upcoming').length
+          });
+          setActivities(activitiesWithCachedStatus);
         } else {
           // 防止重复数据，使用Set去重
           setActivities(prev => {
             const existingIds = new Set(prev.map(activity => activity.id));
-            const newActivities = adaptedData.activities.filter(activity => !existingIds.has(activity.id));
+            const newActivities = activitiesWithCachedStatus.filter(activity => !existingIds.has(activity.id));
             return [...prev, ...newActivities];
           });
         }
@@ -396,7 +641,7 @@ export const ActivityListScreen: React.FC = () => {
       setRefreshing(false);
       setInitialLoading(false);
     }
-  }, [activeFilter, searchText, currentLanguage]);
+  }, [activeFilter, searchText, currentLanguage, user?.id, user?.userId, activityStatusCache]); // 🔧 添加用户ID和状态缓存到依赖项
 
   // 调试：打印API响应
   useEffect(() => {
@@ -406,10 +651,81 @@ export const ActivityListScreen: React.FC = () => {
     }
   }, [activities]);
 
-  // 下拉刷新
-  const onRefresh = useCallback(() => {
-    fetchActivities(1, true);
-  }, [fetchActivities]);
+  
+
+  // 下拉刷新 - 完整优化版本，使用硬编码文本避免翻译问题
+  const onRefresh = useCallback(async () => {
+    try {
+      // 触感反馈 - 开始刷新
+      if (Platform.OS === 'ios') {
+        try {
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        } catch (e) {
+          // 静默处理触感反馈错误
+        }
+      }
+      
+      // 开始刷新动画
+      setRefreshing(true);
+      setRefreshProgress(0);
+      refreshAnimation.value = withTiming(1, {
+        duration: 250,
+        easing: Easing.bezier(0.34, 1.56, 0.64, 1),
+      });
+
+      // 优化渐进式刷新进度
+      const progressSteps = [0.3, 0.6, 0.9, 1.0];
+      const stepDurations = [100, 120, 100, 80];
+      
+      for (let i = 0; i < progressSteps.length; i++) {
+        await new Promise(resolve => setTimeout(resolve, stepDurations[i]));
+        setRefreshProgress(progressSteps[i]);
+        
+        // 在中间步骤添加轻微的触感反馈
+        if (i === 1 && Platform.OS === 'ios') {
+          try {
+            Haptics.selectionAsync();
+          } catch (e) {}
+        }
+      }
+
+      // 执行实际的数据获取
+      await fetchActivities(1, true);
+      
+      // 成功反馈
+      if (Platform.OS === 'ios') {
+        try {
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        } catch (e) {}
+      }
+      
+      // 延迟展示完成状态
+      await new Promise(resolve => setTimeout(resolve, 300));
+      
+      // 结束动画
+      refreshAnimation.value = withTiming(0, {
+        duration: 300,
+        easing: Easing.bezier(0.25, 0.46, 0.45, 0.94),
+      });
+      
+      setRefreshProgress(0);
+    } catch (error) {
+      console.error('刷新失败:', error);
+      setRefreshProgress(0);
+      
+      // 错误触感反馈
+      if (Platform.OS === 'ios') {
+        try {
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+        } catch (e) {}
+      }
+    } finally {
+      // 重置刷新状态
+      setTimeout(() => {
+        setRefreshing(false);
+      }, 100);
+    }
+  }, [fetchActivities, refreshAnimation]);
 
   // 加载更多
   const loadMore = useCallback(() => {
@@ -528,6 +844,15 @@ export const ActivityListScreen: React.FC = () => {
       activity.title.toLowerCase().includes(searchText.toLowerCase()) ||
       activity.location.toLowerCase().includes(searchText.toLowerCase());
     
+    // 调试搜索逻辑
+    if (searchText.length > 0 && !matchesSearch) {
+      console.log('🔍 [SEARCH-DEBUG] 活动被搜索过滤掉:', {
+        title: activity.title,
+        location: activity.location,
+        searchText
+      });
+    }
+    
     // 基于时间的状态匹配 - 前端实时计算确保准确性
     const currentFilterKey = filterTabs[activeFilter];
     let matchesFilter = true;
@@ -589,6 +914,18 @@ export const ActivityListScreen: React.FC = () => {
 
   // 活动详情
   const handleActivityPress = (activity: any) => {
+    console.log('🔍 [ActivityList] 点击活动，传递的数据:', {
+      hasActivity: !!activity,
+      activityKeys: activity ? Object.keys(activity) : [],
+      activitySample: activity ? {
+        id: activity.id,
+        title: activity.title,
+        location: activity.location,
+        date: activity.date,
+        attendees: activity.attendees,
+        maxAttendees: activity.maxAttendees
+      } : null
+    });
     navigation.navigate('ActivityDetail', { activity });
   };
 
@@ -597,8 +934,6 @@ export const ActivityListScreen: React.FC = () => {
     console.log('分享活动:', activity.title);
     // TODO: 实现分享功能
   };
-
-  const { user } = useUser();
 
   const handleBookmark = async (activity: any) => {
     if (!user?.id) {
@@ -728,6 +1063,28 @@ export const ActivityListScreen: React.FC = () => {
         title: 'activities',
         data: filteredActivities,
       }];
+
+  // 自定义刷新指示器组件 - 使用硬编码文本避免翻译键显示问题
+  const CustomRefreshIndicator = () => (
+    <View style={styles.customRefreshContainer}>
+      <Reanimated.View style={[styles.customRefreshIcon, refreshAnimatedStyle]}>
+        <Ionicons 
+          name="refresh" 
+          size={24} 
+          color={theme.colors.primary} 
+        />
+      </Reanimated.View>
+      {refreshProgress > 0 && (
+        <View style={styles.progressContainer}>
+          <View style={[styles.progressBar, { width: `${refreshProgress * 100}%` }]} />
+        </View>
+      )}
+      <Text style={styles.refreshText}>
+        {refreshProgress === 0 ? t('activities.list.refresh') : 
+         refreshProgress === 1 ? t('activities.list.refresh_complete') : t('activities.list.refreshing')}
+      </Text>
+    </View>
+  );
 
   return (
     <SafeAreaView style={styles.container}>
@@ -860,8 +1217,21 @@ export const ActivityListScreen: React.FC = () => {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
-            colors={[theme.colors.primary]}
+            colors={[theme.colors.primary, '#F9A889', '#FF8A65', theme.colors.secondary]}
             tintColor={theme.colors.primary}
+            progressBackgroundColor="rgba(255, 255, 255, 0.95)"
+            progressViewOffset={insets.top + 60}
+            titleColor={theme.colors.text.secondary}
+            title={
+              refreshProgress === 0 ? t('activities.list.refresh') : 
+              refreshProgress === 1 ? t('activities.list.refresh_complete') : 
+              t('activities.list.refreshing')
+            }
+            {...(Platform.OS === 'ios' && {
+              style: { 
+                backgroundColor: 'rgba(249, 168, 137, 0.05)',
+              },
+            })}
           />
         }
         onEndReached={loadMore}
@@ -906,6 +1276,12 @@ export const ActivityListScreen: React.FC = () => {
                 >
                   <Text style={styles.retryButtonText}>{t('common.retry')}</Text>
                 </TouchableOpacity>
+              </>
+            ) : searchText.length > 0 ? (
+              <>
+                <Ionicons name="search-outline" size={64} color={theme.colors.text.tertiary} />
+                <Text style={styles.emptyText}>未找到搜索结果</Text>
+                <Text style={styles.emptySubtext}>没有找到包含"{searchText}"的活动</Text>
               </>
             ) : (
               <>
@@ -1066,7 +1442,7 @@ export { ActivityListScreenWithProvider as ActivityListScreen };
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: 'rgba(255, 255, 255, 0.001)', // Nearly invisible but solid for shadow calculation
+    backgroundColor: 'rgba(255, 255, 255, 0.02)', // Nearly invisible but solid for shadow calculation
   },
   
   // 应用主背景渐变
@@ -1085,7 +1461,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     zIndex: 1000,
-    backgroundColor: 'rgba(255, 255, 255, 0.001)', // Nearly invisible but solid for shadow calculation
+    backgroundColor: 'rgba(255, 255, 255, 0.02)', // Nearly invisible but solid for shadow calculation
   },
   header: {
     flexDirection: 'row',
@@ -1290,7 +1666,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     marginVertical: 2,
     borderRadius: 12,
-    backgroundColor: 'rgba(255, 255, 255, 0.001)', // Nearly invisible but solid for shadow calculation
+    backgroundColor: 'rgba(255, 255, 255, 0.02)', // Nearly invisible but solid for shadow calculation
     position: 'relative', // 为选中图标定位
   },
   locationItemSelected: {
@@ -1354,5 +1730,69 @@ const styles = StyleSheet.create({
   waterfallItem: {
     width: '100%',
     marginBottom: 8, // 卡片间距
+  },
+  
+  // 自定义刷新指示器样式 - 优化版
+  customRefreshContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.98)',
+    borderRadius: 20,
+    marginHorizontal: 20,
+    marginTop: 8,
+    marginBottom: 12,
+    shadowColor: '#F9A889',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(249, 168, 137, 0.1)',
+  },
+  customRefreshIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(249, 168, 137, 0.15)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 10,
+    shadowColor: '#F9A889',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    elevation: 4,
+  },
+  progressContainer: {
+    width: 80,
+    height: 4,
+    backgroundColor: 'rgba(249, 168, 137, 0.25)',
+    borderRadius: 2,
+    overflow: 'hidden',
+    marginBottom: 10,
+    shadowColor: '#F9A889',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.4,
+    shadowRadius: 3,
+    elevation: 2,
+  },
+  progressBar: {
+    height: '100%',
+    backgroundColor: '#F9A889',
+    borderRadius: 2,
+    shadowColor: '#F9A889',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.6,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  refreshText: {
+    fontSize: 13,
+    color: theme.colors.text.primary,
+    fontWeight: '600',
+    letterSpacing: 0.3,
+    textAlign: 'center',
   },
 });

@@ -13,6 +13,7 @@ import { useTranslation } from 'react-i18next';
 import { LinearGradient } from 'expo-linear-gradient';
 import { theme } from '../../theme';
 import { DAWN_GRADIENTS } from '../../theme/core';
+import { useUser } from '../../context/UserContext';
 
 interface TermsScreenProps {
   route: {
@@ -26,11 +27,31 @@ export const TermsScreen: React.FC = () => {
   const navigation = useNavigation();
   const route = useRoute<any>();
   const { t } = useTranslation();
-  const { type = 'terms' } = route.params || {};
+  const { user } = useUser();
+  const { type = 'terms', area } = route.params || {};
+
+
+  // 获取用户地域设置，优先使用路由参数，其次使用用户设置，最后默认中国
+  const userArea = area || user?.area || 'zh';
 
   const isTerms = type === 'terms';
   const title = isTerms ? t('legal.terms.title') : t('legal.privacy.title');
-  const content = isTerms ? t('legal.terms.full_content') : t('legal.privacy.full_content');
+  
+  // 根据地域和内容类型选择相应的内容
+  let content;
+  if (isTerms) {
+    content = t('legal.terms.full_content');
+  } else {
+    // 隐私政策根据地域选择不同版本
+    if (userArea === 'zh') {
+      content = t('legal.privacy.content_china');
+    } else if (userArea === 'en') {
+      content = t('legal.privacy.content_usa');
+    } else {
+      // 备用：使用完整版本
+      content = t('legal.privacy.full_content');
+    }
+  }
 
   // 硬编码内容作为备用（测试用）
   const fallbackContent = isTerms ? `西柚-PomeloX 服务条款
@@ -221,11 +242,15 @@ export const TermsScreen: React.FC = () => {
       
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+        <TouchableOpacity 
+          style={styles.backButton}
+          onPress={() => navigation.goBack()}
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+        >
           <Ionicons name="arrow-back" size={24} color={theme.colors.text.primary} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>{title}</Text>
-        <View style={styles.placeholder} />
+        <View style={styles.headerSpacer} />
       </View>
 
       {/* Content */}
@@ -262,17 +287,21 @@ const styles = StyleSheet.create({
   backButton: {
     width: 40,
     height: 40,
-    justifyContent: 'center',
     alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 20,
+    backgroundColor: 'rgba(0, 0, 0, 0.05)',
   },
   headerTitle: {
+    flex: 1,
     fontSize: theme.typography.fontSize.xl,
     fontWeight: theme.typography.fontWeight.bold,
     color: theme.colors.text.primary,
     textAlign: 'center',
+    marginHorizontal: theme.spacing.md,
   },
-  placeholder: {
-    width: 40,
+  headerSpacer: {
+    width: 40, // 与backButton宽度相同，保持标题居中
   },
   scrollView: {
     flex: 1,

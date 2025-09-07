@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -24,6 +24,8 @@ import { Organization } from '../../types/organization';
 import { UserIdentityData, ParsedUserQRCode } from '../../types/userIdentity';
 import { pomeloXAPI } from '../../services/PomeloXAPI';
 import { useUser } from '../../context/UserContext';
+import { WebCameraView, WebCameraViewRef } from '../../components/web/WebCameraView';
+import { useWebCameraPermissions } from '../../hooks/useWebCameraPermissions';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 const scanAreaSize = screenWidth * 0.7;
@@ -44,9 +46,16 @@ export const QRScannerScreen: React.FC = () => {
     return callbacks?.[callbackId]?.[type];
   };
   
-  const [permission, requestPermission] = useCameraPermissions();
+  // 原生和Web平台的相机权限处理
+  const [nativePermission, requestNativePermission] = Platform.OS !== 'web' ? useCameraPermissions() : [null, () => Promise.resolve({ granted: false, status: 'denied' as const })];
+  const [webPermission, requestWebPermission] = Platform.OS === 'web' ? useWebCameraPermissions() : [null, () => Promise.resolve({ granted: false, status: 'denied' as const })];
+  
+  const permission = Platform.OS === 'web' ? webPermission : nativePermission;
+  const requestPermission = Platform.OS === 'web' ? requestWebPermission : requestNativePermission;
+  
   const [scanned, setScanned] = useState(false);
   const [torchOn, setTorchOn] = useState(false);
+  const webCameraRef = useRef<WebCameraViewRef>(null);
   
   // 用户相关状态
   const { user } = useUser();
@@ -64,6 +73,15 @@ export const QRScannerScreen: React.FC = () => {
   const [showOrganizationSwitchModal, setShowOrganizationSwitchModal] = useState(false);
   const [scanResult, setScanResult] = useState<MerchantQRScanResult | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
+
+  // 组件卸载时停止摄像头
+  useEffect(() => {
+    return () => {
+      if (Platform.OS === 'web' && webCameraRef.current) {
+        webCameraRef.current.stopCamera();
+      }
+    };
+  }, []);
 
   const handleBarCodeScanned = ({ type, data }: { type: string; data: string }) => {
     if (scanned || isProcessing) return;
@@ -746,6 +764,10 @@ export const QRScannerScreen: React.FC = () => {
   };
 
   const handleBack = () => {
+    // Web平台需要先停止摄像头
+    if (Platform.OS === 'web' && webCameraRef.current) {
+      webCameraRef.current.stopCamera();
+    }
     navigation.goBack();
   };
 
@@ -809,7 +831,7 @@ export const QRScannerScreen: React.FC = () => {
   if (!permission.granted) {
     return (
       <View style={styles.container}>
-        <Ionicons name="camera-off" size={64} color={theme.colors.text.disabled} />
+        <Ionicons name="camera-outline" size={64} color={theme.colors.text.disabled} />
         <Text style={styles.message}>{t('qr.camera.no_permission')}</Text>
         <Text style={styles.submessage}>{t('qr.camera.permission_instruction')}</Text>
         <TouchableOpacity style={[styles.button, { marginBottom: theme.spacing[2] }]} onPress={requestPermission}>
@@ -824,15 +846,28 @@ export const QRScannerScreen: React.FC = () => {
 
   return (
     <View style={styles.container}>
-      <CameraView
-        style={StyleSheet.absoluteFillObject}
-        facing="back"
-        enableTorch={torchOn}
-        onBarcodeScanned={scanned ? undefined : handleBarCodeScanned}
-        barcodeScannerSettings={{
-          barcodeTypes: ['qr'],
-        }}
-      />
+      {Platform.OS === 'web' ? (
+        <WebCameraView
+          ref={webCameraRef}
+          style={StyleSheet.absoluteFillObject}
+          facing="back"
+          enableTorch={torchOn}
+          onBarcodeScanned={scanned ? undefined : handleBarCodeScanned}
+          barcodeScannerSettings={{
+            barcodeTypes: ['qr'],
+          }}
+        />
+      ) : (
+        <CameraView
+          style={StyleSheet.absoluteFillObject}
+          facing="back"
+          enableTorch={torchOn}
+          onBarcodeScanned={scanned ? undefined : handleBarCodeScanned}
+          barcodeScannerSettings={{
+            barcodeTypes: ['qr'],
+          }}
+        />
+      )}
 
       {/* Overlay */}
       <View style={styles.overlay}>
@@ -846,7 +881,7 @@ export const QRScannerScreen: React.FC = () => {
           </Text>
           <TouchableOpacity onPress={toggleTorch} style={styles.headerButton}>
             <Ionicons 
-              name={torchOn ? "flash" : "flash-off"} 
+              name={torchOn ? "flash" : "flash-outline"} 
               size={24} 
               color={theme.colors.text.inverse} 
             />

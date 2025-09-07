@@ -1,13 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, memo } from 'react';
 import {
   View,
   Text,
   StyleSheet,
-  Image,
-  ActivityIndicator,
-  Platform,
   TouchableOpacity,
   Dimensions,
+  Platform,
+  Image,
+  ActivityIndicator,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
@@ -25,6 +25,8 @@ import * as Haptics from 'expo-haptics';
 import { theme } from '../../theme';
 import { LIQUID_GLASS_LAYERS, RESTRAINED_COLORS } from '../../theme/core';
 import { useCardPress } from '../../hooks/useCardPress';
+import { OptimizedImage } from '../common/OptimizedImage';
+import { formatActivityDateWithTimezone, FrontendActivity } from '../../utils/activityAdapter';
 
 const { width: screenWidth } = Dimensions.get('window');
 
@@ -38,16 +40,18 @@ interface GridActivityCardProps {
     time: string;
     attendees: number;
     maxAttendees: number;
+    registeredCount: number; // 已报名人数
     status?: string;
     image?: string;
     category?: string;
+    timeZone?: string; // 时区
   } | null;
   onPress: () => void;
   onBookmark?: (activity: any) => void;
   isBookmarked?: boolean;
 }
 
-export const GridActivityCard: React.FC<GridActivityCardProps> = ({
+const GridActivityCardComponent: React.FC<GridActivityCardProps> = ({
   activity,
   onPress,
   onBookmark,
@@ -263,10 +267,13 @@ export const GridActivityCard: React.FC<GridActivityCardProps> = ({
         {/* 图片背景 */}
         {activity.image && !imageError ? (
           <>
-            <Image
-              source={{ uri: activity.image }}
+            <OptimizedImage
+              source={{ 
+                uri: activity.image,
+                priority: 'normal'
+              }}
               style={styles.image}
-              resizeMode="cover"
+              resizeMode={'cover'}
               onLoadStart={() => setImageLoading(true)}
               onLoadEnd={() => setImageLoading(false)}
               onError={() => {
@@ -346,7 +353,7 @@ export const GridActivityCard: React.FC<GridActivityCardProps> = ({
             </View>
             
             <Text style={styles.time}>
-              {formatDateRange()}
+              {formatActivityDateWithTimezone(activity as FrontendActivity, i18n.language as 'zh' | 'en')}
             </Text>
           </View>
         </View>
@@ -354,6 +361,18 @@ export const GridActivityCard: React.FC<GridActivityCardProps> = ({
     </Animated.View>
   );
 };
+
+// 🚀 性能优化：使用React.memo防止不必要的重新渲染
+export const GridActivityCard = memo(GridActivityCardComponent, (prevProps, nextProps) => {
+  // 仅在这些关键属性改变时才重新渲染
+  return (
+    prevProps.activity?.id === nextProps.activity?.id &&
+    prevProps.activity?.attendees === nextProps.activity?.attendees &&
+    prevProps.activity?.registeredCount === nextProps.activity?.registeredCount &&
+    prevProps.activity?.status === nextProps.activity?.status &&
+    prevProps.isBookmarked === nextProps.isBookmarked
+  );
+});
 
 const styles = StyleSheet.create({
   container: {

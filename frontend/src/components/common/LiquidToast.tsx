@@ -56,7 +56,7 @@ export const LiquidToast: React.FC<LiquidToastProps> = ({
           icon: 'warning',
           iconColor: '#F59E0B',
           borderColor: '#F59E0B',
-          backgroundColor: '#FFFBEB',
+          backgroundColor: '#F8F9FA',
         };
       case 'error':
         return {

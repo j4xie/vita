@@ -12,6 +12,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { BlurView } from 'expo-blur';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, {
   useAnimatedStyle,
@@ -23,6 +24,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import { useTranslation } from 'react-i18next';
+import { Glass } from '../../ui/glass/GlassTheme';
 
 const { width: screenWidth } = Dimensions.get('window');
 
@@ -54,6 +56,10 @@ export const UnifiedTabBar: React.FC<UnifiedTabBarProps> = ({
   // 搜索相关动画值
   const searchInputOpacity = useSharedValue(0);
   const cancelButtonOpacity = useSharedValue(0);
+  
+  // 高光扫过动画值
+  const highlightSweepX = useSharedValue(-100);
+  const highlightOpacity = useSharedValue(0);
 
   // Tab配置 - 使用i18n翻译
   const tabs = [
@@ -67,46 +73,38 @@ export const UnifiedTabBar: React.FC<UnifiedTabBarProps> = ({
     console.log('🔍 搜索点击，当前模式:', searchMode);
     
     if (Platform.OS === 'ios') {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
 
     if (searchMode === 'default') {
-      // 第一次点击：参考图效果 - Tab区域缩小，搜索框展开
+      // 展开搜索框
       setSearchMode('expanded');
       
-      // 动画序列1：左侧Tab区域缩小为圆形
-      leftAreaWidth.value = withTiming(60, { 
-        duration: 350, 
-        easing: Easing.bezier(0.25, 0.1, 0.25, 1) 
-      });
-      
-      // 动画序列2：4个Tab淡出，圆形按钮淡入
+      // 动画序列1：4个Tab淡出
       individualTabsOpacity.value = withTiming(0, { duration: 200 });
+      
+      // 动画序列2：圆形按钮出现  
       compactButtonOpacity.value = withDelay(150, withSpring(1, { 
-        damping: 20, 
-        stiffness: 300 
+        damping: Glass.animation.springConfig.damping, 
+        stiffness: Glass.animation.springConfig.stiffness
       }));
       
-      // 动画序列3：搜索区域从右向左展开
-      searchAreaWidth.value = withDelay(200, withTiming(screenWidth - 144, { 
+      // 动画序列3：搜索覆盖层展开
+      searchAreaWidth.value = withDelay(200, withTiming(screenWidth - 116, { 
         duration: 300, 
         easing: Easing.bezier(0.4, 0, 0.2, 1) 
       }));
       
       // 动画序列4：搜索框内容显示
-      searchInputOpacity.value = withDelay(400, withTiming(1, { duration: 150 }));
+      searchInputOpacity.value = withDelay(400, withTiming(1, { duration: 200 }));
       
     } else if (searchMode === 'expanded') {
-      // 第二次点击：进入输入模式
+      // 进入输入模式
       setSearchMode('input');
       
-      // 显示取消按钮
-      cancelButtonOpacity.value = withTiming(1, { duration: 200 });
-      
-      // 聚焦搜索框
       setTimeout(() => {
         searchInputRef.current?.focus();
-      }, 50);
+      }, 100);
     }
   };
 
@@ -116,29 +114,49 @@ export const UnifiedTabBar: React.FC<UnifiedTabBarProps> = ({
     setSearchText('');
     Keyboard.dismiss();
     
-    // 逆向动画恢复
-    cancelButtonOpacity.value = withTiming(0, { duration: 150 });
-    searchInputOpacity.value = withTiming(0, { duration: 200 });
+    // 逆向恢复动画
+    searchInputOpacity.value = withTiming(0, { duration: Glass.animation.opacityTransition });
     
     searchAreaWidth.value = withTiming(0, { 
-      duration: 300, 
+      duration: 250, 
       easing: Easing.bezier(0.4, 0, 0.6, 1) 
     });
     
     compactButtonOpacity.value = withTiming(0, { duration: 200 });
     
-    leftAreaWidth.value = withDelay(100, withTiming(screenWidth - 88, { 
-      duration: 350, 
-      easing: Easing.bezier(0.25, 0.1, 0.25, 1) 
-    }));
-    
-    individualTabsOpacity.value = withDelay(250, withTiming(1, { duration: 200 }));
+    individualTabsOpacity.value = withDelay(200, withTiming(1, { duration: 200 }));
   };
+
+  // 高光扫过动画触发
+  const triggerHighlightSweep = useCallback(() => {
+    highlightSweepX.value = -100;
+    highlightOpacity.value = 0;
+    
+    // 扫光从左至右，时长 250ms
+    highlightSweepX.value = withTiming(400, {
+      duration: Glass.animation.sweepDuration,
+      easing: Easing.out(Easing.quad),
+    });
+    
+    highlightOpacity.value = withSequence(
+      withTiming(0.08, { duration: 80 }), // 淡入
+      withTiming(0.08, { duration: 90 }), // 保持
+      withTiming(0, { duration: 80 }) // 淡出
+    );
+  }, []);
 
   const handleTabPress = (route: any, isFocused: boolean) => {
     if (searchMode !== 'default') {
       handleCancel();
       return;
+    }
+
+    // 触发高光扫过动画
+    triggerHighlightSweep();
+
+    // iOS Haptic反馈
+    if (Platform.OS === 'ios') {
+      Haptics.selectionAsync();
     }
 
     const event = navigation.emit({
@@ -179,24 +197,67 @@ export const UnifiedTabBar: React.FC<UnifiedTabBarProps> = ({
     transform: [{ scale: cancelButtonOpacity.value }],
   }));
 
+  // 高光扫过动画样式
+  const highlightSweepAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [{ translateX: highlightSweepX.value }],
+    opacity: highlightOpacity.value,
+  }));
+
+  // 搜索覆盖层动画样式
+  const searchOverlayAnimatedStyle = useAnimatedStyle(() => ({
+    width: searchAreaWidth.value,
+    opacity: searchInputOpacity.value,
+  }));
+
   return (
     <Animated.View style={[
       styles.container, 
       { bottom: insets.bottom - 7 }
     ]}>
-      {/* 统一胶囊背景容器 */}
-      <View style={styles.unifiedCapsule}>
-        {/* 背景模糊效果 */}
+      {/* Liquid Glass 容器 */}
+      <View style={styles.liquidGlassContainer}>
+        {/* 背景模糊层 */}
         <BlurView
-          intensity={80}
-          tint="light"
+          intensity={Platform.OS === 'android' ? 22 : Glass.blur}
           style={styles.blurBackground}
+          tint="light"
         />
         
-        {/* 左侧区域：Tab或圆形按钮 */}
-        <Animated.View style={[styles.leftArea, leftAreaAnimatedStyle]}>
+        {/* 顶部高光分隔线 */}
+        <LinearGradient 
+          colors={[Glass.hairlineFrom, Glass.hairlineTo]}
+          start={{ x: 0, y: 0 }} 
+          end={{ x: 0, y: 1 }} 
+          style={styles.hairline}
+        />
+        
+        {/* 白系叠色渐变 */}
+        <LinearGradient 
+          colors={[Glass.overlayTop, Glass.overlayBottom]}
+          start={{ x: 0, y: 0 }} 
+          end={{ x: 0, y: 1 }}
+          style={styles.overlay}
+        />
+        
+        {/* 高光扫过效果 */}
+        <Animated.View style={[styles.sweepHighlight, highlightSweepAnimatedStyle]} pointerEvents="none">
+          <LinearGradient
+            colors={[
+              'transparent',
+              'rgba(255,255,255,0.08)',
+              'rgba(255,255,255,0.04)',
+              'transparent'
+            ]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.sweepGradient}
+          />
+        </Animated.View>
+        
+        {/* Tab容器 */}
+        <View style={styles.tabBarContainer}>
           {/* 默认模式：4个Tab */}
-          <Animated.View style={[styles.individualTabs, individualTabsAnimatedStyle]}>
+          <Animated.View style={[styles.normalTabsContainer, individualTabsAnimatedStyle]}>
             {tabs.map((tab, index) => {
               const route = state.routes.find(r => r.name === tab.key);
               if (!route) return null;
@@ -204,96 +265,128 @@ export const UnifiedTabBar: React.FC<UnifiedTabBarProps> = ({
               const isFocused = state.index === state.routes.indexOf(route);
               
               return (
-                <TouchableOpacity
-                  key={tab.key}
-                  style={styles.tab}
-                  onPress={() => handleTabPress(route, isFocused)}
-                  activeOpacity={0.6}
-                >
-                  <Ionicons
-                    name={isFocused ? tab.iconFocused as any : tab.icon as any}
-                    size={20}
-                    color={isFocused ? '#007AFF' : '#333333'}
-                  />
-                  <Text style={[
-                    styles.tabLabel,
-                    { color: isFocused ? '#007AFF' : '#333333' }
-                  ]}>
-                    {tab.label}
-                  </Text>
-                </TouchableOpacity>
+                <View key={tab.key} style={styles.tabContainer}>
+                  <TouchableOpacity
+                    style={styles.tabTouchable}
+                    onPress={() => handleTabPress(route, isFocused)}
+                    activeOpacity={0.7}
+                    accessibilityRole="tab"
+                    accessibilityState={isFocused ? { selected: true } : {}}
+                    accessibilityLabel={`${tab.label}${isFocused ? ', selected' : ''}`}
+                  >
+                    <View style={styles.tabContent}>
+                      {/* 图标容器 */}
+                      <View style={styles.iconContainer}>
+                        <Ionicons
+                          name={isFocused ? tab.iconFocused as any : tab.icon as any}
+                          size={isFocused ? 24 : 22}
+                          color={isFocused ? Glass.system.iosBlue : Glass.textMain}
+                          style={styles.tabIcon}
+                        />
+                      </View>
+                      
+                      {/* 文字标签 */}
+                      <Text
+                        style={[
+                          styles.tabLabel,
+                          { 
+                            color: isFocused ? Glass.system.iosBlue : Glass.textMain,
+                            opacity: isFocused ? 1.0 : 0.7,
+                            fontWeight: isFocused ? '600' : '500',
+                          }
+                        ]}
+                        numberOfLines={1}
+                        adjustsFontSizeToFit={true}
+                        minimumFontScale={0.7}
+                        allowFontScaling={true}
+                      >
+                        {tab.label}
+                      </Text>
+                    </View>
+                  </TouchableOpacity>
+                </View>
               );
             })}
           </Animated.View>
           
-          {/* 紧凑模式：1个圆形按钮 */}
+          {/* 紧凑模式：圆形按钮 */}
           <Animated.View style={[styles.compactButton, compactButtonAnimatedStyle]}>
             <TouchableOpacity
-              style={styles.compactTouch}
+              style={styles.compactButtonTouch}
               onPress={handleCancel}
-              activeOpacity={0.6}
+              activeOpacity={0.7}
             >
               <Ionicons
-                name="apps"
-                size={22}
-                color="#007AFF"
+                name="grid"
+                size={18}
+                color={Glass.textMain}
               />
             </TouchableOpacity>
           </Animated.View>
-        </Animated.View>
+          
+          {/* 搜索按钮 - 默认状态显示 */}
+          {searchMode === 'default' && (
+            <TouchableOpacity
+              style={styles.searchButton}
+              onPress={handleSearchPress}
+              activeOpacity={0.7}
+            >
+              <View style={styles.searchButtonContent}>
+                <Ionicons
+                  name="search"
+                  size={22}
+                  color={Glass.system.iosBlue}
+                />
+              </View>
+            </TouchableOpacity>
+          )}
 
-        {/* 中间搜索区域 */}
-        <Animated.View style={[styles.searchArea, searchAreaAnimatedStyle]}>
-          <Animated.View style={[styles.searchContent, searchInputAnimatedStyle]}>
-            <Ionicons name="search" size={18} color="#9CA3AF" />
+          {/* 取消按钮 - 输入状态显示 */}
+          {searchMode === 'input' && (
+            <TouchableOpacity
+              style={styles.searchButton}
+              onPress={handleCancel}
+              activeOpacity={0.7}
+            >
+              <View style={styles.searchButtonContent}>
+                <Ionicons
+                  name="close"
+                  size={22}
+                  color={Glass.system.iosBlue}
+                />
+              </View>
+            </TouchableOpacity>
+          )}
+        </View>
+
+        {/* 搜索覆盖层 - 独立层级 */}
+        <Animated.View style={[
+          styles.searchOverlay,
+          searchOverlayAnimatedStyle
+        ]}>
+          <View style={styles.searchOverlayContent}>
+            <Ionicons name="search" size={18} color="#666666" />
             <TextInput
               ref={searchInputRef}
-              style={styles.searchInput}
+              style={styles.searchOverlayInput}
               placeholder={t('common.search_placeholder')}
               placeholderTextColor="#9CA3AF"
               value={searchText}
               onChangeText={setSearchText}
               autoCapitalize="none"
               autoCorrect={false}
-              returnKeyType="search"
             />
-          </Animated.View>
-        </Animated.View>
-
-        {/* 右侧按钮区域 */}
-        <View style={styles.rightArea}>
-          {/* 默认和展开模式：搜索按钮 */}
-          {(searchMode === 'default' || searchMode === 'expanded') && (
             <TouchableOpacity
-              style={styles.rightButton}
-              onPress={handleSearchPress}
-              activeOpacity={0.6}
+              style={styles.searchOverlayClear}
+              onPress={handleCancel}
             >
-              <Ionicons
-                name="search"
-                size={22}
-                color="#007AFF"
-              />
+              <Ionicons name="close" size={18} color="#666666" />
             </TouchableOpacity>
-          )}
-
-          {/* 输入模式：取消按钮 */}
-          {searchMode === 'input' && (
-            <Animated.View style={cancelButtonAnimatedStyle}>
-              <TouchableOpacity
-                style={styles.rightButton}
-                onPress={handleCancel}
-                activeOpacity={0.6}
-              >
-                <Ionicons
-                  name="close"
-                  size={22}
-                  color="#007AFF"
-                />
-              </TouchableOpacity>
-            </Animated.View>
-          )}
-        </View>
+          </View>
+        </Animated.View>
+        
+        {/* 边框层 */}
+        <View style={styles.borderLayer} pointerEvents="none" />
       </View>
     </Animated.View>
   );
@@ -306,121 +399,210 @@ const styles = StyleSheet.create({
     right: 16,
     height: 66,
     zIndex: 999,
-  },
-  
-  // 统一胶囊背景 - 精确匹配参考图
-  unifiedCapsule: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.98)', // 更高透明度，更接近参考图
-    borderRadius: 33,
-    paddingHorizontal: 8, // 添加内边距
+    backgroundColor: 'transparent',
     shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 12 }, // 增强阴影
-    shadowOpacity: 0.2,
-    shadowRadius: 20,
-    elevation: 12,
-    borderWidth: 0.5, // 添加微妙边框
-    borderColor: 'rgba(255, 255, 255, 0.8)',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 4,
   },
-  
+
+  liquidGlassContainer: {
+    flex: 1,
+    borderRadius: Glass.radius.tabbar,
+    overflow: 'hidden',
+    backgroundColor: 'transparent',
+  },
+
   blurBackground: {
     ...StyleSheet.absoluteFillObject,
-    borderRadius: 33,
+    borderRadius: Glass.radius.tabbar,
   },
-  
-  // 左侧区域（Tab或圆形按钮）
-  leftArea: {
-    height: '100%',
-    justifyContent: 'center',
-    alignItems: 'center',
+
+  hairline: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 1,
   },
-  
-  // 4个独立Tab容器
-  individualTabs: {
+
+  overlay: {
+    ...StyleSheet.absoluteFillObject,
+    borderRadius: Glass.radius.tabbar,
+  },
+
+  sweepHighlight: {
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+    width: 28,
+    borderRadius: Glass.radius.tabbar,
+  },
+
+  sweepGradient: {
+    flex: 1,
+    borderRadius: Glass.radius.tabbar,
+  },
+
+  tabBarContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: 'transparent',
+    paddingVertical: 6,
+    paddingHorizontal: 8,
     height: '100%',
-    paddingHorizontal: 4,
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
   },
-  
-  tab: {
+
+  tabContainer: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 6,
-    paddingHorizontal: 3,
-    minWidth: 50, // 确保最小宽度
+    height: '100%',
+    position: 'relative',
   },
-  
-  tabLabel: {
-    fontSize: 10,
-    marginTop: 3,
-    fontWeight: '500',
-    textAlign: 'center',
-    lineHeight: 12,
+
+  // 默认Tab容器
+  normalTabsContainer: {
+    flexDirection: 'row',
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'space-around',
+    height: '100%',
+    paddingHorizontal: 16,
   },
-  
-  // 紧凑模式圆形按钮
+
+  // 紧凑圆形按钮
   compactButton: {
     position: 'absolute',
-    width: 48,
-    height: 48,
+    left: 8,
+    top: '50%',
+    marginTop: -25,
+    width: 50,
+    height: 50,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  
-  compactTouch: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: 'rgba(0, 122, 255, 0.1)',
+
+  compactButtonTouch: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
     alignItems: 'center',
     justifyContent: 'center',
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.06,
+    shadowRadius: 4,
+    elevation: 2,
   },
-  
-  // 中间搜索区域
-  searchArea: {
-    height: '100%',
-    justifyContent: 'center',
-    paddingHorizontal: 8,
+
+  // 图标容器
+  iconContainer: {
+    marginBottom: 6, // 参考Web端增加图标和文字间距
   },
-  
-  searchContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    height: 40,
-    paddingHorizontal: 12,
-  },
-  
-  searchInput: {
+
+  tabTouchable: {
     flex: 1,
-    fontSize: 16,
-    color: '#1A1A1A',
-    marginLeft: 8,
-    height: 40,
-  },
-  
-  // 右侧按钮区域
-  rightArea: {
-    width: 56,
-    height: '100%',
     alignItems: 'center',
     justifyContent: 'center',
+    paddingHorizontal: 6,
+    paddingVertical: 12,
+    minHeight: Glass.touch.minSize,
+    minWidth: Glass.touch.minSize,
   },
-  
-  rightButton: {
+
+  tabContent: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: 54,
+    paddingVertical: 6,
+  },
+
+  tabIcon: {
+    // 图标样式，动态设置
+  },
+
+  tabLabel: {
+    fontSize: 11,
+    textAlign: 'center',
+    lineHeight: 13,
+  },
+
+  borderLayer: {
+    ...StyleSheet.absoluteFillObject,
+    borderRadius: Glass.radius.tabbar,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.12)',
+    backgroundColor: 'transparent',
+  },
+
+  // 搜索按钮样式
+  searchButton: {
     width: 44,
     height: 44,
     borderRadius: 22,
     backgroundColor: 'rgba(255, 255, 255, 0.9)',
     alignItems: 'center',
     justifyContent: 'center',
+    marginLeft: 8,
     shadowColor: '#000000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
+  },
+  
+  searchButtonContent: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  // 搜索覆盖层样式
+  searchOverlay: {
+    position: 'absolute',
+    left: 62,
+    right: 54,
+    top: 11,
+    height: 44,
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    borderRadius: 22,
+    justifyContent: 'center',
+    overflow: 'hidden',
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+
+  searchOverlayContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    height: 44,
+  },
+
+  searchOverlayInput: {
+    flex: 1,
+    fontSize: 16,
+    color: Glass.textMain,
+    marginLeft: 8,
+    marginRight: 8,
+  },
+
+  searchOverlayClear: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });

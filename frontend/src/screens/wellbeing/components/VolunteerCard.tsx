@@ -20,7 +20,7 @@ import { usePerformanceDegradation } from '../../../hooks/usePerformanceDegradat
 import { formatTime, formatDuration, formatHours } from '../utils/timeFormatter';
 import { i18n } from '../../../utils/i18n';
 import { SafeText } from '../../../components/common/SafeText';
-// mockSchools removed - using real school data
+import { useUser } from '../../../context/UserContext';
 
 // 扩展API的VolunteerRecord以包含UI需要的字段
 export interface VolunteerRecord {
@@ -28,6 +28,7 @@ export interface VolunteerRecord {
   phone: string;
   name: string;
   school: string;
+  deptId?: number; // 学校ID，用于精确过滤
   userId?: number; // API字段
   legalName?: string; // API字段
   checkInTime?: string;
@@ -39,6 +40,7 @@ export interface VolunteerRecord {
   totalHours?: number; // 总志愿时长（小时）
   lastCheckInTime?: string; // 上次签到时间
   lastCheckOutTime?: string; // 上次签出时间
+  fullUserInfo?: any; // 完整用户信息，用于权限检查
 }
 
 interface VolunteerCardProps {
@@ -52,7 +54,7 @@ interface VolunteerCardProps {
 }
 
 const COLLAPSED_HEIGHT = 88; // 收起状态高度
-const EXPANDED_HEIGHT = 400; // 展开状态高度 - 从410px再减少到400px，再缩短10px
+const EXPANDED_HEIGHT = 400; // 展开状态高度
 const ANIMATION_DURATION = 200; // 动画时长
 
 export const VolunteerCard: React.FC<VolunteerCardProps> = ({
@@ -67,6 +69,7 @@ export const VolunteerCard: React.FC<VolunteerCardProps> = ({
   const { t } = useTranslation();
   const themeContext = useTheme();
   const isDarkMode = themeContext.isDarkMode;
+  const { permissions, user: currentUser } = useUser();
   
   // 🎉 JSC引擎下恢复性能监控和分层配置
   const { getLayerConfig } = usePerformanceDegradation();
@@ -112,7 +115,6 @@ export const VolunteerCard: React.FC<VolunteerCardProps> = ({
   
   // 获取本地化学校名称
   const getLocalizedSchoolName = (schoolName: string) => {
-    // mockSchools removed - return schoolName as-is
     return schoolName;
   };
   
@@ -218,12 +220,34 @@ export const VolunteerCard: React.FC<VolunteerCardProps> = ({
 
   const statusInfo = getStatusInfo();
 
-  // 渲染主按钮
+  // 渲染主按钮 - 根据权限控制显示
   const renderActionButton = () => {
+    const canPerformActions = permissions.canCheckInOut();
     const isCheckIn = volunteer.status === 'not_checked_in';
     const buttonColor = isCheckIn ? theme.colors.primary : theme.colors.warning;
     const buttonText = isCheckIn ? t('volunteerCheckIn.checkIn') : t('volunteerCheckIn.checkOut');
     const iconName = isCheckIn ? 'log-in-outline' : 'log-out-outline';
+
+    // 🚨 精确权限检查：检查是否能操作这个具体的志愿者
+    const canOperateThisVolunteer = volunteer.fullUserInfo ? 
+      canOperateTargetUser(currentUser, volunteer.fullUserInfo) : 
+      canPerformActions;
+
+    // Staff用户或无权限操作此用户时显示查看状态
+    if (!canPerformActions || !canOperateThisVolunteer) {
+      const hintText = !canPerformActions ? 
+        t('wellbeing.volunteer.viewOnly') : 
+        t('wellbeing.volunteer.noPermission');
+        
+      return (
+        <View style={[styles.actionButton, { backgroundColor: theme.colors.background.secondary }]}>
+          <Ionicons name="eye-outline" size={20} color={theme.colors.text.secondary} />
+          <Text style={[styles.actionButtonText, { color: theme.colors.text.secondary }]}>
+            {hintText}
+          </Text>
+        </View>
+      );
+    }
 
     return (
       <TouchableOpacity
@@ -282,12 +306,28 @@ export const VolunteerCard: React.FC<VolunteerCardProps> = ({
               </SafeText>
             </View>
             
-            {/* 时间信息预览 */}
-            {volunteer.checkInTime && (
-              <SafeText style={[styles.timePreview, { color: theme.colors.text.secondary }]} fallback="--:--">
-                {formatTime(volunteer.checkInTime)}
-              </SafeText>
+            {/* 时间信息预览 - 增强显示 */}
+            {volunteer.checkInTime ? (
+              <View style={styles.timePreviewContainer}>
+                <SafeText style={[styles.timePreview, { color: theme.colors.success }]} fallback="--:--">
+                  签到: {formatTime(volunteer.checkInTime)}
+                </SafeText>
+                {volunteer.status === 'checked_in' && (
+                  <SafeText style={[styles.workingDuration, { color: theme.colors.warning }]} fallback="计时中">
+                    {currentWorkDuration || '计时中...'}
+                  </SafeText>
+                )}
+              </View>
+            ) : (
+              <Text style={[styles.timePreview, { color: theme.colors.text.tertiary }]}>
+                暂未签到
+              </Text>
             )}
+            
+            {/* 总工时显示 */}
+            <SafeText style={[styles.totalHoursPreview, { color: theme.colors.text.secondary }]} fallback="0h">
+              总计: {Math.max(0, volunteer.totalHours || 0).toFixed(1)}h
+            </SafeText>
           </View>
         </View>
 
@@ -359,6 +399,7 @@ export const VolunteerCard: React.FC<VolunteerCardProps> = ({
           {/* 操作按钮 */}
           <View style={styles.actionContainer}>
             {renderActionButton()}
+            
           </View>
         </Animated.View>
       </TouchableOpacity>
@@ -439,9 +480,22 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '600',
   },
+  timePreviewContainer: {
+    alignItems: 'flex-end',
+    gap: 2,
+  },
   timePreview: {
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '500',
+  },
+  workingDuration: {
+    fontSize: 11,
+    fontWeight: '600',
+  },
+  totalHoursPreview: {
+    fontSize: 11,
+    fontWeight: '400',
+    marginTop: 2,
   },
   
   // 展开内容

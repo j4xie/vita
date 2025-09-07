@@ -5,14 +5,14 @@
 
 // 奶橘色系统 - 参考图同款柔和色调
 export const CORE_COLORS = {
-  // 主色系 - 适中橙色 (用户指定)
-  primary: '#F9A889', // 适中饱和度的橙色
-  primaryPressed: '#E68956', // 按压时稍深
-  primaryDisabled: '#FCDBC8', // 禁用时变淡
+  // 主色系 - 改为中性色系
+  primary: '#6B7280', // 中性灰色作为主色
+  primaryPressed: '#4B5563', // 按压时稍深
+  primaryDisabled: '#F1F1F1', // 禁用时变淡灰色
   
-  // 辅色系 - 温润奶茶色
-  secondary: '#FFF8E1', // 极淡的奶色
-  secondaryPressed: '#FFECB3', // 按压时的浅橘
+  // 辅色系 - 纯白色调
+  secondary: '#FFFFFF', // 纯白色
+  secondaryPressed: '#F8F9FA', // 按压时的极浅灰
   
   // PomeloX 状态色
   success: '#2ED573',
@@ -328,16 +328,16 @@ export const CORE_PLATFORM_OPTIMIZATIONS = {
   }
 } as const;
 
-// V2.0 极柔和朝霞渐变体系 - 微弱温暖色调
+// V2.0 极柔和朝霞渐变体系 - 纯白色调
 export const DAWN_GRADIENTS = {
   // Sky Cool (天际线) - 中性灰色系  
   skyCool: ['#F8F9FA', '#F1F3F4', '#E8EAED', '#D1D5DB'] as const,
   
-  // Dawn Warm (品牌主渐变) - 奶橘色系，参考图饱和度
-  dawnWarm: ['#FFFEF7', '#FFF8E1', '#FFE0B2'] as const, // 奶白到奶橘 (参考图色调)
+  // Dawn Warm (品牌主渐变) - 改为纯白色系
+  dawnWarm: ['#FFFFFF', '#FFFFFF', '#FFFFFF'] as const, // 纯白色
   
-  // Horizon Blend (过渡混合) - 上半部分微弱奶橘，参考图风格
-  horizonBlend: ['#F8F9FA', '#F5F6F7', '#FFFEF7', '#FFF0DC'] as const, // 微妙奶橘过渡
+  // Horizon Blend (过渡混合) - 改为白色到浅灰
+  horizonBlend: ['#FFFFFF', '#FEFEFE', '#FDFDFD', '#F8F9FA'] as const, // 纯白到极浅灰过渡
   
   // 渐变方向统一
   direction: { x: 0.2, y: 0 }, // 225°角度对应的start/end坐标

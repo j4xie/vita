@@ -115,7 +115,18 @@ export const LoginScreen: React.FC = () => {
         // 导航到主页或返回之前的页面
         const returnTo = navigation.getState()?.routes?.find((r: any) => r.params?.returnTo)?.params?.returnTo;
         if (returnTo) {
-          navigation.navigate(returnTo);
+          // 重置到主导航器，然后导航到目标屏幕
+          navigation.reset({
+            index: 0,
+            routes: [{ name: 'Main' }],
+          });
+          // 在下一个tick导航到目标屏幕
+          setTimeout(() => {
+            navigation.navigate('Main', {
+              screen: returnTo,
+              params: navigation.getState()?.routes?.find((r: any) => r.params?.activityId)?.params
+            });
+          }, 100);
         } else {
           navigation.reset({
             index: 0,

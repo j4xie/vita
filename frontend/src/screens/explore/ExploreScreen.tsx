@@ -19,7 +19,6 @@ import { useTranslation } from 'react-i18next';
 import { theme } from '../../theme';
 import { ActivityCard } from '../../components/cards/ActivityCard';
 import { useUnimplementedFeature } from '../../components/common/UnimplementedFeature';
-import { useTabBarShow } from '../../hooks/useTabBarHide';
 import { pomeloXAPI } from '../../services/PomeloXAPI';
 import { adaptActivityList, FrontendActivity } from '../../utils/activityAdapter';
 import { useUser } from '../../context/UserContext';
@@ -35,8 +34,6 @@ export const ExploreScreen: React.FC = () => {
   const { user } = useUser(); // 🆕 新增用户上下文
   const [selectedSchool, setSelectedSchool] = useState('all');
 
-  // 确保主页面显示TabBar
-  useTabBarShow();
   const [searchText, setSearchText] = useState('');
   const [refreshing, setRefreshing] = useState(false);
   const [activities, setActivities] = useState<FrontendActivity[]>([]);

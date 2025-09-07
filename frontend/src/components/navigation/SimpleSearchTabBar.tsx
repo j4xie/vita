@@ -496,7 +496,7 @@ const styles = StyleSheet.create({
     right: CONTAINER_MARGIN,
     height: TAB_BAR_HEIGHT + 10,
     zIndex: 999,
-    backgroundColor: 'rgba(255, 255, 255, 0.01)', // 添加subtle背景色优化shadow性能
+    backgroundColor: 'rgba(255, 255, 255, 0.02)', // 添加subtle背景色优化shadow性能
     shadowColor: '#000000',
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.3,

@@ -4,7 +4,7 @@ public development URL：
 https://pub-578670e517644aad94f4f68695b605b9.r2.dev
 
 S3 API：
-https://b1251333e5f1465deb7cd31296edeaba.r2.cloudflarestorage.com/vitaglobal-images
+https://b1251333e5f1465deb7cd31296edeaba.r2.cloudflarestorage.com/pomeloX-images
 
 token value：
 yyrWqgGQIiu0286U3HY92cFrBm9i5ja62qW7M058
@@ -17,7 +17,7 @@ secret access key：102c50e0cedbcaa922957760d1cbfd7a2b6f5e013c84f8b9e4e7ec1976ae
 S3 Endpoint：
 https://b1251333e5f1465deb7cd31296edeaba.r2.cloudflarestorage.com
 
-Bucket name：vitaglobal-images
+Bucket name：pomeloX-images
 
 account id：b1251333e5f1465deb7cd31296edeaba
 

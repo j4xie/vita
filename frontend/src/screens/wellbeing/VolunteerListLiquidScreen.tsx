@@ -191,7 +191,7 @@ export const VolunteerListLiquidScreen: React.FC = () => {
     const colorMap: Record<string, string> = {
       'UCD': '#8F8CF0', 'UCB': '#F0A1A1', 'UCLA': '#A1E3F0', 'USC': '#F0E1A1',
       'UCI': '#F6E39B', 'UCSD': '#D1C4E9', 'UCSB': '#C8E6C9', 'UCSC': '#FFCDD2',
-      'UW': '#E1BEE7', 'UMN': '#FFCDD2', 'U Berklee Music': '#FFE0B2',
+      'UW': '#E1BEE7', 'UMN': '#F5F5F5', 'U Berklee Music': '#F5F5F5',
     };
     return colorMap[deptName] || '#E0E0E0';
   };

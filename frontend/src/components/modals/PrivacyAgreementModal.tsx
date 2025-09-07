@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
   Text,
@@ -22,17 +22,29 @@ interface PrivacyAgreementModalProps {
   visible: boolean;
   onAccept: () => void;
   onDecline: () => void;
+  userArea?: 'zh' | 'en' | 'combined'; // 用户地域选择
+  allowRegionSwitch?: boolean; // 是否允许手动切换地域
+  onRegionChange?: (region: 'zh' | 'en' | 'combined') => void; // 地域切换回调
 }
 
 export const PrivacyAgreementModal: React.FC<PrivacyAgreementModalProps> = ({
   visible,
   onAccept,
   onDecline,
+  userArea = 'combined',
+  allowRegionSwitch = true,
+  onRegionChange,
 }) => {
   const { t } = useTranslation();
   const [hasScrolledToBottom, setHasScrolledToBottom] = useState(false);
   const [scrollProgress, setScrollProgress] = useState(0);
+  const [currentRegion, setCurrentRegion] = useState<'zh' | 'en' | 'combined'>(userArea);
   const scrollViewRef = useRef<ScrollView>(null);
+
+  // 当userArea改变时更新currentRegion
+  useEffect(() => {
+    setCurrentRegion(userArea);
+  }, [userArea]);
   
   // 🌙 Dark Mode Support
   const darkMode = useMemoizedDarkMode();
@@ -44,14 +56,7 @@ export const PrivacyAgreementModal: React.FC<PrivacyAgreementModalProps> = ({
     const scrollY = contentOffset.y;
     const scrollHeight = contentSize.height - layoutMeasurement.height;
     
-    // 🚀 调试滚动信息
-    console.log('📜 [PRIVACY-SCROLL]:', {
-      scrollY: Math.round(scrollY),
-      scrollHeight: Math.round(scrollHeight),
-      contentHeight: Math.round(contentSize.height),
-      layoutHeight: Math.round(layoutMeasurement.height),
-      canScroll: scrollHeight > 0
-    });
+    // 滚动进度计算
     
     // 计算滚动进度 (0-1)
     const progress = scrollHeight > 0 ? Math.min(scrollY / scrollHeight, 1) : 1;
@@ -72,14 +77,74 @@ export const PrivacyAgreementModal: React.FC<PrivacyAgreementModalProps> = ({
     setHasScrolledToBottom(false);
     setScrollProgress(0);
     
-    // 🚀 延迟检查内容高度，如果内容很短则自动启用Accept按钮
+    // 检查内容高度
     setTimeout(() => {
       if (scrollViewRef.current) {
-        scrollViewRef.current.measure((x, y, width, height, pageX, pageY) => {
-          console.log('📐 [PRIVACY-LAYOUT] ScrollView尺寸:', { width, height });
+        scrollViewRef.current.measure(() => {
+          // 内容高度检查
         });
       }
     }, 500);
+  };
+
+  // 完整的Markdown转换函数
+  const convertMarkdownToText = (markdownText: string): string => {
+    if (!markdownText) return '';
+    
+    return markdownText
+      // 移除所有标题标记 - 强化清理
+      .replace(/#{1,6}\s*/g, '')
+      .replace(/##\s*/g, '')
+      .replace(/#\s*/g, '')
+      // 移除粗体标记
+      .replace(/\*\*(.*?)\*\*/g, '$1')
+      // 移除斜体标记
+      .replace(/\*(.*?)\*/g, '$1')
+      // 移除链接格式
+      .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+      // 移除代码块
+      .replace(/```[\s\S]*?```/g, '')
+      .replace(/`([^`]+)`/g, '$1')
+      // 处理列表项
+      .replace(/^[\s]*[•\-*+]\s*/gm, '• ')
+      .replace(/^[\s]*\d+\.\s*/gm, '• ')
+      // 清理格式
+      .replace(/•\s*•\s*/g, '• ')
+      .replace(/\n{3,}/g, '\n\n')
+      .split('\n').map(line => line.trim()).join('\n')
+      .trim();
+  };
+
+  // 🌍 根据用户语言 + 地理位置选择隐私内容
+  const getPrivacyContent = () => {
+    // 获取当前语言设置
+    const currentLanguage = t('common.brand.name') === 'PomeloX' ? 'zh' : 'en';
+    
+    // 根据语言 + 地理位置组合决定显示的隐私协议版本
+    let rawContent: string;
+    if (currentRegion === 'zh') {
+      // 用户选择中国版
+      rawContent = t('legal.privacy.content_china');
+    } else if (currentRegion === 'en') {
+      // 用户选择美国版
+      rawContent = t('legal.privacy.content_usa');
+    } else {
+      // 默认显示合并版本
+      rawContent = t('legal.privacy.full_content');
+    }
+    
+    // 转换Markdown为纯文本
+    return convertMarkdownToText(rawContent);
+  };
+
+  // 处理地域切换
+  const handleRegionSwitch = (region: 'zh' | 'en' | 'combined') => {
+    setCurrentRegion(region);
+    // 重置滚动状态，要求用户重新阅读
+    setHasScrolledToBottom(false);
+    setScrollProgress(0);
+    // 回调给父组件
+    onRegionChange?.(region);
   };
 
   // 🌙 Dynamic Styles - 基于Dark Mode动态生成关键样式
@@ -118,8 +183,61 @@ export const PrivacyAgreementModal: React.FC<PrivacyAgreementModalProps> = ({
                   {t('auth.register.privacy.title')}
                 </Text>
                 <Text style={styles.subtitle}>
-                  {t('auth.register.privacy.subtitle')}
+                  {t('auth.register.privacy.subtitle_simple') || 'Privacy Policy'}
                 </Text>
+                
+                {/* 移除地理检测结果显示 - 用户不需要看到检测方法 */}
+                
+                {/* 地域切换器 */}
+                {allowRegionSwitch && (
+                  <View style={styles.regionSwitcher}>
+                    <Text style={styles.regionLabel}>协议版本：</Text>
+                    <View style={styles.regionButtons}>
+                      <TouchableOpacity
+                        style={[
+                          styles.regionButton,
+                          currentRegion === 'combined' && styles.regionButtonActive
+                        ]}
+                        onPress={() => handleRegionSwitch('combined')}
+                      >
+                        <Text style={[
+                          styles.regionButtonText,
+                          currentRegion === 'combined' && styles.regionButtonTextActive
+                        ]}>
+                          🌍 完整版协议
+                        </Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={[
+                          styles.regionButton,
+                          currentRegion === 'zh' && styles.regionButtonActive
+                        ]}
+                        onPress={() => handleRegionSwitch('zh')}
+                      >
+                        <Text style={[
+                          styles.regionButtonText,
+                          currentRegion === 'zh' && styles.regionButtonTextActive
+                        ]}>
+                          🇨🇳 中国版协议
+                        </Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={[
+                          styles.regionButton,
+                          currentRegion === 'en' && styles.regionButtonActive
+                        ]}
+                        onPress={() => handleRegionSwitch('en')}
+                      >
+                        <Text style={[
+                          styles.regionButtonText,
+                          currentRegion === 'en' && styles.regionButtonTextActive
+                        ]}>
+                          🇺🇸 美国版协议
+                        </Text>
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                )}
               </View>
 
               {/* Scroll Progress Indicator */}
@@ -145,16 +263,15 @@ export const PrivacyAgreementModal: React.FC<PrivacyAgreementModalProps> = ({
                 nestedScrollEnabled={true}
                 scrollEnabled={true}
                 keyboardShouldPersistTaps="handled"
-                onContentSizeChange={(contentWidth, contentHeight) => {
-                  console.log('📐 [PRIVACY-CONTENT] 内容尺寸变化:', { contentWidth, contentHeight });
+                onContentSizeChange={() => {
+                  // 内容尺寸变化处理
                 }}
-                onLayout={(event) => {
-                  const { height } = event.nativeEvent.layout;
-                  console.log('📐 [PRIVACY-CONTAINER] 容器高度:', height);
+                onLayout={() => {
+                  // 容器布局处理
                 }}
               >
                 <Text style={styles.contentText}>
-                  {t('auth.register.privacy.content')}
+                  {getPrivacyContent()}
                 </Text>
 
                 <View style={styles.highlightBox}>
@@ -199,7 +316,7 @@ export const PrivacyAgreementModal: React.FC<PrivacyAgreementModalProps> = ({
                     styles.acceptButtonText,
                     !hasScrolledToBottom && styles.acceptButtonTextDisabled
                   ]}>
-                    {hasScrolledToBottom ? t('auth.register.privacy.accept_button') : t('auth.register.privacy.scroll_to_accept')}
+                    {hasScrolledToBottom ? (t('auth.register.privacy.accept_simple') || 'Agree') : t('auth.register.privacy.scroll_to_accept')}
                   </Text>
                 </TouchableOpacity>
               </View>
@@ -352,5 +469,43 @@ const styles = StyleSheet.create({
     color: theme.colors.text.tertiary,
     textAlign: 'center',
     marginTop: theme.spacing[2],
+  },
+  // 地域切换器样式
+  regionSwitcher: {
+    marginTop: theme.spacing[4],
+    alignItems: 'center',
+  },
+  regionLabel: {
+    fontSize: theme.typography.fontSize.sm,
+    color: theme.colors.text.secondary,
+    marginBottom: theme.spacing[2],
+  },
+  regionButtons: {
+    flexDirection: 'row',
+    gap: theme.spacing[1],
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+  },
+  regionButton: {
+    paddingHorizontal: theme.spacing[2],
+    paddingVertical: theme.spacing[1],
+    borderRadius: theme.borderRadius.md,
+    borderWidth: 1,
+    borderColor: theme.colors.border.secondary,
+    backgroundColor: theme.colors.background.secondary,
+    minWidth: 80,
+  },
+  regionButtonActive: {
+    backgroundColor: theme.colors.primary,
+    borderColor: theme.colors.primary,
+  },
+  regionButtonText: {
+    fontSize: theme.typography.fontSize.xs,
+    color: theme.colors.text.secondary,
+    fontWeight: theme.typography.fontWeight.medium,
+    textAlign: 'center',
+  },
+  regionButtonTextActive: {
+    color: theme.colors.text.inverse,
   },
 });

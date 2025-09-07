@@ -5,10 +5,19 @@ import {
   View,
   StyleSheet,
   Platform,
+  Pressable,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTranslation } from 'react-i18next';
+import Animated, { 
+  useSharedValue, 
+  useAnimatedStyle, 
+  withSpring, 
+  withTiming,
+  runOnJS
+} from 'react-native-reanimated';
+import * as Haptics from 'expo-haptics';
 
 import { theme } from '../../theme';
 import { useTheme } from '../../context/ThemeContext';
@@ -33,6 +42,8 @@ interface PersonalInfoCardProps {
   membershipStatus?: 'free' | 'vip' | 'premium';
   // 新增主CTA
   onQRCodePress?: () => void;
+  onVolunteerHoursPress?: () => void; // 新增：点击志愿者小时回调
+  isGuest?: boolean; // 新增：是否为访客状态
 }
 
 export const PersonalInfoCard: React.FC<PersonalInfoCardProps> = ({
@@ -47,6 +58,8 @@ export const PersonalInfoCard: React.FC<PersonalInfoCardProps> = ({
   stats,
   membershipStatus = 'free',
   onQRCodePress,
+  onVolunteerHoursPress,
+  isGuest = false,
 }) => {
   const { t } = useTranslation();
   const themeContext = useTheme();
@@ -59,8 +72,42 @@ export const PersonalInfoCard: React.FC<PersonalInfoCardProps> = ({
   const { getLayerConfig } = usePerformanceDegradation();
   const L2Config = getLayerConfig('L2', isDarkMode);
 
-  // 个人资料编辑功能已禁用，等待后端API支持
-  // const handlePress = () => { ... };
+  // 动画相关的 shared values
+  const scale = useSharedValue(1);
+  const opacity = useSharedValue(1);
+
+  // 处理按压开始
+  const handlePressIn = () => {
+    'worklet';
+    scale.value = withSpring(0.98, {
+      damping: 15,
+      stiffness: 300,
+    });
+    opacity.value = withTiming(0.8, { duration: 150 });
+    
+    // 触觉反馈
+    if (Platform.OS === 'ios') {
+      runOnJS(Haptics.selectionAsync)();
+    }
+  };
+
+  // 处理按压结束
+  const handlePressOut = () => {
+    'worklet';
+    scale.value = withSpring(1, {
+      damping: 15,
+      stiffness: 300,
+    });
+    opacity.value = withTiming(1, { duration: 200 });
+  };
+
+  // 动画样式
+  const animatedStyle = useAnimatedStyle(() => {
+    return {
+      transform: [{ scale: scale.value }],
+      opacity: opacity.value,
+    };
+  });
 
   const styles = StyleSheet.create({
     container: {
@@ -135,7 +182,7 @@ export const PersonalInfoCard: React.FC<PersonalInfoCardProps> = ({
       marginLeft: 8,
     },
     vipBadge: {
-      backgroundColor: '#FFE0B2', // 奶橘色VIP标识
+      backgroundColor: '#F5F5F5', // 浅灰色VIP标识
     },
     premiumBadge: {
       backgroundColor: '#E3F2FD', // 淡蓝色PLUS标识
@@ -175,6 +222,39 @@ export const PersonalInfoCard: React.FC<PersonalInfoCardProps> = ({
       backgroundColor: 'rgba(0, 0, 0, 0.06)',
       marginHorizontal: 12, // 增加间距适配2项布局
     },
+    volunteerHoursLabelContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    clickIndicator: {
+      marginLeft: 3,
+      opacity: 0.6,
+    },
+    
+    // 访客状态样式 - 右侧登录按钮
+    guestLoginButton: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingHorizontal: 12,
+      paddingVertical: 6,
+    },
+    
+    // 访客状态专用的nameRow样式
+    guestNameRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      width: '100%',
+    },
+    guestLoginText: {
+      fontSize: 16, // 增大字体
+      color: '#6B7280',
+      fontWeight: '600', // 更加加粗
+    },
+    guestLoginIcon: {
+      marginLeft: 4,
+    },
     
     // V2.0 克制设计 - 中性玻璃按钮
     qrCodeButton: {
@@ -204,10 +284,18 @@ export const PersonalInfoCard: React.FC<PersonalInfoCardProps> = ({
   });
 
   return (
-    <View>
-      <View
-        style={[styles.container, dmStyles.card.contentSection]}
-        testID={testID}
+    <Pressable
+      onPress={onPress}
+      onPressIn={handlePressIn}
+      onPressOut={handlePressOut}
+      testID={testID}
+    >
+      <Animated.View
+        style={[
+          styles.container, 
+          dmStyles.card.contentSection,
+          animatedStyle
+        ]}
       >
         {/* 小红书风格简洁头像 */}
         <View style={[
@@ -220,34 +308,59 @@ export const PersonalInfoCard: React.FC<PersonalInfoCardProps> = ({
           <Ionicons
             name="person"
             size={24}
-            color={dmIcons.tertiary}
+            color={dmIcons?.tertiary || dmIcons?.primary || (isDarkMode ? '#EBEBF54D' : '#3C3C434D')}
           />
         </View>
         
         <View style={styles.infoContainer}>
-          <View style={styles.nameRow}>
-            <Text 
-              style={[styles.name, dmStyles.text.title]}
-              allowFontScaling={true}
-              maxFontSizeMultiplier={1.4}
-              numberOfLines={1}
-            >
-              {name}
-            </Text>
-            {/* 会员标识 */}
-            {membershipStatus !== 'free' && (
-              <View style={[styles.memberBadge, 
-                membershipStatus === 'vip' ? styles.vipBadge : styles.premiumBadge
-              ]}>
-                <Text style={styles.memberBadgeText}>
-                  {membershipStatus === 'vip' ? 'VIP' : 'PLUS'}
+          {!isGuest ? (
+            <View style={styles.nameRow}>
+              <Text 
+                style={[styles.name, dmStyles.text.title]}
+                allowFontScaling={true}
+                maxFontSizeMultiplier={1.4}
+                numberOfLines={1}
+              >
+                {name}
+              </Text>
+              {/* 会员标识 */}
+              {membershipStatus !== 'free' && (
+                <View style={[styles.memberBadge, 
+                  membershipStatus === 'vip' ? styles.vipBadge : styles.premiumBadge
+                ]}>
+                  <Text style={styles.memberBadgeText}>
+                    {membershipStatus === 'vip' ? 'VIP' : 'PLUS'}
+                  </Text>
+                </View>
+              )}
+            </View>
+          ) : (
+            /* 访客状态：Guest名称与Login按钮在同一水平线 */
+            <View style={styles.guestNameRow}>
+              <Text 
+                style={[styles.name, dmStyles.text.title]}
+                allowFontScaling={true}
+                maxFontSizeMultiplier={1.4}
+                numberOfLines={1}
+              >
+                {name}
+              </Text>
+              <View style={styles.guestLoginButton}>
+                <Text style={styles.guestLoginText}>
+                  {t('auth.login.login', 'Login')}
                 </Text>
+                <Ionicons 
+                  name="chevron-forward" 
+                  size={18} 
+                  color="#6B7280" 
+                  style={styles.guestLoginIcon}
+                />
               </View>
-            )}
-          </View>
+            </View>
+          )}
           
-          {/* 学校 • 组织信息 与 岗位徽章同行显示 */}
-          {(school || organization || position) && (
+          {/* 学校 • 组织信息 与 岗位徽章同行显示 - 仅登录用户显示 */}
+          {!isGuest && (school || organization || position) && (
             <View style={styles.organizationRow}>
               {/* 学校组织信息 */}
               {(school || organization) && (
@@ -277,8 +390,8 @@ export const PersonalInfoCard: React.FC<PersonalInfoCardProps> = ({
             </View>
           )}
           
-          {/* 兜底显示邮箱（如果没有学校和组织信息） */}
-          {!school && !organization && email && (
+          {/* 兜底显示邮箱（如果没有学校和组织信息） - 仅登录用户显示 */}
+          {!isGuest && !school && !organization && email && (
             <Text 
               style={[styles.email, dmStyles.text.secondary]}
               allowFontScaling={true}
@@ -290,12 +403,29 @@ export const PersonalInfoCard: React.FC<PersonalInfoCardProps> = ({
           )}
           
           {/* 精简统计数据 - 仅2项KPI */}
-          {stats && (
+          {stats && !isGuest && (
             <View style={styles.statsRow}>
-              <View style={styles.statItem}>
+              <TouchableOpacity 
+                style={styles.statItem} 
+                onPress={onVolunteerHoursPress}
+                disabled={!onVolunteerHoursPress}
+                activeOpacity={0.7}
+                accessibilityRole="button"
+                accessibilityLabel={`查看志愿者工时详情: ${stats.volunteerHours}小时`}
+              >
                 <Text style={[styles.statNumber, dmStyles.text.primary]}>{stats.volunteerHours}h</Text>
-                <Text style={[styles.statLabel, dmStyles.text.secondary]}>{t('profile.volunteer_hours_label')}</Text>
-              </View>
+                <View style={styles.volunteerHoursLabelContainer}>
+                  <Text style={[styles.statLabel, dmStyles.text.secondary]}>{t('profile.volunteer_hours_label')}</Text>
+                  {onVolunteerHoursPress && (
+                    <Ionicons 
+                      name="chevron-forward" 
+                      size={12} 
+                      color={dmStyles.text.tertiary.color}
+                      style={styles.clickIndicator}
+                    />
+                  )}
+                </View>
+              </TouchableOpacity>
               <View style={styles.statDivider} />
               <View style={styles.statItem}>
                 <Text style={[styles.statNumber, dmStyles.text.primary]}>{stats.points > 1000 ? `${(stats.points/1000).toFixed(1)}k` : stats.points}</Text>
@@ -305,18 +435,18 @@ export const PersonalInfoCard: React.FC<PersonalInfoCardProps> = ({
           )}
         </View>
         
-        {/* 主CTA按钮 - 我的二维码 */}
-        {onQRCodePress && (
+        {/* QR码按钮 - 已登录用户显示 */}
+        {onQRCodePress && !isGuest && (
           <TouchableOpacity 
             style={styles.qrCodeButton}
             onPress={onQRCodePress}
             activeOpacity={0.8}
           >
-            <Ionicons name="qr-code" size={20} color={dmIcons.primary} />
+            <Ionicons name="qr-code" size={20} color={dmIcons?.primary || (isDarkMode ? '#FFFFFF' : '#000000')} />
           </TouchableOpacity>
         )}
-      </View>
-    </View>
+      </Animated.View>
+    </Pressable>
   );
 };
 

@@ -6,11 +6,11 @@ import {
   TouchableOpacity,
   StyleSheet,
   SafeAreaView,
-  KeyboardAvoidingView,
-  Platform,
   ScrollView,
   Alert,
   ActivityIndicator,
+  Keyboard,
+  TouchableWithoutFeedback,
 } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
@@ -34,6 +34,8 @@ import {
   fetchSchoolList,
   validatePhoneNumber 
 } from '../../services/registrationAPI';
+import RegionDetectionService from '../../services/RegionDetectionService';
+import UserRegionPreferences from '../../services/UserRegionPreferences';
 
 export const RegisterStep1Screen: React.FC = () => {
   const navigation = useNavigation<any>();
@@ -167,18 +169,47 @@ export const RegisterStep1Screen: React.FC = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleNext = () => {
+  const handleNext = async () => {
     if (validateForm()) {
-      // 导航到第二步，传递第一步的数据和邀请码信息
-      navigation.navigate('RegisterStep2', { 
-        step1Data: {
-          ...formData,
-          legalName: `${formData.lastName} ${formData.firstName}`.trim(),
-        },
-        referralCode,
-        hasReferralCode,
-        registrationType
-      });
+      try {
+        setLoading(true);
+        
+        // 执行地理位置检测（用于初始化区域偏好）
+        console.log('注册流程：开始地理位置检测...');
+        const detectionResult = await RegionDetectionService.detectRegion();
+        console.log('注册流程：地理位置检测结果:', detectionResult);
+        
+        // 初始化用户区域偏好
+        await UserRegionPreferences.initializePreferences(detectionResult.region);
+        console.log('注册流程：用户区域偏好初始化完成');
+        
+        // 导航到第二步，传递第一步的数据、邀请码信息和地理检测结果
+        navigation.navigate('RegisterStep2', { 
+          step1Data: {
+            ...formData,
+            legalName: `${formData.lastName} ${formData.firstName}`.trim(),
+          },
+          referralCode,
+          hasReferralCode,
+          registrationType,
+          regionDetection: detectionResult, // 传递地理检测结果
+        });
+      } catch (error) {
+        console.error('注册流程地理位置检测失败:', error);
+        // 即使地理检测失败也继续注册流程，使用默认设置
+        navigation.navigate('RegisterStep2', { 
+          step1Data: {
+            ...formData,
+            legalName: `${formData.lastName} ${formData.firstName}`.trim(),
+          },
+          referralCode,
+          hasReferralCode,
+          registrationType,
+          regionDetection: null, // 检测失败
+        });
+      } finally {
+        setLoading(false);
+      }
     }
   };
 
@@ -262,10 +293,7 @@ export const RegisterStep1Screen: React.FC = () => {
     <SafeAreaView style={styles.container}>
       <LinearGradient colors={DAWN_GRADIENTS.skyCool} style={StyleSheet.absoluteFill} />
       
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={styles.keyboardView}
-      >
+      <View style={styles.contentView}>
         {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity onPress={handleBack} style={styles.backButton}>
@@ -283,11 +311,13 @@ export const RegisterStep1Screen: React.FC = () => {
           <Text style={styles.progressText}>{t('auth.register.form.progress', { current: 1, total: 2 })}</Text>
         </View>
 
-        <ScrollView
-          contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}
-          keyboardShouldPersistTaps="handled"
-        >
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+          <ScrollView
+            contentContainerStyle={styles.scrollContent}
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+            keyboardDismissMode="on-drag"
+          >
           <View style={styles.formContainer}>
             <Text style={styles.stepTitle}>{t('auth.register.form.basic_info')}</Text>
             <Text style={styles.stepSubtitle}>
@@ -362,25 +392,26 @@ export const RegisterStep1Screen: React.FC = () => {
               {errors.phoneNumber && <Text style={styles.errorText}>{errors.phoneNumber}</Text>}
             </View>
           </View>
-        </ScrollView>
+          </ScrollView>
+        </TouchableWithoutFeedback>
+      </View>
 
-        {/* Bottom Button */}
-        <View style={styles.bottomContainer}>
-          <TouchableOpacity
-            style={[styles.nextButton, loading && styles.nextButtonDisabled]}
-            onPress={handleNext}
-            disabled={loading}
-          >
-            {loading ? (
-              <ActivityIndicator color={theme.colors.text.inverse} />
-            ) : (
-              <Text style={styles.nextButtonText}>
-                {t('auth.register.form.next_step')}
-              </Text>
-            )}
-          </TouchableOpacity>
-        </View>
-      </KeyboardAvoidingView>
+      {/* Fixed Bottom Button */}
+      <View style={styles.fixedBottomContainer}>
+        <TouchableOpacity
+          style={[styles.nextButton, loading && styles.nextButtonDisabled]}
+          onPress={handleNext}
+          disabled={loading}
+        >
+          {loading ? (
+            <ActivityIndicator color={theme.colors.text.inverse} />
+          ) : (
+            <Text style={styles.nextButtonText}>
+              {t('auth.register.form.next_step')}
+            </Text>
+          )}
+        </TouchableOpacity>
+      </View>
     </SafeAreaView>
   );
 };
@@ -390,7 +421,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: 'transparent',
   },
-  keyboardView: {
+  contentView: {
     flex: 1,
   },
   header: {
@@ -439,6 +470,7 @@ const styles = StyleSheet.create({
   scrollContent: {
     flexGrow: 1,
     paddingHorizontal: theme.spacing[6],
+    paddingBottom: 120, // 增加更多空间避免键盘遮挡内容
   },
   formContainer: {
     backgroundColor: LIQUID_GLASS_LAYERS.L1.background.light,
@@ -565,9 +597,15 @@ const styles = StyleSheet.create({
     fontSize: theme.typography.fontSize.base,
     color: theme.colors.text.primary,
   },
-  bottomContainer: {
-    padding: theme.spacing[6],
-    backgroundColor: theme.colors.text.inverse,
+  fixedBottomContainer: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    paddingHorizontal: theme.spacing[6],
+    paddingVertical: theme.spacing[3], // 减少垂直间距
+    paddingBottom: theme.spacing[3] + 20, // 显著减少底部间距，更贴近底部
+    backgroundColor: 'rgba(255, 255, 255, 0.98)',
     borderTopWidth: 1,
     borderTopColor: '#E5E7EB',
   },

@@ -10,33 +10,33 @@
 		13B07FBC1A68108700A75B9A /* AppDelegate.mm in Sources */ = {isa = PBXBuildFile; fileRef = 13B07FB01A68108700A75B9A /* AppDelegate.mm */; };
 		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
 		13B07FC11A68108700A75B9A /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 13B07FB71A68108700A75B9A /* main.m */; };
+		2092566894404312A165A6D7 /* noop-file.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A9ADAF576934DE2B5595666 /* noop-file.swift */; };
+		252036DEF1534AE1A281F0D1 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 8BF7B74D6226437AAB463BD3 /* InfoPlist.strings */; };
 		3E461D99554A48A4959DE609 /* SplashScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */; };
-		48DAAFE353AE436E9A3A24ED /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = CF403564B49C492D9BFD0158 /* InfoPlist.strings */; };
-		919F41B6C1ECADAB2CC44604 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 9FFC1C6F0369A7176D1FB350 /* PrivacyInfo.xcprivacy */; };
+		6D589B96F4DD10C1E1FB1CA3 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 0803D2C84CB330555C3C1C91 /* PrivacyInfo.xcprivacy */; };
 		96905EF65AED1B983A6B3ABC /* libPods-PomeloX.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 58EEBF8E8E6FB1BC6CAF49B5 /* libPods-PomeloX.a */; };
-		A819021643E44481B7F18290 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = AED0E9D4D657498C96752F59 /* InfoPlist.strings */; };
 		B18059E884C0ABDD17F3DC3D /* ExpoModulesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = FAC715A2D49A985799AEE119 /* ExpoModulesProvider.swift */; };
-		B93027CD63784781BADE03BF /* noop-file.swift in Sources */ = {isa = PBXBuildFile; fileRef = 475388537758469C85A5759E /* noop-file.swift */; };
 		BB2F792D24A3F905000567C9 /* Expo.plist in Resources */ = {isa = PBXBuildFile; fileRef = BB2F792C24A3F905000567C9 /* Expo.plist */; };
+		CF46AF1CD3A4421C8BD48DFD /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 0B6AE28EB0384BF59530A922 /* InfoPlist.strings */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		0803D2C84CB330555C3C1C91 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; name = PrivacyInfo.xcprivacy; path = PomeloX/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		0B6AE28EB0384BF59530A922 /* InfoPlist.strings */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 4; includeInIndex = 0; lastKnownFileType = text.plist.strings; name = InfoPlist.strings; path = "en-US.lproj/InfoPlist.strings"; sourceTree = "<group>"; };
 		13B07F961A680F5B00A75B9A /* PomeloX.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = PomeloX.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		13B07FAF1A68108700A75B9A /* AppDelegate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = AppDelegate.h; path = PomeloX/AppDelegate.h; sourceTree = "<group>"; };
 		13B07FB01A68108700A75B9A /* AppDelegate.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = AppDelegate.mm; path = PomeloX/AppDelegate.mm; sourceTree = "<group>"; };
 		13B07FB51A68108700A75B9A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = PomeloX/Images.xcassets; sourceTree = "<group>"; };
 		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = PomeloX/Info.plist; sourceTree = "<group>"; };
 		13B07FB71A68108700A75B9A /* main.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = main.m; path = PomeloX/main.m; sourceTree = "<group>"; };
-		475388537758469C85A5759E /* noop-file.swift */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 4; includeInIndex = 0; lastKnownFileType = sourcecode.swift; name = "noop-file.swift"; path = "PomeloX/noop-file.swift"; sourceTree = "<group>"; };
+		1EDB0F6B38634B4CB9D9B21E /* PomeloX-Bridging-Header.h */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 4; includeInIndex = 0; lastKnownFileType = sourcecode.c.h; name = "PomeloX-Bridging-Header.h"; path = "PomeloX/PomeloX-Bridging-Header.h"; sourceTree = "<group>"; };
 		58EEBF8E8E6FB1BC6CAF49B5 /* libPods-PomeloX.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-PomeloX.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		6C2E3173556A471DD304B334 /* Pods-PomeloX.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-PomeloX.debug.xcconfig"; path = "Target Support Files/Pods-PomeloX/Pods-PomeloX.debug.xcconfig"; sourceTree = "<group>"; };
 		7A4D352CD337FB3A3BF06240 /* Pods-PomeloX.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-PomeloX.release.xcconfig"; path = "Target Support Files/Pods-PomeloX/Pods-PomeloX.release.xcconfig"; sourceTree = "<group>"; };
-		9FFC1C6F0369A7176D1FB350 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; name = PrivacyInfo.xcprivacy; path = PomeloX/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		8BF7B74D6226437AAB463BD3 /* InfoPlist.strings */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 4; includeInIndex = 0; lastKnownFileType = text.plist.strings; name = InfoPlist.strings; path = "zh-CN.lproj/InfoPlist.strings"; sourceTree = "<group>"; };
+		9A9ADAF576934DE2B5595666 /* noop-file.swift */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 4; includeInIndex = 0; lastKnownFileType = sourcecode.swift; name = "noop-file.swift"; path = "PomeloX/noop-file.swift"; sourceTree = "<group>"; };
 		AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = SplashScreen.storyboard; path = PomeloX/SplashScreen.storyboard; sourceTree = "<group>"; };
-		AED0E9D4D657498C96752F59 /* InfoPlist.strings */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 4; includeInIndex = 0; lastKnownFileType = text.plist.strings; name = InfoPlist.strings; path = "en-US.lproj/InfoPlist.strings"; sourceTree = "<group>"; };
 		BB2F792C24A3F905000567C9 /* Expo.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Expo.plist; sourceTree = "<group>"; };
-		CF403564B49C492D9BFD0158 /* InfoPlist.strings */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 4; includeInIndex = 0; lastKnownFileType = text.plist.strings; name = InfoPlist.strings; path = "zh-CN.lproj/InfoPlist.strings"; sourceTree = "<group>"; };
-		EC277FA57ECE4710BA4BA109 /* PomeloX-Bridging-Header.h */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 4; includeInIndex = 0; lastKnownFileType = sourcecode.c.h; name = "PomeloX-Bridging-Header.h"; path = "PomeloX/PomeloX-Bridging-Header.h"; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
 		FAC715A2D49A985799AEE119 /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-PomeloX/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -53,15 +53,6 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		12B3C56FC6C0469DB9FF6BF2 /* en-US.lproj */ = {
-			isa = PBXGroup;
-			children = (
-				AED0E9D4D657498C96752F59 /* InfoPlist.strings */,
-			);
-			name = "en-US.lproj";
-			path = "";
-			sourceTree = "<group>";
-		};
 		13B07FAE1A68108700A75B9A /* PomeloX */ = {
 			isa = PBXGroup;
 			children = (
@@ -72,9 +63,9 @@
 				13B07FB61A68108700A75B9A /* Info.plist */,
 				13B07FB71A68108700A75B9A /* main.m */,
 				AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */,
-				475388537758469C85A5759E /* noop-file.swift */,
-				EC277FA57ECE4710BA4BA109 /* PomeloX-Bridging-Header.h */,
-				9FFC1C6F0369A7176D1FB350 /* PrivacyInfo.xcprivacy */,
+				9A9ADAF576934DE2B5595666 /* noop-file.swift */,
+				1EDB0F6B38634B4CB9D9B21E /* PomeloX-Bridging-Header.h */,
+				0803D2C84CB330555C3C1C91 /* PrivacyInfo.xcprivacy */,
 			);
 			name = PomeloX;
 			sourceTree = "<group>";
@@ -86,15 +77,6 @@
 				58EEBF8E8E6FB1BC6CAF49B5 /* libPods-PomeloX.a */,
 			);
 			name = Frameworks;
-			sourceTree = "<group>";
-		};
-		422CB5ADCFB54EDCBF1F4F95 /* zh-CN.lproj */ = {
-			isa = PBXGroup;
-			children = (
-				CF403564B49C492D9BFD0158 /* InfoPlist.strings */,
-			);
-			name = "zh-CN.lproj";
-			path = "";
 			sourceTree = "<group>";
 		};
 		832341AE1AAA6A7D00B99B32 /* Libraries */ = {
@@ -135,12 +117,21 @@
 			name = PomeloX;
 			sourceTree = "<group>";
 		};
+		B7E8422AB5FF4FCAB1D41A9B /* en-US.lproj */ = {
+			isa = PBXGroup;
+			children = (
+				0B6AE28EB0384BF59530A922 /* InfoPlist.strings */,
+			);
+			name = "en-US.lproj";
+			path = "";
+			sourceTree = "<group>";
+		};
 		BB2F792B24A3F905000567C9 /* Supporting */ = {
 			isa = PBXGroup;
 			children = (
 				BB2F792C24A3F905000567C9 /* Expo.plist */,
-				422CB5ADCFB54EDCBF1F4F95 /* zh-CN.lproj */,
-				12B3C56FC6C0469DB9FF6BF2 /* en-US.lproj */,
+				E5A6FFF787B146AEB25F7544 /* zh-CN.lproj */,
+				B7E8422AB5FF4FCAB1D41A9B /* en-US.lproj */,
 			);
 			name = Supporting;
 			path = PomeloX/Supporting;
@@ -163,6 +154,15 @@
 			name = ExpoModulesProviders;
 			sourceTree = "<group>";
 		};
+		E5A6FFF787B146AEB25F7544 /* zh-CN.lproj */ = {
+			isa = PBXGroup;
+			children = (
+				8BF7B74D6226437AAB463BD3 /* InfoPlist.strings */,
+			);
+			name = "zh-CN.lproj";
+			path = "";
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -171,7 +171,7 @@
 			buildConfigurationList = 13B07F931A680F5B00A75B9A /* Build configuration list for PBXNativeTarget "PomeloX" */;
 			buildPhases = (
 				08A4A3CD28434E44B6B9DE2E /* [CP] Check Pods Manifest.lock */,
-				5DA96268BCAE176734DF099E /* [Expo] Configure project */,
+				51ACC30584BACAE1C4BD5A47 /* [Expo] Configure project */,
 				13B07F871A680F5B00A75B9A /* Sources */,
 				13B07F8C1A680F5B00A75B9A /* Frameworks */,
 				13B07F8E1A680F5B00A75B9A /* Resources */,
@@ -226,9 +226,9 @@
 				BB2F792D24A3F905000567C9 /* Expo.plist in Resources */,
 				13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */,
 				3E461D99554A48A4959DE609 /* SplashScreen.storyboard in Resources */,
-				48DAAFE353AE436E9A3A24ED /* InfoPlist.strings in Resources */,
-				A819021643E44481B7F18290 /* InfoPlist.strings in Resources */,
-				919F41B6C1ECADAB2CC44604 /* PrivacyInfo.xcprivacy in Resources */,
+				252036DEF1534AE1A281F0D1 /* InfoPlist.strings in Resources */,
+				CF46AF1CD3A4421C8BD48DFD /* InfoPlist.strings in Resources */,
+				6D589B96F4DD10C1E1FB1CA3 /* PrivacyInfo.xcprivacy in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -272,7 +272,7 @@
 			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
 			showEnvVarsInLog = 0;
 		};
-		5DA96268BCAE176734DF099E /* [Expo] Configure project */ = {
+		51ACC30584BACAE1C4BD5A47 /* [Expo] Configure project */ = {
 			isa = PBXShellScriptBuildPhase;
 			alwaysOutOfDate = 1;
 			buildActionMask = 2147483647;
@@ -343,7 +343,7 @@
 				13B07FBC1A68108700A75B9A /* AppDelegate.mm in Sources */,
 				13B07FC11A68108700A75B9A /* main.m in Sources */,
 				B18059E884C0ABDD17F3DC3D /* ExpoModulesProvider.swift in Sources */,
-				B93027CD63784781BADE03BF /* noop-file.swift in Sources */,
+				2092566894404312A165A6D7 /* noop-file.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

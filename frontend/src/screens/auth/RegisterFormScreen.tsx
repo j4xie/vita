@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
   Text,
@@ -6,11 +6,11 @@ import {
   TouchableOpacity,
   StyleSheet,
   SafeAreaView,
-  KeyboardAvoidingView,
-  Platform,
   ScrollView,
   Alert,
   ActivityIndicator,
+  Keyboard,
+  TouchableWithoutFeedback,
 } from 'react-native';
 import { useNavigation, useRoute, CommonActions } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
@@ -25,6 +25,7 @@ import { pomeloXAPI } from '../../services/PomeloXAPI';
 import { useUser } from '../../context/UserContext';
 import { login } from '../../services/authAPI';
 import SchoolEmailService, { APISchoolData } from '../../services/schoolEmailService';
+import RegionDetectionService, { RegionDetectionResult } from '../../services/RegionDetectionService';
 
 interface FormData {
   userName: string;
@@ -44,6 +45,7 @@ interface FormData {
   organizationId: string; // 组织ID
   bizId?: string; // SMS验证码接口返回的字段
   privacyConsent: boolean; // 隐私协议同意状态
+  area: 'zh' | 'en'; // 地域选择：zh-中国，en-美国
 }
 
 export const RegisterFormScreen: React.FC = () => {
@@ -65,6 +67,10 @@ export const RegisterFormScreen: React.FC = () => {
   const [countdown, setCountdown] = useState(0);
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   
+  // 地域检测状态
+  const [regionDetecting, setRegionDetecting] = useState(false);
+  const [regionDetectionResult, setRegionDetectionResult] = useState<RegionDetectionResult | null>(null);
+  
   const [formData, setFormData] = useState<FormData>({
     userName: '',
     legalName: '',
@@ -83,9 +89,36 @@ export const RegisterFormScreen: React.FC = () => {
     organizationId: '',
     bizId: '',
     privacyConsent: true, // 用户从RegisterChoice页面来时已经同意了隐私协议
+    area: 'zh', // 默认选择中国
   });
 
   const [errors, setErrors] = useState<Partial<FormData>>({});
+
+  // 自动地域检测
+  useEffect(() => {
+    detectUserRegion();
+  }, []);
+
+  const detectUserRegion = async () => {
+    setRegionDetecting(true);
+    try {
+      console.log('🌍 开始自动地域检测...');
+      const result = await RegionDetectionService.detectRegion();
+      
+      setRegionDetectionResult(result);
+      
+      // 自动设置检测到的地域（只读，不可修改）
+      updateFormData('area', result.region);
+      
+      console.log('🎯 地域检测完成:', result);
+    } catch (error) {
+      console.error('地域检测失败:', error);
+      // 检测失败时使用默认值（中国），不提供手动选择
+      updateFormData('area', 'zh');
+    } finally {
+      setRegionDetecting(false);
+    }
+  };
 
   const handleBack = () => {
     if (currentStep > 1) {
@@ -316,7 +349,7 @@ export const RegisterFormScreen: React.FC = () => {
 
   // 处理条款和隐私政策点击
   const handleTermsPress = (type: 'terms' | 'privacy') => {
-    navigation.navigate('Terms', { type });
+    navigation.navigate('Terms', { type, area: formData.area });
   };
 
   // 解析注册错误为用户友好提示
@@ -350,6 +383,7 @@ export const RegisterFormScreen: React.FC = () => {
         deptId: formData.universityId, // 传递学校ID，确保用户关联正确的学校
         orgId: formData.organizationId,
         invCode: formData.referralCode,
+        area: formData.area, // 地域选择
       };
 
       console.log('📋 邀请码注册数据:', {
@@ -453,6 +487,8 @@ export const RegisterFormScreen: React.FC = () => {
     <View style={styles.stepContainer}>
       <Text style={styles.stepTitle}>{t('auth.register.form.basic_info')}</Text>
       <Text style={styles.stepSubtitle}>{t('auth.register.form.basic_info_desc')}</Text>
+
+      {/* 移除Region Detection显示区域 - 地理检测在后台静默进行 */}
 
       {hasReferralCode && (
         <View style={styles.referralBadge}>
@@ -708,11 +744,7 @@ export const RegisterFormScreen: React.FC = () => {
   return (
     <SafeAreaView style={styles.container}>
       <LinearGradient colors={isDarkMode ? dmGradients.page.background : DAWN_GRADIENTS.skyCool} style={StyleSheet.absoluteFill} />
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 0}
-        style={styles.keyboardView}
-      >
+      <View style={styles.contentView}>
         {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity onPress={handleBack} style={styles.backButton}>
@@ -726,46 +758,50 @@ export const RegisterFormScreen: React.FC = () => {
 
         {renderProgressBar()}
 
-        <ScrollView
-          ref={scrollRef}
-          contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+          <ScrollView
+            ref={scrollRef}
+            contentContainerStyle={styles.scrollContent}
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+            keyboardDismissMode="on-drag"
           keyboardShouldPersistTaps="handled"
           contentInsetAdjustmentBehavior="automatic"
         >
           <View style={styles.formContainer}>
             {renderStepContent()}
-          </View>
-        </ScrollView>
-
-        {/* Bottom Button */}
-        <View style={styles.bottomContainer}>
-          <TouchableOpacity
-            style={[
-              styles.nextButton,
-              loading && styles.nextButtonDisabled,
-              currentStep === 3 && !agreedToTerms && styles.nextButtonDisabled
-            ]}
-            onPress={handleNext}
-            disabled={loading || (currentStep === 3 && !agreedToTerms)}
-          >
-            {loading ? (
-              <View style={styles.loadingContainer}>
-                <ActivityIndicator color={theme.colors.text.inverse} />
-                {loadingMessage && (
-                  <Text style={styles.loadingText}>{loadingMessage}</Text>
+            
+            {/* Register Button - 跟随内容在表单底部 */}
+            <View style={styles.bottomContainer}>
+              <TouchableOpacity
+                style={[
+                  styles.nextButton,
+                  loading && styles.nextButtonDisabled,
+                  currentStep === 3 && !agreedToTerms && styles.nextButtonDisabled
+                ]}
+                onPress={handleNext}
+                disabled={loading || (currentStep === 3 && !agreedToTerms)}
+              >
+                {loading ? (
+                  <View style={styles.loadingContainer}>
+                    <ActivityIndicator color={theme.colors.text.inverse} />
+                    {loadingMessage && (
+                      <Text style={styles.loadingText}>{loadingMessage}</Text>
+                    )}
+                  </View>
+                ) : (
+                  <Text style={styles.nextButtonText}>
+                    {currentStep === 3 
+                      ? (hasReferralCode ? t('auth.register.form.complete_registration') : t('auth.register.form.send_code'))
+                      : t('auth.register.form.next_step')}
+                  </Text>
                 )}
-              </View>
-            ) : (
-              <Text style={styles.nextButtonText}>
-                {currentStep === 3 
-                  ? (hasReferralCode ? t('auth.register.form.complete_registration') : t('auth.register.form.send_code'))
-                  : t('auth.register.form.next_step')}
-              </Text>
-            )}
-          </TouchableOpacity>
-        </View>
-      </KeyboardAvoidingView>
+              </TouchableOpacity>
+            </View>
+          </View>
+          </ScrollView>
+        </TouchableWithoutFeedback>
+      </View>
     </SafeAreaView>
   );
 };
@@ -775,7 +811,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: 'transparent',
   },
-  keyboardView: {
+  contentView: {
     flex: 1,
   },
   header: {
@@ -834,7 +870,7 @@ const styles = StyleSheet.create({
   scrollContent: {
     flexGrow: 1,
     paddingHorizontal: theme.spacing[6],
-    paddingBottom: 120, // 为底部按钮留出空间，避免被键盘遮挡
+    paddingBottom: theme.spacing[6], // 正常底部间距，按钮在ScrollView内部
   },
   formContainer: {
     backgroundColor: LIQUID_GLASS_LAYERS.L1.background.light,
@@ -1026,9 +1062,131 @@ const styles = StyleSheet.create({
     color: theme.colors.text.inverse,
     fontWeight: theme.typography.fontWeight.medium,
   },
+  areaDescription: {
+    fontSize: theme.typography.fontSize.xs,
+    color: theme.colors.text.secondary,
+    marginBottom: theme.spacing[3],
+    lineHeight: theme.typography.fontSize.xs * theme.typography.lineHeight.relaxed,
+  },
+  areaContainer: {
+    flexDirection: 'row',
+    marginBottom: theme.spacing[2],
+  },
+  areaButton: {
+    flex: 1,
+    paddingVertical: theme.spacing[3],
+    borderRadius: theme.borderRadius.lg,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    alignItems: 'center',
+    marginHorizontal: theme.spacing[1],
+    backgroundColor: theme.colors.background.secondary,
+  },
+  areaActive: {
+    backgroundColor: theme.colors.primary,
+    borderColor: theme.colors.primary,
+  },
+  areaButtonText: {
+    fontSize: theme.typography.fontSize.base,
+    color: theme.colors.text.secondary,
+    fontWeight: theme.typography.fontWeight.medium,
+  },
+  areaButtonTextActive: {
+    color: theme.colors.text.inverse,
+    fontWeight: theme.typography.fontWeight.semibold,
+  },
+  areaDetectingContainer: {
+    backgroundColor: theme.colors.background.secondary,
+    borderRadius: theme.borderRadius.lg,
+    padding: theme.spacing[4],
+    borderWidth: 1,
+    borderColor: theme.colors.border.secondary,
+  },
+  detectingIndicator: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  detectingText: {
+    fontSize: theme.typography.fontSize.sm,
+    color: theme.colors.text.secondary,
+    marginLeft: theme.spacing[2],
+    fontWeight: theme.typography.fontWeight.medium,
+  },
+  areaResultContainer: {
+    marginBottom: theme.spacing[2],
+  },
+  areaDetectedCard: {
+    backgroundColor: theme.colors.primary + '10',
+    borderRadius: theme.borderRadius.lg,
+    padding: theme.spacing[4],
+    borderWidth: 1,
+    borderColor: theme.colors.primary + '30',
+    marginBottom: theme.spacing[3],
+  },
+  areaResultHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: theme.spacing[2],
+  },
+  areaResultIcon: {
+    fontSize: 28,
+    marginRight: theme.spacing[3],
+  },
+  areaResultTextContainer: {
+    flex: 1,
+  },
+  areaResultTitle: {
+    fontSize: theme.typography.fontSize.base,
+    fontWeight: theme.typography.fontWeight.semibold,
+    color: theme.colors.text.primary,
+    marginBottom: theme.spacing[1],
+  },
+  areaResultSubtitle: {
+    fontSize: theme.typography.fontSize.xs,
+    color: theme.colors.text.secondary,
+    lineHeight: theme.typography.fontSize.xs * theme.typography.lineHeight.relaxed,
+  },
+  areaChangeButton: {
+    alignSelf: 'flex-start',
+    paddingVertical: theme.spacing[1],
+    paddingHorizontal: theme.spacing[2],
+    borderRadius: theme.borderRadius.sm,
+    backgroundColor: theme.colors.background.secondary,
+  },
+  areaChangeButtonText: {
+    fontSize: theme.typography.fontSize.xs,
+    color: theme.colors.primary,
+    fontWeight: theme.typography.fontWeight.medium,
+  },
+  areaManualContainer: {
+    backgroundColor: theme.colors.background.secondary,
+    borderRadius: theme.borderRadius.lg,
+    padding: theme.spacing[3],
+  },
+  areaManualLabel: {
+    fontSize: theme.typography.fontSize.sm,
+    color: theme.colors.text.secondary,
+    marginBottom: theme.spacing[2],
+    textAlign: 'center',
+  },
+  areaFallbackContainer: {
+    backgroundColor: theme.colors.background.secondary,
+    borderRadius: theme.borderRadius.lg,
+    padding: theme.spacing[4],
+    borderWidth: 1,
+    borderColor: theme.colors.border.secondary,
+  },
+  areaFallbackText: {
+    fontSize: theme.typography.fontSize.sm,
+    color: theme.colors.text.secondary,
+    textAlign: 'center',
+    marginBottom: theme.spacing[3],
+  },
   bottomContainer: {
-    padding: theme.spacing[6],
-    backgroundColor: 'transparent',
+    paddingTop: theme.spacing[8], // 表单与按钮间的间距
+    paddingHorizontal: 0, // 已经在scrollContent中设置
+    paddingBottom: theme.spacing[6], // 表单底部留白
   },
   nextButton: {
     backgroundColor: theme.colors.primary,

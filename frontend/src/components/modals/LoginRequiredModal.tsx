@@ -35,8 +35,9 @@ export const LoginRequiredModal: React.FC<LoginRequiredModalProps> = ({
 }) => {
   const { t } = useTranslation();
   const themeContext = useTheme();
+  const { isDarkMode } = themeContext;
   const darkModeSystem = useAllDarkModeStyles();
-  const { isDarkMode, styles: dmStyles, gradients: dmGradients, blur: dmBlur, icons: dmIcons } = darkModeSystem;
+  const { styles: dmStyles, gradients: dmGradients, blur: dmBlur, icons: dmIcons } = darkModeSystem;
 
   const handleClose = () => {
     if (Platform.OS === 'ios') {
@@ -146,10 +147,10 @@ export const LoginRequiredModal: React.FC<LoginRequiredModalProps> = ({
       statusBarTranslucent={true}
       onRequestClose={handleClose}
     >
-      <View style={[styles.overlay, dmStyles.modal.overlay]}>
+      <View style={[styles.overlay, dmStyles.modal?.overlay]}>
         <View style={[
           styles.container,
-          dmStyles.modal.container
+          dmStyles.modal?.container
         ]}>
           {/* 顶部图标 */}
           <View style={[
@@ -166,7 +167,7 @@ export const LoginRequiredModal: React.FC<LoginRequiredModalProps> = ({
           {/* 标题 */}
           <Text style={[
             styles.title,
-            dmStyles.text.title
+            dmStyles.text?.title
           ]}>
             {title || t('alerts.login_required_title')}
           </Text>
@@ -174,7 +175,7 @@ export const LoginRequiredModal: React.FC<LoginRequiredModalProps> = ({
           {/* 描述消息 */}
           <Text style={[
             styles.message,
-            dmStyles.text.secondary
+            dmStyles.text?.secondary
           ]}>
             {message || t('alerts.login_required_activity_message')}
           </Text>
@@ -183,7 +184,7 @@ export const LoginRequiredModal: React.FC<LoginRequiredModalProps> = ({
           <View style={styles.buttonContainer}>
             {/* 主按钮 - 去登录 */}
             <TouchableOpacity
-              style={[styles.primaryButton, dmStyles.button.primary]}
+              style={[styles.primaryButton, dmStyles.button?.primary]}
               onPress={handleLogin}
               activeOpacity={0.8}
               accessibilityRole="button"
@@ -198,7 +199,7 @@ export const LoginRequiredModal: React.FC<LoginRequiredModalProps> = ({
             <TouchableOpacity
               style={[
                 styles.secondaryButton,
-                dmStyles.button.outline
+                dmStyles.button?.outline
               ]}
               onPress={handleClose}
               activeOpacity={0.7}
@@ -207,7 +208,7 @@ export const LoginRequiredModal: React.FC<LoginRequiredModalProps> = ({
             >
               <Text style={[
                 styles.secondaryButtonText,
-                dmStyles.text.primary
+                dmStyles.text?.primary
               ]}>
                 {t('common.cancel')}
               </Text>

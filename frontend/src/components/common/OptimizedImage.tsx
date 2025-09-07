@@ -1,0 +1,83 @@
+import React from 'react';
+import { View, StyleSheet, Image, Platform, ImageResizeMode } from 'react-native';
+
+interface OptimizedImageProps {
+  source: {
+    uri?: string;
+    priority?: 'low' | 'normal' | 'high';
+  };
+  style?: any;
+  fallbackColor?: string;
+  borderRadius?: number;
+  resizeMode?: ImageResizeMode;
+  onLoad?: () => void;
+  onError?: () => void;
+}
+
+/**
+ * 🚀 优化的图片组件
+ * 在移动端使用react-native-fast-image，在Web端使用普通Image
+ */
+export const OptimizedImage: React.FC<OptimizedImageProps> = ({
+  source,
+  style,
+  fallbackColor = '#F3F4F6',
+  borderRadius = 0,
+  resizeMode = 'cover',
+  onLoad,
+  onError,
+  ...props
+}) => {
+  // Web端使用普通Image组件
+  if (Platform.OS === 'web') {
+    return (
+      <View style={[
+        styles.container, 
+        style, 
+        { backgroundColor: fallbackColor, borderRadius }
+      ]}>
+        <Image
+          source={{ uri: source.uri }}
+          style={[StyleSheet.absoluteFill, { borderRadius }]}
+          resizeMode={resizeMode}
+          onLoad={onLoad}
+          onError={onError}
+          {...props}
+        />
+      </View>
+    );
+  }
+
+  // 移动端使用FastImage（动态导入避免Web端错误）
+  const FastImage = require('react-native-fast-image').default;
+  
+  const fastImageSource = {
+    uri: source.uri || '',
+    priority: source.priority === 'high' ? FastImage.priority.high : 
+             source.priority === 'low' ? FastImage.priority.low : 
+             FastImage.priority.normal,
+  };
+
+  return (
+    <View style={[
+      styles.container, 
+      style, 
+      { backgroundColor: fallbackColor, borderRadius }
+    ]}>
+      <FastImage
+        {...props}
+        source={fastImageSource}
+        style={[StyleSheet.absoluteFill, { borderRadius }]}
+        resizeMode={FastImage.resizeMode[resizeMode] || FastImage.resizeMode.cover}
+        onLoad={onLoad}
+        onError={onError}
+      />
+    </View>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    overflow: 'hidden',
+  },
+});

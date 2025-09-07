@@ -29,7 +29,7 @@
    状态: 可立即用于开发
 
 ✅ Cloudflare R2 (完整可用)
-   - 存储桶: vitaglobal-images
+   - 存储桶: pomeloX-images
    - S3 API端点: 已配置
    - Access Key/Secret: 已设置
    - CORS政策: 已配置
@@ -55,10 +55,10 @@
    - 访问Firebase Console: https://console.firebase.google.com/
    - 添加Android应用，下载google-services.json
    - 添加iOS应用，下载GoogleService-Info.plist
-   - Bundle ID建议: com.vitaglobal.app
+   - Bundle ID建议: com.pomeloX.app
 
 3. 生产环境域名准备 (5分钟)
-   - 确定生产域名 (如: vitaglobal.app)  
+   - 确定生产域名 (如: pomeloX.app)  
    - 记录需要更新CORS和重定向URI的服务
 
 💡 这些补充配置可以在开发过程中并行完成！
@@ -69,7 +69,7 @@
 📋 基础设施清单:
 
 1. 域名购买
-   - 推荐: vitaglobal.app 或 vitaglobal.org
+   - 推荐: pomeloX.app 或 pomeloX.org
    - 注册商: Namecheap, GoDaddy
    - 预计费用: $10-20/年
 
@@ -114,8 +114,8 @@
 📋 技术环境准备:
 
 1. 代码仓库创建
-   - GitHub组织: vitaglobal-org
-   - 仓库: vitaglobal-backend, vitaglobal-app
+   - GitHub组织: pomeloX-org
+   - 仓库: pomeloX-backend, pomeloX-app
    - 分支策略: main, develop, feature/*
 
 2. 开发工具统一
