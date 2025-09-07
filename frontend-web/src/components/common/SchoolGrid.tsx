@@ -1,3 +1,4 @@
+/* Web端特定版本 - 与App端隔离 */
 import React, { useRef, useMemo } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Image, Dimensions, Animated } from 'react-native';
 import { getSchoolLogo } from '../../utils/schoolLogos';

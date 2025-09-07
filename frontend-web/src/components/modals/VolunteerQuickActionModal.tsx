@@ -378,9 +378,11 @@ const VolunteerQuickActionModalComponent: React.FC<VolunteerQuickActionModalProp
       alignItems: 'center',
       justifyContent: 'center',
       paddingVertical: 14,
-      paddingHorizontal: 16,
+      paddingHorizontal: 12, // 减少padding确保等宽
       borderRadius: 12,
       gap: 8,
+      minWidth: 0, // 确保等宽分布
+      width: '48%', // 强制各占48%，留4%给gap
     },
     checkinButton: {
       backgroundColor: '#10B981',

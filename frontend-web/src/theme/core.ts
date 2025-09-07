@@ -5,10 +5,10 @@
 
 // 奶橘色系统 - 参考图同款柔和色调
 export const CORE_COLORS = {
-  // 主色系 - 适中橙色 (用户指定)
-  primary: '#F9A889', // 适中饱和度的橙色
-  primaryPressed: '#E68956', // 按压时稍深
-  primaryDisabled: '#FCDBC8', // 禁用时变淡
+  // 主色系 - PomeloX 橙色主题
+  primary: '#FF6B35', // PomeloX 橙色主题色
+  primaryPressed: '#E55A2B', // 按压时稍深的橙色
+  primaryDisabled: '#FFB499', // 禁用时的浅橙色
   
   // 辅色系 - 温润奶茶色
   secondary: '#FFF8E1', // 极淡的奶色

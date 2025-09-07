@@ -9,6 +9,7 @@ import {
   SafeAreaView,
   NativeScrollEvent,
   NativeSyntheticEvent,
+  Platform,
 } from 'react-native';
 import { BlurView } from '../../components/web/WebBlurView';
 import { Ionicons } from '@expo/vector-icons';
@@ -340,14 +341,21 @@ const styles = StyleSheet.create({
   },
   modalContainer: {
     width: '100%',
-    maxWidth: 400,
-    height: '80%', // 🚀 使用固定高度比例确保布局稳定
+    maxWidth: 500,
+    height: '85%', // 增加高度比例
     backgroundColor: LIQUID_GLASS_LAYERS.L1.background.light,
-    borderRadius: LIQUID_GLASS_LAYERS.L1.borderRadius.modal,
+    borderRadius: theme.borderRadius.xl,
     borderWidth: LIQUID_GLASS_LAYERS.L1.border.width,
     borderColor: LIQUID_GLASS_LAYERS.L1.border.color.light,
     overflow: 'hidden',
     ...theme.shadows.lg,
+    // Web端特定样式优化
+    ...(Platform.OS === 'web' && {
+      maxWidth: '90vw',
+      maxHeight: '90vh',
+      minWidth: 450,
+      minHeight: 500,
+    }),
   },
   header: {
     padding: theme.spacing[6],
@@ -379,10 +387,20 @@ const styles = StyleSheet.create({
   },
   contentScrollView: {
     flex: 1,
-    maxHeight: 400, // 🚀 增加最大高度，确保有足够滚动空间
+    maxHeight: 500, // 进一步增加高度
+    // Web端优化
+    ...(Platform.OS === 'web' && {
+      maxHeight: '60vh',
+      minHeight: 300,
+    }),
   },
   contentContainer: {
     padding: theme.spacing[6],
+    // Web端增加内边距
+    ...(Platform.OS === 'web' && {
+      paddingHorizontal: theme.spacing[8],
+      paddingVertical: theme.spacing[6],
+    }),
   },
   contentText: {
     fontSize: theme.typography.fontSize.sm,
@@ -413,6 +431,12 @@ const styles = StyleSheet.create({
     padding: theme.spacing[6],
     borderTopWidth: 1,
     borderTopColor: theme.colors.border.primary,
+    // Web端增加按钮区域空间
+    ...(Platform.OS === 'web' && {
+      paddingVertical: theme.spacing[8],
+      paddingHorizontal: theme.spacing[8],
+      gap: theme.spacing[4],
+    }),
   },
   button: {
     flex: 1,

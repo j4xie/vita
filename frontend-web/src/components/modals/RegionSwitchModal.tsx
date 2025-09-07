@@ -1,11 +1,22 @@
 /**
- * Web端区域切换弹窗组件
+ * Web端区域切换弹窗组件 - React Native Web版本
  * 支持区域切换和隐私条款签署流程
  */
 
 import React, { useState, useEffect } from 'react';
-import { createPortal } from 'react-dom';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  Modal,
+  SafeAreaView,
+  ActivityIndicator,
+  Platform,
+} from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
+import { theme } from '../../theme/index';
 import UserRegionPreferences, { UserRegionCode } from '../../services/UserRegionPreferences';
 import { PrivacyAgreementModal } from './PrivacyAgreementModal';
 
@@ -35,25 +46,6 @@ export const RegionSwitchModal: React.FC<RegionSwitchModalProps> = ({
       loadRegionData();
     }
   }, [visible]);
-
-  // 处理ESC键关闭
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape' && visible && !loading) {
-        onClose();
-      }
-    };
-
-    if (visible) {
-      document.addEventListener('keydown', handleKeyDown);
-      document.body.style.overflow = 'hidden'; // 防止背景滚动
-    }
-
-    return () => {
-      document.removeEventListener('keydown', handleKeyDown);
-      document.body.style.overflow = 'unset';
-    };
-  }, [visible, loading, onClose]);
 
   const loadRegionData = async () => {
     try {
@@ -162,445 +154,316 @@ export const RegionSwitchModal: React.FC<RegionSwitchModalProps> = ({
     },
   ];
 
-  if (!visible) return null;
-
-  return createPortal(
+  return (
     <>
-      {/* Main Modal */}
-      <div className="modal-backdrop" onClick={handleBackdropClick}>
-        <div className="modal-container" onClick={(e) => e.stopPropagation()}>
-          
-          {/* Header */}
-          <div className="modal-header">
-            <div className="header-content">
-              <div className="icon-container">
-                <span className="icon">📍</span>
-              </div>
-              <h2 className="title">
-                {t('profile.region_switch.title', '选择地区')}
-              </h2>
-              <p className="subtitle">
-                {t('profile.region_switch.subtitle', '切换到不同地区将使用相应的隐私政策')}
-              </p>
-            </div>
-            
-            <button
-              className="close-button"
-              onClick={onClose}
-              disabled={loading}
-              aria-label="关闭"
-            >
-              ✕
-            </button>
-          </div>
+      <Modal
+        visible={visible}
+        transparent={true}
+        animationType="fade"
+        statusBarTranslucent={true}
+        onRequestClose={onClose}
+      >
+        <SafeAreaView style={styles.container}>
+          <View style={styles.overlay}>
+            <View style={styles.modalContainer}>
+              
+              {/* Header */}
+              <View style={styles.header}>
+                <View style={styles.headerContent}>
+                  <View style={styles.iconContainer}>
+                    <Text style={styles.iconText}>📍</Text>
+                  </View>
+                  <Text style={styles.title}>
+                    {t('profile.region_switch.title', '选择地区')}
+                  </Text>
+                  <Text style={styles.subtitle}>
+                    {t('profile.region_switch.subtitle', '切换到不同地区将使用相应的隐私政策')}
+                  </Text>
+                </View>
+                
+                <TouchableOpacity
+                  style={styles.closeButton}
+                  onPress={onClose}
+                  disabled={loading}
+                >
+                  <Ionicons 
+                    name="close" 
+                    size={24} 
+                    color={theme.colors.text.secondary} 
+                  />
+                </TouchableOpacity>
+              </View>
 
-          {/* Region Options */}
-          <div className="modal-content">
-            {regions.map((region) => (
-              <button
-                key={region.code}
-                className={`
-                  region-option
-                  ${currentRegion === region.code ? 'region-option-active' : ''}
-                  ${loading ? 'region-option-disabled' : ''}
-                `}
-                onClick={() => handleRegionSelect(region.code)}
-                disabled={loading}
-              >
-                <div className="region-content">
-                  <div className="region-left">
-                    <span className="region-icon">{region.icon}</span>
-                    <div className="region-info">
-                      <div className="region-name">{region.name}</div>
-                      <div className="region-description">{region.description}</div>
-                    </div>
-                  </div>
-                  
-                  <div className="region-right">
-                    {currentRegion === region.code && (
-                      <span className="check-icon">✓</span>
-                    )}
-                    
-                    {/* 隐私条款签署状态 */}
-                    {privacySignedRegions.includes(region.code) && (
-                      <div className="privacy-signed-indicator">
-                        <span className="shield-icon">🛡️</span>
-                        <span className="privacy-signed-text">
-                          {t('profile.region_switch.privacy_signed', '已签署')}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </button>
-            ))}
-          </div>
+              {/* Region Options */}
+              <View style={styles.content}>
+                {regions.map((region) => (
+                  <TouchableOpacity
+                    key={region.code}
+                    style={[
+                      styles.regionOption,
+                      currentRegion === region.code && styles.regionOptionActive,
+                      loading && styles.regionOptionDisabled,
+                    ]}
+                    onPress={() => handleRegionSelect(region.code)}
+                    disabled={loading}
+                    activeOpacity={0.7}
+                  >
+                    <View style={styles.regionContent}>
+                      <View style={styles.regionLeft}>
+                        <Text style={styles.regionIcon}>{region.icon}</Text>
+                        <View style={styles.regionInfo}>
+                          <Text style={styles.regionName}>
+                            {region.name}
+                          </Text>
+                          <Text style={styles.regionDescription}>
+                            {region.description}
+                          </Text>
+                        </View>
+                      </View>
+                      
+                      <View style={styles.regionRight}>
+                        {currentRegion === region.code && (
+                          <Ionicons 
+                            name="checkmark-circle" 
+                            size={24} 
+                            color={theme.colors.primary} 
+                          />
+                        )}
+                        
+                        {/* 隐私条款签署状态 */}
+                        {privacySignedRegions.includes(region.code) && (
+                          <View style={styles.privacySignedIndicator}>
+                            <Ionicons 
+                              name="shield-checkmark" 
+                              size={16} 
+                              color={theme.colors.success} 
+                            />
+                            <Text style={styles.privacySignedText}>
+                              {t('profile.region_switch.privacy_signed', '已签署')}
+                            </Text>
+                          </View>
+                        )}
+                      </View>
+                    </View>
+                  </TouchableOpacity>
+                ))}
+              </View>
 
-          {/* Footer */}
-          <div className="modal-footer">
-            <div className="footer-info">
-              <span className="info-icon">ℹ️</span>
-              <span className="footer-text">
-                {t('profile.region_switch.privacy_notice', '切换地区时如未签署相应隐私政策，将需要重新签署')}
-              </span>
-            </div>
-          </div>
+              {/* Footer */}
+              <View style={styles.footer}>
+                <View style={styles.footerInfo}>
+                  <Ionicons 
+                    name="information-circle-outline" 
+                    size={16} 
+                    color={theme.colors.text.secondary} 
+                  />
+                  <Text style={styles.footerText}>
+                    {t('profile.region_switch.privacy_notice', '切换地区时如未签署相应隐私政策，将需要重新签署')}
+                  </Text>
+                </View>
+              </View>
 
-          {/* Loading Overlay */}
-          {loading && (
-            <div className="loading-overlay">
-              <div className="loading-spinner"></div>
-              <div className="loading-text">
-                {t('profile.region_switch.loading', '处理中...')}
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
+              {/* Loading Overlay */}
+              {loading && (
+                <View style={styles.loadingOverlay}>
+                  <ActivityIndicator size="large" color={theme.colors.primary} />
+                  <Text style={styles.loadingText}>
+                    {t('profile.region_switch.loading', '处理中...')}
+                  </Text>
+                </View>
+              )}
+            </View>
+          </View>
+        </SafeAreaView>
+      </Modal>
 
       {/* Privacy Agreement Modal */}
-      {showPrivacyModal && (
-        <PrivacyAgreementModal
-          visible={showPrivacyModal}
-          onAccept={handlePrivacyAccept}
-          onDecline={handlePrivacyDecline}
-          userArea={pendingRegion === 'china' ? 'zh' : 'en'}
-          allowRegionSwitch={false}
-        />
-      )}
-
-      <style jsx>{`
-        .modal-backdrop {
-          position: fixed;
-          top: 0;
-          left: 0;
-          right: 0;
-          bottom: 0;
-          background: rgba(0, 0, 0, 0.5);
-          backdrop-filter: blur(10px);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          padding: 16px;
-          z-index: 1000;
-          animation: fadeIn 0.2s ease-out;
-        }
-
-        .modal-container {
-          background: white;
-          border-radius: 16px;
-          box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
-          max-width: 480px;
-          width: 100%;
-          max-height: 90vh;
-          overflow: hidden;
-          position: relative;
-          animation: slideUp 0.3s ease-out;
-        }
-
-        .modal-header {
-          display: flex;
-          align-items: flex-start;
-          padding: 24px;
-          border-bottom: 1px solid #f1f5f9;
-        }
-
-        .header-content {
-          flex: 1;
-          text-align: center;
-        }
-
-        .icon-container {
-          width: 64px;
-          height: 64px;
-          background: #ff6b3515;
-          border-radius: 32px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          margin: 0 auto 16px;
-        }
-
-        .icon {
-          font-size: 32px;
-        }
-
-        .title {
-          margin: 0 0 8px;
-          font-size: 24px;
-          font-weight: 600;
-          color: #1e293b;
-        }
-
-        .subtitle {
-          margin: 0;
-          font-size: 14px;
-          color: #64748b;
-          line-height: 1.5;
-        }
-
-        .close-button {
-          padding: 8px;
-          background: none;
-          border: none;
-          font-size: 20px;
-          color: #64748b;
-          cursor: pointer;
-          border-radius: 6px;
-          transition: all 0.2s;
-        }
-
-        .close-button:hover {
-          background: #f1f5f9;
-          color: #1e293b;
-        }
-
-        .close-button:disabled {
-          opacity: 0.5;
-          cursor: not-allowed;
-        }
-
-        .modal-content {
-          padding: 24px;
-          padding-top: 16px;
-        }
-
-        .region-option {
-          display: block;
-          width: 100%;
-          border: 2px solid #e2e8f0;
-          border-radius: 12px;
-          padding: 16px;
-          margin-bottom: 12px;
-          background: #f8fafc;
-          cursor: pointer;
-          transition: all 0.2s;
-          text-align: left;
-        }
-
-        .region-option:hover {
-          border-color: #ff6b35;
-          background: #ff6b3508;
-        }
-
-        .region-option-active {
-          border-color: #ff6b35 !important;
-          background: #ff6b3508 !important;
-        }
-
-        .region-option-disabled {
-          opacity: 0.6;
-          cursor: not-allowed;
-        }
-
-        .region-content {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-        }
-
-        .region-left {
-          display: flex;
-          align-items: center;
-          flex: 1;
-        }
-
-        .region-icon {
-          font-size: 28px;
-          margin-right: 12px;
-        }
-
-        .region-info {
-          flex: 1;
-        }
-
-        .region-name {
-          font-size: 18px;
-          font-weight: 600;
-          color: #1e293b;
-          margin-bottom: 4px;
-        }
-
-        .region-description {
-          font-size: 14px;
-          color: #64748b;
-          line-height: 1.4;
-        }
-
-        .region-right {
-          display: flex;
-          flex-direction: column;
-          align-items: flex-end;
-        }
-
-        .check-icon {
-          font-size: 24px;
-          color: #ff6b35;
-          margin-bottom: 4px;
-        }
-
-        .privacy-signed-indicator {
-          display: flex;
-          align-items: center;
-          margin-top: 4px;
-        }
-
-        .shield-icon {
-          font-size: 16px;
-          margin-right: 4px;
-        }
-
-        .privacy-signed-text {
-          font-size: 12px;
-          font-weight: 500;
-          color: #059669;
-        }
-
-        .modal-footer {
-          padding: 24px;
-          padding-top: 0;
-          border-top: 1px solid #f1f5f9;
-        }
-
-        .footer-info {
-          display: flex;
-          align-items: flex-start;
-        }
-
-        .info-icon {
-          font-size: 16px;
-          margin-right: 8px;
-          margin-top: 2px;
-        }
-
-        .footer-text {
-          flex: 1;
-          font-size: 12px;
-          color: #64748b;
-          line-height: 1.5;
-        }
-
-        .loading-overlay {
-          position: absolute;
-          top: 0;
-          left: 0;
-          right: 0;
-          bottom: 0;
-          background: rgba(255, 255, 255, 0.9);
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: center;
-        }
-
-        .loading-spinner {
-          width: 40px;
-          height: 40px;
-          border: 3px solid #f1f5f9;
-          border-top: 3px solid #ff6b35;
-          border-radius: 50%;
-          animation: spin 1s linear infinite;
-        }
-
-        .loading-text {
-          font-size: 16px;
-          font-weight: 500;
-          color: #1e293b;
-          margin-top: 12px;
-        }
-
-        @keyframes fadeIn {
-          from { opacity: 0; }
-          to { opacity: 1; }
-        }
-
-        @keyframes slideUp {
-          from { 
-            opacity: 0;
-            transform: translateY(20px) scale(0.95);
-          }
-          to { 
-            opacity: 1;
-            transform: translateY(0) scale(1);
-          }
-        }
-
-        @keyframes spin {
-          from { transform: rotate(0deg); }
-          to { transform: rotate(360deg); }
-        }
-
-        /* 暗色模式支持 */
-        @media (prefers-color-scheme: dark) {
-          .modal-container {
-            background: #1e293b;
-            color: #f1f5f9;
-          }
-
-          .modal-header {
-            border-bottom-color: #334155;
-          }
-
-          .title {
-            color: #f1f5f9;
-          }
-
-          .subtitle {
-            color: #94a3b8;
-          }
-
-          .close-button {
-            color: #94a3b8;
-          }
-
-          .close-button:hover {
-            background: #334155;
-            color: #f1f5f9;
-          }
-
-          .region-option {
-            border-color: #334155;
-            background: #0f172a;
-          }
-
-          .region-option:hover {
-            border-color: #ff6b35;
-            background: #ff6b3508;
-          }
-
-          .region-name {
-            color: #f1f5f9;
-          }
-
-          .region-description {
-            color: #94a3b8;
-          }
-
-          .modal-footer {
-            border-top-color: #334155;
-          }
-
-          .footer-text {
-            color: #94a3b8;
-          }
-
-          .loading-overlay {
-            background: rgba(30, 41, 59, 0.9);
-          }
-
-          .loading-text {
-            color: #f1f5f9;
-          }
-
-          .loading-spinner {
-            border-color: #334155;
-            border-top-color: #ff6b35;
-          }
-        }
-      `}</style>
-    </>,
-    document.body
+      <PrivacyAgreementModal
+        visible={showPrivacyModal}
+        onAccept={handlePrivacyAccept}
+        onDecline={handlePrivacyDecline}
+        userArea={pendingRegion === 'china' ? 'zh' : 'en'}
+        allowRegionSwitch={false}
+      />
+    </>
   );
 };
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  overlay: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: theme.spacing[4],
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    // Web端优化
+    ...(Platform.OS === 'web' && {
+      backdropFilter: 'blur(10px)',
+      WebkitBackdropFilter: 'blur(10px)',
+    }),
+  },
+  modalContainer: {
+    width: '100%',
+    maxWidth: 500,
+    minHeight: 400,
+    backgroundColor: theme.colors.background.primary,
+    borderRadius: theme.borderRadius.xl,
+    borderWidth: 1,
+    borderColor: theme.colors.border.primary,
+    overflow: 'hidden',
+    ...theme.shadows.lg,
+    // Web端特定样式
+    ...(Platform.OS === 'web' && {
+      maxWidth: '90vw',
+      maxHeight: '90vh',
+      minWidth: 400,
+    }),
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    padding: theme.spacing[6],
+    borderBottomWidth: 1,
+    borderBottomColor: theme.colors.border.primary,
+  },
+  headerContent: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  iconContainer: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: theme.colors.primary + '15',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: theme.spacing[4],
+  },
+  iconText: {
+    fontSize: 32,
+  },
+  title: {
+    fontSize: theme.typography.fontSize['2xl'],
+    fontWeight: theme.typography.fontWeight.bold,
+    color: theme.colors.text.primary,
+    textAlign: 'center',
+    marginBottom: theme.spacing[2],
+  },
+  subtitle: {
+    fontSize: theme.typography.fontSize.sm,
+    color: theme.colors.text.secondary,
+    textAlign: 'center',
+    lineHeight: theme.typography.fontSize.sm * theme.typography.lineHeight.relaxed,
+  },
+  closeButton: {
+    padding: theme.spacing[2],
+    marginTop: -theme.spacing[2],
+    marginRight: -theme.spacing[2],
+  },
+  content: {
+    padding: theme.spacing[6],
+    paddingTop: theme.spacing[4],
+    paddingBottom: theme.spacing[6],
+    // Web端优化间距
+    ...(Platform.OS === 'web' && {
+      paddingHorizontal: theme.spacing[8],
+    }),
+  },
+  regionOption: {
+    borderWidth: 2,
+    borderColor: theme.colors.border.secondary,
+    borderRadius: theme.borderRadius.lg,
+    padding: theme.spacing[5],
+    marginBottom: theme.spacing[4],
+    backgroundColor: theme.colors.background.secondary,
+    minHeight: 80,
+    // Web端优化触摸体验
+    ...(Platform.OS === 'web' && {
+      cursor: 'pointer',
+      transition: 'all 0.2s ease',
+    }),
+  },
+  regionOptionActive: {
+    borderColor: theme.colors.primary,
+    backgroundColor: theme.colors.primary + '08',
+  },
+  regionOptionDisabled: {
+    opacity: 0.6,
+  },
+  regionContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  regionLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  regionIcon: {
+    fontSize: 28,
+    marginRight: theme.spacing[3],
+  },
+  regionInfo: {
+    flex: 1,
+  },
+  regionName: {
+    fontSize: theme.typography.fontSize.lg,
+    fontWeight: theme.typography.fontWeight.semibold,
+    color: theme.colors.text.primary,
+    marginBottom: theme.spacing[1],
+  },
+  regionDescription: {
+    fontSize: theme.typography.fontSize.sm,
+    color: theme.colors.text.secondary,
+    lineHeight: theme.typography.fontSize.sm * theme.typography.lineHeight.normal,
+  },
+  regionRight: {
+    alignItems: 'flex-end',
+  },
+  privacySignedIndicator: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: theme.spacing[1],
+  },
+  privacySignedText: {
+    fontSize: theme.typography.fontSize.xs,
+    fontWeight: theme.typography.fontWeight.medium,
+    marginLeft: theme.spacing[1],
+    color: theme.colors.success,
+  },
+  footer: {
+    padding: theme.spacing[6],
+    paddingTop: 0,
+    borderTopWidth: 1,
+    borderTopColor: theme.colors.border.primary,
+  },
+  footerInfo: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+  },
+  footerText: {
+    flex: 1,
+    fontSize: theme.typography.fontSize.xs,
+    color: theme.colors.text.secondary,
+    marginLeft: theme.spacing[2],
+    lineHeight: theme.typography.fontSize.xs * theme.typography.lineHeight.relaxed,
+  },
+  loadingOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  loadingText: {
+    fontSize: theme.typography.fontSize.base,
+    fontWeight: theme.typography.fontWeight.medium,
+    color: theme.colors.text.primary,
+    marginTop: theme.spacing[3],
+  },
+});
 
 export default RegionSwitchModal;

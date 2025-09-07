@@ -655,53 +655,64 @@ class PomeloXAPI {
   /**
    * 活动报名
    */
-  async enrollActivity(activityId: number, userId: number): Promise<ApiResponse<number>> {
+  async enrollActivity(activityId: number, userId: number, isCancel?: boolean): Promise<ApiResponse<number>> {
     try {
-      console.log('🌐 [PomeloXAPI] 发起活动报名请求:', {
-        url: `/app/activity/enroll?activityId=${activityId}&userId=${userId}`,
+      const action = isCancel ? '取消报名' : '报名';
+      console.log(`🌐 [PomeloXAPI] 发起活动${action}请求:`, {
+        url: `/app/activity/enroll?activityId=${activityId}&userId=${userId}${isCancel ? '&isCancel=1' : ''}`,
         method: 'GET',
+        isCancel,
         timestamp: new Date().toISOString()
       });
       
-      const response = await this.request(`/app/activity/enroll?activityId=${activityId}&userId=${userId}`, {
+      // 构建请求URL，根据isCancel参数决定是否添加isCancel=1
+      const url = `/app/activity/enroll?activityId=${activityId}&userId=${userId}${isCancel ? '&isCancel=1' : ''}`;
+      
+      const response = await this.request(url, {
         method: 'GET',
       });
       
-      console.log('📡 [PomeloXAPI] 活动报名响应:', {
+      console.log(`📡 [PomeloXAPI] 活动${action}响应:`, {
         response,
         success: response.code === 200,
         timestamp: new Date().toISOString()
       });
 
-      // 报名成功后发送本地通知
+      // 操作成功后的处理
       if (response.code === 200) {
-        // 获取活动信息用于通知
-        try {
-          const activityResponse = await this.getActivityList({ 
-            pageNum: 1, 
-            pageSize: 10, 
-            userId: userId 
-          });
-          const activity = activityResponse.data?.rows?.find((a: any) => a.id === activityId);
-          
-          if (activity) {
-            // 发送即时成功通知
-            await notifyRegistrationSuccess(activity.name);
+        if (!isCancel) {
+          // 报名成功后发送本地通知
+          try {
+            const activityResponse = await this.getActivityList({ 
+              pageNum: 1, 
+              pageSize: 10, 
+              userId: userId 
+            });
+            const activity = activityResponse.data?.rows?.find((a: any) => a.id === activityId);
             
-            // 安排活动提醒
-            await scheduleActivityReminder(activity);
+            if (activity) {
+              // 发送即时成功通知
+              await notifyRegistrationSuccess(activity.name);
+              
+              // 安排活动提醒
+              await scheduleActivityReminder(activity);
+            }
+          } catch (notificationError) {
+            console.error('发送报名通知失败:', notificationError);
+            // 不影响报名流程
           }
-        } catch (notificationError) {
-          console.error('发送报名通知失败:', notificationError);
-          // 不影响报名流程
-        }
 
-        // 发送事件给其他组件刷新数据
-        DeviceEventEmitter.emit('activityRegistered', { activityId, userId });
+          // 发送报名事件
+          DeviceEventEmitter.emit('activityRegistered', { activityId, userId });
+        } else {
+          // 发送取消报名事件
+          DeviceEventEmitter.emit('activityCancelled', { activityId, userId });
+        }
       }
 
       return response;
     } catch (error) {
+      console.error(`❌ [PomeloXAPI] 活动${isCancel ? '取消报名' : '报名'}失败:`, error);
       throw error;
     }
   }

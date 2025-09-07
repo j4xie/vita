@@ -15,7 +15,9 @@ import { useTranslation } from 'react-i18next';
 import { useNavigation } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { WebHaptics as Haptics } from '../../utils/WebHaptics';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { WebAsyncStorage as AsyncStorage } from '../../services/WebStorageService';
+import UserRegionPreferences, { UserRegionCode } from '../../services/UserRegionPreferences';
+import { RegionSwitchModal } from '../../components/modals/RegionSwitchModal';
 import { DeviceEventEmitter } from 'react-native';
 
 import { theme } from '../../theme';
@@ -168,6 +170,11 @@ export const GeneralScreen: React.FC = () => {
   
   // Activity layout preference state
   const [activityLayout, setActivityLayout] = useState<'list' | 'grid'>('list');
+  
+  // Region states (完全照搬App端)
+  const [currentRegion, setCurrentRegion] = useState<UserRegionCode>('china');
+  const [regionLoading, setRegionLoading] = useState(false);
+  const [showRegionModal, setShowRegionModal] = useState(false);
 
   useEffect(() => {
     const checkAccessibility = async () => {
@@ -181,6 +188,9 @@ export const GeneralScreen: React.FC = () => {
     
     // Load activity layout preference
     loadActivityLayoutPreference();
+    
+    // Load user region
+    loadCurrentRegion();
     
     // 监听布局变化事件
     const layoutSubscription = DeviceEventEmitter.addListener('activityLayoutChanged', (newLayout: 'list' | 'grid') => {
@@ -218,8 +228,52 @@ export const GeneralScreen: React.FC = () => {
     navigation.navigate('LanguageSelection');
   };
 
+  const loadCurrentRegion = async () => {
+    try {
+      const region = await UserRegionPreferences.getCurrentRegion();
+      setCurrentRegion(region);
+      console.log('Web端GeneralScreen加载region成功:', region);
+    } catch (error) {
+      console.error('Web端GeneralScreen加载region失败:', error);
+    }
+  };
+
+  // Haptic feedback helper (照搬App端)  
+  const triggerHaptic = () => {
+    if (Platform.OS === 'ios' && !isReduceMotionEnabled) {
+      // Web端Haptics适配
+      if (typeof Haptics.selectionAsync === 'function') {
+        Haptics.selectionAsync();
+      }
+    }
+  };
+
   const handleRegionPress = () => {
-    Alert.alert(t('profile.general.regionAndTimezone'), t('profile.general.regionTimezoneMessage'));
+    triggerHaptic();
+    setShowRegionModal(true);
+  };
+
+  // Handle region change (完全照搬App端)
+  const handleRegionChange = async (newRegion: UserRegionCode) => {
+    try {
+      setRegionLoading(true);
+      await UserRegionPreferences.updateCurrentRegion(newRegion);
+      setCurrentRegion(newRegion);
+      setShowRegionModal(false);
+      
+      // 显示成功提示 (照搬App端)
+      Alert.alert(
+        t('common.success'),
+        t('profile.region_updated_successfully', { 
+          region: UserRegionPreferences.getRegionDisplayName(newRegion, currentLanguage)
+        })
+      );
+    } catch (error) {
+      console.error('更新用户区域失败:', error);
+      Alert.alert(t('common.error'), t('profile.region_update_failed'));
+    } finally {
+      setRegionLoading(false);
+    }
   };
 
   
@@ -301,6 +355,18 @@ export const GeneralScreen: React.FC = () => {
   };
 
 
+  const getRegionDisplayValue = () => {
+    try {
+      const lang = currentLanguage.startsWith('zh') ? 'zh' : 'en';
+      const icon = UserRegionPreferences.getRegionIcon(currentRegion);
+      const name = UserRegionPreferences.getRegionDisplayName(currentRegion, lang);
+      return `${icon} ${name}`;
+    } catch (error) {
+      console.error('获取区域显示值失败:', error);
+      return '🇨🇳 中国'; // 默认值
+    }
+  };
+
   const displayItems = [
     {
       id: 'language',
@@ -311,9 +377,9 @@ export const GeneralScreen: React.FC = () => {
     },
     {
       id: 'region',
-      title: t('profile.general.regionAndTimezone'),
+      title: t('profile.region', 'Region & Timezone'),
       icon: 'location-outline' as keyof typeof Ionicons.glyphMap,
-      value: t('profile.general.chinaMainland'),
+      value: getRegionDisplayValue(),
       onPress: handleRegionPress,
     },
     {
@@ -438,6 +504,13 @@ export const GeneralScreen: React.FC = () => {
           </View>
         </ScrollView>
       </SafeAreaView>
+
+      {/* Region Switch Modal */}
+      <RegionSwitchModal
+        visible={showRegionModal}
+        onClose={() => setShowRegionModal(false)}
+        onRegionChanged={handleRegionChange}
+      />
 
     </View>
   );

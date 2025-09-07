@@ -1,5 +1,7 @@
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
+import WebStorageService from '../services/WebStorageService';
+
 import {
   SupportedLanguage,
   SUPPORTED_LANGUAGES,
@@ -8,6 +10,9 @@ import {
   saveLanguage,
   isFirstLaunch,
 } from '../utils/i18n';
+
+// Web端存储适配器  
+const AsyncStorage = new WebStorageService('local');
 
 interface LanguageContextType {
   currentLanguage: SupportedLanguage;

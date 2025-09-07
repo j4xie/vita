@@ -1,3 +1,4 @@
+/* Web端特定版本 - 与App端隔离 */
 import React, { Component, ReactNode } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';

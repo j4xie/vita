@@ -151,6 +151,21 @@ export const UserActivityModal: React.FC<UserActivityModalProps> = ({
     onClose();
   };
 
+  // Web端特有的取消报名处理
+  const handleCancelRegistration = (activityId: number) => {
+    console.log('🔄 [Web] UserActivityModal收到取消报名回调:', { activityId });
+    
+    // 从活动列表中移除该活动
+    setActivities(prevActivities => 
+      prevActivities.filter(activity => activity.id !== activityId)
+    );
+    
+    // 刷新统计数据
+    if (onRefreshStats) {
+      onRefreshStats();
+    }
+  };
+
   // 处理扫码签到
   const handleScanPress = (activityId: number) => {
     // 关闭modal
@@ -287,6 +302,7 @@ export const UserActivityModal: React.FC<UserActivityModalProps> = ({
                   key={activity.id}
                   activity={activity}
                   onScanPress={handleScanPress}
+                  onCancelRegistration={handleCancelRegistration}
                 />
               ))}
             </View>

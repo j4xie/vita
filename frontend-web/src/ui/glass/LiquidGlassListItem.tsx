@@ -195,6 +195,18 @@ export const LiquidGlassListItem: React.FC<LiquidGlassListItemProps> = ({
 
           {/* 右侧徽章和chevron */}
           <View style={styles.rightSection}>
+            {/* 志愿者数量徽章 */}
+            <View style={[styles.badge, { backgroundColor: `${tint}20` }]}>
+              <Ionicons
+                name="people"
+                size={12}
+                color={Glass.textMain}
+                style={styles.badgeIcon}
+              />
+              <Text style={styles.badgeText}>
+                {volunteers}
+              </Text>
+            </View>
             
             {/* Chevron */}
             <Ionicons

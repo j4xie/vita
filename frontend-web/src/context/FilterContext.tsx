@@ -1,3 +1,4 @@
+/* Web端特定版本 - 与App端隔离 */
 import React, { createContext, useContext, useState, ReactNode } from 'react';
 
 interface FilterContextType {

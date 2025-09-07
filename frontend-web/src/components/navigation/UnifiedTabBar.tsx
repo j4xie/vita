@@ -41,11 +41,11 @@ export const UnifiedTabBar: React.FC<UnifiedTabBarProps> = ({
   const [searchText, setSearchText] = useState('');
   const searchInputRef = useRef<TextInput>(null);
 
-  // 核心动画值
+  // 核心动画值 - 优化平均分配
   const capsuleWidth = useSharedValue(screenWidth - 32);
-  const leftAreaWidth = useSharedValue(screenWidth - 88); // Tab区域宽度
+  const leftAreaWidth = useSharedValue(screenWidth - 120); // 减少Tab区域宽度，给搜索更多空间
   const searchAreaWidth = useSharedValue(0); // 搜索区域宽度
-  const rightButtonWidth = useSharedValue(56); // 右侧按钮区域宽度
+  const rightButtonWidth = useSharedValue(88); // 增加右侧按钮区域宽度
 
   // Tab状态动画值
   const individualTabsOpacity = useSharedValue(1); // 4个独立Tab的透明度
@@ -402,18 +402,18 @@ const styles = StyleSheet.create({
     height: 40,
   },
   
-  // 右侧按钮区域
+  // 右侧按钮区域 - 增加宽度以更好分配空间
   rightArea: {
-    width: 56,
+    width: 88,
     height: '100%',
     alignItems: 'center',
     justifyContent: 'center',
   },
   
   rightButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     backgroundColor: 'rgba(255, 255, 255, 0.9)',
     alignItems: 'center',
     justifyContent: 'center',

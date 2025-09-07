@@ -10,12 +10,12 @@ import {
   StyleSheet,
   SafeAreaView,
   ScrollView,
-  RefreshControl,
   TouchableOpacity,
   TextInput,
   Alert,
   Platform,
 } from 'react-native';
+import { WebRefreshControl } from '../../components/web/WebRefreshControl';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { LinearGradient } from '../../components/web/WebLinearGradient';
 import { Ionicons } from '@expo/vector-icons';
@@ -392,7 +392,7 @@ export const MyCardsScreen: React.FC = () => {
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
         refreshControl={
-          <RefreshControl
+          <WebRefreshControl
             refreshing={state.refreshing}
             onRefresh={refreshCards}
             tintColor={theme.colors.primary}

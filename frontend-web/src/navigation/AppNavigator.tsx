@@ -5,22 +5,28 @@ import { createStackNavigator } from '@react-navigation/stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { getFocusedRouteNameFromRoute } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useTranslation } from 'react-i18next';
+import WebStorageService from '../services/WebStorageService';
 import { pomeloXAPI } from '../services/PomeloXAPI';
+
 import { theme } from '../theme';
 import { CustomTabBar } from '../components/navigation/CustomTabBar';
 import { SimpleSearchTabBar } from '../components/navigation/SimpleSearchTabBar';
 import { useUser, UserProvider } from '../context/UserContext';
 import { createPermissionChecker } from '../types/userPermissions';
+
 import { pageTransitions } from '../utils/animations';
 import { LanguageProvider } from '../context/LanguageContext';
 import { ThemeProvider } from '../context/ThemeContext';
 import { FilterProvider } from '../context/FilterContext';
+
 import { shouldShowTabBar, mustHideTabBar } from '../config/tabBarConfig';
 
+// Web端存储适配器
+const AsyncStorage = new WebStorageService('local');
+
 // Screens
-import { ActivityListScreen } from '../screens/activities/ActivityListScreen';
+import { BeautifulActivityListScreen as ActivityListScreen } from '../screens/activities/ActivityListScreen.beautiful';
 import { ActivityDetailScreen } from '../screens/activities/ActivityDetailScreen';
 import { ActivityRegistrationFormScreen } from '../screens/activities/ActivityRegistrationFormScreen';
 import { LoginScreen } from '../screens/auth/LoginScreen';
@@ -55,6 +61,7 @@ import { VolunteerCheckInScreen } from '../screens/volunteer/VolunteerCheckInScr
 import { FloatingAIButton } from '../components/common/FloatingAIButton';
 import { GlobalTouchHandler } from '../components/common/GlobalTouchHandler';
 import { ErrorBoundary } from '../components/common/ErrorBoundary';
+import { ScrollDebugHelper } from '../components/debug/ScrollDebugHelper';
 import { TermsScreen } from '../screens/legal/TermsScreen';
 
 // Stack Navigators
@@ -238,6 +245,13 @@ const HomeNavigator = () => {
           ...pageTransitions.slideFromRight,
         }}
       />
+      <MainStack.Screen 
+        name="Community" 
+        component={CommunityScreen}
+        options={{
+          ...pageTransitions.fade,
+        }}
+      />
     </MainStack.Navigator>
   );
 };
@@ -414,7 +428,7 @@ const TabNavigator = () => {
         {/* 探索 - 所有用户都可以访问 */}
         <Tab.Screen 
           name="Explore" 
-          component={HomeNavigator}
+          component={ActivityListScreen}
           options={({ route }) => {
             const routeName = getFocusedRouteNameFromRoute(route) ?? 'ActivityList';
             
@@ -485,7 +499,7 @@ const TabNavigator = () => {
         {/* 个人 - 所有用户都可以访问 */}
         <Tab.Screen 
           name="Profile" 
-          component={ProfileNavigator}
+          component={ProfileHomeScreen}
           options={({ route }) => {
             const routeName = getFocusedRouteNameFromRoute(route) ?? 'ProfileHome';
             
@@ -513,6 +527,9 @@ const TabNavigator = () => {
         <ErrorBoundary>
           <FloatingAIButton />
         </ErrorBoundary>
+
+        {/* Web端滚动调试工具 - 已关闭 */}
+        {/* <ScrollDebugHelper /> */}
       </View>
       </GlobalTouchHandler>
     </FilterProvider>
@@ -647,6 +664,83 @@ export const AppNavigator = () => {
             }}
           />
           
+          {/* Activity Detail - 全局可访问 */}
+          <RootStack.Screen 
+            name="ActivityDetail" 
+            component={ActivityDetailScreen}
+            options={{
+              ...pageTransitions.slideFromRight,
+            }}
+          />
+          
+          <RootStack.Screen 
+            name="ActivityRegistrationForm" 
+            component={ActivityRegistrationFormScreen}
+            options={{
+              ...pageTransitions.slideFromRight,
+            }}
+          />
+
+          {/* Profile子页面 - 全局可访问 */}
+          <RootStack.Screen 
+            name="EditProfile" 
+            component={EditProfileScreen}
+            options={{
+              headerShown: true,
+              title: '编辑个人资料',
+              ...pageTransitions.slideFromRight,
+            }}
+          />
+          
+          <RootStack.Screen 
+            name="Notifications" 
+            component={NotificationScreen}
+            options={{
+              headerShown: true,
+              title: '通知设置',
+              ...pageTransitions.slideFromRight,
+            }}
+          />
+          
+          <RootStack.Screen 
+            name="General" 
+            component={GeneralScreen}
+            options={{
+              headerShown: true,
+              title: '通用设置',
+              ...pageTransitions.slideFromRight,
+            }}
+          />
+          
+          <RootStack.Screen 
+            name="AboutSupport" 
+            component={AboutSupportScreen}
+            options={{
+              headerShown: true,
+              title: '关于与支持',
+              ...pageTransitions.slideFromRight,
+            }}
+          />
+          
+          <RootStack.Screen 
+            name="LanguageSelection" 
+            component={LanguageSelectionScreen}
+            options={{
+              headerShown: true,
+              title: '语言设置',
+              ...pageTransitions.slideFromRight,
+            }}
+          />
+          
+          <RootStack.Screen 
+            name="ActivityLayoutSelection" 
+            component={ActivityLayoutSelectionScreen}
+            options={{
+              headerShown: false,
+              ...pageTransitions.slideFromRight,
+            }}
+          />
+
           {/* Legal Screens */}
           <RootStack.Screen 
             name="Terms" 

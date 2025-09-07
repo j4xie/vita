@@ -15,7 +15,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { useNavigation } from '@react-navigation/native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { WebAsyncStorage } from '../../services/WebStorageService';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { WebHaptics as Haptics } from '../../utils/WebHaptics';
 
@@ -151,8 +151,29 @@ export const ProfileScreen: React.FC = () => {
 
   // Handle region selection
   const handleRegionPress = () => {
-    triggerHaptic();
-    setShowRegionModal(true);
+    console.log('Web端点击Region & Timezone按钮');
+    try {
+      triggerHaptic();
+      
+      // 临时使用Alert测试，确保点击事件正常工作
+      Alert.alert(
+        'Region切换',
+        `当前region: ${UserRegionPreferences.getRegionDisplayName(currentRegion, currentLanguage)}`,
+        [
+          { text: '取消', style: 'cancel' },
+          { 
+            text: '打开设置', 
+            onPress: () => {
+              console.log('用户选择打开region设置');
+              setShowRegionModal(true);
+            }
+          },
+        ]
+      );
+    } catch (error) {
+      console.error('Web端处理region点击失败:', error);
+      Alert.alert('错误', `处理失败: ${error.message}`);
+    }
   };
 
   // Handle region change
@@ -213,17 +234,8 @@ export const ProfileScreen: React.FC = () => {
     },
   ];
   
-  // Group 2: Notifications & General
+  // Group 2: General
   const notificationsGeneralItems = [
-    {
-      id: 'notifications',
-      title: t('profile.notifications'),
-      icon: 'notifications-outline' as keyof typeof Ionicons.glyphMap,
-      onPress: () => {
-        triggerHaptic();
-        Alert.alert(t('common.confirm'), t('alerts.feature_not_implemented'));
-      },
-    },
     {
       id: 'language',
       title: t('profile.language'),
@@ -432,8 +444,8 @@ export const ProfileScreen: React.FC = () => {
         {/* Account & Security Group */}
         {renderGroup(t('profile.sections.accountSecurity'), accountSecurityItems)}
         
-        {/* Notifications & General Group */}
-        {renderGroup(t('profile.sections.notificationsGeneral'), notificationsGeneralItems)}
+        {/* General Group */}
+        {renderGroup(t('profile.sections.general'), notificationsGeneralItems)}
         
         {/* About & Support Group */}
         {renderGroup(t('profile.sections.aboutSupport'), aboutSupportItems)}

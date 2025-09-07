@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import {
   View,
   Text,
@@ -9,9 +9,9 @@ import {
   TextInput,
   Image,
   Dimensions,
-  RefreshControl,
   DeviceEventEmitter,
 } from 'react-native';
+import { WebRefreshControl } from '../../components/web/WebRefreshControl';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from '../../components/web/WebLinearGradient';
@@ -39,6 +39,7 @@ export const ExploreScreen: React.FC = () => {
   const [activities, setActivities] = useState<FrontendActivity[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchLoading, setSearchLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   
   // 功能未实现提示
   const { showFeature, FeatureModal } = useUnimplementedFeature();
@@ -90,6 +91,7 @@ export const ExploreScreen: React.FC = () => {
         setLoading(true);
       }
       
+      setError(null); // 清除之前的错误
       console.log('🔍 加载活动数据:', { searchQuery });
       
       // 🔧 支持访客模式浏览 - userId可选
@@ -113,25 +115,44 @@ export const ExploreScreen: React.FC = () => {
         activitiesCount: result.rows?.length || 0
       });
       
+      console.log('🔄 开始适配活动数据:', {
+        rowsCount: result.rows?.length || 0,
+        resultCode: result.code,
+        resultMsg: result.msg
+      });
+      
       const adaptedData = adaptActivityList(result, 'zh');
       
+      console.log('📊 适配后数据:', {
+        success: adaptedData.success,
+        activitiesCount: adaptedData.activities.length,
+        message: adaptedData.message,
+        total: adaptedData.total
+      });
+      
       if (adaptedData.success) {
+        console.log('🚀 准备设置activities状态:', adaptedData.activities);
         setActivities(adaptedData.activities);
-        console.log('✅ 活动数据加载成功:', {
-          searchQuery,
-          totalActivities: adaptedData.activities.length,
-          activities: adaptedData.activities.map(a => ({ 
-            id: a.id, 
-            title: a.title, 
-            location: a.location 
-          }))
-        });
+        console.log('✅ activities状态已设置，长度:', adaptedData.activities.length);
       } else {
         console.warn('⚠️ 活动数据加载失败:', adaptedData.message);
         setActivities([]);
       }
     } catch (error) {
       console.error('❌ 加载活动数据错误:', error);
+      
+      // Web端网络错误的特殊处理
+      if (Platform.OS === 'web') {
+        if (error.message.includes('Network request failed') || error.message.includes('fetch')) {
+          setError('网络连接失败，请检查网络设置或稍后重试');
+          console.warn('🌐 Web端网络访问受限，可能是CORS或SSL证书问题');
+        } else {
+          setError('数据加载失败，请重新尝试');
+        }
+      } else {
+        setError('数据加载失败，请重新尝试');
+      }
+      
       setActivities([]);
     } finally {
       setLoading(false);
@@ -253,13 +274,16 @@ export const ExploreScreen: React.FC = () => {
     <SafeAreaView style={styles.container}>
       <ScrollView 
         style={styles.scrollView}
+        contentContainerStyle={styles.scrollViewContent}
+        showsVerticalScrollIndicator={true}
+        scrollEnabled={true}
+        nestedScrollEnabled={true}
         refreshControl={
-          <RefreshControl
+          <WebRefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
             colors={[theme.colors.primary]}
             tintColor={theme.colors.primary}
-            title={t('common.loading')}
           />
         }
       >
@@ -375,7 +399,7 @@ export const ExploreScreen: React.FC = () => {
             </Text>
             {/* 调试信息显示 */}
             <Text style={{ fontSize: 10, color: 'red' }}>
-              DEBUG: searchText="{searchText}" activities={activities.length}
+              DEBUG: searchText="{searchText}" activities={activities.length} loading={loading.toString()} error={error || 'null'}
             </Text>
             {!searchText.trim() && (
               <TouchableOpacity onPress={() => showFeature(t('explore.recommended_activities'), t('explore.features.recommendations_developing'))}>
@@ -393,8 +417,19 @@ export const ExploreScreen: React.FC = () => {
             </View>
           )}
           
+          {/* Error state */}
+          {!loading && !searchLoading && error && (
+            <View style={styles.errorState}>
+              <Ionicons name="warning-outline" size={48} color={theme.colors.warning} style={styles.errorIcon} />
+              <Text style={styles.errorText}>{error}</Text>
+              <TouchableOpacity onPress={() => loadActivities()} style={styles.retryButton}>
+                <Text style={styles.retryButtonText}>重新加载</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+          
           {/* Activities List */}
-          {!loading && !searchLoading && (() => {
+          {!loading && !searchLoading && !error && (() => {
             const filteredAndSorted = getSortedActivities();
             return (
               <View>
@@ -469,6 +504,10 @@ const styles = StyleSheet.create({
   },
   scrollView: {
     flex: 1,
+  },
+  scrollViewContent: {
+    flexGrow: 1,
+    paddingBottom: 20,
   },
   
   // Header
@@ -567,6 +606,33 @@ const styles = StyleSheet.create({
     fontSize: theme.typography.fontSize.base,
     color: theme.colors.text.secondary,
     textAlign: 'center',
+  },
+
+  // Error state
+  errorState: {
+    paddingVertical: theme.spacing[8],
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  errorIcon: {
+    marginBottom: theme.spacing[3],
+  },
+  errorText: {
+    fontSize: theme.typography.fontSize.base,
+    color: theme.colors.text.secondary,
+    textAlign: 'center',
+    marginBottom: theme.spacing[4],
+  },
+  retryButton: {
+    backgroundColor: theme.colors.primary,
+    paddingHorizontal: theme.spacing[4],
+    paddingVertical: theme.spacing[2],
+    borderRadius: theme.borderRadius.md,
+  },
+  retryButtonText: {
+    color: '#FFFFFF',
+    fontSize: theme.typography.fontSize.sm,
+    fontWeight: theme.typography.fontWeight.medium,
   },
 
   // Activities list

@@ -35,6 +35,7 @@ export interface GlobalLightModeStyles {
     success: any;
     warning: any;
     error: any;
+    title: any;
   };
   
   // 输入框样式
@@ -75,6 +76,13 @@ export interface GlobalLightModeStyles {
     error: any;
     info: any;
   };
+
+  // 模态框样式
+  modal: {
+    overlay: any;
+    container: any;
+    backdrop: any;
+  };
 }
 
 /**
@@ -84,6 +92,8 @@ export const useAllDarkModeStyles = (): {
   isDarkMode: boolean;
   styles: GlobalLightModeStyles;
   gradients: any;
+  icons: any;
+  blur: any;
 } => {
   const isDarkMode = false; // 固定为false
 
@@ -205,6 +215,13 @@ export const useAllDarkModeStyles = (): {
           color: colors.error,
         }
       }).error,
+      title: StyleSheet.create({
+        title: {
+          color: '#111827',
+          fontSize: 20,
+          fontWeight: '600',
+        }
+      }).title,
     },
     
     // 输入框样式
@@ -352,6 +369,27 @@ export const useAllDarkModeStyles = (): {
         }
       }).info,
     },
+
+    // 模态框样式
+    modal: {
+      overlay: StyleSheet.create({
+        overlay: {
+          backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        }
+      }).overlay,
+      container: StyleSheet.create({
+        container: {
+          backgroundColor: '#FFFFFF',
+          borderRadius: 12,
+          padding: 20,
+        }
+      }).container,
+      backdrop: StyleSheet.create({
+        backdrop: {
+          backgroundColor: 'rgba(0, 0, 0, 0.3)',
+        }
+      }).backdrop,
+    },
   };
 
   // Light Mode渐变样式
@@ -362,10 +400,28 @@ export const useAllDarkModeStyles = (): {
     brand: colors.gradients.vitaflow,
   };
 
+  // Light Mode图标颜色
+  const lightIcons = {
+    primary: '#111827',
+    secondary: '#4B5563',
+    tertiary: '#6B7280',
+    quaternary: '#9CA3AF',
+    brand: colors.primary,
+  };
+
+  // Light Mode模糊效果
+  const lightBlur = {
+    light: 20,
+    medium: 25,
+    heavy: 30,
+  };
+
   return {
     isDarkMode,
     styles: lightStyles,
     gradients: lightGradients,
+    icons: lightIcons,
+    blur: lightBlur,
   };
 };
 

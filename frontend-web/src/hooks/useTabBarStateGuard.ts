@@ -152,10 +152,11 @@ export const useTabBarVerification = (routeName: string, options?: {
             });
           }
           
-          // 🔄 如果应该显示TabBar，完全移除tabBarStyle让默认行为生效
+          // 🔄 Web端兼容性修复：明确设置TabBar显示状态
           if (shouldShow) {
+            // Web端需要明确设置display: 'flex'，而非undefined
             parentNav.setOptions({
-              tabBarStyle: undefined // 移除样式，让TabBar正常显示
+              tabBarStyle: { display: 'flex' }
             });
           } else {
             parentNav.setOptions({

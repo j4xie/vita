@@ -705,7 +705,7 @@ export const ActivityDetailScreen: React.FC = () => {
 
       {/* Bottom Register Button */}
       <View style={[styles.bottomContainer, { 
-        bottom: insets.bottom + 12, // 安全区上方间距≥12
+        bottom: insets.bottom - 20, // 继续向下移动，更贴近底部
       }]}>
         <View style={[
           styles.registerButtonShadowContainer,

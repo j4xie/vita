@@ -182,25 +182,9 @@ export const AboutSupportScreen: React.FC = () => {
     });
   };
 
-  const appInfoItems = [
-    {
-      id: 'app-info',
-      title: t('profile.about.aboutApp'),
-      icon: 'information-circle-outline' as keyof typeof Ionicons.glyphMap,
-      value: 'v1.0.24',
-      onPress: handleAppInfo,
-    },
-  ];
+  const appInfoItems = [];
 
-  const supportItems = [
-    {
-      id: 'github',
-      title: t('profile.about.githubRepo'),
-      icon: 'logo-github' as keyof typeof Ionicons.glyphMap,
-      onPress: handleGitHub,
-      isExternal: true,
-    },
-  ];
+  const supportItems = [];
 
   const legalItems = [
     {
@@ -289,39 +273,43 @@ export const AboutSupportScreen: React.FC = () => {
           contentContainerStyle={styles.contentContainer}
           showsVerticalScrollIndicator={false}
         >
-          {/* 应用信息 */}
-          <View style={styles.groupContainer}>
-            <Text style={styles.groupTitle}>{t('profile.about.sectionAppInfo')}</Text>
-            <View style={styles.listContainer}>
-              {appInfoItems.map((item, index) => (
-                <SettingRow
-                  key={item.id}
-                  title={item.title}
-                  icon={item.icon}
-                  value={item.value}
-                  onPress={item.onPress}
-                  isLast={index === appInfoItems.length - 1}
-                />
-              ))}
+          {/* 应用信息 - 仅当有项目时显示 */}
+          {appInfoItems.length > 0 && (
+            <View style={styles.groupContainer}>
+              <Text style={styles.groupTitle}>{t('profile.about.sectionAppInfo')}</Text>
+              <View style={styles.listContainer}>
+                {appInfoItems.map((item, index) => (
+                  <SettingRow
+                    key={item.id}
+                    title={item.title}
+                    icon={item.icon}
+                    value={item.value}
+                    onPress={item.onPress}
+                    isLast={index === appInfoItems.length - 1}
+                  />
+                ))}
+              </View>
             </View>
-          </View>
+          )}
 
-          {/* 支持与反馈 */}
-          <View style={styles.groupContainer}>
-            <Text style={styles.groupTitle}>{t('profile.about.sectionSupportFeedback')}</Text>
-            <View style={styles.listContainer}>
-              {supportItems.map((item, index) => (
-                <SettingRow
-                  key={item.id}
-                  title={item.title}
-                  icon={item.icon}
-                  onPress={item.onPress}
-                  isExternal={item.isExternal}
-                  isLast={index === supportItems.length - 1}
-                />
-              ))}
+          {/* 支持与反馈 - 仅当有项目时显示 */}
+          {supportItems.length > 0 && (
+            <View style={styles.groupContainer}>
+              <Text style={styles.groupTitle}>{t('profile.about.sectionSupportFeedback')}</Text>
+              <View style={styles.listContainer}>
+                {supportItems.map((item, index) => (
+                  <SettingRow
+                    key={item.id}
+                    title={item.title}
+                    icon={item.icon}
+                    onPress={item.onPress}
+                    isExternal={item.isExternal}
+                    isLast={index === supportItems.length - 1}
+                  />
+                ))}
+              </View>
             </View>
-          </View>
+          )}
 
           {/* 法律条款 */}
           <View style={styles.groupContainer}>

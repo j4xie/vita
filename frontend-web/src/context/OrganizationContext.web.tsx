@@ -4,7 +4,8 @@
  */
 
 import React, { createContext, useContext, useReducer, useEffect, useCallback } from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import WebStorageService from '../services/WebStorageService';
+
 import { 
   Organization, 
   UserOrganization, 
@@ -13,9 +14,6 @@ import {
   OrganizationError
 } from '../types/organization';
 import { fetchOrganizationList } from '../services/registrationAPI';
-
-// Web端存储适配器
-const AsyncStorage = new WebStorageService('local');
 
 // ==================== Context类型定义 ====================
 

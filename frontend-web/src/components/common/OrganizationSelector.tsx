@@ -1,3 +1,4 @@
+/* Web端特定版本 - 与App端隔离 */
 import React, { useState, useEffect } from 'react';
 import {
   View,

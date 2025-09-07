@@ -4,7 +4,7 @@ import {
   Text,
   TouchableOpacity,
   StyleSheet,
-  SafeAreaView,
+  SafeAreaView, // 改回原生SafeAreaView
   ScrollView,
   Platform,
   Alert,
@@ -14,6 +14,7 @@ import {
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from '../../components/web/WebLinearGradient';
+// import { WebSafeAreaView } from '../../components/web/WebSafeAreaView'; // 改回原生SafeAreaView
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
@@ -580,13 +581,6 @@ export const ProfileHomeScreen: React.FC = () => {
 
   const settingItems = [
     {
-      id: 'notifications',
-      title: t('profile.menuItems.notifications'),
-      icon: 'notifications-outline' as keyof typeof Ionicons.glyphMap,
-      badgeCount: 0, // 暂无通知API，显示真实的0状态
-      onPress: () => navigation.navigate('Notifications'),
-    },
-    {
       id: 'general',
       title: t('profile.menuItems.general'),
       icon: 'settings-outline' as keyof typeof Ionicons.glyphMap,
@@ -1063,7 +1057,7 @@ export const ProfileHomeScreen: React.FC = () => {
     
     // Logout section styles
     logoutSection: {
-      marginTop: 4, // 减少上边距20px，让按钮向上移动
+      marginTop: -40, // 大幅减少上边距，让按钮明显向上移动
       marginBottom: 20,
       paddingHorizontal: 4,
     },
@@ -1413,9 +1407,10 @@ export const ProfileHomeScreen: React.FC = () => {
           visible={showPersonalHistoryModal}
           onClose={() => setShowPersonalHistoryModal(false)}
           userId={parseInt(user.userId)}
-          userName="我" // 个人查询显示"我的志愿者记录"
-          userPermission="staff" // 个人查询使用staff权限，限制为7天内
+          userName="我"
+          userPermission="staff"
           currentUser={user}
+          isPersonalView={true}
         />
       )}
     </View>

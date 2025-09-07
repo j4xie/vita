@@ -6,6 +6,9 @@ import App from './App';
 import './src/utils/qrScanPermissionTest';
 import './src/utils/manualQRTest';
 
+// 🔧 Web端滚动修复CSS - 必须在应用启动前加载
+import './src/styles/web-scroll-fix.css';
+
 // 🔍 全局错误捕获和调试配置
 console.log('[STARTUP] 应用启动 - 启用全局错误追踪');
 

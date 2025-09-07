@@ -1,7 +1,8 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import WebStorageService from '../services/WebStorageService';
 import { pomeloXAPI } from '../services/PomeloXAPI';
 import { adaptUserInfoResponse, FrontendUser } from '../utils/userAdapter';
+
 import { 
   isLoggedIn, 
   getUserInfo as getAuthUserInfo, 
@@ -15,6 +16,9 @@ import {
   getUserPermissionLevel
 } from '../types/userPermissions';
 import { activityStatsService } from '../services/activityStatsService';
+
+// Web端存储适配器
+const AsyncStorage = new WebStorageService('local');
 
 interface UserPermissions {
   canAccessVolunteerFeatures: boolean;

@@ -4,7 +4,7 @@
  */
 
 import LocationService, { LocationData } from './LocationService';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { WebAsyncStorage } from './WebStorageService';
 
 export type RegionCode = 'zh' | 'en'; // zh-中国，en-美国
 
@@ -479,7 +479,7 @@ class RegionDetectionService {
    */
   private async getCachedResultFromStorage(): Promise<RegionDetectionResult | null> {
     try {
-      const cached = await AsyncStorage.getItem(this.STORAGE_KEY);
+      const cached = await WebAsyncStorage.getItem(this.STORAGE_KEY);
       if (!cached) return null;
 
       const { result, timestamp } = JSON.parse(cached);
@@ -488,7 +488,7 @@ class RegionDetectionService {
       // 检查缓存是否过期
       if (now - timestamp > this.CACHE_DURATION) {
         console.log('⏰ 地域检测缓存已过期');
-        await AsyncStorage.removeItem(this.STORAGE_KEY);
+        await WebAsyncStorage.removeItem(this.STORAGE_KEY);
         return null;
       }
 
@@ -509,7 +509,7 @@ class RegionDetectionService {
         result,
         timestamp: Date.now()
       };
-      await AsyncStorage.setItem(this.STORAGE_KEY, JSON.stringify(cacheData));
+      await WebAsyncStorage.setItem(this.STORAGE_KEY, JSON.stringify(cacheData));
       this.cachedResult = result;
       console.log('📦 地域检测结果已缓存');
     } catch (error) {
@@ -531,7 +531,7 @@ class RegionDetectionService {
   async clearCache(): Promise<void> {
     this.cachedResult = null;
     try {
-      await AsyncStorage.removeItem(this.STORAGE_KEY);
+      await WebAsyncStorage.removeItem(this.STORAGE_KEY);
       console.log('🗑️ 已清除地域检测缓存');
     } catch (error) {
       console.error('清除缓存失败:', error);

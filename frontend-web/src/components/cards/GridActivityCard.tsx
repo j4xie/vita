@@ -50,6 +50,8 @@ interface GridActivityCardProps {
   onPress: () => void;
   onBookmark?: (activity: any) => void;
   isBookmarked?: boolean;
+  // 🚫 滚动保护支持
+  isScrolling?: boolean;
 }
 
 const GridActivityCardComponent: React.FC<GridActivityCardProps> = ({
@@ -57,6 +59,7 @@ const GridActivityCardComponent: React.FC<GridActivityCardProps> = ({
   onPress,
   onBookmark,
   isBookmarked = false,
+  isScrolling = false, // 🚫 滚动状态
 }) => {
   const { t, i18n } = useTranslation();
   const [imageLoading, setImageLoading] = useState(true);
@@ -167,16 +170,20 @@ const GridActivityCardComponent: React.FC<GridActivityCardProps> = ({
     });
   };
 
-  // 卡片点击检测
+  // 卡片点击检测 - 带滚动保护
   const cardPress = useCardPress({
     onPress: () => {
+      // 🚫 滚动保护：如果正在滚动，忽略点击
+      if (isScrolling) {
+        return;
+      }
       onPress();
     },
     onPressIn: handleGestureStart,
     onPressOut: handleGestureEnd,
   }, {
-    maxMoveThreshold: 15,
-    maxTimeThreshold: 400,
+    maxMoveThreshold: 5, // 🔧 从15px减少到5px，更严格的移动检测
+    maxTimeThreshold: 200, // 🔧 从400ms减少到200ms，避免长按
     enableHaptics: Platform.OS === 'ios',
     debug: false,
   });

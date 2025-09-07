@@ -4,10 +4,10 @@ import {
   Text,
   FlatList,
   StyleSheet,
-  RefreshControl,
   Platform,
   Dimensions,
 } from 'react-native';
+import { WebRefreshControl } from '../../components/web/WebRefreshControl';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -448,7 +448,7 @@ export const VolunteerListLiquidScreen: React.FC = () => {
             onScroll={handleScrollEvent}              // 任何滚动变化
             scrollEventThrottle={1}                   // 高频检测
             refreshControl={
-              <RefreshControl
+              <WebRefreshControl
                 refreshing={refreshing}
                 onRefresh={onRefresh}
                 tintColor={Glass.textWeak}

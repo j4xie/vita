@@ -20,6 +20,7 @@ import { theme } from '../../theme';
 import { LIQUID_GLASS_LAYERS } from '../../theme/core';
 import { useAllDarkModeStyles } from '../../hooks/useDarkModeStyles';
 import { useTabBarVerification } from '../../hooks/useTabBarStateGuard';
+import { useWebTabBarRestore } from '../../hooks/useWebTabBarRestore';
 // import RenderHtml from 'react-native-render-html'; // 暂时注释掉，避免兼容性问题
 import { pomeloXAPI } from '../../services/PomeloXAPI';
 import { FrontendActivity } from '../../utils/activityAdapter';
@@ -362,7 +363,38 @@ export const ActivityDetailScreen: React.FC = () => {
     };
   }, [activity.id]);
 
+  // 🌐 Web端TabBar恢复机制：当退出详情页时恢复TabBar
+  const { manualRestore } = useWebTabBarRestore({
+    routeName: 'ActivityDetail',
+    forceRestore: false, // 详情页不强制显示TabBar
+    debugLogs: true
+  });
+
   const handleBack = () => {
+    // 在返回前手动触发TabBar恢复
+    try {
+      console.log('🔙 [ACTIVITY-DETAIL] 返回ActivityList，触发TabBar恢复');
+      
+      // 获取父级导航器并强制恢复TabBar
+      const parentNav = navigation.getParent();
+      if (parentNav && typeof parentNav.setOptions === 'function') {
+        parentNav.setOptions({
+          tabBarStyle: {
+            display: 'flex',
+            position: 'absolute' as const,
+            bottom: 0,
+            left: 0,
+            right: 0,
+            elevation: 0,
+            borderTopWidth: 0,
+          }
+        });
+        console.log('✅ [ACTIVITY-DETAIL] TabBar强制恢复为显示状态');
+      }
+    } catch (error) {
+      console.error('⚠️ [ACTIVITY-DETAIL] TabBar恢复失败:', error);
+    }
+    
     navigation.goBack();
   };
 

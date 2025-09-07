@@ -482,12 +482,32 @@
       "available": "可报名",
       "registration_closed": "报名已结束"
     },
+    "cancel": {
+      "button": "取消报名",
+      "title": "取消报名",
+      "message": "确定要取消报名这个活动吗？取消后如需重新报名，需要重新提交申请。",
+      "confirm": "确定取消",
+      "success_title": "取消成功",
+      "success_message": "已成功取消报名",
+      "error_title": "取消失败",
+      "error_message": "取消报名时发生错误，请稍后重试"
+    },
     "bookmark_unavailable": "收藏功能暂时不可用",
     "fetch_failed": "获取活动失败"
   },
   "profile": {
     "title": "个人中心",
     "username": "用户名",
+    "region": "地区与时区",
+    "region_updated_successfully": "地区已更新为 {{region}}",
+    "region_update_failed": "地区更新失败，请稍后重试",
+    "region_switch": {
+      "title": "选择地区",
+      "subtitle": "切换到不同地区将使用相应的隐私政策",
+      "privacy_notice": "切换地区时如未签署相应隐私政策，将需要重新签署",
+      "privacy_signed": "已签署",
+      "loading": "处理中..."
+    },
     "sections": {
       "accountSecurity": "账户与安全",
       "notificationsGeneral": "通知与通用",
@@ -514,7 +534,7 @@
     "settings": "设置",
     "language": "语言",
     "privacy": "隐私设置",
-    "volunteer_hours_label": "志愿时长",
+    "volunteer_hours_label": "志愿",
     "points_label": "积分",
     "verification_code_label": "核销码",
     "settings_and_help": "设置与帮助",
@@ -549,6 +569,7 @@
       "language": "语言",
       "regionAndTimezone": "地区与时区",
       "chinaMainland": "中国大陆",
+      "appearance": "外观",
       "activityLayout": "活动布局",
       "layoutChanged": "布局已更改",
       "layoutChangeMessage": "活动列表布局已切换为{{layout}}视图",
@@ -566,6 +587,13 @@
       "sectionDisplayAppearance": "显示与外观",
       "sectionStoragePerformance": "存储与性能",
       "regionTimezoneMessage": "地区时区设置功能即将推出",
+      "darkModePattern": "深色模式",
+      "light_mode": "浅色模式",
+      "dark_mode": "深色模式",
+      "auto_mode": "跟随系统",
+      "auto_description": "根据系统设置自动切换",
+      "light_description": "始终使用浅色界面",
+      "dark_description": "始终使用深色界面"
     },
     "edit": {
       "changeAvatar": "更换头像",
@@ -594,7 +622,7 @@
       "no_pending_checkin": "暂无待签到活动",
       "no_checked_in": "暂无已签到活动",
       "checked_in": "已签到",
-      "scan_to_checkin": "去扫码签到"
+      "scan_to_checkin": "扫码"
     },
     "about": {
       "sectionAppInfo": "应用信息",
@@ -768,6 +796,7 @@
       "history": {
         "title": "志愿者历史记录",
         "subtitle": "查看 {{userName}} 的打卡记录",
+        "subtitle_personal": "我的记录",
         "selectTimeRange": "选择时间范围",
         "recordsList": "打卡记录",
         "recordsFound": "共{{count}}条记录",
@@ -911,7 +940,26 @@
     "go_to_settings": "去设置",
     "android_permission_instruction": "请在设置 > 应用权限 > 位置信息中开启定位权限",
     "check_in_now": "立即签到",
-    "permission_denied": "定位权限被拒绝"
+    "permission_denied": "定位权限被拒绝",
+    "mismatch": {
+      "title": "位置变化提醒",
+      "subtitle": "检测到您的位置发生了变化",
+      "current_location": "检测到的位置",
+      "settings_region": "当前设置",
+      "recommendation": "建议更新地区设置以获得最佳体验和相应的隐私保护",
+      "ignore": "先忽略",
+      "go_to_settings": "去设置"
+    }
+  },
+  "regions": {
+    "china": {
+      "name": "中国",
+      "description": "适用中华人民共和国相关法律法规"
+    },
+    "usa": {
+      "name": "美国", 
+      "description": "适用美国联邦和州相关法律法规"
+    }
   },
   "qr": {
     "scanning": {
@@ -1283,6 +1331,7 @@
     "stepOf": "步骤 {{current}} / {{total}}",
     "basicInfo": "基本信息",
     "basicInfoDesc": "请填写您的真实信息",
+    "appearanceSettings": "外观设置",
     "generating": "正在生成验收报告...",
     "cannotGenerateReport": "无法生成报告",
     "acceptanceReport": "验收报告",

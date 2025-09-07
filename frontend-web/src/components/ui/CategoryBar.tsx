@@ -1,7 +1,7 @@
 import React, { useRef, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Animated, useColorScheme } from 'react-native';
-import { LinearGradient } from '../../components/web/WebLinearGradient';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { LinearGradient } from '../web/WebLinearGradient';
+import { useWebSafeAreaInsets as useSafeAreaInsets } from '../../hooks/useWebSafeArea';
 import { Ionicons } from '@expo/vector-icons';
 import { WebHaptics as Haptics } from '../../utils/WebHaptics';
 import { useTranslation } from 'react-i18next';

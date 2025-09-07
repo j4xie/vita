@@ -48,6 +48,8 @@ interface SimpleActivityCardProps {
   // 滚动视差动画支持
   scrollY?: Animated.SharedValue<number>;
   index?: number;
+  // 🚫 滚动保护支持
+  isScrolling?: boolean;
   // 新增收藏功能
   onBookmark?: (activity: any) => void;
   isBookmarked?: boolean;
@@ -60,6 +62,7 @@ const SimpleActivityCardComponent: React.FC<SimpleActivityCardProps> = ({
   index = 0,
   onBookmark,
   isBookmarked = false,
+  isScrolling = false, // 🚫 滚动状态
 }) => {
   const { t, i18n } = useTranslation();
   const [imageLoading, setImageLoading] = useState(true);
@@ -184,17 +187,23 @@ const SimpleActivityCardComponent: React.FC<SimpleActivityCardProps> = ({
     });
   };
 
-  // 简单的卡片点击检测 - 不干扰滚动
+  // 简单的卡片点击检测 - 带滚动保护
   const cardPress = useCardPress({
     onPress: () => {
+      // 🚫 滚动保护：如果正在滚动，忽略点击
+      if (isScrolling) {
+        console.log('🚫 [CARD-PROTECTION] 正在滚动，忽略卡片点击');
+        return;
+      }
       // 确认是真正的点击事件，执行导航
+      console.log('✅ [CARD-PROTECTION] 静止状态下的有效卡片点击');
       onPress();
     },
     onPressIn: handleGestureStart,
     onPressOut: handleGestureEnd,
   }, {
-    maxMoveThreshold: 15,      // 15px 内的移动仍视为点击
-    maxTimeThreshold: 400,     // 400ms 内视为点击
+    maxMoveThreshold: 10,      // 🔧 减少到10px，更严格的点击检测
+    maxTimeThreshold: 300,     // 🔧 减少到300ms，避免长按误触
     enableHaptics: Platform.OS === 'ios',
     debug: false,
   });

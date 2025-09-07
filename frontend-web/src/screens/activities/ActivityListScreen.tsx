@@ -1,14 +1,11 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import {
   View,
-  FlatList,
-  SectionList,
   Text,
   StyleSheet,
-  RefreshControl,
   TouchableOpacity,
   Image,
-  SafeAreaView,
+  SafeAreaView, // 使用原生SafeAreaView
   TextInput,
   ScrollView,
   ActivityIndicator,
@@ -17,9 +14,9 @@ import {
   AccessibilityInfo,
   Alert,
 } from 'react-native';
+import { WebFlatList } from '../../components/web/WebFlatList';
 // Added Animated for sticky filter bar
 import Reanimated, {
-  FlatList as ReanimatedFlatList,
   useAnimatedStyle,
   useSharedValue,
   withTiming,
@@ -29,13 +26,14 @@ import Reanimated, {
 } from 'react-native-reanimated';
 import { useNavigation } from '@react-navigation/native';
 import { useWebSafeAreaInsets } from '../../hooks/useWebSafeArea';
-import { WebSafeAreaView } from '../../components/web/WebSafeAreaView';
+// import { WebSafeAreaView } from '../../components/web/WebSafeAreaView'; // 改用原生SafeAreaView
+import { WebRefreshControl } from '../../components/web/WebRefreshControl';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from '../../components/web/WebLinearGradient';
 import { BlurView } from '../../components/web/WebBlurView';
 import { Platform, DeviceEventEmitter } from 'react-native';
 import { WebHaptics as Haptics } from '../../utils/WebHaptics';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { WebAsyncStorage as AsyncStorage } from '../../services/WebStorageService';
 import { useTranslation } from 'react-i18next';
 import { theme } from '../../theme';
 import { BRAND_GLASS, BRAND_INTERACTIONS, BRAND_GRADIENT, LIQUID_GLASS_LAYERS, DAWN_GRADIENTS, DAWN_OVERLAYS } from '../../theme/core';
@@ -51,6 +49,7 @@ import { ACTIVITY_CATEGORIES, getCategoryName } from '../../data/activityCategor
 import { usePerformanceDegradation } from '../../hooks/usePerformanceDegradation';
 import { useFilter } from '../../context/FilterContext';
 import { useTabBarVerification } from '../../hooks/useTabBarStateGuard';
+import { useWebTabBarRestore } from '../../hooks/useWebTabBarRestore';
 // import { OrganizationProvider, useOrganization } from '../../context/OrganizationContext'; // 移除组织功能
 // import { OrganizationSwitcher } from '../../components/organization/OrganizationSwitcher'; // 移除组织切换器
 import { activityStatsService } from '../../services/activityStatsService';
@@ -70,9 +69,16 @@ export const ActivityListScreen: React.FC = () => {
   const { setIsFilterOpen } = useFilter();
   const { user } = useUser(); // 移动到开头，在所有使用user的useCallback之前
   
-  // 🛡️ TabBar状态守护：ActivityList作为Tab根页面，通常由TabNavigator自动管理
-  // 只在需要调试时启用
-  useTabBarVerification('ActivityList', { debugLogs: false });
+  // 🛡️ TabBar状态守护：ActivityList作为Tab根页面，确保从详情页返回时正确显示
+  // Web端需要启用以修复TabBar隐藏后无法恢复的问题
+  useTabBarVerification('ActivityList', { debugLogs: false, enabled: true });
+  
+  // 🌐 Web端专用TabBar恢复机制：强制恢复TabBar显示
+  const { manualRestore } = useWebTabBarRestore({
+    routeName: 'ActivityList',
+    forceRestore: true,
+    debugLogs: false
+  });
   // V2.0 性能降级策略和分层配置
   const { handleScrollEvent: performanceScrollHandler, isPerformanceDegraded, getLayerConfig } = usePerformanceDegradation();
   const L1Config = getLayerConfig('L1', false); // 假设浅色模式
@@ -99,8 +105,12 @@ export const ActivityListScreen: React.FC = () => {
   // 新增: Header 显隐状态
   const [isReduceMotionEnabled, setIsReduceMotionEnabled] = useState(false);
   
-  // SectionList引用，用于滚动到顶部
-  const sectionListRef = useRef<SectionList>(null);
+  // 🚫 滚动时点击保护机制
+  const [isScrolling, setIsScrolling] = useState(false);
+  const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  
+  // 列表引用，用于滚动到顶部
+  const listRef = useRef<any>(null);
   
   // 地理位置选择状态 - 两层结构
   const [selectedState, setSelectedState] = useState('NY');
@@ -207,9 +217,8 @@ export const ActivityListScreen: React.FC = () => {
   useEffect(() => {
     const subscription = DeviceEventEmitter.addListener('scrollToTopAndRefresh', () => {
       // 滚动到顶部
-      sectionListRef.current?.scrollToLocation({
-        sectionIndex: 0,
-        itemIndex: 0,
+      listRef.current?.scrollToOffset({
+        offset: 0,
         animated: true,
       });
       
@@ -341,10 +350,43 @@ export const ActivityListScreen: React.FC = () => {
     setActiveFilter(index);
   }, []);
 
+  // 🚫 滚动保护事件处理函数
+  const handleScrollBegin = useCallback(() => {
+    setIsScrolling(true);
+    // console.log('📜 [SCROLL-PROTECTION] 开始拖动滚动，禁用卡片点击'); // 静默运行
+    
+    // 清除之前的计时器
+    if (scrollTimeoutRef.current) {
+      clearTimeout(scrollTimeoutRef.current);
+    }
+  }, []);
+
+  const handleScrollEnd = useCallback(() => {
+    // 滚动结束后等待一段时间再启用点击，确保手势完全结束
+    scrollTimeoutRef.current = setTimeout(() => {
+      setIsScrolling(false);
+      // console.log('📜 [SCROLL-PROTECTION] 拖动结束，重新启用卡片点击'); // 静默运行
+    }, 300); // 300ms延迟，确保手势完全结束
+  }, []);
 
   // Header 滚动处理器 - 使用安全的处理方式避免 Reanimated 冲突
   const handleScroll = useCallback((event: any) => {
     try {
+      // 🚫 滚动保护：立即禁用点击
+      if (!isScrolling) {
+        setIsScrolling(true);
+        // 静默运行，不输出日志
+      }
+      
+      // 重置延迟计时器
+      if (scrollTimeoutRef.current) {
+        clearTimeout(scrollTimeoutRef.current);
+      }
+      scrollTimeoutRef.current = setTimeout(() => {
+        setIsScrolling(false);
+        // 静默运行，不输出日志
+      }, 500); // 500ms延迟确保手势完全结束
+
       // 确保事件对象存在
       if (!event || !event.nativeEvent || typeof event.nativeEvent.contentOffset?.y !== 'number') {
         return;
@@ -498,11 +540,13 @@ export const ActivityListScreen: React.FC = () => {
 
   
 
-  // 下拉刷新 - 完整优化版本，使用硬编码文本避免翻译问题
+  // Web端优化的下拉刷新 - 增强停顿感和视觉反馈
   const onRefresh = useCallback(async () => {
     try {
-      // 触感反馈 - 开始刷新
-      if (Platform.OS === 'ios') {
+      // Web端触觉反馈模拟（振动API）
+      if (Platform.OS === 'web' && 'vibrate' in navigator) {
+        navigator.vibrate([100, 50, 100]); // 短振动模式
+      } else if (Platform.OS === 'ios') {
         try {
           Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
         } catch (e) {
@@ -510,46 +554,53 @@ export const ActivityListScreen: React.FC = () => {
         }
       }
       
-      // 开始刷新动画
+      // 开始刷新动画 - 更缓慢的启动动画
       setRefreshing(true);
       setRefreshProgress(0);
       refreshAnimation.value = withTiming(1, {
-        duration: 250,
-        easing: Easing.bezier(0.34, 1.56, 0.64, 1),
+        duration: 400, // 增加到400ms让用户感受到停顿
+        easing: Easing.bezier(0.25, 0.1, 0.25, 1), // 缓入缓出曲线
       });
 
-      // 优化渐进式刷新进度
-      const progressSteps = [0.3, 0.6, 0.9, 1.0];
-      const stepDurations = [100, 120, 100, 80];
+      // 增强的渐进式刷新进度 - 更明显的停顿感
+      const progressSteps = [0.2, 0.4, 0.7, 0.85, 1.0];
+      const stepDurations = [200, 250, 300, 200, 150]; // 增加各阶段停顿时间
       
       for (let i = 0; i < progressSteps.length; i++) {
         await new Promise(resolve => setTimeout(resolve, stepDurations[i]));
         setRefreshProgress(progressSteps[i]);
         
-        // 在中间步骤添加轻微的触感反馈
-        if (i === 1 && Platform.OS === 'ios') {
+        // 在关键节点添加触觉反馈
+        if ((i === 1 || i === 3) && Platform.OS === 'web' && 'vibrate' in navigator) {
+          navigator.vibrate(50); // 轻微振动
+        } else if ((i === 1 || i === 3) && Platform.OS === 'ios') {
           try {
             Haptics.selectionAsync();
           } catch (e) {}
         }
       }
 
+      // 在数据获取前添加额外停顿，增强用户感知
+      await new Promise(resolve => setTimeout(resolve, 200));
+
       // 执行实际的数据获取
       await fetchActivities(1, true);
       
-      // 成功反馈
-      if (Platform.OS === 'ios') {
+      // 成功反馈 - Web端视觉反馈
+      if (Platform.OS === 'web' && 'vibrate' in navigator) {
+        navigator.vibrate([200]); // 成功振动
+      } else if (Platform.OS === 'ios') {
         try {
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         } catch (e) {}
       }
       
-      // 延迟展示完成状态
-      await new Promise(resolve => setTimeout(resolve, 300));
+      // 延长完成状态展示时间 - 增强停顿感
+      await new Promise(resolve => setTimeout(resolve, 500)); // 从300ms增加到500ms
       
-      // 结束动画
+      // 更缓慢的结束动画
       refreshAnimation.value = withTiming(0, {
-        duration: 300,
+        duration: 400, // 增加结束动画时长
         easing: Easing.bezier(0.25, 0.46, 0.45, 0.94),
       });
       
@@ -559,16 +610,18 @@ export const ActivityListScreen: React.FC = () => {
       setRefreshProgress(0);
       
       // 错误触感反馈
-      if (Platform.OS === 'ios') {
+      if (Platform.OS === 'web' && 'vibrate' in navigator) {
+        navigator.vibrate([100, 50, 100, 50, 100]); // 错误振动模式
+      } else if (Platform.OS === 'ios') {
         try {
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
         } catch (e) {}
       }
     } finally {
-      // 重置刷新状态
+      // 重置刷新状态 - 延长到确保动画完成
       setTimeout(() => {
         setRefreshing(false);
-      }, 100);
+      }, 200);
     }
   }, [fetchActivities, refreshAnimation]);
 
@@ -611,6 +664,15 @@ export const ActivityListScreen: React.FC = () => {
     
     loadInitialData();
   }, []); // 空依赖数组，只在挂载时执行一次
+
+  // 🧹 清理滚动保护计时器
+  useEffect(() => {
+    return () => {
+      if (scrollTimeoutRef.current) {
+        clearTimeout(scrollTimeoutRef.current);
+      }
+    };
+  }, []);
 
   // 计算滤后的活动数量 - 用于传递给FilterBottomSheet
   const calculateFilteredCount = useCallback((filters: string[], search: string) => {
@@ -753,18 +815,13 @@ export const ActivityListScreen: React.FC = () => {
 
   // 活动详情
   const handleActivityPress = (activity: any) => {
-    console.log('🔍 [ActivityList] 点击活动，传递的数据:', {
-      hasActivity: !!activity,
-      activityKeys: activity ? Object.keys(activity) : [],
-      activitySample: activity ? {
-        id: activity.id,
-        title: activity.title,
-        location: activity.location,
-        date: activity.date,
-        attendees: activity.attendees,
-        maxAttendees: activity.maxAttendees
-      } : null
-    });
+    // 🚫 滚动保护：如果正在滚动，忽略点击
+    if (isScrolling) {
+      // 静默忽略，不输出日志
+      return;
+    }
+    
+    // 静默有效点击处理
     navigation.navigate('ActivityDetail', { activity });
   };
 
@@ -905,6 +962,16 @@ export const ActivityListScreen: React.FC = () => {
         data: filteredActivities,
       }];
 
+  // 调试信息
+  console.log('🔍 [RENDER] 渲染数据状态:', {
+    activitiesCount: activities.length,
+    filteredCount: filteredActivities.length,
+    sectionDataLength: sectionData[0].data.length,
+    viewLayout,
+    activeFilter,
+    searchText: searchText.substring(0, 20) + '...'
+  });
+
   // 自定义刷新指示器组件 - 使用硬编码文本避免翻译键显示问题
   const CustomRefreshIndicator = () => (
     <View style={styles.customRefreshContainer}>
@@ -928,7 +995,7 @@ export const ActivityListScreen: React.FC = () => {
   );
 
   return (
-    <WebSafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container}>
       {/* 应用背景渐变层 - 调灰版本 */}
       <LinearGradient
         colors={[
@@ -968,10 +1035,30 @@ export const ActivityListScreen: React.FC = () => {
               ))}
             </View>
             
-            {/* 扫码按钮 */}
-            <TouchableOpacity onPress={handleScan} style={styles.scanButton}>
-              <Ionicons name="scan-outline" size={20} color="#F9A889" />
-            </TouchableOpacity>
+            {/* 右侧按钮组 */}
+            <View style={styles.rightButtonsContainer}>
+              {/* Web端刷新按钮 */}
+              {Platform.OS === 'web' && (
+                <TouchableOpacity 
+                  onPress={onRefresh} 
+                  style={[styles.webRefreshButton, { opacity: refreshing ? 0.6 : 1 }]}
+                  disabled={refreshing}
+                >
+                  <Reanimated.View style={[refreshAnimatedStyle]}>
+                    <Ionicons 
+                      name={refreshing ? "refresh" : "refresh-outline"} 
+                      size={18} 
+                      color="#F9A889" 
+                    />
+                  </Reanimated.View>
+                </TouchableOpacity>
+              )}
+              
+              {/* 扫码按钮 */}
+              <TouchableOpacity onPress={handleScan} style={styles.scanButton}>
+                <Ionicons name="scan-outline" size={20} color="#F9A889" />
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
       </Reanimated.View>
@@ -989,151 +1076,148 @@ export const ActivityListScreen: React.FC = () => {
           showShimmer={!isPerformanceDegraded} // v1.2: 性能降级时禁用shimmer
         />
       ) : (
-      <SectionList
-        ref={sectionListRef}
-        sections={sectionData}
-        keyExtractor={(item: any) => {
-          if (viewLayout === 'grid' && item.type === 'waterfall') {
-            return 'waterfall-grid';
-          }
-          return item.id;
-        }}
-        renderItem={({ item, index }) => {
-          if (viewLayout === 'grid' && item.type === 'waterfall') {
-            // 瀑布流布局 - 渲染两列
-            const { leftColumn, rightColumn } = item.columns;
-            return (
-              <View style={styles.waterfallContainer}>
-                {/* 左列 */}
-                <View style={styles.waterfallColumn}>
-                  {leftColumn.map((activity: FrontendActivity) => (
-                    <View key={activity.id} style={styles.waterfallItem}>
-                      <GridActivityCard
-                        activity={activity}
-                        onPress={() => handleActivityPress(activity)}
-                        onBookmark={user?.id ? handleBookmark : undefined}
-                        isBookmarked={false}
-                      />
-                    </View>
-                  ))}
-                </View>
-                
-                {/* 右列 */}
-                <View style={styles.waterfallColumn}>
-                  {rightColumn.map((activity: FrontendActivity) => (
-                    <View key={activity.id} style={styles.waterfallItem}>
-                      <GridActivityCard
-                        activity={activity}
-                        onPress={() => handleActivityPress(activity)}
-                        onBookmark={user?.id ? handleBookmark : undefined}
-                        isBookmarked={false}
-                      />
-                    </View>
-                  ))}
-                </View>
-              </View>
-            );
-          } else {
-            // 列表布局
-            return (
-              <SimpleActivityCard
-                activity={item}
-                onPress={() => handleActivityPress(item)}
-              />
-            );
-          }
-        }}
-        renderSectionHeader={renderSectionHeader}
-        stickySectionHeadersEnabled={true}
-        ListHeaderComponent={renderListHeader}
-        contentContainerStyle={[
-          styles.listContent,
-          { 
-            paddingTop: 60 + insets.top, // 调整为适配新的header设计
-            paddingBottom: 120 + insets.bottom,
-          }
-        ]}
-        ItemSeparatorComponent={() => <View style={{ height: -14 }} />} // 再减少5px，总计-14px，卡片会有更明显的重叠
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={onRefresh}
-            colors={[theme.colors.primary, '#F9A889', '#FF8A65', theme.colors.secondary]}
-            tintColor={theme.colors.primary}
-            progressBackgroundColor="rgba(255, 255, 255, 0.95)"
-            progressViewOffset={insets.top + 60}
-            titleColor={theme.colors.text.secondary}
-            title={
-              refreshProgress === 0 ? t('activities.list.refresh') : 
-              refreshProgress === 1 ? t('activities.list.refresh_complete') : 
-              t('activities.list.refreshing')
+        <ScrollView
+          ref={listRef}
+          style={styles.scrollView}
+          contentContainerStyle={[
+            styles.listContent,
+            {
+              paddingTop: 60 + insets.top,
+              paddingBottom: 120 + insets.bottom,
             }
-            {...(Platform.OS === 'ios' && {
-              style: { 
-                backgroundColor: 'rgba(249, 168, 137, 0.05)',
-              },
-            })}
-          />
-        }
-        onEndReached={loadMore}
-        onEndReachedThreshold={0.5}
-        // 使用普通滚动处理器避免 Reanimated 冲突
-        onScroll={handleScroll}
-        scrollEventThrottle={16}
-        // v1.2 规范: FlatList 性能优化配置
-        removeClippedSubviews={true}
-        maxToRenderPerBatch={theme.performance.flatList.maxToRenderPerBatch}        // v1.2: 5
-        initialNumToRender={theme.performance.flatList.initialNumToRender}         // v1.2: 8
-        windowSize={theme.performance.flatList.windowSize}                         // v1.2: 12
-        updateCellsBatchingPeriod={theme.performance.flatList.updateCellsBatchingPeriod} // v1.2: 50ms
-        getItemLayout={(data, index) => {
-          const ITEM_HEIGHT = 240; // 新设计卡片高度
-          const SEPARATOR_HEIGHT = 16;
-          const TOTAL_ITEM_HEIGHT = ITEM_HEIGHT + SEPARATOR_HEIGHT;
-          return {
-            length: TOTAL_ITEM_HEIGHT,
-            offset: TOTAL_ITEM_HEIGHT * index,
-            index,
-          };
-        }}
-        // 减少重新渲染
-        disableVirtualization={false}
-        // 改善滑动性能 (scrollEventThrottle already set above)
-        // Web端特殊配置
-        {...(Platform.OS === 'web' && {
-          nestedScrollEnabled: true, // Web端允许嵌套滚动
-          showsVerticalScrollIndicator: true, // Web端显示滚动条
-          style: { minHeight: '100%' }, // 确保足够高度
-        })}
-        ListFooterComponent={() => loading ? (
-          <View style={styles.loadingFooter}>
-            <ActivityIndicator size="small" color={theme.colors.primary} />
-          </View>
-        ) : null}
-        ListEmptyComponent={() => (
-          <View style={styles.emptyContainer}>
-            {error ? (
-              <>
-                <Ionicons name="wifi-outline" size={64} color={theme.colors.danger} />
-                <Text style={styles.emptyText}>{t('common.network_error')}</Text>
-                <Text style={styles.emptySubtext}>{error}</Text>
-                <TouchableOpacity 
-                  style={styles.retryButton}
-                  onPress={() => fetchActivities(1, true)}
+          ]}
+          showsVerticalScrollIndicator={false}
+          onScroll={handleScroll}
+          onScrollBeginDrag={handleScrollBegin}     // 开始拖动
+          onScrollEndDrag={handleScrollEnd}         // 拖动结束  
+          onMomentumScrollBegin={handleScrollBegin} // 惯性滚动开始
+          onMomentumScrollEnd={handleScrollEnd}     // 惯性滚动结束
+          scrollEventThrottle={16}
+          {...(Platform.OS !== 'web' && {
+            refreshControl: (
+              <WebRefreshControl
+                refreshing={refreshing}
+                onRefresh={onRefresh}
+                colors={[theme.colors.primary, '#F9A889', '#FF8A65', theme.colors.secondary]}
+                tintColor={theme.colors.primary}
+                progressBackgroundColor="rgba(255, 255, 255, 0.95)"
+                progressViewOffset={insets.top + 60}
+                titleColor={theme.colors.text.secondary}
+              />
+            )
+          })}
+        >
+          {filteredActivities.map((item, index) => {
+            if (viewLayout === 'grid') {
+              // 网格布局 - 暂时使用简化版
+              return (
+                <View style={{
+                  backgroundColor: '#FFFFFF',
+                  margin: 5,
+                  padding: 12,
+                  borderRadius: 12,
+                  width: '48%',
+                  borderWidth: 1,
+                  borderColor: '#E0E0E0'
+                }}>
+                  <Text style={{ fontSize: 14, fontWeight: 'bold', color: '#333' }}>
+                    {item.title}
+                  </Text>
+                  <Text style={{ fontSize: 12, color: '#666', marginTop: 3 }}>
+                    {'📍'} {item.location}
+                  </Text>
+                  <Text style={{ fontSize: 11, color: '#999', marginTop: 3 }}>
+                    {'📅'} {item.date}
+                  </Text>
+                </View>
+              );
+            } else {
+              // 列表布局
+              return (
+                <TouchableOpacity
+                  onPress={() => handleActivityPress(item)}
+                  style={{
+                    backgroundColor: '#FFFFFF',
+                    margin: 10,
+                    padding: 15,
+                    borderRadius: 12,
+                    borderWidth: 1,
+                    borderColor: '#E0E0E0',
+                    shadowColor: '#000',
+                    shadowOffset: { width: 0, height: 2 },
+                    shadowOpacity: 0.1,
+                    shadowRadius: 4,
+                  }}
                 >
-                  <Text style={styles.retryButtonText}>{t('common.retry')}</Text>
+                  <Text style={{ fontSize: 16, fontWeight: 'bold', color: '#333' }}>
+                    {item.title}
+                  </Text>
+                  <Text style={{ fontSize: 14, color: '#666', marginTop: 5 }}>
+                    {'📍'} {item.location}
+                  </Text>
+                  <Text style={{ fontSize: 12, color: '#999', marginTop: 5 }}>
+                    {'📅'} {item.date} | {'⏰'} {item.time}
+                  </Text>
+                  <Text style={{ fontSize: 12, color: '#007AFF', marginTop: 5 }}>
+                    {'👥'} {item.attendees}/{item.maxAttendees} | Status: {item.status}
+                  </Text>
                 </TouchableOpacity>
-              </>
-            ) : (
-              <>
-                <Ionicons name="calendar-outline" size={64} color={theme.colors.text.tertiary} />
-                <Text style={styles.emptyText}>{t('activities.empty')}</Text>
-                <Text style={styles.emptySubtext}>{t('activities.pullToRefresh')}</Text>
-              </>
-            )}
-          </View>
-        )}
-      />
+              );
+            }
+          }}
+          contentContainerStyle={[
+            styles.listContent,
+            {
+              paddingTop: 60 + insets.top,
+              paddingBottom: 120 + insets.bottom,
+            }
+          ]}
+          onEndReached={loadMore}
+          onEndReachedThreshold={0.5}
+          onScroll={handleScroll}
+          scrollEventThrottle={16}
+          removeClippedSubviews={true}
+          maxToRenderPerBatch={10}
+          initialNumToRender={8}
+          windowSize={12}
+          updateCellsBatchingPeriod={50}
+          getItemLayout={(data, index) => {
+            const ITEM_HEIGHT = 120;
+            const SEPARATOR_HEIGHT = 20;
+            const TOTAL_ITEM_HEIGHT = ITEM_HEIGHT + SEPARATOR_HEIGHT;
+            return {
+              length: TOTAL_ITEM_HEIGHT,
+              offset: TOTAL_ITEM_HEIGHT * index,
+              index,
+            };
+          }}
+          ListFooterComponent={() => loading ? (
+            <View style={styles.loadingFooter}>
+              <ActivityIndicator size="small" color={theme.colors.primary} />
+            </View>
+          ) : null}
+          ListEmptyComponent={() => (
+            <View style={styles.emptyContainer}>
+              {error ? (
+                <>
+                  <Text style={styles.emptyText}>{t('common.network_error')}</Text>
+                  <Text style={styles.emptySubtext}>{error}</Text>
+                  <TouchableOpacity 
+                    style={styles.retryButton}
+                    onPress={() => fetchActivities(1, true)}
+                  >
+                    <Text style={styles.retryButtonText}>{t('common.retry')}</Text>
+                  </TouchableOpacity>
+                </>
+              ) : (
+                <>
+                  <Text style={styles.emptyText}>{t('activities.empty')}</Text>
+                  <Text style={styles.emptySubtext}>{t('activities.pullToRefresh')}</Text>
+                </>
+              )}
+            </View>
+          )}
+        />
       )}
       </View>
 
@@ -1256,7 +1340,7 @@ export const ActivityListScreen: React.FC = () => {
       {/* 组织轮盘切换器 */}
       <OrganizationSwitcherWrapper />
 
-    </WebSafeAreaView>
+    </SafeAreaView>
   );
 };
 
@@ -1283,15 +1367,8 @@ export { ActivityListScreenWithProvider as ActivityListScreen };
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: 'rgba(255, 255, 255, 0.02)', // Nearly invisible but solid for shadow calculation
-    ...(Platform.OS === 'web' && {
-      width: '100%',
-      minHeight: '100vh', // 确保充满视口
-      position: 'relative',
-      // 移除任何可能的最大宽度限制
-      maxWidth: 'none',
-      overflow: 'visible',
-    }),
+    backgroundColor: 'rgba(255, 255, 255, 0.02)',
+    // 🔧 简化：移除所有Web端特殊样式，使用标准样式
   },
   
   // 应用主背景渐变
@@ -1407,6 +1484,30 @@ const styles = StyleSheet.create({
     backgroundColor: '#F9A889',
     borderRadius: 1.5,
   },
+  // 右侧按钮容器
+  rightButtonsContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8, // 按钮之间的间距
+  },
+  
+  // Web端刷新按钮
+  webRefreshButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    borderWidth: 1.5,
+    borderColor: '#F9A889',
+    backgroundColor: 'rgba(249, 168, 137, 0.08)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#F9A889',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 3,
+    elevation: 3,
+  },
+  
   scanButton: {
     width: 38,
     height: 38,
@@ -1447,15 +1548,23 @@ const styles = StyleSheet.create({
   // List Container
   listContainer: {
     flex: 1,
-    position: 'relative',
+    // 🔧 简化：移除所有特殊样式
   },
   
+  // 🔧 添加ScrollView样式（仿照CommunityScreen）
+  scrollView: {
+    flex: 1,
+  },
   
   // 列表内容样式
   listContent: {
     paddingHorizontal: theme.spacing[4],
     paddingTop: 0, // 重置为0，由contentContainerStyle控制
     paddingBottom: 120,
+  },
+  // 添加缺失的样式
+  listContentContainer: {
+    paddingHorizontal: theme.spacing[4],
   },
   loadingFooter: {
     paddingVertical: theme.spacing[4],

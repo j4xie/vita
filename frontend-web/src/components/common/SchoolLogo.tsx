@@ -1,3 +1,4 @@
+/* Web端特定版本 - 与App端隔离 */
 import React from 'react';
 import { Image, View, Text, StyleSheet } from 'react-native';
 
