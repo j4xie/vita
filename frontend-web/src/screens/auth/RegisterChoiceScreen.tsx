@@ -108,7 +108,7 @@ export const RegisterChoiceScreen: React.FC = () => {
 
   // 处理条款和隐私政策点击
   const handleTermsPress = (type: 'terms' | 'privacy') => {
-    navigation.navigate('Terms', { type });
+    navigation.navigate('Terms', { type, hideCustomHeader: true });
   };
 
   return (

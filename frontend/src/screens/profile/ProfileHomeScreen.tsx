@@ -1416,6 +1416,7 @@ export const ProfileHomeScreen: React.FC = () => {
           userName="我" // 个人查询显示"我的志愿者记录"
           userPermission="staff" // 个人查询使用staff权限，限制为7天内
           currentUser={user}
+          isPersonalView={true} // 标记为个人查看模式，显示"My Records"
         />
       )}
     </View>

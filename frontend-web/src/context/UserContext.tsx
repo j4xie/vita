@@ -187,18 +187,29 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const logout = async () => {
     try {
+      console.log('🔓 [UserContext] Starting logout process...');
+      
       // 清除当前用户的活动统计数据
       if (user?.id) {
+        console.log('🗑️ [UserContext] Clearing user local data for user:', user.id);
         await activityStatsService.clearUserLocalData(user.id);
       }
       
+      console.log('🔄 [UserContext] Clearing user state...');
       setUser(null);
       setPermissionLevel('guest');
       setPermissions(createPermissionChecker(null));
+      
+      console.log('🗝️ [UserContext] Clearing user session...');
       await clearUserSession(); // 使用新的authAPI清除会话
+      
+      console.log('📱 [UserContext] Removing userData from storage...');
       await AsyncStorage.removeItem('userData');
+      
+      console.log('✅ [UserContext] Logout completed successfully');
     } catch (error) {
-      console.error('Failed to logout:', error);
+      console.error('❌ [UserContext] Failed to logout:', error);
+      throw error; // 重新抛出错误以便上层处理
     }
   };
 

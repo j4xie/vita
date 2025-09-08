@@ -33,6 +33,7 @@ export const ExploreScreen: React.FC = () => {
   const navigation = useNavigation<any>();
   const { user } = useUser(); // 🆕 新增用户上下文
   const [selectedSchool, setSelectedSchool] = useState('all');
+  const [selectedCategory, setSelectedCategory] = useState('all'); // 🆕 添加分类状态管理
 
   const [searchText, setSearchText] = useState('');
   const [refreshing, setRefreshing] = useState(false);

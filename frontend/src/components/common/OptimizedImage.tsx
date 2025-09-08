@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, StyleSheet, Image, Platform, ImageResizeMode } from 'react-native';
+import FastImage from 'react-native-fast-image';
 
 interface OptimizedImageProps {
   source: {
@@ -48,9 +49,7 @@ export const OptimizedImage: React.FC<OptimizedImageProps> = ({
     );
   }
 
-  // 移动端使用FastImage（动态导入避免Web端错误）
-  const FastImage = require('react-native-fast-image').default;
-  
+  // 移动端使用FastImage
   const fastImageSource = {
     uri: source.uri || '',
     priority: source.priority === 'high' ? FastImage.priority.high : 

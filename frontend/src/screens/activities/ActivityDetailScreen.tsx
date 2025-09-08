@@ -245,9 +245,33 @@ export const ActivityDetailScreen: React.FC = () => {
   }, [navigation, activity.id, user?.id, user?.userId]); // 🔧 添加user?.userId到依赖项
 
 
+  // 检查活动是否已结束的辅助函数
+  const isActivityEnded = () => {
+    try {
+      const now = new Date();
+      const activityEnd = activity.endDate 
+        ? new Date(activity.endDate + ' 23:59:59') 
+        : new Date(activity.date + ' ' + (activity.time || '00:00'));
+      
+      return activityEnd.getTime() < now.getTime();
+    } catch (error) {
+      console.warn('检查活动结束时间失败:', error);
+      return false; // 默认认为未结束，保持功能可用
+    }
+  };
+
   // 处理活动报名
   const handleRegister = async () => {
     if (loading) return;
+
+    // 检查活动是否已结束
+    if (isActivityEnded()) {
+      Alert.alert(
+        t('activityDetail.activity_ended') || '活动已结束',
+        t('activityDetail.cannot_register_ended_activity') || '已结束的活动无法报名'
+      );
+      return;
+    }
 
     // 检查用户登录状态
     if (!isAuthenticated) {
@@ -709,15 +733,16 @@ export const ActivityDetailScreen: React.FC = () => {
       }]}>
         <View style={[
           styles.registerButtonShadowContainer,
-          registrationStatus === 'checked_in' && styles.checkedInButton
+          (registrationStatus === 'checked_in' || isActivityEnded()) && styles.checkedInButton
         ]}>
           <TouchableOpacity
             style={styles.registerButton}
             onPress={registrationStatus === 'registered' ? handleSignIn : handleRegister}
-            disabled={loading || registrationStatus === 'checked_in'}
+            disabled={loading || registrationStatus === 'checked_in' || isActivityEnded()}
           >
             <Text style={styles.registerButtonText}>
               {loading ? t('common.loading') :
+               isActivityEnded() ? (t('activityDetail.activity_ended') || '活动已结束') :
                !isAuthenticated ? t('activityDetail.login_required_to_register') :
                registrationStatus === 'upcoming' ? t('activityDetail.registerNow') :
                registrationStatus === 'registered' ? t('activityDetail.checkin_now') :

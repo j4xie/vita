@@ -25,6 +25,7 @@ import { useUser } from '../../context/UserContext';
 import { useTheme } from '../../context/ThemeContext';
 import { useAllDarkModeStyles } from '../../hooks/useDarkModeStyles';
 import UserActivityCard from '../cards/UserActivityCard';
+import { ErrorBoundary } from '../common/ErrorBoundary';
 
 interface UserActivityModalProps {
   visible: boolean;
@@ -149,6 +150,21 @@ export const UserActivityModal: React.FC<UserActivityModalProps> = ({
       Haptics.selectionAsync();
     }
     onClose();
+  };
+
+  // 处理取消报名
+  const handleCancelRegistration = (activityId: number) => {
+    console.log('🔄 UserActivityModal收到取消报名回调:', { activityId });
+    
+    // 从活动列表中移除该活动
+    setActivities(prevActivities => 
+      prevActivities.filter(activity => activity.id !== activityId)
+    );
+    
+    // 刷新统计数据
+    if (onRefreshStats) {
+      onRefreshStats();
+    }
   };
 
   // 处理扫码签到
@@ -283,11 +299,17 @@ export const UserActivityModal: React.FC<UserActivityModalProps> = ({
           ) : activities.length > 0 ? (
             <View style={styles.activitiesContainer}>
               {activities.map((activity) => (
-                <UserActivityCard
+                <ErrorBoundary 
                   key={activity.id}
-                  activity={activity}
-                  onScanPress={handleScanPress}
-                />
+                  title={t('activities.error_title', '活动操作失败')}
+                  message={t('activities.error_message', '请重试或刷新页面')}
+                >
+                  <UserActivityCard
+                    activity={activity}
+                    onScanPress={handleScanPress}
+                    onCancelRegistration={handleCancelRegistration}
+                  />
+                </ErrorBoundary>
               ))}
             </View>
           ) : (

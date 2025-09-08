@@ -46,6 +46,7 @@ import { AboutSupportScreen } from '../screens/profile/AboutSupportScreen';
 import { LanguageSelectionScreen } from '../screens/profile/LanguageSelectionScreen';
 import { EditProfileScreen } from '../screens/profile/EditProfileScreen';
 import { ActivityLayoutSelectionScreen } from '../screens/profile/ActivityLayoutSelectionScreen';
+import { UserDetailScreen } from '../screens/profile/UserDetailScreen';
 // Cards Screens
 import { MyCardsScreen } from '../screens/cards/MyCardsScreen';
 // Organization Provider
@@ -136,6 +137,7 @@ const AuthNavigator = () => {
       <AuthStack.Screen 
         name="Terms" 
         component={TermsScreen}
+        initialParams={{ hideCustomHeader: true }}
         options={({ route }) => ({
           headerShown: true,
           title: (route.params as any)?.type === 'privacy' ? t('navigation.headers.privacy_policy') : t('navigation.headers.terms_of_service'),
@@ -371,16 +373,10 @@ const ProfileNavigator = () => {
         }}
       />
       <ProfileStack.Screen 
-        name="MyCards" 
-        component={MyCardsScreenWithProvider}
-        options={{
-          headerShown: false, // MyCardsScreen有自己的header
-        }}
-      />
-      <ProfileStack.Screen 
         name="Terms" 
         component={TermsScreen}
         options={({ route }) => ({
+          headerShown: false,
           title: (route.params as any)?.type === 'privacy' ? t('navigation.headers.privacy_policy') : t('navigation.headers.terms_of_service'),
           ...pageTransitions.slideFromRight,
         })}
@@ -610,6 +606,15 @@ export const AppNavigator = () => {
             }}
           />
           
+          <RootStack.Screen
+            name="UserDetail"
+            component={UserDetailScreen}
+            options={{
+              headerShown: false,
+              ...pageTransitions.slideFromRight,
+            }}
+          />
+          
           {/* Search Screen - 独立搜索页面 */}
           <RootStack.Screen 
             name="Search" 
@@ -740,12 +745,23 @@ export const AppNavigator = () => {
               ...pageTransitions.slideFromRight,
             }}
           />
+          
+          {/* MyCards Screen - 全局可访问 */}
+          <RootStack.Screen 
+            name="MyCards" 
+            component={MyCardsScreenWithProvider}
+            options={{
+              headerShown: false,
+              ...pageTransitions.slideFromRight,
+            }}
+          />
 
           {/* Legal Screens */}
           <RootStack.Screen 
             name="Terms" 
             component={TermsScreen}
             options={{
+              headerShown: false,
               ...pageTransitions.slideFromRight,
             }}
           />

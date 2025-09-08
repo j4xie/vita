@@ -352,18 +352,40 @@ export const WellbeingScreen: React.FC = () => {
   const darkModeSystem = useAllDarkModeStyles();
   const { isDarkMode, styles: dmStyles, gradients: dmGradients } = darkModeSystem;
   
-  const [activeTab, setActiveTab] = useState('wellbeing-plan'); // 默认选中安心计划
+  // 🚨 修复：根据用户权限设置正确的默认 tab
+  const getDefaultTab = () => {
+    // 如果用户有志愿者管理权限，默认显示志愿者tab
+    if (permissions.hasVolunteerManagementAccess()) {
+      return 'volunteer';
+    }
+    return 'wellbeing-plan';
+  };
+  
+  const [activeTab, setActiveTab] = useState(getDefaultTab());
   const [selectedSchool, setSelectedSchool] = useState<School | null>(null);
   const [showSchoolSelection, setShowSchoolSelection] = useState(false);
   
   // 🚀 Animation values for smooth tab transitions
-  const wellbeingOpacity = useRef(new Animated.Value(1)).current;
-  const volunteerOpacity = useRef(new Animated.Value(0)).current;
+  const wellbeingOpacity = useRef(new Animated.Value(activeTab === 'wellbeing-plan' ? 1 : 0)).current;
+  const volunteerOpacity = useRef(new Animated.Value(activeTab === 'volunteer' ? 1 : 0)).current;
   
   // V2.0 获取分层配置
   const { getLayerConfig } = usePerformanceDegradation();
   const L1Config = getLayerConfig('L1', false);
   const L2Config = getLayerConfig('L2', false);
+
+  // 🚨 修复：确保 activeTab 改变时 opacity 值也更新
+  useEffect(() => {
+    if (activeTab === 'volunteer') {
+      volunteerOpacity.setValue(1);
+      wellbeingOpacity.setValue(0);
+      console.log('🎯 [TAB-SYNC] 切换到志愿者tab，设置志愿者opacity=1');
+    } else {
+      volunteerOpacity.setValue(0);
+      wellbeingOpacity.setValue(1);
+      console.log('🎯 [TAB-SYNC] 切换到安心计划tab，设置安心计划opacity=1');
+    }
+  }, [activeTab]);
 
   // 处理从其他页面传入的参数
   useEffect(() => {

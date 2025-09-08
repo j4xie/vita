@@ -1158,11 +1158,17 @@ export const SchoolDetailScreen: React.FC = () => {
           if (durationMs > 0) {
             const hours = Math.floor(durationMs / (1000 * 60 * 60));
             const minutes = Math.floor((durationMs % (1000 * 60 * 60)) / (1000 * 60));
-            const durationText = hours > 0 
-              ? (minutes > 0 ? 
-                  (i18n.language === 'en-US' ? `${hours} hours ${minutes} minutes` : `${hours}小时${minutes}分钟`) :
-                  (i18n.language === 'en-US' ? `${hours} hours` : `${hours}小时`))
-              : (i18n.language === 'en-US' ? `${Math.max(1, minutes)} minutes` : `${Math.max(1, minutes)}分钟`);
+            const durationText = (() => {
+              if (hours > 0) {
+                if (minutes > 0) {
+                  return `${hours} ${i18n.t('common.time.hours', '小时')} ${minutes} ${i18n.t('common.time.minutes', '分钟')}`;
+                } else {
+                  return `${hours} ${i18n.t('common.time.hours', '小时')}`;
+                }
+              } else {
+                return `${Math.max(1, minutes)} ${i18n.t('common.time.minutes', '分钟')}`;
+              }
+            })();
             
             console.log('🕐 [LOCAL-DURATION] 计算本地工作时长:', {
               startTime: actualStartTime,

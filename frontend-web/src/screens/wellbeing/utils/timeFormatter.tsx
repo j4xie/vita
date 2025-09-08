@@ -12,11 +12,11 @@ export const formatDuration = (minutes: number): string => {
   const mins = minutes % 60;
   
   if (hours === 0) {
-    return `${mins} ${i18n.t('volunteerCheckIn.time.minutes')}`;
+    return `${mins} ${i18n.t('common.time.minutes', '分钟')}`;
   } else if (mins === 0) {
-    return `${hours} ${i18n.t('volunteerCheckIn.time.hours')}`;
+    return `${hours} ${i18n.t('common.time.hours', '小时')}`;
   } else {
-    return `${hours} ${i18n.t('volunteerCheckIn.time.hours')} ${mins} ${i18n.t('volunteerCheckIn.time.minutes')}`;
+    return `${hours} ${i18n.t('common.time.hours', '小时')} ${mins} ${i18n.t('common.time.minutes', '分钟')}`;
   }
 };
 
@@ -26,11 +26,11 @@ export const formatHours = (hours: number): string => {
   const minutes = Math.round((hours - wholeHours) * 60);
   
   if (wholeHours === 0) {
-    return `${minutes} ${i18n.t('volunteerCheckIn.time.minutes')}`;
+    return `${minutes} ${i18n.t('common.time.minutes', '分钟')}`;
   } else if (minutes === 0) {
-    return `${wholeHours} ${i18n.t('volunteerCheckIn.time.hours')}`;
+    return `${wholeHours} ${i18n.t('common.time.hours', '小时')}`;
   } else {
-    return `${wholeHours} ${i18n.t('volunteerCheckIn.time.hours')} ${minutes} ${i18n.t('volunteerCheckIn.time.minutes')}`;
+    return `${wholeHours} ${i18n.t('common.time.hours', '小时')} ${minutes} ${i18n.t('common.time.minutes', '分钟')}`;
   }
 };
 

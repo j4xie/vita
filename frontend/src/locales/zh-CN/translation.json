@@ -77,7 +77,11 @@
     "scroll_to_submit": "滑动到底部提交",
     "english_name": "英文名",
     "organization": "组织",
-    "school": "学校"
+    "school": "学校",
+    "time": {
+      "hours": "小时",
+      "minutes": "分钟"
+    }
   },
   "language": {
     "selection": {
@@ -262,11 +266,12 @@
         "contact_info_desc": "请选择并填写您的电话号码",
         "referral_code": "推荐码：{{code}}",
         "username_label": "用户名 *",
-        "username_placeholder": "请输入用户名(6-20位字母数字)",
-        "legal_name_label": "法定名 *",
-        "legal_name_placeholder": "请输入您的法定姓名",
+        "username_placeholder": "如：alex123、sophia_wang（6-20位字母数字）",
+        "legal_name_label": "法定姓名 *",
+        "legal_name_placeholder": "如：张三 或 Zhang San（护照/身份证姓名）",
+        "legal_name_description": "请使用护照或身份证上显示的完整姓名",
         "english_nickname_label": "英文昵称 *",
-        "english_nickname_placeholder": "请输入您的英文昵称",
+        "english_nickname_placeholder": "如：Alex、Sophia（日常使用的英文名）",
         "university_label": "所属学校 *",
         "university_placeholder": "请选择您的学校",
         "gender_label": "性别",
@@ -294,7 +299,7 @@
         "last_name_label": "姓 *",
         "last_name_placeholder": "请输入您的姓",
         "school_email_preview": "学校邮箱预览",
-        "email_username_placeholder": "用户名",
+        "email_username_placeholder": "如：zhang.san、alex123"
         "complete_email": "完整邮箱",
         "loading_schools": "加载学校列表中...",
         "step2_description": "设置您的登录账号和密码",
@@ -443,10 +448,8 @@
     },
     "filters": {
       "all": "全部",
-      "ongoing": "进行中",
-      "upcoming": "即将开始",
-      "ended": "已结束",
       "available": "可报名",
+      "ended": "已结束",
       "availableOnly": "仅显示可报名活动"
     },
     "peopleRegistered": "人已报名",
@@ -472,6 +475,9 @@
       "submit_button": "确认报名",
       "success_title": "报名成功",
       "success_message": "您已成功报名该活动，现场请扫描签到二维码完成签到",
+      "checkin_option": "立即签到",
+      "checkin_prompt_title": "开始志愿服务",
+      "checkin_prompt_message": "报名成功！是否立即前往签到页面开始志愿服务？",
       "failed_title": "报名失败",
       "failed_message": "报名失败，请稍后重试",
       "register_now": "立即报名"
@@ -481,6 +487,16 @@
       "checked_in": "已签到",
       "available": "可报名",
       "registration_closed": "报名已结束"
+    },
+    "cancel": {
+      "button": "取消报名",
+      "title": "取消报名",
+      "message": "确定要取消报名这个活动吗？取消后如需重新报名，需要重新提交申请。",
+      "confirm": "确定取消",
+      "success_title": "取消成功",
+      "success_message": "已成功取消报名",
+      "error_title": "取消失败",
+      "error_message": "取消报名时发生错误，请稍后重试"
     },
     "bookmark_unavailable": "收藏功能暂时不可用",
     "fetch_failed": "获取活动失败"
@@ -524,7 +540,7 @@
     "settings": "设置",
     "language": "语言",
     "privacy": "隐私设置",
-    "volunteer_hours_label": "志愿时长",
+    "volunteer_hours_label": "志愿",
     "points_label": "积分",
     "verification_code_label": "核销码",
     "settings_and_help": "设置与帮助",
@@ -612,7 +628,7 @@
       "no_pending_checkin": "暂无待签到活动",
       "no_checked_in": "暂无已签到活动",
       "checked_in": "已签到",
-      "scan_to_checkin": "去扫码签到"
+      "scan_to_checkin": "扫码"
     },
     "about": {
       "sectionAppInfo": "应用信息",
@@ -786,6 +802,7 @@
       "history": {
         "title": "志愿者历史记录",
         "subtitle": "查看 {{userName}} 的打卡记录",
+        "subtitle_personal": "我的记录",
         "selectTimeRange": "选择时间范围",
         "recordsList": "打卡记录",
         "recordsFound": "共{{count}}条记录",
@@ -1174,11 +1191,11 @@
   },
   "activityCard": {
     "status": {
-      "ongoing": "进行中",
-      "upcoming": "即将开始",
+      "available": "可报名",
+      "registered": "已报名",
+      "checked_in": "已签到",
       "ended": "已结束",
-      "full": "名额已满",
-      "available": "可报名"
+      "full": "名额已满"
     },
     "registered": "已报名",
     "people": "人"
@@ -1207,6 +1224,8 @@
     "checkin_failed": "签到失败",
     "checkin_failed_message": "签到失败，请稍后重试",
     "checkin_now": "立即签到",
+    "activity_ended": "活动已结束",
+    "cannot_register_ended_activity": "已结束的活动无法报名",
     "checked_in": "已签到",
     "unavailable": "不可用",
     "login_required_to_register": "请登录后进行报名",
@@ -1301,7 +1320,7 @@
     },
     "status": {
       "all": "全部",
-      "upcoming": "即将开始",
+      "available": "可报名",
       "ended": "已结束"
     }
   },

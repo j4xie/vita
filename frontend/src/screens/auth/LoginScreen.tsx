@@ -443,9 +443,11 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255, 255, 255, 0.5)',
     borderRadius: theme.borderRadius.base,
     paddingHorizontal: theme.spacing.md,
+    paddingVertical: theme.spacing.md, // 增加垂直内边距
     borderWidth: 1.5,
     borderColor: 'transparent', // Default state has no visible border
     transition: 'border-color 0.3s ease-in-out',
+    minHeight: 52, // 设置最小高度，让输入框更舒适
   },
   inputFocused: {
     borderColor: theme.colors.primary, // Dawn Warm border

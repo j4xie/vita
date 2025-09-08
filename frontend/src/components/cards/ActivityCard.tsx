@@ -109,7 +109,7 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({
     image: safeString(activity.image),
     attendees: safeNumber(activity.attendees, 0),
     maxAttendees: safeNumber(activity.maxAttendees, 0),
-    status: safeString(activity.status, 'upcoming'),
+    status: safeString(activity.status, 'available'),
     organizer: activity.organizer ? {
       name: safeString(activity.organizer.name, 'Organizer'),
       avatar: safeString(activity.organizer.avatar),
@@ -146,10 +146,12 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({
 
   const getStatusConfig = (status: string) => {
     switch (status) {
-      case 'ongoing':
-        return { text: t('activityCard.status.ongoing'), color: theme.colors.success };
-      case 'upcoming':
-        return { text: t('activityCard.status.upcoming'), color: BRAND_INTERACTIONS.navigation.active.text };
+      case 'available':
+        return { text: t('activityCard.status.available'), color: BRAND_INTERACTIONS.navigation.active.text };
+      case 'registered':
+        return { text: t('activityCard.status.registered'), color: theme.colors.success };
+      case 'checked_in':
+        return { text: t('activityCard.status.checked_in'), color: theme.colors.success };
       case 'almost_full':
         return { text: t('activityCard.status.full'), color: theme.colors.warning };
       case 'full':

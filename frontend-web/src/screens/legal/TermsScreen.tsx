@@ -28,7 +28,7 @@ export const TermsScreen: React.FC = () => {
   const route = useRoute<any>();
   const { t } = useTranslation();
   const { user } = useUser();
-  const { type = 'terms', area } = route.params || {};
+  const { type = 'terms', area, hideCustomHeader = false } = route.params || {};
 
 
   // 获取用户地域设置，优先使用路由参数，其次使用用户设置，最后默认中国
@@ -240,18 +240,20 @@ export const TermsScreen: React.FC = () => {
     <SafeAreaView style={styles.container}>
       <LinearGradient colors={DAWN_GRADIENTS.skyCool} style={StyleSheet.absoluteFill} />
       
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity 
-          style={styles.backButton}
-          onPress={() => navigation.goBack()}
-          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-        >
-          <Ionicons name="arrow-back" size={24} color={theme.colors.text.primary} />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>{title}</Text>
-        <View style={styles.headerSpacer} />
-      </View>
+      {/* Header - only show if not using navigation header */}
+      {!hideCustomHeader && (
+        <View style={styles.header}>
+          <TouchableOpacity 
+            style={styles.backButton}
+            onPress={() => navigation.goBack()}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          >
+            <Ionicons name="arrow-back" size={24} color={theme.colors.text.primary} />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>{title}</Text>
+          <View style={styles.headerSpacer} />
+        </View>
+      )}
 
       {/* Content */}
       <ScrollView 

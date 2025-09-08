@@ -1,0 +1,21 @@
+{
+  "name": "browser-automation-tools",
+  "version": "1.0.0",
+  "description": "简单的浏览器自动化工具",
+  "main": "browser-tools.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "@playwright/test": "^1.49.0",
+    "playwright": "^1.49.0"
+  },
+  "keywords": [
+    "browser",
+    "automation",
+    "screenshot",
+    "console"
+  ],
+  "author": "",
+  "license": "ISC"
+}

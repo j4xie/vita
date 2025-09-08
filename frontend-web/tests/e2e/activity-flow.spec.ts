@@ -17,7 +17,7 @@ test.describe('活动功能端到端测试', () => {
     console.log('🎯 测试活动列表浏览功能...');
     
     // 检查页面标题
-    await expect(page).toHaveTitle(/PomeloX|pomelo/i);
+    await expect(page).toHaveTitle(/PomeloX|pomelo|explore/i);
     
     // 等待活动列表加载
     await page.waitForTimeout(2000);

@@ -6,6 +6,9 @@
 import React, { createContext, useContext, useReducer, useEffect, useCallback } from 'react';
 import WebStorageService from '../services/WebStorageService';
 
+// Web端存储适配器
+const AsyncStorage = new WebStorageService('local');
+
 import { 
   Organization, 
   UserOrganization, 

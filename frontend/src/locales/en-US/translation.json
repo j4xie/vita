@@ -77,7 +77,11 @@
     "scroll_to_submit": "Scroll to submit",
     "english_name": "English Name",
     "organization": "Organization",
-    "school": "School"
+    "school": "School",
+    "time": {
+      "hours": "hours",
+      "minutes": "minutes"
+    }
   },
   "language": {
     "selection": {
@@ -251,7 +255,10 @@
       "verification": {
         "title": "SMS Verification",
         "verify_phone": "Verify Your Phone",
-        "verify_and_register": "Verify and Register"
+        "verify_and_register": "Verify and Register",
+        "code_sent_to": "We sent verification code to +{{countryCode}} {{phone}}",
+        "resend_code": "Resend verification code",
+        "resend_countdown": "Resend ({{seconds}}s)"
       },
       "form": {
         "progress": "Step {{current}} of {{total}}",
@@ -273,11 +280,12 @@
         "contact_info_desc": "Please select and fill in your phone number",
         "referral_code": "Referral Code: {{code}}",
         "username_label": "Username *",
-        "username_placeholder": "Enter username (6-20 alphanumeric)",
+        "username_placeholder": "e.g. alex123, sophia_wang (6-20 alphanumeric)",
         "legal_name_label": "Legal Name *",
-        "legal_name_placeholder": "Enter your legal name",
+        "legal_name_placeholder": "e.g. Zhang San or John Smith (as on passport/ID)",
+        "legal_name_description": "Please use your full name as shown on passport or ID",
         "english_nickname_label": "English Nickname *",
-        "english_nickname_placeholder": "Enter your English nickname",
+        "english_nickname_placeholder": "e.g. Alex, Sophia (commonly used English name)",
         "university_label": "University *",
         "university_placeholder": "Select your university",
         "gender_label": "Gender",
@@ -305,7 +313,7 @@
         "last_name_label": "Last Name *",
         "last_name_placeholder": "Enter your last name",
         "school_email_preview": "School Email Preview",
-        "email_username_placeholder": "Username",
+        "email_username_placeholder": "e.g. zhang.san, alex123"
         "complete_email": "Complete Email",
         "loading_schools": "Loading schools...",
         "step2_description": "Set up your login account and password",
@@ -399,7 +407,10 @@
     "verification": {
       "title": "SMS Verification",
       "verify_phone": "Verify Your Phone",
-      "verify_and_register": "Verify and Register"
+      "verify_and_register": "Verify and Register",
+      "code_sent_to": "We sent verification code to +{{countryCode}} {{phone}}",
+      "resend_code": "Resend verification code",
+      "resend_countdown": "Resend ({{seconds}}s)"
     },
     "login_required": "Please login first",
     "login_required_message": "Login to bookmark and track activities",
@@ -453,10 +464,8 @@
     },
     "filters": {
       "all": "All",
-      "ongoing": "Ongoing",
-      "upcoming": "Upcoming",
-      "ended": "Ended",
       "available": "Available",
+      "ended": "Ended",
       "availableOnly": "Available only"
     },
     "peopleRegistered": "people registered",
@@ -482,6 +491,9 @@
       "submit_button": "Confirm Registration",
       "success_title": "Registration Successful",
       "success_message": "You have successfully registered for this activity. Please scan the check-in QR code on-site to complete check-in.",
+      "checkin_option": "Check-in Now",
+      "checkin_prompt_title": "Start Volunteer Service",
+      "checkin_prompt_message": "Registration successful! Would you like to go to the check-in page to start your volunteer service?",
       "failed_title": "Registration Failed",
       "failed_message": "Registration failed, please try again later",
       "register_now": "Register Now"
@@ -491,6 +503,16 @@
       "checked_in": "Checked In",
       "available": "Available",
       "registration_closed": "Registration Closed"
+    },
+    "cancel": {
+      "button": "Cancel",
+      "title": "Cancel Registration",
+      "message": "Are you sure you want to cancel your registration for this activity? You'll need to register again if you change your mind.",
+      "confirm": "Confirm Cancel",
+      "success_title": "Cancelled Successfully",
+      "success_message": "Your registration has been cancelled successfully",
+      "error_title": "Cancellation Failed",
+      "error_message": "Failed to cancel registration. Please try again later."
     },
     "bookmark_unavailable": "Bookmark feature temporarily unavailable",
     "fetch_failed": "Failed to fetch activities"
@@ -534,7 +556,7 @@
     "settings": "Settings",
     "language": "Language",
     "privacy": "Privacy Settings",
-    "volunteer_hours_label": "Volunteer Hours",
+    "volunteer_hours_label": "Hours",
     "points_label": "Points",
     "verification_code_label": "Verification Code",
     "settings_and_help": "Settings & Help",
@@ -564,7 +586,7 @@
       "no_pending_checkin": "No pending check-ins",
       "no_checked_in": "No checked-in activities",
       "checked_in": "Checked In",
-      "scan_to_checkin": "Scan to Check In"
+      "scan_to_checkin": "Scan"
     },
     "menuItems": {
       "accountSecurity": "Account & Security",
@@ -792,6 +814,7 @@
       "history": {
         "title": "History",
         "subtitle": "{{userName}}'s Records",
+        "subtitle_personal": "My Records",
         "selectTimeRange": "Time Range",
         "recordsList": "Records",
         "recordsFound": "{{count}} found",
@@ -1143,11 +1166,11 @@
   },
   "activityCard": {
     "status": {
-      "ongoing": "Ongoing",
-      "upcoming": "Upcoming",
+      "available": "Available",
+      "registered": "Registered",
+      "checked_in": "Checked In",
       "ended": "Ended",
-      "full": "Full",
-      "available": "Available"
+      "full": "Full"
     },
     "registered": "Registered",
     "people": "people"
@@ -1177,6 +1200,8 @@
     "checkin_failed": "Check-in Failed",
     "checkin_failed_message": "Check-in failed, please try again later",
     "checkin_now": "Check In Now",
+    "activity_ended": "Activity Ended",
+    "cannot_register_ended_activity": "Cannot register for ended activities",
     "checked_in": "Checked In",
     "unavailable": "Unavailable",
     "login_required_to_register": "Login to Register",
@@ -1283,7 +1308,7 @@
     },
     "status": {
       "all": "All",
-      "upcoming": "Upcoming",
+      "available": "Available",
       "ended": "Ended"
     },
     "categoriesTitle": "Categories",

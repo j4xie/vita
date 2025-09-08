@@ -18,6 +18,9 @@ import { timeManager, validateDeviceTime } from './src/services/timeManager';
 // 导入智能提醒系统
 import { initializeSmartAlerts } from './src/services/smartAlertSystem';
 
+// 导入Web输入修复工具
+import { WebInputFix } from './src/utils/WebInputFix';
+
 // 导入地理检测服务
 import RegionDetectionService from './src/services/RegionDetectionService';
 
@@ -109,6 +112,11 @@ export default function App() {
         console.log('[ALERT] 初始化智能提醒系统...');
         const alertSystemInitialized = await initializeSmartAlerts();
         console.log('[ALERT]', alertSystemInitialized ? '✅ 智能提醒系统启用' : '❌ 智能提醒系统失败');
+        
+        // 5. 初始化Web输入修复工具
+        console.log('[WEB-INPUT] 初始化Web输入修复工具...');
+        WebInputFix.init();
+        console.log('[WEB-INPUT] ✅ Web输入修复工具启用');
         
         // 5. 启动地理检测预检测（后台运行，不阻塞启动）
         console.log('[REGION] 启动地理检测预检测...');

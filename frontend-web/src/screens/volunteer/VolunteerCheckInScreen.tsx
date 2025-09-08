@@ -10,7 +10,7 @@ import {
   Alert,
   FlatList,
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from '../../components/web/WebLinearGradient';
 import { useTranslation } from 'react-i18next';
@@ -191,7 +191,11 @@ export const VolunteerCheckInScreen: React.FC = () => {
   const formatDuration = (minutes: number) => {
     const h = Math.floor(minutes / 60);
     const m = minutes % 60;
-    return h > 0 ? `${h}小时${m}分钟` : `${m}分钟`;
+    if (h > 0) {
+      return `${h} ${t('common.time.hours', '小时')} ${m} ${t('common.time.minutes', '分钟')}`;
+    } else {
+      return `${m} ${t('common.time.minutes', '分钟')}`;
+    }
   };
 
   // 加载志愿者记录和工时数据

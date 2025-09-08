@@ -1,0 +1,1393 @@
+{
+  "config": {
+    "configFile": "/Users/jietaoxie/pomeloX/frontend-web/playwright.config.ts",
+    "rootDir": "/Users/jietaoxie/pomeloX/frontend-web/tests",
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": "/Users/jietaoxie/pomeloX/frontend-web/tests/global-setup.ts",
+    "globalTeardown": "/Users/jietaoxie/pomeloX/frontend-web/tests/global-teardown.ts",
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "reporter": [
+      [
+        "html",
+        {
+          "outputFolder": "playwright-report"
+        }
+      ],
+      [
+        "json",
+        {
+          "outputFile": "test-results/results.json"
+        }
+      ],
+      [
+        "line",
+        null
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "quiet": false,
+    "projects": [
+      {
+        "outputDir": "/Users/jietaoxie/pomeloX/frontend-web/test-results",
+        "repeatEach": 1,
+        "retries": 2,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "chromium-desktop",
+        "name": "chromium-desktop",
+        "testDir": "/Users/jietaoxie/pomeloX/frontend-web/tests",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 30000
+      },
+      {
+        "outputDir": "/Users/jietaoxie/pomeloX/frontend-web/test-results",
+        "repeatEach": 1,
+        "retries": 2,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "firefox-desktop",
+        "name": "firefox-desktop",
+        "testDir": "/Users/jietaoxie/pomeloX/frontend-web/tests",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 30000
+      },
+      {
+        "outputDir": "/Users/jietaoxie/pomeloX/frontend-web/test-results",
+        "repeatEach": 1,
+        "retries": 2,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "webkit-desktop",
+        "name": "webkit-desktop",
+        "testDir": "/Users/jietaoxie/pomeloX/frontend-web/tests",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 30000
+      },
+      {
+        "outputDir": "/Users/jietaoxie/pomeloX/frontend-web/test-results",
+        "repeatEach": 1,
+        "retries": 2,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "mobile-chrome",
+        "name": "mobile-chrome",
+        "testDir": "/Users/jietaoxie/pomeloX/frontend-web/tests",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 30000
+      },
+      {
+        "outputDir": "/Users/jietaoxie/pomeloX/frontend-web/test-results",
+        "repeatEach": 1,
+        "retries": 2,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "mobile-safari",
+        "name": "mobile-safari",
+        "testDir": "/Users/jietaoxie/pomeloX/frontend-web/tests",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 30000
+      },
+      {
+        "outputDir": "/Users/jietaoxie/pomeloX/frontend-web/test-results",
+        "repeatEach": 1,
+        "retries": 2,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "monitor-mode",
+        "name": "monitor-mode",
+        "testDir": "/Users/jietaoxie/pomeloX/frontend-web/tests",
+        "testIgnore": [],
+        "testMatch": [
+          "**/monitoring/**/*.spec.ts"
+        ],
+        "timeout": 30000
+      }
+    ],
+    "shard": null,
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.55.0",
+    "workers": 1,
+    "webServer": null
+  },
+  "suites": [
+    {
+      "title": "e2e/qrscanner-camera-start.spec.ts",
+      "file": "e2e/qrscanner-camera-start.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "QRScanner 摄像头启动验证",
+          "file": "e2e/qrscanner-camera-start.spec.ts",
+          "line": 5,
+          "column": 6,
+          "specs": [
+            {
+              "title": "进入 /QRScanner 后自动启动摄像头并播放视频",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium-desktop",
+                  "projectName": "chromium-desktop",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 8122,
+                      "error": {
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBeTruthy\u001b[2m()\u001b[22m\n\nReceived: \u001b[31mfalse\u001b[39m",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBeTruthy\u001b[2m()\u001b[22m\n\nReceived: \u001b[31mfalse\u001b[39m\n    at /Users/jietaoxie/pomeloX/frontend-web/tests/e2e/qrscanner-camera-start.spec.ts:51:33",
+                        "location": {
+                          "file": "/Users/jietaoxie/pomeloX/frontend-web/tests/e2e/qrscanner-camera-start.spec.ts",
+                          "column": 33,
+                          "line": 51
+                        },
+                        "snippet": "\u001b[0m \u001b[90m 49 |\u001b[39m     console\u001b[33m.\u001b[39mlog(\u001b[32m'videoState:'\u001b[39m\u001b[33m,\u001b[39m videoState)\u001b[33m;\u001b[39m\n \u001b[90m 50 |\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 51 |\u001b[39m     expect(videoState\u001b[33m.\u001b[39mhasVideo)\u001b[33m.\u001b[39mtoBeTruthy()\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                                 \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 52 |\u001b[39m     \u001b[90m// 在 CI 或沙盒里部分字段可能不立刻可用，所以只做合理断言\u001b[39m\n \u001b[90m 53 |\u001b[39m     expect(videoState\u001b[33m.\u001b[39mreadyState)\u001b[33m.\u001b[39mtoBeGreaterThanOrEqual(\u001b[35m2\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 54 |\u001b[39m   })\u001b[33m;\u001b[39m\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/Users/jietaoxie/pomeloX/frontend-web/tests/e2e/qrscanner-camera-start.spec.ts",
+                            "column": 33,
+                            "line": 51
+                          },
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBeTruthy\u001b[2m()\u001b[22m\n\nReceived: \u001b[31mfalse\u001b[39m\n\n\u001b[0m \u001b[90m 49 |\u001b[39m     console\u001b[33m.\u001b[39mlog(\u001b[32m'videoState:'\u001b[39m\u001b[33m,\u001b[39m videoState)\u001b[33m;\u001b[39m\n \u001b[90m 50 |\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 51 |\u001b[39m     expect(videoState\u001b[33m.\u001b[39mhasVideo)\u001b[33m.\u001b[39mtoBeTruthy()\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                                 \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 52 |\u001b[39m     \u001b[90m// 在 CI 或沙盒里部分字段可能不立刻可用，所以只做合理断言\u001b[39m\n \u001b[90m 53 |\u001b[39m     expect(videoState\u001b[33m.\u001b[39mreadyState)\u001b[33m.\u001b[39mtoBeGreaterThanOrEqual(\u001b[35m2\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 54 |\u001b[39m   })\u001b[33m;\u001b[39m\u001b[0m\n\u001b[2m    at /Users/jietaoxie/pomeloX/frontend-web/tests/e2e/qrscanner-camera-start.spec.ts:51:33\u001b[22m"
+                        }
+                      ],
+                      "stdout": [
+                        {
+                          "text": "[console] %cDownload the React DevTools for a better development experience: https://reactjs.org/link/react-devtools font-weight:bold\n"
+                        },
+                        {
+                          "text": "[console] \"shadow*\" style props are deprecated. Use \"boxShadow\".\n"
+                        },
+                        {
+                          "text": "[console] ⏰ 全局时间管理器已启动\n"
+                        },
+                        {
+                          "text": "[console] \"textShadow*\" style props are deprecated. Use \"textShadow\".\n"
+                        },
+                        {
+                          "text": "[console] 🧪 QR权限测试工具已加载\n"
+                        },
+                        {
+                          "text": "[console] 💡 使用 testQRPermissions() 运行完整测试\n"
+                        },
+                        {
+                          "text": "[console] 💡 使用 testQRScenario(\"totalAdmin\", \"sameSchoolUser\") 测试特定场景\n"
+                        },
+                        {
+                          "text": "[console] 🧪 手动QR权限测试工具已加载\n"
+                        },
+                        {
+                          "text": "[console] 💡 使用 manualTestQR() 手动运行测试\n"
+                        },
+                        {
+                          "text": "[console] [STARTUP] 应用启动 - 启用全局错误追踪\n"
+                        },
+                        {
+                          "text": "[console] [PERF] 应用加载开始时间: 2025-09-07T19:14:22.368Z\n"
+                        },
+                        {
+                          "text": "[console] Running application \"main\" with appParams:\n {rootTag: #root, hydrate: undefined} \nDevelopment-level warnings: ON.\nPerformance optimizations: OFF.\n"
+                        },
+                        {
+                          "text": "[console] [READY] 应用注册完成, 总耗时: 5 ms\n"
+                        },
+                        {
+                          "text": "[console] i18next: languageChanged zh-CN\n"
+                        },
+                        {
+                          "text": "[console] i18next: initialized {debug: true, initImmediate: true, ns: Array(1), defaultNS: translation, fallbackLng: Array(1)}\n"
+                        },
+                        {
+                          "text": "[console] 🌐 PomeloX Web版本启动成功\n"
+                        },
+                        {
+                          "text": "[console] props.pointerEvents is deprecated. Use style.pointerEvents\n"
+                        },
+                        {
+                          "text": "[console] 🔍 [TABS] 渲染Tab导航，用户权限: {hasUser: false, permissionLevel: guest, hasVolunteerAccess: false, isAdmin: false, isStaff: false}\n"
+                        },
+                        {
+                          "text": "[console] ✅ [TAB-CONFIG] 允许的Stack页面，显示TabBar: ActivityList\n"
+                        },
+                        {
+                          "text": "[console] 📱 [TAB-CONTROL] Explore Tab: {routeName: ActivityList, mustHide: false, shouldShow: true, finalDisplay: flex}\n"
+                        },
+                        {
+                          "text": "[console] ✅ [TAB-CONFIG] Tab根页面，显示TabBar: Community\n"
+                        },
+                        {
+                          "text": "[console] 📱 [TAB-CONTROL] Community Tab: {routeName: Community, mustHide: false, shouldShow: true}\n"
+                        },
+                        {
+                          "text": "[console] ✅ [TAB-CONFIG] 允许的Stack页面，显示TabBar: WellbeingHome\n"
+                        },
+                        {
+                          "text": "[console] 📱 [TAB-CONTROL] Wellbeing Tab: {routeName: WellbeingHome, mustHide: false, shouldShow: true, finalDisplay: flex}\n"
+                        },
+                        {
+                          "text": "[console] ✅ [TAB-CONFIG] 允许的Stack页面，显示TabBar: ProfileHome\n"
+                        },
+                        {
+                          "text": "[console] 📱 [TAB-CONTROL] Profile Tab: {routeName: ProfileHome, mustHide: false, shouldShow: true, finalDisplay: flex}\n"
+                        },
+                        {
+                          "text": "[console] 🔍 TabBar页面检测: {tabRouteName: Explore, focusedRouteName: Explore, isExplorePage: true, showSearchButton: true, stateIndex: 0}\n"
+                        },
+                        {
+                          "text": "[console] ✅ [TAB-CONFIG] Tab根页面，显示TabBar: Explore\n"
+                        },
+                        {
+                          "text": "[console] 🔍 [CUSTOM-TABBAR] TabBar渲染检查: {tabRouteName: Explore, focusedRouteName: Explore, shouldHideByStyle: false, shouldShowByConfig: true, finalDecision: show}\n"
+                        },
+                        {
+                          "text": "[console] 🔍 [BEAUTIFUL] 加载活动数据\n"
+                        },
+                        {
+                          "text": "[console] 👤 访客模式活动列表\n"
+                        },
+                        {
+                          "text": "[console] Animated: `useNativeDriver` is not supported because the native animated module is missing. Falling back to JS-based animation. To resolve this, add `RCTAnimation` module to this app, or remove `useNativeDriver`. Make sure to run `bundle exec pod install` first. Read more about autolinking: https://github.com/react-native-community/cli/blob/master/docs/autolinking.md\n"
+                        },
+                        {
+                          "text": "[console] 🔐 活动列表API调用: {endpoint: https://www.vitaglobal.icu/app/activity/list?pageNum=1&pageSize=20, mode: 访客模式, hasToken: false, hasUserId: false, tokenPreview: null}\n"
+                        },
+                        {
+                          "text": "[console] 🌐 发起网络请求: {url: https://www.vitaglobal.icu/app/activity/list?pageNum=1&pageSize=20, method: GET, mode: 访客模式}\n"
+                        },
+                        {
+                          "text": "[console] 📡 发起网络请求: {url: https://www.vitaglobal.icu/app/activity/list?pageNum=1&pageSize=20}\n"
+                        },
+                        {
+                          "text": "[console] i18next: languageChanged zh-CN\n"
+                        },
+                        {
+                          "text": "[console] 🔍 [TABS] 渲染Tab导航，用户权限: {hasUser: false, permissionLevel: guest, hasVolunteerAccess: false, isAdmin: false, isStaff: false}\n"
+                        },
+                        {
+                          "text": "[console] ✅ [TAB-CONFIG] 允许的Stack页面，显示TabBar: ActivityList\n"
+                        },
+                        {
+                          "text": "[console] 📱 [TAB-CONTROL] Explore Tab: {routeName: ActivityList, mustHide: false, shouldShow: true, finalDisplay: flex}\n"
+                        },
+                        {
+                          "text": "[console] ✅ [TAB-CONFIG] Tab根页面，显示TabBar: Community\n"
+                        },
+                        {
+                          "text": "[console] 📱 [TAB-CONTROL] Community Tab: {routeName: Community, mustHide: false, shouldShow: true}\n"
+                        },
+                        {
+                          "text": "[console] ✅ [TAB-CONFIG] 允许的Stack页面，显示TabBar: WellbeingHome\n"
+                        },
+                        {
+                          "text": "[console] 📱 [TAB-CONTROL] Wellbeing Tab: {routeName: WellbeingHome, mustHide: false, shouldShow: true, finalDisplay: flex}\n"
+                        },
+                        {
+                          "text": "[console] ✅ [TAB-CONFIG] 允许的Stack页面，显示TabBar: ProfileHome\n"
+                        },
+                        {
+                          "text": "[console] 📱 [TAB-CONTROL] Profile Tab: {routeName: ProfileHome, mustHide: false, shouldShow: true, finalDisplay: flex}\n"
+                        },
+                        {
+                          "text": "[console] 🔍 TabBar页面检测: {tabRouteName: Explore, focusedRouteName: Explore, isExplorePage: true, showSearchButton: true, stateIndex: 0}\n"
+                        },
+                        {
+                          "text": "[console] ✅ [TAB-CONFIG] Tab根页面，显示TabBar: Explore\n"
+                        },
+                        {
+                          "text": "[console] 🔍 [CUSTOM-TABBAR] TabBar渲染检查: {tabRouteName: Explore, focusedRouteName: Explore, shouldHideByStyle: false, shouldShowByConfig: true, finalDecision: show}\n"
+                        },
+                        {
+                          "text": "[console] 🧪 [MANUAL-QR-TEST] 开始手动权限测试\n"
+                        },
+                        {
+                          "text": "[console] ============================================================\n"
+                        },
+                        {
+                          "text": "[console] \n📋 测试 staff 用户: tester5\n"
+                        },
+                        {
+                          "text": "[console] 🔍 [PERMISSION-DEBUG] 后端原始用户数据: {userName: tester5, admin: undefined, adminType: undefined, role: Object, roleKey: staff}\n"
+                        },
+                        {
+                          "text": "[console] 🔍 [PERMISSION] 单个role对象检测: staff\n"
+                        },
+                        {
+                          "text": "[console] ✅ [PERMISSION] 权限确认: staff (来自role.roleKey)\n"
+                        },
+                        {
+                          "text": "[console] 🔍 [SCAN-PERMISSION-INPUT] 权限检查输入参数: {scannerUser存在: true, scannerUserName: tester5, scannerUserRole: Object, scannerUserRoles: Array(0), scannerUserDeptId: 211}\n"
+                        },
+                        {
+                          "text": "[console] 🔍 [PERMISSION-DEBUG] 后端原始用户数据: {userName: tester5, admin: undefined, adminType: undefined, role: Object, roleKey: staff}\n"
+                        },
+                        {
+                          "text": "[console] 🔍 [PERMISSION] 单个role对象检测: staff\n"
+                        },
+                        {
+                          "text": "[console] ✅ [PERMISSION] 权限确认: staff (来自role.roleKey)\n"
+                        },
+                        {
+                          "text": "[console] 🔍 [SCAN-PERMISSION] 权限检查详细: {scannerUser: tester5, scannerLevel: staff, scannerDeptId: 211, scannedUserId: 100, scannedDeptId: 211}\n"
+                        },
+                        {
+                          "text": "[console]    权限级别: staff\n"
+                        },
+                        {
+                          "text": "[console]    是否同校: true\n"
+                        },
+                        {
+                          "text": "[console]    志愿者管理: false\n"
+                        },
+                        {
+                          "text": "[console]    活动签到: false\n"
+                        },
+                        {
+                          "text": "[console]    预期UI: 仅显示身份信息\n"
+                        },
+                        {
+                          "text": "[console]    权限正确: ✅\n"
+                        },
+                        {
+                          "text": "[console] \n📋 测试 admin 用户: admin Xie\n"
+                        },
+                        {
+                          "text": "[console] 🔍 [PERMISSION-DEBUG] 后端原始用户数据: {userName: admin Xie, admin: undefined, adminType: undefined, role: Object, roleKey: manage}\n"
+                        },
+                        {
+                          "text": "[console] 🔍 [PERMISSION] 单个role对象检测: manage\n"
+                        },
+                        {
+                          "text": "[console] ✅ [PERMISSION] 权限确认: manage (来自role.roleKey)\n"
+                        },
+                        {
+                          "text": "[console] 🔍 [SCAN-PERMISSION-INPUT] 权限检查输入参数: {scannerUser存在: true, scannerUserName: admin Xie, scannerUserRole: Object, scannerUserRoles: Array(0), scannerUserDeptId: 223}\n"
+                        },
+                        {
+                          "text": "[console] 🔍 [PERMISSION-DEBUG] 后端原始用户数据: {userName: admin Xie, admin: undefined, adminType: undefined, role: Object, roleKey: manage}\n"
+                        },
+                        {
+                          "text": "[console] 🔍 [PERMISSION] 单个role对象检测: manage\n"
+                        },
+                        {
+                          "text": "[console] ✅ [PERMISSION] 权限确认: manage (来自role.roleKey)\n"
+                        },
+                        {
+                          "text": "[console] 🔍 [SCAN-PERMISSION] 权限检查详细: {scannerUser: admin Xie, scannerLevel: manage, scannerDeptId: 223, scannedUserId: 100, scannedDeptId: 211}\n"
+                        },
+                        {
+                          "text": "[console]    权限级别: manage\n"
+                        },
+                        {
+                          "text": "[console]    是否同校: false\n"
+                        },
+                        {
+                          "text": "[console]    志愿者管理: true\n"
+                        },
+                        {
+                          "text": "[console]    活动签到: true\n"
+                        },
+                        {
+                          "text": "[console]    预期UI: 显示操作按钮\n"
+                        },
+                        {
+                          "text": "[console]    权限正确: ✅\n"
+                        },
+                        {
+                          "text": "[console] \n============================================================\n"
+                        },
+                        {
+                          "text": "[console] 🎯 [MANUAL-QR-TEST] 测试完成\n"
+                        },
+                        {
+                          "text": "[console] ✅ API响应成功: 200\n"
+                        },
+                        {
+                          "text": "[console] 📥 活动列表API响应: {code: 200, msg: 查询成功, total: 7, rowsCount: 7, firstActivitySignStatus: 0}\n"
+                        },
+                        {
+                          "text": "[console] 📋 活动完整数据样本: [Object, Object, Object]\n"
+                        },
+                        {
+                          "text": "[console] 📊 [BEAUTIFUL] API响应: {code: 200, total: 7, rowsCount: 7}\n"
+                        },
+                        {
+                          "text": "[console] 🎯 [TIME-DEBUG] USC活动修复后时间计算: {活动名称: USC免费接机活动, 当前时间: 2025-09-07T19:14:23.753Z, 开始时间原始: 2025-08-24 00:00:00, 结束时间原始: 2025-08-28 00:00:00, 开始时间解析: 2025-08-23T16:00:00.000Z}\n"
+                        },
+                        {
+                          "text": "[console] 🔄 活动28[USC免费接机活动]数据详情: {enrollment: 0, registerCount: 1, registerCountType: number, hasRegisterCount: true, timeZone: 太平洋时区(Pacific Time, PT)}\n"
+                        },
+                        {
+                          "text": "[console] 🔄 活动27[UCLA CU免费接机]数据详情: {enrollment: 0, registerCount: 1, registerCountType: number, hasRegisterCount: true, timeZone: null}\n"
+                        },
+                        {
+                          "text": "[console] 🔄 活动26[UW CU免费接机签到]数据详情: {enrollment: 0, registerCount: 1, registerCountType: number, hasRegisterCount: true, timeZone: null}\n"
+                        },
+                        {
+                          "text": "[console] 🔄 活动25[UCD CU免费接机签到]数据详情: {enrollment: 0, registerCount: 1, registerCountType: number, hasRegisterCount: true, timeZone: null}\n"
+                        },
+                        {
+                          "text": "[console] 🔄 活动24[UCSB CU免费接机]数据详情: {enrollment: 0, registerCount: 1, registerCountType: number, hasRegisterCount: true, timeZone: null}\n"
+                        },
+                        {
+                          "text": "[console] 🔄 活动23[UCSD CU免费接机]数据详情: {enrollment: 0, registerCount: 1, registerCountType: number, hasRegisterCount: true, timeZone: null}\n"
+                        },
+                        {
+                          "text": "[console] 🔄 活动21[UCI CU免费接机]数据详情: {enrollment: 100, registerCount: 2, registerCountType: number, hasRegisterCount: true, timeZone: null}\n"
+                        },
+                        {
+                          "text": "[console] ✅ [BEAUTIFUL] Activities设置成功: 7\n"
+                        },
+                        {
+                          "text": "[console] 🎯 USC活动状态检查: USC免费接机活动 {status: ended, currentFilter: all, shouldShow: true, startTime: 2025-08-24 00:00:00, endTime: 2025-08-28 00:00:00}\n"
+                        },
+                        {
+                          "text": "[console] 📹 [QRScannerScreen] 渲染摄像头组件, Platform.OS: web\n"
+                        },
+                        {
+                          "text": "[console] 🌐 [QRScannerScreen] 使用EnhancedWebCameraView组件\n"
+                        },
+                        {
+                          "text": "[console] 🎯 [ReferralCodeInputSheet] visible状态变化: false\n"
+                        },
+                        {
+                          "text": "[console] OrganizationProvider initializing with userId: guest\n"
+                        },
+                        {
+                          "text": "[console] Loading organization data from storage...\n"
+                        },
+                        {
+                          "text": "[console] Organization state updated: {isInitialized: false, currentOrg: undefined, orgCount: 0, isLoading: false}\n"
+                        },
+                        {
+                          "text": "[console] 📹 [QRScannerScreen] 渲染摄像头组件, Platform.OS: web\n"
+                        },
+                        {
+                          "text": "[console] 🌐 [QRScannerScreen] 使用EnhancedWebCameraView组件\n"
+                        },
+                        {
+                          "text": "[console] Organization state updated: {isInitialized: true, currentOrg: undefined, orgCount: 0, isLoading: false}\n"
+                        },
+                        {
+                          "text": "[console] No local data found, refreshing organizations...\n"
+                        },
+                        {
+                          "text": "[console] 📹 [QRScannerScreen] 渲染摄像头组件, Platform.OS: web\n"
+                        },
+                        {
+                          "text": "[console] 🌐 [QRScannerScreen] 使用EnhancedWebCameraView组件\n"
+                        },
+                        {
+                          "text": "[console] Organization state updated: {isInitialized: true, currentOrg: undefined, orgCount: 0, isLoading: true}\n"
+                        },
+                        {
+                          "text": "[console] 📹 [QRScannerScreen] 渲染摄像头组件, Platform.OS: web\n"
+                        },
+                        {
+                          "text": "[console] 🌐 [QRScannerScreen] 使用EnhancedWebCameraView组件\n"
+                        },
+                        {
+                          "text": "[console] 📷 [EnhancedWebCameraView] 当前权限状态: granted\n"
+                        },
+                        {
+                          "text": "[console] 📹 [QRScannerScreen] 渲染摄像头组件, Platform.OS: web\n"
+                        },
+                        {
+                          "text": "[console] 🌐 [QRScannerScreen] 使用EnhancedWebCameraView组件\n"
+                        },
+                        {
+                          "text": "[console] 📹 [QRScannerScreen] 渲染摄像头组件, Platform.OS: web\n"
+                        },
+                        {
+                          "text": "[console] 🌐 [QRScannerScreen] 使用EnhancedWebCameraView组件\n"
+                        },
+                        {
+                          "text": "[console] Organization state updated: {isInitialized: true, currentOrg: undefined, orgCount: 0, isLoading: false}\n"
+                        },
+                        {
+                          "text": "[console] 📷 [EnhancedWebCameraView] 检测到 3 个摄像头设备\n"
+                        },
+                        {
+                          "text": "[console]    设备1: FaceTime HD Camera (1C1C:B782)\n"
+                        },
+                        {
+                          "text": "[console]    设备2: Elgato Virtual Camera\n"
+                        },
+                        {
+                          "text": "[console]    设备3: workinggg Camera\n"
+                        },
+                        {
+                          "text": "[console] 📷 [EnhancedWebCameraView] 请求摄像头权限: {video: Object}\n"
+                        },
+                        {
+                          "text": "videoState: { hasVideo: \u001b[33mfalse\u001b[39m }\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-09-07T19:14:18.673Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/jietaoxie/pomeloX/frontend-web/test-results/e2e-qrscanner-camera-start-d7e43--进入-QRScanner-后自动启动摄像头并播放视频-chromium-desktop/test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "/Users/jietaoxie/pomeloX/frontend-web/test-results/e2e-qrscanner-camera-start-d7e43--进入-QRScanner-后自动启动摄像头并播放视频-chromium-desktop/video.webm"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/Users/jietaoxie/pomeloX/frontend-web/test-results/e2e-qrscanner-camera-start-d7e43--进入-QRScanner-后自动启动摄像头并播放视频-chromium-desktop/error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/Users/jietaoxie/pomeloX/frontend-web/tests/e2e/qrscanner-camera-start.spec.ts",
+                        "column": 33,
+                        "line": 51
+                      }
+                    },
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 7960,
+                      "error": {
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBeGreaterThanOrEqual\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m\n\nExpected: >= \u001b[32m2\u001b[39m\nReceived:    \u001b[31m0\u001b[39m",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBeGreaterThanOrEqual\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m\n\nExpected: >= \u001b[32m2\u001b[39m\nReceived:    \u001b[31m0\u001b[39m\n    at /Users/jietaoxie/pomeloX/frontend-web/tests/e2e/qrscanner-camera-start.spec.ts:53:35",
+                        "location": {
+                          "file": "/Users/jietaoxie/pomeloX/frontend-web/tests/e2e/qrscanner-camera-start.spec.ts",
+                          "column": 35,
+                          "line": 53
+                        },
+                        "snippet": "\u001b[0m \u001b[90m 51 |\u001b[39m     expect(videoState\u001b[33m.\u001b[39mhasVideo)\u001b[33m.\u001b[39mtoBeTruthy()\u001b[33m;\u001b[39m\n \u001b[90m 52 |\u001b[39m     \u001b[90m// 在 CI 或沙盒里部分字段可能不立刻可用，所以只做合理断言\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 53 |\u001b[39m     expect(videoState\u001b[33m.\u001b[39mreadyState)\u001b[33m.\u001b[39mtoBeGreaterThanOrEqual(\u001b[35m2\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                                   \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 54 |\u001b[39m   })\u001b[33m;\u001b[39m\n \u001b[90m 55 |\u001b[39m })\u001b[33m;\u001b[39m\n \u001b[90m 56 |\u001b[39m\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/Users/jietaoxie/pomeloX/frontend-web/tests/e2e/qrscanner-camera-start.spec.ts",
+                            "column": 35,
+                            "line": 53
+                          },
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBeGreaterThanOrEqual\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m\n\nExpected: >= \u001b[32m2\u001b[39m\nReceived:    \u001b[31m0\u001b[39m\n\n\u001b[0m \u001b[90m 51 |\u001b[39m     expect(videoState\u001b[33m.\u001b[39mhasVideo)\u001b[33m.\u001b[39mtoBeTruthy()\u001b[33m;\u001b[39m\n \u001b[90m 52 |\u001b[39m     \u001b[90m// 在 CI 或沙盒里部分字段可能不立刻可用，所以只做合理断言\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 53 |\u001b[39m     expect(videoState\u001b[33m.\u001b[39mreadyState)\u001b[33m.\u001b[39mtoBeGreaterThanOrEqual(\u001b[35m2\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                                   \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 54 |\u001b[39m   })\u001b[33m;\u001b[39m\n \u001b[90m 55 |\u001b[39m })\u001b[33m;\u001b[39m\n \u001b[90m 56 |\u001b[39m\u001b[0m\n\u001b[2m    at /Users/jietaoxie/pomeloX/frontend-web/tests/e2e/qrscanner-camera-start.spec.ts:53:35\u001b[22m"
+                        }
+                      ],
+                      "stdout": [
+                        {
+                          "text": "[console] %cDownload the React DevTools for a better development experience: https://reactjs.org/link/react-devtools font-weight:bold\n"
+                        },
+                        {
+                          "text": "[console] \"shadow*\" style props are deprecated. Use \"boxShadow\".\n"
+                        },
+                        {
+                          "text": "[console] ⏰ 全局时间管理器已启动\n"
+                        },
+                        {
+                          "text": "[console] \"textShadow*\" style props are deprecated. Use \"textShadow\".\n"
+                        },
+                        {
+                          "text": "[console] 🧪 QR权限测试工具已加载\n"
+                        },
+                        {
+                          "text": "[console] 💡 使用 testQRPermissions() 运行完整测试\n"
+                        },
+                        {
+                          "text": "[console] 💡 使用 testQRScenario(\"totalAdmin\", \"sameSchoolUser\") 测试特定场景\n"
+                        },
+                        {
+                          "text": "[console] 🧪 手动QR权限测试工具已加载\n"
+                        },
+                        {
+                          "text": "[console] 💡 使用 manualTestQR() 手动运行测试\n"
+                        },
+                        {
+                          "text": "[console] [STARTUP] 应用启动 - 启用全局错误追踪\n"
+                        },
+                        {
+                          "text": "[console] [PERF] 应用加载开始时间: 2025-09-07T19:14:31.256Z\n"
+                        },
+                        {
+                          "text": "[console] Running application \"main\" with appParams:\n {rootTag: #root, hydrate: undefined} \nDevelopment-level warnings: ON.\nPerformance optimizations: OFF.\n"
+                        },
+                        {
+                          "text": "[console] [READY] 应用注册完成, 总耗时: 3 ms\n"
+                        },
+                        {
+                          "text": "[console] i18next: languageChanged zh-CN\n"
+                        },
+                        {
+                          "text": "[console] i18next: initialized {debug: true, initImmediate: true, ns: Array(1), defaultNS: translation, fallbackLng: Array(1)}\n"
+                        },
+                        {
+                          "text": "[console] 🌐 PomeloX Web版本启动成功\n"
+                        },
+                        {
+                          "text": "[console] props.pointerEvents is deprecated. Use style.pointerEvents\n"
+                        },
+                        {
+                          "text": "[console] 🔍 [TABS] 渲染Tab导航，用户权限: {hasUser: false, permissionLevel: guest, hasVolunteerAccess: false, isAdmin: false, isStaff: false}\n"
+                        },
+                        {
+                          "text": "[console] ✅ [TAB-CONFIG] 允许的Stack页面，显示TabBar: ActivityList\n"
+                        },
+                        {
+                          "text": "[console] 📱 [TAB-CONTROL] Explore Tab: {routeName: ActivityList, mustHide: false, shouldShow: true, finalDisplay: flex}\n"
+                        },
+                        {
+                          "text": "[console] ✅ [TAB-CONFIG] Tab根页面，显示TabBar: Community\n"
+                        },
+                        {
+                          "text": "[console] 📱 [TAB-CONTROL] Community Tab: {routeName: Community, mustHide: false, shouldShow: true}\n"
+                        },
+                        {
+                          "text": "[console] ✅ [TAB-CONFIG] 允许的Stack页面，显示TabBar: WellbeingHome\n"
+                        },
+                        {
+                          "text": "[console] 📱 [TAB-CONTROL] Wellbeing Tab: {routeName: WellbeingHome, mustHide: false, shouldShow: true, finalDisplay: flex}\n"
+                        },
+                        {
+                          "text": "[console] ✅ [TAB-CONFIG] 允许的Stack页面，显示TabBar: ProfileHome\n"
+                        },
+                        {
+                          "text": "[console] 📱 [TAB-CONTROL] Profile Tab: {routeName: ProfileHome, mustHide: false, shouldShow: true, finalDisplay: flex}\n"
+                        },
+                        {
+                          "text": "[console] 🔍 TabBar页面检测: {tabRouteName: Explore, focusedRouteName: Explore, isExplorePage: true, showSearchButton: true, stateIndex: 0}\n"
+                        },
+                        {
+                          "text": "[console] ✅ [TAB-CONFIG] Tab根页面，显示TabBar: Explore\n"
+                        },
+                        {
+                          "text": "[console] 🔍 [CUSTOM-TABBAR] TabBar渲染检查: {tabRouteName: Explore, focusedRouteName: Explore, shouldHideByStyle: false, shouldShowByConfig: true, finalDecision: show}\n"
+                        },
+                        {
+                          "text": "[console] 🔍 [BEAUTIFUL] 加载活动数据\n"
+                        },
+                        {
+                          "text": "[console] 👤 访客模式活动列表\n"
+                        },
+                        {
+                          "text": "[console] Animated: `useNativeDriver` is not supported because the native animated module is missing. Falling back to JS-based animation. To resolve this, add `RCTAnimation` module to this app, or remove `useNativeDriver`. Make sure to run `bundle exec pod install` first. Read more about autolinking: https://github.com/react-native-community/cli/blob/master/docs/autolinking.md\n"
+                        },
+                        {
+                          "text": "[console] 🔐 活动列表API调用: {endpoint: https://www.vitaglobal.icu/app/activity/list?pageNum=1&pageSize=20, mode: 访客模式, hasToken: false, hasUserId: false, tokenPreview: null}\n"
+                        },
+                        {
+                          "text": "[console] 🌐 发起网络请求: {url: https://www.vitaglobal.icu/app/activity/list?pageNum=1&pageSize=20, method: GET, mode: 访客模式}\n"
+                        },
+                        {
+                          "text": "[console] 📡 发起网络请求: {url: https://www.vitaglobal.icu/app/activity/list?pageNum=1&pageSize=20}\n"
+                        },
+                        {
+                          "text": "[console] i18next: languageChanged zh-CN\n"
+                        },
+                        {
+                          "text": "[console] 🔍 [TABS] 渲染Tab导航，用户权限: {hasUser: false, permissionLevel: guest, hasVolunteerAccess: false, isAdmin: false, isStaff: false}\n"
+                        },
+                        {
+                          "text": "[console] ✅ [TAB-CONFIG] 允许的Stack页面，显示TabBar: ActivityList\n"
+                        },
+                        {
+                          "text": "[console] 📱 [TAB-CONTROL] Explore Tab: {routeName: ActivityList, mustHide: false, shouldShow: true, finalDisplay: flex}\n"
+                        },
+                        {
+                          "text": "[console] ✅ [TAB-CONFIG] Tab根页面，显示TabBar: Community\n"
+                        },
+                        {
+                          "text": "[console] 📱 [TAB-CONTROL] Community Tab: {routeName: Community, mustHide: false, shouldShow: true}\n"
+                        },
+                        {
+                          "text": "[console] ✅ [TAB-CONFIG] 允许的Stack页面，显示TabBar: WellbeingHome\n"
+                        },
+                        {
+                          "text": "[console] 📱 [TAB-CONTROL] Wellbeing Tab: {routeName: WellbeingHome, mustHide: false, shouldShow: true, finalDisplay: flex}\n"
+                        },
+                        {
+                          "text": "[console] ✅ [TAB-CONFIG] 允许的Stack页面，显示TabBar: ProfileHome\n"
+                        },
+                        {
+                          "text": "[console] 📱 [TAB-CONTROL] Profile Tab: {routeName: ProfileHome, mustHide: false, shouldShow: true, finalDisplay: flex}\n"
+                        },
+                        {
+                          "text": "[console] 🔍 TabBar页面检测: {tabRouteName: Explore, focusedRouteName: Explore, isExplorePage: true, showSearchButton: true, stateIndex: 0}\n"
+                        },
+                        {
+                          "text": "[console] ✅ [TAB-CONFIG] Tab根页面，显示TabBar: Explore\n"
+                        },
+                        {
+                          "text": "[console] 🔍 [CUSTOM-TABBAR] TabBar渲染检查: {tabRouteName: Explore, focusedRouteName: Explore, shouldHideByStyle: false, shouldShowByConfig: true, finalDecision: show}\n"
+                        },
+                        {
+                          "text": "[console] 🧪 [MANUAL-QR-TEST] 开始手动权限测试\n"
+                        },
+                        {
+                          "text": "[console] ============================================================\n"
+                        },
+                        {
+                          "text": "[console] \n📋 测试 staff 用户: tester5\n"
+                        },
+                        {
+                          "text": "[console] 🔍 [PERMISSION-DEBUG] 后端原始用户数据: {userName: tester5, admin: undefined, adminType: undefined, role: Object, roleKey: staff}\n"
+                        },
+                        {
+                          "text": "[console] 🔍 [PERMISSION] 单个role对象检测: staff\n"
+                        },
+                        {
+                          "text": "[console] ✅ [PERMISSION] 权限确认: staff (来自role.roleKey)\n"
+                        },
+                        {
+                          "text": "[console] 🔍 [SCAN-PERMISSION-INPUT] 权限检查输入参数: {scannerUser存在: true, scannerUserName: tester5, scannerUserRole: Object, scannerUserRoles: Array(0), scannerUserDeptId: 211}\n"
+                        },
+                        {
+                          "text": "[console] 🔍 [PERMISSION-DEBUG] 后端原始用户数据: {userName: tester5, admin: undefined, adminType: undefined, role: Object, roleKey: staff}\n"
+                        },
+                        {
+                          "text": "[console] 🔍 [PERMISSION] 单个role对象检测: staff\n"
+                        },
+                        {
+                          "text": "[console] ✅ [PERMISSION] 权限确认: staff (来自role.roleKey)\n"
+                        },
+                        {
+                          "text": "[console] 🔍 [SCAN-PERMISSION] 权限检查详细: {scannerUser: tester5, scannerLevel: staff, scannerDeptId: 211, scannedUserId: 100, scannedDeptId: 211}\n"
+                        },
+                        {
+                          "text": "[console]    权限级别: staff\n"
+                        },
+                        {
+                          "text": "[console]    是否同校: true\n"
+                        },
+                        {
+                          "text": "[console]    志愿者管理: false\n"
+                        },
+                        {
+                          "text": "[console]    活动签到: false\n"
+                        },
+                        {
+                          "text": "[console]    预期UI: 仅显示身份信息\n"
+                        },
+                        {
+                          "text": "[console]    权限正确: ✅\n"
+                        },
+                        {
+                          "text": "[console] \n📋 测试 admin 用户: admin Xie\n"
+                        },
+                        {
+                          "text": "[console] 🔍 [PERMISSION-DEBUG] 后端原始用户数据: {userName: admin Xie, admin: undefined, adminType: undefined, role: Object, roleKey: manage}\n"
+                        },
+                        {
+                          "text": "[console] 🔍 [PERMISSION] 单个role对象检测: manage\n"
+                        },
+                        {
+                          "text": "[console] ✅ [PERMISSION] 权限确认: manage (来自role.roleKey)\n"
+                        },
+                        {
+                          "text": "[console] 🔍 [SCAN-PERMISSION-INPUT] 权限检查输入参数: {scannerUser存在: true, scannerUserName: admin Xie, scannerUserRole: Object, scannerUserRoles: Array(0), scannerUserDeptId: 223}\n"
+                        },
+                        {
+                          "text": "[console] 🔍 [PERMISSION-DEBUG] 后端原始用户数据: {userName: admin Xie, admin: undefined, adminType: undefined, role: Object, roleKey: manage}\n"
+                        },
+                        {
+                          "text": "[console] 🔍 [PERMISSION] 单个role对象检测: manage\n"
+                        },
+                        {
+                          "text": "[console] ✅ [PERMISSION] 权限确认: manage (来自role.roleKey)\n"
+                        },
+                        {
+                          "text": "[console] 🔍 [SCAN-PERMISSION] 权限检查详细: {scannerUser: admin Xie, scannerLevel: manage, scannerDeptId: 223, scannedUserId: 100, scannedDeptId: 211}\n"
+                        },
+                        {
+                          "text": "[console]    权限级别: manage\n"
+                        },
+                        {
+                          "text": "[console]    是否同校: false\n"
+                        },
+                        {
+                          "text": "[console]    志愿者管理: true\n"
+                        },
+                        {
+                          "text": "[console]    活动签到: true\n"
+                        },
+                        {
+                          "text": "[console]    预期UI: 显示操作按钮\n"
+                        },
+                        {
+                          "text": "[console]    权限正确: ✅\n"
+                        },
+                        {
+                          "text": "[console] \n============================================================\n"
+                        },
+                        {
+                          "text": "[console] 🎯 [MANUAL-QR-TEST] 测试完成\n"
+                        },
+                        {
+                          "text": "[console] 📹 [QRScannerScreen] 渲染摄像头组件, Platform.OS: web\n"
+                        },
+                        {
+                          "text": "[console] 🌐 [QRScannerScreen] 使用EnhancedWebCameraView组件\n"
+                        },
+                        {
+                          "text": "[console] 🎯 [ReferralCodeInputSheet] visible状态变化: false\n"
+                        },
+                        {
+                          "text": "[console] OrganizationProvider initializing with userId: guest\n"
+                        },
+                        {
+                          "text": "[console] Loading organization data from storage...\n"
+                        },
+                        {
+                          "text": "[console] Organization state updated: {isInitialized: false, currentOrg: undefined, orgCount: 0, isLoading: false}\n"
+                        },
+                        {
+                          "text": "[console] 📹 [QRScannerScreen] 渲染摄像头组件, Platform.OS: web\n"
+                        },
+                        {
+                          "text": "[console] 🌐 [QRScannerScreen] 使用EnhancedWebCameraView组件\n"
+                        },
+                        {
+                          "text": "[console] Organization state updated: {isInitialized: true, currentOrg: undefined, orgCount: 0, isLoading: false}\n"
+                        },
+                        {
+                          "text": "[console] No local data found, refreshing organizations...\n"
+                        },
+                        {
+                          "text": "[console] 📹 [QRScannerScreen] 渲染摄像头组件, Platform.OS: web\n"
+                        },
+                        {
+                          "text": "[console] 🌐 [QRScannerScreen] 使用EnhancedWebCameraView组件\n"
+                        },
+                        {
+                          "text": "[console] Organization state updated: {isInitialized: true, currentOrg: undefined, orgCount: 0, isLoading: true}\n"
+                        },
+                        {
+                          "text": "[console] 📹 [QRScannerScreen] 渲染摄像头组件, Platform.OS: web\n"
+                        },
+                        {
+                          "text": "[console] 🌐 [QRScannerScreen] 使用EnhancedWebCameraView组件\n"
+                        },
+                        {
+                          "text": "[console] ✅ API响应成功: 200\n"
+                        },
+                        {
+                          "text": "[console] 📷 [EnhancedWebCameraView] 当前权限状态: granted\n"
+                        },
+                        {
+                          "text": "[console] 📥 活动列表API响应: {code: 200, msg: 查询成功, total: 7, rowsCount: 7, firstActivitySignStatus: 0}\n"
+                        },
+                        {
+                          "text": "[console] 📋 活动完整数据样本: [Object, Object, Object]\n"
+                        },
+                        {
+                          "text": "[console] 📊 [BEAUTIFUL] API响应: {code: 200, total: 7, rowsCount: 7}\n"
+                        },
+                        {
+                          "text": "[console] 🎯 [TIME-DEBUG] USC活动修复后时间计算: {活动名称: USC免费接机活动, 当前时间: 2025-09-07T19:14:32.529Z, 开始时间原始: 2025-08-24 00:00:00, 结束时间原始: 2025-08-28 00:00:00, 开始时间解析: 2025-08-23T16:00:00.000Z}\n"
+                        },
+                        {
+                          "text": "[console] 🔄 活动28[USC免费接机活动]数据详情: {enrollment: 0, registerCount: 1, registerCountType: number, hasRegisterCount: true, timeZone: 太平洋时区(Pacific Time, PT)}\n"
+                        },
+                        {
+                          "text": "[console] 🔄 活动27[UCLA CU免费接机]数据详情: {enrollment: 0, registerCount: 1, registerCountType: number, hasRegisterCount: true, timeZone: null}\n"
+                        },
+                        {
+                          "text": "[console] 🔄 活动26[UW CU免费接机签到]数据详情: {enrollment: 0, registerCount: 1, registerCountType: number, hasRegisterCount: true, timeZone: null}\n"
+                        },
+                        {
+                          "text": "[console] 🔄 活动25[UCD CU免费接机签到]数据详情: {enrollment: 0, registerCount: 1, registerCountType: number, hasRegisterCount: true, timeZone: null}\n"
+                        },
+                        {
+                          "text": "[console] 🔄 活动24[UCSB CU免费接机]数据详情: {enrollment: 0, registerCount: 1, registerCountType: number, hasRegisterCount: true, timeZone: null}\n"
+                        },
+                        {
+                          "text": "[console] 🔄 活动23[UCSD CU免费接机]数据详情: {enrollment: 0, registerCount: 1, registerCountType: number, hasRegisterCount: true, timeZone: null}\n"
+                        },
+                        {
+                          "text": "[console] 🔄 活动21[UCI CU免费接机]数据详情: {enrollment: 100, registerCount: 2, registerCountType: number, hasRegisterCount: true, timeZone: null}\n"
+                        },
+                        {
+                          "text": "[console] ✅ [BEAUTIFUL] Activities设置成功: 7\n"
+                        },
+                        {
+                          "text": "[console] 🎯 USC活动状态检查: USC免费接机活动 {status: ended, currentFilter: all, shouldShow: true, startTime: 2025-08-24 00:00:00, endTime: 2025-08-28 00:00:00}\n"
+                        },
+                        {
+                          "text": "[console] 📹 [QRScannerScreen] 渲染摄像头组件, Platform.OS: web\n"
+                        },
+                        {
+                          "text": "[console] 🌐 [QRScannerScreen] 使用EnhancedWebCameraView组件\n"
+                        },
+                        {
+                          "text": "[console] 📹 [QRScannerScreen] 渲染摄像头组件, Platform.OS: web\n"
+                        },
+                        {
+                          "text": "[console] 🌐 [QRScannerScreen] 使用EnhancedWebCameraView组件\n"
+                        },
+                        {
+                          "text": "[console] Organization state updated: {isInitialized: true, currentOrg: undefined, orgCount: 0, isLoading: false}\n"
+                        },
+                        {
+                          "text": "[console] 📷 [EnhancedWebCameraView] 检测到 3 个摄像头设备\n"
+                        },
+                        {
+                          "text": "[console]    设备1: FaceTime HD Camera (1C1C:B782)\n"
+                        },
+                        {
+                          "text": "[console]    设备2: Elgato Virtual Camera\n"
+                        },
+                        {
+                          "text": "[console]    设备3: workinggg Camera\n"
+                        },
+                        {
+                          "text": "[console] 📷 [EnhancedWebCameraView] 请求摄像头权限: {video: Object}\n"
+                        },
+                        {
+                          "text": "[console] ✅ [EnhancedWebCameraView] 摄像头权限获取成功\n"
+                        },
+                        {
+                          "text": "videoState: {\n  hasVideo: \u001b[33mtrue\u001b[39m,\n  hasSrcObject: \u001b[33mfalse\u001b[39m,\n  readyState: \u001b[33m0\u001b[39m,\n  width: \u001b[33m0\u001b[39m,\n  height: \u001b[33m0\u001b[39m,\n  isPlaying: \u001b[33mfalse\u001b[39m\n}\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 1,
+                      "startTime": "2025-09-07T19:14:29.076Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/jietaoxie/pomeloX/frontend-web/test-results/e2e-qrscanner-camera-start-d7e43--进入-QRScanner-后自动启动摄像头并播放视频-chromium-desktop-retry1/test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "/Users/jietaoxie/pomeloX/frontend-web/test-results/e2e-qrscanner-camera-start-d7e43--进入-QRScanner-后自动启动摄像头并播放视频-chromium-desktop-retry1/video.webm"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/Users/jietaoxie/pomeloX/frontend-web/test-results/e2e-qrscanner-camera-start-d7e43--进入-QRScanner-后自动启动摄像头并播放视频-chromium-desktop-retry1/error-context.md"
+                        },
+                        {
+                          "name": "trace",
+                          "contentType": "application/zip",
+                          "path": "/Users/jietaoxie/pomeloX/frontend-web/test-results/e2e-qrscanner-camera-start-d7e43--进入-QRScanner-后自动启动摄像头并播放视频-chromium-desktop-retry1/trace.zip"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/Users/jietaoxie/pomeloX/frontend-web/tests/e2e/qrscanner-camera-start.spec.ts",
+                        "column": 35,
+                        "line": 53
+                      }
+                    },
+                    {
+                      "workerIndex": 2,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 6709,
+                      "error": {
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBeTruthy\u001b[2m()\u001b[22m\n\nReceived: \u001b[31mfalse\u001b[39m",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBeTruthy\u001b[2m()\u001b[22m\n\nReceived: \u001b[31mfalse\u001b[39m\n    at /Users/jietaoxie/pomeloX/frontend-web/tests/e2e/qrscanner-camera-start.spec.ts:51:33",
+                        "location": {
+                          "file": "/Users/jietaoxie/pomeloX/frontend-web/tests/e2e/qrscanner-camera-start.spec.ts",
+                          "column": 33,
+                          "line": 51
+                        },
+                        "snippet": "\u001b[0m \u001b[90m 49 |\u001b[39m     console\u001b[33m.\u001b[39mlog(\u001b[32m'videoState:'\u001b[39m\u001b[33m,\u001b[39m videoState)\u001b[33m;\u001b[39m\n \u001b[90m 50 |\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 51 |\u001b[39m     expect(videoState\u001b[33m.\u001b[39mhasVideo)\u001b[33m.\u001b[39mtoBeTruthy()\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                                 \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 52 |\u001b[39m     \u001b[90m// 在 CI 或沙盒里部分字段可能不立刻可用，所以只做合理断言\u001b[39m\n \u001b[90m 53 |\u001b[39m     expect(videoState\u001b[33m.\u001b[39mreadyState)\u001b[33m.\u001b[39mtoBeGreaterThanOrEqual(\u001b[35m2\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 54 |\u001b[39m   })\u001b[33m;\u001b[39m\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/Users/jietaoxie/pomeloX/frontend-web/tests/e2e/qrscanner-camera-start.spec.ts",
+                            "column": 33,
+                            "line": 51
+                          },
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBeTruthy\u001b[2m()\u001b[22m\n\nReceived: \u001b[31mfalse\u001b[39m\n\n\u001b[0m \u001b[90m 49 |\u001b[39m     console\u001b[33m.\u001b[39mlog(\u001b[32m'videoState:'\u001b[39m\u001b[33m,\u001b[39m videoState)\u001b[33m;\u001b[39m\n \u001b[90m 50 |\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 51 |\u001b[39m     expect(videoState\u001b[33m.\u001b[39mhasVideo)\u001b[33m.\u001b[39mtoBeTruthy()\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                                 \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 52 |\u001b[39m     \u001b[90m// 在 CI 或沙盒里部分字段可能不立刻可用，所以只做合理断言\u001b[39m\n \u001b[90m 53 |\u001b[39m     expect(videoState\u001b[33m.\u001b[39mreadyState)\u001b[33m.\u001b[39mtoBeGreaterThanOrEqual(\u001b[35m2\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 54 |\u001b[39m   })\u001b[33m;\u001b[39m\u001b[0m\n\u001b[2m    at /Users/jietaoxie/pomeloX/frontend-web/tests/e2e/qrscanner-camera-start.spec.ts:51:33\u001b[22m"
+                        }
+                      ],
+                      "stdout": [
+                        {
+                          "text": "[console] %cDownload the React DevTools for a better development experience: https://reactjs.org/link/react-devtools font-weight:bold\n"
+                        },
+                        {
+                          "text": "[console] \"shadow*\" style props are deprecated. Use \"boxShadow\".\n"
+                        },
+                        {
+                          "text": "[console] ⏰ 全局时间管理器已启动\n"
+                        },
+                        {
+                          "text": "[console] \"textShadow*\" style props are deprecated. Use \"textShadow\".\n"
+                        },
+                        {
+                          "text": "[console] 🧪 QR权限测试工具已加载\n"
+                        },
+                        {
+                          "text": "[console] 💡 使用 testQRPermissions() 运行完整测试\n"
+                        },
+                        {
+                          "text": "[console] 💡 使用 testQRScenario(\"totalAdmin\", \"sameSchoolUser\") 测试特定场景\n"
+                        },
+                        {
+                          "text": "[console] 🧪 手动QR权限测试工具已加载\n"
+                        },
+                        {
+                          "text": "[console] 💡 使用 manualTestQR() 手动运行测试\n"
+                        },
+                        {
+                          "text": "[console] [STARTUP] 应用启动 - 启用全局错误追踪\n"
+                        },
+                        {
+                          "text": "[console] [PERF] 应用加载开始时间: 2025-09-07T19:14:40.730Z\n"
+                        },
+                        {
+                          "text": "[console] Running application \"main\" with appParams:\n {rootTag: #root, hydrate: undefined} \nDevelopment-level warnings: ON.\nPerformance optimizations: OFF.\n"
+                        },
+                        {
+                          "text": "[console] [READY] 应用注册完成, 总耗时: 2 ms\n"
+                        },
+                        {
+                          "text": "[console] i18next: languageChanged zh-CN\n"
+                        },
+                        {
+                          "text": "[console] i18next: initialized {debug: true, initImmediate: true, ns: Array(1), defaultNS: translation, fallbackLng: Array(1)}\n"
+                        },
+                        {
+                          "text": "[console] 🌐 PomeloX Web版本启动成功\n"
+                        },
+                        {
+                          "text": "[console] props.pointerEvents is deprecated. Use style.pointerEvents\n"
+                        },
+                        {
+                          "text": "[console] 🔍 [TABS] 渲染Tab导航，用户权限: {hasUser: false, permissionLevel: guest, hasVolunteerAccess: false, isAdmin: false, isStaff: false}\n"
+                        },
+                        {
+                          "text": "[console] ✅ [TAB-CONFIG] 允许的Stack页面，显示TabBar: ActivityList\n"
+                        },
+                        {
+                          "text": "[console] 📱 [TAB-CONTROL] Explore Tab: {routeName: ActivityList, mustHide: false, shouldShow: true, finalDisplay: flex}\n"
+                        },
+                        {
+                          "text": "[console] ✅ [TAB-CONFIG] Tab根页面，显示TabBar: Community\n"
+                        },
+                        {
+                          "text": "[console] 📱 [TAB-CONTROL] Community Tab: {routeName: Community, mustHide: false, shouldShow: true}\n"
+                        },
+                        {
+                          "text": "[console] ✅ [TAB-CONFIG] 允许的Stack页面，显示TabBar: WellbeingHome\n"
+                        },
+                        {
+                          "text": "[console] 📱 [TAB-CONTROL] Wellbeing Tab: {routeName: WellbeingHome, mustHide: false, shouldShow: true, finalDisplay: flex}\n"
+                        },
+                        {
+                          "text": "[console] ✅ [TAB-CONFIG] 允许的Stack页面，显示TabBar: ProfileHome\n"
+                        },
+                        {
+                          "text": "[console] 📱 [TAB-CONTROL] Profile Tab: {routeName: ProfileHome, mustHide: false, shouldShow: true, finalDisplay: flex}\n"
+                        },
+                        {
+                          "text": "[console] 🔍 TabBar页面检测: {tabRouteName: Explore, focusedRouteName: Explore, isExplorePage: true, showSearchButton: true, stateIndex: 0}\n"
+                        },
+                        {
+                          "text": "[console] ✅ [TAB-CONFIG] Tab根页面，显示TabBar: Explore\n"
+                        },
+                        {
+                          "text": "[console] 🔍 [CUSTOM-TABBAR] TabBar渲染检查: {tabRouteName: Explore, focusedRouteName: Explore, shouldHideByStyle: false, shouldShowByConfig: true, finalDecision: show}\n"
+                        },
+                        {
+                          "text": "[console] 🔍 [BEAUTIFUL] 加载活动数据\n"
+                        },
+                        {
+                          "text": "[console] 👤 访客模式活动列表\n"
+                        },
+                        {
+                          "text": "[console] Animated: `useNativeDriver` is not supported because the native animated module is missing. Falling back to JS-based animation. To resolve this, add `RCTAnimation` module to this app, or remove `useNativeDriver`. Make sure to run `bundle exec pod install` first. Read more about autolinking: https://github.com/react-native-community/cli/blob/master/docs/autolinking.md\n"
+                        },
+                        {
+                          "text": "[console] 🔐 活动列表API调用: {endpoint: https://www.vitaglobal.icu/app/activity/list?pageNum=1&pageSize=20, mode: 访客模式, hasToken: false, hasUserId: false, tokenPreview: null}\n"
+                        },
+                        {
+                          "text": "[console] 🌐 发起网络请求: {url: https://www.vitaglobal.icu/app/activity/list?pageNum=1&pageSize=20, method: GET, mode: 访客模式}\n"
+                        },
+                        {
+                          "text": "[console] 📡 发起网络请求: {url: https://www.vitaglobal.icu/app/activity/list?pageNum=1&pageSize=20}\n"
+                        },
+                        {
+                          "text": "[console] i18next: languageChanged zh-CN\n"
+                        },
+                        {
+                          "text": "[console] 🔍 [TABS] 渲染Tab导航，用户权限: {hasUser: false, permissionLevel: guest, hasVolunteerAccess: false, isAdmin: false, isStaff: false}\n"
+                        },
+                        {
+                          "text": "[console] ✅ [TAB-CONFIG] 允许的Stack页面，显示TabBar: ActivityList\n"
+                        },
+                        {
+                          "text": "[console] 📱 [TAB-CONTROL] Explore Tab: {routeName: ActivityList, mustHide: false, shouldShow: true, finalDisplay: flex}\n"
+                        },
+                        {
+                          "text": "[console] ✅ [TAB-CONFIG] Tab根页面，显示TabBar: Community\n"
+                        },
+                        {
+                          "text": "[console] 📱 [TAB-CONTROL] Community Tab: {routeName: Community, mustHide: false, shouldShow: true}\n"
+                        },
+                        {
+                          "text": "[console] ✅ [TAB-CONFIG] 允许的Stack页面，显示TabBar: WellbeingHome\n"
+                        },
+                        {
+                          "text": "[console] 📱 [TAB-CONTROL] Wellbeing Tab: {routeName: WellbeingHome, mustHide: false, shouldShow: true, finalDisplay: flex}\n"
+                        },
+                        {
+                          "text": "[console] ✅ [TAB-CONFIG] 允许的Stack页面，显示TabBar: ProfileHome\n"
+                        },
+                        {
+                          "text": "[console] 📱 [TAB-CONTROL] Profile Tab: {routeName: ProfileHome, mustHide: false, shouldShow: true, finalDisplay: flex}\n"
+                        },
+                        {
+                          "text": "[console] 🔍 TabBar页面检测: {tabRouteName: Explore, focusedRouteName: Explore, isExplorePage: true, showSearchButton: true, stateIndex: 0}\n"
+                        },
+                        {
+                          "text": "[console] ✅ [TAB-CONFIG] Tab根页面，显示TabBar: Explore\n"
+                        },
+                        {
+                          "text": "[console] 🔍 [CUSTOM-TABBAR] TabBar渲染检查: {tabRouteName: Explore, focusedRouteName: Explore, shouldHideByStyle: false, shouldShowByConfig: true, finalDecision: show}\n"
+                        },
+                        {
+                          "text": "[console] 🧪 [MANUAL-QR-TEST] 开始手动权限测试\n"
+                        },
+                        {
+                          "text": "[console] ============================================================\n"
+                        },
+                        {
+                          "text": "[console] \n📋 测试 staff 用户: tester5\n"
+                        },
+                        {
+                          "text": "[console] 🔍 [PERMISSION-DEBUG] 后端原始用户数据: {userName: tester5, admin: undefined, adminType: undefined, role: Object, roleKey: staff}\n"
+                        },
+                        {
+                          "text": "[console] 🔍 [PERMISSION] 单个role对象检测: staff\n"
+                        },
+                        {
+                          "text": "[console] ✅ [PERMISSION] 权限确认: staff (来自role.roleKey)\n"
+                        },
+                        {
+                          "text": "[console] 🔍 [SCAN-PERMISSION-INPUT] 权限检查输入参数: {scannerUser存在: true, scannerUserName: tester5, scannerUserRole: Object, scannerUserRoles: Array(0), scannerUserDeptId: 211}\n"
+                        },
+                        {
+                          "text": "[console] 🔍 [PERMISSION-DEBUG] 后端原始用户数据: {userName: tester5, admin: undefined, adminType: undefined, role: Object, roleKey: staff}\n"
+                        },
+                        {
+                          "text": "[console] 🔍 [PERMISSION] 单个role对象检测: staff\n"
+                        },
+                        {
+                          "text": "[console] ✅ [PERMISSION] 权限确认: staff (来自role.roleKey)\n"
+                        },
+                        {
+                          "text": "[console] 🔍 [SCAN-PERMISSION] 权限检查详细: {scannerUser: tester5, scannerLevel: staff, scannerDeptId: 211, scannedUserId: 100, scannedDeptId: 211}\n"
+                        },
+                        {
+                          "text": "[console]    权限级别: staff\n"
+                        },
+                        {
+                          "text": "[console]    是否同校: true\n"
+                        },
+                        {
+                          "text": "[console]    志愿者管理: false\n"
+                        },
+                        {
+                          "text": "[console]    活动签到: false\n"
+                        },
+                        {
+                          "text": "[console]    预期UI: 仅显示身份信息\n"
+                        },
+                        {
+                          "text": "[console]    权限正确: ✅\n"
+                        },
+                        {
+                          "text": "[console] \n📋 测试 admin 用户: admin Xie\n"
+                        },
+                        {
+                          "text": "[console] 🔍 [PERMISSION-DEBUG] 后端原始用户数据: {userName: admin Xie, admin: undefined, adminType: undefined, role: Object, roleKey: manage}\n"
+                        },
+                        {
+                          "text": "[console] 🔍 [PERMISSION] 单个role对象检测: manage\n"
+                        },
+                        {
+                          "text": "[console] ✅ [PERMISSION] 权限确认: manage (来自role.roleKey)\n"
+                        },
+                        {
+                          "text": "[console] 🔍 [SCAN-PERMISSION-INPUT] 权限检查输入参数: {scannerUser存在: true, scannerUserName: admin Xie, scannerUserRole: Object, scannerUserRoles: Array(0), scannerUserDeptId: 223}\n"
+                        },
+                        {
+                          "text": "[console] 🔍 [PERMISSION-DEBUG] 后端原始用户数据: {userName: admin Xie, admin: undefined, adminType: undefined, role: Object, roleKey: manage}\n"
+                        },
+                        {
+                          "text": "[console] 🔍 [PERMISSION] 单个role对象检测: manage\n"
+                        },
+                        {
+                          "text": "[console] ✅ [PERMISSION] 权限确认: manage (来自role.roleKey)\n"
+                        },
+                        {
+                          "text": "[console] 🔍 [SCAN-PERMISSION] 权限检查详细: {scannerUser: admin Xie, scannerLevel: manage, scannerDeptId: 223, scannedUserId: 100, scannedDeptId: 211}\n"
+                        },
+                        {
+                          "text": "[console]    权限级别: manage\n"
+                        },
+                        {
+                          "text": "[console]    是否同校: false\n"
+                        },
+                        {
+                          "text": "[console]    志愿者管理: true\n"
+                        },
+                        {
+                          "text": "[console]    活动签到: true\n"
+                        },
+                        {
+                          "text": "[console]    预期UI: 显示操作按钮\n"
+                        },
+                        {
+                          "text": "[console]    权限正确: ✅\n"
+                        },
+                        {
+                          "text": "[console] \n============================================================\n"
+                        },
+                        {
+                          "text": "[console] 🎯 [MANUAL-QR-TEST] 测试完成\n"
+                        },
+                        {
+                          "text": "[console] ✅ API响应成功: 200\n"
+                        },
+                        {
+                          "text": "[console] 📥 活动列表API响应: {code: 200, msg: 查询成功, total: 7, rowsCount: 7, firstActivitySignStatus: 0}\n"
+                        },
+                        {
+                          "text": "[console] 📋 活动完整数据样本: [Object, Object, Object]\n"
+                        },
+                        {
+                          "text": "[console] 📊 [BEAUTIFUL] API响应: {code: 200, total: 7, rowsCount: 7}\n"
+                        },
+                        {
+                          "text": "[console] 🎯 [TIME-DEBUG] USC活动修复后时间计算: {活动名称: USC免费接机活动, 当前时间: 2025-09-07T19:14:41.785Z, 开始时间原始: 2025-08-24 00:00:00, 结束时间原始: 2025-08-28 00:00:00, 开始时间解析: 2025-08-23T16:00:00.000Z}\n"
+                        },
+                        {
+                          "text": "[console] 🔄 活动28[USC免费接机活动]数据详情: {enrollment: 0, registerCount: 1, registerCountType: number, hasRegisterCount: true, timeZone: 太平洋时区(Pacific Time, PT)}\n"
+                        },
+                        {
+                          "text": "[console] 🔄 活动27[UCLA CU免费接机]数据详情: {enrollment: 0, registerCount: 1, registerCountType: number, hasRegisterCount: true, timeZone: null}\n"
+                        },
+                        {
+                          "text": "[console] 🔄 活动26[UW CU免费接机签到]数据详情: {enrollment: 0, registerCount: 1, registerCountType: number, hasRegisterCount: true, timeZone: null}\n"
+                        },
+                        {
+                          "text": "[console] 🔄 活动25[UCD CU免费接机签到]数据详情: {enrollment: 0, registerCount: 1, registerCountType: number, hasRegisterCount: true, timeZone: null}\n"
+                        },
+                        {
+                          "text": "[console] 🔄 活动24[UCSB CU免费接机]数据详情: {enrollment: 0, registerCount: 1, registerCountType: number, hasRegisterCount: true, timeZone: null}\n"
+                        },
+                        {
+                          "text": "[console] 🔄 活动23[UCSD CU免费接机]数据详情: {enrollment: 0, registerCount: 1, registerCountType: number, hasRegisterCount: true, timeZone: null}\n"
+                        },
+                        {
+                          "text": "[console] 🔄 活动21[UCI CU免费接机]数据详情: {enrollment: 100, registerCount: 2, registerCountType: number, hasRegisterCount: true, timeZone: null}\n"
+                        },
+                        {
+                          "text": "[console] ✅ [BEAUTIFUL] Activities设置成功: 7\n"
+                        },
+                        {
+                          "text": "[console] 🎯 USC活动状态检查: USC免费接机活动 {status: ended, currentFilter: all, shouldShow: true, startTime: 2025-08-24 00:00:00, endTime: 2025-08-28 00:00:00}\n"
+                        },
+                        {
+                          "text": "videoState: { hasVideo: \u001b[33mfalse\u001b[39m }\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 2,
+                      "startTime": "2025-09-07T19:14:38.702Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/jietaoxie/pomeloX/frontend-web/test-results/e2e-qrscanner-camera-start-d7e43--进入-QRScanner-后自动启动摄像头并播放视频-chromium-desktop-retry2/test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "/Users/jietaoxie/pomeloX/frontend-web/test-results/e2e-qrscanner-camera-start-d7e43--进入-QRScanner-后自动启动摄像头并播放视频-chromium-desktop-retry2/video.webm"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/Users/jietaoxie/pomeloX/frontend-web/test-results/e2e-qrscanner-camera-start-d7e43--进入-QRScanner-后自动启动摄像头并播放视频-chromium-desktop-retry2/error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/Users/jietaoxie/pomeloX/frontend-web/tests/e2e/qrscanner-camera-start.spec.ts",
+                        "column": 33,
+                        "line": 51
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "6afb29a833a6ecc22cd4-35d8896eeef8d00cea9f",
+              "file": "e2e/qrscanner-camera-start.spec.ts",
+              "line": 11,
+              "column": 7
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2025-09-07T19:14:16.882Z",
+    "duration": 29451.189000000002,
+    "expected": 0,
+    "skipped": 0,
+    "unexpected": 1,
+    "flaky": 0
+  }
+}

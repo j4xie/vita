@@ -37,7 +37,7 @@ export interface FrontendActivity {
   attendees: number;
   maxAttendees: number;
   registeredCount: number; // 已报名人数
-  status: 'upcoming' | 'ongoing' | 'ended' | 'registered' | 'checked_in';
+  status: 'available' | 'ended' | 'registered' | 'checked_in';
   category?: string;
   organizer?: {
     name: string;
@@ -53,14 +53,13 @@ export interface FrontendActivity {
 }
 
 // 🚀 性能优化：预编译状态映射表
-const REGISTRATION_STATUS_MAP = new Map<number, 'upcoming' | 'registered' | 'checked_in'>([
+const REGISTRATION_STATUS_MAP = new Map<number, 'available' | 'registered' | 'checked_in'>([
   [-1, 'registered'],
   [1, 'checked_in'],
 ]);
 
-const ACTIVITY_TYPE_MAP = new Map<number, 'upcoming' | 'ongoing' | 'ended'>([
-  [-1, 'upcoming'],
-  [1, 'ongoing'], 
+const ACTIVITY_TYPE_MAP = new Map<number, 'available' | 'ended'>([
+  [-1, 'available'],
   [2, 'ended'],
 ]);
 
@@ -69,8 +68,8 @@ const ACTIVITY_TYPE_MAP = new Map<number, 'upcoming' | 'ongoing' | 'ended'>([
  */
 const convertRegistrationStatus = (
   signStatus?: number | null, 
-  fallbackStatus?: 'registered' | 'checked_in' | 'upcoming'
-): 'upcoming' | 'registered' | 'checked_in' => {
+  fallbackStatus?: 'registered' | 'checked_in' | 'available'
+): 'available' | 'registered' | 'checked_in' => {
   
   // ✅ 如果API返回失败或空值，使用备用状态
   if (signStatus === null || signStatus === undefined) {
@@ -82,11 +81,11 @@ const convertRegistrationStatus = (
       });
       return fallbackStatus;
     }
-    return 'upcoming';
+    return 'available';
   }
   
   // ✅ 正常映射逻辑
-  const result = REGISTRATION_STATUS_MAP.get(signStatus) ?? 'upcoming';
+  const result = REGISTRATION_STATUS_MAP.get(signStatus) ?? 'available';
   
   // 详细的映射日志
   console.log(`🔄 [STATUS-MAP] signStatus映射:`, {
@@ -104,8 +103,8 @@ const convertRegistrationStatus = (
 /**
  * 快速转换活动类型状态
  */
-const convertActivityType = (type?: number): 'upcoming' | 'ongoing' | 'ended' => {
-  return ACTIVITY_TYPE_MAP.get(type ?? -1) ?? 'upcoming';
+const convertActivityType = (type?: number): 'available' | 'ended' => {
+  return ACTIVITY_TYPE_MAP.get(type ?? -1) ?? 'available';
 };
 
 // 🚀 性能优化：快速时间解析缓存
@@ -295,14 +294,14 @@ export const adaptActivity = (
   const { date: endDate } = parseDateTime(backendActivity.endTime);
   
   // 实时计算活动状态，确保准确性
-  const calculateRealTimeStatus = (): 'upcoming' | 'ongoing' | 'ended' | 'registered' | 'checked_in' => {
+  const calculateRealTimeStatus = (): 'available' | 'ended' | 'registered' | 'checked_in' => {
     // ✅ 第一优先级：用户的报名/签到状态（增强容错处理）
     if (backendActivity.signStatus !== undefined && backendActivity.signStatus !== null) {
       const status = convertRegistrationStatus(backendActivity.signStatus);
       console.log(`🎯 [ADAPTER] 活动${backendActivity.id}使用用户报名状态:`, {
         原始signStatus: backendActivity.signStatus,
         转换后状态: status,
-        映射逻辑: 'signStatus: -1->registered, 1->checked_in, others->upcoming'
+        映射逻辑: 'signStatus: -1->registered, 1->checked_in, others->available'
       });
       return status;
     }
@@ -312,21 +311,17 @@ export const adaptActivity = (
     
     // 第二优先级：基于当前时间实时计算活动状态
     const now = new Date();
-    const activityStart = new Date(backendActivity.startTime);
     const activityEnd = new Date(backendActivity.endTime);
     
-    let timeBasedStatus: 'upcoming' | 'ongoing' | 'ended';
+    let timeBasedStatus: 'available' | 'ended';
     if (activityEnd.getTime() < now.getTime()) {
       timeBasedStatus = 'ended'; // 已结束
-    } else if (activityStart.getTime() <= now.getTime() && activityEnd.getTime() >= now.getTime()) {
-      timeBasedStatus = 'ongoing'; // 进行中
     } else {
-      timeBasedStatus = 'upcoming'; // 即将开始
+      timeBasedStatus = 'available'; // 可报名（包括未开始和进行中）
     }
     
     console.log(`🕐 [ADAPTER] 活动${backendActivity.id}使用时间计算状态:`, {
       状态: timeBasedStatus,
-      开始时间: backendActivity.startTime,
       结束时间: backendActivity.endTime,
       当前时间: now.toISOString(),
       signStatus: backendActivity.signStatus
@@ -493,7 +488,7 @@ export const getActivityStatusText = (
       return t('activities.status.registered');
     case 'checked_in':
       return t('activities.status.checked_in');
-    case 'upcoming':
+    case 'available':
       return canRegisterForActivity(activity) 
         ? t('activities.status.available') 
         : t('activities.status.registration_closed');

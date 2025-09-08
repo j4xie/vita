@@ -11,7 +11,6 @@ import {
   ActionSheetIOS,
   DeviceEventEmitter,
 } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from '../../components/web/WebLinearGradient';
 // import { WebSafeAreaView } from '../../components/web/WebSafeAreaView'; // 改回原生SafeAreaView
@@ -532,6 +531,8 @@ export const ProfileHomeScreen: React.FC = () => {
 
   // Logout handling functions
   const handleLogout = () => {
+    console.log('🔴 [ProfileHome] handleLogout被点击');
+    
     // Haptic feedback
     if (Platform.OS === 'ios') {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
@@ -552,6 +553,15 @@ export const ProfileHomeScreen: React.FC = () => {
           }
         }
       );
+    } else if (Platform.OS === 'web') {
+      // Web环境使用原生confirm对话框，因为Alert.alert在Web上可能不显示
+      const confirmed = window.confirm(
+        `${t('profile.account.logoutConfirm', '确认退出')}\n\n${t('profile.account.logoutMessage', '您确定要退出登录吗？')}`
+      );
+      console.log('🌐 [ProfileHome] Web confirm result:', confirmed);
+      if (confirmed) {
+        performLogout();
+      }
     } else {
       Alert.alert(
         t('profile.account.logoutConfirm'),
@@ -566,16 +576,32 @@ export const ProfileHomeScreen: React.FC = () => {
 
   const performLogout = async () => {
     try {
+      console.log('🔓 [ProfileHome] Starting logout process...');
+      
       // 使用 UserContext 的 logout 方法来正确清理所有状态
       await logout();
       
-      // 在状态清理后，重置导航到认证页面
-      navigation.reset({
-        index: 0,
-        routes: [{ name: 'Auth' }],
-      });
+      console.log('✅ [ProfileHome] Logout completed, resetting navigation...');
+      
+      // 在Web环境下，使用navigate而不是reset可能更可靠
+      if (Platform.OS === 'web') {
+        // Web环境下直接导航到登录页面
+        navigation.navigate('Auth', { screen: 'Login' });
+      } else {
+        // 在状态清理后，重置导航到认证页面
+        navigation.reset({
+          index: 0,
+          routes: [{ name: 'Auth' }],
+        });
+      }
     } catch (error) {
-      console.error('Logout error:', error);
+      console.error('❌ [ProfileHome] Logout error:', error);
+      // 如果出错，至少尝试导航到登录页面
+      try {
+        navigation.navigate('Auth', { screen: 'Login' });
+      } catch (navError) {
+        console.error('❌ [ProfileHome] Navigation error:', navError);
+      }
     }
   };
 
@@ -626,7 +652,7 @@ export const ProfileHomeScreen: React.FC = () => {
     contentContainer: {
       paddingHorizontal: 16,
       paddingTop: 20,
-      paddingBottom: 56 + 12 + insets.bottom - 20, // Tab bar height + margin + safe area - 20px向上调整
+      paddingBottom: 150, // 增加底部空白区域，让用户可以下滑查看Login按钮
     },
     userSection: {
       marginBottom: 16, // 减少间距，更符合小红书的紧凑设计
@@ -1057,9 +1083,11 @@ export const ProfileHomeScreen: React.FC = () => {
     
     // Logout section styles
     logoutSection: {
-      marginTop: -40, // 大幅减少上边距，让按钮明显向上移动
-      marginBottom: 20,
+      marginTop: -30, // 适度减少上边距，平衡位置
+      marginBottom: 40, // 增加下边距，为滑动留出更多空间
       paddingHorizontal: 4,
+      // Web环境下确保section可接收点击事件
+      pointerEvents: 'auto',
     },
     logoutButton: {
       flexDirection: 'row',
@@ -1077,6 +1105,10 @@ export const ProfileHomeScreen: React.FC = () => {
       shadowOpacity: 0.1,
       shadowRadius: 4,
       elevation: 2,
+      // Web环境下确保按钮可点击
+      pointerEvents: 'auto',
+      zIndex: 999,
+      position: 'relative',
     },
     logoutIcon: {
       marginRight: 8,
@@ -1121,8 +1153,9 @@ export const ProfileHomeScreen: React.FC = () => {
           style={styles.scrollView}
           contentContainerStyle={styles.contentContainer}
           showsVerticalScrollIndicator={false}
-          onScroll={() => {}} // Explicit empty handler to prevent propagation issues
           scrollEventThrottle={16}
+          keyboardShouldPersistTaps="handled"
+          nestedScrollEnabled={true}
         >
           {/* 用户信息卡片 */}
           <View style={styles.userSection}>
@@ -1344,6 +1377,14 @@ export const ProfileHomeScreen: React.FC = () => {
                 style={styles.logoutButton}
                 onPress={handleLogout}
                 activeOpacity={0.7}
+                onPressIn={() => console.log('🔴 [ProfileHome] Logout button pressed in')}
+                onPressOut={() => console.log('🔴 [ProfileHome] Logout button pressed out')}
+                {...(Platform.OS === 'web' && {
+                  onClick: () => {
+                    console.log('🌐 [ProfileHome] Web onClick triggered for logout');
+                    handleLogout();
+                  }
+                })}
               >
                 <Ionicons 
                   name="log-out-outline" 

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -6,11 +6,16 @@ import {
   Image,
   TouchableOpacity,
   Platform,
+  Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
+import * as Haptics from 'expo-haptics';
 import { theme } from '../../theme';
 import { LIQUID_GLASS_LAYERS } from '../../theme/core';
+import { pomeloXAPI } from '../../services/PomeloXAPI';
+import { useUser } from '../../context/UserContext';
+import { handleAPIError } from '../../utils/errorHandler';
 
 interface UserActivityCardProps {
   activity: {
@@ -23,13 +28,17 @@ interface UserActivityCardProps {
     signStatus: number; // -1: 已报名未签到, 1: 已签到
   };
   onScanPress?: (activityId: number) => void;
+  onCancelRegistration?: (activityId: number) => void; // 新增取消报名回调
 }
 
 export const UserActivityCard: React.FC<UserActivityCardProps> = ({
   activity,
   onScanPress,
+  onCancelRegistration,
 }) => {
   const { t } = useTranslation();
+  const { user } = useUser();
+  const [isLoading, setIsLoading] = useState(false);
 
   const formatActivityTime = (startTime: string, endTime: string) => {
     try {
@@ -55,6 +64,94 @@ export const UserActivityCard: React.FC<UserActivityCardProps> = ({
   const handleScanPress = () => {
     if (onScanPress) {
       onScanPress(activity.id);
+    }
+  };
+
+  // 取消报名处理函数
+  const handleCancelRegistration = () => {
+    if (Platform.OS === 'ios') {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    }
+    
+    Alert.alert(
+      t('activities.cancel.title', '取消报名'),
+      t('activities.cancel.message', '确定要取消报名这个活动吗？取消后如需重新报名，需要重新提交申请。'),
+      [
+        {
+          text: t('common.cancel', '取消'),
+          style: 'cancel',
+        },
+        {
+          text: t('activities.cancel.confirm', '确定取消'),
+          style: 'destructive',
+          onPress: performCancelRegistration,
+        },
+      ],
+      { cancelable: true }
+    );
+  };
+
+  // 执行取消报名
+  const performCancelRegistration = async () => {
+    if (!user?.id) {
+      Alert.alert(
+        t('common.error', '错误'),
+        t('common.user_info_incomplete', '用户信息不完整，请重新登录'),
+        [{ text: t('common.ok', '确定') }]
+      );
+      return;
+    }
+    
+    setIsLoading(true);
+    try {
+      // 改进的用户ID类型处理和验证
+      const numericUserId = typeof user.id === 'string' ? parseInt(user.id) : user.id;
+      
+      if (!numericUserId || isNaN(numericUserId) || numericUserId <= 0) {
+        Alert.alert(
+          t('common.error', '错误'),
+          t('common.user_info_incomplete', '用户信息不完整，请重新登录'),
+          [{ text: t('common.ok', '确定') }]
+        );
+        return;
+      }
+      
+      console.log('🔄 取消报名请求:', { activityId: activity.id, userId: numericUserId });
+      
+      const response = await pomeloXAPI.enrollActivity(activity.id, numericUserId, true);
+      
+      if (response.code === 200) {
+        if (Platform.OS === 'ios') {
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        }
+        
+        Alert.alert(
+          t('activities.cancel.success_title', '取消成功'),
+          t('activities.cancel.success_message', '已成功取消报名'),
+          [{ text: t('common.ok', '确定') }]
+        );
+        
+        // 调用回调通知父组件刷新数据
+        if (onCancelRegistration) {
+          onCancelRegistration(activity.id);
+        }
+      } else {
+        throw new Error(response.msg || '取消报名失败');
+      }
+    } catch (error: any) {
+      console.error('取消报名失败:', error);
+      
+      if (Platform.OS === 'ios') {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      }
+      
+      // 使用统一的错误处理机制
+      handleAPIError(error, { 
+        action: '取消报名', 
+        component: 'UserActivityCard' 
+      }, Alert.alert);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -105,16 +202,33 @@ export const UserActivityCard: React.FC<UserActivityCardProps> = ({
             </Text>
           </View>
         ) : needsCheckIn ? (
-          <TouchableOpacity 
-            style={styles.scanButton}
-            onPress={handleScanPress}
-            activeOpacity={0.7}
-          >
-            <Ionicons name="qr-code-outline" size={16} color="#FFFFFF" />
-            <Text style={styles.scanButtonText}>
-              {t('profile.activity.scan_to_checkin', '去扫码签到')}
-            </Text>
-          </TouchableOpacity>
+          <View style={styles.buttonGroup}>
+            {/* 扫码签到按钮 */}
+            <TouchableOpacity 
+              style={styles.scanButton}
+              onPress={handleScanPress}
+              activeOpacity={0.7}
+              disabled={isLoading}
+            >
+              <Ionicons name="qr-code-outline" size={14} color="#FFFFFF" />
+              <Text style={styles.scanButtonText}>
+                {t('profile.activity.scan_to_checkin', '扫码')}
+              </Text>
+            </TouchableOpacity>
+            
+            {/* 取消报名按钮 */}
+            <TouchableOpacity 
+              style={[styles.cancelButton, { opacity: isLoading ? 0.6 : 1 }]}
+              onPress={handleCancelRegistration}
+              activeOpacity={0.7}
+              disabled={isLoading}
+            >
+              <Ionicons name="close-circle-outline" size={14} color="#EF4444" />
+              <Text style={styles.cancelButtonText}>
+                {isLoading ? t('common.loading', '加载中...') : t('activities.cancel.button', '取消')}
+              </Text>
+            </TouchableOpacity>
+          </View>
         ) : null}
       </View>
     </View>
@@ -190,20 +304,46 @@ const styles = StyleSheet.create({
     marginLeft: 12,
   },
   
+  buttonGroup: {
+    flexDirection: 'column',
+    alignItems: 'flex-end',
+    gap: 6,
+  },
+  
   scanButton: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: theme.colors.primary,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 20,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 16,
+    minWidth: 60,
   },
   
   scanButtonText: {
     color: '#FFFFFF',
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '500',
-    marginLeft: 4,
+    marginLeft: 3,
+  },
+  
+  cancelButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FEF2F2',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#FECACA',
+    minWidth: 60,
+  },
+  
+  cancelButtonText: {
+    color: '#EF4444',
+    fontSize: 12,
+    fontWeight: '500',
+    marginLeft: 3,
   },
   
   checkedInBadge: {

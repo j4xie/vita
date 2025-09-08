@@ -11,7 +11,9 @@ import {
   DeviceEventEmitter,
   Keyboard,
   TouchableWithoutFeedback,
+  Platform,
 } from 'react-native';
+import { ForceNativeInput } from '../../components/web/ForceNativeInput';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
@@ -47,6 +49,35 @@ export const ActivityRegistrationFormScreen: React.FC = () => {
 
   // 🛡️ TabBar状态守护：确保报名表单页面TabBar始终隐藏
   useTabBarVerification('ActivityRegistrationForm', { debugLogs: false });
+
+  // 🔧 Web环境表单调试初始化
+  useEffect(() => {
+    if (Platform.OS === 'web') {
+      console.log('🌐 [表单调试] 活动报名表单页面初始化:', {
+        activityId: activity?.id,
+        activityTitle: activity?.title || activity?.name,
+        userId: user?.id,
+        userName: user?.legalName,
+        timestamp: new Date().toLocaleTimeString(),
+        formData: {
+          legalName: formData.legalName,
+          nickName: formData.nickName,
+          phone: formData.phone,
+          email: formData.email,
+          schoolName: formData.schoolName,
+        }
+      });
+      
+      // 添加全局表单调试标记
+      window.PomeloXFormDebug = {
+        currentForm: 'ActivityRegistrationForm',
+        formData,
+        errors,
+        loading,
+        updateFormField,
+      };
+    }
+  }, [activity, user, formData, errors, loading]);
 
   // 自动填充用户信息
   useEffect(() => {
@@ -87,10 +118,13 @@ export const ActivityRegistrationFormScreen: React.FC = () => {
     if (!validateForm()) return;
 
     setLoading(true);
+    
     try {
       // 🔧 增强报名API调用日志
       const activityIdInt = parseInt(activity.id);
       const userIdInt = parseInt(user?.id || '0');
+      
+      console.log('🚨 [Web调试] 准备调用API:', { activityIdInt, userIdInt });
       
       console.log('🚀 [报名] 开始调用后端API:', {
         activityId: activityIdInt,
@@ -120,24 +154,15 @@ export const ActivityRegistrationFormScreen: React.FC = () => {
       if (result.code === 200) {
         console.log('🎉 [报名] 报名成功，准备发送事件和返回页面');
         
-        Alert.alert(
-          t('activities.registration.success_title'),
-          t('activities.registration.success_message'),
-          [
-            {
-              text: t('common.confirm'),
-              onPress: () => {
-                // 发送报名成功事件，刷新活动状态
-                console.log('📡 [报名] 发送activityRegistered事件:', { activityId: activity.id });
-                DeviceEventEmitter.emit('activityRegistered', { activityId: activity.id });
-                
-                // 返回活动详情页面
-                console.log('🔙 [报名] 返回活动详情页面');
-                navigation.goBack();
-              },
-            },
-          ]
-        );
+        // 🌐 Web端：先发送事件，确保状态更新，然后延迟返回页面
+        console.log('📡 [报名] 发送activityRegistered事件:', { activityId: activity.id });
+        DeviceEventEmitter.emit('activityRegistered', { activityId: activity.id });
+        
+        // 🔄 延迟返回页面，确保事件处理完成
+        setTimeout(() => {
+          console.log('🔙 [报名] 延迟返回活动详情页面，确保状态已更新');
+          navigation.goBack();
+        }, 100); // 延迟100毫秒确保状态更新
       } else {
         console.error('❌ [报名] 报名失败:', {
           code: result.code,
@@ -177,6 +202,9 @@ export const ActivityRegistrationFormScreen: React.FC = () => {
       setErrors(prev => ({ ...prev, [field]: undefined }));
     }
   };
+
+  // 智能输入组件选择器 - Web环境使用ForceNativeInput，其他环境使用TextInput
+  const TextInput = Platform.OS === 'web' ? ForceNativeInput : TextInput;
 
   return (
     <SafeAreaView style={styles.container}>
@@ -218,9 +246,25 @@ export const ActivityRegistrationFormScreen: React.FC = () => {
               <TextInput
                 style={[styles.input, errors.legalName && styles.inputError]}
                 value={formData.legalName}
-                onChangeText={(value) => updateFormField('legalName', value)}
+                onChangeText={(value) => {
+                  console.log('🏷️ [表单调试] Legal Name输入:', value);
+                  updateFormField('legalName', value);
+                }}
+                onFocus={() => {
+                  console.log('🎯 [表单调试] Legal Name输入框获得焦点');
+                }}
+                onBlur={() => {
+                  console.log('👋 [表单调试] Legal Name输入框失去焦点，当前值:', formData.legalName);
+                }}
                 placeholder={t('auth.register.form.legal_name_placeholder')}
                 placeholderTextColor={theme.colors.text.disabled}
+                // Web优化属性
+                autoCapitalize="words"
+                autoCorrect={false}
+                spellCheck={false}
+                editable={true}
+                accessibilityRole="textbox"
+                accessible={true}
               />
               {errors.legalName && <Text style={styles.errorText}>{errors.legalName}</Text>}
             </View>
@@ -231,9 +275,25 @@ export const ActivityRegistrationFormScreen: React.FC = () => {
               <TextInput
                 style={[styles.input, errors.nickName && styles.inputError]}
                 value={formData.nickName}
-                onChangeText={(value) => updateFormField('nickName', value)}
+                onChangeText={(value) => {
+                  console.log('🏷️ [表单调试] Nickname输入:', value);
+                  updateFormField('nickName', value);
+                }}
+                onFocus={() => {
+                  console.log('🎯 [表单调试] Nickname输入框获得焦点');
+                }}
+                onBlur={() => {
+                  console.log('👋 [表单调试] Nickname输入框失去焦点，当前值:', formData.nickName);
+                }}
                 placeholder={t('auth.register.form.nickname_placeholder')}
                 placeholderTextColor={theme.colors.text.disabled}
+                // Web优化属性
+                autoCapitalize="words"
+                autoCorrect={false}
+                spellCheck={false}
+                editable={true}
+                accessibilityRole="textbox"
+                accessible={true}
               />
               {errors.nickName && <Text style={styles.errorText}>{errors.nickName}</Text>}
             </View>
@@ -244,10 +304,26 @@ export const ActivityRegistrationFormScreen: React.FC = () => {
               <TextInput
                 style={[styles.input, errors.phone && styles.inputError]}
                 value={formData.phone}
-                onChangeText={(value) => updateFormField('phone', value)}
+                onChangeText={(value) => {
+                  console.log('📱 [表单调试] Phone输入:', value);
+                  updateFormField('phone', value);
+                }}
+                onFocus={() => {
+                  console.log('🎯 [表单调试] Phone输入框获得焦点');
+                }}
+                onBlur={() => {
+                  console.log('👋 [表单调试] Phone输入框失去焦点，当前值:', formData.phone);
+                }}
                 placeholder={t('auth.register.form.phone_placeholder')}
                 placeholderTextColor={theme.colors.text.disabled}
                 keyboardType="phone-pad"
+                // Web优化属性
+                autoCapitalize="none"
+                autoCorrect={false}
+                spellCheck={false}
+                editable={true}
+                accessibilityRole="textbox"
+                accessible={true}
               />
               {errors.phone && <Text style={styles.errorText}>{errors.phone}</Text>}
             </View>
@@ -258,11 +334,26 @@ export const ActivityRegistrationFormScreen: React.FC = () => {
               <TextInput
                 style={[styles.input, errors.email && styles.inputError]}
                 value={formData.email}
-                onChangeText={(value) => updateFormField('email', value)}
+                onChangeText={(value) => {
+                  console.log('📧 [表单调试] Email输入:', value);
+                  updateFormField('email', value);
+                }}
+                onFocus={() => {
+                  console.log('🎯 [表单调试] Email输入框获得焦点');
+                }}
+                onBlur={() => {
+                  console.log('👋 [表单调试] Email输入框失去焦点，当前值:', formData.email);
+                }}
                 placeholder={t('auth.register.form.email_placeholder')}
                 placeholderTextColor={theme.colors.text.disabled}
                 keyboardType="email-address"
                 autoCapitalize="none"
+                // Web优化属性
+                autoCorrect={false}
+                spellCheck={false}
+                editable={true}
+                accessibilityRole="textbox"
+                accessible={true}
               />
               {errors.email && <Text style={styles.errorText}>{errors.email}</Text>}
             </View>
@@ -273,10 +364,25 @@ export const ActivityRegistrationFormScreen: React.FC = () => {
               <TextInput
                 style={[styles.input, errors.schoolName && styles.inputError]}
                 value={formData.schoolName}
-                onChangeText={(value) => updateFormField('schoolName', value)}
+                onChangeText={(value) => {
+                  console.log('🏫 [表单调试] School输入:', value);
+                  updateFormField('schoolName', value);
+                }}
+                onFocus={() => {
+                  console.log('🎯 [表单调试] School输入框获得焦点');
+                }}
+                onBlur={() => {
+                  console.log('👋 [表单调试] School输入框失去焦点，当前值:', formData.schoolName);
+                }}
                 placeholder={t('auth.register.form.school_placeholder')}
                 placeholderTextColor={theme.colors.text.disabled}
-                editable={false}
+                editable={true}
+                // Web优化属性
+                autoCapitalize="words"
+                autoCorrect={false}
+                spellCheck={false}
+                accessibilityRole="textbox"
+                accessible={true}
               />
             </View>
 
@@ -391,10 +497,26 @@ const styles = StyleSheet.create({
     borderColor: '#D1D5DB',
     borderRadius: theme.borderRadius.lg,
     paddingHorizontal: theme.spacing[4],
-    paddingVertical: theme.spacing[3],
+    paddingVertical: theme.spacing[4], // 增加垂直内边距
     fontSize: theme.typography.fontSize.base,
     color: theme.colors.text.primary,
     backgroundColor: '#FFFFFF',
+    minHeight: 52, // 设置最小高度，让输入框更舒适
+    // Web环境特定优化
+    ...(Platform.OS === 'web' && {
+      cursor: 'text',
+      userSelect: 'text',
+      WebkitUserSelect: 'text',
+      pointerEvents: 'auto',
+      zIndex: 10,
+      position: 'relative',
+      WebkitAppearance: 'none',
+      MozAppearance: 'textfield',
+      touchAction: 'manipulation',
+      boxSizing: 'border-box',
+      // outline: 'none', // React Native Web 不支持这个属性
+      WebkitTapHighlightColor: 'transparent',
+    }),
   },
   inputError: {
     borderColor: theme.colors.danger,

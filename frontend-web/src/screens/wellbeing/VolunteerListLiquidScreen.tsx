@@ -2,36 +2,22 @@ import React, { useState, useCallback } from 'react';
 import {
   View,
   Text,
-  FlatList,
+  ScrollView,
   StyleSheet,
   Platform,
   Dimensions,
 } from 'react-native';
-import { WebRefreshControl } from '../../components/web/WebRefreshControl';
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withTiming,
-  withSpring,
-  withSequence,
-  Easing,
-} from 'react-native-reanimated';
 import { WebHaptics as Haptics } from '../../utils/WebHaptics';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { LinearGradient } from '../../components/web/WebLinearGradient';
 import { useTranslation } from 'react-i18next';
 import { useNavigation } from '@react-navigation/native';
-import { getSchoolLogo } from '../../utils/schoolLogos';
 import { fetchSchoolList } from '../../services/registrationAPI';
 import { useUser } from '../../context/UserContext';
-import { getSchoolVolunteerStats } from '../../services/volunteerAPI';
 import { getSchoolVolunteerCount } from '../../services/userStatsAPI';
-import { SegmentedGlass } from '../../ui/glass/SegmentedGlass';
 import { GlassSearchBar } from '../../ui/glass/GlassSearchBar';
-import { LiquidGlassListItem } from '../../ui/glass/LiquidGlassListItem';
 import { Glass } from '../../ui/glass/GlassTheme';
 import { useAllDarkModeStyles } from '../../hooks/useDarkModeStyles';
-import { i18n } from '../../utils/i18n';
+import { SchoolVolunteerCard } from '../../components/volunteer/SchoolVolunteerCard';
 
 // Mock schools data removed - using real API data only
 
@@ -50,23 +36,8 @@ export const VolunteerListLiquidScreen: React.FC = () => {
   const [schools, setSchools] = useState<any[]>([]); // 初始为空，避免显示Mock数据
   const [loading, setLoading] = useState(true); // 显示loading状态
   
-  // 🚀 滚动状态管理防止误触
-  const [isScrolling, setIsScrolling] = useState(false);
-  const scrollTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
-  
-  // 学校卡片放大跳转动画系统 - v2方案
-  const [cardLayouts, setCardLayouts] = useState<Map<string, any>>(new Map());
+  // 简化的状态管理 - Web 端优化
   const [isTransitioning, setIsTransitioning] = useState(false);
-  const [selectedSchoolId, setSelectedSchoolId] = useState<string | null>(null);
-  
-  // 动画值
-  const cardScale = useSharedValue(1);
-  const cardOpacity = useSharedValue(1);
-  const cardX = useSharedValue(0);
-  const cardY = useSharedValue(0);
-  const cornerRadius = useSharedValue(16);
-  const blurGain = useSharedValue(0);
-  const highlightGain = useSharedValue(1);
 
   // 加载真实学校数据
   const loadSchoolData = useCallback(async () => {
@@ -105,30 +76,66 @@ export const VolunteerListLiquidScreen: React.FC = () => {
             tint: getSchoolColor(school.deptName),
           }));
         
-        // 为每个学校获取真实的用户统计数据（包括各角色）
-        const schoolsWithStats = await Promise.all(
-          realSchools.map(async (school) => {
-            try {
-              // 使用真实的用户统计API，计算各角色用户
-              const volunteerCount = await getSchoolVolunteerCount(school.deptId);
-              
-              console.log(`学校${school.deptName}(ID:${school.deptId})志愿者数量:`, volunteerCount);
-              
-              return {
-                ...school,
-                volunteers: volunteerCount, // 真实的志愿者数量（内部员工+管理员）
-              };
-            } catch (error) {
-              console.warn(`获取学校${school.deptName}用户统计失败:`, error);
-              return {
-                ...school,
-                volunteers: 0, // 失败时显示0
-              };
-            }
-          })
-        );
+        // 🚀 性能优化：先显示学校列表，异步加载志愿者数量
+        const schoolsWithoutStats = realSchools.map(school => ({
+          ...school,
+          volunteers: 0, // 初始显示0，避免等待
+        }));
         
-        setSchools(schoolsWithStats);
+        // 立即设置学校列表，让用户先看到内容
+        setSchools(schoolsWithoutStats);
+        setLoading(false);
+        
+        // 异步加载志愿者统计，避免阻塞UI
+        console.log(`📊 [ASYNC-LOADING] 异步获取${realSchools.length}个学校的志愿者统计...`);
+        
+        // 分批加载，避免一次性请求过多
+        const batchSize = 3; // 每批处理3个学校
+        const batches = [];
+        for (let i = 0; i < realSchools.length; i += batchSize) {
+          batches.push(realSchools.slice(i, i + batchSize));
+        }
+        
+        // 逐批处理学校统计
+        for (const batch of batches) {
+          const batchResults = await Promise.all(
+            batch.map(async (school) => {
+              try {
+                const volunteerCount = await getSchoolVolunteerCount(school.deptId);
+                console.log(`✅ ${school.deptName}: ${volunteerCount}名志愿者`);
+                return {
+                  ...school,
+                  volunteers: volunteerCount,
+                };
+              } catch (error) {
+                console.warn(`⚠️ 获取${school.deptName}统计失败:`, error);
+                return {
+                  ...school,
+                  volunteers: 0,
+                };
+              }
+            })
+          );
+          
+          // 更新这一批的数据
+          setSchools(prevSchools => {
+            const updatedSchools = [...prevSchools];
+            batchResults.forEach(updatedSchool => {
+              const index = updatedSchools.findIndex(s => s.deptId === updatedSchool.deptId);
+              if (index !== -1) {
+                updatedSchools[index] = updatedSchool;
+              }
+            });
+            return updatedSchools;
+          });
+          
+          // 批次之间添加小延迟，避免API压力
+          if (batch !== batches[batches.length - 1]) {
+            await new Promise(resolve => setTimeout(resolve, 200));
+          }
+        }
+        
+        console.log(`📈 [ASYNC-COMPLETED] 异步加载全部完成`);
       } else {
         // API失败时显示空状态
         console.warn('学校数据加载失败');
@@ -196,14 +203,6 @@ export const VolunteerListLiquidScreen: React.FC = () => {
     return colorMap[deptName] || '#E0E0E0';
   };
   
-  // 动画样式 - 仅原位置缩放
-  const animatedCardStyle = useAnimatedStyle(() => ({
-    transform: [
-      { scale: cardScale.value } // 仅缩放，不移动位置
-    ],
-    opacity: cardOpacity.value,
-  }));
-
   // 🌍 FIXED: 过滤学校数据 - 使用正确的字段名
   const filteredSchools = schools.filter(school => {
     if (!searchQuery) return true;
@@ -223,192 +222,41 @@ export const VolunteerListLiquidScreen: React.FC = () => {
     setRefreshing(false);
   }, [loadSchoolData]);
 
-  // 处理学校选择
-  // 记录卡片布局信息
-  const handleCardLayout = useCallback((schoolId: string, event: any) => {
-    const { x, y, width, height } = event.nativeEvent.layout;
-    setCardLayouts(prev => new Map(prev.set(schoolId, { x, y, width, height })));
-  }, []);
-  
-  // 学校卡片点击 - v2方案放大跳转动画
+  // 简化的学校点击处理 - Web 端优化
   const handleSchoolPress = useCallback((school: any) => {
     if (isTransitioning) return; // 防止重复点击
     
-    const cardLayout = cardLayouts.get(school.id);
-    console.log('🎬 点击学校:', school.nameCN, '布局信息:', cardLayout);
-    
-    if (!cardLayout) {
-      // 没有布局信息，直接切换
-      navigation.navigate('SchoolDetail' as never, { school } as never);
-      return;
-    }
-    
     setIsTransitioning(true);
-    setSelectedSchoolId(school.id);
     
-    // 阶段0: 按压反馈 (0-100ms)
-    cardScale.value = withTiming(0.98, { 
-      duration: 120, 
-      easing: Easing.bezier(0.2, 0.9, 0.2, 1) 
-    });
-    
-    // haptic反馈
+    // Web 端触觉反馈
     if (Platform.OS === 'ios') {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
     
-    // 延迟执行主动画
+    // 简单导航，不使用复杂动画
     setTimeout(() => {
-      startMorphAnimation(school, cardLayout);
-    }, 100);
-  }, [isTransitioning, cardLayouts, navigation]);
-
-  // 🚀 滚动状态处理函数
-  const handleScrollBegin = () => {
-    setIsScrolling(true);
-    console.log('📜 [VOLUNTEER-LIQUID] 开始滚动，禁用学校卡片点击');
-    
-    if (scrollTimeoutRef.current) {
-      clearTimeout(scrollTimeoutRef.current);
-    }
-  };
-
-  const handleScrollEnd = () => {
-    scrollTimeoutRef.current = setTimeout(() => {
-      setIsScrolling(false);
-      console.log('📜 [VOLUNTEER-LIQUID] 滚动结束，重新启用学校卡片点击');
-    }, 100); // 缩短到100ms，更快恢复点击
-  };
-
-  const handleScrollEvent = () => {
-    if (!isScrolling) {
-      setIsScrolling(true);
-    }
-    
-    if (scrollTimeoutRef.current) {
-      clearTimeout(scrollTimeoutRef.current);
-    }
-    
-    scrollTimeoutRef.current = setTimeout(() => {
-      setIsScrolling(false);
-    }, 100); // 缩短到100ms，更快恢复点击
-  };
-
-  // 🧹 清理滚动定时器
-  React.useEffect(() => {
-    return () => {
-      if (scrollTimeoutRef.current) {
-        clearTimeout(scrollTimeoutRef.current);
-      }
-    };
-  }, []);
-  
-  // Morph-to-Header动画执行
-  const startMorphAnimation = useCallback((school: any, layout: any) => {
-    console.log('🎬 开始Morph动画到Header位置');
-    
-    // 计算目标Header坐标 (志愿者列表页面顶部)
-    const targetX = 16; // 页面左边距
-    const targetY = insets.top + 16; // Header顶部位置
-    
-    // 阶段1: 放大跳出 (100-320ms) - 克制放大1.15
-    const animationDuration = 220;
-    
-    cardScale.value = withSpring(1.15, { // 克制在1.12-1.18
-      damping: 20,
-      stiffness: 220,
-      mass: 1
-    });
-    
-    cardOpacity.value = withSequence(
-      withTiming(0.85, { duration: animationDuration * 0.7 }),
-      withTiming(0.2, { duration: animationDuration * 0.3 })
-    );
-    
-    // 修正: 不移动位置，仅在原位置放大
-    cardX.value = 0; // 不移动X坐标
-    cardY.value = 0; // 不移动Y坐标
-    
-    // 材质联动
-    cornerRadius.value = withTiming(0, { duration: animationDuration });
-    blurGain.value = withSequence(
-      withTiming(4, { duration: animationDuration * 0.4 }),
-      withTiming(0, { duration: animationDuration * 0.3 })
-    );
-    highlightGain.value = withTiming(1.15, { duration: animationDuration * 0.5 });
-    
-    // 阶段2: 页面切换 - 45%启动，无slide动画
-    setTimeout(() => {
-      console.log('🚀 45%进度，开始页面切换');
-      if (Platform.OS === 'ios') {
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-      }
-      // 使用自定义动画或无动画切换
-      navigation.navigate('SchoolDetail' as never, { 
-        school,
-        // 禁用默认slide动画
-        animationEnabled: false
-      } as never);
-    }, animationDuration * 0.45);
-    
-    // 完成清理
-    setTimeout(() => {
+      navigation.navigate('SchoolDetail' as never, { school } as never);
       setIsTransitioning(false);
-      setSelectedSchoolId(null);
-      cardScale.value = 1;
-      cardOpacity.value = 1;
-      cardX.value = 0;
-      cardY.value = 0;
-      cornerRadius.value = 16;
-      blurGain.value = 0;
-      highlightGain.value = 1;
-    }, 500);
-  }, [insets.top, navigation]);
+    }, 200);
+  }, [isTransitioning, navigation]);
 
-  // 🌍 FIXED: 渲染列表项 - 传递正确的API字段给组件
+
+  // 🎨 使用新的更好看的学校卡片组件
   const renderSchoolItem = ({ item }: { item: any }) => {
-    const isAnimatingCard = selectedSchoolId === item.id;
-    
     return (
-      <View onLayout={(event) => handleCardLayout(item.id, event)}>
-        {isAnimatingCard ? (
-          <Animated.View style={animatedCardStyle}>
-            <LiquidGlassListItem
-              id={item.id}
-              nameCN={item.nameCN}
-              nameEN={item.nameEN}
-              deptName={item.deptName}
-              engName={item.engName}
-              aprName={item.aprName}
-              city={item.city}
-              state={item.state}
-              volunteers={item.volunteers}
-              tint={item.tint}
-              schoolId={item.id}
-              onPress={() => handleSchoolPress(item)}
-              disabled={isTransitioning}
-              isScrolling={isScrolling}  // 🚀 传递滚动状态
-            />
-          </Animated.View>
-        ) : (
-          <LiquidGlassListItem
-            id={item.id}
-            nameCN={item.nameCN}
-            nameEN={item.nameEN}
-            deptName={item.deptName}
-            engName={item.engName}
-            aprName={item.aprName}
-            city={item.city}
-            state={item.state}
-            volunteers={item.volunteers}
-            tint={item.tint}
-            schoolId={item.id}
-            onPress={() => handleSchoolPress(item)}
-            disabled={isTransitioning}
-            isScrolling={isScrolling}  // 🚀 传递滚动状态
-          />
-        )}
-      </View>
+      <SchoolVolunteerCard
+        school={{
+          id: item.id,
+          deptId: item.deptId,
+          deptName: item.deptName,
+          engName: item.engName,
+          aprName: item.aprName,
+          volunteers: item.volunteers,
+          tint: item.tint,
+        }}
+        onPress={() => handleSchoolPress(item)}
+        disabled={isTransitioning}
+      />
     );
   };
 
@@ -422,7 +270,6 @@ export const VolunteerListLiquidScreen: React.FC = () => {
 
   return (
     <View style={[styles.container, dmStyles.page.container]}>
-      {/* 移除背景渐变，由父组件WellbeingScreen提供 */}
 
       <View style={styles.content}>
         {/* 搜索框 - 直接显示，不需要Tab判断 */}
@@ -434,45 +281,23 @@ export const VolunteerListLiquidScreen: React.FC = () => {
           />
         </View>
 
-        {/* 志愿者学校列表 - 直接显示 */}
+        {/* 志愿者学校列表 */}
         <View style={styles.listContainer}>
-          <FlatList
-            data={filteredSchools}
-            renderItem={renderSchoolItem}
-            keyExtractor={(item) => item.id}
-            showsVerticalScrollIndicator={false}
-            onScrollBeginDrag={handleScrollBegin}     // 开始拖动滚动
-            onScrollEndDrag={handleScrollEnd}         // 拖动结束
-            onMomentumScrollBegin={handleScrollBegin} // 惯性滚动开始
-            onMomentumScrollEnd={handleScrollEnd}     // 惯性滚动结束
-            onScroll={handleScrollEvent}              // 任何滚动变化
-            scrollEventThrottle={1}                   // 高频检测
-            refreshControl={
-              <WebRefreshControl
-                refreshing={refreshing}
-                onRefresh={onRefresh}
-                tintColor={Glass.textWeak}
-                title={t('common.loading')}
-              />
-            }
-            contentContainerStyle={[
-              styles.listContent,
-              {
-                paddingBottom: insets.bottom + 80,
-              }
-            ]}
-            ListEmptyComponent={renderEmptyState}
-            // 性能优化
-            removeClippedSubviews={true}
-            maxToRenderPerBatch={8}
-            initialNumToRender={8}
-            windowSize={7}
-            getItemLayout={(data, index) => ({
-              length: 96, // 固定行高包含阴影
-              offset: 96 * index,
-              index,
-            })}
-          />
+          {loading ? (
+            <View style={styles.emptyContainer}>
+              <Text style={styles.emptyText}>{t('common.loading')}</Text>
+            </View>
+          ) : filteredSchools.length > 0 ? (
+            <View style={styles.schoolsList}>
+              {filteredSchools.map((item, index) => (
+                <View key={item.id}>
+                  {renderSchoolItem({ item, index })}
+                </View>
+              ))}
+            </View>
+          ) : (
+            renderEmptyState()
+          )}
         </View>
       </View>
     </View>
@@ -502,6 +327,11 @@ const styles = StyleSheet.create({
 
   listContent: {
     paddingHorizontal: Glass.touch.spacing.sectionMargin,
+  },
+
+  // 学校列表容器 - 更紧凑的间距
+  schoolsList: {
+    paddingVertical: 8,
   },
 
   // 空状态

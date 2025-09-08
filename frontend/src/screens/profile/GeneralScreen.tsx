@@ -258,16 +258,17 @@ export const GeneralScreen: React.FC = () => {
       setCurrentRegion(newRegion);
       
       // Show success message
-      const regionName = UserRegionPreferences.getRegionDisplayName(newRegion, 'zh');
+      const languageCode = currentLanguage.startsWith('zh') ? 'zh' : 'en';
+      const regionName = UserRegionPreferences.getRegionDisplayName(newRegion, languageCode);
       Alert.alert(
-        t('profile.region_updated_successfully', '地区已更新'),
-        t('profile.region_updated_message', `地区已更新为 ${regionName}`),
+        t('common.success'),
+        t('profile.region_updated_successfully', { region: regionName }),
       );
     } catch (error) {
       console.error('Region change failed:', error);
       Alert.alert(
-        t('profile.region_update_failed', '更新失败'),
-        t('profile.region_update_error', '地区更新失败，请稍后重试')
+        t('common.error'),
+        t('common.try_again_later')
       );
     }
   };
@@ -369,7 +370,7 @@ export const GeneralScreen: React.FC = () => {
       id: 'region',
       title: t('profile.general.regionAndTimezone'),
       icon: 'location-outline' as keyof typeof Ionicons.glyphMap,
-      value: `${UserRegionPreferences.getRegionIcon(currentRegion)} ${UserRegionPreferences.getRegionDisplayName(currentRegion, 'zh')}`,
+      value: `${UserRegionPreferences.getRegionIcon(currentRegion)} ${UserRegionPreferences.getRegionDisplayName(currentRegion, currentLanguage.startsWith('zh') ? 'zh' : 'en')}`,
       onPress: handleRegionPress,
     },
     {

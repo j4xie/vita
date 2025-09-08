@@ -192,62 +192,94 @@ export const getSchoolUserStats = async (deptId?: number): Promise<{
 
 /**
  * 综合计算学校的"志愿者"数量
- * 由于用户列表接口不存在，使用简化的统计方法
+ * 使用用户列表接口正确按学校过滤志愿者
  * @param deptId 学校ID
  * @returns 志愿者数量
  */
 export const getSchoolVolunteerCount = async (deptId?: number): Promise<number> => {
   try {
-    const token = await getCurrentToken();
+    console.log(`🔍 [VOLUNTEER-COUNT] 开始统计学校${deptId}的志愿者数量...`);
     
-    if (!token) {
-      return 0;
-    }
-
-    // 使用PDF文档第11项：志愿者工时列表接口
-    const response = await fetch(`${BASE_URL}/app/hour/hourList`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
-      },
-    });
-
-    if (!response.ok) {
-      console.warn('志愿者工时接口调用失败:', response.status);
-      return 0;
-    }
-
-    const data = await response.json();
+    // 使用真实的用户列表获取所有用户
+    const userListResult = await getUserList();
     
-    if (data.code === 200 && data.rows) {
-      // 如果指定了学校ID，需要进一步过滤
-      let volunteers = data.rows;
-      
-      if (deptId) {
-        // 需要获取每个志愿者的详细信息来过滤学校
-        // 由于API限制，暂时返回总数
-        console.log(`学校${deptId}志愿者数量: ${volunteers.length}（总数，待细化过滤）`);
-      }
-      
-      // 如果没有志愿者工时记录，使用基于用户角色的统计
-      if (volunteers.length === 0) {
-        console.log('没有志愿者工时记录，基于用户角色统计');
-        return getVolunteerCountByRole(deptId);
-      }
-      
-      console.log(`志愿者统计:`, {
-        总志愿者: volunteers.length,
-        学校ID: deptId || '全部',
-        志愿者列表: volunteers.map((v: any) => `${v.legalName}(${v.userId})`),
+    if (userListResult.code !== 200 || !userListResult.data) {
+      console.warn(`⚠️ [VOLUNTEER-COUNT] 获取用户列表失败，学校${deptId}返回0`);
+      return getVolunteerCountByRole(deptId);
+    }
+    
+    const allUsers = userListResult.data;
+    console.log(`📊 [VOLUNTEER-COUNT] 获取到${allUsers.length}个用户，开始过滤学校${deptId}的志愿者...`);
+    
+    // 过滤指定学校的用户
+    let schoolUsers = allUsers;
+    if (deptId) {
+      schoolUsers = allUsers.filter((user: any) => {
+        const userDeptId = user.deptId || user.dept?.deptId;
+        return userDeptId === deptId;
       });
-      
-      return volunteers.length;
+      console.log(`🏫 [SCHOOL-FILTER] 学校${deptId}共有${schoolUsers.length}个用户`);
     }
     
-    return 0;
+    // 统计志愿者角色用户（管理员+内部员工）
+    let volunteerCount = 0;
+    const volunteerDetails: string[] = [];
+    
+    for (const user of schoolUsers) {
+      const roles = user.roles || [];
+      const userName = user.userName?.toLowerCase() || '';
+      
+      // 判断是否为志愿者角色
+      let isVolunteer = false;
+      let roleType = '';
+      
+      // 检查角色key
+      const hasManageRole = roles.some((role: any) => 
+        role.key === 'manage' || role.roleKey === 'manage'
+      );
+      const hasPartManageRole = roles.some((role: any) => 
+        role.key === 'part_manage' || role.roleKey === 'part_manage'
+      );
+      const hasStaffRole = roles.some((role: any) => 
+        role.key === 'staff' || role.roleKey === 'staff'
+      );
+      
+      if (hasManageRole) {
+        isVolunteer = true;
+        roleType = 'manage';
+      } else if (hasPartManageRole) {
+        isVolunteer = true;
+        roleType = 'part_manage';
+      } else if (hasStaffRole) {
+        isVolunteer = true;
+        roleType = 'staff';
+      } else if (userName.includes('admin')) {
+        // 备用检查：用户名包含admin
+        isVolunteer = true;
+        roleType = 'admin';
+      } else if (userName.includes('eb-') || user.postCode === 'pic') {
+        // 备用检查：EB员工
+        isVolunteer = true;
+        roleType = 'eb';
+      }
+      
+      if (isVolunteer) {
+        volunteerCount++;
+        volunteerDetails.push(`${user.legalName || user.userName}(${roleType})`);
+      }
+    }
+    
+    console.log(`✅ [VOLUNTEER-COUNT] 学校${deptId}志愿者统计完成:`, {
+      学校ID: deptId,
+      总用户数: schoolUsers.length,
+      志愿者数量: volunteerCount,
+      志愿者详情: volunteerDetails
+    });
+    
+    return volunteerCount;
+    
   } catch (error) {
-    console.error('获取志愿者统计失败:', error);
+    console.error(`❌ [VOLUNTEER-COUNT] 统计学校${deptId}志愿者失败:`, error);
     return getVolunteerCountByRole(deptId);
   }
 };

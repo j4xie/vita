@@ -51,6 +51,7 @@
     "operation_error": "操作异常，请刷新页面后重试",
     "condition_not_met": "{{operation}}条件不满足",
     "unknown": "未知",
+    "no_image": "暂无图片",
     "network_timeout": "网络请求超时，请重试",
     "server_connection_failed": "服务器连接失败，请稍后重试",
     "load_failed": "加载失败，请检查网络后重试",
@@ -262,11 +263,12 @@
         "contact_info_desc": "请选择并填写您的电话号码",
         "referral_code": "推荐码：{{code}}",
         "username_label": "用户名 *",
-        "username_placeholder": "请输入用户名(6-20位字母数字)",
-        "legal_name_label": "法定名 *",
-        "legal_name_placeholder": "请输入您的法定姓名",
+        "username_placeholder": "如：alex123、sophia_wang（6-20位字母数字）",
+        "legal_name_label": "法定姓名 *",
+        "legal_name_placeholder": "如：张三 或 Zhang San（护照/身份证姓名）",
+        "legal_name_description": "请使用护照或身份证上显示的完整姓名",
         "english_nickname_label": "英文昵称 *",
-        "english_nickname_placeholder": "请输入您的英文昵称",
+        "english_nickname_placeholder": "如：Alex、Sophia（日常使用的英文名）",
         "university_label": "所属学校 *",
         "university_placeholder": "请选择您的学校",
         "gender_label": "性别",
@@ -294,7 +296,8 @@
         "last_name_label": "姓 *",
         "last_name_placeholder": "请输入您的姓",
         "school_email_preview": "学校邮箱预览",
-        "email_username_placeholder": "用户名",
+        "email_username_placeholder": "如：zhang.san、alex123",
+        "email_prefix_placeholder": "用户名",
         "complete_email": "完整邮箱",
         "loading_schools": "加载学校列表中...",
         "step2_description": "设置您的登录账号和密码",
@@ -340,7 +343,8 @@
         "nickname_required": "请输入昵称",
         "phone_required": "请输入电话号码",
         "email_required": "请输入邮箱",
-        "email_format": "邮箱格式不正确"
+        "email_format": "邮箱格式不正确",
+        "verification_code_format": "验证码格式不正确"
       },
       "username_required": "请输入用户名",
       "username_length": "用户名长度为6-20位",
@@ -388,7 +392,10 @@
     "verification": {
       "title": "短信验证",
       "verify_phone": "验证您的手机号",
-      "verify_and_register": "验证并注册"
+      "verify_and_register": "验证并注册",
+      "code_sent_to": "我们已向 +{{countryCode}} {{phone}} 发送验证码",
+      "resend_code": "重新发送验证码",
+      "resend_countdown": "重新发送 ({{seconds}}s)"
     },
     "login_required": "请先登录",
     "login_required_message": "需要登录后才能收藏活动",
@@ -443,10 +450,8 @@
     },
     "filters": {
       "all": "全部",
-      "ongoing": "进行中",
-      "upcoming": "即将开始",
-      "ended": "已结束",
       "available": "可报名",
+      "ended": "已结束",
       "availableOnly": "仅显示可报名活动"
     },
     "peopleRegistered": "人已报名",
@@ -464,6 +469,26 @@
       "full": "名额已满",
       "ended": "活动已结束"
     },
+    "share": {
+      "title": "活动分享",
+      "message": "{{title}}\n时间: {{date}}\n地点: {{location}}\n\n来参加这个活动吧！",
+      "success": "分享成功",
+      "failed": "分享失败，请重试",
+      "copied_to_clipboard": "活动信息已复制到剪贴板"
+    },
+    "notification": {
+      "too_late_title": "无法设置提醒",
+      "too_late_message": "活动即将开始或已开始，无法设置提醒",
+      "not_supported_title": "不支持通知",
+      "not_supported_message": "您的浏览器不支持通知功能",
+      "permission_denied_title": "通知权限被拒绝",
+      "permission_denied_message": "请在浏览器设置中允许通知权限",
+      "set_success_title": "提醒设置成功",
+      "set_success_message": "已设置活动提醒，将在 {{time}} 通知您",
+      "set_failed": "设置提醒失败，请重试",
+      "reminder_title": "活动提醒",
+      "reminder_body": "活动 \"{{title}}\" 将在1小时后开始"
+    },
     "registration": {
       "form_title": "活动报名",
       "personal_info": "个人信息",
@@ -472,6 +497,9 @@
       "submit_button": "确认报名",
       "success_title": "报名成功",
       "success_message": "您已成功报名该活动，现场请扫描签到二维码完成签到",
+      "checkin_option": "立即签到",
+      "checkin_prompt_title": "开始志愿服务",
+      "checkin_prompt_message": "报名成功！是否立即前往签到页面开始志愿服务？",
       "failed_title": "报名失败",
       "failed_message": "报名失败，请稍后重试",
       "register_now": "立即报名"
@@ -975,12 +1003,25 @@
       "merchant_instruction": "将商家二维码放入框内\n获取专属会员卡",
       "manual_input": "手动输入推荐码",
       "manual_input_title": "手动输入推荐码",
-      "manual_input_desc": "请输入您的推荐码",
-      "input_placeholder": "请输入您的推荐码",
+      "manual_input_desc": "输入推荐码",
+      "input_placeholder": "请输入推荐码",
       "referral_code_label": "推荐码",
+      "format_hint": "8位字母数字组合",
+      "how_to_get": "推荐码获取方式",
+      "get_from_organization": "通过组织或官方平台获得",
       "confirm": "确认",
       "cancel": "取消",
       "manual_input_button": "手动输入"
+    },
+    "userDetail": {
+      "title": "用户详情",
+      "no_data": "无用户数据",
+      "volunteer_stats": "志愿服务统计",
+      "total_hours": "总志愿时长",
+      "total_records": "签到记录",
+      "no_volunteer_data": "暂无志愿服务数据",
+      "limited_access": "权限有限，仅显示基本信息",
+      "manage_volunteer": "志愿者管理"
     },
     "camera": {
       "permission_requesting": "请求相机权限中...",
@@ -1181,15 +1222,19 @@
     "student": "学生",
     "user": "用户",
     "guest": "访客",
-    "not_logged_in": "未登录"
+    "not_logged_in": "未登录",
+    "time": {
+      "hours": "小时",
+      "minutes": "分钟"
+    }
   },
   "activityCard": {
     "status": {
-      "ongoing": "进行中",
-      "upcoming": "即将开始",
+      "available": "可报名",
+      "registered": "已报名",
+      "checked_in": "已签到",
       "ended": "已结束",
-      "full": "名额已满",
-      "available": "可报名"
+      "full": "名额已满"
     },
     "registered": "已报名",
     "people": "人"
@@ -1312,7 +1357,7 @@
     },
     "status": {
       "all": "全部",
-      "upcoming": "即将开始",
+      "available": "可报名",
       "ended": "已结束"
     }
   },

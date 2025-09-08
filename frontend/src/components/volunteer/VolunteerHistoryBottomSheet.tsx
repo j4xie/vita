@@ -186,6 +186,7 @@ interface VolunteerHistoryBottomSheetProps {
   userName: string;
   userPermission: 'manage' | 'part_manage' | 'staff';
   currentUser?: any; // 当前操作用户信息，用于权限验证
+  isPersonalView?: boolean; // 新增：是否为个人查看模式（从Profile进入）
 }
 
 export const VolunteerHistoryBottomSheet: React.FC<VolunteerHistoryBottomSheetProps> = ({
@@ -195,6 +196,7 @@ export const VolunteerHistoryBottomSheet: React.FC<VolunteerHistoryBottomSheetPr
   userName,
   userPermission,
   currentUser,
+  isPersonalView = false, // 默认为管理员查看模式
 }) => {
   const { t } = useTranslation();
   const themeContext = useTheme();
@@ -409,7 +411,10 @@ export const VolunteerHistoryBottomSheet: React.FC<VolunteerHistoryBottomSheetPr
           </View>
           
           <Text style={[styles.subtitle, { color: theme.colors.text.secondary }]}>
-            {t('wellbeing.volunteer.history.subtitle', { userName })}
+            {isPersonalView 
+              ? t('wellbeing.volunteer.history.subtitle_personal') 
+              : t('wellbeing.volunteer.history.subtitle', { userName })
+            }
           </Text>
         </View>
 

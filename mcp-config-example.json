@@ -1,0 +1,16 @@
+{
+  "mcpServers": {
+    "custom-browser-tools": {
+      "command": "node",
+      "args": ["/Users/jietaoxie/pomeloX/browser-tools.js"],
+      "env": {
+        "NODE_ENV": "production"
+      }
+    }
+  }
+}
+
+
+
+
+

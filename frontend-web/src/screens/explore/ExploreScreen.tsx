@@ -10,6 +10,7 @@ import {
   Image,
   Dimensions,
   DeviceEventEmitter,
+  Platform,
 } from 'react-native';
 import { WebRefreshControl } from '../../components/web/WebRefreshControl';
 import { useNavigation } from '@react-navigation/native';
@@ -33,6 +34,27 @@ export const ExploreScreen: React.FC = () => {
   const navigation = useNavigation<any>();
   const { user } = useUser(); // 🆕 新增用户上下文
   const [selectedSchool, setSelectedSchool] = useState('all');
+  const [selectedCategory, setSelectedCategory] = useState('all'); // 🆕 添加分类状态管理
+
+  // 为Web端添加CSS旋转动画
+  useEffect(() => {
+    if (Platform.OS === 'web') {
+      const style = document.createElement('style');
+      style.textContent = `
+        @keyframes spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+      `;
+      document.head.appendChild(style);
+      
+      return () => {
+        if (style.parentNode) {
+          style.parentNode.removeChild(style);
+        }
+      };
+    }
+  }, []);
 
   const [searchText, setSearchText] = useState('');
   const [refreshing, setRefreshing] = useState(false);
@@ -52,16 +74,52 @@ export const ExploreScreen: React.FC = () => {
   // 监听来自CustomTabBar的搜索事件
   useEffect(() => {
     console.log('🎧 注册搜索事件监听器');
-    const subscription = DeviceEventEmitter.addListener('searchTextChanged', (text: string) => {
+    const searchSubscription = DeviceEventEmitter.addListener('searchTextChanged', (text: string) => {
       console.log('🔍 [EVENT] 收到搜索事件:', { receivedText: text, currentSearchText: searchText });
       setSearchText(text);
     });
 
     return () => {
       console.log('🎧 移除搜索事件监听器');
-      subscription.remove();
+      searchSubscription.remove();
     };
   }, []);
+
+  // 🆕 监听双击TabBar刷新事件
+  useEffect(() => {
+    console.log('🎧 注册双击刷新事件监听器');
+    const doubleTabSubscription = DeviceEventEmitter.addListener('exploreDoubleTabRefresh', () => {
+      console.log('🔥🔥 [EVENT] 收到双击TabBar刷新事件，开始刷新活动列表');
+      
+      // 强制刷新活动列表
+      setRefreshing(true);
+      loadActivities(searchText.trim() || undefined).finally(() => {
+        setRefreshing(false);
+      });
+    });
+
+    return () => {
+      console.log('🎧 移除双击刷新事件监听器');
+      doubleTabSubscription.remove();
+    };
+  }, [searchText]);
+
+  // 🆕 监听单击TabBar滚动到顶部并刷新事件
+  useEffect(() => {
+    console.log('🎧 注册滚动到顶部并刷新事件监听器');
+    const scrollToTopSubscription = DeviceEventEmitter.addListener('scrollToTopAndRefresh', () => {
+      console.log('📜 [EVENT] 收到单击TabBar滚动到顶部并刷新事件');
+      
+      // 因为Explore页面使用的是ScrollView，我们直接刷新数据
+      // 页面会自动滚动到顶部显示新数据
+      onRefresh();
+    });
+
+    return () => {
+      console.log('🎧 移除滚动到顶部并刷新事件监听器');
+      scrollToTopSubscription.remove();
+    };
+  }, [onRefresh]);
 
   // 搜索防抖效果
   useEffect(() => {
@@ -160,11 +218,48 @@ export const ExploreScreen: React.FC = () => {
     }
   };
 
-  // Real categories using translations
+  // 🆕 精确的活动结束判断逻辑
+  const getActivityStatus = (activity: FrontendActivity): 'upcoming' | 'ended' => {
+    const now = new Date();
+    
+    try {
+      let activityEndTime: Date;
+      
+      if (activity.endDate) {
+        // 如果有 endDate，使用 endDate + 23:59:59 作为结束时间
+        activityEndTime = new Date(activity.endDate);
+        activityEndTime.setHours(23, 59, 59, 999);
+      } else {
+        // 如果没有 endDate，使用 date + time 作为结束时间
+        const activityDateTime = new Date(`${activity.date} ${activity.time || '23:59:59'}`);
+        activityEndTime = activityDateTime;
+      }
+      
+      // 检查日期解析是否成功
+      if (isNaN(activityEndTime.getTime())) {
+        return 'upcoming';
+      }
+      
+      // 当前时间超过活动结束时间即判断为已结束
+      return now > activityEndTime ? 'ended' : 'upcoming';
+    } catch (error) {
+      return 'upcoming'; // 出错时默认为upcoming
+    }
+  };
+
+  // 🆕 计算每个分类的活动数量
+  const getCategoryCount = (categoryId: string): number => {
+    if (categoryId === 'all') {
+      return activities.length;
+    }
+    return activities.filter(activity => getActivityStatus(activity) === categoryId).length;
+  };
+
+  // Real categories using translations with dynamic counts
   const realCategories = [
-    { id: 'all', name: t('filters.categories.all') || '全部活动', icon: 'apps-outline', count: 0 },
-    { id: 'upcoming', name: t('filters.status.upcoming') || '即将开始', icon: 'time-outline', count: 0 },
-    { id: 'ended', name: t('filters.status.ended') || '已结束', icon: 'checkmark-circle-outline', count: 0 },
+    { id: 'all', name: t('filters.categories.all') || '全部活动', icon: 'apps-outline', count: getCategoryCount('all') },
+    { id: 'upcoming', name: t('filters.status.upcoming') || '即将开始', icon: 'time-outline', count: getCategoryCount('upcoming') },
+    { id: 'ended', name: t('filters.status.ended') || '已结束', icon: 'checkmark-circle-outline', count: getCategoryCount('ended') },
   ];
 
   // Handle refresh
@@ -189,36 +284,27 @@ export const ExploreScreen: React.FC = () => {
     navigation.navigate('ActivityDetail', { activity });
   };
 
-  // 前端搜索过滤（确保搜索结果准确）
+  // 前端搜索和分类过滤（确保搜索结果准确）
   const getFilteredActivities = (): FrontendActivity[] => {
-    if (!searchText.trim()) {
-      console.log('🔍 无搜索文本，返回所有活动:', activities.length);
-      return activities; // 无搜索文本，返回所有活动
+    let filtered = [...activities];
+
+    // 1. 首先按分类筛选
+    if (selectedCategory !== 'all') {
+      filtered = filtered.filter(activity => {
+        const status = getActivityStatus(activity);
+        return status === selectedCategory;
+      });
     }
 
-    const query = searchText.toLowerCase().trim();
-    console.log('🔍 开始前端过滤:', { searchText, query, totalActivities: activities.length });
-    
-    const filtered = activities.filter(activity => {
-      const title = activity.title.toLowerCase();
-      const location = activity.location.toLowerCase();
-      const matches = title.includes(query) || location.includes(query);
-      
-      console.log(`🔍 活动过滤:`, { 
-        title: activity.title, 
-        location: activity.location, 
-        matches 
+    // 2. 然后按搜索文本筛选
+    if (searchText.trim()) {
+      const query = searchText.toLowerCase().trim();
+      filtered = filtered.filter(activity => {
+        const title = activity.title.toLowerCase();
+        const location = activity.location.toLowerCase();
+        return title.includes(query) || location.includes(query);
       });
-      
-      return matches;
-    });
-    
-    console.log('🔍 过滤结果:', {
-      searchQuery: query,
-      originalCount: activities.length,
-      filteredCount: filtered.length,
-      filteredActivities: filtered.map(a => a.title)
-    });
+    }
     
     return filtered;
   };
@@ -256,11 +342,9 @@ export const ExploreScreen: React.FC = () => {
     });
   };
 
-  // Handle category press
+  // 🆕 Handle category press - 实现真正的分类筛选
   const handleCategoryPress = (categoryId: string) => {
-    // 显示功能未实现提示
-    const categoryName = realCategories.find(c => c.id === categoryId)?.name || t('explore.category_fallback');
-    showFeature(categoryName, t('explore.category_developing_message', { category: categoryName }));
+    setSelectedCategory(categoryId);
   };
 
   // Handle activity press
@@ -272,6 +356,22 @@ export const ExploreScreen: React.FC = () => {
 
   return (
     <SafeAreaView style={styles.container}>
+      {/* 🚨 强制显示的代码更新标识 */}
+      <View style={{
+        backgroundColor: '#ff0000',
+        padding: 20,
+        alignItems: 'center',
+        borderBottomWidth: 5,
+        borderBottomColor: '#ffffff'
+      }}>
+        <Text style={{ 
+          color: '#ffffff', 
+          fontSize: 18, 
+          fontWeight: 'bold' 
+        }}>
+          ✅ FRONTEND-WEB 代码已更新 - 分类:{selectedCategory} - 活动:{activities.length}
+        </Text>
+      </View>
       <ScrollView 
         style={styles.scrollView}
         contentContainerStyle={styles.scrollViewContent}
@@ -295,8 +395,35 @@ export const ExploreScreen: React.FC = () => {
           style={styles.header}
         >
           <View style={styles.headerContent}>
-            <Text style={styles.headerTitle}>{t('explore.title')}</Text>
-            <Text style={styles.headerSubtitle}>{t('explore.subtitle')}</Text>
+            <View style={styles.headerTop}>
+              <View style={styles.headerTextContainer}>
+                <Text style={styles.headerTitle}>{t('explore.title')} - 筛选:{selectedCategory}</Text>
+                <Text style={styles.headerSubtitle}>
+                  {t('explore.subtitle')} | 活动:{activities.length} | 已结束:{getCategoryCount('ended')}
+                </Text>
+              </View>
+              
+              {/* Web端刷新按钮 */}
+              <TouchableOpacity
+                style={styles.refreshButton}
+                onPress={onRefresh}
+                disabled={refreshing}
+              >
+                <View style={[
+                  styles.refreshIconContainer,
+                  refreshing && Platform.OS === 'web' && { 
+                    // @ts-ignore - Web specific CSS animation
+                    animation: 'spin 1s linear infinite'
+                  }
+                ]}>
+                  <Ionicons
+                    name={refreshing ? "refresh" : "refresh-outline"}
+                    size={24}
+                    color={refreshing ? '#999' : theme.colors.primary}
+                  />
+                </View>
+              </TouchableOpacity>
+            </View>
           </View>
           
           {/* Search Status */}
@@ -359,35 +486,61 @@ export const ExploreScreen: React.FC = () => {
 
         {/* Activity Categories */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>{t('explore.activity_categories')}</Text>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+            <Text style={styles.sectionTitle}>{t('explore.activity_categories')}</Text>
+          </View>
+          
           <View style={styles.categoriesGrid}>
-            {realCategories.map((category) => (
-              // Shadow容器 - 使用solid background优化阴影渲染
-              <View
-                key={category.id}
-                style={styles.categoryCardShadowContainer}
-              >
-                <TouchableOpacity
-                  style={styles.categoryCard}
-                  onPress={() => handleCategoryPress(category.id)}
+            {realCategories.map((category) => {
+              const isSelected = selectedCategory === category.id;
+              return (
+                // Shadow容器 - 使用solid background优化阴影渲染
+                <View
+                  key={category.id}
+                  style={[
+                    styles.categoryCardShadowContainer,
+                    isSelected && styles.categoryCardShadowContainerSelected
+                  ]}
                 >
-                  <LinearGradient
-                    colors={['rgba(255, 107, 53, 0.1)', 'rgba(255, 71, 87, 0.05)']} // PomeloX 橙红渐变
-                    style={styles.categoryCardGradient}
+                  <TouchableOpacity
+                    style={styles.categoryCard}
+                    onPress={() => handleCategoryPress(category.id)}
                   >
-                  <View style={styles.categoryIcon}>
-                    <Ionicons 
-                      name={category.icon as any} 
-                      size={24} 
-                      color={theme.colors.primary} 
-                    />
-                  </View>
-                  <Text style={styles.categoryName}>{category.name}</Text>
-                  <Text style={styles.categoryCount}>{t('explore.activities_count', { count: category.count })}</Text>
-                  </LinearGradient>
-                </TouchableOpacity>
-              </View>
-            ))}
+                    <LinearGradient
+                      colors={
+                        isSelected 
+                          ? ['rgba(255, 107, 53, 0.2)', 'rgba(255, 71, 87, 0.15)'] // 选中时更深的渐变
+                          : ['rgba(255, 107, 53, 0.1)', 'rgba(255, 71, 87, 0.05)'] // 默认渐变
+                      }
+                      style={styles.categoryCardGradient}
+                    >
+                      <View style={[
+                        styles.categoryIcon,
+                        isSelected && styles.categoryIconSelected
+                      ]}>
+                        <Ionicons 
+                          name={category.icon as any} 
+                          size={24} 
+                          color={isSelected ? '#ffffff' : theme.colors.primary} 
+                        />
+                      </View>
+                      <Text style={[
+                        styles.categoryName,
+                        isSelected && styles.categoryNameSelected
+                      ]}>
+                        {category.name}
+                      </Text>
+                      <Text style={[
+                        styles.categoryCount,
+                        isSelected && styles.categoryCountSelected
+                      ]}>
+                        {t('explore.activities_count', { count: category.count })}
+                      </Text>
+                    </LinearGradient>
+                  </TouchableOpacity>
+                </View>
+              );
+            })}
           </View>
         </View>
 
@@ -433,11 +586,6 @@ export const ExploreScreen: React.FC = () => {
             const filteredAndSorted = getSortedActivities();
             return (
               <View>
-                {/* 调试过滤结果 */}
-                <Text style={{ fontSize: 10, color: 'blue', padding: 5 }}>
-                  过滤结果: {filteredAndSorted.length}个活动 (原始:{activities.length})
-                  {filteredAndSorted.length > 0 && ` - 显示: ${filteredAndSorted.map(a => a.title).join(', ')}`}
-                </Text>
                 
                 {filteredAndSorted.length > 0 ? (
                   <View style={styles.activitiesList}>
@@ -520,6 +668,31 @@ const styles = StyleSheet.create({
   },
   headerContent: {
     marginBottom: theme.spacing[4],
+  },
+  headerTop: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+  },
+  headerTextContainer: {
+    flex: 1,
+  },
+  refreshButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginLeft: theme.spacing[3],
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  refreshIconContainer: {
+    // 图标容器样式
   },
   headerTitle: {
     fontSize: theme.typography.fontSize['2xl'],
@@ -699,6 +872,11 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: theme.liquidGlass.card.border,
   },
+  categoryCardShadowContainerSelected: {
+    borderWidth: 2,
+    borderColor: theme.colors.primary,
+    ...theme.shadows.md, // 选中时更明显的阴影
+  },
   
   categoryCard: {
     width: '100%',
@@ -721,6 +899,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginBottom: theme.spacing[2],
   },
+  categoryIconSelected: {
+    backgroundColor: theme.colors.primary, // 选中时使用主题色背景
+  },
   categoryName: {
     fontSize: theme.typography.fontSize.base,
     fontWeight: theme.typography.fontWeight.semibold,
@@ -728,9 +909,17 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing[1],
     textAlign: 'center',
   },
+  categoryNameSelected: {
+    color: theme.colors.primary, // 选中时使用主题色文字
+    fontWeight: theme.typography.fontWeight.bold,
+  },
   categoryCount: {
     fontSize: theme.typography.fontSize.xs,
     color: theme.colors.text.secondary,
     textAlign: 'center',
+  },
+  categoryCountSelected: {
+    color: theme.colors.primary, // 选中时使用主题色
+    fontWeight: theme.typography.fontWeight.semibold,
   },
 });

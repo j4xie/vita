@@ -424,11 +424,40 @@ export const CustomTabBar: React.FC<CustomTabBarProps> = ({
     Array.from({ length: 5 }, () => useSharedValue(1))
   ).current;
   
-  // Tab点击处理 - 增强动画反馈
+  // 双击检测
+  const lastTapTime = useRef<number>(0);
+  const doubleTapDelay = 400; // 400ms内的第二次点击被认为是双击
+  
+  // Tab点击处理 - 增强动画反馈 + 双击检测
   const handleTabPress = useCallback((route: any, isFocused: boolean) => {
     console.log('🔥 Tab clicked:', route.name, 'isFocused:', isFocused);
     
+    const currentTime = Date.now();
+    const timeSinceLastTap = currentTime - lastTapTime.current;
+    const isDoubleTap = timeSinceLastTap < doubleTapDelay;
+    
+    lastTapTime.current = currentTime;
+    
     const tabIndex = state.routes.findIndex(r => r.key === route.key);
+    
+    // 双击Explore按钮特殊处理
+    if (isFocused && route.name === 'Explore' && isDoubleTap) {
+      console.log('🔥🔥 双击Explore按钮，触发刷新');
+      DeviceEventEmitter.emit('exploreDoubleTabRefresh');
+      
+      // 双击特殊震动反馈
+      if (Platform.OS === 'ios') {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+      }
+      
+      // 双击特殊动画 - 更强烈的震动
+      tabBarTranslateY.value = withSequence(
+        withTiming(-3, { duration: 60, easing: Easing.out(Easing.quad) }),
+        withSpring(0, { damping: 10, stiffness: 500 })
+      );
+      
+      return; // 提前返回，不执行后续逻辑
+    }
     
     // 触发高光扫过
     triggerHighlightSweep();
@@ -470,11 +499,11 @@ export const CustomTabBar: React.FC<CustomTabBarProps> = ({
       console.log('🔥 Tab切换:', route.name);
       
       navigation.navigate(route.name, route.params);
-    } else if (isFocused && route.name === 'Explore') {
-      console.log('📜 Scroll to top and refresh');
+    } else if (isFocused && route.name === 'Explore' && !isDoubleTap) {
+      console.log('📜 单击Explore - Scroll to top and refresh');
       DeviceEventEmitter.emit('scrollToTopAndRefresh');
     }
-  }, [navigation, triggerHighlightSweep]);
+  }, [navigation, triggerHighlightSweep, doubleTapDelay]);
 
   // Filter 状态变化时控制导航栏显示/隐藏
   useEffect(() => {

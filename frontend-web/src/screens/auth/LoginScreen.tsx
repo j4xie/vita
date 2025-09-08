@@ -26,6 +26,8 @@ import { useAllDarkModeStyles } from '../../hooks/useDarkModeStyles';
 import { fadeIn, slideInFromBottom } from '../../utils/animations';
 import { pomeloXAPI } from '../../services/PomeloXAPI';
 import { useUser } from '../../context/UserContext';
+import { WebHaptics as Haptics } from '../../utils/WebHaptics';
+import { WebTextInput } from '../../components/web/WebTextInput';
 
 const { width, height } = Dimensions.get('window');
 
@@ -45,10 +47,15 @@ export const LoginScreen: React.FC = () => {
   // 表单验证状态
   const [errors, setErrors] = useState<{email?: string; password?: string}>({});
   const [focusedInput, setFocusedInput] = useState<string | null>(null);
+  const [formValid, setFormValid] = useState(false);
+  const [buttonPressed, setButtonPressed] = useState(false);
   
   // 动画状态
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(50)).current;
+  const buttonScaleAnim = useRef(new Animated.Value(1)).current;
+  const buttonColorAnim = useRef(new Animated.Value(0)).current;
+  
   
   // 入场动画
   useEffect(() => {
@@ -57,6 +64,22 @@ export const LoginScreen: React.FC = () => {
       slideInFromBottom(slideAnim, 600),
     ]).start();
   }, []);
+
+  // 🟢 表单验证状态监听
+  useEffect(() => {
+    const isFormValid = email.trim().length >= 3 && password.length >= 6;
+    
+    if (isFormValid !== formValid) {
+      setFormValid(isFormValid);
+      
+      // 🎨 按钮颜色动画
+      Animated.timing(buttonColorAnim, {
+        toValue: isFormValid ? 1 : 0,
+        duration: 300,
+        useNativeDriver: false,
+      }).start();
+    }
+  }, [email, password, formValid]);
 
   const validateEmail = (email: string) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -71,7 +94,6 @@ export const LoginScreen: React.FC = () => {
     } else if (email.length < 3) {
       newErrors.email = t('auth.validation.username_min_length');
     }
-    // 移除邮箱格式验证，允许用户名格式
     
     if (!password) {
       newErrors.password = t('auth.validation.password_required');
@@ -81,6 +103,55 @@ export const LoginScreen: React.FC = () => {
     
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
+  };
+
+  // 🎨 动态按钮样式计算函数
+  const getButtonStyles = () => {
+    const backgroundColor = buttonColorAnim.interpolate({
+      inputRange: [0, 1],
+      outputRange: [theme.colors.text.disabled, theme.colors.primary], // 从灰色到橙色
+    });
+
+    const shadowOpacity = buttonColorAnim.interpolate({
+      inputRange: [0, 1],
+      outputRange: [0, 0.3],
+    });
+
+    return {
+      backgroundColor,
+      shadowOpacity,
+      transform: [{ scale: buttonScaleAnim }],
+    };
+  };
+
+  // 🔄 按钮点击动画和反馈
+  const handleButtonPressIn = () => {
+    if (!formValid || loading) return;
+    
+    setButtonPressed(true);
+    
+    // 🎵 触觉反馈
+    Haptics.impactAsync('light');
+    
+    // 🎨 缩放动画
+    Animated.spring(buttonScaleAnim, {
+      toValue: 0.95,
+      useNativeDriver: true,
+      tension: 150,
+      friction: 8,
+    }).start();
+  };
+
+  const handleButtonPressOut = () => {
+    setButtonPressed(false);
+    
+    // 恢复缩放
+    Animated.spring(buttonScaleAnim, {
+      toValue: 1,
+      useNativeDriver: true,
+      tension: 150,
+      friction: 8,
+    }).start();
   };
 
   const handleLogin = async () => {
@@ -113,9 +184,31 @@ export const LoginScreen: React.FC = () => {
         }
         
         // 导航到主页或返回之前的页面
-        const returnTo = navigation.getState()?.routes?.find((r: any) => r.params?.returnTo)?.params?.returnTo;
-        if (returnTo) {
-          navigation.navigate(returnTo);
+        const currentRoute = navigation.getState()?.routes?.[navigation.getState().index];
+        const routeParams = currentRoute?.params as any;
+        
+        if (routeParams?.returnTo) {
+          // 从活动详情页面登录的情况，返回活动详情
+          if (routeParams.returnTo === 'ActivityDetail' && routeParams.activityId) {
+            // 保持原有的activity数据（如果有的话），同时强制刷新
+            const originalActivity = routeParams.originalActivity || { id: routeParams.activityId };
+            navigation.reset({
+              index: 0,
+              routes: [
+                { name: 'Main' },
+                { 
+                  name: 'ActivityDetail', 
+                  params: { 
+                    activity: originalActivity,
+                    refreshOnReturn: true,
+                    forceRefresh: true
+                  }
+                }
+              ],
+            });
+          } else {
+            navigation.navigate(routeParams.returnTo);
+          }
         } else {
           navigation.reset({
             index: 0,
@@ -215,7 +308,7 @@ export const LoginScreen: React.FC = () => {
               <Text style={styles.label}>{t('auth.login.email_label')}</Text>
               <View style={[styles.inputWrapper, errors.email && styles.inputError, focusedInput === 'email' && styles.inputFocused]}>
                 <Ionicons name="mail-outline" size={20} color={theme.colors.text.disabled} />
-                <TextInput
+                <WebTextInput
                   style={styles.input}
                   placeholder={t('auth.login.email_placeholder')}
                   value={email}
@@ -241,7 +334,7 @@ export const LoginScreen: React.FC = () => {
               <Text style={styles.label}>{t('auth.login.password_label')}</Text>
               <View style={[styles.inputWrapper, errors.password && styles.inputError, focusedInput === 'password' && styles.inputFocused]}>
                 <Ionicons name="lock-closed-outline" size={20} color={theme.colors.text.disabled} />
-                <TextInput
+                <WebTextInput
                   style={styles.input}
                   placeholder={t('auth.login.password_placeholder')}
                   value={password}
@@ -286,27 +379,32 @@ export const LoginScreen: React.FC = () => {
               </TouchableOpacity>
             </View>
 
-                {/* Login Button - Shadow优化 */}
-                <View style={[styles.loginButtonShadowContainer, loading && styles.loginButtonDisabled]}>
-                  <LinearGradient
-                    colors={[theme.colors.secondary, theme.colors.secondaryPressed]}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 0 }}
-                    style={styles.loginButton}
-                  >
+                {/* 🚀 Dynamic Login Button - 动态交互按钮 */}
+                <Animated.View style={[
+                  styles.loginButtonShadowContainer, 
+                  getButtonStyles(),
+                  (!formValid || loading) && styles.loginButtonDisabled
+                ]}>
                   <TouchableOpacity
                     style={styles.loginButtonInner}
                     onPress={handleLogin}
-                    disabled={loading}
+                    onPressIn={handleButtonPressIn}
+                    onPressOut={handleButtonPressOut}
+                    disabled={!formValid || loading}
+                    activeOpacity={0.9}
                   >
                     {loading ? (
                       <ActivityIndicator color={theme.colors.text.inverse} />
                     ) : (
-                      <Text style={styles.loginButtonText}>{t('auth.login.login_button')}</Text>
+                      <Text style={[
+                        styles.loginButtonText,
+                        !formValid && styles.loginButtonTextDisabled
+                      ]}>
+                        {t('auth.login.login_button')}
+                      </Text>
                     )}
                   </TouchableOpacity>
-                  </LinearGradient>
-                </View>
+                </Animated.View>
 
                 {/* Register Link */}
                 <View style={styles.registerContainer}>
@@ -432,9 +530,11 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255, 255, 255, 0.5)',
     borderRadius: theme.borderRadius.base,
     paddingHorizontal: theme.spacing.md,
+    paddingVertical: theme.spacing[4], // 增加垂直内边距
     borderWidth: 1.5,
     borderColor: 'transparent', // Default state has no visible border
     transition: 'border-color 0.3s ease-in-out',
+    minHeight: 52, // 设置最小高度，让输入框更舒适
   },
   inputFocused: {
     borderColor: theme.colors.primary, // Dawn Warm border
@@ -500,33 +600,39 @@ const styles = StyleSheet.create({
     fontWeight: theme.typography.fontWeight.semibold,
   },
   
-  // Login Button Shadow容器 - 解决LinearGradient阴影冲突
+  // 🚀 Dynamic Login Button Shadow容器 - 增强交互版
   loginButtonShadowContainer: {
     borderRadius: theme.borderRadius.button,
-    backgroundColor: theme.colors.secondary, // solid background用于阴影优化
     marginBottom: theme.spacing.xl,
-    ...theme.shadows.button,
-  },
-  
-  loginButton: {
-    borderRadius: theme.borderRadius.button,
-    // 移除阴影，由loginButtonShadowContainer处理
+    shadowColor: theme.colors.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowRadius: 8,
+    elevation: 6,
+    // 背景色现在由 getButtonStyles() 动态计算
   },
   
   loginButtonInner: {
     paddingVertical: theme.spacing.lg,
     alignItems: 'center',
     justifyContent: 'center',
+    borderRadius: theme.borderRadius.button,
   },
   
   loginButtonDisabled: {
-    opacity: 0.6,
-    ...theme.shadows.none,
+    shadowOpacity: 0,
+    elevation: 0,
   },
+  
   loginButtonText: {
     fontSize: theme.typography.fontSize.xl,
     fontWeight: theme.typography.fontWeight.bold,
     color: theme.colors.text.inverse,
+    textAlign: 'center',
+  },
+  
+  loginButtonTextDisabled: {
+    color: theme.colors.text.secondary,
+    opacity: 0.7,
   },
   
   // Register Link

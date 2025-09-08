@@ -1,9 +1,9 @@
 /**
- * SafeAlert - 避免Text渲染错误的Alert替代方案
- * 开发环境使用console.log，生产环境使用原生Alert
+ * SafeAlert - Web兼容的Alert替代方案
+ * Web端使用浏览器原生alert/confirm，Native使用React Native Alert
  */
 
-import { Alert, AlertButton } from 'react-native';
+import { Alert, AlertButton, Platform } from 'react-native';
 
 interface SafeAlertOptions {
   title: string;
@@ -13,22 +13,34 @@ interface SafeAlertOptions {
 
 export const SafeAlert = {
   alert: (title: string, message?: string, buttons?: AlertButton[]) => {
-    if (__DEV__) {
-      // 开发环境：使用console.log，避免Text渲染错误
-      console.log(`[ALERT] ${title}: ${message || ''}`);
+    if (Platform.OS === 'web') {
+      // Web端处理
+      const fullMessage = message ? `${title}\n\n${message}` : title;
       
-      // 如果有按钮，自动执行第一个非取消按钮的onPress
-      if (buttons && buttons.length > 0) {
+      if (!buttons || buttons.length === 0) {
+        // 简单alert
+        window.alert(fullMessage);
+      } else if (buttons.length === 1) {
+        // 单按钮alert
+        window.alert(fullMessage);
+        const button = buttons[0];
+        if (button.onPress) {
+          setTimeout(() => button.onPress?.(), 100);
+        }
+      } else {
+        // 多按钮处理 - 使用confirm
+        const confirmed = window.confirm(fullMessage);
         const actionButton = buttons.find(btn => btn.style !== 'cancel');
-        if (actionButton && actionButton.onPress) {
-          // 延迟执行，模拟用户点击
-          setTimeout(() => {
-            actionButton.onPress?.();
-          }, 500);
+        const cancelButton = buttons.find(btn => btn.style === 'cancel');
+        
+        if (confirmed && actionButton?.onPress) {
+          setTimeout(() => actionButton.onPress?.(), 100);
+        } else if (!confirmed && cancelButton?.onPress) {
+          setTimeout(() => cancelButton.onPress?.(), 100);
         }
       }
     } else {
-      // 生产环境：使用原生Alert
+      // Native端使用React Native Alert
       Alert.alert(title, message, buttons);
     }
   }

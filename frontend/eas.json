@@ -10,8 +10,7 @@
       "channel": "development",
       "cache": {
         "disabled": false,
-        "cacheDefaultPaths": true,
-        "customPaths": ["node_modules"]
+        "paths": ["node_modules"]
       }
     },
     "preview": {
@@ -19,8 +18,7 @@
       "channel": "preview",
       "cache": {
         "disabled": false,
-        "cacheDefaultPaths": true,
-        "customPaths": ["node_modules"]
+        "paths": ["node_modules"]
       },
       "ios": {
         "simulator": false,
@@ -32,8 +30,7 @@
       "channel": "production",
       "cache": {
         "disabled": false,
-        "cacheDefaultPaths": true,
-        "customPaths": ["node_modules", "ios/Pods"]
+        "paths": ["node_modules", "ios/Pods"]
       },
       "ios": {
         "simulator": false,

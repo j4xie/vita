@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>直接输入测试 - PomeloX</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 20px;
+            background: #f5f5f5;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        h1 {
+            color: #333;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        
+        .test-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+        
+        .test-section h2 {
+            margin-top: 0;
+            color: #666;
+            font-size: 18px;
+        }
+        
+        .input-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.2s;
+            box-sizing: border-box;
+        }
+        
+        input:focus {
+            outline: none;
+            border-color: #007AFF;
+            box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1);
+        }
+        
+        .react-native-style {
+            cursor: text;
+            user-select: text;
+            -webkit-user-select: text;
+            pointer-events: auto;
+            z-index: 10;
+            position: relative;
+            -webkit-appearance: none;
+            -moz-appearance: textfield;
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        .console {
+            background: #1a1a1a;
+            color: #00ff00;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Monaco', 'Consolas', monospace;
+            font-size: 14px;
+            height: 200px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+        }
+        
+        .test-button {
+            background: #007AFF;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-right: 10px;
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
+        
+        .test-button:hover {
+            background: #0056b3;
+        }
+        
+        .status {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+        
+        .status.success { background: #d4edda; color: #155724; }
+        .status.error { background: #f8d7da; color: #721c24; }
+        
+        .iframe-container {
+            margin-top: 30px;
+            border: 2px solid #007AFF;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        
+        iframe {
+            width: 100%;
+            height: 600px;
+            border: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 PomeloX 直接输入功能测试</h1>
+        
+        <!-- 标准HTML输入测试 -->
+        <div class="test-section">
+            <h2>1️⃣ 标准HTML输入测试</h2>
+            <div class="input-group">
+                <label for="standard-text">标准文本输入</label>
+                <input type="text" id="standard-text" placeholder="请输入文字测试..." />
+                <span class="status" id="standard-status">等待测试</span>
+            </div>
+            
+            <div class="input-group">
+                <label for="standard-email">邮箱输入</label>
+                <input type="email" id="standard-email" placeholder="test@example.com" />
+                <span class="status" id="email-status">等待测试</span>
+            </div>
+        </div>
+        
+        <!-- React Native Web样式模拟 -->
+        <div class="test-section">
+            <h2>2️⃣ React Native Web样式模拟</h2>
+            <div class="input-group">
+                <label for="rn-style-text">RN Web样式输入框</label>
+                <input type="text" id="rn-style-text" class="react-native-style" placeholder="模拟RN Web输入框..." />
+                <span class="status" id="rn-status">等待测试</span>
+            </div>
+        </div>
+        
+        <!-- 控制按钮 -->
+        <div class="test-section">
+            <h2>3️⃣ 测试控制</h2>
+            <button class="test-button" onclick="testAllInputs()">🧪 测试所有输入框</button>
+            <button class="test-button" onclick="simulateTyping()">⌨️ 模拟输入</button>
+            <button class="test-button" onclick="clearAllInputs()">🧹 清空所有输入</button>
+            <button class="test-button" onclick="openPomeloX()">🚀 打开PomeloX</button>
+        </div>
+        
+        <!-- 控制台输出 -->
+        <div class="test-section">
+            <h2>4️⃣ 测试日志</h2>
+            <div class="console" id="console-output">等待测试结果...\n</div>
+        </div>
+        
+        <!-- PomeloX iframe嵌入测试 -->
+        <div class="test-section">
+            <h2>5️⃣ PomeloX应用对比测试</h2>
+            <button class="test-button" onclick="toggleIframe()">📱 显示/隐藏 PomeloX</button>
+            <div class="iframe-container" id="iframe-container" style="display: none;">
+                <iframe src="http://localhost:8090" id="pomelo-iframe"></iframe>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // 控制台日志函数
+        function log(message, type = 'info') {
+            const console = document.getElementById('console-output');
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = `[${timestamp}] ${message}\n`;
+            console.textContent += logEntry;
+            console.scrollTop = console.scrollHeight;
+            
+            console.log(`[PomeloX测试] ${message}`);
+        }
+        
+        // 更新状态显示
+        function updateStatus(elementId, success, message = '') {
+            const statusElement = document.getElementById(elementId);
+            if (success) {
+                statusElement.textContent = '✅ 正常' + (message ? `: ${message}` : '');
+                statusElement.className = 'status success';
+            } else {
+                statusElement.textContent = '❌ 异常' + (message ? `: ${message}` : '');
+                statusElement.className = 'status error';
+            }
+        }
+        
+        // 测试单个输入框
+        function testSingleInput(inputId, statusId, testName) {
+            const input = document.getElementById(inputId);
+            log(`开始测试 ${testName}...`);
+            
+            try {
+                // 测试聚焦
+                input.focus();
+                const canFocus = document.activeElement === input;
+                log(`${testName} 聚焦测试: ${canFocus ? '成功' : '失败'}`);
+                
+                if (!canFocus) {
+                    updateStatus(statusId, false, '无法聚焦');
+                    return false;
+                }
+                
+                // 测试输入
+                const testValue = `test-${Date.now()}`;
+                input.value = testValue;
+                
+                // 触发输入事件
+                input.dispatchEvent(new Event('input', { bubbles: true }));
+                input.dispatchEvent(new Event('change', { bubbles: true }));
+                
+                const valueCorrect = input.value === testValue;
+                log(`${testName} 输入测试: ${valueCorrect ? '成功' : '失败'} (值: "${input.value}")`);
+                
+                if (valueCorrect) {
+                    updateStatus(statusId, true);
+                    return true;
+                } else {
+                    updateStatus(statusId, false, '输入失败');
+                    return false;
+                }
+                
+            } catch (error) {
+                log(`${testName} 测试异常: ${error.message}`);
+                updateStatus(statusId, false, '测试异常');
+                return false;
+            }
+        }
+        
+        // 测试所有输入框
+        function testAllInputs() {
+            log('===============================');
+            log('开始全面输入测试...');
+            
+            const tests = [
+                ['standard-text', 'standard-status', '标准文本输入'],
+                ['standard-email', 'email-status', '邮箱输入'],
+                ['rn-style-text', 'rn-status', 'RN样式输入']
+            ];
+            
+            let successCount = 0;
+            tests.forEach(([inputId, statusId, name]) => {
+                if (testSingleInput(inputId, statusId, name)) {
+                    successCount++;
+                }
+            });
+            
+            log(`测试完成: ${successCount}/${tests.length} 个输入框正常`);
+            log('===============================');
+        }
+        
+        // 模拟用户输入
+        function simulateTyping() {
+            log('开始模拟用户输入...');
+            
+            const inputs = ['standard-text', 'standard-email', 'rn-style-text'];
+            const testTexts = ['用户输入测试', 'user@test.com', 'React Native输入'];
+            
+            inputs.forEach((inputId, index) => {
+                const input = document.getElementById(inputId);
+                const text = testTexts[index];
+                
+                input.focus();
+                input.value = '';
+                
+                // 逐字符模拟输入
+                let charIndex = 0;
+                const typeChar = () => {
+                    if (charIndex < text.length) {
+                        input.value += text[charIndex];
+                        input.dispatchEvent(new Event('input', { bubbles: true }));
+                        charIndex++;
+                        setTimeout(typeChar, 100);
+                    } else {
+                        input.dispatchEvent(new Event('change', { bubbles: true }));
+                        log(`模拟输入完成: ${inputId} = "${text}"`);
+                    }
+                };
+                
+                setTimeout(typeChar, index * 1000);
+            });
+        }
+        
+        // 清空所有输入
+        function clearAllInputs() {
+            const inputs = document.querySelectorAll('input');
+            inputs.forEach(input => {
+                input.value = '';
+                input.dispatchEvent(new Event('input', { bubbles: true }));
+                input.dispatchEvent(new Event('change', { bubbles: true }));
+            });
+            
+            // 重置状态
+            ['standard-status', 'email-status', 'rn-status'].forEach(statusId => {
+                const statusElement = document.getElementById(statusId);
+                statusElement.textContent = '已重置';
+                statusElement.className = 'status';
+            });
+            
+            log('所有输入框已清空并重置');
+        }
+        
+        // 打开PomeloX
+        function openPomeloX() {
+            log('正在打开PomeloX应用...');
+            window.open('http://localhost:8090', '_blank');
+        }
+        
+        // 切换iframe显示
+        function toggleIframe() {
+            const container = document.getElementById('iframe-container');
+            const isVisible = container.style.display !== 'none';
+            
+            if (isVisible) {
+                container.style.display = 'none';
+                log('已隐藏PomeloX iframe');
+            } else {
+                container.style.display = 'block';
+                log('已显示PomeloX iframe');
+            }
+        }
+        
+        // 监听所有输入事件
+        document.addEventListener('DOMContentLoaded', function() {
+            const inputs = document.querySelectorAll('input');
+            
+            inputs.forEach(input => {
+                input.addEventListener('focus', () => {
+                    log(`输入框聚焦: ${input.id}`);
+                });
+                
+                input.addEventListener('blur', () => {
+                    log(`输入框失焦: ${input.id}`);
+                });
+                
+                input.addEventListener('input', () => {
+                    log(`输入内容变化: ${input.id} = "${input.value}"`);
+                });
+                
+                input.addEventListener('change', () => {
+                    log(`输入完成: ${input.id} = "${input.value}"`);
+                });
+            });
+            
+            log('直接输入测试页面初始化完成');
+            log('请点击"测试所有输入框"按钮开始测试');
+        });
+        
+        // 全局错误处理
+        window.addEventListener('error', function(e) {
+            log(`JavaScript错误: ${e.message} (${e.filename}:${e.lineno})`, 'error');
+        });
+        
+        // 监听来自PomeloX的消息
+        window.addEventListener('message', function(event) {
+            if (event.origin === 'http://localhost:8090') {
+                log(`收到PomeloX消息: ${JSON.stringify(event.data)}`);
+            }
+        });
+    </script>
+</body>
+</html>

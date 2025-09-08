@@ -39,8 +39,8 @@ export const BeautifulActivityListScreen: React.FC = () => {
   const scrollTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
 
   // 过滤标签 - 使用硬编码避免翻译键显示问题
-  const filterTabs = ['all', 'upcoming', 'ongoing', 'ended'];
-  const filterLabels = ['All', 'Upcoming', 'Ongoing', 'Ended'];
+  const filterTabs = ['all', 'available', 'ended'];
+  const filterLabels = ['All', 'Upcoming', 'Ended'];
 
   // 加载活动数据
   const loadActivities = async () => {
@@ -92,12 +92,32 @@ export const BeautifulActivityListScreen: React.FC = () => {
     }
   }, []);
 
-  // 过滤活动
+  // 扫码处理
+  const handleScanPress = useCallback(() => {
+    navigation.navigate('QRScanner', {
+      purpose: 'scan', // 通用扫码功能
+      returnScreen: 'Explore' // 扫码完成后返回到首页
+    });
+  }, [navigation]);
+
+  // 过滤活动 - 添加状态计算日志
   const filteredActivities = activities.filter(activity => {
-    if (filterTabs[activeFilter] === 'all') return true;
-    if (filterTabs[activeFilter] === 'upcoming') return activity.status === 'upcoming';
-    if (filterTabs[activeFilter] === 'ongoing') return activity.status === 'ongoing';
-    if (filterTabs[activeFilter] === 'ended') return activity.status === 'ended';
+    const currentFilter = filterTabs[activeFilter];
+    
+    // 🎯 Debug: USC活动状态检查
+    if (activity.title.includes('USC')) {
+      console.log(`🎯 USC活动状态检查: ${activity.title}`, {
+        status: activity.status,
+        currentFilter,
+        shouldShow: currentFilter === 'all' || activity.status === currentFilter,
+        startTime: activity.startTime,
+        endTime: activity.endTime
+      });
+    }
+    
+    if (currentFilter === 'all') return true;
+    if (currentFilter === 'available') return activity.status === 'available';
+    if (currentFilter === 'ended') return activity.status === 'ended';
     return true;
   });
 
@@ -153,7 +173,7 @@ export const BeautifulActivityListScreen: React.FC = () => {
         <SimpleCategoryBar
           selectedIndex={activeFilter}
           onIndexChange={setActiveFilter}
-          onScanPress={() => console.log('扫码功能暂未实现')}
+          onScanPress={handleScanPress}
           viewLayout={viewLayout}
           onLayoutChange={setViewLayout}
         />

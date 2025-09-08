@@ -229,20 +229,27 @@ export const VolunteerScreen: React.FC = () => {
                     <View style={[
                       styles.activityStatus,
                       { 
-                        backgroundColor: activity.status === 'ongoing' 
+                        backgroundColor: activity.status === 'available' 
                           ? theme.colors.success + '20'
-                          : theme.colors.primary + '20'
+                          : activity.status === 'registered'
+                          ? theme.colors.primary + '20'
+                          : theme.colors.text.secondary + '20'
                       }
                     ]}>
                       <Text style={[
                         styles.activityStatusText,
                         {
-                          color: activity.status === 'ongoing'
+                          color: activity.status === 'available'
                             ? theme.colors.success
-                            : theme.colors.primary
+                            : activity.status === 'registered'
+                            ? theme.colors.primary
+                            : theme.colors.text.secondary
                         }
                       ]}>
-                        {activity.status === 'ongoing' ? t('activityCard.status.ongoing') : t('activityCard.status.upcoming')}
+                        {activity.status === 'available' ? t('activityCard.status.available') : 
+                         activity.status === 'registered' ? t('activityCard.status.registered') : 
+                         activity.status === 'checked_in' ? t('activityCard.status.checked_in') : 
+                         t('activityCard.status.ended')}
                       </Text>
                     </View>
                   </View>

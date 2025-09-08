@@ -25,8 +25,7 @@ import { WebHaptics as Haptics } from '../../utils/WebHaptics';
 import { theme } from '../../theme';
 import { LIQUID_GLASS_LAYERS, RESTRAINED_COLORS } from '../../theme/core';
 import { useCardPress } from '../../hooks/useCardPress';
-import { OptimizedImage } from '../common/OptimizedImage';
-// FastImage import removed - using OptimizedImage instead
+import { UltraFastImage } from '../common/UltraFastImage';
 import { formatActivityDateWithTimezone, FrontendActivity } from '../../utils/activityAdapter';
 
 const { width: screenWidth } = Dimensions.get('window');
@@ -275,15 +274,12 @@ const GridActivityCardComponent: React.FC<GridActivityCardProps> = ({
         {/* 图片背景 */}
         {activity.image && !imageError ? (
           <>
-            <OptimizedImage
-              source={{ 
-                uri: activity.image,
-                priority: 'normal'
-              }}
+            <UltraFastImage
+              uri={activity.image}
               style={styles.image}
               resizeMode="cover"
               onLoadStart={() => setImageLoading(true)}
-              onLoadEnd={() => setImageLoading(false)}
+              onLoad={() => setImageLoading(false)}
               onError={() => {
                 setImageError(true);
                 setImageLoading(false);

@@ -512,11 +512,12 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.background.secondary,
     borderRadius: theme.borderRadius.lg,
     paddingHorizontal: theme.spacing[4],
-    paddingVertical: theme.spacing[3],
+    paddingVertical: theme.spacing[4], // 增加垂直内边距
     fontSize: theme.typography.fontSize.base,
     color: theme.colors.text.primary,
     borderWidth: 1,
     borderColor: 'transparent',
+    minHeight: 52, // 设置最小高度，让输入框更舒适
   },
   inputError: {
     borderColor: theme.colors.danger,

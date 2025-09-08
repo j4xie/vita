@@ -10,6 +10,7 @@ interface WebFlatListProps {
   contentContainerStyle?: any;
   style?: any;
   showsVerticalScrollIndicator?: boolean;
+  ListEmptyComponent?: React.ComponentType<any> | React.ReactElement | (() => React.ReactElement);
   [key: string]: any;
 }
 
@@ -21,6 +22,7 @@ export const WebFlatList: React.FC<WebFlatListProps> = ({
   contentContainerStyle,
   style,
   showsVerticalScrollIndicator,
+  ListEmptyComponent,
   ...otherProps
 }) => {
   if (Platform.OS === 'web') {
@@ -37,14 +39,25 @@ export const WebFlatList: React.FC<WebFlatListProps> = ({
           minHeight: '100vh',
           paddingBottom: '120px', // 底部安全区域
         }}>
-          {data.map((item, index) => {
-            const key = keyExtractor ? keyExtractor(item, index) : item.id || index.toString();
-            return (
-              <div key={key}>
-                {renderItem({ item, index })}
+          {data.length > 0 ? (
+            data.map((item, index) => {
+              const key = keyExtractor ? keyExtractor(item, index) : item.id || index.toString();
+              return (
+                <div key={key}>
+                  {renderItem({ item, index })}
+                </div>
+              );
+            })
+          ) : (
+            ListEmptyComponent && (
+              <div>
+                {React.isValidElement(ListEmptyComponent) ? 
+                  ListEmptyComponent : 
+                  React.createElement(ListEmptyComponent as React.ComponentType)
+                }
               </div>
-            );
-          })}
+            )
+          )}
         </div>
         
         {/* 下拉刷新功能 - 简化版本 */}
@@ -77,6 +90,7 @@ export const WebFlatList: React.FC<WebFlatListProps> = ({
       contentContainerStyle={contentContainerStyle}
       style={style}
       showsVerticalScrollIndicator={showsVerticalScrollIndicator}
+      ListEmptyComponent={ListEmptyComponent}
       {...otherProps}
     />
   );

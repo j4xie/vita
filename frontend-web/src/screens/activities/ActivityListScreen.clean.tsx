@@ -395,10 +395,10 @@ export const ActivityListScreen: React.FC = () => {
   // Animation now handled by LiquidGlassTab component
   
   // 修改为基于时间的3个状态 - 使用翻译函数
-  const filterTabs = ['all', 'upcoming', 'ended'];
+  const filterTabs = ['all', 'available', 'ended'];
   const segmentLabels = [
     t('filters.status.all') || '全部',
-    t('filters.status.upcoming') || '即将开始',
+    t('filters.status.available') || '即将开始',
     t('filters.status.ended') || '已结束',
   ];
 
@@ -413,7 +413,7 @@ export const ActivityListScreen: React.FC = () => {
   ];
 
   const statusFilters = [
-    { id: 'upcoming', label: t('filters.status.upcoming') || '即将开始', icon: 'time-outline' },
+    { id: 'available', label: t('filters.status.available') || '即将开始', icon: 'time-outline' },
     { id: 'ended', label: t('filters.status.ended') || '已结束', icon: 'close-circle-outline' },
   ];
 
@@ -567,10 +567,10 @@ export const ActivityListScreen: React.FC = () => {
             title: activity.title?.substring(0, 10) + '...',
             originalStatus: activity.status,
             cachedStatus: cachedStatus,
-            willApplyCache: !!(cachedStatus && cachedStatus !== 'upcoming')
+            willApplyCache: !!(cachedStatus && cachedStatus !== 'available')
           });
           
-          if (cachedStatus && cachedStatus !== 'upcoming') {
+          if (cachedStatus && cachedStatus !== 'available') {
             console.log('✅ [FETCH-ACTIVITIES] 应用缓存状态:', {
               activityId: activity.id,
               title: activity.title,
@@ -586,7 +586,7 @@ export const ActivityListScreen: React.FC = () => {
               title: activity.title,
               originalStatus: activity.status,
               cachedStatus: cachedStatus,
-              reason: !cachedStatus ? '无缓存状态' : cachedStatus === 'upcoming' ? '缓存状态为upcoming' : '未知原因'
+              reason: !cachedStatus ? '无缓存状态' : cachedStatus === 'available' ? '缓存状态为upcoming' : '未知原因'
             });
           }
           return activity;
@@ -597,7 +597,7 @@ export const ActivityListScreen: React.FC = () => {
             totalActivities: activitiesWithCachedStatus.length,
             registeredActivities: activitiesWithCachedStatus.filter(a => a.status === 'registered').length,
             checkedInActivities: activitiesWithCachedStatus.filter(a => a.status === 'checked_in').length,
-            upcomingActivities: activitiesWithCachedStatus.filter(a => a.status === 'upcoming').length
+            upcomingActivities: activitiesWithCachedStatus.filter(a => a.status === 'available').length
           });
           setActivities(activitiesWithCachedStatus);
         } else {
@@ -790,7 +790,7 @@ export const ActivityListScreen: React.FC = () => {
           const activityStart = new Date(activity.date + ' ' + (activity.time || '00:00'));
           const activityEnd = activity.endDate ? new Date(activity.endDate + ' 23:59:59') : activityStart;
           
-          if (filterId === 'upcoming') {
+          if (filterId === 'available') {
             return activityStart.getTime() > now.getTime();
           } else if (filterId === 'ended') {
             return activityEnd.getTime() < now.getTime();
@@ -864,7 +864,7 @@ export const ActivityListScreen: React.FC = () => {
       
       // 前端实时计算活动状态，不依赖后端可能过时的状态
       switch(currentFilterKey) {
-        case 'upcoming':
+        case 'available':
           // 即将开始：活动开始时间在现在之后
           matchesFilter = activityStart.getTime() > now.getTime();
           break;
@@ -889,7 +889,7 @@ export const ActivityListScreen: React.FC = () => {
           const activityStart = new Date(activity.date + ' ' + (activity.time || '00:00'));
           const activityEnd = activity.endDate ? new Date(activity.endDate + ' 23:59:59') : activityStart;
           
-          if (filterId === 'upcoming') {
+          if (filterId === 'available') {
             return activityStart.getTime() > now.getTime();
           } else if (filterId === 'ended') {
             return activityEnd.getTime() < now.getTime();

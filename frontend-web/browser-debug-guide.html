@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🔧 浏览器开发者工具调试指南</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+            background: #f8f9fa;
+        }
+        .container {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            margin: 20px 0;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+        }
+        .step-card {
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 16px 0;
+            background: #f8f9fa;
+        }
+        .step-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .keyboard-shortcut {
+            background: #e9ecef;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-weight: bold;
+            border: 1px solid #adb5bd;
+        }
+        .code-block {
+            background: #1a1a1a;
+            color: #00ff41;
+            padding: 16px;
+            border-radius: 8px;
+            font-family: 'Monaco', 'Consolas', monospace;
+            font-size: 14px;
+            line-height: 1.4;
+            margin: 12px 0;
+            overflow-x: auto;
+        }
+        .highlight {
+            background: #fff3cd;
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-weight: bold;
+        }
+        .warning {
+            background: #ffe6e6;
+            border-left: 4px solid #dc3545;
+            padding: 12px 16px;
+            border-radius: 4px;
+            margin: 12px 0;
+        }
+        .success {
+            background: #e6ffe6;
+            border-left: 4px solid #28a745;
+            padding: 12px 16px;
+            border-radius: 4px;
+            margin: 12px 0;
+        }
+        .info {
+            background: #e6f3ff;
+            border-left: 4px solid #007bff;
+            padding: 12px 16px;
+            border-radius: 4px;
+            margin: 12px 0;
+        }
+        .tab-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 16px;
+            margin: 20px 0;
+        }
+        .tab-card {
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            padding: 16px;
+            background: white;
+        }
+        .tab-card h4 {
+            margin-top: 0;
+            color: #495057;
+        }
+        .icon {
+            font-size: 24px;
+        }
+        .demo-button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 4px;
+            font-size: 12px;
+        }
+        .demo-button:hover {
+            background: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🔧 浏览器开发者工具调试指南</h1>
+        <p>验证PomeloX Web端修复效果的完整指南</p>
+    </div>
+
+    <div class="container">
+        <h2>🚀 快速开始</h2>
+        
+        <div class="step-card">
+            <div class="step-title">
+                <span class="icon">⌨️</span>
+                第一步：打开开发者工具
+            </div>
+            <p><strong>键盘快捷键：</strong></p>
+            <ul>
+                <li><span class="keyboard-shortcut">F12</span> (Windows/Linux)</li>
+                <li><span class="keyboard-shortcut">Cmd + Option + I</span> (macOS)</li>
+                <li><span class="keyboard-shortcut">Ctrl + Shift + I</span> (Windows/Linux)</li>
+            </ul>
+            <p><strong>或者：</strong> 右键点击页面 → 选择"检查"或"Inspect"</p>
+        </div>
+
+        <div class="step-card">
+            <div class="step-title">
+                <span class="icon">🌐</span>
+                第二步：访问你的Web应用
+            </div>
+            <div class="code-block">
+                // 在浏览器地址栏输入：
+                http://localhost:8088
+                
+                // 或备用地址：
+                http://localhost:8082
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>🔍 具体调试步骤</h2>
+        
+        <div class="tab-grid">
+            <div class="tab-card">
+                <h4>📋 Console 控制台</h4>
+                <p>查看JavaScript日志和错误</p>
+                <button class="demo-button" onclick="testConsole()">测试控制台</button>
+                <div class="code-block" style="font-size: 12px;">
+// 在控制台中输入以下命令测试：
+console.log('🎯 测试我们的修复');
+
+// 测试时间状态计算
+const testActivity = {
+  startTime: "2024-01-15 14:00:00",
+  endTime: "2024-01-15 16:00:00"
+};
+console.log('活动数据:', testActivity);
+                </div>
+            </div>
+
+            <div class="tab-card">
+                <h4>📱 Elements 元素</h4>
+                <p>检查DOM结构和CSS样式</p>
+                <button class="demo-button" onclick="inspectElements()">检查元素</button>
+                <div class="code-block" style="font-size: 12px;">
+// 查找我们修复的组件：
+// 1. 推荐码BottomSheet
+// 2. 活动分类按钮
+// 3. 摄像头权限提示
+                </div>
+            </div>
+
+            <div class="tab-card">
+                <h4>🌐 Network 网络</h4>
+                <p>监控API请求和响应</p>
+                <button class="demo-button" onclick="checkNetwork()">监控网络</button>
+                <div class="code-block" style="font-size: 12px;">
+// 关注以下API请求：
+// - 活动列表API
+// - 推荐码验证API
+// - 用户权限API
+                </div>
+            </div>
+
+            <div class="tab-card">
+                <h4>📋 Application 应用</h4>
+                <p>检查存储和权限</p>
+                <button class="demo-button" onclick="checkPermissions()">检查权限</button>
+                <div class="code-block" style="font-size: 12px;">
+// 检查项目：
+// - Camera权限状态
+// - LocalStorage数据
+// - SessionStorage缓存
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>🎯 具体验证三个修复</h2>
+
+        <div class="step-card">
+            <div class="step-title">
+                <span class="icon">🕐</span>
+                验证一：时间分类逻辑修复
+            </div>
+            
+            <div class="info">
+                <strong>测试步骤：</strong>
+                <ol>
+                    <li>打开 <span class="highlight">Console</span> 标签页</li>
+                    <li>进入活动列表页面</li>
+                    <li>点击"即将开始"和"已结束"分类</li>
+                    <li>观察控制台日志输出</li>
+                </ol>
+            </div>
+
+            <div class="code-block">
+// 在控制台中应该看到类似输出：
+[ActivityListScreen] 活动1[测试活动] 状态: upcoming
+[ActivityStatusCalculator] 时间解析成功
+[ActivityListScreen] 分类过滤完成，显示 5 个活动
+            </div>
+
+            <div class="success">
+                <strong>✅ 修复成功标志：</strong>
+                <ul>
+                    <li>活动正确按时间状态分类</li>
+                    <li>没有时间解析错误</li>
+                    <li>分类切换响应快速</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="step-card">
+            <div class="step-title">
+                <span class="icon">📷</span>
+                验证二：摄像头权限修复
+            </div>
+            
+            <div class="info">
+                <strong>测试步骤：</strong>
+                <ol>
+                    <li>打开 <span class="highlight">Console</span> 标签页</li>
+                    <li>进入扫码页面</li>
+                    <li>观察摄像头权限请求</li>
+                    <li>查看错误提示和指导</li>
+                </ol>
+            </div>
+
+            <div class="code-block">
+// 在控制台中应该看到类似输出：
+📷 [EnhancedWebCameraView] 环境检查: HTTPS ✅
+📷 [EnhancedWebCameraView] 请求摄像头权限
+✅ [EnhancedWebCameraView] 摄像头权限获取成功
+▶️ [EnhancedWebCameraView] 视频流开始播放
+            </div>
+
+            <div class="success">
+                <strong>✅ 修复成功标志：</strong>
+                <ul>
+                    <li>显示清晰的权限指导</li>
+                    <li>提供具体的错误解决方案</li>
+                    <li>支持重试和设备切换</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="step-card">
+            <div class="step-title">
+                <span class="icon">🎫</span>
+                验证三：推荐码输入修复
+            </div>
+            
+            <div class="info">
+                <strong>测试步骤：</strong>
+                <ol>
+                    <li>打开 <span class="highlight">Elements</span> 标签页</li>
+                    <li>进入推荐码扫描页面</li>
+                    <li>点击"手动输入推荐码"按钮</li>
+                    <li>观察BottomSheet组件出现</li>
+                </ol>
+            </div>
+
+            <div class="code-block">
+// 在Elements中应该看到：
+&lt;ReferralCodeInputSheet visible={true}&gt;
+  &lt;View style="overlay"&gt;
+    &lt;View style="sheetContainer"&gt;
+      &lt;TextInput placeholder="请输入推荐码" /&gt;
+    &lt;/View&gt;
+  &lt;/View&gt;
+&lt;/ReferralCodeInputSheet&gt;
+            </div>
+
+            <div class="success">
+                <strong>✅ 修复成功标志：</strong>
+                <ul>
+                    <li>点击按钮后弹出BottomSheet</li>
+                    <li>支持输入验证和格式检查</li>
+                    <li>提供使用指导和示例</li>
+                </ul>
+            </li>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>🐛 常见问题调试</h2>
+
+        <div class="step-card">
+            <div class="step-title">
+                <span class="icon">❌</span>
+                如果功能还没生效
+            </div>
+            
+            <div class="warning">
+                <strong>可能原因：</strong>
+                <ol>
+                    <li>浏览器缓存未清除</li>
+                    <li>热重载未触发</li>
+                    <li>代码编译错误</li>
+                </ol>
+            </div>
+
+            <div class="code-block">
+// 解决方案：
+// 1. 强制刷新页面
+Ctrl + F5 (Windows) / Cmd + Shift + R (Mac)
+
+// 2. 清除缓存
+// 在开发者工具的Network标签页中
+// 右键点击刷新按钮 → "Empty Cache and Hard Reload"
+
+// 3. 检查控制台错误
+// 查看Console标签页中的红色错误信息
+            </div>
+        </div>
+
+        <div class="step-card">
+            <div class="step-title">
+                <span class="icon">🔍</span>
+                高级调试技巧
+            </div>
+            
+            <div class="code-block">
+// 1. 设置断点调试
+// 在Sources标签页中找到相关文件，点击行号设置断点
+
+// 2. 监控特定函数
+// 在Console中输入：
+monitorEvents(document, 'click');
+
+// 3. 检查React组件状态
+// 安装React Developer Tools扩展
+// 查看组件树和状态变化
+
+// 4. 性能分析
+// 在Performance标签页中录制用户交互
+// 分析渲染性能和响应时间
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>📝 验证清单</h2>
+        
+        <div class="step-card">
+            <h3>请按顺序完成以下验证：</h3>
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px;">
+                <div>
+                    <h4>🕐 时间分类</h4>
+                    <label><input type="checkbox"> 打开活动列表</label><br>
+                    <label><input type="checkbox"> 点击分类按钮</label><br>
+                    <label><input type="checkbox"> 验证分类正确</label><br>
+                    <label><input type="checkbox"> 检查控制台日志</label><br>
+                </div>
+                <div>
+                    <h4>📷 摄像头权限</h4>
+                    <label><input type="checkbox"> 进入扫码页面</label><br>
+                    <label><input type="checkbox"> 观察权限请求</label><br>
+                    <label><input type="checkbox"> 测试错误处理</label><br>
+                    <label><input type="checkbox"> 验证重试功能</label><br>
+                </div>
+                <div>
+                    <h4>🎫 推荐码输入</h4>
+                    <label><input type="checkbox"> 点击输入按钮</label><br>
+                    <label><input type="checkbox"> 验证BottomSheet</label><br>
+                    <label><input type="checkbox"> 测试输入验证</label><br>
+                    <label><input type="checkbox"> 检查提交功能</label><br>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function testConsole() {
+            console.log('🎯 测试控制台功能');
+            console.log('当前时间:', new Date().toISOString());
+            console.log('浏览器信息:', navigator.userAgent);
+            console.log('页面URL:', window.location.href);
+            alert('请查看浏览器控制台（F12）中的输出信息');
+        }
+
+        function inspectElements() {
+            alert('请按F12打开开发者工具，然后：\n1. 点击Elements标签页\n2. 使用选择器工具(Ctrl+Shift+C)\n3. 点击页面中的元素进行检查');
+        }
+
+        function checkNetwork() {
+            console.log('🌐 开始监控网络请求');
+            alert('请按F12打开开发者工具，然后：\n1. 点击Network标签页\n2. 刷新页面或进行操作\n3. 观察API请求和响应');
+        }
+
+        function checkPermissions() {
+            console.log('📋 检查应用权限和存储');
+            
+            // 检查摄像头权限
+            if (navigator.permissions) {
+                navigator.permissions.query({name: 'camera'}).then(result => {
+                    console.log('摄像头权限状态:', result.state);
+                });
+            }
+            
+            // 检查本地存储
+            console.log('LocalStorage内容:', localStorage);
+            console.log('SessionStorage内容:', sessionStorage);
+            
+            alert('请查看控制台中的权限和存储信息');
+        }
+
+        // 页面加载完成后的提示
+        window.addEventListener('load', () => {
+            console.log('🔧 浏览器调试指南页面已加载');
+            console.log('💡 提示：按F12打开开发者工具开始调试');
+        });
+    </script>
+</body>
+</html>
+
+
+
+
+

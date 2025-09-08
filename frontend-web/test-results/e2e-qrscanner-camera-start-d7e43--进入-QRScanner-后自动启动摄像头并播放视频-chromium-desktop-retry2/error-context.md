@@ -1,0 +1,104 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e12]:
+  - generic [ref=e13]:
+    - generic [ref=e18]:
+      - generic [ref=e20]:
+        - generic [ref=e22] [cursor=pointer]: 
+        - generic [ref=e23]:
+          - generic [ref=e25] [cursor=pointer]: All
+          - generic [ref=e27] [cursor=pointer]: Upcoming
+          - generic [ref=e29] [cursor=pointer]: Ended
+        - generic [ref=e31] [cursor=pointer]: 
+      - generic [ref=e34]:
+        - generic [ref=e37]:
+          - generic [ref=e43]: 即将开始
+          - generic [ref=e44]:
+            - generic [ref=e45]: UCI CU免费接机
+            - generic [ref=e46]:
+              - generic [ref=e47]:
+                - generic [ref=e48]: 
+                - generic [ref=e49]: LAX
+              - generic [ref=e50]: 09/10-09/16
+        - generic [ref=e53]:
+          - generic [ref=e59]: 即将开始
+          - generic [ref=e60]:
+            - generic [ref=e61]: UCSD CU免费接机
+            - generic [ref=e62]:
+              - generic [ref=e63]:
+                - generic [ref=e64]: 
+                - generic [ref=e65]: LAX
+              - generic [ref=e66]: 09/13-09/17
+        - generic [ref=e69]:
+          - generic [ref=e75]: 即将开始
+          - generic [ref=e76]:
+            - generic [ref=e77]: UCD CU免费接机签到
+            - generic [ref=e78]:
+              - generic [ref=e79]:
+                - generic [ref=e80]: 
+                - generic [ref=e81]: SFO机场
+              - generic [ref=e82]: 09/14-09/17
+        - generic [ref=e85]:
+          - progressbar [ref=e90]:
+            - img [ref=e92]
+          - generic [ref=e97]: 即将开始
+          - generic [ref=e98]:
+            - generic [ref=e99]: UW CU免费接机签到
+            - generic [ref=e100]:
+              - generic [ref=e101]:
+                - generic [ref=e102]: 
+                - generic [ref=e103]: Tacoma机场
+              - generic [ref=e104]: 09/15-09/18
+        - generic [ref=e112]:
+          - generic [ref=e113]: UCLA CU免费接机
+          - generic [ref=e114]:
+            - generic [ref=e115]:
+              - generic [ref=e116]: 
+              - generic [ref=e117]: LAX
+            - generic [ref=e118]: 09/05-09/09
+        - generic [ref=e121]:
+          - progressbar [ref=e126]:
+            - img [ref=e128]
+          - generic [ref=e132]:
+            - generic [ref=e133]: UCSB CU免费接机
+            - generic [ref=e134]:
+              - generic [ref=e135]:
+                - generic [ref=e136]: 
+                - generic [ref=e137]: LAX
+              - generic [ref=e138]: 09/17-09/20
+        - generic [ref=e146]:
+          - generic [ref=e147]: USC免费接机活动
+          - generic [ref=e148]:
+            - generic [ref=e149]:
+              - generic [ref=e150]: 
+              - generic [ref=e151]: LAX
+            - generic [ref=e152]: 08/23-08/27
+    - generic [ref=e154]:
+      - generic [ref=e158]:
+        - generic [ref=e159]:
+          - tab "探索, selected" [ref=e161] [cursor=pointer]:
+            - generic [ref=e162] [cursor=pointer]:
+              - generic [ref=e164] [cursor=pointer]: 
+              - generic [ref=e165] [cursor=pointer]: 探索
+          - tab "社区" [ref=e167] [cursor=pointer]:
+            - generic [ref=e168] [cursor=pointer]:
+              - generic [ref=e170] [cursor=pointer]: 
+              - generic [ref=e171] [cursor=pointer]: 社区
+          - tab "安心" [ref=e173] [cursor=pointer]:
+            - generic [ref=e174] [cursor=pointer]:
+              - generic [ref=e176] [cursor=pointer]: 
+              - generic [ref=e177] [cursor=pointer]: 安心
+          - tab "个人" [ref=e179] [cursor=pointer]:
+            - generic [ref=e180] [cursor=pointer]:
+              - generic [ref=e182] [cursor=pointer]: 
+              - generic [ref=e183] [cursor=pointer]: 个人
+        - generic [ref=e186] [cursor=pointer]: 
+        - generic [ref=e189] [cursor=pointer]: 
+      - generic [ref=e190]:
+        - generic [ref=e191]: 
+        - textbox "搜索活动..." [ref=e192]
+  - generic [ref=e201] [cursor=pointer]:
+    - img [ref=e202] [cursor=pointer]
+    - generic [ref=e220] [cursor=pointer]: AI
+```

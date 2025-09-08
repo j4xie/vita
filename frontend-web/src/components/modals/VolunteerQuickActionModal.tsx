@@ -240,9 +240,9 @@ const VolunteerQuickActionModalComponent: React.FC<VolunteerQuickActionModalProp
     const minutes = Math.floor((durationMs % (1000 * 60 * 60)) / (1000 * 60));
     
     if (hours > 0) {
-      return `${hours}小时${minutes}分钟`;
+      return `${hours} ${t('common.time.hours', '小时')} ${minutes} ${t('common.time.minutes', '分钟')}`;
     } else {
-      return `${minutes}分钟`;
+      return `${minutes} ${t('common.time.minutes', '分钟')}`;
     }
   };
 

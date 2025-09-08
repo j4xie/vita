@@ -51,6 +51,7 @@
     "operation_error": "Operation error, please refresh page and retry",
     "condition_not_met": "{{operation}} condition not met",
     "unknown": "Unknown",
+    "no_image": "No image available",
     "network_timeout": "Network timeout, please retry",
     "server_connection_failed": "Server connection failed, please try again later",
     "load_failed": "Load failed, please check network and retry",
@@ -273,11 +274,12 @@
         "contact_info_desc": "Please select and fill in your phone number",
         "referral_code": "Referral Code: {{code}}",
         "username_label": "Username *",
-        "username_placeholder": "Enter username (6-20 alphanumeric)",
+        "username_placeholder": "e.g. alex123, sophia_wang (6-20 alphanumeric)",
         "legal_name_label": "Legal Name *",
-        "legal_name_placeholder": "Enter your legal name",
+        "legal_name_placeholder": "e.g. Zhang San or John Smith (as on passport/ID)",
+        "legal_name_description": "Please use your full name as shown on passport or ID",
         "english_nickname_label": "English Nickname *",
-        "english_nickname_placeholder": "Enter your English nickname",
+        "english_nickname_placeholder": "e.g. Alex, Sophia (commonly used English name)",
         "university_label": "University *",
         "university_placeholder": "Select your university",
         "gender_label": "Gender",
@@ -305,7 +307,8 @@
         "last_name_label": "Last Name *",
         "last_name_placeholder": "Enter your last name",
         "school_email_preview": "School Email Preview",
-        "email_username_placeholder": "Username",
+        "email_username_placeholder": "e.g. zhang.san, alex123",
+        "email_prefix_placeholder": "username",
         "complete_email": "Complete Email",
         "loading_schools": "Loading schools...",
         "step2_description": "Set up your login account and password",
@@ -351,7 +354,8 @@
         "nickname_required": "Nickname is required",
         "phone_required": "Phone number is required",
         "email_required": "Email is required",
-        "email_format": "Invalid email format"
+        "email_format": "Invalid email format",
+        "verification_code_format": "Invalid verification code format"
       },
       "username_required": "Username is required",
       "username_length": "Username must be 6-20 characters",
@@ -453,10 +457,8 @@
     },
     "filters": {
       "all": "All",
-      "ongoing": "Ongoing",
-      "upcoming": "Upcoming",
-      "ended": "Ended",
       "available": "Available",
+      "ended": "Ended",
       "availableOnly": "Available only"
     },
     "peopleRegistered": "people registered",
@@ -474,6 +476,26 @@
       "full": "Full",
       "ended": "Activity Ended"
     },
+    "share": {
+      "title": "Share Activity",
+      "message": "{{title}}\nTime: {{date}}\nLocation: {{location}}\n\nJoin this activity!",
+      "success": "Share Success",
+      "failed": "Share failed, please try again",
+      "copied_to_clipboard": "Activity info copied to clipboard"
+    },
+    "notification": {
+      "too_late_title": "Cannot Set Reminder",
+      "too_late_message": "Activity is starting soon or has started, cannot set reminder",
+      "not_supported_title": "Notifications Not Supported",
+      "not_supported_message": "Your browser does not support notifications",
+      "permission_denied_title": "Notification Permission Denied",
+      "permission_denied_message": "Please allow notification permission in browser settings",
+      "set_success_title": "Reminder Set Successfully",
+      "set_success_message": "Activity reminder set for {{time}}",
+      "set_failed": "Failed to set reminder, please try again",
+      "reminder_title": "Activity Reminder",
+      "reminder_body": "Activity \"{{title}}\" will start in 1 hour"
+    },
     "registration": {
       "form_title": "Event Registration",
       "personal_info": "Personal Information",
@@ -482,6 +504,9 @@
       "submit_button": "Confirm Registration",
       "success_title": "Registration Successful",
       "success_message": "You have successfully registered for this activity. Please scan the check-in QR code on-site to complete check-in.",
+      "checkin_option": "Check-in Now",
+      "checkin_prompt_title": "Start Volunteer Service",
+      "checkin_prompt_message": "Registration successful! Would you like to go to the check-in page to start your volunteer service?",
       "failed_title": "Registration Failed",
       "failed_message": "Registration failed, please try again later",
       "register_now": "Register Now"
@@ -960,12 +985,25 @@
       "merchant_instruction": "Place merchant QR code in the frame\nto get exclusive membership card",
       "manual_input": "Enter Code",
       "manual_input_title": "Enter Code",
-      "manual_input_desc": "Enter your referral code",
-      "input_placeholder": "Enter your referral code",
+      "manual_input_desc": "Enter referral code",
+      "input_placeholder": "Enter referral code",
       "referral_code_label": "Referral Code",
+      "format_hint": "8 characters (letters and numbers)",
+      "how_to_get": "How to get referral code",
+      "get_from_organization": "Get from your organization or official platform",
       "confirm": "Confirm",
       "cancel": "Cancel",
       "manual_input_button": "Manual Input"
+    },
+    "userDetail": {
+      "title": "User Detail",
+      "no_data": "No user data",
+      "volunteer_stats": "Volunteer Service Stats",
+      "total_hours": "Total Hours",
+      "total_records": "Total Records",
+      "no_volunteer_data": "No volunteer service data",
+      "limited_access": "Limited access, basic info only",
+      "manage_volunteer": "Manage Volunteer"
     },
     "camera": {
       "permission_requesting": "Getting camera access...",
@@ -1150,15 +1188,19 @@
     "student": "Student",
     "user": "User",
     "guest": "Guest",
-    "not_logged_in": "Not logged in"
+    "not_logged_in": "Not logged in",
+    "time": {
+      "hours": "hours",
+      "minutes": "minutes"
+    }
   },
   "activityCard": {
     "status": {
-      "ongoing": "Ongoing",
-      "upcoming": "Upcoming",
+      "available": "Available",
+      "registered": "Registered",
+      "checked_in": "Checked In",
       "ended": "Ended",
-      "full": "Full",
-      "available": "Available"
+      "full": "Full"
     },
     "registered": "Registered",
     "people": "people"
@@ -1294,7 +1336,7 @@
     },
     "status": {
       "all": "All",
-      "upcoming": "Upcoming",
+      "available": "Available",
       "ended": "Ended"
     },
     "categoriesTitle": "Categories",

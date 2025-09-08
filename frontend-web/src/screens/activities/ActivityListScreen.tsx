@@ -45,8 +45,10 @@ import { ListSkeleton } from '../../components/ui/SkeletonScreen';
 import { pomeloXAPI } from '../../services/PomeloXAPI';
 import { adaptActivityList, FrontendActivity } from '../../utils/activityAdapter';
 import { ACTIVITY_CATEGORIES, getCategoryName } from '../../data/activityCategories';
+import { calculateActivityStatus, filterActivitiesByStatus, type ActivityTimeData } from '../../utils/activityStatusCalculator';
 // import { getActivityListSimple } from '../../utils/networkHelper'; // 废弃：不带token的简化版本
 import { usePerformanceDegradation } from '../../hooks/usePerformanceDegradation';
+import { useImagePreloader } from '../../hooks/useImagePreloader';
 import { useFilter } from '../../context/FilterContext';
 import { useTabBarVerification } from '../../hooks/useTabBarStateGuard';
 import { useWebTabBarRestore } from '../../hooks/useWebTabBarRestore';
@@ -101,6 +103,9 @@ export const ActivityListScreen: React.FC = () => {
   // V1.1 规范: BottomSheet 过滤器状态
   const [showFilterBottomSheet, setShowFilterBottomSheet] = useState(false);
   const [activeFilters, setActiveFilters] = useState<string[]>([]);
+  
+  // 🚀 图片预加载Hook
+  const { preloadActivityImage, getCacheStats } = useImagePreloader(activities, true);
   
   // 新增: Header 显隐状态
   const [isReduceMotionEnabled, setIsReduceMotionEnabled] = useState(false);
@@ -317,11 +322,11 @@ export const ActivityListScreen: React.FC = () => {
 
   // Animation now handled by LiquidGlassTab component
   
-  // 修改为基于时间的3个状态 - 使用翻译函数
-  const filterTabs = ['all', 'upcoming', 'ended'];
+  // 修改为基于报名状态的3个状态 - 使用翻译函数
+  const filterTabs = ['all', 'available', 'ended'];
   const segmentLabels = [
     t('filters.status.all') || '全部',
-    t('filters.status.upcoming') || '即将开始',
+    t('filters.status.available') || '可报名',
     t('filters.status.ended') || '已结束',
   ];
 
@@ -336,7 +341,7 @@ export const ActivityListScreen: React.FC = () => {
   ];
 
   const statusFilters = [
-    { id: 'upcoming', label: t('filters.status.upcoming') || '即将开始', icon: 'time-outline' },
+    { id: 'available', label: t('filters.status.available') || '可报名', icon: 'time-outline' },
     { id: 'ended', label: t('filters.status.ended') || '已结束', icon: 'close-circle-outline' },
   ];
 
@@ -453,21 +458,43 @@ export const ActivityListScreen: React.FC = () => {
 
       const selectedCategory = activeFilter > 0 ? ACTIVITY_CATEGORIES[activeFilter - 1] : null;
       
-      // 🔧 支持访客模式和个性化模式
-      const isLoggedIn = !!(user?.id);
+      // 🔧 支持访客模式和个性化模式 - 修复用户ID获取逻辑
+      const isLoggedIn = !!(user?.id || user?.userId);
+      const userIdToUse = isLoggedIn ? (user.id || user.userId) : undefined;
+      const parsedUserId = userIdToUse ? parseInt(String(userIdToUse)) : undefined;
+      
+      // 🔧 验证用户ID有效性
+      const isValidUserId = parsedUserId && !isNaN(parsedUserId) && parsedUserId > 0;
+      
+      console.log('📋 [FETCH-ACTIVITIES] 准备获取活动列表:', {
+        page,
+        isRefresh,
+        isLoggedIn,
+        userIdToUse,
+        parsedUserId,
+        isValidUserId,
+        mode: isValidUserId ? '个性化模式' : '访客模式',
+        category: selectedCategory?.name || '全部',
+        searchText: searchText || '无搜索'
+      });
       
       const result = await pomeloXAPI.getActivityList({
         pageNum: page,
         pageSize: 20,
-        userId: isLoggedIn ? parseInt(user.id) : undefined, // 🔧 可选参数，访客模式时不传
+        userId: isValidUserId ? parsedUserId : undefined, // 🔧 修复：确保传递有效的数字ID
         name: searchText || undefined,
         categoryId: selectedCategory?.id || undefined,
       });
       
-      console.log('📋 活动列表模式:', {
-        mode: isLoggedIn ? '个性化模式' : '访客模式',
-        userId: isLoggedIn ? user.id : 'guest',
-        hasPersonalizedData: result.data?.rows?.[0]?.signStatus !== undefined
+      console.log('📋 [FETCH-ACTIVITIES] API响应状态:', {
+        success: result.code === 200,
+        dataLength: result.data?.rows?.length || 0,
+        hasPersonalizedData: result.data?.rows?.[0]?.signStatus !== undefined,
+        sampleActivity: result.data?.rows?.[0] ? {
+          id: result.data.rows[0].id,
+          title: result.data.rows[0].name,
+          signStatus: result.data.rows[0].signStatus
+        } : null
       });
 
       const adaptedData = adaptActivityList(result, currentLanguage);
@@ -650,20 +677,17 @@ export const ActivityListScreen: React.FC = () => {
   }, []);
 
   // 初始加载数据
-  // 安全的初始加载 - 只执行一次
   useEffect(() => {
-    const loadInitialData = async () => {
-      try {
-        await fetchActivities(1);
-        setInitialLoading(false);
-      } catch (error) {
-        console.error('初始数据加载失败:', error);
-        setInitialLoading(false);
-      }
-    };
-    
-    loadInitialData();
-  }, []); // 空依赖数组，只在挂载时执行一次
+    fetchActivities(1);
+  }, []); // 只在组件挂载时执行一次
+
+  // 当筛选条件变化时重新加载
+  useEffect(() => {
+    if (!initialLoading) {
+      setCurrentPage(1);
+      fetchActivities(1);
+    }
+  }, [activeFilter, searchText]);
 
   // 🧹 清理滚动保护计时器
   useEffect(() => {
@@ -693,15 +717,34 @@ export const ActivityListScreen: React.FC = () => {
         if (categoryFilters.some(f => f.id === filterId)) {
           return activity.category === filterId;
         }
-        // 状态过滤 - 使用后端type字段（高效）
+        // 状态过滤 - 使用修复后的时间解析逻辑
         if (statusFilters.some(f => f.id === filterId)) {
-          // 使用相同的前端实时计算逻辑
           const now = new Date();
-          const activityStart = new Date(activity.date + ' ' + (activity.time || '00:00'));
-          const activityEnd = activity.endDate ? new Date(activity.endDate + ' 23:59:59') : activityStart;
           
-          if (filterId === 'upcoming') {
-            return activityStart.getTime() > now.getTime();
+          let activityStart: Date;
+          let activityEnd: Date;
+          
+          try {
+            // 🔧 修复：使用正确的时间字段
+            if (activity.startTime) {
+              activityStart = new Date(activity.startTime);
+            } else {
+              activityStart = new Date(activity.date + ' ' + (activity.time || '00:00'));
+            }
+            
+            if (activity.endTime) {
+              activityEnd = new Date(activity.endTime);
+            } else if (activity.endDate) {
+              activityEnd = new Date(activity.endDate + ' 23:59:59');
+            } else {
+              activityEnd = activityStart;
+            }
+          } catch (error) {
+            return false;
+          }
+          
+          if (filterId === 'available') {
+            return activityEnd.getTime() >= now.getTime();
           } else if (filterId === 'ended') {
             return activityEnd.getTime() < now.getTime();
           }
@@ -747,34 +790,48 @@ export const ActivityListScreen: React.FC = () => {
     }).length;
   }, [activities, categoryFilters, statusFilters, locationFilters, dateFilters]);
   
-  // 搜索和状态过滤
+  // 搜索和状态过滤 - 使用统一的状态计算器
   const filteredActivities = activities.filter(activity => {
     // 搜索匹配 - 匹配标题和地点
     const matchesSearch = searchText.length === 0 || 
       activity.title.toLowerCase().includes(searchText.toLowerCase()) ||
       activity.location.toLowerCase().includes(searchText.toLowerCase());
     
-    // 基于时间的状态匹配 - 前端实时计算确保准确性
+    // 基于时间的状态匹配 - 使用统一状态计算器
     const currentFilterKey = filterTabs[activeFilter];
     let matchesFilter = true;
     
     if (currentFilterKey !== 'all') {
-      const now = new Date();
-      const activityStart = new Date(activity.date + ' ' + (activity.time || '00:00'));
-      const activityEnd = activity.endDate ? new Date(activity.endDate + ' 23:59:59') : activityStart;
-      
-      // 前端实时计算活动状态，不依赖后端可能过时的状态
-      switch(currentFilterKey) {
-        case 'upcoming':
-          // 即将开始：活动开始时间在现在之后
-          matchesFilter = activityStart.getTime() > now.getTime();
-          break;
-        case 'ended':
-          // 已结束：活动结束时间在现在之前
-          matchesFilter = activityEnd.getTime() < now.getTime();
-          break;
-        default:
-          matchesFilter = true;
+      try {
+        // 构建时间数据对象
+        const timeData: ActivityTimeData = {
+          startTime: activity.startTime || (activity.date + ' ' + (activity.time || '00:00')),
+          endTime: activity.endTime || (activity.endDate ? activity.endDate + ' 23:59:59' : 
+                   activity.startTime || (activity.date + ' ' + (activity.time || '00:00'))),
+          signStatus: (activity as any).signStatus,
+          type: (activity as any).type
+        };
+        
+        // 使用统一的状态计算
+        const activityStatus = calculateActivityStatus(timeData);
+        
+        console.log(`[ActivityListScreen] 活动${activity.id}[${activity.title}] 状态: ${activityStatus}`);
+        
+        // 映射过滤条件
+        switch(currentFilterKey) {
+          case 'available':
+            matchesFilter = activityStatus === 'available' || activityStatus === 'registered' || activityStatus === 'checked_in';
+            break;
+          case 'ended':
+            matchesFilter = activityStatus === 'ended';
+            break;
+          default:
+            matchesFilter = true;
+        }
+      } catch (error) {
+        console.warn('[ActivityListScreen] 状态计算错误:', error, activity);
+        // 解析失败时默认显示
+        matchesFilter = true;
       }
     }
     
@@ -787,11 +844,30 @@ export const ActivityListScreen: React.FC = () => {
         if (statusFilters.some(f => f.id === filterId)) {
           // 使用相同的前端实时计算逻辑
           const now = new Date();
-          const activityStart = new Date(activity.date + ' ' + (activity.time || '00:00'));
-          const activityEnd = activity.endDate ? new Date(activity.endDate + ' 23:59:59') : activityStart;
           
-          if (filterId === 'upcoming') {
-            return activityStart.getTime() > now.getTime();
+          let activityStart: Date;
+          let activityEnd: Date;
+          
+          try {
+            if (activity.startTime) {
+              activityStart = new Date(activity.startTime);
+            } else {
+              activityStart = new Date(activity.date + ' ' + (activity.time || '00:00'));
+            }
+            
+            if (activity.endTime) {
+              activityEnd = new Date(activity.endTime);
+            } else if (activity.endDate) {
+              activityEnd = new Date(activity.endDate + ' 23:59:59');
+            } else {
+              activityEnd = activityStart;
+            }
+          } catch (error) {
+            return false;
+          }
+          
+          if (filterId === 'available') {
+            return activityEnd.getTime() >= now.getTime();
           } else if (filterId === 'ended') {
             return activityEnd.getTime() < now.getTime();
           }
@@ -826,9 +902,44 @@ export const ActivityListScreen: React.FC = () => {
   };
 
   // V1.1 规范: 滑动操作处理函数
-  const handleShare = (activity: any) => {
-    console.log('分享活动:', activity.title);
-    // TODO: 实现分享功能
+  const handleShare = async (activity: any) => {
+    try {
+      if (Platform.OS === 'ios') {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      }
+      
+      const shareContent = {
+        title: t('activities.share.title', '活动分享'),
+        message: t('activities.share.message', {
+          title: activity.title,
+          date: activity.date,
+          location: activity.location || activity.address || t('common.unknown')
+        }) || `${activity.title}\n时间: ${activity.date}\n地点: ${activity.location || activity.address || '待定'}\n\n来参加这个活动吧！`,
+        url: `https://www.vitaglobal.icu/activity/${activity.id}`
+      };
+
+      if (Platform.OS === 'web') {
+        if (navigator.share) {
+          await navigator.share(shareContent);
+        } else {
+          await navigator.clipboard.writeText(shareContent.message + '\n' + shareContent.url);
+          Alert.alert(
+            t('activities.share.success', '分享成功'), 
+            t('activities.share.copied_to_clipboard', '活动信息已复制到剪贴板')
+          );
+        }
+      }
+      
+      console.log('✅ 分享活动成功:', activity.title);
+    } catch (error) {
+      console.error('分享活动失败:', error);
+      if (error !== 'AbortError') {
+        Alert.alert(
+          t('common.error'), 
+          t('activities.share.failed', '分享失败，请重试')
+        );
+      }
+    }
   };
 
   // user已移动到组件开头
@@ -855,9 +966,83 @@ export const ActivityListScreen: React.FC = () => {
     }
   };
 
-  const handleNotifyMe = (activity: any) => {
-    console.log('提醒我:', activity.title);
-    // TODO: 实现通知提醒功能
+  const handleNotifyMe = async (activity: any) => {
+    if (!user?.id) {
+      Alert.alert(t('auth.login_required'), t('auth.login_required_message'));
+      return;
+    }
+
+    try {
+      // 触觉反馈
+      if (Platform.OS === 'ios') {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      }
+
+      // 计算活动开始前1小时的提醒时间
+      const activityDateTime = new Date(`${activity.date} ${activity.time || '00:00'}`);
+      const reminderTime = new Date(activityDateTime.getTime() - 60 * 60 * 1000); // 提前1小时
+      
+      const now = new Date();
+      if (reminderTime <= now) {
+        Alert.alert(
+          t('activities.notification.too_late_title', '无法设置提醒'),
+          t('activities.notification.too_late_message', '活动即将开始或已开始，无法设置提醒')
+        );
+        return;
+      }
+
+      // Web端使用Notification API
+      if (Platform.OS === 'web') {
+        // 检查浏览器通知权限
+        if (!('Notification' in window)) {
+          Alert.alert(
+            t('activities.notification.not_supported_title', '不支持通知'),
+            t('activities.notification.not_supported_message', '您的浏览器不支持通知功能')
+          );
+          return;
+        }
+
+        const permission = await Notification.requestPermission();
+        if (permission !== 'granted') {
+          Alert.alert(
+            t('activities.notification.permission_denied_title', '通知权限被拒绝'),
+            t('activities.notification.permission_denied_message', '请在浏览器设置中允许通知权限')
+          );
+          return;
+        }
+
+        // 设置提醒
+        const timeUntilReminder = reminderTime.getTime() - now.getTime();
+        
+        setTimeout(() => {
+          new Notification(t('activities.notification.reminder_title', '活动提醒'), {
+            body: t('activities.notification.reminder_body', {
+              title: activity.title,
+              time: activity.time || '时间待定'
+            }) || `活动 "${activity.title}" 将在1小时后开始`,
+            icon: activity.image || '/favicon.ico',
+            tag: `activity-${activity.id}`,
+            requireInteraction: true
+          });
+        }, timeUntilReminder);
+
+        Alert.alert(
+          t('activities.notification.set_success_title', '提醒设置成功'),
+          t('activities.notification.set_success_message', {
+            title: activity.title,
+            time: reminderTime.toLocaleString()
+          }) || `已设置活动提醒，将在 ${reminderTime.toLocaleString()} 通知您`
+        );
+      }
+      
+      console.log('✅ 设置活动提醒成功:', activity.title, '提醒时间:', reminderTime);
+    } catch (error) {
+      console.error('设置活动提醒失败:', error);
+      Alert.alert(
+        t('common.error'),
+        t('activities.notification.set_failed', '设置提醒失败，请重试')
+      );
+    }
   };
 
   // V1.1 规范: BottomSheet 过滤器处理函数 - 冻结CategoryBar状态
@@ -874,13 +1059,90 @@ export const ActivityListScreen: React.FC = () => {
   };
 
   const handleFiltersChange = (filters: string[]) => {
+    console.log('🔍 应用活动过滤器:', filters);
     setActiveFilters(filters);
-    // TODO: 应用过滤器到活动列表
+    
+    // 触觉反馈
+    if (Platform.OS === 'ios') {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
+    
+    // 立即应用过滤器到活动列表
+    filterActivities(allActivities, filters, searchText);
+  };
+
+  // 活动过滤器函数
+  const filterActivities = (activities: FrontendActivity[], filters: string[], searchText: string) => {
+    let filtered = [...activities];
+
+    // 应用搜索筛选
+    if (searchText.trim()) {
+      const search = searchText.trim().toLowerCase();
+      filtered = filtered.filter(activity =>
+        activity.title?.toLowerCase().includes(search) ||
+        activity.location?.toLowerCase().includes(search) ||
+        activity.address?.toLowerCase().includes(search)
+      );
+    }
+
+    // 应用分类筛选
+    if (filters.length > 0) {
+      filtered = filtered.filter(activity => {
+        if (filters.includes('available')) {
+          const status = calculateActivityStatus({
+            startTime: activity.startTime || `${activity.date} ${activity.time || '00:00'}`,
+            endTime: activity.endTime || `${activity.endDate || activity.date} 23:59`,
+            signStatus: activity.signStatus
+          });
+          return status === 'available';
+        }
+        
+        if (filters.includes('registered')) {
+          const status = calculateActivityStatus({
+            startTime: activity.startTime || `${activity.date} ${activity.time || '00:00'}`,
+            endTime: activity.endTime || `${activity.endDate || activity.date} 23:59`,
+            signStatus: activity.signStatus
+          });
+          return status === 'registered';
+        }
+        
+        if (filters.includes('checked_in')) {
+          const status = calculateActivityStatus({
+            startTime: activity.startTime || `${activity.date} ${activity.time || '00:00'}`,
+            endTime: activity.endTime || `${activity.endDate || activity.date} 23:59`,
+            signStatus: activity.signStatus
+          });
+          return status === 'checked_in';
+        }
+        
+        if (filters.includes('ended')) {
+          const status = calculateActivityStatus({
+            startTime: activity.startTime || `${activity.date} ${activity.time || '00:00'}`,
+            endTime: activity.endTime || `${activity.endDate || activity.date} 23:59`,
+            signStatus: activity.signStatus
+          });
+          return status === 'ended';
+        }
+        
+        return true;
+      });
+    }
+
+    console.log('🔍 过滤结果:', {
+      原始数量: activities.length,
+      过滤后数量: filtered.length,
+      应用的过滤器: filters,
+      搜索关键词: searchText
+    });
+
+    setFilteredActivities(filtered);
   };
 
   // 搜索处理函数
   const handleSearchChange = (text: string) => {
     setSearchText(text);
+    // 实时应用搜索和过滤器
+    filterActivities(allActivities, activeFilters, text);
   };
 
   // 布局切换处理函数

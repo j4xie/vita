@@ -36,13 +36,16 @@ export interface FrontendActivity {
   attendees: number;
   maxAttendees: number;
   registeredCount: number; // 已报名人数
-  status: 'upcoming' | 'ongoing' | 'ended' | 'registered' | 'checked_in';
+  status: 'available' | 'ended' | 'registered' | 'checked_in';
   category?: string;
   organizer?: {
     name: string;
     avatar?: string;
     verified?: boolean;
   };
+  // 完整的时间信息（用于准确的状态判断）
+  startTime?: string; // 完整的开始时间字符串
+  endTime?: string; // 完整的结束时间字符串
   // 额外信息
   registrationStartTime?: string;
   registrationEndTime?: string;
@@ -52,29 +55,28 @@ export interface FrontendActivity {
 }
 
 // 🚀 性能优化：预编译状态映射表
-const REGISTRATION_STATUS_MAP = new Map<number, 'upcoming' | 'registered' | 'checked_in'>([
+const REGISTRATION_STATUS_MAP = new Map<number, 'available' | 'registered' | 'checked_in'>([
   [-1, 'registered'],
   [1, 'checked_in'],
 ]);
 
-const ACTIVITY_TYPE_MAP = new Map<number, 'upcoming' | 'ongoing' | 'ended'>([
-  [-1, 'upcoming'],
-  [1, 'ongoing'], 
+const ACTIVITY_TYPE_MAP = new Map<number, 'available' | 'ended'>([
+  [-1, 'available'],
   [2, 'ended'],
 ]);
 
 /**
  * 快速转换报名状态
  */
-const convertRegistrationStatus = (signStatus?: number): 'upcoming' | 'registered' | 'checked_in' => {
-  return REGISTRATION_STATUS_MAP.get(signStatus ?? 0) ?? 'upcoming';
+const convertRegistrationStatus = (signStatus?: number): 'available' | 'registered' | 'checked_in' => {
+  return REGISTRATION_STATUS_MAP.get(signStatus ?? 0) ?? 'available';
 };
 
 /**
  * 快速转换活动类型状态
  */
-const convertActivityType = (type?: number): 'upcoming' | 'ongoing' | 'ended' => {
-  return ACTIVITY_TYPE_MAP.get(type ?? -1) ?? 'upcoming';
+const convertActivityType = (type?: number): 'available' | 'ended' => {
+  return ACTIVITY_TYPE_MAP.get(type ?? -1) ?? 'available';
 };
 
 // 🚀 性能优化：快速时间解析缓存
@@ -264,24 +266,54 @@ export const adaptActivity = (
   const { date: endDate } = parseDateTime(backendActivity.endTime);
   
   // 实时计算活动状态，确保准确性
-  const calculateRealTimeStatus = (): 'upcoming' | 'ongoing' | 'ended' | 'registered' | 'checked_in' => {
-    // 第一优先级：用户的报名/签到状态
-    if (backendActivity.signStatus !== undefined) {
-      return convertRegistrationStatus(backendActivity.signStatus);
-    }
-    
-    // 第二优先级：基于当前时间实时计算活动状态
+  const calculateRealTimeStatus = (): 'available' | 'ended' | 'registered' | 'checked_in' => {
+    // 🔥 修复优先级：先基于时间判断活动状态，再考虑用户报名状态
     const now = new Date();
     const activityStart = new Date(backendActivity.startTime);
     const activityEnd = new Date(backendActivity.endTime);
     
-    if (activityEnd.getTime() < now.getTime()) {
-      return 'ended'; // 已结束
-    } else if (activityStart.getTime() <= now.getTime() && activityEnd.getTime() >= now.getTime()) {
-      return 'ongoing'; // 进行中
-    } else {
-      return 'upcoming'; // 即将开始
+    // 🎯 详细时间计算调试
+    const isEnded = activityEnd.getTime() < now.getTime();
+    const isOngoing = activityStart.getTime() <= now.getTime() && activityEnd.getTime() >= now.getTime();
+    
+    if (backendActivity.name.includes('USC')) {
+      console.log(`🎯 [TIME-DEBUG] USC活动修复后时间计算:`, {
+        活动名称: backendActivity.name,
+        当前时间: now.toISOString(),
+        开始时间原始: backendActivity.startTime,
+        结束时间原始: backendActivity.endTime,
+        开始时间解析: activityStart.toISOString(),
+        结束时间解析: activityEnd.toISOString(),
+        时间戳比较: {
+          现在: now.getTime(),
+          开始: activityStart.getTime(),
+          结束: activityEnd.getTime()
+        },
+        判断结果: {
+          已结束: isEnded,
+          进行中: isOngoing,
+          时间基础状态: isEnded ? 'ended' : 'available'
+        },
+        用户状态: {
+          signStatus: backendActivity.signStatus,
+          用户状态转换: backendActivity.signStatus !== undefined ? convertRegistrationStatus(backendActivity.signStatus) : '无'
+        }
+      });
     }
+    
+    // ✅ 第一优先级：活动已结束则直接返回ended，不考虑用户状态
+    if (isEnded) {
+      return 'ended'; // 已结束的活动，不管用户是否报名都是ended
+    }
+    
+    // ✅ 第二优先级：对于未结束的活动，考虑用户的报名/签到状态
+    if (backendActivity.signStatus !== undefined && backendActivity.signStatus !== 0) {
+      // 只有当用户已报名或已签到时，才返回特殊状态
+      return convertRegistrationStatus(backendActivity.signStatus);
+    }
+    
+    // ✅ 第三优先级：对于未结束的活动，统一显示为可报名
+    return 'available'; // 可报名（不管是否已开始）
   };
   
   const activityStatus = calculateRealTimeStatus();
@@ -316,6 +348,9 @@ export const adaptActivity = (
       name: '官方活动', // 暂时使用通用名称
       verified: true,
     },
+    // 🔧 添加完整的时间字段，用于精确的状态判断
+    startTime: backendActivity.startTime,
+    endTime: backendActivity.endTime,
     registrationStartTime: backendActivity.signStartTime,
     registrationEndTime: backendActivity.signEndTime,
     detail: backendActivity.detail,

@@ -84,15 +84,20 @@ const SimpleActivityCardComponent: React.FC<SimpleActivityCardProps> = ({
   // 获取状态标签的样式和文本
   const getStatusConfig = () => {
     switch (activity.status) {
-      case 'upcoming':
+      case 'available':
         return {
-          label: t('activityCard.status.upcoming'),
-          color: '#EF4444', // 红色
+          label: t('activityCard.status.available'),
+          color: '#10B981', // 绿色，表示可报名
         };
-      case 'ongoing':
+      case 'registered':
         return {
-          label: t('activityCard.status.ongoing'),
-          color: '#10B981', // 绿色
+          label: t('activityCard.status.registered'),
+          color: '#3B82F6', // 蓝色，表示已报名
+        };
+      case 'checked_in':
+        return {
+          label: t('activityCard.status.checked_in'),
+          color: '#8B5CF6', // 紫色，表示已签到
         };
       case 'ended':
         return {

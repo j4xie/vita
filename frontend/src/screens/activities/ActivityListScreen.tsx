@@ -395,7 +395,7 @@ export const ActivityListScreen: React.FC = () => {
   // Animation now handled by LiquidGlassTab component
   
   // 修改为基于时间的3个状态 - 使用翻译函数
-  const filterTabs = ['all', 'upcoming', 'ended'];
+  const filterTabs = ['all', 'available', 'ended'];
   const segmentLabels = [
     t('filters.status.all') || '全部',
     t('filters.status.upcoming') || '即将开始',
@@ -808,11 +808,10 @@ export const ActivityListScreen: React.FC = () => {
         if (statusFilters.some(f => f.id === filterId)) {
           // 使用相同的前端实时计算逻辑
           const now = new Date();
-          const activityStart = new Date(activity.date + ' ' + (activity.time || '00:00'));
-          const activityEnd = activity.endDate ? new Date(activity.endDate + ' 23:59:59') : activityStart;
+          const activityEnd = activity.endDate ? new Date(activity.endDate + ' 23:59:59') : new Date(activity.date + ' ' + (activity.time || '00:00'));
           
-          if (filterId === 'upcoming') {
-            return activityStart.getTime() > now.getTime();
+          if (filterId === 'available') {
+            return activityEnd.getTime() >= now.getTime();
           } else if (filterId === 'ended') {
             return activityEnd.getTime() < now.getTime();
           }
@@ -907,11 +906,10 @@ export const ActivityListScreen: React.FC = () => {
         if (statusFilters.some(f => f.id === filterId)) {
           // 使用相同的前端实时计算逻辑
           const now = new Date();
-          const activityStart = new Date(activity.date + ' ' + (activity.time || '00:00'));
-          const activityEnd = activity.endDate ? new Date(activity.endDate + ' 23:59:59') : activityStart;
+          const activityEnd = activity.endDate ? new Date(activity.endDate + ' 23:59:59') : new Date(activity.date + ' ' + (activity.time || '00:00'));
           
-          if (filterId === 'upcoming') {
-            return activityStart.getTime() > now.getTime();
+          if (filterId === 'available') {
+            return activityEnd.getTime() >= now.getTime();
           } else if (filterId === 'ended') {
             return activityEnd.getTime() < now.getTime();
           }

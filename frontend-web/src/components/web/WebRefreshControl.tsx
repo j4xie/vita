@@ -1,5 +1,5 @@
 import React from 'react';
-import { Platform, RefreshControl as RNRefreshControl, View, Text, StyleSheet } from 'react-native';
+import { Platform, RefreshControl as RNRefreshControl } from 'react-native';
 
 interface WebRefreshControlProps {
   refreshing: boolean;
@@ -20,22 +20,8 @@ export const WebRefreshControl: React.FC<WebRefreshControlProps> = ({
   progressViewOffset,
   titleColor,
 }) => {
-  if (Platform.OS === 'web') {
-    // Web平台：使用简化的RefreshControl，避免复杂配置
-    return (
-      <RNRefreshControl
-        refreshing={refreshing}
-        onRefresh={onRefresh}
-        tintColor={tintColor}
-        // 移除可能导致问题的属性
-        // colors={colors}
-        // progressBackgroundColor={progressBackgroundColor}
-        // progressViewOffset={progressViewOffset}
-      />
-    );
-  }
-
-  // 移动端：使用完整的RefreshControl
+  // 所有平台都使用原生RefreshControl
+  // Web端虽然下拉手势可能不完全响应，但仍提供基本的刷新指示器
   return (
     <RNRefreshControl
       refreshing={refreshing}

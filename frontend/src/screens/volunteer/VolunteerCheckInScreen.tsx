@@ -10,7 +10,7 @@ import {
   Alert,
   FlatList,
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTranslation } from 'react-i18next';
@@ -56,6 +56,7 @@ interface DisplayVolunteerRecord {
 export const VolunteerCheckInScreen: React.FC = () => {
   const { t } = useTranslation();
   const navigation = useNavigation<any>();
+  const route = useRoute<any>();
   const { user, hasPermission, permissions, permissionLevel } = useUser();
   
   const [searchPhone, setSearchPhone] = useState('');
@@ -113,6 +114,29 @@ export const VolunteerCheckInScreen: React.FC = () => {
     VolunteerStateService.addListener(handleStateChange);
     return () => VolunteerStateService.removeListener(handleStateChange);
   }, []);
+
+  // 🚀 处理从活动报名页面跳转过来的自动搜索
+  useEffect(() => {
+    const { autoSearchPhone, autoSearchUserId, fromRegistration, activityInfo } = route.params || {};
+    
+    if (fromRegistration && autoSearchPhone) {
+      console.log('🚀 [志愿者签到] 从活动报名跳转过来，自动搜索用户:', {
+        autoSearchPhone,
+        autoSearchUserId,
+        activityInfo: activityInfo?.title
+      });
+      
+      // 设置搜索电话号码
+      setSearchPhone(autoSearchPhone);
+      
+      // 延迟执行搜索，确保组件已完全加载
+      const searchTimeout = setTimeout(() => {
+        handleAutoSearch(autoSearchPhone, autoSearchUserId);
+      }, 500);
+      
+      return () => clearTimeout(searchTimeout);
+    }
+  }, [route.params]);
 
 
   // 加载用户的最后一条记录（用于展示历史记录）
@@ -180,7 +204,7 @@ export const VolunteerCheckInScreen: React.FC = () => {
 
   // 计算当前本次时长（分钟）
   const getCurrentDurationMinutes = (vol: DisplayVolunteerRecord) => {
-    const start = vol?.checkInTime || persistedCheckins[vol?.userId!];
+    const start = vol?.checkInTime || VolunteerStateService.getPersistedCheckinTime(vol?.userId!);
     if (!start) return 0;
     const startDate = new Date(start);
     const diffMs = currentTime.getTime() - startDate.getTime();
@@ -191,7 +215,11 @@ export const VolunteerCheckInScreen: React.FC = () => {
   const formatDuration = (minutes: number) => {
     const h = Math.floor(minutes / 60);
     const m = minutes % 60;
-    return h > 0 ? `${h}小时${m}分钟` : `${m}分钟`;
+    if (h > 0) {
+      return `${h} ${t('common.time.hours', '小时')} ${m} ${t('common.time.minutes', '分钟')}`;
+    } else {
+      return `${m} ${t('common.time.minutes', '分钟')}`;
+    }
   };
 
   // 加载志愿者记录和工时数据
@@ -340,7 +368,7 @@ export const VolunteerCheckInScreen: React.FC = () => {
             
             // 如果当前已签到，同步持久化时间
             if (displayStatus === 'checked_in' && lastRecord.data.startTime) {
-              await persistCheckinTime(foundUser.userId!, lastRecord.data.startTime);
+              await VolunteerStateService.persistCheckinTime(foundUser.userId!, lastRecord.data.startTime);
               console.log('🔍 [DEBUG] 已保存持久化时间');
             }
           } else {
@@ -359,6 +387,96 @@ export const VolunteerCheckInScreen: React.FC = () => {
     } catch (error) {
       console.error('搜索志愿者失败:', error);
       SafeAlert.alert(t('common.error'), t('volunteer.search_failed'));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 🚀 从活动报名页面跳转过来的自动搜索
+  const handleAutoSearch = async (phone: string, userId: number) => {
+    console.log('🚀 [自动搜索] 开始自动搜索志愿者:', { phone, userId });
+    setLoading(true);
+    
+    try {
+      // 等待志愿者数据加载完成
+      await loadVolunteerData();
+      
+      // 在今日记录中搜索对应的志愿者
+      const foundUser = todayRecords.find(v => v.phone === phone || v.userId === userId);
+      console.log('🚀 [自动搜索] 搜索结果:', foundUser);
+      
+      if (foundUser) {
+        // 获取该用户的最新签到状态
+        try {
+          const lastRecord = await getLastVolunteerRecord(foundUser.userId!);
+          console.log('🚀 [自动搜索] 最新记录:', lastRecord);
+          
+          if (lastRecord.code === 200 && lastRecord.data) {
+            const apiStatus = getVolunteerStatus(lastRecord.data);
+            let displayStatus: 'not_checked_in' | 'checked_in' | 'checked_out';
+            switch (apiStatus) {
+              case 'signed_in':
+                displayStatus = 'checked_in';
+                break;
+              case 'signed_out':
+                displayStatus = 'checked_out';
+                break;
+              default:
+                displayStatus = 'not_checked_in';
+                break;
+            }
+            
+            const updatedUser = {
+              ...foundUser,
+              status: displayStatus,
+              checkInTime: lastRecord.data.startTime,
+              checkOutTime: lastRecord.data.endTime,
+              currentRecordId: (!lastRecord.data.endTime && lastRecord.data.startTime) ? lastRecord.data.id : undefined,
+            };
+            
+            console.log('🚀 [自动搜索] 设置用户数据:', updatedUser);
+            setCurrentUser(updatedUser);
+            
+            // 如果当前已签到，同步持久化时间
+            if (displayStatus === 'checked_in' && lastRecord.data.startTime) {
+              await VolunteerStateService.persistCheckinTime(foundUser.userId!, lastRecord.data.startTime);
+            }
+          } else {
+            console.log('🚀 [自动搜索] 没有最新记录，使用缓存数据');
+            setCurrentUser(foundUser);
+          }
+        } catch (error) {
+          console.warn('🚀 [自动搜索] 获取最新记录失败，使用缓存数据:', error);
+          setCurrentUser(foundUser);
+        }
+      } else {
+        console.log('🚀 [自动搜索] 未找到用户，可能需要等待数据加载');
+        // 如果在todayRecords中没有找到，创建一个临时的用户记录
+        const tempUser: DisplayVolunteerRecord = {
+          id: userId.toString(),
+          phone: phone,
+          name: user?.legalName || user?.userName || '当前用户',
+          school: user?.dept?.deptName || '学校信息',
+          status: 'not_checked_in',
+          userId: userId,
+          totalHours: 0
+        };
+        setCurrentUser(tempUser);
+        console.log('🚀 [自动搜索] 创建临时用户记录:', tempUser);
+      }
+    } catch (error) {
+      console.error('🚀 [自动搜索] 自动搜索失败:', error);
+      // 创建临时用户记录作为降级处理
+      const tempUser: DisplayVolunteerRecord = {
+        id: userId.toString(),
+        phone: phone,
+        name: user?.legalName || user?.userName || '当前用户',
+        school: user?.dept?.deptName || '学校信息',
+        status: 'not_checked_in',
+        userId: userId,
+        totalHours: 0
+      };
+      setCurrentUser(tempUser);
     } finally {
       setLoading(false);
     }
@@ -401,7 +519,7 @@ export const VolunteerCheckInScreen: React.FC = () => {
                 setCurrentUser(updatedUser);
                 
                 // 持久化签到时间
-                await persistCheckinTime(currentUser.userId!, checkInTimeISO);
+                await VolunteerStateService.persistCheckinTime(currentUser.userId!, checkInTimeISO);
                 
                 // 更新记录列表
                 setTodayRecords(prev => 
@@ -486,7 +604,7 @@ export const VolunteerCheckInScreen: React.FC = () => {
                 setCurrentUser(updatedUser);
                 
                 // 清除持久化的签到时间
-                await persistCheckinTime(currentUser.userId!, null);
+                await VolunteerStateService.persistCheckinTime(currentUser.userId!, null);
                 
                 // 更新记录列表
                 setTodayRecords(prev => 

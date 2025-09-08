@@ -7,10 +7,10 @@ import {
   StyleSheet,
   SafeAreaView,
   ScrollView,
-  Alert,
   ActivityIndicator,
   Keyboard,
   TouchableWithoutFeedback,
+  Platform,
 } from 'react-native';
 import { useNavigation, useRoute, CommonActions } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
@@ -26,6 +26,10 @@ import { useUser } from '../../context/UserContext';
 import { login } from '../../services/authAPI';
 import SchoolEmailService, { APISchoolData } from '../../services/schoolEmailService';
 import RegionDetectionService, { RegionDetectionResult } from '../../services/RegionDetectionService';
+import { getWebInputStyles, getWebInputProps } from '../../utils/webInputStyles';
+import { SafeAlert } from '../../utils/SafeAlert';
+import { WebTextInput } from '../../components/web/WebTextInput';
+import { ForceNativeInput } from '../../components/web/ForceNativeInput';
 
 interface FormData {
   userName: string;
@@ -273,7 +277,7 @@ export const RegisterFormScreen: React.FC = () => {
         // 保存bizId到表单数据
         updateFormData('bizId', result.bizId);
         
-        Alert.alert(
+        SafeAlert.alert(
           t('auth.register.sms.code_sent_title'),
           t('auth.register.sms.code_sent_message', {
             countryCode: formData.phoneType === 'CN' ? '86' : '1',
@@ -302,11 +306,11 @@ export const RegisterFormScreen: React.FC = () => {
           phoneType: formData.phoneType 
         });
       } else {
-        Alert.alert(t('auth.register.sms.send_failed_title'), t('auth.register.sms.send_failed_message'));
+        SafeAlert.alert(t('auth.register.sms.send_failed_title'), t('auth.register.sms.send_failed_message'));
       }
     } catch (error) {
       console.error('发送验证码错误:', error);
-      Alert.alert(t('auth.register.sms.send_failed_title'), t('auth.register.sms.send_failed_message'));
+      SafeAlert.alert(t('auth.register.sms.send_failed_title'), t('auth.register.sms.send_failed_message'));
     } finally {
       setLoading(false);
     }
@@ -318,6 +322,9 @@ export const RegisterFormScreen: React.FC = () => {
       setErrors(prev => ({ ...prev, [field]: undefined }));
     }
   };
+
+  // 智能输入组件选择器 - Web环境使用ForceNativeInput，保证输入正常工作
+  const WebTextInput = Platform.OS === 'web' ? ForceNativeInput : WebTextInput;
 
   // 根据学校更新邮箱域名
   const handleSchoolSelect = (school: any) => {
@@ -411,7 +418,7 @@ export const RegisterFormScreen: React.FC = () => {
             // 登录成功，更新用户状态
             await userLogin(loginResult.data.token);
             
-            Alert.alert(
+            SafeAlert.alert(
               t('auth.register.success_title'),
               t('auth.register.auto_login_success'),
               [{
@@ -426,7 +433,7 @@ export const RegisterFormScreen: React.FC = () => {
             );
           } else {
             // 登录失败，但注册成功
-            Alert.alert(
+            SafeAlert.alert(
               t('auth.register.success_title'),
               t('auth.register.success_please_login'),
               [{
@@ -438,7 +445,7 @@ export const RegisterFormScreen: React.FC = () => {
         } catch (loginError) {
           console.error('自动登录失败:', loginError);
           // 登录失败，但注册成功
-          Alert.alert(
+          SafeAlert.alert(
             t('auth.register.success_title'),
             t('auth.register.success_please_login'),
             [{
@@ -449,12 +456,12 @@ export const RegisterFormScreen: React.FC = () => {
         }
       } else {
         const friendlyError = parseRegistrationError(result.msg || '');
-        Alert.alert(t('auth.register.error_title'), friendlyError);
+        SafeAlert.alert(t('auth.register.error_title'), friendlyError);
       }
     } catch (error) {
       console.error('注册失败:', error);
       const friendlyError = parseRegistrationError(error.message || '');
-      Alert.alert(t('auth.register.error_title'), friendlyError);
+      SafeAlert.alert(t('auth.register.error_title'), friendlyError);
     } finally {
       setLoading(false);
       setLoadingMessage('');
@@ -499,7 +506,7 @@ export const RegisterFormScreen: React.FC = () => {
 
       <View style={styles.inputContainer}>
         <Text style={styles.label}>{t('auth.register.form.username_label')}</Text>
-        <TextInput
+        <WebTextInput
           style={[styles.input, errors.userName && styles.inputError]}
           placeholder={t('auth.register.form.username_placeholder')}
           value={formData.userName}
@@ -516,7 +523,8 @@ export const RegisterFormScreen: React.FC = () => {
 
       <View style={styles.inputContainer}>
         <Text style={styles.label}>{t('auth.register.form.legal_name_label')}</Text>
-        <TextInput
+        <Text style={styles.fieldDescription}>{t('auth.register.form.legal_name_description')}</Text>
+        <WebTextInput
           style={[styles.input, errors.legalName && styles.inputError]}
           placeholder={t('auth.register.form.legal_name_placeholder')}
           value={formData.legalName}
@@ -531,7 +539,7 @@ export const RegisterFormScreen: React.FC = () => {
 
       <View style={styles.inputContainer}>
         <Text style={styles.label}>{t('auth.register.form.english_nickname_label')}</Text>
-        <TextInput
+        <WebTextInput
           style={[styles.input, errors.englishNickname && styles.inputError]}
           placeholder={t('auth.register.form.english_nickname_placeholder')}
           value={formData.englishNickname}
@@ -566,9 +574,9 @@ export const RegisterFormScreen: React.FC = () => {
         <Text style={styles.label}>{t('auth.register.form.email_label')}</Text>
         {SchoolEmailService.getEmailDomainByName(formData.university) ? (
           <View style={styles.emailInputWrapper}>
-            <TextInput
+            <WebTextInput
               style={[styles.emailPrefixInput, errors.email && styles.inputError]}
-              placeholder="your-username"
+              placeholder={t('auth.register.form.email_prefix_placeholder')}
               value={formData.emailPrefix}
               onChangeText={handleEmailPrefixChange}
               keyboardType="email-address"
@@ -581,7 +589,7 @@ export const RegisterFormScreen: React.FC = () => {
             <Text style={styles.emailDomain}>@{SchoolEmailService.getEmailDomainByName(formData.university)}</Text>
           </View>
         ) : (
-          <TextInput
+          <WebTextInput
             style={[styles.input, errors.email && styles.inputError]}
             placeholder={t('auth.register.form.email_placeholder')}
             value={formData.email}
@@ -599,7 +607,7 @@ export const RegisterFormScreen: React.FC = () => {
 
       <View style={styles.inputContainer}>
         <Text style={styles.label}>{t('auth.register.form.password_label')}</Text>
-        <TextInput
+        <WebTextInput
           style={[styles.input, errors.password && styles.inputError]}
           placeholder={t('auth.register.form.password_placeholder')}
           value={formData.password}
@@ -612,7 +620,7 @@ export const RegisterFormScreen: React.FC = () => {
 
       <View style={styles.inputContainer}>
         <Text style={styles.label}>{t('auth.register.form.confirm_password_label')}</Text>
-        <TextInput
+        <WebTextInput
           style={[styles.input, errors.confirmPassword && styles.inputError]}
           placeholder={t('auth.register.form.confirm_password_placeholder')}
           value={formData.confirmPassword}
@@ -642,7 +650,7 @@ export const RegisterFormScreen: React.FC = () => {
         <TouchableOpacity
           style={[styles.phoneTypeButton, formData.phoneType === 'US' && styles.phoneTypeActive]}
           onPress={() => {
-            Alert.alert(
+            SafeAlert.alert(
               t('auth.register.form.us_phone_not_supported_title'),
               `${t('auth.register.form.us_phone_not_supported_message')}\n\n${t('auth.register.form.us_phone_contact_info')}`,
               [{ text: t('common.confirm'), style: 'default' }]
@@ -661,7 +669,7 @@ export const RegisterFormScreen: React.FC = () => {
           <Text style={styles.phonePrefix}>
             +{formData.phoneType === 'CN' ? '86' : '1'}
           </Text>
-          <TextInput
+          <WebTextInput
             style={[styles.phoneInput, errors.phoneNumber && styles.inputError]}
             placeholder={formData.phoneType === 'CN' ? '13812345678' : '2025551234'}
             value={formData.phoneNumber}
@@ -911,6 +919,10 @@ const styles = StyleSheet.create({
   },
   inputContainer: {
     marginBottom: theme.spacing[5],
+    // Web环境下确保容器不阻挡点击事件
+    ...(Platform.OS === 'web' && {
+      pointerEvents: 'auto',
+    }),
   },
   label: {
     fontSize: theme.typography.fontSize.sm,
@@ -922,11 +934,14 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.background.secondary,
     borderRadius: theme.borderRadius.lg,
     paddingHorizontal: theme.spacing[4],
-    paddingVertical: theme.spacing[3],
+    paddingVertical: theme.spacing[4], // 增加垂直内边距
     fontSize: theme.typography.fontSize.base,
     color: theme.colors.text.primary,
     borderWidth: 1,
     borderColor: 'transparent',
+    minHeight: 52, // 设置最小高度，让输入框更舒适
+    // Web环境下的兼容性修复
+    ...getWebInputStyles(),
   },
   inputError: {
     borderColor: theme.colors.danger,
@@ -935,6 +950,12 @@ const styles = StyleSheet.create({
     fontSize: theme.typography.fontSize.xs,
     color: theme.colors.danger,
     marginTop: theme.spacing[1],
+  },
+  fieldDescription: {
+    fontSize: theme.typography.fontSize.xs,
+    color: theme.colors.text.secondary,
+    marginBottom: theme.spacing[2],
+    lineHeight: theme.typography.fontSize.xs * theme.typography.lineHeight.relaxed,
   },
   phoneTypeContainer: {
     flexDirection: 'row',
@@ -975,9 +996,12 @@ const styles = StyleSheet.create({
   },
   phoneInput: {
     flex: 1,
-    paddingVertical: theme.spacing[3],
+    paddingVertical: theme.spacing[4], // 增加垂直内边距
     fontSize: theme.typography.fontSize.base,
     color: theme.colors.text.primary,
+    minHeight: 52, // 设置最小高度
+    // Web环境下的兼容性修复
+    ...getWebInputStyles(),
   },
   emailInputWrapper: {
     flexDirection: 'row',
@@ -993,9 +1017,12 @@ const styles = StyleSheet.create({
     minWidth: 120,
     maxWidth: 180,
     paddingHorizontal: theme.spacing[4],
-    paddingVertical: theme.spacing[3],
+    paddingVertical: theme.spacing[4], // 增加垂直内边距
     fontSize: theme.typography.fontSize.base,
     color: theme.colors.text.primary,
+    minHeight: 52, // 设置最小高度
+    // Web环境下的兼容性修复
+    ...getWebInputStyles(),
   },
   emailDomain: {
     paddingLeft: theme.spacing[1],

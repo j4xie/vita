@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PomeloX 表单输入调试工具</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .debug-container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 16px;
+            padding: 32px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        h1 {
+            color: #2d3748;
+            margin-bottom: 8px;
+            font-size: 28px;
+            font-weight: 700;
+        }
+        
+        .subtitle {
+            color: #718096;
+            margin-bottom: 32px;
+            font-size: 16px;
+        }
+        
+        .debug-section {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 24px;
+            border: 1px solid #e2e8f0;
+        }
+        
+        .debug-section h2 {
+            color: #2d3748;
+            font-size: 20px;
+            margin-bottom: 16px;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 8px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #4a5568;
+        }
+        
+        input, textarea {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: all 0.2s ease;
+            box-sizing: border-box;
+        }
+        
+        input:focus, textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        input:hover {
+            border-color: #cbd5e0;
+        }
+        
+        .test-input {
+            background: #f7fafc;
+        }
+        
+        .rn-web-input {
+            background: #fff5f5;
+            border-color: #fc8181;
+        }
+        
+        .debug-log {
+            background: #1a202c;
+            color: #e2e8f0;
+            padding: 16px;
+            border-radius: 8px;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 14px;
+            max-height: 300px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            margin-top: 16px;
+        }
+        
+        .button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin-right: 12px;
+            margin-bottom: 12px;
+        }
+        
+        .button:hover {
+            background: #5a67d8;
+            transform: translateY(-1px);
+        }
+        
+        .button.danger {
+            background: #e53e3e;
+        }
+        
+        .button.danger:hover {
+            background: #c53030;
+        }
+        
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        
+        .status-success { background: #38a169; }
+        .status-error { background: #e53e3e; }
+        .status-warning { background: #d69e2e; }
+        
+        .hidden {
+            display: none;
+        }
+        
+        .test-results {
+            margin-top: 16px;
+            padding: 16px;
+            background: #f7fafc;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+    </style>
+</head>
+<body>
+    <div class="debug-container">
+        <h1>🔧 PomeloX 表单输入调试工具</h1>
+        <p class="subtitle">用于诊断和修复Web端表单输入问题的综合调试工具</p>
+        
+        <!-- 基础输入测试 -->
+        <div class="debug-section">
+            <h2>1️⃣ 标准HTML输入测试</h2>
+            <div class="form-group">
+                <label for="html-text">文本输入框</label>
+                <input type="text" id="html-text" class="test-input" placeholder="请输入文本测试..." />
+            </div>
+            
+            <div class="form-group">
+                <label for="html-email">邮箱输入框</label>
+                <input type="email" id="html-email" class="test-input" placeholder="test@example.com" />
+            </div>
+            
+            <div class="form-group">
+                <label for="html-password">密码输入框</label>
+                <input type="password" id="html-password" class="test-input" placeholder="密码..." />
+            </div>
+        </div>
+        
+        <!-- React Native Web 样式测试 -->
+        <div class="debug-section">
+            <h2>2️⃣ React Native Web 样式模拟测试</h2>
+            <div class="form-group">
+                <label for="rn-text">模拟RN TextInput样式</label>
+                <input type="text" id="rn-text" class="rn-web-input" 
+                       style="cursor: text; user-select: text; -webkit-user-select: text; pointer-events: auto; -webkit-appearance: none; -moz-appearance: textfield; z-index: 10; position: relative;"
+                       placeholder="RN Web样式测试..." />
+            </div>
+        </div>
+        
+        <!-- 交互测试 -->
+        <div class="debug-section">
+            <h2>3️⃣ 交互事件测试</h2>
+            <div class="form-group">
+                <label for="event-test">事件监听测试</label>
+                <input type="text" id="event-test" class="test-input" placeholder="输入内容查看事件..." />
+            </div>
+            <div id="event-log" class="debug-log">等待用户交互...</div>
+        </div>
+        
+        <!-- 调试工具 -->
+        <div class="debug-section">
+            <h2>4️⃣ 调试工具</h2>
+            <button class="button" onclick="openPomeloXInNewTab()">🚀 打开PomeloX应用</button>
+            <button class="button" onclick="testInputFocus()">🎯 测试输入框聚焦</button>
+            <button class="button" onclick="simulateUserInput()">📝 模拟用户输入</button>
+            <button class="button" onclick="checkInputStyles()">💅 检查输入框样式</button>
+            <button class="button danger" onclick="clearLogs()">🧹 清空日志</button>
+            
+            <div class="test-results">
+                <h3>📊 测试结果</h3>
+                <div id="test-results">暂无测试结果</div>
+            </div>
+        </div>
+        
+        <!-- 浏览器信息 -->
+        <div class="debug-section">
+            <h2>5️⃣ 浏览器环境信息</h2>
+            <div id="browser-info"></div>
+        </div>
+    </div>
+    
+    <script>
+        // 全局调试对象
+        window.PomeloXDebug = {
+            logs: [],
+            inputTests: {},
+            
+            log(message, type = 'info') {
+                const timestamp = new Date().toLocaleTimeString();
+                const logEntry = `[${timestamp}] [${type.toUpperCase()}] ${message}`;
+                this.logs.push(logEntry);
+                console.log(logEntry);
+                
+                // 更新事件日志显示
+                const eventLog = document.getElementById('event-log');
+                if (eventLog) {
+                    eventLog.textContent = this.logs.slice(-10).join('\n');
+                    eventLog.scrollTop = eventLog.scrollHeight;
+                }
+            }
+        };
+        
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeDebugTools();
+            setupEventListeners();
+            displayBrowserInfo();
+            PomeloXDebug.log('调试工具初始化完成', 'success');
+        });
+        
+        function initializeDebugTools() {
+            PomeloXDebug.log('开始初始化调试工具...');
+            
+            // 检测输入框是否可用
+            const inputs = document.querySelectorAll('input');
+            inputs.forEach((input, index) => {
+                input.addEventListener('focus', () => {
+                    PomeloXDebug.log(`输入框 ${index + 1} 获得焦点: ${input.id || input.className}`, 'success');
+                });
+                
+                input.addEventListener('blur', () => {
+                    PomeloXDebug.log(`输入框 ${index + 1} 失去焦点: ${input.id || input.className}`, 'info');
+                });
+                
+                input.addEventListener('input', (e) => {
+                    PomeloXDebug.log(`输入框 ${index + 1} 内容变化: "${e.target.value}"`, 'info');
+                });
+            });
+        }
+        
+        function setupEventListeners() {
+            const eventTestInput = document.getElementById('event-test');
+            
+            // 监听所有可能的输入事件
+            const events = ['focus', 'blur', 'input', 'change', 'keydown', 'keyup', 'click', 'mousedown', 'mouseup', 'touchstart', 'touchend'];
+            
+            events.forEach(eventName => {
+                eventTestInput.addEventListener(eventName, function(e) {
+                    PomeloXDebug.log(`事件触发: ${eventName} - 值: "${e.target.value}"`, 'info');
+                });
+            });
+        }
+        
+        function openPomeloXInNewTab() {
+            PomeloXDebug.log('正在打开PomeloX应用...', 'info');
+            window.open('http://localhost:8090', '_blank');
+        }
+        
+        function testInputFocus() {
+            PomeloXDebug.log('开始测试输入框聚焦功能...', 'info');
+            
+            const inputs = document.querySelectorAll('input');
+            let testIndex = 0;
+            
+            function focusNext() {
+                if (testIndex < inputs.length) {
+                    const input = inputs[testIndex];
+                    PomeloXDebug.log(`聚焦测试 ${testIndex + 1}/${inputs.length}: ${input.id || input.className}`, 'info');
+                    
+                    input.focus();
+                    setTimeout(() => {
+                        const isFocused = document.activeElement === input;
+                        PomeloXDebug.log(`聚焦结果: ${isFocused ? '成功' : '失败'}`, isFocused ? 'success' : 'error');
+                        testIndex++;
+                        focusNext();
+                    }, 1000);
+                } else {
+                    PomeloXDebug.log('输入框聚焦测试完成', 'success');
+                }
+            }
+            
+            focusNext();
+        }
+        
+        function simulateUserInput() {
+            PomeloXDebug.log('开始模拟用户输入...', 'info');
+            
+            const testInput = document.getElementById('event-test');
+            const testValue = '模拟输入测试' + Math.random().toString(36).substring(7);
+            
+            // 聚焦输入框
+            testInput.focus();
+            
+            setTimeout(() => {
+                // 清空输入框
+                testInput.value = '';
+                testInput.dispatchEvent(new Event('input', { bubbles: true }));
+                
+                // 逐字符输入
+                let charIndex = 0;
+                const typeChar = () => {
+                    if (charIndex < testValue.length) {
+                        testInput.value += testValue[charIndex];
+                        testInput.dispatchEvent(new Event('input', { bubbles: true }));
+                        charIndex++;
+                        setTimeout(typeChar, 100);
+                    } else {
+                        PomeloXDebug.log(`模拟输入完成: "${testValue}"`, 'success');
+                        testInput.dispatchEvent(new Event('change', { bubbles: true }));
+                    }
+                };
+                typeChar();
+            }, 500);
+        }
+        
+        function checkInputStyles() {
+            PomeloXDebug.log('开始检查输入框样式...', 'info');
+            
+            const inputs = document.querySelectorAll('input');
+            inputs.forEach((input, index) => {
+                const styles = window.getComputedStyle(input);
+                const importantStyles = {
+                    cursor: styles.cursor,
+                    userSelect: styles.userSelect,
+                    pointerEvents: styles.pointerEvents,
+                    zIndex: styles.zIndex,
+                    position: styles.position,
+                    opacity: styles.opacity,
+                    visibility: styles.visibility,
+                    display: styles.display
+                };
+                
+                PomeloXDebug.log(`输入框 ${index + 1} 样式: ${JSON.stringify(importantStyles)}`, 'info');
+            });
+            
+            updateTestResults();
+        }
+        
+        function updateTestResults() {
+            const resultsDiv = document.getElementById('test-results');
+            const inputs = document.querySelectorAll('input');
+            let results = '';
+            
+            inputs.forEach((input, index) => {
+                const canFocus = input.tabIndex !== -1 && input.style.pointerEvents !== 'none';
+                const statusClass = canFocus ? 'status-success' : 'status-error';
+                const statusText = canFocus ? '正常' : '异常';
+                
+                results += `<div><span class="status-indicator ${statusClass}"></span>输入框 ${index + 1}: ${statusText}</div>`;
+            });
+            
+            resultsDiv.innerHTML = results;
+        }
+        
+        function clearLogs() {
+            PomeloXDebug.logs = [];
+            document.getElementById('event-log').textContent = '日志已清空...';
+            document.getElementById('test-results').textContent = '暂无测试结果';
+            PomeloXDebug.log('日志已清空', 'info');
+        }
+        
+        function displayBrowserInfo() {
+            const info = {
+                userAgent: navigator.userAgent,
+                platform: navigator.platform,
+                language: navigator.language,
+                cookieEnabled: navigator.cookieEnabled,
+                onLine: navigator.onLine,
+                viewport: `${window.innerWidth}x${window.innerHeight}`,
+                screen: `${screen.width}x${screen.height}`,
+                devicePixelRatio: window.devicePixelRatio,
+                touchSupport: 'ontouchstart' in window,
+                localStorage: typeof(Storage) !== 'undefined',
+                webGL: !!window.WebGLRenderingContext
+            };
+            
+            let infoHtml = '';
+            Object.entries(info).forEach(([key, value]) => {
+                infoHtml += `<div><strong>${key}:</strong> ${value}</div>`;
+            });
+            
+            document.getElementById('browser-info').innerHTML = infoHtml;
+        }
+        
+        // 监听来自PomeloX应用的消息
+        window.addEventListener('message', function(event) {
+            if (event.origin === 'http://localhost:8090') {
+                PomeloXDebug.log(`收到来自PomeloX的消息: ${JSON.stringify(event.data)}`, 'info');
+            }
+        });
+        
+        // 全局错误处理
+        window.addEventListener('error', function(e) {
+            PomeloXDebug.log(`JavaScript错误: ${e.message} (${e.filename}:${e.lineno})`, 'error');
+        });
+        
+        // 监听页面可见性变化
+        document.addEventListener('visibilitychange', function() {
+            PomeloXDebug.log(`页面可见性: ${document.visibilityState}`, 'info');
+        });
+    </script>
+</body>
+</html>

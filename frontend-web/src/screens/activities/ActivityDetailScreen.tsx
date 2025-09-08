@@ -25,6 +25,8 @@ import { useWebTabBarRestore } from '../../hooks/useWebTabBarRestore';
 import { pomeloXAPI } from '../../services/PomeloXAPI';
 import { FrontendActivity } from '../../utils/activityAdapter';
 import { useUser } from '../../context/UserContext';
+import { UltraFastImage } from '../../components/common/UltraFastImage';
+import { imageCacheManager } from '../../utils/ImageCacheManager';
 
 const { width: screenWidth } = Dimensions.get('window');
 
@@ -37,16 +39,86 @@ export const ActivityDetailScreen: React.FC = () => {
   const darkModeSystem = useAllDarkModeStyles();
   const { isDarkMode, styles: dmStyles, gradients: dmGradients, blur: dmBlur, icons: dmIcons } = darkModeSystem;
   
-  const activity = route.params?.activity || {};
+  const routeActivity = route.params?.activity || {};
   const { user, isAuthenticated } = useUser();
   
+  // 🔍 调试：打印接收到的route参数
+  useEffect(() => {
+    console.log('🎯 [ACTIVITY-DETAIL] Route参数调试:', {
+      routeParams: route.params,
+      routeActivity,
+      activityKeys: Object.keys(routeActivity),
+      location: routeActivity.location,
+      address: routeActivity.address,
+      hasLocation: !!(routeActivity.location || routeActivity.address)
+    });
+  }, [route.params]);
+  
+  const [activity, setActivity] = useState(routeActivity);
   const [isRegistered, setIsRegistered] = useState(false);
-  const [registrationStatus, setRegistrationStatus] = useState<'upcoming' | 'registered' | 'checked_in'>('upcoming');
+  const [registrationStatus, setRegistrationStatus] = useState<'available' | 'registered' | 'checked_in'>('available');
   const [loading, setLoading] = useState(false);
   const [isFavorited, setIsFavorited] = useState(false);
+  const [isLoadingActivity, setIsLoadingActivity] = useState(false);
 
   // 🛡️ TabBar状态守护：确保活动详情页面TabBar始终隐藏
   useTabBarVerification('ActivityDetail', { debugLogs: false });
+
+  // 🔧 监听用户登录状态变化，重新获取活动数据
+  useEffect(() => {
+    if (isAuthenticated && routeActivity.id && (!activity.detail || !activity.image)) {
+      console.log('🔄 用户登录后重新获取活动详情数据');
+      refreshActivityData();
+    }
+  }, [isAuthenticated, routeActivity.id]);
+
+  // 🔧 处理登录后返回的刷新逻辑
+  useEffect(() => {
+    if ((route.params?.refreshOnReturn || route.params?.forceRefresh) && isAuthenticated && routeActivity.id) {
+      console.log('🔄 从登录页面返回，刷新活动数据');
+      refreshActivityData();
+    }
+  }, [route.params?.refreshOnReturn, route.params?.forceRefresh, isAuthenticated]);
+
+  // 🔄 重新获取活动详情数据
+  const refreshActivityData = async () => {
+    if (!routeActivity.id) return;
+    
+    setIsLoadingActivity(true);
+    try {
+      // 从活动列表API获取最新数据（包含完整信息）
+      const response = await pomeloXAPI.getActivityList({
+        pageNum: 1,
+        pageSize: 100,
+        userId: user?.id ? parseInt(user.id) : undefined
+      });
+      
+      if (response.code === 200 && response.data?.rows) {
+        const updatedActivity = response.data.rows.find((act: any) => act.id === routeActivity.id);
+        
+        if (updatedActivity) {
+          console.log('✅ 获取到最新活动数据:', updatedActivity);
+          setActivity(updatedActivity);
+          
+          // 🚀 预加载活动图片
+          if (updatedActivity.image) {
+            imageCacheManager.preloadImage(updatedActivity.image);
+          }
+        } else {
+          console.warn('⚠️ 在活动列表中未找到对应活动，保持原数据');
+          setActivity(routeActivity);
+        }
+      } else {
+        console.warn('⚠️ 获取活动列表失败，保持原数据');
+        setActivity(routeActivity);
+      }
+    } catch (error) {
+      console.error('❌ 获取活动数据失败:', error);
+      setActivity(routeActivity);
+    } finally {
+      setIsLoadingActivity(false);
+    }
+  };
 
   // 🔧 优化报名状态初始化 - 优先使用API验证而非缓存数据
   useEffect(() => {
@@ -67,7 +139,11 @@ export const ActivityDetailScreen: React.FC = () => {
         const registeredCount = activity.registeredCount ?? activity.attendees ?? 0;
         const maxAttendees = activity.maxAttendees || activity.enrollment || 0;
         return maxAttendees > 0 ? `${registeredCount}/${maxAttendees}` : `${registeredCount}`;
-      })()
+      })(),
+      // 🐛 新增调试信息
+      currentRegistrationStatus: registrationStatus,
+      currentIsRegistered: isRegistered,
+      timestamp: new Date().toLocaleTimeString()
     });
     
     // 🔧 优先通过API验证状态，而不是依赖可能过时的缓存数据
@@ -79,7 +155,7 @@ export const ActivityDetailScreen: React.FC = () => {
           setIsRegistered(true);
           console.log('✅ [未登录] 使用传入状态:', activity.status);
         } else {
-          setRegistrationStatus('upcoming');
+          setRegistrationStatus('available');
           setIsRegistered(false);
           console.log('📋 [未登录] 默认未报名状态');
         }
@@ -96,7 +172,7 @@ export const ActivityDetailScreen: React.FC = () => {
         
         if (signInfo.code === 200) {
           const latestStatus = signInfo.data;
-          let newStatus: 'upcoming' | 'registered' | 'checked_in';
+          let newStatus: 'available' | 'registered' | 'checked_in';
           
           switch (latestStatus) {
             case -1:
@@ -108,7 +184,7 @@ export const ActivityDetailScreen: React.FC = () => {
               setIsRegistered(true);
               break;
             default:
-              newStatus = 'upcoming';
+              newStatus = 'available';
               setIsRegistered(false);
           }
           
@@ -124,7 +200,7 @@ export const ActivityDetailScreen: React.FC = () => {
             setRegistrationStatus(activity.status);
             setIsRegistered(true);
           } else {
-            setRegistrationStatus('upcoming');
+            setRegistrationStatus('available');
             setIsRegistered(false);
           }
         }
@@ -135,7 +211,7 @@ export const ActivityDetailScreen: React.FC = () => {
           setRegistrationStatus(activity.status);
           setIsRegistered(true);
         } else {
-          setRegistrationStatus('upcoming');
+          setRegistrationStatus('available');
           setIsRegistered(false);
         }
       }
@@ -143,6 +219,13 @@ export const ActivityDetailScreen: React.FC = () => {
     
     verifyInitialStatus();
   }, [activity.id, user?.id]); // 移除activity.status依赖，避免重复触发
+
+  // 🚀 预加载活动图片
+  useEffect(() => {
+    if (activity.image) {
+      imageCacheManager.preloadImage(activity.image);
+    }
+  }, [activity.image]);
 
   // 🔧 页面焦点变化时重新验证状态（确保最新数据）
   useEffect(() => {
@@ -158,7 +241,7 @@ export const ActivityDetailScreen: React.FC = () => {
           
           if (signInfo.code === 200) {
             const latestStatus = signInfo.data;
-            let newStatus: 'upcoming' | 'registered' | 'checked_in';
+            let newStatus: 'available' | 'registered' | 'checked_in';
             
             switch (latestStatus) {
               case -1:
@@ -170,7 +253,7 @@ export const ActivityDetailScreen: React.FC = () => {
                 setIsRegistered(true);
                 break;
               default:
-                newStatus = 'upcoming';
+                newStatus = 'available';
                 setIsRegistered(false);
             }
             
@@ -196,17 +279,39 @@ export const ActivityDetailScreen: React.FC = () => {
   const handleRegister = async () => {
     if (loading) return;
 
+    console.log('🚀 [注册按钮] 用户点击Register Now按钮:', {
+      isAuthenticated,
+      registrationStatus,
+      isRegistered,
+      activityId: activity.id,
+      activityTitle: activity.title,
+      userId: user?.id,
+      timestamp: new Date().toLocaleTimeString()
+    });
+
     // 检查用户登录状态
     if (!isAuthenticated) {
-      // 未登录，跳转到登录页面
-      navigation.navigate('Login', { returnTo: 'ActivityDetail', activityId: activity.id });
+      console.log('🔐 [注册按钮] 用户未登录，跳转到登录页面');
+      // 未登录，跳转到登录页面，传递完整的activity数据
+      navigation.navigate('Login', { 
+        returnTo: 'ActivityDetail', 
+        activityId: activity.id,
+        originalActivity: activity
+      });
       return;
     }
 
     // 已登录，跳转到报名表单页面
-    if (registrationStatus === 'upcoming') {
+    if (registrationStatus === 'available') {
+      console.log('📝 [注册按钮] 用户已登录且可以报名，跳转到报名表单页面');
       navigation.navigate('ActivityRegistrationForm', { activity });
       return;
+    } else {
+      console.log('⚠️ [注册按钮] 用户状态异常，无法进行报名:', {
+        registrationStatus,
+        isRegistered,
+        shouldShowRegisterNow: registrationStatus === 'available' && !isRegistered
+      });
     }
   };
 
@@ -215,8 +320,13 @@ export const ActivityDetailScreen: React.FC = () => {
     if (loading || registrationStatus !== 'registered') return;
 
     try {
-      console.log('开始活动签到流程:', { activityId: activity.id, activityName: activity.name });
+      console.log('🚀 [签到] 打开活动签到扫码页面:', { 
+        activityId: activity.id, 
+        activityName: activity.name,
+        userId: user?.id
+      });
       
+      // 原来的QR扫描逻辑（备用）
       // 生成唯一的回调ID
       const callbackId = `activity_signin_${Date.now()}`;
       
@@ -353,15 +463,39 @@ export const ActivityDetailScreen: React.FC = () => {
   useEffect(() => {
     const registrationListener = DeviceEventEmitter.addListener('activityRegistered', (data: { activityId: string }) => {
       if (data.activityId === activity.id) {
+        console.log('🎉 [ActivityDetail] 接收到activityRegistered事件，更新状态为已报名');
         setRegistrationStatus('registered');
         setIsRegistered(true);
+        
+        // 🔄 额外验证：重新从API获取最新状态以确保数据一致性
+        setTimeout(async () => {
+          if (user?.id) {
+            try {
+              const signInfo = await pomeloXAPI.getSignInfo(parseInt(activity.id), parseInt(user.id));
+              if (signInfo.code === 200) {
+                const latestStatus = signInfo.data;
+                console.log('✅ [ActivityDetail] API验证报名后状态:', latestStatus);
+                
+                if (latestStatus === -1) {
+                  setRegistrationStatus('registered');
+                  setIsRegistered(true);
+                } else if (latestStatus === 1) {
+                  setRegistrationStatus('checked_in');
+                  setIsRegistered(true);
+                }
+              }
+            } catch (error) {
+              console.warn('⚠️ [ActivityDetail] 验证报名状态失败:', error);
+            }
+          }
+        }, 200);
       }
     });
 
     return () => {
       registrationListener.remove();
     };
-  }, [activity.id]);
+  }, [activity.id, user?.id]);
 
   // 🌐 Web端TabBar恢复机制：当退出详情页时恢复TabBar
   const { manualRestore } = useWebTabBarRestore({
@@ -456,10 +590,12 @@ export const ActivityDetailScreen: React.FC = () => {
       >
         {/* Image Header */}
         <View style={styles.imageContainer}>
-          <Image
-            source={{ uri: activity.image }}
+          <UltraFastImage
+            uri={activity.image}
             style={styles.image}
             resizeMode="cover"
+            onLoad={() => console.log('✅ 活动图片加载成功')}
+            onError={(error) => console.warn('⚠️ 活动图片加载失败:', error)}
           />
         </View>
 
@@ -527,7 +663,9 @@ export const ActivityDetailScreen: React.FC = () => {
                 </View>
                 <View style={styles.infoCardContent}>
                   <Text style={styles.infoCardLabel}>{t('activityDetail.activityLocation')}</Text>
-                  <Text style={styles.infoCardValue}>{activity.location}</Text>
+                  <Text style={styles.infoCardValue}>
+                    {activity.location || activity.address || t('common.unknown')}
+                  </Text>
                 </View>
               </View>
             </View>
@@ -576,13 +714,33 @@ export const ActivityDetailScreen: React.FC = () => {
         ]}>
           <TouchableOpacity
             style={styles.registerButton}
-            onPress={registrationStatus === 'registered' ? handleSignIn : handleRegister}
+            onPress={() => {
+              console.log('🎯 [按钮渲染] 用户点击底部按钮:', {
+                registrationStatus,
+                isRegistered,
+                isAuthenticated,
+                willCallSignIn: registrationStatus === 'registered',
+                willCallRegister: registrationStatus !== 'registered',
+                currentButtonText: loading ? 'loading' :
+                  !isAuthenticated ? 'login_required_to_register' :
+                  registrationStatus === 'available' ? 'registerNow' :
+                  registrationStatus === 'registered' ? 'checkin_now' :
+                  registrationStatus === 'checked_in' ? 'checked_in' : 'unavailable',
+                timestamp: new Date().toLocaleTimeString()
+              });
+              
+              if (registrationStatus === 'registered') {
+                handleSignIn();
+              } else {
+                handleRegister();
+              }
+            }}
             disabled={loading || registrationStatus === 'checked_in'}
           >
             <Text style={styles.registerButtonText}>
               {loading ? t('common.loading') :
                !isAuthenticated ? t('activityDetail.login_required_to_register') :
-               registrationStatus === 'upcoming' ? t('activityDetail.registerNow') :
+               registrationStatus === 'available' ? t('activityDetail.registerNow') :
                registrationStatus === 'registered' ? t('activityDetail.checkin_now') :
                registrationStatus === 'checked_in' ? t('activityDetail.checked_in') : t('activityDetail.unavailable')}
             </Text>

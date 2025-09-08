@@ -33,7 +33,7 @@ export default defineConfig({
   // 全局测试配置
   use: {
     // 基础URL - 测试页面地址
-    baseURL: 'file://' + process.cwd(),
+    baseURL: 'http://localhost:8081',
     
     // 浏览器设置
     headless: false, // 显示浏览器窗口便于监控
@@ -56,8 +56,8 @@ export default defineConfig({
     
     // 额外的浏览器上下文选项
     contextOptions: {
-      // 权限设置
-      permissions: ['camera', 'microphone', 'geolocation'],
+      // 权限设置 - Chromium only
+      permissions: ['geolocation'],
       
       // 模拟移动设备（测试响应式设计）
       // userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 14_7_1 like Mac OS X)',

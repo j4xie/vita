@@ -14,6 +14,10 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { WebHaptics as Haptics } from '../../utils/WebHaptics';
+import { WebCameraView } from '../../components/web/WebCameraView';
+import { EnhancedWebCameraView } from '../../components/web/EnhancedWebCameraView';
+import { SimpleQRScanner } from '../../components/web/SimpleQRScanner';
+import { ReferralCodeInputSheet } from '../../components/sheets/ReferralCodeInputSheet';
 
 import { theme } from '../../theme';
 import { useOrganization } from '../../context/OrganizationContext';
@@ -47,6 +51,7 @@ export const QRScannerScreen: React.FC = () => {
   const [permission, requestPermission] = useCameraPermissions();
   const [scanned, setScanned] = useState(false);
   const [torchOn, setTorchOn] = useState(false);
+  const [showReferralInputSheet, setShowReferralInputSheet] = useState(false);
   
   // 用户相关状态
   const { user } = useUser();
@@ -522,9 +527,11 @@ export const QRScannerScreen: React.FC = () => {
         {
           text: '查看详情',
           onPress: () => {
-            // TODO: 跳转到用户详情页面
-            console.log('Navigate to user profile:', userData.userId);
-            navigation.goBack();
+            // 跳转到用户详情页面
+            navigation.navigate('UserDetail', {
+              userData: userData,
+              fromQRScan: true
+            });
           }
         },
         {
@@ -746,7 +753,13 @@ export const QRScannerScreen: React.FC = () => {
   };
 
   const handleBack = () => {
-    navigation.goBack();
+    console.log('🔙 [QRScanner] handleBack被点击');
+    try {
+      navigation.goBack();
+      console.log('✅ [QRScanner] navigation.goBack()执行成功');
+    } catch (error) {
+      console.error('❌ [QRScanner] navigation.goBack()执行失败:', error);
+    }
   };
 
   const toggleTorch = () => {
@@ -754,29 +767,24 @@ export const QRScannerScreen: React.FC = () => {
   };
 
   const handleManualInput = () => {
+    console.log('🔍 [QRScanner] 手动输入按钮被点击, purpose:', purpose);
     if (purpose === 'register') {
-      Alert.prompt(
-        t('qr.scanning.manual_input_title'),
-        t('qr.scanning.manual_input_desc'),
-        [
-          {
-            text: t('qr.scanning.cancel'),
-            style: 'cancel',
-          },
-          {
-            text: t('qr.scanning.confirm'),
-            onPress: (text) => {
-              if (text) {
-                navigation.navigate('RegisterForm', { 
-                  referralCode: text,
-                  hasReferralCode: true 
-                });
-              }
-            },
-          },
-        ],
-        'plain-text'
-      );
+      console.log('✅ [QRScanner] 显示推荐码输入Sheet');
+      setShowReferralInputSheet(true);
+    } else {
+      console.log('❌ [QRScanner] purpose不是register，不显示推荐码输入', { purpose });
+    }
+  };
+
+  const handleReferralCodeSubmit = (code: string) => {
+    console.log('📝 [QRScannerScreen] 用户手动输入推荐码:', code);
+    setShowReferralInputSheet(false);
+    
+    if (code.trim()) {
+      navigation.navigate('RegisterForm', { 
+        referralCode: code.trim(),
+        hasReferralCode: true 
+      });
     }
   };
 
@@ -798,32 +806,52 @@ export const QRScannerScreen: React.FC = () => {
     }
   };
 
-  if (!permission) {
-    return (
-      <View style={styles.container}>
-        <Text style={styles.message}>{t('qr.camera.permission_requesting')}</Text>
-      </View>
-    );
+  // Web端不需要expo-camera的权限检查
+  if (Platform.OS !== 'web') {
+    if (!permission) {
+      return (
+        <View style={styles.container}>
+          <Text style={styles.message}>{t('qr.camera.permission_requesting')}</Text>
+        </View>
+      );
+    }
+
+    if (!permission.granted) {
+      return (
+        <View style={styles.container}>
+          <Ionicons name="camera-off" size={64} color={theme.colors.text.disabled} />
+          <Text style={styles.message}>{t('qr.camera.no_permission')}</Text>
+          <Text style={styles.submessage}>{t('qr.camera.permission_instruction')}</Text>
+          <TouchableOpacity style={[styles.button, { marginBottom: theme.spacing[2] }]} onPress={requestPermission}>
+            <Text style={styles.buttonText}>{t('qr.camera.request_permission_button')}</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.button} onPress={handleBack}>
+            <Text style={styles.buttonText}>{t('common.back')}</Text>
+          </TouchableOpacity>
+        </View>
+      );
+    }
   }
 
-  if (!permission.granted) {
+  // 渲染摄像头组件
+  const renderCamera = () => {
+    console.log('📹 [QRScannerScreen] 渲染摄像头组件, Platform.OS:', Platform.OS);
+    
+    if (Platform.OS === 'web') {
+      console.log('🌐 [QRScannerScreen] 使用SimpleQRScanner组件');
+      return (
+        <SimpleQRScanner
+          style={StyleSheet.absoluteFillObject}
+          onScan={(data) => {
+            if (!scanned) {
+              handleBarCodeScanned({ type: 'qr', data });
+            }
+          }}
+        />
+      );
+    }
+    
     return (
-      <View style={styles.container}>
-        <Ionicons name="camera-off" size={64} color={theme.colors.text.disabled} />
-        <Text style={styles.message}>{t('qr.camera.no_permission')}</Text>
-        <Text style={styles.submessage}>{t('qr.camera.permission_instruction')}</Text>
-        <TouchableOpacity style={[styles.button, { marginBottom: theme.spacing[2] }]} onPress={requestPermission}>
-          <Text style={styles.buttonText}>{t('qr.camera.request_permission_button')}</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.button} onPress={handleBack}>
-          <Text style={styles.buttonText}>{t('common.back')}</Text>
-        </TouchableOpacity>
-      </View>
-    );
-  }
-
-  return (
-    <View style={styles.container}>
       <CameraView
         style={StyleSheet.absoluteFillObject}
         facing="back"
@@ -833,12 +861,24 @@ export const QRScannerScreen: React.FC = () => {
           barcodeTypes: ['qr'],
         }}
       />
+    );
+  };
+
+  return (
+    <View style={styles.container}>
+      {renderCamera()}
 
       {/* Overlay */}
       <View style={styles.overlay}>
         {/* Header */}
         <View style={styles.header}>
-          <TouchableOpacity onPress={handleBack} style={styles.headerButton}>
+          <TouchableOpacity 
+            onPress={handleBack} 
+            style={styles.headerButton}
+            activeOpacity={0.7}
+            onPressIn={() => console.log('🔙 [QRScanner] Back button pressed in')}
+            onPressOut={() => console.log('🔙 [QRScanner] Back button pressed out')}
+          >
             <Ionicons name="close" size={28} color={theme.colors.text.inverse} />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>
@@ -887,6 +927,13 @@ export const QRScannerScreen: React.FC = () => {
           )}
         </View>
       </View>
+
+      {/* 推荐码输入BottomSheet */}
+      <ReferralCodeInputSheet
+        visible={showReferralInputSheet}
+        onClose={() => setShowReferralInputSheet(false)}
+        onSubmit={handleReferralCodeSubmit}
+      />
 
       {/* 组织切换模态框 */}
       <OrganizationSwitchModal
@@ -1108,6 +1155,7 @@ const styles = StyleSheet.create({
   overlay: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    pointerEvents: 'box-none',
   },
   header: {
     flexDirection: 'row',
@@ -1116,12 +1164,20 @@ const styles = StyleSheet.create({
     paddingTop: Platform.OS === 'ios' ? 50 : 30,
     paddingHorizontal: theme.spacing[4],
     paddingBottom: theme.spacing[4],
+    pointerEvents: 'auto',
+    zIndex: 9998,
+    position: 'relative',
   },
   headerButton: {
     width: 44,
     height: 44,
     justifyContent: 'center',
     alignItems: 'center',
+    pointerEvents: 'auto',
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    borderRadius: 22,
+    zIndex: 9999,
+    position: 'relative',
   },
   headerTitle: {
     fontSize: theme.typography.fontSize.lg,

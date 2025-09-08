@@ -50,6 +50,7 @@ export const LiquidGlassListItem: React.FC<LiquidGlassListItemProps> = ({
   const pressed = useSharedValue(0);
   const logoSource = getSchoolLogo(schoolId);
   
+  
   // 🌍 NEW: 根据用户要求和语言获取正确的标题和副标题
   const getDisplayInfo = () => {
     const isEnglish = i18n.language === 'en-US';
