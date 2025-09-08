@@ -176,33 +176,58 @@ export const UserActivityModal: React.FC<UserActivityModalProps> = ({
       // 生成唯一的回调ID
       const callbackId = `user_activity_signin_${Date.now()}`;
       
-      // 注册回调函数到导航状态
-      const parentNavigator = (navigation as any).getParent();
-      if (parentNavigator) {
-        const state = parentNavigator.getState();
-        if (!state.qrScannerCallbacks) {
-          state.qrScannerCallbacks = {};
-        }
-        
-        state.qrScannerCallbacks[callbackId] = {
-          onScanSuccess: () => {
-            // 签到成功后刷新统计
-            if (onRefreshStats) {
-              onRefreshStats();
+      // 注册回调函数到导航状态 - Web端安全版本
+      try {
+        const parentNavigator = (navigation as any).getParent?.();
+        if (!parentNavigator) {
+          console.warn('⚠️ [UserActivityModal] 无法获取父导航器');
+        } else {
+          const state = parentNavigator.getState?.();
+          if (state && typeof state === 'object') {
+            // 确保qrScannerCallbacks存在且为对象
+            if (!state.qrScannerCallbacks || typeof state.qrScannerCallbacks !== 'object') {
+              state.qrScannerCallbacks = {};
             }
-            // 清理回调函数
-            delete state.qrScannerCallbacks[callbackId];
-          },
-          onScanError: (error: string) => {
-            console.error('扫码失败:', error);
-            // 清理回调函数
-            delete state.qrScannerCallbacks[callbackId];
+            
+            // 设置回调函数
+            state.qrScannerCallbacks[callbackId] = {
+              onScanSuccess: () => {
+                // 签到成功后刷新统计
+                if (onRefreshStats) {
+                  onRefreshStats();
+                }
+                // 清理回调函数
+                try {
+                  if (state?.qrScannerCallbacks?.[callbackId]) {
+                    delete state.qrScannerCallbacks[callbackId];
+                  }
+                } catch (e) {
+                  console.warn('清理回调函数失败:', e);
+                }
+              },
+              onScanError: (error: string) => {
+                console.error('扫码失败:', error);
+                // 清理回调函数
+                try {
+                  if (state?.qrScannerCallbacks?.[callbackId]) {
+                    delete state.qrScannerCallbacks[callbackId];
+                  }
+                } catch (e) {
+                  console.warn('清理回调函数失败:', e);
+                }
+              }
+            };
+            console.log('✅ [UserActivityModal] 回调函数注册成功:', callbackId);
+          } else {
+            console.warn('⚠️ [UserActivityModal] 导航状态无效');
           }
-        };
+        }
+      } catch (error) {
+        console.error('⚠️ [UserActivityModal] 注册回调函数失败:', error);
       }
       
       navigation.navigate('QRScanner', {
-        scanType: 'activity_signin',
+        purpose: 'activity_signin',
         activityId: activityId.toString(),
         callbackId: callbackId // 传递回调ID而不是函数
       });

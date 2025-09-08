@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -18,6 +18,7 @@ import { WebCameraView } from '../../components/web/WebCameraView';
 import { EnhancedWebCameraView } from '../../components/web/EnhancedWebCameraView';
 import { SimpleQRScanner } from '../../components/web/SimpleQRScanner';
 import { ReferralCodeInputSheet } from '../../components/sheets/ReferralCodeInputSheet';
+import { ScanFeedbackOverlay, QRCodeBounds } from '../../components/common/ScanFeedbackOverlay';
 
 import { theme } from '../../theme';
 import { useOrganization } from '../../context/OrganizationContext';
@@ -41,17 +42,33 @@ export const QRScannerScreen: React.FC = () => {
   const activity = route.params?.activity; // 活动信息
   const callbackId = route.params?.callbackId; // 回调函数标识符
   
-  // 获取注册的回调函数
+  // 获取注册的回调函数 - Web端兼容性修复
   const getRegisteredCallback = (type: 'onScanSuccess' | 'onScanError') => {
-    const state = (navigation as any).getParent()?.getState();
-    const callbacks = state?.qrScannerCallbacks;
-    return callbacks?.[callbackId]?.[type];
+    try {
+      const parentNavigator = (navigation as any).getParent?.();
+      if (!parentNavigator) return null;
+      
+      const state = parentNavigator.getState?.();
+      if (!state || typeof state !== 'object') return null;
+      
+      const callbacks = state.qrScannerCallbacks;
+      if (!callbacks || typeof callbacks !== 'object') return null;
+      
+      return callbacks[callbackId]?.[type] || null;
+    } catch (error) {
+      console.warn('⚠️ [QRScanner Web] 获取回调函数失败:', error);
+      return null;
+    }
   };
   
   const [permission, requestPermission] = useCameraPermissions();
   const [scanned, setScanned] = useState(false);
   const [torchOn, setTorchOn] = useState(false);
   const [showReferralInputSheet, setShowReferralInputSheet] = useState(false);
+  
+  // 扫码反馈状态
+  const [showScanFeedback, setShowScanFeedback] = useState(false);
+  const [qrCodeBounds, setQRCodeBounds] = useState<QRCodeBounds | undefined>();
   
   // 用户相关状态
   const { user } = useUser();
@@ -70,35 +87,70 @@ export const QRScannerScreen: React.FC = () => {
   const [scanResult, setScanResult] = useState<MerchantQRScanResult | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
 
-  const handleBarCodeScanned = ({ type, data }: { type: string; data: string }) => {
+  // 用于保存扫描数据的ref
+  const scannedDataRef = useRef<string>('');
+
+  const handleBarCodeScanned = ({ type, data, bounds }: { type: string; data: string; bounds?: any }) => {
     if (scanned || isProcessing) return;
     
+    console.log('🔎 [QRScanner Web] 检测到二维码:', { type, data: data?.substring(0, 50), bounds });
+    
+    // 保存扫描数据
+    scannedDataRef.current = data;
+    
+    // 设置扫码状态和二维码位置
     setScanned(true);
     
-    // 触觉反馈
+    // 如果有边界信息，保存用于定位圆圈
+    if (bounds) {
+      setQRCodeBounds({
+        origin: { x: bounds.origin.x, y: bounds.origin.y },
+        size: { width: bounds.size.width, height: bounds.size.height }
+      });
+    }
+    
+    // 显示扫码反馈动画
+    setShowScanFeedback(true);
+    
+    // Web端触觉反馈（在ScanFeedbackOverlay中处理）
     if (Platform.OS === 'ios') {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     }
+  };
+
+  // 扫码反馈动画完成后处理扫描结果
+  const handleScanFeedbackComplete = () => {
+    setShowScanFeedback(false);
+    
+    // 获取最后扫描的数据
+    const lastScannedData = scannedDataRef.current;
+    if (!lastScannedData) {
+      console.warn('⚠️ [QRScanner Web] 扫码数据丢失');
+      setScanned(false);
+      return;
+    }
+    
+    console.log('✅ [QRScanner Web] 开始处理扫码结果:', lastScannedData.substring(0, 50));
     
     // 根据不同用途处理扫描结果
     switch (purpose) {
       case 'register':
-        handleRegisterCode(data);
+        handleRegisterCode(lastScannedData);
         break;
       case 'verify':
-        handleVerifyCode(data);
+        handleVerifyCode(lastScannedData);
         break;
       case 'membership_card':
-        handleMembershipCardScan(data);
+        handleMembershipCardScan(lastScannedData);
         break;
       case 'user_identity':
-        handleUserIdentityScan(data);
+        handleUserIdentityScan(lastScannedData);
         break;
       case 'activity_signin':
-        handleActivitySignInScan(data);
+        handleActivitySignInScan(lastScannedData);
         break;
       default:
-        handleGeneralScan(data);
+        handleGeneralScan(lastScannedData);
     }
   };
 
@@ -300,9 +352,12 @@ export const QRScannerScreen: React.FC = () => {
                 {
                   text: t('activities.registration.register_now'),
                   onPress: () => {
-                    // 获取活动信息并跳转
+                    // 获取活动信息并跳转，传递来源信息
+                    const fromProfile = returnScreen?.includes('Profile') || returnScreen?.includes('profile');
                     navigation.navigate('ActivityDetail', { 
-                      activity: { id: activityId.toString() }
+                      activity: { id: activityId.toString() },
+                      fromProfile,
+                      returnScreen
                     });
                   },
                 },
@@ -388,10 +443,32 @@ export const QRScannerScreen: React.FC = () => {
       const result = await pomeloXAPI.signInActivity(activityId, parseInt(user?.id || '0'));
       
       if (result.code === 200) {
-        // 签到成功
+        // 签到成功 - 增强反馈和状态广播
+        console.log('✅ [QR签到] 活动签到成功:', {
+          activityId,
+          userId: user?.id,
+          result,
+          timestamp: new Date().toISOString()
+        });
+        
+        // 触觉反馈
         if (Platform.OS === 'ios') {
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         }
+        
+        // 🚀 重要：广播签到成功事件，更新所有相关UI组件
+        DeviceEventEmitter.emit('activitySignedIn', { 
+          activityId: activityId.toString(),
+          userId: user?.id,
+          timestamp: new Date().toISOString()
+        });
+        
+        // 广播给活动列表和详情页面
+        DeviceEventEmitter.emit('activityStatusChanged', {
+          activityId: activityId.toString(),
+          newStatus: 'checked_in',
+          userId: user?.id
+        });
         
         Alert.alert(
           t('qr.results.signin_success_title'),
@@ -410,13 +487,19 @@ export const QRScannerScreen: React.FC = () => {
           ]
         );
       } else {
+        console.warn('⚠️ [QR签到] 签到失败:', {
+          activityId,
+          code: result.code,
+          message: result.msg
+        });
+        
         showScanError(
           t('qr.results.signin_failed_title'),
           result.msg || t('qr.results.signin_failed_message')
         );
       }
     } catch (error) {
-      console.error('Sign-in API error:', error);
+      console.error('❌ [QR签到] API调用异常:', error);
       showScanError(
         t('qr.results.signin_failed_title'),
         t('common.network_error')
@@ -453,31 +536,37 @@ export const QRScannerScreen: React.FC = () => {
 
   const handleUserIdentityScan = (qrData: string) => {
     try {
+      console.log('🔎 [QR扫描] 开始处理用户身份码扫描');
       const parsedUser = parseUserIdentityQR(qrData);
       
       if (!parsedUser.isValid) {
+        console.log('❌ [QR扫描] 身份码无效:', parsedUser.error);
         showScanError(t('qr.errors.invalid_user_code'), parsedUser.error || t('qr.errors.scan_valid_user_qr'));
         return;
       }
 
-
       if (!parsedUser.data) {
+        console.log('❌ [QR扫描] 身份码数据为空');
         showScanError(t('qr.errors.identity_data_error'), t('qr.errors.cannot_read_user_info'));
         return;
       }
 
+      console.log('✅ [QR扫描] 身份码解析成功，显示用户信息');
       // 显示用户信息
       showUserInfo(parsedUser.data);
 
     } catch (error) {
-      console.error('Error processing user identity QR code:', error);
+      console.error('❌ [QR扫描] 处理用户身份码异常:', error);
       showScanError(t('qr.errors.scan_failed'), t('qr.errors.process_user_code_error'));
     }
   };
 
   const parseUserIdentityQR = (qrData: string): ParsedUserQRCode => {
     try {
+      console.log('🔍 [QR解析] 开始解析用户身份码:', qrData?.substring(0, 50) + '...');
+      
       if (!qrData.startsWith('VG_USER_')) {
+        console.log('❌ [QR解析] 非用户身份码格式');
         return {
           isValid: false,
           error: '不是有效的用户身份码格式'
@@ -485,24 +574,44 @@ export const QRScannerScreen: React.FC = () => {
       }
 
       const base64Data = qrData.replace('VG_USER_', '');
+      console.log('🔑 [QR解析] 提取的base64数据长度:', base64Data.length);
+      
       const encodedString = atob(base64Data);
+      console.log('🗜️ [QR解析] atob解码后的字符串长度:', encodedString.length);
+      
       const jsonString = decodeURIComponent(encodedString);
+      console.log('📜 [QR解析] decodeURIComponent后的JSON字符串长度:', jsonString.length);
+      
       const userData: UserIdentityData = JSON.parse(jsonString);
+      console.log('✅ [QR解析] JSON解析成功:', {
+        userId: userData.userId,
+        userName: userData.userName,
+        legalName: userData.legalName,
+        type: userData.type,
+        hasOrganization: !!userData.currentOrganization
+      });
 
       // 验证必要字段
       if (!userData.userId || !userData.userName || !userData.legalName) {
+        console.log('⚠️ [QR解析] 缺少必要字段:', {
+          hasUserId: !!userData.userId,
+          hasUserName: !!userData.userName,
+          hasLegalName: !!userData.legalName
+        });
         return {
           isValid: false,
           error: '身份码缺少必要信息'
         };
       }
 
+      console.log('✨ [QR解析] 身份码解析成功!');
       return {
         isValid: true,
         data: userData
       };
 
     } catch (error) {
+      console.error('❌ [QR解析] 解析异常:', error);
       return {
         isValid: false,
         error: '身份码格式错误，无法解析'
@@ -721,6 +830,9 @@ export const QRScannerScreen: React.FC = () => {
   };
 
   const showScanError = (title: string, message: string) => {
+    // 隐藏扫码反馈覆盖层
+    setShowScanFeedback(false);
+    
     if (Platform.OS === 'ios') {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
     }
@@ -731,7 +843,11 @@ export const QRScannerScreen: React.FC = () => {
       [
         {
           text: '重新扫描',
-          onPress: () => setScanned(false)
+          onPress: () => {
+            setScanned(false);
+            setQRCodeBounds(undefined);
+            scannedDataRef.current = '';
+          }
         },
         {
           text: '返回',
@@ -927,6 +1043,13 @@ export const QRScannerScreen: React.FC = () => {
           )}
         </View>
       </View>
+
+      {/* 扫码反馈覆盖层 */}
+      <ScanFeedbackOverlay
+        visible={showScanFeedback}
+        qrCodeBounds={qrCodeBounds}
+        onAnimationComplete={handleScanFeedbackComplete}
+      />
 
       {/* 推荐码输入BottomSheet */}
       <ReferralCodeInputSheet
