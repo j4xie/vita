@@ -1,43 +1,30 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 
 interface SimpleCategoryBarProps {
   selectedIndex: number;
   onIndexChange: (index: number) => void;
   onScanPress?: () => void;
-  viewLayout?: 'list' | 'grid';
-  onLayoutChange?: (layout: 'list' | 'grid') => void;
 }
 
 export const SimpleCategoryBar: React.FC<SimpleCategoryBarProps> = ({
   selectedIndex,
   onIndexChange,
   onScanPress,
-  viewLayout = 'list',
-  onLayoutChange,
 }) => {
-  const segments = ['All', 'Upcoming', 'Ended'];
+  const { t } = useTranslation();
+  
+  const segments = [
+    t('filters.status.all', 'All'),
+    t('filters.status.available', 'Available'), 
+    t('filters.status.ended', 'Ended')
+  ];
 
-  const handleLayoutToggle = () => {
-    if (onLayoutChange) {
-      const newLayout = viewLayout === 'list' ? 'grid' : 'list';
-      onLayoutChange(newLayout);
-    }
-  };
 
   return (
     <View style={styles.container}>
-      {/* 布局切换按钮 */}
-      {onLayoutChange && (
-        <TouchableOpacity style={styles.layoutButton} onPress={handleLayoutToggle}>
-          <Ionicons
-            name={viewLayout === 'list' ? 'grid-outline' : 'list-outline'}
-            size={18}
-            color="#666666"
-          />
-        </TouchableOpacity>
-      )}
       
       <View style={styles.segmentContainer}>
         {segments.map((segment, index) => (
@@ -136,22 +123,6 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.15,
     shadowRadius: 3,
-    elevation: 2,
-  },
-  layoutButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: 'rgba(255, 255, 255, 0.8)',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.4)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 10,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
     elevation: 2,
   },
 });

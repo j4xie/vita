@@ -8,6 +8,7 @@ import {
   Dimensions,
   Animated,
   ScrollView,
+  Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from '../../components/web/WebLinearGradient';
@@ -346,7 +347,11 @@ export const WellbeingScreen: React.FC = () => {
   const { t } = useTranslation();
   const route = useRoute();
   const navigation = useNavigation();
-  const { permissions, user } = useUser(); // 获取用户权限和用户信息
+  const { permissions, user, forceRefreshPermissions } = useUser(); // 获取用户权限和用户信息
+  
+  // 权限核对状态
+  const [isVerifyingPermissions, setIsVerifyingPermissions] = useState(false);
+  const [lastPermissionCheck, setLastPermissionCheck] = useState<Date | null>(null);
   
   // 🌙 Dark Mode Support
   const darkModeSystem = useAllDarkModeStyles();
@@ -373,6 +378,82 @@ export const WellbeingScreen: React.FC = () => {
   const { getLayerConfig } = usePerformanceDegradation();
   const L1Config = getLayerConfig('L1', false);
   const L2Config = getLayerConfig('L2', false);
+
+  // 🔐 权限核对功能
+  const performPermissionCheck = async () => {
+    if (isVerifyingPermissions) return;
+    
+    try {
+      setIsVerifyingPermissions(true);
+      const previousLevel = permissions.getPermissionLevel();
+      console.log('🔐 [WELLBEING-WEB] 开始权限核对...', { previousLevel });
+      
+      // 强制刷新权限信息
+      await forceRefreshPermissions();
+      
+      // 记录权限核对时间
+      setLastPermissionCheck(new Date());
+      
+      const newLevel = permissions.getPermissionLevel();
+      const hasVolunteerAccess = permissions.hasVolunteerManagementAccess();
+      
+      console.log('✅ [WELLBEING-WEB] 权限核对完成:', {
+        previousLevel,
+        newLevel,
+        hasVolunteerAccess,
+        checkTime: new Date().toLocaleTimeString()
+      });
+      
+      // 🎯 权限变化反应逻辑 - 只在权限显著提升时提醒
+      if (previousLevel !== newLevel && hasVolunteerAccess && !permissions.isRegularUser()) {
+        // 只有从普通用户提升到管理权限时才显示提醒
+        if (previousLevel === 'common' && ['manage', 'part_manage', 'staff'].includes(newLevel)) {
+          Alert.alert(
+            '权限已更新',
+            getPermissionDescription(newLevel),
+            [
+              {
+                text: '了解',
+                style: 'default',
+                onPress: () => {
+                  // 如果获得了志愿者权限，自动切换到志愿者tab
+                  if (tabs.length > 1 && hasVolunteerAccess) {
+                    setActiveTab('volunteer');
+                  }
+                }
+              }
+            ]
+          );
+        }
+      }
+      
+    } catch (error) {
+      console.error('❌ [WELLBEING-WEB] 权限核对失败:', error);
+      Alert.alert(
+        '权限核对失败',
+        '权限信息获取失败，请检查网络连接后重试',
+        [{ text: '确定', style: 'default' }]
+      );
+    } finally {
+      setIsVerifyingPermissions(false);
+    }
+  };
+
+  // 🎯 获取权限描述
+  const getPermissionDescription = (level: string): string => {
+    switch (level) {
+      case 'manage':
+        return '您现在拥有系统最高权限，可以管理所有学校的志愿者活动和用户信息。';
+      case 'part_manage':
+        return '您现在是分管理员，可以管理本校的志愿者活动和学生信息。';
+      case 'staff':
+        return '您现在是内部员工，可以查看和管理个人的志愿者工作记录。';
+      case 'common':
+        return '您当前是普通用户，可以使用安心计划功能。';
+      default:
+        return '您的账户权限已更新。';
+    }
+  };
 
   // 🚨 修复：确保 activeTab 改变时 opacity 值也更新
   useEffect(() => {
@@ -407,6 +488,30 @@ export const WellbeingScreen: React.FC = () => {
       navigation.setParams({ selectedSchool: undefined, fromConsulting: undefined });
     }
   }, [route.params, navigation]);
+
+  // 🔐 页面进入时自动权限核对
+  useEffect(() => {
+    const checkPermissionsOnFocus = () => {
+      // 如果距离上次检查超过5分钟，或者从未检查过，则进行权限核对
+      const shouldCheck = !lastPermissionCheck || 
+                         (Date.now() - lastPermissionCheck.getTime()) > 5 * 60 * 1000;
+      
+      if (shouldCheck && user) {
+        console.log('🔄 [WELLBEING-WEB] 页面焦点时自动核对权限');
+        performPermissionCheck();
+      }
+    };
+
+    // 监听页面焦点
+    const unsubscribe = navigation.addListener('focus', checkPermissionsOnFocus);
+    
+    // 初次进入时也检查
+    if (user) {
+      checkPermissionsOnFocus();
+    }
+
+    return unsubscribe;
+  }, [navigation, user, lastPermissionCheck]);
   
   // 权限调试日志和状态检查
   const permissionDebugInfo = {

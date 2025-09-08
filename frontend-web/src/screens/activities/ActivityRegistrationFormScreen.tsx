@@ -158,9 +158,24 @@ export const ActivityRegistrationFormScreen: React.FC = () => {
         console.log('📡 [报名] 发送activityRegistered事件:', { activityId: activity.id });
         DeviceEventEmitter.emit('activityRegistered', { activityId: activity.id });
         
+        // 🔧 发送活动报名完成事件，用于TabBar位置修复
+        DeviceEventEmitter.emit('activityRegistrationCompleted', { 
+          activityId: activity.id,
+          userId: user?.id,
+          timestamp: Date.now()
+        });
+        
         // 🔄 延迟返回页面，确保事件处理完成
         setTimeout(() => {
           console.log('🔙 [报名] 延迟返回活动详情页面，确保状态已更新');
+          
+          // 🔧 发送页面跳转完成事件
+          DeviceEventEmitter.emit('navigationCompleted', { 
+            from: 'ActivityRegistrationForm',
+            to: 'ActivityDetail',
+            timestamp: Date.now()
+          });
+          
           navigation.goBack();
         }, 100); // 延迟100毫秒确保状态更新
       } else {

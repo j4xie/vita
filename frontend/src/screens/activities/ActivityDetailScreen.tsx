@@ -42,7 +42,6 @@ export const ActivityDetailScreen: React.FC = () => {
   const [isRegistered, setIsRegistered] = useState(false);
   const [registrationStatus, setRegistrationStatus] = useState<'upcoming' | 'registered' | 'checked_in'>('upcoming');
   const [loading, setLoading] = useState(false);
-  const [isFavorited, setIsFavorited] = useState(false);
   const [activity, setActivity] = useState(route.params?.activity || {}); // ✅ 将activity转为状态以支持动态更新
 
   // 🛡️ TabBar状态守护：确保活动详情页面TabBar始终隐藏
@@ -560,13 +559,7 @@ export const ActivityDetailScreen: React.FC = () => {
   };
 
 
-  const handleShare = () => {
-    Alert.alert(t('activityDetail.share'), t('activityDetail.shareMessage'));
-  };
 
-  const handleFavorite = () => {
-    setIsFavorited(!isFavorited);
-  };
 
   // 格式化时间为12小时制
   const formatTime = (timeString: string) => {
@@ -588,24 +581,6 @@ export const ActivityDetailScreen: React.FC = () => {
           <Ionicons name="arrow-back" size={24} color="white" />
         </TouchableOpacity>
 
-        <View style={styles.fixedActionButtons}>
-          <TouchableOpacity
-            style={styles.fixedActionButton}
-            onPress={handleFavorite}
-          >
-            <Ionicons 
-              name={isFavorited ? "heart" : "heart-outline"} 
-              size={20} // 稍微减小尺寸适配36px容器
-              color={isFavorited ? theme.colors.danger : '#FFFFFF'} // 白色图标
-            />
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.fixedActionButton}
-            onPress={handleShare}
-          >
-            <Ionicons name="share-outline" size={20} color="#FFFFFF" />
-          </TouchableOpacity>
-        </View>
       </View>
       
       <ScrollView 
@@ -778,20 +753,6 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0, 0, 0, 0.8)', // 增加不透明度避免阴影问题
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  fixedActionButtons: {
-    flexDirection: 'row',
-  },
-  fixedActionButton: {
-    width: 36, // 按建议调整为36
-    height: 36,
-    borderRadius: 18, // L1圆形
-    backgroundColor: LIQUID_GLASS_LAYERS.L1.background.light,
-    borderWidth: 1, // 描边1pt
-    borderColor: 'rgba(255, 255, 255, 0.3)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginLeft: theme.spacing[2],
   },
   imageContainer: {
     width: screenWidth,

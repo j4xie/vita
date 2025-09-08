@@ -22,7 +22,7 @@ import { SimpleCategoryBar } from '../../components/ui/SimpleCategoryBar';
 
 export const BeautifulActivityListScreen: React.FC = () => {
   const { t } = useTranslation();
-  const { user } = useUser();
+  const { user, isAuthenticated } = useUser();
   const navigation = useNavigation<any>();
   const insets = useWebSafeAreaInsets();
   
@@ -32,15 +32,19 @@ export const BeautifulActivityListScreen: React.FC = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [activeFilter, setActiveFilter] = useState(0);
-  const [viewLayout, setViewLayout] = useState<'list' | 'grid'>('list');
+  // 移除viewLayout状态，固定使用grid视图
   
   // 🚫 滚动保护机制
   const [isScrolling, setIsScrolling] = useState(false);
   const scrollTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
 
-  // 过滤标签 - 使用硬编码避免翻译键显示问题
+  // 过滤标签 - 使用翻译系统
   const filterTabs = ['all', 'available', 'ended'];
-  const filterLabels = ['All', 'Upcoming', 'Ended'];
+  const filterLabels = [
+    t('filters.status.all', 'All'),
+    t('filters.status.available', 'Available'),
+    t('filters.status.ended', 'Ended')
+  ];
 
   // 加载活动数据
   const loadActivities = async () => {
@@ -81,6 +85,7 @@ export const BeautifulActivityListScreen: React.FC = () => {
   useEffect(() => {
     loadActivities();
   }, []);
+
 
   // 刷新处理
   const onRefresh = useCallback(async () => {
@@ -174,8 +179,6 @@ export const BeautifulActivityListScreen: React.FC = () => {
           selectedIndex={activeFilter}
           onIndexChange={setActiveFilter}
           onScanPress={handleScanPress}
-          viewLayout={viewLayout}
-          onLayoutChange={setViewLayout}
         />
       </View>
 
@@ -220,25 +223,10 @@ export const BeautifulActivityListScreen: React.FC = () => {
           }
         >
           {filteredActivities.length > 0 ? (
-            viewLayout === 'grid' ? (
-              // 网格布局 - 两列显示
-              <View style={styles.gridContainer}>
-                {filteredActivities.map((activity) => (
-                  <View key={activity.id} style={styles.gridItem}>
-                    <GridActivityCard
-                      activity={activity}
-                      onPress={() => handleActivityPress(activity)}
-                      onBookmark={user?.id ? () => console.log('收藏:', activity.title) : undefined}
-                      isBookmarked={false}
-                      isScrolling={isScrolling} // 🚫 传递滚动状态
-                    />
-                  </View>
-                ))}
-              </View>
-            ) : (
-              // 列表布局 - 单列显示
-              filteredActivities.map((activity) => (
-                <View key={activity.id} style={styles.cardContainer}>
+            // 固定网格布局 - 两列显示
+            <View style={styles.gridContainer}>
+              {filteredActivities.map((activity) => (
+                <View key={activity.id} style={styles.gridItem}>
                   <GridActivityCard
                     activity={activity}
                     onPress={() => handleActivityPress(activity)}
@@ -247,8 +235,8 @@ export const BeautifulActivityListScreen: React.FC = () => {
                     isScrolling={isScrolling} // 🚫 传递滚动状态
                   />
                 </View>
-              ))
-            )
+              ))}
+            </View>
           ) : (
             <View style={styles.emptyContainer}>
               <Ionicons name="calendar-outline" size={64} color="#CCCCCC" />
@@ -315,9 +303,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingTop: 8,
     paddingBottom: 100,
-  },
-  cardContainer: {
-    marginBottom: 16,
   },
   gridContainer: {
     flexDirection: 'row',

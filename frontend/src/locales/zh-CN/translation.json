@@ -177,9 +177,9 @@
       "title": "登录",
       "welcome": "欢迎回来",
       "subtitle": "登录您的账户，发现精彩活动",
-      "login_hint": "请使用注册时的用户名或邮箱登录",
-      "email_label": "用户名或邮箱",
-      "email_placeholder": "请输入用户名或邮箱",
+      "login_hint": "请使用注册时的用户名登录",
+      "email_label": "用户名",
+      "email_placeholder": "请输入用户名",
       "password_label": "密码",
       "password_placeholder": "请输入密码",
       "remember_me": "记住我",
@@ -299,7 +299,7 @@
         "last_name_label": "姓 *",
         "last_name_placeholder": "请输入您的姓",
         "school_email_preview": "学校邮箱预览",
-        "email_username_placeholder": "如：zhang.san、alex123"
+        "email_username_placeholder": "如：zhang.san、alex123",
         "complete_email": "完整邮箱",
         "loading_schools": "加载学校列表中...",
         "step2_description": "设置您的登录账号和密码",
@@ -384,11 +384,20 @@
     },
     "errors": {
       "login_failed": "登录失败",
-      "invalid_credentials": "邮箱或密码错误，请重试",
+      "user_not_found": "用户名不存在，请检查输入或先注册账号",
+      "invalid_password": "密码错误，请重新输入",
+      "invalid_credentials": "用户名或密码错误，请重新登录",
       "network_error": "网络连接错误，请重试",
+      "network_timeout": "网络请求超时，请检查网络连接后重试",
+      "network_connection_failed": "网络连接失败，请检查网络设置或切换网络",
+      "server_error": "服务器暂时无法响应，请稍后重试",
+      "server_unavailable": "服务暂时不可用，请稍后重试",
+      "account_locked": "账户已被锁定，请联系管理员",
+      "rate_limited": "登录尝试过于频繁，请稍后再试",
+      "authentication_failed": "身份验证失败，请重新登录",
+      "session_expired": "登录已过期，请重新登录",
       "school_load_failed": "加载学校列表失败，请重试",
-      "network_connection_failed": "网络连接失败，请检查网络后重试",
-      "server_error": "服务器错误，请稍后重试"
+      "unknown_error": "发生未知错误，请稍后重试"
     },
     "verification": {
       "title": "短信验证",
@@ -599,7 +608,13 @@
       "auto_mode": "跟随系统",
       "auto_description": "根据系统设置自动切换",
       "light_description": "始终使用浅色界面",
-      "dark_description": "始终使用深色界面"
+      "dark_description": "始终使用深色界面",
+      "appearanceDevelopmentTitle": "外观自定义功能正在开发中",
+      "appearanceDevelopmentMessage": "更丰富的主题选项正在开发中，敬请期待！",
+      "appearanceComingFeatures": "即将推出的功能",
+      "lightModeCustomization": "浅色模式自定义",
+      "darkModeCustomization": "深色模式自定义",
+      "accentColorSelection": "主题色彩选择"
     },
     "edit": {
       "changeAvatar": "更换头像",
@@ -938,6 +953,23 @@
     "tabs": {
       "plan": "安心计划",
       "volunteer": "志愿者功能"
+    },
+    "permission_check": {
+      "verifying": "正在核对权限...",
+      "verified": "权限验证成功",
+      "updated": "权限已更新",
+      "status": {
+        "admin": "总管理员权限 - 可管理所有学校志愿者",
+        "part_manage": "分管理员权限 - 可管理本校志愿者",
+        "staff": "内部员工权限 - 可查看个人志愿者记录",
+        "common": "普通用户 - 只能查看安心计划",
+        "guest": "访客 - 功能受限"
+      },
+      "toast": {
+        "refreshing": "正在刷新权限信息...",
+        "success": "权限信息已更新",
+        "failed": "权限刷新失败，请重试"
+      }
     }
   },
   "location": {
@@ -1057,7 +1089,9 @@
       "scan_instruction": "扫描二维码查看我的信息",
       "organization_label": "组织",
       "school_label": "学校", 
-      "position_label": "职位"
+      "position_label": "职位",
+      "englishName": "英文名称",
+      "username": "用户名"
     },
     "organization": {
       "switch_title": "切换组织"

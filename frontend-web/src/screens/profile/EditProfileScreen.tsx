@@ -438,7 +438,7 @@ export const EditProfileScreen: React.FC = () => {
             <View style={styles.avatarContainer}>
               {avatarUri ? (
                 <Image
-                  source={{ uri: avatarUri }}
+                  uri={avatarUri }
                   style={styles.avatar}
                   resizeMode="cover"
                 />

@@ -20,8 +20,6 @@ interface CategoryBarProps {
   onScanPress: () => void; // 新增扫码按钮回调
   hasActiveFilters?: boolean;
   activeFiltersCount?: number;
-  viewLayout?: 'list' | 'grid';
-  onLayoutChange?: (layout: 'list' | 'grid') => void;
 }
 
 const CategoryBar: React.FC<CategoryBarProps> = ({
@@ -31,8 +29,6 @@ const CategoryBar: React.FC<CategoryBarProps> = ({
   onScanPress,
   hasActiveFilters = false,
   activeFiltersCount = 0,
-  viewLayout = 'list',
-  onLayoutChange,
 }) => {
   const { t } = useTranslation();
   const theme = useTheme();
@@ -42,7 +38,6 @@ const CategoryBar: React.FC<CategoryBarProps> = ({
   const { isDarkMode } = darkMode;
   
   const filterButtonScale = useRef(new Animated.Value(1)).current;
-  const layoutButtonScale = useRef(new Animated.Value(1)).current;
   const scanButtonScale = useRef(new Animated.Value(1)).current;
   
   // 容器缩放动画
@@ -61,7 +56,7 @@ const CategoryBar: React.FC<CategoryBarProps> = ({
   // 修改为基于时间的活动状态分类 - 使用翻译函数
   const segments = [
     t('filters.status.all', '全部'),
-    t('filters.status.upcoming', '即将开始'),
+    t('filters.status.available', '可报名'),
     t('filters.status.ended', '已结束')
   ];
   
@@ -125,37 +120,6 @@ const CategoryBar: React.FC<CategoryBarProps> = ({
     onScanPress();
   };
 
-  const handleLayoutChange = () => {
-    console.log(`🎯 CategoryBar 按钮被点击! 当前布局: ${viewLayout}`);
-    
-    if (!onLayoutChange) {
-      console.warn('⚠️ onLayoutChange callback not provided');
-      alert('onLayoutChange callback missing!');
-      return;
-    }
-    
-    const newLayout = viewLayout === 'list' ? 'grid' : 'list';
-    console.log(`🔄 准备切换: ${viewLayout} -> ${newLayout}`);
-    
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    
-    // Add press animation
-    Animated.sequence([
-      Animated.timing(layoutButtonScale, {
-        toValue: 0.95,
-        duration: 90,
-        useNativeDriver: true,
-      }),
-      Animated.timing(layoutButtonScale, {
-        toValue: 1,
-        duration: 90,
-        useNativeDriver: true,
-      }),
-    ]).start();
-    
-    console.log(`📞 调用 onLayoutChange(${newLayout})`);
-    onLayoutChange(newLayout);
-  };
 
   const styles = StyleSheet.create({
     container: {
@@ -181,10 +145,6 @@ const CategoryBar: React.FC<CategoryBarProps> = ({
       height: '100%',
       paddingHorizontal: 8,
     },
-    leftButtonsContainer: {
-      flexDirection: 'row',
-      alignItems: 'center',
-    },
     rightButtonContainer: {
       flexDirection: 'row',
       alignItems: 'center',
@@ -199,22 +159,6 @@ const CategoryBar: React.FC<CategoryBarProps> = ({
       backgroundColor: 'transparent',
       alignItems: 'center',
       justifyContent: 'center',
-      shadowColor: '#000000',
-      shadowOffset: { width: 0, height: 1 },
-      shadowOpacity: 0.1,
-      shadowRadius: 2,
-      elevation: 2,
-    },
-    layoutButton: {
-      width: 32,
-      height: 32,
-      borderRadius: 16,
-      backgroundColor: 'rgba(255, 255, 255, 0.8)',
-      borderWidth: 1,
-      borderColor: 'rgba(255, 255, 255, 0.4)',
-      alignItems: 'center',
-      justifyContent: 'center',
-      marginRight: 8,
       shadowColor: '#000000',
       shadowOffset: { width: 0, height: 1 },
       shadowOpacity: 0.1,
@@ -240,26 +184,6 @@ const CategoryBar: React.FC<CategoryBarProps> = ({
       ]}
     >
       <View style={styles.contentContainer}>
-        {/* 左侧按钮容器 */}
-        <View style={styles.leftButtonsContainer}>
-          {/* 布局切换按钮 */}
-          {onLayoutChange && (
-            <Animated.View style={{ transform: [{ scale: layoutButtonScale }] }}>
-              <TouchableOpacity
-                style={styles.layoutButton}
-                onPress={handleLayoutChange}
-                activeOpacity={0.8}
-                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-              >
-                <Ionicons
-                  name={viewLayout === 'list' ? 'grid-outline' : 'list-outline'}
-                  size={16}
-                  color="#666666"
-                />
-              </TouchableOpacity>
-            </Animated.View>
-          )}
-        </View>
         
         {/* 分段控件 */}
         <View style={styles.segmentedControlWrapper}>

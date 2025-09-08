@@ -143,7 +143,7 @@ export const ExploreScreen: React.FC = () => {
   // Real categories using translations
   const realCategories = [
     { id: 'all', name: t('filters.categories.all') || '全部活动', icon: 'apps-outline', count: 0 },
-    { id: 'upcoming', name: t('filters.status.upcoming') || '即将开始', icon: 'time-outline', count: 0 },
+    { id: 'upcoming', name: t('filters.status.available') || '可报名', icon: 'time-outline', count: 0 },
     { id: 'ended', name: t('filters.status.ended') || '已结束', icon: 'checkmark-circle-outline', count: 0 },
   ];
 

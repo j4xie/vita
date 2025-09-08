@@ -430,23 +430,6 @@ const SimpleActivityCardComponent: React.FC<SimpleActivityCardProps> = ({
         </View>
       )}
 
-      {/* 收藏按钮 */}
-      {onBookmark && (
-        <TouchableOpacity 
-          style={styles.bookmarkButton}
-          onPress={() => onBookmark(activity)}
-          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-          accessibilityRole="button"
-          accessibilityLabel={isBookmarked ? "取消收藏活动" : "收藏活动"}
-          accessibilityHint={isBookmarked ? "点击取消收藏此活动" : "点击收藏此活动"}
-        >
-          <Ionicons 
-            name={isBookmarked ? "heart" : "heart-outline"} 
-            size={20} 
-            color={isBookmarked ? "#FF6B35" : "rgba(255, 255, 255, 0.8)"} 
-          />
-        </TouchableOpacity>
-      )}
 
       {/* 参与人数指示器 - 暂时隐藏 */}
       {/*
@@ -643,19 +626,6 @@ const styles = StyleSheet.create({
     zIndex: 3, // 确保在遮罩上方
   },
 
-  // 收藏按钮样式
-  bookmarkButton: {
-    position: 'absolute',
-    top: 12,
-    left: 12,
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: 'rgba(0, 0, 0, 0.3)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: 3,
-  },
   
   // 底部信息区 - 压缩布局
   infoContainer: {

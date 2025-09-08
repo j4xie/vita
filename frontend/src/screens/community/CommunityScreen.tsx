@@ -17,7 +17,6 @@ import { GlassCapsule } from '../../components/consulting/GlassCapsule';
 import { SchoolGrid } from '../../components/common/SchoolGrid';
 import { useSchoolData } from '../../hooks/useSchoolData';
 import { Glass } from '../../ui/glass/GlassTheme';
-import { useAllDarkModeStyles } from '../../hooks/useDarkModeStyles';
 
 
 export const CommunityScreen: React.FC = () => {
@@ -26,10 +25,6 @@ export const CommunityScreen: React.FC = () => {
   const insets = useSafeAreaInsets();
   
   const { schools, loading, loadSchools } = useSchoolData();
-  
-  // 🌙 Dark Mode Support
-  const darkModeSystem = useAllDarkModeStyles();
-  const { isDarkMode, styles: dmStyles, gradients: dmGradients } = darkModeSystem;
   
   const [showModal, setShowModal] = useState(false);
   const [selectedSchool, setSelectedSchool] = useState<SchoolInfo | null>(null);
@@ -56,14 +51,22 @@ export const CommunityScreen: React.FC = () => {
     
     // 找到选中的学校
     const school = schools.find(s => s.id === schoolId);
+    console.log('🔍 [SCHOOL-SELECT] 查找学校结果:', { schoolId, found: !!school, school });
+    
     if (school) {
-      setSelectedSchoolId(schoolId);
-      setSelectedSchool({
+      const schoolInfo = {
         id: schoolId,
         name: school.name,
         shortName: school.shortName,
-      });
+      };
+      
+      console.log('📋 [MODAL-SETUP] 设置Modal数据:', schoolInfo);
+      setSelectedSchoolId(schoolId);
+      setSelectedSchool(schoolInfo);
       setShowModal(true);
+      console.log('🎭 [MODAL-STATE] Modal状态已设置为显示');
+    } else {
+      console.log('❌ [SCHOOL-SELECT] 未找到学校数据');
     }
   };
 
@@ -122,24 +125,19 @@ export const CommunityScreen: React.FC = () => {
   }, []);
 
   return (
-    <SafeAreaView style={[styles.container, dmStyles.page.safeArea]}>
-      {/* iOS风格Header背景：增强对比的暖色渐变 - 🌙 Dark Mode适配 */}
+    <SafeAreaView style={styles.container}>
+      {/* 简化背景 */}
       <LinearGradient
-        colors={isDarkMode ? [
-          '#000000',   // 纯黑顶部
-          '#1C1C1E',   // Apple系统深灰  
-          '#2C2C2E',   // 渐变到更浅深灰
-          '#1C1C1E'    // 底部回到系统深灰
-        ] : [
-          '#FFE4C4',    // 恢复原来的暖色
-          '#FFF0E6',    // 恢复原来的浅桃色
+        colors={[
+          '#FFE4C4',    // 暖色
+          '#FFF0E6',    // 浅桃色
           '#F8F9FA',    // 渐变到浅灰
           '#F1F3F4'     // 底部中性灰
         ]}
         start={{ x: 0, y: 0 }} 
         end={{ x: 0, y: 1 }}
         style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0 }}
-        locations={[0, 0.3, 0.7, 1]} // 上半部分暖色，下半部分中性
+        locations={[0, 0.3, 0.7, 1]}
       />
 
       <ScrollView 

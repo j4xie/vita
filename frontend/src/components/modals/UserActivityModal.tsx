@@ -174,38 +174,13 @@ export const UserActivityModal: React.FC<UserActivityModalProps> = ({
     
     // 延迟跳转，确保modal动画完成
     setTimeout(() => {
-      // 生成唯一的回调ID
-      const callbackId = `user_activity_signin_${Date.now()}`;
-      
-      // 注册回调函数到导航状态
-      const parentNavigator = (navigation as any).getParent();
-      if (parentNavigator) {
-        const state = parentNavigator.getState();
-        if (!state.qrScannerCallbacks) {
-          state.qrScannerCallbacks = {};
-        }
-        
-        state.qrScannerCallbacks[callbackId] = {
-          onScanSuccess: () => {
-            // 签到成功后刷新统计
-            if (onRefreshStats) {
-              onRefreshStats();
-            }
-            // 清理回调函数
-            delete state.qrScannerCallbacks[callbackId];
-          },
-          onScanError: (error: string) => {
-            console.error('扫码失败:', error);
-            // 清理回调函数
-            delete state.qrScannerCallbacks[callbackId];
-          }
-        };
-      }
-      
+      // 简化方案：直接导航到QR扫描器，不使用复杂的回调机制
+      // QR扫描器成功后会自动返回，用户可以手动刷新或重新打开modal
       navigation.navigate('QRScanner', {
-        scanType: 'activity_signin',
+        purpose: 'activity_signin',
         activityId: activityId.toString(),
-        callbackId: callbackId // 传递回调ID而不是函数
+        returnScreen: 'Profile', // 指定返回的屏幕
+        onSuccess: onRefreshStats ? 'refresh_stats' : undefined // 简单的成功标识
       });
     }, 300);
   };

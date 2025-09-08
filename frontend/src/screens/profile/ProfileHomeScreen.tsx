@@ -1135,7 +1135,7 @@ export const ProfileHomeScreen: React.FC = () => {
             {/* V2.0 双层结构：外层solid背景用于阴影，内层L2品牌玻璃 */}
             <View style={styles.personalInfoShadowContainer}>
               <PersonalInfoCard
-                name={user ? (user.nickName || user.userName || '用户') : t('userInfo.guest')}
+                name={user ? (user.userName || user.nickName || '用户') : t('userInfo.guest')}
                 {...getUserOrganizationInfo()}
                 email={user?.email}
                 avatarUrl={undefined}
@@ -1178,7 +1178,7 @@ export const ProfileHomeScreen: React.FC = () => {
                     {t('profile.not_participated')}
                   </Text>
                   <Text style={styles.activityCount}>
-                    {isAuthenticated && user?.id ? (isLoadingStats ? '...' : activityStats.notParticipated) : '--'}
+                    {isAuthenticated && user?.id ? activityStats.notParticipated : '--'}
                   </Text>
                 </View>
               </TouchableOpacity>
@@ -1203,7 +1203,7 @@ export const ProfileHomeScreen: React.FC = () => {
                     {t('profile.participated')}
                   </Text>
                   <Text style={styles.activityCount}>
-                    {isAuthenticated && user?.id ? (isLoadingStats ? '...' : activityStats.participated) : '--'}
+                    {isAuthenticated && user?.id ? activityStats.participated : '--'}
                   </Text>
                 </View>
               </TouchableOpacity>
@@ -1228,7 +1228,7 @@ export const ProfileHomeScreen: React.FC = () => {
                     {t('profile.bookmarked')}
                   </Text>
                   <Text style={styles.activityCount}>
-                    {isAuthenticated && user?.id ? (isLoadingStats ? '...' : activityStats.bookmarked) : '--'}
+                    {isAuthenticated && user?.id ? activityStats.bookmarked : '--'}
                   </Text>
                 </View>
               </TouchableOpacity>
@@ -1253,7 +1253,7 @@ export const ProfileHomeScreen: React.FC = () => {
                     {t('profile.pending_review')}
                   </Text>
                   <Text style={styles.activityCount}>
-                    {isAuthenticated && user?.id ? (isLoadingStats ? '...' : activityStats.pendingReview) : '--'}
+                    {isAuthenticated && user?.id ? activityStats.pendingReview : '--'}
                   </Text>
                 </View>
               </TouchableOpacity>

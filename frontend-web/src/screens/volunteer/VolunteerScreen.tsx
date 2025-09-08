@@ -212,7 +212,7 @@ export const VolunteerScreen: React.FC = () => {
             >
               <View style={styles.activityCardContent}>
                 <Image
-                  source={{ uri: activity.image }}
+                  uri={activity.image }
                   style={styles.activityImage}
                   resizeMode="cover"
                 />

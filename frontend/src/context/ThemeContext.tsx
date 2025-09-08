@@ -22,7 +22,7 @@ const THEME_STORAGE_KEY = '@pomelo_theme_mode';
 
 export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
   const systemColorScheme = useColorScheme();
-  const [themeMode, setThemeMode] = useState<ThemeMode>('auto');
+  const [themeMode, setThemeMode] = useState<ThemeMode>('light');
   const [isDarkMode, setIsDarkMode] = useState(false);
 
   // 初始化主题设置
@@ -32,9 +32,15 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
         const savedThemeMode = await AsyncStorage.getItem(THEME_STORAGE_KEY);
         if (savedThemeMode && ['light', 'dark', 'auto'].includes(savedThemeMode)) {
           setThemeMode(savedThemeMode as ThemeMode);
+        } else {
+          // 如果没有保存的主题设置，默认设置为浅色模式
+          setThemeMode('light');
+          await AsyncStorage.setItem(THEME_STORAGE_KEY, 'light');
         }
       } catch (error) {
         console.error('Error loading theme mode:', error);
+        // 出错时也设置为浅色模式
+        setThemeMode('light');
       }
     };
 

@@ -18,13 +18,22 @@ export const SimpleQRScanner: React.FC<SimpleQRScannerProps> = ({ onScan, style 
         console.log('🚀 SimpleQRScanner: 开始初始化');
         
         // 1. 获取摄像头
-        const stream = await navigator.mediaDevices.getUserMedia({
-          video: { 
-            width: { ideal: 1280 }, 
-            height: { ideal: 720 },
-            facingMode: { ideal: 'environment' }
+        let stream;
+        try {
+          stream = await navigator.mediaDevices.getUserMedia({
+            video: { 
+              width: { ideal: 1280 }, 
+              height: { ideal: 720 },
+              facingMode: { ideal: 'environment' }
+            }
+          });
+        } catch (error: any) {
+          console.warn('⚠️ 摄像头访问失败:', error.message);
+          if (error.name === 'NotAllowedError') {
+            console.info('💡 提示: 摄像头需要在 HTTPS 环境下使用，或者用户拒绝了摄像头权限');
           }
-        });
+          throw error;
+        }
         
         if (!isMounted || !videoRef.current) return;
         
@@ -42,7 +51,7 @@ export const SimpleQRScanner: React.FC<SimpleQRScannerProps> = ({ onScan, style 
           };
         });
         
-        // 3. 动态加载QR Scanner库
+        // 3. 动态加载QR Scanner库 (最新版本，不需要设置WORKER_PATH)
         if (!(window as any).QrScanner) {
           console.log('📚 SimpleQRScanner: 加载QR Scanner库');
           await new Promise<void>((resolve, reject) => {
@@ -50,7 +59,7 @@ export const SimpleQRScanner: React.FC<SimpleQRScannerProps> = ({ onScan, style 
             script.src = 'https://cdn.jsdelivr.net/npm/qr-scanner@1.4.2/qr-scanner.umd.min.js';
             script.onload = () => {
               console.log('✅ SimpleQRScanner: QR Scanner库加载成功');
-              (window as any).QrScanner.WORKER_PATH = 'https://cdn.jsdelivr.net/npm/qr-scanner@1.4.2/qr-scanner-worker.min.js';
+              // 新版本不再需要设置 WORKER_PATH
               resolve();
             };
             script.onerror = () => {
@@ -72,15 +81,7 @@ export const SimpleQRScanner: React.FC<SimpleQRScannerProps> = ({ onScan, style 
           (result: { data: string }) => {
             console.log('🎯 SimpleQRScanner: 检测到QR码:', result.data);
             
-            // 触觉反馈
-            if ('vibrate' in navigator) {
-              navigator.vibrate(100);
-            }
-            
-            // 显示Alert确认扫描成功
-            alert(`QR扫描成功！\n内容：${result.data}`);
-            
-            // 调用回调
+            // 调用回调，触发ScanFeedbackOverlay
             onScan(result.data);
           },
           {

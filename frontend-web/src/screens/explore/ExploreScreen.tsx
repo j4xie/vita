@@ -258,7 +258,7 @@ export const ExploreScreen: React.FC = () => {
   // Real categories using translations with dynamic counts
   const realCategories = [
     { id: 'all', name: t('filters.categories.all') || '全部活动', icon: 'apps-outline', count: getCategoryCount('all') },
-    { id: 'upcoming', name: t('filters.status.upcoming') || '即将开始', icon: 'time-outline', count: getCategoryCount('upcoming') },
+    { id: 'upcoming', name: t('filters.status.available') || '可报名', icon: 'time-outline', count: getCategoryCount('upcoming') },
     { id: 'ended', name: t('filters.status.ended') || '已结束', icon: 'checkmark-circle-outline', count: getCategoryCount('ended') },
   ];
 

@@ -129,6 +129,26 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
         // 从登录响应中获取userId，然后获取完整用户信息
         await refreshUserInfo();
       }
+      
+      // 🔧 为用户强制设置默认grid视图偏好（临时测试）
+      try {
+        // 先检查现有布局偏好
+        const existingLayout = await AsyncStorage.getItem('activity_view_layout');
+        console.log('🔧 [LOGIN] 当前布局偏好:', existingLayout);
+        
+        // 暂时强制所有用户使用grid，用于调试
+        await AsyncStorage.setItem('activity_view_layout', 'grid');
+        console.log('✅ [LOGIN] 强制设置默认grid视图 (调试模式)');
+        
+        // 🔔 发送布局更新事件通知ActivityListScreen
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('layoutPreferenceUpdated', { 
+            detail: { layout: 'grid' } 
+          }));
+        }
+      } catch (error) {
+        console.warn('设置默认布局偏好失败:', error);
+      }
     } catch (error) {
       console.error('Failed to get user info after login:', error);
       throw error;

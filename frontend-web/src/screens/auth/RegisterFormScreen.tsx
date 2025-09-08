@@ -423,12 +423,27 @@ export const RegisterFormScreen: React.FC = () => {
               t('auth.register.auto_login_success'),
               [{
                 text: t('common.confirm'),
-                onPress: () => navigation.dispatch(
-                  CommonActions.reset({
-                    index: 0,
-                    routes: [{ name: 'Main' }],
-                  })
-                )
+                onPress: () => {
+                  // 🔧 发送注册完成事件，用于TabBar位置修复
+                  DeviceEventEmitter.emit('registrationCompleted', { 
+                    userId: result.data?.id,
+                    timestamp: Date.now()
+                  });
+                  
+                  // 🔧 发送页面跳转完成事件
+                  DeviceEventEmitter.emit('navigationCompleted', { 
+                    from: 'RegisterForm',
+                    to: 'Main',
+                    timestamp: Date.now()
+                  });
+                  
+                  navigation.dispatch(
+                    CommonActions.reset({
+                      index: 0,
+                      routes: [{ name: 'Main' }],
+                    })
+                  );
+                }
               }]
             );
           } else {

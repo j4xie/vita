@@ -177,9 +177,9 @@
       "title": "Login",
       "welcome": "Welcome Back",
       "subtitle": "Login to your account and discover exciting activities",
-      "login_hint": "Use the username or email from registration",
-      "email_label": "Username or Email",
-      "email_placeholder": "Enter your username or email",
+      "login_hint": "Use the username from registration",
+      "email_label": "Username",
+      "email_placeholder": "Enter your username",
       "password_label": "Password",
       "password_placeholder": "Enter your password",
       "remember_me": "Remember Me",
@@ -394,11 +394,20 @@
     },
     "errors": {
       "login_failed": "Login Failed",
-      "invalid_credentials": "Wrong email or password",
-      "network_error": "Network error, try again",
+      "user_not_found": "Username does not exist, please check your input or register first",
+      "invalid_password": "Incorrect password, please try again",
+      "invalid_credentials": "Invalid username or password, please try again",
+      "network_error": "Network error, please try again",
+      "network_timeout": "Network timeout, please check your connection and retry",
+      "network_connection_failed": "Network connection failed, please check your network settings",
+      "server_error": "Server temporarily unavailable, please try again later",
+      "server_unavailable": "Service temporarily unavailable, please try again later",
+      "account_locked": "Account has been locked, please contact administrator",
+      "rate_limited": "Too many login attempts, please try again later",
+      "authentication_failed": "Authentication failed, please login again",
+      "session_expired": "Session expired, please login again",
       "school_load_failed": "Failed to load school list, please try again",
-      "network_connection_failed": "Network connection failed, please check and retry",
-      "server_error": "Server error, please try again later"
+      "unknown_error": "An unknown error occurred, please try again later"
     },
     "verification": {
       "title": "SMS Verification",
@@ -1074,7 +1083,9 @@
       "scan_instruction": "Scan QR code to view my information",
       "organization_label": "Organization",
       "school_label": "School",
-      "position_label": "Position"
+      "position_label": "Position",
+      "englishName": "English Name",
+      "username": "Username"
     },
     "save": {
       "permission_denied_title": "Permission Denied",

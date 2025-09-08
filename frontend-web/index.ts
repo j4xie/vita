@@ -3,8 +3,8 @@ import { registerRootComponent } from 'expo';
 import App from './App';
 
 // 🧪 加载QR权限测试工具
-import './src/utils/qrScanPermissionTest';
-import './src/utils/manualQRTest';
+// import './src/utils/qrScanPermissionTest';
+// import './src/utils/manualQRTest';
 
 // 🔧 Web端滚动修复CSS - 必须在应用启动前加载
 import './src/styles/web-scroll-fix.css';

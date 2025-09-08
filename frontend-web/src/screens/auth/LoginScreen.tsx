@@ -49,6 +49,7 @@ export const LoginScreen: React.FC = () => {
   const [focusedInput, setFocusedInput] = useState<string | null>(null);
   const [formValid, setFormValid] = useState(false);
   const [buttonPressed, setButtonPressed] = useState(false);
+  const [loginError, setLoginError] = useState<string | null>(null);
   
   // 动画状态
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -65,9 +66,9 @@ export const LoginScreen: React.FC = () => {
     ]).start();
   }, []);
 
-  // 🟢 表单验证状态监听
+  // 🟢 表单验证状态监听 - 调整为更宽松的验证
   useEffect(() => {
-    const isFormValid = email.trim().length >= 3 && password.length >= 6;
+    const isFormValid = email.trim().length > 0 && password.length > 0;
     
     if (isFormValid !== formValid) {
       setFormValid(isFormValid);
@@ -89,16 +90,13 @@ export const LoginScreen: React.FC = () => {
   const validateForm = () => {
     const newErrors: {email?: string; password?: string} = {};
     
-    if (!email) {
+    // 只检查必填字段，允许尝试登录让后端返回具体错误
+    if (!email || email.trim().length === 0) {
       newErrors.email = t('auth.validation.email_required');
-    } else if (email.length < 3) {
-      newErrors.email = t('auth.validation.username_min_length');
     }
     
-    if (!password) {
+    if (!password || password.length === 0) {
       newErrors.password = t('auth.validation.password_required');
-    } else if (password.length < 6) {
-      newErrors.password = t('auth.validation.password_min_length');
     }
     
     setErrors(newErrors);
@@ -154,13 +152,85 @@ export const LoginScreen: React.FC = () => {
     }).start();
   };
 
+  // 🔧 智能错误处理函数
+  const parseLoginError = (result: any, error?: Error): string => {
+    // 处理API响应错误
+    if (result && result.code !== 200) {
+      const msg = result.msg || '';
+      const code = result.code;
+      
+      // 用户相关错误 (通常返回500) - 统一返回凭证错误，不暴露具体原因
+      if (msg.includes('用户不存在') || msg.includes('用户名不存在') || msg.includes('邮箱不存在') || 
+          msg.includes('密码错误') || msg.includes('密码不正确')) {
+        return t('auth.errors.invalid_credentials');
+      }
+      if (msg.includes('账户锁定') || msg.includes('账户被锁')) {
+        return t('auth.errors.account_locked');
+      }
+      if (msg.includes('频繁') || msg.includes('限制')) {
+        return t('auth.errors.rate_limited');
+      }
+      
+      // HTTP状态码错误
+      if (code === 400) {
+        return t('auth.errors.invalid_credentials');
+      }
+      if (code === 401) {
+        return t('auth.errors.authentication_failed');
+      }
+      if (code === 403) {
+        return t('auth.errors.account_locked');
+      }
+      if (code === 429) {
+        return t('auth.errors.rate_limited');
+      }
+      if (code === 500) {
+        return t('auth.errors.server_error');
+      }
+      if (code === 503) {
+        return t('auth.errors.server_unavailable');
+      }
+      
+      // 返回后端提供的错误信息（已经很友好的情况下）
+      if (msg && msg.length > 0 && msg.length < 100) {
+        return msg;
+      }
+      
+      return t('auth.errors.invalid_credentials');
+    }
+    
+    // 处理网络异常
+    if (error) {
+      const errorMessage = error.message || '';
+      
+      if (errorMessage.includes('timeout') || errorMessage.includes('超时')) {
+        return t('auth.errors.network_timeout');
+      }
+      if (errorMessage.includes('Network request failed') || errorMessage.includes('网络连接失败')) {
+        return t('auth.errors.network_connection_failed');
+      }
+      if (errorMessage.includes('fetch') || errorMessage.includes('XMLHttpRequest')) {
+        return t('auth.errors.network_connection_failed');
+      }
+      if (errorMessage.includes('AbortError')) {
+        return t('auth.errors.network_timeout');
+      }
+      if (errorMessage.includes('500') || errorMessage.includes('502') || errorMessage.includes('503')) {
+        return t('auth.errors.server_error');
+      }
+    }
+    
+    return t('auth.errors.unknown_error');
+  };
+
   const handleLogin = async () => {
     if (!validateForm()) return;
     
     setLoading(true);
+    setLoginError(null); // 清除之前的错误
     
     try {
-      console.log('尝试登录:', { userName: email, password: '[HIDDEN]' }); // 调试信息
+      console.log('🔐 尝试登录:', { userName: email, timestamp: new Date().toISOString() });
       
       // 调用PomeloX登录API，后端需要username字段（注意不是userName）
       const result = await pomeloXAPI.login({
@@ -168,7 +238,12 @@ export const LoginScreen: React.FC = () => {
         password: password,
       });
       
-      console.log('登录响应:', result); // 调试信息
+      console.log('📡 登录响应:', { 
+        code: result.code, 
+        success: result.code === 200,
+        hasToken: !!result.data?.token,
+        timestamp: new Date().toISOString()
+      });
       
       if (result.code === 200 && result.data?.token) {
         // 登录成功，通过UserContext获取用户信息
@@ -216,30 +291,23 @@ export const LoginScreen: React.FC = () => {
           });
         }
       } else {
-        // 详细的错误处理
-        let errorMessage = result.msg || t('auth.errors.invalid_credentials');
+        // 🔧 使用智能错误解析
+        const errorMessage = parseLoginError(result);
+        console.warn('❌ 登录失败:', { code: result.code, msg: result.msg, parsedError: errorMessage });
         
-        if (result.code === 500 && errorMessage.includes('用户不存在')) {
-          errorMessage = t('auth.validation.user_not_exists');
-        } else if (result.code === 500 && errorMessage.includes('密码错误')) {
-          errorMessage = t('auth.validation.password_incorrect');
-        }
-        
-        Alert.alert(t('auth.errors.login_failed'), errorMessage);
+        setLoginError(errorMessage);
       }
     } catch (error) {
-      console.error('登录错误:', error);
+      console.error('❌ 登录异常:', {
+        name: error instanceof Error ? error.name : 'Unknown',
+        message: error instanceof Error ? error.message : 'Unknown error',
+        timestamp: new Date().toISOString()
+      });
       
-      let errorMessage = t('auth.errors.network_error');
-      if (error instanceof Error) {
-        if (error.message.includes('Network')) {
-          errorMessage = t('auth.errors.network_connection_failed');
-        } else if (error.message.includes('500')) {
-          errorMessage = t('auth.errors.server_error');
-        }
-      }
+      // 🔧 使用智能错误解析
+      const errorMessage = parseLoginError(null, error as Error);
       
-      Alert.alert(t('auth.errors.login_failed'), errorMessage);
+      setLoginError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -307,7 +375,7 @@ export const LoginScreen: React.FC = () => {
             <View style={styles.inputContainer}>
               <Text style={styles.label}>{t('auth.login.email_label')}</Text>
               <View style={[styles.inputWrapper, errors.email && styles.inputError, focusedInput === 'email' && styles.inputFocused]}>
-                <Ionicons name="mail-outline" size={20} color={theme.colors.text.disabled} />
+                <Ionicons name="person-outline" size={20} color={theme.colors.text.disabled} />
                 <WebTextInput
                   style={styles.input}
                   placeholder={t('auth.login.email_placeholder')}
@@ -315,10 +383,11 @@ export const LoginScreen: React.FC = () => {
                   onChangeText={(text) => {
                     setEmail(text);
                     if (errors.email) setErrors({...errors, email: undefined});
+                    if (loginError) setLoginError(null); // 清除登录错误
                   }}
                   onFocus={() => setFocusedInput('email')}
                   onBlur={() => setFocusedInput(null)}
-                  keyboardType="email-address"
+                  keyboardType="default"
                   autoCapitalize="none"
                   autoCorrect={false}
                   placeholderTextColor={theme.colors.text.disabled}
@@ -341,6 +410,7 @@ export const LoginScreen: React.FC = () => {
                   onChangeText={(text) => {
                     setPassword(text);
                     if (errors.password) setErrors({...errors, password: undefined});
+                    if (loginError) setLoginError(null); // 清除登录错误
                   }}
                   onFocus={() => setFocusedInput('password')}
                   onBlur={() => setFocusedInput(null)}
@@ -378,6 +448,13 @@ export const LoginScreen: React.FC = () => {
                 <Text style={styles.forgotText}>{t('auth.login.forgot_password')}</Text>
               </TouchableOpacity>
             </View>
+
+            {/* 🚨 登录错误显示 */}
+            {loginError && (
+              <View style={styles.errorContainer}>
+                <Text style={styles.loginErrorText}>{loginError}</Text>
+              </View>
+            )}
 
                 {/* 🚀 Dynamic Login Button - 动态交互按钮 */}
                 <Animated.View style={[
@@ -561,6 +638,22 @@ const styles = StyleSheet.create({
     color: theme.colors.danger,
     marginTop: theme.spacing.xs,
     fontWeight: theme.typography.fontWeight.medium,
+  },
+  
+  // 🚨 登录错误显示样式
+  errorContainer: {
+    backgroundColor: 'rgba(251, 84, 84, 0.1)',
+    borderRadius: theme.borderRadius.base,
+    borderLeftWidth: 4,
+    borderLeftColor: theme.colors.danger,
+    padding: theme.spacing.md,
+    marginBottom: theme.spacing.lg,
+  },
+  loginErrorText: {
+    fontSize: theme.typography.fontSize.base,
+    color: theme.colors.danger,
+    fontWeight: theme.typography.fontWeight.medium,
+    textAlign: 'center',
   },
   
   // Options Row

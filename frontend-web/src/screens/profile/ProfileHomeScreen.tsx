@@ -298,22 +298,34 @@ export const ProfileHomeScreen: React.FC = () => {
     setShowIdentityQR(true);
   };
 
-  // 处理未签到活动点击
+  // 🚀 处理未签到活动点击 - 增强状态核对
   const handleNotCheckedInPress = () => {
     if (Platform.OS === 'ios') {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
-    setActivityModalType('not_checked_in');
-    setShowActivityModal(true);
+    
+    console.log('📋 [Profile] 用户点击未签到活动统计，触发状态核对');
+    
+    // 🔍 打开前先核对状态数据准确性
+    loadActivityStats(true).then(() => {
+      setActivityModalType('not_checked_in');
+      setShowActivityModal(true);
+    });
   };
 
-  // 处理已签到活动点击
+  // 🚀 处理已签到活动点击 - 增强状态核对
   const handleCheckedInPress = () => {
     if (Platform.OS === 'ios') {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
-    setActivityModalType('checked_in');
-    setShowActivityModal(true);
+    
+    console.log('📋 [Profile] 用户点击已签到活动统计，触发状态核对');
+    
+    // 🔍 打开前先核对状态数据准确性
+    loadActivityStats(true).then(() => {
+      setActivityModalType('checked_in');
+      setShowActivityModal(true);
+    });
   };
 
   // 处理未登录用户点击活动统计
@@ -336,8 +348,8 @@ export const ProfileHomeScreen: React.FC = () => {
   };
 
 
-  // 加载活动统计数据
-  const loadActivityStats = async () => {
+  // 🚀 加载活动统计数据 - 增强状态核对机制
+  const loadActivityStats = async (forceRefresh: boolean = false) => {
     if (!isAuthenticated || !user?.id) {
       // 静默处理未登录状态，避免不必要的控制台警告
       return;
@@ -345,16 +357,73 @@ export const ProfileHomeScreen: React.FC = () => {
     
     try {
       setIsLoadingStats(true);
-      console.log('📊 正在加载活动统计，用户信息:', {
+      console.log('📊 [Profile] 正在加载活动统计，用户信息:', {
         userId: user.id,
         userName: user.userName,
-        isAuthenticated
+        isAuthenticated,
+        forceRefresh
       });
+
+      // 🚀 获取活动统计数据
       const stats = await activityStatsService.getUserActivityStats(user.id);
+      
+      // 🔍 状态核对：验证统计数据的准确性
+      if (stats && (stats.notCheckedInCount > 0 || stats.checkedInCount > 0) && forceRefresh) {
+        console.log('🔍 [Profile] 开始验证活动统计数据准确性:', {
+          notCheckedInCount: stats.notCheckedInCount,
+          checkedInCount: stats.checkedInCount
+        });
+
+        try {
+          // 通过活动列表API再次验证状态计数
+          const activityListResponse = await pomeloXAPI.getActivityList({
+            pageNum: 1,
+            pageSize: 100, // 获取更多数据确保准确性
+            userId: parseInt(user.id)
+          });
+
+          if (activityListResponse.code === 200 && activityListResponse.data?.rows) {
+            const activities = activityListResponse.data.rows;
+            const actualRegisteredCount = activities.filter(a => a.signStatus === -1).length;
+            const actualCheckedInCount = activities.filter(a => a.signStatus === 1).length;
+
+            console.log('✅ [Profile] 活动状态验证完成:', {
+              统计服务数据: {
+                未签到: stats.notCheckedInCount,
+                已签到: stats.checkedInCount
+              },
+              活动列表验证: {
+                已报名: actualRegisteredCount,
+                已签到: actualCheckedInCount
+              },
+              数据一致性: {
+                未签到一致: stats.notCheckedInCount === actualRegisteredCount,
+                已签到一致: stats.checkedInCount === actualCheckedInCount
+              }
+            });
+
+            // 如果检测到不一致，使用活动列表的真实数据
+            if (stats.notCheckedInCount !== actualRegisteredCount || stats.checkedInCount !== actualCheckedInCount) {
+              console.log('🔄 [Profile] 检测到统计数据不一致，使用活动列表的真实数据');
+              const correctedStats = {
+                ...stats,
+                notCheckedInCount: actualRegisteredCount,
+                checkedInCount: actualCheckedInCount
+              };
+              setActivityStats(correctedStats);
+              console.log('✨ [Profile] 应用修正后的统计数据');
+              return;
+            }
+          }
+        } catch (verificationError) {
+          console.warn('⚠️ [Profile] 状态验证失败，使用原始统计数据:', verificationError);
+        }
+      }
+      
       setActivityStats(stats);
-      console.log('📊 ✅ 活动统计加载成功');
+      console.log('📊 ✅ [Profile] 活动统计加载成功');
     } catch (error) {
-      console.error('📊 ❌ 加载活动统计失败:', error);
+      console.error('📊 ❌ [Profile] 加载活动统计失败:', error);
     } finally {
       setIsLoadingStats(false);
     }
@@ -478,13 +547,14 @@ export const ProfileHomeScreen: React.FC = () => {
     }
   }, [isAuthenticated, user?.userId, user?.id]);
 
-  // 页面聚焦时刷新统计数据（用户从活动页面返回时）
+  // 🚀 页面聚焦时刷新统计数据（用户从活动页面返回时）- 强制核对状态
   useFocusEffect(
     useCallback(() => {
       const userIdString = user?.userId || user?.id;
       const userIdToUse = userIdString ? parseInt(userIdString, 10) : undefined;
       if (isAuthenticated && userIdToUse && !isNaN(userIdToUse)) {
-        loadActivityStats();
+        console.log('📱 [Profile] 页面聚焦，开始强制状态核对');
+        loadActivityStats(true); // 🔍 点击个人时强制核对状态
         loadVolunteerStats();
       }
     }, [isAuthenticated, user?.userId, user?.id])
@@ -501,15 +571,42 @@ export const ProfileHomeScreen: React.FC = () => {
       });
       
       if (isAuthenticated) {
-        console.log('🔄 [ProfileHome] 开始刷新活动统计数据');
-        loadActivityStats();
+        console.log('🔄 [ProfileHome] 活动状态变化，开始强制刷新统计数据');
+        loadActivityStats(true); // 🔍 状态变化时强制核对
       } else {
         console.log('⚠️ [ProfileHome] 用户未认证，跳过统计数据刷新');
       }
     });
 
+    // 🚀 监听签到成功事件
+    const signInListener = DeviceEventEmitter.addListener('activitySignedIn', (data: { activityId: string, userId?: string }) => {
+      console.log('📊 [ProfileHome] 收到活动签到成功事件，强制刷新统计数据:', {
+        activityId: data?.activityId,
+        userId: data?.userId,
+        currentUserId: user?.id,
+        timestamp: new Date().toISOString()
+      });
+      
+      if (isAuthenticated && (data?.userId === user?.id)) {
+        console.log('🔄 [ProfileHome] 开始强制刷新活动统计数据（签到事件）');
+        loadActivityStats(true); // 🔍 签到后强制核对统计数据
+      }
+    });
+
+    // 🚀 监听活动状态变化事件
+    const statusChangeListener = DeviceEventEmitter.addListener('activityStatusChanged', (data: { activityId: string, newStatus: string, userId?: string }) => {
+      console.log('📊 [ProfileHome] 收到活动状态变化事件，强制刷新统计数据:', data);
+      
+      if (isAuthenticated && (data?.userId === user?.id)) {
+        console.log('🔄 [ProfileHome] 开始强制刷新活动统计数据（状态变化）');
+        loadActivityStats(true); // 🔍 状态变化后强制核对统计数据
+      }
+    });
+
     return () => {
       registrationListener?.remove();
+      signInListener?.remove();
+      statusChangeListener?.remove();
     };
   }, [isAuthenticated]);
 
@@ -1162,7 +1259,7 @@ export const ProfileHomeScreen: React.FC = () => {
             {/* V2.0 双层结构：外层solid背景用于阴影，内层L2品牌玻璃 */}
             <View style={styles.personalInfoShadowContainer}>
               <PersonalInfoCard
-                name={user ? (user.nickName || user.userName || '用户') : t('userInfo.guest')}
+                name={user ? (user.userName || user.nickName || '用户') : t('userInfo.guest')}
                 {...getUserOrganizationInfo()}
                 email={user?.email}
                 avatarUrl={undefined}
@@ -1205,7 +1302,7 @@ export const ProfileHomeScreen: React.FC = () => {
                     {t('profile.not_participated')}
                   </Text>
                   <Text style={styles.activityCount}>
-                    {isAuthenticated && user?.id ? (isLoadingStats ? '...' : activityStats.notParticipated) : '--'}
+                    {isAuthenticated && user?.id ? activityStats.notParticipated : '--'}
                   </Text>
                 </View>
               </TouchableOpacity>
@@ -1230,7 +1327,7 @@ export const ProfileHomeScreen: React.FC = () => {
                     {t('profile.participated')}
                   </Text>
                   <Text style={styles.activityCount}>
-                    {isAuthenticated && user?.id ? (isLoadingStats ? '...' : activityStats.participated) : '--'}
+                    {isAuthenticated && user?.id ? activityStats.participated : '--'}
                   </Text>
                 </View>
               </TouchableOpacity>
@@ -1255,7 +1352,7 @@ export const ProfileHomeScreen: React.FC = () => {
                     {t('profile.bookmarked')}
                   </Text>
                   <Text style={styles.activityCount}>
-                    {isAuthenticated && user?.id ? (isLoadingStats ? '...' : activityStats.bookmarked) : '--'}
+                    {isAuthenticated && user?.id ? activityStats.bookmarked : '--'}
                   </Text>
                 </View>
               </TouchableOpacity>
@@ -1280,7 +1377,7 @@ export const ProfileHomeScreen: React.FC = () => {
                     {t('profile.pending_review')}
                   </Text>
                   <Text style={styles.activityCount}>
-                    {isAuthenticated && user?.id ? (isLoadingStats ? '...' : activityStats.pendingReview) : '--'}
+                    {isAuthenticated && user?.id ? activityStats.pendingReview : '--'}
                   </Text>
                 </View>
               </TouchableOpacity>

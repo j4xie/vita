@@ -22,7 +22,7 @@ import { theme } from '../../theme';
 import { useLanguage } from '../../context/LanguageContext';
 import { useTheme } from '../../context/ThemeContext';
 import { useAllDarkModeStyles } from '../../hooks/useDarkModeStyles';
-import { ThemeSelectionModal } from '../../components/common/ThemeSelectionModal';
+import { AppearanceDevModal } from '../../components/modals/AppearanceDevModal';
 import { RegionSwitchModal } from '../../components/modals/RegionSwitchModal';
 import UserRegionPreferences, { UserRegionCode } from '../../services/UserRegionPreferences';
 
@@ -163,7 +163,7 @@ export const GeneralScreen: React.FC = () => {
   const { themeMode, getThemeModeDisplayName } = useTheme();
 
   // Modal states
-  const [showThemeModal, setShowThemeModal] = useState(false);
+  const [showAppearanceDevModal, setShowAppearanceDevModal] = useState(false);
   const [showRegionModal, setShowRegionModal] = useState(false);
 
   // Cache states
@@ -274,7 +274,7 @@ export const GeneralScreen: React.FC = () => {
   };
 
   const handleAppearancePress = () => {
-    setShowThemeModal(true);
+    setShowAppearanceDevModal(true);
   };
   
   // Load activity layout preference
@@ -503,10 +503,10 @@ export const GeneralScreen: React.FC = () => {
         </ScrollView>
       </SafeAreaView>
 
-      {/* Theme Selection Modal */}
-      <ThemeSelectionModal
-        visible={showThemeModal}
-        onClose={() => setShowThemeModal(false)}
+      {/* Appearance Development Modal */}
+      <AppearanceDevModal
+        visible={showAppearanceDevModal}
+        onClose={() => setShowAppearanceDevModal(false)}
       />
 
       {/* Region Switch Modal */}

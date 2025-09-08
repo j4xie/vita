@@ -288,13 +288,18 @@ export const VolunteerListLiquidScreen: React.FC = () => {
               <Text style={styles.emptyText}>{t('common.loading')}</Text>
             </View>
           ) : filteredSchools.length > 0 ? (
-            <View style={styles.schoolsList}>
+            <ScrollView 
+              style={styles.schoolsList}
+              contentContainerStyle={styles.scrollContent}
+              showsVerticalScrollIndicator={false}
+              keyboardShouldPersistTaps="handled"
+            >
               {filteredSchools.map((item, index) => (
                 <View key={item.id}>
                   {renderSchoolItem({ item, index })}
                 </View>
               ))}
-            </View>
+            </ScrollView>
           ) : (
             renderEmptyState()
           )}
@@ -329,9 +334,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: Glass.touch.spacing.sectionMargin,
   },
 
-  // 学校列表容器 - 更紧凑的间距
+  // 学校列表容器 - ScrollView样式
   schoolsList: {
+    flex: 1,
+  },
+
+  // ScrollView内容容器 - 更紧凑的间距
+  scrollContent: {
     paddingVertical: 8,
+    paddingHorizontal: Glass.touch.spacing.sectionMargin,
   },
 
   // 空状态

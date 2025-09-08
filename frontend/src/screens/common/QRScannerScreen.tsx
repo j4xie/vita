@@ -14,6 +14,7 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import * as Haptics from 'expo-haptics';
+import { ScanFeedbackOverlay, QRCodeBounds } from '../../components/common/ScanFeedbackOverlay';
 
 import { theme } from '../../theme';
 import { useOrganization } from '../../context/OrganizationContext';
@@ -41,9 +42,29 @@ export const QRScannerScreen: React.FC = () => {
   
   // 获取注册的回调函数
   const getRegisteredCallback = (type: 'onScanSuccess' | 'onScanError') => {
-    const state = (navigation as any).getParent()?.getState();
-    const callbacks = state?.qrScannerCallbacks;
-    return callbacks?.[callbackId]?.[type];
+    try {
+      const state = (navigation as any).getParent()?.getState();
+      if (!state || typeof state !== 'object') {
+        console.warn('⚠️ [QRScanner] Navigation state is invalid');
+        return undefined;
+      }
+      
+      const callbacks = state.qrScannerCallbacks;
+      if (!callbacks || typeof callbacks !== 'object') {
+        console.warn('⚠️ [QRScanner] qrScannerCallbacks is not available');
+        return undefined;
+      }
+      
+      if (!callbackId) {
+        console.warn('⚠️ [QRScanner] callbackId is not provided');
+        return undefined;
+      }
+      
+      return callbacks[callbackId]?.[type];
+    } catch (error) {
+      console.error('❌ [QRScanner] Error getting registered callback:', error);
+      return undefined;
+    }
   };
   
   // 原生和Web平台的相机权限处理
@@ -56,6 +77,10 @@ export const QRScannerScreen: React.FC = () => {
   const [scanned, setScanned] = useState(false);
   const [torchOn, setTorchOn] = useState(false);
   const webCameraRef = useRef<WebCameraViewRef>(null);
+  
+  // 扫码反馈状态
+  const [showScanFeedback, setShowScanFeedback] = useState(false);
+  const [qrCodeBounds, setQRCodeBounds] = useState<QRCodeBounds | undefined>();
   
   // 用户相关状态
   const { user } = useUser();
@@ -83,35 +108,70 @@ export const QRScannerScreen: React.FC = () => {
     };
   }, []);
 
-  const handleBarCodeScanned = ({ type, data }: { type: string; data: string }) => {
+  // 用于保存扫描数据的ref
+  const scannedDataRef = useRef<string>('');
+
+  const handleBarCodeScanned = ({ type, data, bounds }: { type: string; data: string; bounds?: any }) => {
     if (scanned || isProcessing) return;
     
+    console.log('🔎 [QRScanner] 检测到二维码:', { type, data: data?.substring(0, 50), bounds });
+    
+    // 保存扫描数据
+    scannedDataRef.current = data;
+    
+    // 设置扫码状态和二维码位置
     setScanned(true);
     
-    // 触觉反馈
+    // 如果有边界信息，保存用于定位圆圈
+    if (bounds) {
+      setQRCodeBounds({
+        origin: { x: bounds.origin.x, y: bounds.origin.y },
+        size: { width: bounds.size.width, height: bounds.size.height }
+      });
+    }
+    
+    // 显示扫码反馈动画
+    setShowScanFeedback(true);
+    
+    // iOS触觉反馈
     if (Platform.OS === 'ios') {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     }
+  };
+
+  // 扫码反馈动画完成后处理扫描结果
+  const handleScanFeedbackComplete = () => {
+    setShowScanFeedback(false);
+    
+    // 获取最后扫描的数据
+    const lastScannedData = scannedDataRef.current;
+    if (!lastScannedData) {
+      console.warn('⚠️ [QRScanner] 扫码数据丢失');
+      setScanned(false);
+      return;
+    }
+    
+    console.log('✅ [QRScanner] 开始处理扫码结果:', lastScannedData.substring(0, 50));
     
     // 根据不同用途处理扫描结果
     switch (purpose) {
       case 'register':
-        handleRegisterCode(data);
+        handleRegisterCode(lastScannedData);
         break;
       case 'verify':
-        handleVerifyCode(data);
+        handleVerifyCode(lastScannedData);
         break;
       case 'membership_card':
-        handleMembershipCardScan(data);
+        handleMembershipCardScan(lastScannedData);
         break;
       case 'user_identity':
-        handleUserIdentityScan(data);
+        handleUserIdentityScan(lastScannedData);
         break;
       case 'activity_signin':
-        handleActivitySignInScan(data);
+        handleActivitySignInScan(lastScannedData);
         break;
       default:
-        handleGeneralScan(data);
+        handleGeneralScan(lastScannedData);
     }
   };
 
@@ -240,7 +300,37 @@ export const QRScannerScreen: React.FC = () => {
   };
 
   const handleActivitySignInScan = async (qrData: string) => {
-    // 如果有注册的回调函数，使用回调
+    // 检查是否有简单的成功标识
+    const successAction = route.params?.onSuccess;
+    
+    // 优先使用简化的成功处理方案
+    if (successAction === 'refresh_stats') {
+      try {
+        // 验证扫码数据的有效性
+        const activityId = parseActivityQRCode(qrData);
+        if (!activityId) {
+          showScanError(
+            t('qr.results.invalid_qr_title'),
+            t('qr.results.invalid_activity_qr_message')
+          );
+          return;
+        }
+
+        // 执行签到逻辑
+        await performSignIn(activityId);
+        // 注意：performSignIn内部已经处理成功/失败的导航
+        return;
+      } catch (error) {
+        console.error('Activity sign-in scan error:', error);
+        showScanError(
+          t('qr.results.signin_failed_title'),
+          t('common.network_error')
+        );
+      }
+      return;
+    }
+
+    // 尝试使用回调函数（向后兼容）
     const onScanSuccess = getRegisteredCallback('onScanSuccess');
     const onScanError = getRegisteredCallback('onScanError');
     
@@ -466,31 +556,37 @@ export const QRScannerScreen: React.FC = () => {
 
   const handleUserIdentityScan = (qrData: string) => {
     try {
+      console.log('🔎 [QR扫描] 开始处理用户身份码扫描');
       const parsedUser = parseUserIdentityQR(qrData);
       
       if (!parsedUser.isValid) {
+        console.log('❌ [QR扫描] 身份码无效:', parsedUser.error);
         showScanError(t('qr.errors.invalid_user_code'), parsedUser.error || t('qr.errors.scan_valid_user_qr'));
         return;
       }
 
-
       if (!parsedUser.data) {
+        console.log('❌ [QR扫描] 身份码数据为空');
         showScanError(t('qr.errors.identity_data_error'), t('qr.errors.cannot_read_user_info'));
         return;
       }
 
+      console.log('✅ [QR扫描] 身份码解析成功，显示用户信息');
       // 显示用户信息
       showUserInfo(parsedUser.data);
 
     } catch (error) {
-      console.error('Error processing user identity QR code:', error);
+      console.error('❌ [QR扫描] 处理用户身份码异常:', error);
       showScanError(t('qr.errors.scan_failed'), t('qr.errors.process_user_code_error'));
     }
   };
 
   const parseUserIdentityQR = (qrData: string): ParsedUserQRCode => {
     try {
+      console.log('🔍 [QR解析] 开始解析用户身份码:', qrData?.substring(0, 50) + '...');
+      
       if (!qrData.startsWith('VG_USER_')) {
+        console.log('❌ [QR解析] 非用户身份码格式');
         return {
           isValid: false,
           error: '不是有效的用户身份码格式'
@@ -498,24 +594,44 @@ export const QRScannerScreen: React.FC = () => {
       }
 
       const base64Data = qrData.replace('VG_USER_', '');
+      console.log('🔑 [QR解析] 提取的base64数据长度:', base64Data.length);
+      
       const encodedString = atob(base64Data);
+      console.log('🗜️ [QR解析] atob解码后的字符串长度:', encodedString.length);
+      
       const jsonString = decodeURIComponent(encodedString);
+      console.log('📜 [QR解析] decodeURIComponent后的JSON字符串长度:', jsonString.length);
+      
       const userData: UserIdentityData = JSON.parse(jsonString);
+      console.log('✅ [QR解析] JSON解析成功:', {
+        userId: userData.userId,
+        userName: userData.userName,
+        legalName: userData.legalName,
+        type: userData.type,
+        hasOrganization: !!userData.currentOrganization
+      });
 
       // 验证必要字段
       if (!userData.userId || !userData.userName || !userData.legalName) {
+        console.log('⚠️ [QR解析] 缺少必要字段:', {
+          hasUserId: !!userData.userId,
+          hasUserName: !!userData.userName,
+          hasLegalName: !!userData.legalName
+        });
         return {
           isValid: false,
           error: '身份码缺少必要信息'
         };
       }
 
+      console.log('✨ [QR解析] 身份码解析成功!');
       return {
         isValid: true,
         data: userData
       };
 
     } catch (error) {
+      console.error('❌ [QR解析] 解析异常:', error);
       return {
         isValid: false,
         error: '身份码格式错误，无法解析'
@@ -732,6 +848,9 @@ export const QRScannerScreen: React.FC = () => {
   };
 
   const showScanError = (title: string, message: string) => {
+    // 隐藏扫码反馈覆盖层
+    setShowScanFeedback(false);
+    
     if (Platform.OS === 'ios') {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
     }
@@ -742,7 +861,11 @@ export const QRScannerScreen: React.FC = () => {
       [
         {
           text: '重新扫描',
-          onPress: () => setScanned(false)
+          onPress: () => {
+            setScanned(false);
+            setQRCodeBounds(undefined);
+            scannedDataRef.current = '';
+          }
         },
         {
           text: '返回',
@@ -922,6 +1045,13 @@ export const QRScannerScreen: React.FC = () => {
           )}
         </View>
       </View>
+
+      {/* 扫码反馈覆盖层 */}
+      <ScanFeedbackOverlay
+        visible={showScanFeedback}
+        qrCodeBounds={qrCodeBounds}
+        onAnimationComplete={handleScanFeedbackComplete}
+      />
 
       {/* 组织切换模态框 */}
       <OrganizationSwitchModal

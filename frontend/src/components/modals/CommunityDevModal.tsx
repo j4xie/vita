@@ -4,20 +4,10 @@ import {
   Text,
   Modal,
   TouchableOpacity,
-  StyleSheet,
-  SafeAreaView,
-  Dimensions,
-  Image,
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
-import { BlurView } from 'expo-blur';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
-import { Glass } from '../../ui/glass/GlassTheme';
-import { getSchoolLogo } from '../../utils/schoolLogos';
-import { useAllDarkModeStyles } from '../../hooks/useDarkModeStyles';
 
-const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
 export interface SchoolInfo {
   id: string;
@@ -38,301 +28,271 @@ export const CommunityDevModal: React.FC<CommunityDevModalProps> = ({
 }) => {
   const { t } = useTranslation();
   
-  // 🌙 Dark Mode Support
-  const darkModeSystem = useAllDarkModeStyles();
-  const { isDarkMode, styles: dmStyles, blur: dmBlur } = darkModeSystem;
+  // Simplified: Remove complex dark mode support for debugging
+  const isDarkMode = false; // Force light mode temporarily
+  
+  console.log('🔍 [MODAL-DEBUG] CommunityDevModal渲染:', { visible, school, hasSchool: !!school });
+  
+  if (!school) {
+    console.log('❌ [MODAL-DEBUG] 没有学校数据，不渲染Modal');
+    return null;
+  }
 
-  if (!school) return null;
+  // Simplified: Remove logo logic that might cause errors
+  const logoSource = null;
 
-  const logoSource = getSchoolLogo(school.id);
+  console.log('🎭 [MODAL-DEBUG] 准备渲染Modal:', { visible, schoolName: school.name });
 
   return (
     <Modal
       visible={visible}
       transparent
-      animationType="fade"
-      statusBarTranslucent
+      animationType="slide"
     >
-      <BlurView intensity={dmBlur.intensity} tint={dmBlur.tint} style={[styles.backdrop, dmStyles.modal.overlay]}>
-        <SafeAreaView style={styles.container}>
-          <View style={dmStyles.modal.container}>
-            <LinearGradient
-              colors={isDarkMode 
-                ? ['rgba(44, 44, 46, 0.95)', 'rgba(28, 28, 30, 0.85)']  // 深色模式渐变
-                : ['rgba(255, 255, 255, 0.95)', 'rgba(255, 255, 255, 0.85)'] // 浅色模式渐变
-              }
-              style={styles.modalContent}
-            >
-              {/* Header with close button */}
-              <View style={styles.header}>
-                <TouchableOpacity style={styles.closeButton} onPress={onClose}>
-                  <Ionicons name="close" size={24} color={isDarkMode ? dmStyles.text.secondary.color : "#666666"} />
-                </TouchableOpacity>
-              </View>
-
-              {/* School logo and name */}
-              <View style={styles.schoolInfo}>
-                <View style={styles.logoContainer}>
-                  {logoSource ? (
-                    <Image source={logoSource} style={styles.schoolLogo} resizeMode="cover" />
-                  ) : (
-                    <View style={styles.fallbackLogo}>
-                      <Text style={styles.fallbackLogoText}>{school.shortName}</Text>
-                    </View>
-                  )}
-                </View>
-                <Text style={styles.schoolName}>{school.name}</Text>
-                <Text style={styles.schoolShortName}>{school.shortName}</Text>
-              </View>
-
-              {/* Development status */}
-              <View style={styles.statusSection}>
-                <View style={styles.statusBadge}>
-                  <Ionicons name="construct-outline" size={20} color="#FF6B35" />
-                  <Text style={styles.statusText}>{t('community.developing')}</Text>
-                </View>
-                <Text style={styles.developmentMessage}>
-                  {t('community.developingDescription')}
-                </Text>
-              </View>
-
-              {/* Upcoming features */}
-              <View style={styles.featuresSection}>
-                <Text style={styles.featuresTitle}>{t('community.upcomingFeatures')}</Text>
-                <View style={styles.featuresList}>
-                  <FeatureItem
-                    icon="storefront-outline"
-                    title={t('community.features.merchantOffers')}
-                    description={t('community.features.merchantOffersDescription')}
-                  />
-                  <FeatureItem
-                    icon="swap-horizontal-outline"
-                    title={t('community.features.secondHand')}
-                    description={t('community.features.secondHandDescription')}
-                  />
-                  <FeatureItem
-                    icon="briefcase-outline"
-                    title={t('community.features.career')}
-                    description={t('community.features.careerDescription')}
-                  />
-                  <FeatureItem
-                    icon="people-circle-outline"
-                    title={t('community.features.alumni')}
-                    description={t('community.features.alumniDescription')}
-                  />
-                </View>
-              </View>
-
-              {/* Close button */}
-              <TouchableOpacity style={styles.closeActionButton} onPress={onClose}>
-                <Text style={styles.closeActionText}>{t('common.iKnow')}</Text>
-              </TouchableOpacity>
-            </LinearGradient>
+      <View style={{
+        flex: 1,
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        justifyContent: 'center',
+        alignItems: 'center',
+      }}>
+        <View style={{
+          backgroundColor: 'white',
+          width: '80%',
+          maxHeight: '70%',
+          borderRadius: 20,
+          padding: 20,
+        }}>
+          {/* Simple header */}
+          <View style={{
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: 20,
+          }}>
+            <Text style={{
+              fontSize: 18,
+              fontWeight: 'bold',
+              color: '#333',
+            }}>
+              {school.name}
+            </Text>
+            <TouchableOpacity onPress={onClose} style={{
+              padding: 8,
+              borderRadius: 20,
+              backgroundColor: '#f0f0f0',
+            }}>
+              <Text style={{ fontSize: 16, color: '#666' }}>✕</Text>
+            </TouchableOpacity>
           </View>
-        </SafeAreaView>
-      </BlurView>
+
+          {/* 开发状态 */}
+          <View style={{
+            alignItems: 'center',
+            marginBottom: 20,
+          }}>
+            <View style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              backgroundColor: 'rgba(255, 107, 53, 0.1)',
+              paddingHorizontal: 12,
+              paddingVertical: 6,
+              borderRadius: 16,
+              marginBottom: 12,
+            }}>
+              <Text style={{ fontSize: 16, marginRight: 6 }}>🚧</Text>
+              <Text style={{
+                fontSize: 14,
+                fontWeight: '600',
+                color: '#FF6B35',
+              }}>
+                Coming Soon
+              </Text>
+            </View>
+            <Text style={{
+              fontSize: 16,
+              color: '#333',
+              textAlign: 'center',
+            }}>
+              Building a warm student community
+            </Text>
+          </View>
+
+          {/* 功能列表 */}
+          <View style={{ marginBottom: 20 }}>
+            <Text style={{
+              fontSize: 18,
+              fontWeight: '700',
+              color: '#333',
+              marginBottom: 16,
+              textAlign: 'center',
+            }}>
+              Upcoming Features
+            </Text>
+            
+            {/* 功能项 */}
+            <View style={{ gap: 12 }}>
+              <View style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                paddingVertical: 8,
+              }}>
+                <View style={{
+                  width: 36,
+                  height: 36,
+                  borderRadius: 18,
+                  backgroundColor: 'rgba(255, 107, 53, 0.1)',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  marginRight: 12,
+                }}>
+                  <Text style={{ fontSize: 18 }}>🏪</Text>
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={{
+                    fontSize: 15,
+                    fontWeight: '600',
+                    color: '#333',
+                    marginBottom: 2,
+                  }}>
+                    Merchant Offers
+                  </Text>
+                  <Text style={{
+                    fontSize: 13,
+                    color: '#666',
+                    lineHeight: 18,
+                  }}>
+                    Exclusive discounts and coupons
+                  </Text>
+                </View>
+              </View>
+
+              <View style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                paddingVertical: 8,
+              }}>
+                <View style={{
+                  width: 36,
+                  height: 36,
+                  borderRadius: 18,
+                  backgroundColor: 'rgba(255, 107, 53, 0.1)',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  marginRight: 12,
+                }}>
+                  <Text style={{ fontSize: 18 }}>🔄</Text>
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={{
+                    fontSize: 15,
+                    fontWeight: '600',
+                    color: '#333',
+                    marginBottom: 2,
+                  }}>
+                    Second-hand Market
+                  </Text>
+                  <Text style={{
+                    fontSize: 13,
+                    color: '#666',
+                    lineHeight: 18,
+                  }}>
+                    Trade items between students
+                  </Text>
+                </View>
+              </View>
+
+              <View style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                paddingVertical: 8,
+              }}>
+                <View style={{
+                  width: 36,
+                  height: 36,
+                  borderRadius: 18,
+                  backgroundColor: 'rgba(255, 107, 53, 0.1)',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  marginRight: 12,
+                }}>
+                  <Text style={{ fontSize: 18 }}>💼</Text>
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={{
+                    fontSize: 15,
+                    fontWeight: '600',
+                    color: '#333',
+                    marginBottom: 2,
+                  }}>
+                    Career Development
+                  </Text>
+                  <Text style={{
+                    fontSize: 13,
+                    color: '#666',
+                    lineHeight: 18,
+                  }}>
+                    Job guidance and career planning
+                  </Text>
+                </View>
+              </View>
+
+              <View style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                paddingVertical: 8,
+              }}>
+                <View style={{
+                  width: 36,
+                  height: 36,
+                  borderRadius: 18,
+                  backgroundColor: 'rgba(255, 107, 53, 0.1)',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  marginRight: 12,
+                }}>
+                  <Text style={{ fontSize: 18 }}>👥</Text>
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={{
+                    fontSize: 15,
+                    fontWeight: '600',
+                    color: '#333',
+                    marginBottom: 2,
+                  }}>
+                    Alumni Network
+                  </Text>
+                  <Text style={{
+                    fontSize: 13,
+                    color: '#666',
+                    lineHeight: 18,
+                  }}>
+                    Connect with alumni and share experiences
+                  </Text>
+                </View>
+              </View>
+            </View>
+          </View>
+
+          {/* Simple close button */}
+          <TouchableOpacity 
+            onPress={onClose}
+            style={{
+              backgroundColor: '#FF6B35',
+              padding: 15,
+              borderRadius: 10,
+              alignItems: 'center',
+            }}
+          >
+            <Text style={{
+              color: 'white',
+              fontSize: 16,
+              fontWeight: '600',
+            }}>
+              I Know
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </View>
     </Modal>
   );
 };
-
-const FeatureItem: React.FC<{
-  icon: string;
-  title: string;
-  description: string;
-}> = ({ icon, title, description }) => (
-  <View style={styles.featureItem}>
-    <View style={styles.featureIcon}>
-      <Ionicons name={icon as any} size={20} color="#FF6B35" />
-    </View>
-    <View style={styles.featureText}>
-      <Text style={styles.featureTitle}>{title}</Text>
-      <Text style={styles.featureDescription}>{description}</Text>
-    </View>
-  </View>
-);
-
-const styles = StyleSheet.create({
-  backdrop: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-  },
-
-  modalContainer: {
-    width: screenWidth - 40,
-    maxWidth: 400,
-    borderRadius: 24,
-    overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 10,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 20,
-    elevation: 10,
-  },
-
-  modalContent: {
-    padding: 24,
-  },
-
-  header: {
-    alignItems: 'flex-end',
-    marginBottom: 16,
-  },
-
-  closeButton: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: 'rgba(0, 0, 0, 0.05)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-
-  schoolInfo: {
-    alignItems: 'center',
-    marginBottom: 24,
-  },
-
-  logoContainer: {
-    marginBottom: 12,
-  },
-
-  schoolLogo: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-  },
-
-  fallbackLogo: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    backgroundColor: '#F3F4F6',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-
-  fallbackLogoText: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#333333',
-  },
-
-  schoolName: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#333333',
-    textAlign: 'center',
-    marginBottom: 4,
-  },
-
-  schoolShortName: {
-    fontSize: 14,
-    color: '#666666',
-    textAlign: 'center',
-  },
-
-  statusSection: {
-    alignItems: 'center',
-    marginBottom: 24,
-    paddingHorizontal: 16,
-  },
-
-  statusBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(255, 107, 53, 0.1)',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
-    marginBottom: 12,
-  },
-
-  statusText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#FF6B35',
-    marginLeft: 6,
-  },
-
-  developmentMessage: {
-    fontSize: 16,
-    color: '#333333',
-    textAlign: 'center',
-    lineHeight: 24,
-  },
-
-  featuresSection: {
-    marginBottom: 24,
-  },
-
-  featuresTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#333333',
-    marginBottom: 16,
-    textAlign: 'center',
-  },
-
-  featuresList: {
-    // gap not supported in RN, using marginBottom instead
-  },
-
-  featureItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 8,
-    marginBottom: 12,
-  },
-
-  featureIcon: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: 'rgba(255, 107, 53, 0.1)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 12,
-  },
-
-  featureText: {
-    flex: 1,
-  },
-
-  featureTitle: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: '#333333',
-    marginBottom: 2,
-  },
-
-  featureDescription: {
-    fontSize: 13,
-    color: '#666666',
-    lineHeight: 18,
-  },
-
-  closeActionButton: {
-    backgroundColor: '#FF6B35',
-    paddingVertical: 14,
-    paddingHorizontal: 24,
-    borderRadius: 12,
-    alignItems: 'center',
-  },
-
-  closeActionText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#FFFFFF',
-  },
-});

@@ -38,7 +38,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useTranslation } from 'react-i18next';
 import { theme } from '../../theme';
 import { BRAND_GLASS, BRAND_INTERACTIONS, BRAND_GRADIENT, LIQUID_GLASS_LAYERS, DAWN_GRADIENTS, DAWN_OVERLAYS } from '../../theme/core';
-import { SimpleActivityCard } from '../../components/cards/SimpleActivityCard';
+// SimpleActivityCard import removed - only using GridActivityCard for grid-only layout
 import { GridActivityCard } from '../../components/cards/GridActivityCard';
 import { LiquidGlassTab } from '../../components/ui/LiquidGlassTab';
 import { FilterBottomSheet } from '../../components/ui/FilterBottomSheet';
@@ -93,7 +93,7 @@ export const ActivityListScreen: React.FC = () => {
   // ✅ 状态缓存机制：缓存已确认的报名状态
   const [activityStatusCache, setActivityStatusCache] = useState<Map<string, 'registered' | 'checked_in'>>(new Map());
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const [viewLayout, setViewLayout] = useState<'list' | 'grid'>('list'); // 布局模式状态
+  // 移除viewLayout状态，固定使用grid视图
   
   // V1.1 规范: BottomSheet 过滤器状态
   const [showFilterBottomSheet, setShowFilterBottomSheet] = useState(false);
@@ -193,18 +193,7 @@ export const ActivityListScreen: React.FC = () => {
     AccessibilityInfo.isReduceMotionEnabled().then(setIsReduceMotionEnabled);
   }, []);
   
-  // 监听布局切换事件
-  useEffect(() => {
-    const layoutChangeSubscription = DeviceEventEmitter.addListener('activityLayoutChanged', (newLayout: 'list' | 'grid') => {
-      console.log(`📱 收到布局切换事件: ${newLayout}`);
-      console.log(`📱 当前布局: ${viewLayout} -> 新布局: ${newLayout}`);
-      setViewLayout(newLayout);
-    });
-
-    return () => {
-      layoutChangeSubscription?.remove();
-    };
-  }, []);
+  // 布局切换监听器已移除 - 固定使用grid布局
 
   // 监听TabBar的滚动到顶部和刷新事件
   useEffect(() => {
@@ -398,7 +387,7 @@ export const ActivityListScreen: React.FC = () => {
   const filterTabs = ['all', 'available', 'ended'];
   const segmentLabels = [
     t('filters.status.all') || '全部',
-    t('filters.status.upcoming') || '即将开始',
+    t('filters.status.available') || '可报名',
     t('filters.status.ended') || '已结束',
   ];
 
@@ -413,7 +402,7 @@ export const ActivityListScreen: React.FC = () => {
   ];
 
   const statusFilters = [
-    { id: 'upcoming', label: t('filters.status.upcoming') || '即将开始', icon: 'time-outline' },
+    { id: 'upcoming', label: t('filters.status.available') || '可报名', icon: 'time-outline' },
     { id: 'ended', label: t('filters.status.ended') || '已结束', icon: 'close-circle-outline' },
   ];
 
@@ -756,21 +745,7 @@ export const ActivityListScreen: React.FC = () => {
     }
   }, [loading, hasMore, currentPage, fetchActivities]);
 
-  // 加载用户布局偏好
-  useEffect(() => {
-    const loadLayoutPreference = async () => {
-      try {
-        const savedLayout = await AsyncStorage.getItem('activity_view_layout');
-        if (savedLayout && (savedLayout === 'list' || savedLayout === 'grid')) {
-          setViewLayout(savedLayout);
-        }
-      } catch (error) {
-        console.warn('Failed to load layout preference:', error);
-      }
-    };
-    
-    loadLayoutPreference();
-  }, []);
+  // 布局偏好加载已移除 - 固定使用grid布局
 
   // 初始加载数据
   useEffect(() => {
@@ -1004,19 +979,7 @@ export const ActivityListScreen: React.FC = () => {
     setSearchText(text);
   };
 
-  // 布局切换处理函数
-  const handleLayoutChange = async (layout: 'list' | 'grid') => {
-    console.log(`🔄 布局切换: ${viewLayout} -> ${layout}`);
-    setViewLayout(layout);
-    
-    // 保存用户偏好
-    try {
-      await AsyncStorage.setItem('activity_view_layout', layout);
-      console.log(`💾 布局偏好已保存: ${layout}`);
-    } catch (error) {
-      console.warn('Failed to save layout preference:', error);
-    }
-  };
+  // 布局切换处理函数已移除 - 固定使用grid布局
 
   // CategoryBar - SectionHeader (仅包含CategoryBar)
   const renderListHeader = () => null;
@@ -1069,19 +1032,14 @@ export const ActivityListScreen: React.FC = () => {
     return { leftColumn, rightColumn };
   };
 
-  // 获取瀑布流列数据
-  const waterfallData = viewLayout === 'grid' ? formatWaterfallData(filteredActivities) : null;
+  // 获取瀑布流列数据 - 固定使用grid布局
+  const waterfallData = formatWaterfallData(filteredActivities);
 
-  // 为 SectionList 格式化数据
-  const sectionData = viewLayout === 'grid' 
-    ? [{
-        title: 'activities',
-        data: waterfallData ? [{ type: 'waterfall', columns: waterfallData }] : [],
-      }]
-    : [{
-        title: 'activities',
-        data: filteredActivities,
-      }];
+  // 为 SectionList 格式化数据 - 固定使用grid布局
+  const sectionData = [{
+    title: 'activities',
+    data: waterfallData ? [{ type: 'waterfall', columns: waterfallData }] : [],
+  }];
 
   // 自定义刷新指示器组件 - 使用硬编码文本避免翻译键显示问题
   const CustomRefreshIndicator = () => (
@@ -1191,14 +1149,14 @@ export const ActivityListScreen: React.FC = () => {
         ref={sectionListRef}
         sections={sectionData}
         keyExtractor={(item: any) => {
-          if (viewLayout === 'grid' && item.type === 'waterfall') {
+          if (item.type === 'waterfall') {
             return 'waterfall-grid';
           }
           return item.id;
         }}
         renderItem={({ item, index }) => {
-          if (viewLayout === 'grid' && item.type === 'waterfall') {
-            // 瀑布流布局 - 渲染两列
+          if (item.type === 'waterfall') {
+            // 瀑布流布局 - 渲染两列 (固定使用grid)
             const { leftColumn, rightColumn } = item.columns;
             return (
               <View style={styles.waterfallContainer}>
@@ -1232,13 +1190,8 @@ export const ActivityListScreen: React.FC = () => {
               </View>
             );
           } else {
-            // 列表布局
-            return (
-              <SimpleActivityCard
-                activity={item}
-                onPress={() => handleActivityPress(item)}
-              />
-            );
+            // 备用情况 - 不应该发生，因为我们总是使用瀑布流
+            return null;
           }
         }}
         renderSectionHeader={renderSectionHeader}

@@ -332,9 +332,16 @@ export const UserIdentityQRModal: React.FC<IdentityQRCodeProps> = ({
               <Text style={styles.userName}>
                 {userData.legalName}
               </Text>
-              <Text style={styles.userEmail}>
-                {userData.nickName}
-              </Text>
+              {userData.nickName && (
+                <Text style={styles.userEmail}>
+                  {userData.nickName}
+                </Text>
+              )}
+              {userData.userName && (
+                <Text style={styles.userEmail}>
+                  {userData.userName}
+                </Text>
+              )}
             </View>
 
             {/* Organization & School Info - Combined */}

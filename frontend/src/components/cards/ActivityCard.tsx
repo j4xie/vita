@@ -120,7 +120,6 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({
   const scaleAnim = useRef(new Animated.Value(1)).current;
   const opacityAnim = useRef(new Animated.Value(1)).current;
   const translateYAnim = useRef(new Animated.Value(0)).current;
-  const favoriteScaleAnim = useRef(new Animated.Value(1)).current;
   
   // 滑动手势相关状态
   const [swipeDirection, setSwipeDirection] = useState<'left' | 'right' | null>(null);
@@ -223,11 +222,6 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({
     onPress?.();
   };
 
-  const handleFavoritePress = () => {
-    // 收藏按钮点击动画
-    bounce(favoriteScaleAnim).start();
-    onFavorite?.();
-  };
 
   const handleRegisterPress = () => {
     onRegister?.();
@@ -337,9 +331,6 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({
     opacity: opacityAnim,
   };
 
-  const favoriteAnimatedStyle = {
-    transform: [{ scale: favoriteScaleAnim }],
-  };
 
   // Static styles (dynamic styles will be applied inline)
   const staticStyles = StyleSheet.create({
@@ -470,17 +461,6 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({
               <Text style={styles.statusText}>{statusConfig.text}</Text>
             </View>
             
-            {onFavorite && (
-              <Animated.View style={favoriteAnimatedStyle}>
-                <TouchableOpacity 
-                  style={styles.favoriteButton}
-                  onPress={handleFavoritePress}
-                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                >
-                  <Ionicons name="heart-outline" size={22} color={theme.colors.text.inverse} />
-                </TouchableOpacity>
-              </Animated.View>
-            )}
           </View>
 
           {/* Bottom Content */}
@@ -686,11 +666,6 @@ const styles = StyleSheet.create({
     color: theme.colors.text.inverse,
     fontSize: theme.typography.fontSize.xs,
     fontWeight: theme.typography.fontWeight.semibold,
-  },
-  favoriteButton: {
-    padding: theme.spacing.xs,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    borderRadius: theme.borderRadius.full,
   },
   
   // Overlay Content

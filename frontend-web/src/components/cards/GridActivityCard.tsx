@@ -1,4 +1,4 @@
-import React, { useState, memo } from 'react';
+import React, { useState, memo, useCallback } from 'react';
 import {
   View,
   Text,
@@ -63,6 +63,20 @@ const GridActivityCardComponent: React.FC<GridActivityCardProps> = ({
   const { t, i18n } = useTranslation();
   const [imageLoading, setImageLoading] = useState(true);
   const [imageError, setImageError] = useState(false);
+
+  // 🔧 Memoized image event handlers to prevent infinite re-renders
+  const handleImageLoadStart = useCallback(() => {
+    setImageLoading(true);
+  }, []);
+
+  const handleImageLoad = useCallback(() => {
+    setImageLoading(false);
+  }, []);
+
+  const handleImageError = useCallback(() => {
+    setImageError(true);
+    setImageLoading(false);
+  }, []);
 
   // 流畅动画系统
   const scale = useSharedValue(1);
@@ -278,12 +292,9 @@ const GridActivityCardComponent: React.FC<GridActivityCardProps> = ({
               uri={activity.image}
               style={styles.image}
               resizeMode="cover"
-              onLoadStart={() => setImageLoading(true)}
-              onLoad={() => setImageLoading(false)}
-              onError={() => {
-                setImageError(true);
-                setImageLoading(false);
-              }}
+              onLoadStart={handleImageLoadStart}
+              onLoad={handleImageLoad}
+              onError={handleImageError}
             />
             {imageLoading && (
               <View style={styles.imageLoadingContainer}>

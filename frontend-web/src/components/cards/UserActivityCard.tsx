@@ -139,7 +139,7 @@ export const UserActivityCard: React.FC<UserActivityCardProps> = ({
         <View style={styles.imageContainer}>
           {activity.icon ? (
             <Image 
-              source={{ uri: activity.icon }} 
+              uri={activity.icon } 
               style={styles.activityImage}
               resizeMode="cover"
             />

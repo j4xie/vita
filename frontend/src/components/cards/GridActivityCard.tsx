@@ -71,37 +71,8 @@ const GridActivityCardComponent: React.FC<GridActivityCardProps> = ({
     return null;
   }
 
-  // 瀑布流布局：宽度由父容器决定，这里不需要计算
-  
-  // 根据内容计算动态高度 - 适中的瀑布流效果
-  const calculateDynamicHeight = () => {
-    const baseHeight = 180; // 适中的基础高度
-    const titleLength = activity.title.length;
-    const locationLength = activity.location.length;
-    
-    // 标题长度影响高度 - 适中变化
-    const titleHeightAddition = titleLength > 20 ? 20 : 
-                               titleLength > 15 ? 15 : 
-                               titleLength > 10 ? 10 : 0;
-    
-    // 地点长度影响高度 - 适中变化
-    const locationHeightAddition = locationLength > 15 ? 15 : 
-                                  locationLength > 10 ? 10 : 0;
-    
-    // 适中的随机变化（基于活动ID）
-    const seed1 = parseInt(activity.id) % 5; // 0-4
-    const seed2 = (parseInt(activity.id) * 17) % 4; // 0-3
-    const randomAddition = seed1 * 12 + seed2 * 8; // 0-80的适中范围
-    
-    // 图片比例影响 - 三种高度变化
-    const imageRatio = (parseInt(activity.id) % 4) === 0 ? 20 : 
-                      (parseInt(activity.id) % 4) === 1 ? 0 : 
-                      (parseInt(activity.id) % 4) === 2 ? 10 : 15; // 四种变化
-    
-    return Math.min(280, Math.max(160, baseHeight + titleHeightAddition + locationHeightAddition + randomAddition + imageRatio));
-  };
-  
-  const dynamicHeight = calculateDynamicHeight();
+  // 统一固定高度的方块布局
+  const cardHeight = 180; // 固定高度，统一方块大小
   
   // 获取活动状态标签 - 优先显示报名状态，其次是时间紧急程度
   const getActivityLabel = () => {
@@ -240,7 +211,7 @@ const GridActivityCardComponent: React.FC<GridActivityCardProps> = ({
   }));
 
   return (
-    <Animated.View style={[styles.container, { height: dynamicHeight }, animatedContainerStyle, animatedShadowStyle]}>
+    <Animated.View style={[styles.container, { height: cardHeight }, animatedContainerStyle, animatedShadowStyle]}>
       {/* 边缘发光效果 */}
       <Animated.View style={[styles.glowBorder, borderGlowStyle]} pointerEvents="none" />
       
@@ -318,20 +289,6 @@ const GridActivityCardComponent: React.FC<GridActivityCardProps> = ({
           </View>
         )}
 
-        {/* 收藏按钮 */}
-        {onBookmark && (
-          <TouchableOpacity 
-            style={styles.bookmarkButton}
-            onPress={() => onBookmark(activity)}
-            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-          >
-            <Ionicons 
-              name={isBookmarked ? "heart" : "heart-outline"} 
-              size={16} 
-              color={isBookmarked ? "#FF6B35" : "rgba(255, 255, 255, 0.8)"} 
-            />
-          </TouchableOpacity>
-        )}
 
         {/* 底部信息区 - 紧凑布局 */}
         <View style={styles.infoContainer}>
@@ -382,7 +339,7 @@ const styles = StyleSheet.create({
     overflow: 'visible',
     backgroundColor: theme.colors.background.primary,
     ...theme.shadows.sm,
-    marginBottom: 2, // 瀑布流：极致紧凑的2px间距
+    marginBottom: 8, // 方块布局：适中间距
   },
 
   // 触摸区域
@@ -480,19 +437,6 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
   },
 
-  // 收藏按钮样式 - 更小尺寸适配网格
-  bookmarkButton: {
-    position: 'absolute',
-    top: 8,
-    left: 8,
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: 'rgba(0, 0, 0, 0.3)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: 3,
-  },
   
   // 底部信息区 - 更紧凑的网格布局
   infoContainer: {

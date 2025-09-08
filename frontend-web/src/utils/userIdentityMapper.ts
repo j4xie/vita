@@ -5,6 +5,11 @@
 import { UserIdentityData, OrganizationInfo, SchoolInfo, PositionInfo } from '../types/userIdentity';
 import Base64 from 'react-native-base64';
 
+// 添加调试日志函数
+const debugLog = (message: string, data?: any) => {
+  console.log(`[UserIdentityMapper] ${message}`, data || '');
+};
+
 // 组织ID到组织信息的映射
 const ORGANIZATION_MAPPING: Record<number, OrganizationInfo> = {
   1: {
@@ -283,33 +288,53 @@ export const mapUserToIdentityData = (user: any): UserIdentityData => {
  */
 export const generateUserQRContent = (userData: UserIdentityData): string => {
   try {
-    // 完整的QR码内容，包含所有关键信息
-    const qrData = {
-      type: 'VG_USER',
+    debugLog('🔧 [生成身份码] 开始生成用户身份码:', userData.userId);
+    
+    // 使用与解析逻辑匹配的数据结构 - 直接使用UserIdentityData格式
+    const qrData: UserIdentityData = {
       userId: userData.userId,
       userName: userData.userName,
       legalName: userData.legalName,
       nickName: userData.nickName,
-      organization: userData.currentOrganization?.displayNameZh || userData.currentOrganization?.name,
-      school: userData.school?.name || userData.school?.fullName,
-      position: userData.position?.displayName,
-      roleKey: userData.position?.roleKey,
-      timestamp: Date.now(),
+      email: userData.email,
+      avatarUrl: userData.avatarUrl,
+      studentId: userData.studentId,
+      deptId: userData.deptId,
+      currentOrganization: userData.currentOrganization,
+      memberOrganizations: userData.memberOrganizations,
+      school: userData.school,
+      position: userData.position,
+      type: 'user_identity', // 使用正确的类型标识
     };
     
     // 生成QR码字符串 - 使用base64编码格式与扫描解析逻辑匹配
     const jsonString = JSON.stringify(qrData);
+    debugLog('📝 [生成身份码] JSON字符串长度:', jsonString.length);
     
     // 如果数据太长，使用简化格式
     if (jsonString.length > 800) {
-      return `VG_USER_${userData.userId}_${userData.legalName}_${userData.position?.roleKey || 'user'}_${Date.now()}`;
+      const fallbackCode = `VG_USER_${userData.userId}_${userData.legalName}_${userData.position?.roleKey || 'user'}_${Date.now()}`;
+      debugLog('⚠️ [生成身份码] 数据太长，使用简化格式:', fallbackCode.substring(0, 50) + '...');
+      return fallbackCode;
     }
     
     // 编码为base64格式，与扫描解析逻辑匹配 - 使用React Native兼容的方案
     const encodedString = encodeURIComponent(jsonString);
     const base64Data = Base64.encode(encodedString);
+    const finalCode = `VG_USER_${base64Data}`;
     
-    return `VG_USER_${base64Data}`;
+    debugLog('✅ [生成身份码] 身份码生成成功:', {
+      finalCodeLength: finalCode.length,
+      finalCodePreview: finalCode.substring(0, 50) + '...',
+      dataStructure: {
+        userId: qrData.userId,
+        userName: qrData.userName,
+        legalName: qrData.legalName,
+        hasEmail: !!qrData.email
+      }
+    });
+    
+    return finalCode;
   } catch (error) {
     console.error('生成QR码内容失败:', error);
     return `VG_USER_${userData.userId || 'unknown'}_${Date.now()}`;

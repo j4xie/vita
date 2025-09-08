@@ -61,7 +61,7 @@ const CategoryBar: React.FC<CategoryBarProps> = ({
   // 修改为基于时间的活动状态分类 - 使用翻译函数
   const segments = [
     t('filters.status.all', '全部'),
-    t('filters.status.upcoming', '即将开始'),
+    t('filters.status.available', '可报名'),
     t('filters.status.ended', '已结束')
   ];
   

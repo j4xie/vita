@@ -151,15 +151,15 @@ export const RegionSwitchModal: React.FC<RegionSwitchModalProps> = ({
   const regions: { code: UserRegionCode; name: string; icon: string; description: string }[] = [
     {
       code: 'china',
-      name: t('regions.china.name', '中国'),
+      name: t('regions.china.name'),
       icon: '🇨🇳',
-      description: t('regions.china.description', '适用中华人民共和国相关法律法规'),
+      description: t('regions.china.description'),
     },
     {
       code: 'usa',
-      name: t('regions.usa.name', '美国'),
+      name: t('regions.usa.name'),
       icon: '🇺🇸',
-      description: t('regions.usa.description', '适用美国联邦和州相关法律法规'),
+      description: t('regions.usa.description'),
     },
   ];
 

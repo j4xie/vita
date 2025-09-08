@@ -39,6 +39,7 @@ import { theme } from '../../theme';
 import { useFilter } from '../../context/FilterContext';
 import { Glass } from '../../ui/glass/GlassTheme';
 import { shouldShowTabBar } from '../../config/tabBarConfig';
+import { useTabBarPositionFix } from '../../hooks/useTabBarPositionFix';
 
 interface CustomTabBarProps extends BottomTabBarProps {
   // 可以添加额外的自定义属性
@@ -53,6 +54,9 @@ export const CustomTabBar: React.FC<CustomTabBarProps> = ({
   const insets = useSafeAreaInsets();
   const { isFilterOpen } = useFilter();
   const [isReduceMotionEnabled, setIsReduceMotionEnabled] = useState(false);
+  
+  // 🔧 Web端TabBar位置修复
+  const { forceTabBarPositionFix } = useTabBarPositionFix();
   
   // 页面检测 - 只在探索页面显示搜索按钮
   const currentRoute = state.routes[state.index];
@@ -120,6 +124,56 @@ export const CustomTabBar: React.FC<CustomTabBarProps> = ({
   // Check accessibility preferences
   useEffect(() => {
     AccessibilityInfo.isReduceMotionEnabled().then(setIsReduceMotionEnabled);
+  }, []);
+
+  // 🔧 Web端视窗变化监听和TabBar位置修复
+  useEffect(() => {
+    if (Platform.OS !== 'web') return;
+    
+    // 防抖函数
+    let resizeTimeout: NodeJS.Timeout;
+    
+    const handleViewportChange = () => {
+      // 清除之前的定时器
+      if (resizeTimeout) {
+        clearTimeout(resizeTimeout);
+      }
+      
+      // 防抖处理：300ms后执行
+      resizeTimeout = setTimeout(() => {
+        console.log('🔧 [TABBAR] 视窗变化，重新校准TabBar位置');
+        
+        // 强制重新计算TabBar位置
+        // 通过微小的动画触发重新布局
+        tabBarTranslateY.value = withSequence(
+          withTiming(1, { duration: 50 }),
+          withTiming(0, { duration: 50 })
+        );
+      }, 300);
+    };
+    
+    // 监听窗口大小变化
+    window.addEventListener('resize', handleViewportChange);
+    // 监听屏幕方向变化
+    window.addEventListener('orientationchange', handleViewportChange);
+    
+    // 监听视觉视窗变化（处理移动端浏览器地址栏显示/隐藏）
+    if ('visualViewport' in window && window.visualViewport) {
+      window.visualViewport.addEventListener('resize', handleViewportChange);
+    }
+    
+    return () => {
+      window.removeEventListener('resize', handleViewportChange);
+      window.removeEventListener('orientationchange', handleViewportChange);
+      
+      if ('visualViewport' in window && window.visualViewport) {
+        window.visualViewport.removeEventListener('resize', handleViewportChange);
+      }
+      
+      if (resizeTimeout) {
+        clearTimeout(resizeTimeout);
+      }
+    };
   }, []);
 
   // 移除气泡初始化代码
@@ -687,12 +741,16 @@ export const CustomTabBar: React.FC<CustomTabBarProps> = ({
   }
 
   return (
-    <Animated.View style={[
-      styles.container, 
-      { bottom: insets.bottom - 7 }, // 再往下移动5px (从-2改为-7)
-      animatedTabBarStyle,
-      isFilterOpen && styles.hidden
-    ]}>
+    <Animated.View 
+      testID="custom-tab-bar"
+      style={[
+        styles.container, 
+        // 🔧 Web端使用fixed定位，移动端使用SafeArea
+        Platform.OS === 'web' ? {} : { bottom: insets.bottom - 7 },
+        animatedTabBarStyle,
+        isFilterOpen && styles.hidden
+      ]}
+    >
       {/* Liquid Glass 容器 */}
       <View style={styles.liquidGlassContainer}>
         {/* 背景模糊层 */}
@@ -915,14 +973,21 @@ const styles = StyleSheet.create({
     shadowRadius: 8, // Reduced from 16 to 8
     elevation: 4, // Reduced from 8 to 4
     ...(Platform.OS === 'web' && {
-      bottom: 50, // 显著增加底部间距
-      position: 'absolute',
+      // 🔧 Web端TabBar位置修复
+      position: 'fixed', // 改为fixed确保始终固定在视窗底部
+      bottom: 'max(20px, env(safe-area-inset-bottom))', // 使用CSS calc确保最小间距20px
       left: 16,
       right: 16,
       width: 'auto',
+      maxWidth: 'calc(100vw - 32px)', // 防止超出视窗
       // Web端增强圆角效果
       borderRadius: 25, // 增强圆角
-      marginBottom: 20, // 更大的底部边距
+      // 移除marginBottom，使用bottom定位
+      // 🚀 确保在所有元素之上
+      zIndex: 9999,
+      // 🎯 添加backdrop-filter支持
+      backdropFilter: 'blur(10px)',
+      WebkitBackdropFilter: 'blur(10px)',
     }),
   },
 
