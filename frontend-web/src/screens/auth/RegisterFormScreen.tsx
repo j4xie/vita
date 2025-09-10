@@ -11,6 +11,7 @@ import {
   Keyboard,
   TouchableWithoutFeedback,
   Platform,
+  DeviceEventEmitter,
 } from 'react-native';
 import { useNavigation, useRoute, CommonActions } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
@@ -30,6 +31,7 @@ import { getWebInputStyles, getWebInputProps } from '../../utils/webInputStyles'
 import { SafeAlert } from '../../utils/SafeAlert';
 import { WebTextInput } from '../../components/web/WebTextInput';
 import { ForceNativeInput } from '../../components/web/ForceNativeInput';
+import { validateInvitationCode } from '../../services/registrationAPI';
 
 interface FormData {
   userName: string;
@@ -70,6 +72,8 @@ export const RegisterFormScreen: React.FC = () => {
   const [verificationCode, setVerificationCode] = useState('');
   const [countdown, setCountdown] = useState(0);
   const [agreedToTerms, setAgreedToTerms] = useState(false);
+  const [agreedToPrivacy, setAgreedToPrivacy] = useState(false);
+  const [agreedToSMS, setAgreedToSMS] = useState(false);
   
   // 地域检测状态
   const [regionDetecting, setRegionDetecting] = useState(false);
@@ -97,6 +101,16 @@ export const RegisterFormScreen: React.FC = () => {
   });
 
   const [errors, setErrors] = useState<Partial<FormData>>({});
+
+  // 推荐码信息调试日志
+  useEffect(() => {
+    console.log('🎫 推荐码信息检查:', {
+      routeParams: route.params,
+      referralCode: referralCode,
+      hasReferralCode: hasReferralCode,
+      formDataReferralCode: formData.referralCode
+    });
+  }, [route.params, referralCode, hasReferralCode, formData.referralCode]);
 
   // 自动地域检测
   useEffect(() => {
@@ -216,10 +230,22 @@ export const RegisterFormScreen: React.FC = () => {
           : t('validation.phone_usa_invalid');
       }
     }
+
+    // 验证合规勾选
+    if (!agreedToPrivacy) {
+      SafeAlert.alert(t('common.error'), t('auth.register.sms.terms_privacy_checkbox'));
+      return false;
+    }
+    
+    if (!agreedToSMS) {
+      SafeAlert.alert(t('common.error'), t('auth.register.sms.sms_consent_checkbox'));
+      return false;
+    }
     
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
+
 
   const handleNext = () => {
     let isValid = false;
@@ -367,6 +393,21 @@ export const RegisterFormScreen: React.FC = () => {
     if (errorMsg.includes('Duplicate entry')) return t('validation.duplicate_registration');
     if (errorMsg.includes('too long')) return t('validation.field_too_long');
     if (errorMsg.includes('constraint')) return t('validation.data_constraint_error');
+    
+    // 邀请码相关错误
+    if (errorMsg.includes('invCode') || errorMsg.includes('邀请码')) {
+      if (errorMsg.includes('不存在') || errorMsg.includes('无效') || errorMsg.includes('invalid')) {
+        return '邀请码不存在或已失效，请检查邀请码是否正确';
+      }
+      if (errorMsg.includes('已使用') || errorMsg.includes('used')) {
+        return '此邀请码已被使用，请联系邀请人获取新的邀请码';
+      }
+      if (errorMsg.includes('过期') || errorMsg.includes('expired')) {
+        return '邀请码已过期，请联系邀请人重新生成邀请码';
+      }
+      return '邀请码验证失败，请检查邀请码是否正确';
+    }
+    
     return t('auth.register.error_message');
   };
 
@@ -390,7 +431,7 @@ export const RegisterFormScreen: React.FC = () => {
         deptId: formData.universityId, // 传递学校ID，确保用户关联正确的学校
         orgId: formData.organizationId,
         invCode: formData.referralCode,
-        area: formData.area, // 地域选择
+        areaCode: formData.area, // 修复：API期望areaCode字段而不是area
       };
 
       console.log('📋 邀请码注册数据:', {
@@ -400,7 +441,53 @@ export const RegisterFormScreen: React.FC = () => {
         deptId: formData.universityId
       });
 
+      // 详细的数据验证日志
+      console.log('🔍 详细字段检查:', {
+        userName: `"${registrationData.userName}" (length: ${registrationData.userName?.length})`,
+        legalName: `"${registrationData.legalName}" (length: ${registrationData.legalName?.length})`,
+        nickName: `"${registrationData.nickName}" (length: ${registrationData.nickName?.length})`,
+        email: `"${registrationData.email}" (length: ${registrationData.email?.length})`,
+        phonenumber: `"${registrationData.phonenumber}" (length: ${registrationData.phonenumber?.length})`,
+        sex: `"${registrationData.sex}"`,
+        deptId: `"${registrationData.deptId}" (type: ${typeof registrationData.deptId})`,
+        orgId: `"${registrationData.orgId}" (type: ${typeof registrationData.orgId})`,
+        invCode: `"${registrationData.invCode}" (length: ${registrationData.invCode?.length})`,
+        areaCode: `"${registrationData.areaCode}"`
+      });
+
+      // 关键字段空值检查
+      const emptyFields = [];
+      if (!registrationData.userName) emptyFields.push('userName');
+      if (!registrationData.legalName) emptyFields.push('legalName');
+      if (!registrationData.nickName) emptyFields.push('nickName');
+      if (!registrationData.email) emptyFields.push('email');
+      if (!registrationData.phonenumber) emptyFields.push('phonenumber');
+      if (!registrationData.sex) emptyFields.push('sex');
+      if (!registrationData.deptId) emptyFields.push('deptId');
+      if (!registrationData.orgId) emptyFields.push('orgId');
+      
+      if (emptyFields.length > 0) {
+        console.error('❌ 发现空值字段:', emptyFields);
+        SafeAlert.alert(t('auth.register.error_title'), `以下字段不能为空: ${emptyFields.join(', ')}`);
+        return;
+      } else {
+        console.log('✅ 所有必填字段都有值');
+      }
+
+      // 邀请码有效性验证由后端在注册时进行
+      // 根据API文档，接口14需要管理员权限，普通用户无法调用验证
+      if (registrationData.invCode) {
+        console.log('🎫 邀请码将在注册时进行后端验证:', registrationData.invCode);
+      }
+
       const result = await pomeloXAPI.register(registrationData);
+      
+      console.log('🌐 API响应结果:', {
+        code: result.code,
+        msg: result.msg,
+        hasData: !!result.data,
+        dataKeys: result.data ? Object.keys(result.data) : null
+      });
       
       if (result.code === 200) {
         // 注册成功后自动登录
@@ -474,9 +561,20 @@ export const RegisterFormScreen: React.FC = () => {
         SafeAlert.alert(t('auth.register.error_title'), friendlyError);
       }
     } catch (error) {
-      console.error('注册失败:', error);
-      const friendlyError = parseRegistrationError(error.message || '');
-      SafeAlert.alert(t('auth.register.error_title'), friendlyError);
+      console.error('🚨 注册失败完整错误信息:', {
+        error: error,
+        message: error.message,
+        stack: error.stack,
+        name: error.name
+      });
+      
+      // 检查是否是网络错误
+      if (error.message?.includes('fetch') || error.message?.includes('network')) {
+        SafeAlert.alert(t('auth.register.error_title'), '网络连接失败，请检查网络后重试');
+      } else {
+        const friendlyError = parseRegistrationError(error.message || '');
+        SafeAlert.alert(t('auth.register.error_title'), friendlyError);
+      }
     } finally {
       setLoading(false);
       setLoadingMessage('');
@@ -645,57 +743,8 @@ export const RegisterFormScreen: React.FC = () => {
         />
         {errors.confirmPassword && <Text style={styles.errorText}>{errors.confirmPassword}</Text>}
       </View>
-    </View>
-  );
 
-  const renderStep3 = () => (
-    <View style={styles.stepContainer}>
-      <Text style={styles.stepTitle}>{t('auth.register.form.contact_info')}</Text>
-      <Text style={styles.stepSubtitle}>{t('auth.register.form.contact_info_desc')}</Text>
-
-      <View style={styles.phoneTypeContainer}>
-        <TouchableOpacity
-          style={[styles.phoneTypeButton, formData.phoneType === 'CN' && styles.phoneTypeActive]}
-          onPress={() => updateFormData('phoneType', 'CN')}
-        >
-          <Text style={[styles.phoneTypeText, formData.phoneType === 'CN' && styles.phoneTypeTextActive]}>
-            {t('auth.register.form.phone_china')}
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.phoneTypeButton, formData.phoneType === 'US' && styles.phoneTypeActive]}
-          onPress={() => {
-            SafeAlert.alert(
-              t('auth.register.form.us_phone_not_supported_title'),
-              `${t('auth.register.form.us_phone_not_supported_message')}\n\n${t('auth.register.form.us_phone_contact_info')}`,
-              [{ text: t('common.confirm'), style: 'default' }]
-            );
-          }}
-        >
-          <Text style={[styles.phoneTypeText, formData.phoneType === 'US' && styles.phoneTypeTextActive]}>
-            {t('auth.register.form.phone_usa')}
-          </Text>
-        </TouchableOpacity>
-      </View>
-
-      <View style={styles.inputContainer}>
-        <Text style={styles.label}>{t('auth.register.form.phone_label')}</Text>
-        <View style={styles.phoneInputWrapper}>
-          <Text style={styles.phonePrefix}>
-            +{formData.phoneType === 'CN' ? '86' : '1'}
-          </Text>
-          <WebTextInput
-            style={[styles.phoneInput, errors.phoneNumber && styles.inputError]}
-            placeholder={formData.phoneType === 'CN' ? '13812345678' : '2025551234'}
-            value={formData.phoneNumber}
-            onChangeText={(text) => updateFormData('phoneNumber', text)}
-            keyboardType="phone-pad"
-            placeholderTextColor={theme.colors.text.disabled}
-          />
-        </View>
-        {errors.phoneNumber && <Text style={styles.errorText}>{errors.phoneNumber}</Text>}
-      </View>
-
+      {/* 移动到第2步的性别选择 */}
       <View style={styles.inputContainer}>
         <Text style={styles.label}>{t('auth.register.form.gender_label')}</Text>
         <View style={styles.genderContainer}>
@@ -726,6 +775,7 @@ export const RegisterFormScreen: React.FC = () => {
         </View>
       </View>
 
+      {/* 移动到第2步的推荐组织 */}
       <View style={styles.inputContainer}>
         <Text style={styles.label}>{t('auth.register.form.organization_label')}</Text>
         <OrganizationSelector
@@ -739,30 +789,114 @@ export const RegisterFormScreen: React.FC = () => {
           error={errors.organization}
         />
       </View>
+    </View>
+  );
 
-      <View style={styles.termsContainer}>
-        <TouchableOpacity onPress={() => setAgreedToTerms(!agreedToTerms)}>
-          <View style={[styles.checkbox, agreedToTerms && styles.checkboxChecked]}>
-            {agreedToTerms && (
-              <Ionicons name="checkmark" size={16} color={theme.colors.text.inverse} />
-            )}
-          </View>
+  const renderStep3 = () => (
+    <View style={styles.stepContainer}>
+      <Text style={styles.stepTitle}>{t('auth.register.form.phone_label')}</Text>
+      <Text style={styles.stepSubtitle}>请输入您的手机号码，用于接收验证码</Text>
+
+      <View style={styles.phoneTypeContainer}>
+        <TouchableOpacity
+          style={[styles.phoneTypeButton, formData.phoneType === 'CN' && styles.phoneTypeActive]}
+          onPress={() => updateFormData('phoneType', 'CN')}
+        >
+          <Text style={[styles.phoneTypeText, formData.phoneType === 'CN' && styles.phoneTypeTextActive]}>
+            {t('auth.register.form.phone_china')}
+          </Text>
         </TouchableOpacity>
-        <View style={styles.termsTextContainer}>
-          <Text style={styles.termsText}>
-            {t('auth.register.form.terms_checkbox')}
-            <TouchableOpacity onPress={() => handleTermsPress('terms')}>
-              <Text style={styles.termsLink}> {t('auth.register.terms_of_service')} </Text>
-            </TouchableOpacity>
-            {t('auth.register.and')}
-            <TouchableOpacity onPress={() => handleTermsPress('privacy')}>
-              <Text style={styles.termsLink}> {t('auth.register.privacy_policy')}</Text>
-            </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.phoneTypeButton, formData.phoneType === 'US' && styles.phoneTypeActive]}
+          onPress={() => {
+            SafeAlert.alert(
+              t('auth.register.form.us_phone_not_supported_title'),
+              `${t('auth.register.form.us_phone_not_supported_message')}\n\n${t('auth.register.form.us_phone_contact_info')}`,
+              [{ text: t('common.confirm'), style: 'default' }]
+            );
+          }}
+        >
+          <Text style={[styles.phoneTypeText, formData.phoneType === 'US' && styles.phoneTypeTextActive]}>
+            {t('auth.register.form.phone_usa')}
+          </Text>
+        </TouchableOpacity>
+      </View>
+
+      <View style={styles.inputContainer}>
+        <Text style={styles.label}>{t('auth.register.form.phone_label')} *</Text>
+        <View style={styles.phoneInputWrapper}>
+          <Text style={styles.phonePrefix}>
+            +{formData.phoneType === 'CN' ? '86' : '1'}
+          </Text>
+          <WebTextInput
+            style={[styles.phoneInput, errors.phoneNumber && styles.inputError]}
+            placeholder={formData.phoneType === 'CN' ? '13812345678' : '2025551234'}
+            value={formData.phoneNumber}
+            onChangeText={(text) => updateFormData('phoneNumber', text)}
+            keyboardType="phone-pad"
+            placeholderTextColor={theme.colors.text.disabled}
+          />
+        </View>
+        {errors.phoneNumber && <Text style={styles.errorText}>{errors.phoneNumber}</Text>}
+      </View>
+
+      {/* 合规勾选区域 */}
+      <View style={styles.complianceContainer}>
+        {/* 服务条款和隐私政策勾选 */}
+        <View style={styles.checkboxContainer}>
+          <TouchableOpacity 
+            onPress={() => setAgreedToPrivacy(!agreedToPrivacy)}
+            style={styles.checkboxRow}
+          >
+            <View style={[styles.checkbox, agreedToPrivacy && styles.checkboxChecked]}>
+              {agreedToPrivacy && (
+                <Ionicons name="checkmark" size={16} color={theme.colors.text.inverse} />
+              )}
+            </View>
+            <View style={styles.checkboxTextContainer}>
+              <View style={styles.termsTextRow}>
+                <Text style={styles.checkboxText}>我已阅读并同意</Text>
+                <TouchableOpacity onPress={() => handleTermsPress('terms')}>
+                  <Text style={styles.termsLink}>《{t('auth.register.sms.service_terms')}》</Text>
+                </TouchableOpacity>
+                <Text style={styles.checkboxText}>和</Text>
+                <TouchableOpacity onPress={() => handleTermsPress('privacy')}>
+                  <Text style={styles.termsLink}>《{t('auth.register.sms.privacy_policy')}》</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </TouchableOpacity>
+        </View>
+
+        {/* 短信接收同意勾选 */}
+        <View style={styles.checkboxContainer}>
+          <TouchableOpacity 
+            onPress={() => setAgreedToSMS(!agreedToSMS)}
+            style={styles.checkboxRow}
+          >
+            <View style={[styles.checkbox, agreedToSMS && styles.checkboxChecked]}>
+              {agreedToSMS && (
+                <Ionicons name="checkmark" size={16} color={theme.colors.text.inverse} />
+              )}
+            </View>
+            <View style={styles.checkboxTextContainer}>
+              <Text style={styles.checkboxText}>
+                {t('auth.register.sms.sms_consent_checkbox')}
+              </Text>
+            </View>
+          </TouchableOpacity>
+        </View>
+
+        {/* 合规说明文本 */}
+        <View style={styles.complianceNoticeContainer}>
+          <Text style={styles.complianceNotice}>
+            {t('auth.register.sms.compliance_notice')}
           </Text>
         </View>
       </View>
     </View>
   );
+
 
   return (
     <SafeAreaView style={styles.container}>
@@ -800,10 +934,10 @@ export const RegisterFormScreen: React.FC = () => {
                 style={[
                   styles.nextButton,
                   loading && styles.nextButtonDisabled,
-                  currentStep === 3 && !agreedToTerms && styles.nextButtonDisabled
+                  currentStep === 3 && (!agreedToPrivacy || !agreedToSMS) && styles.nextButtonDisabled
                 ]}
                 onPress={handleNext}
-                disabled={loading || (currentStep === 3 && !agreedToTerms)}
+                disabled={loading || (currentStep === 3 && (!agreedToPrivacy || !agreedToSMS))}
               >
                 {loading ? (
                   <View style={styles.loadingContainer}>
@@ -1257,5 +1391,63 @@ const styles = StyleSheet.create({
     color: theme.colors.text.inverse,
     marginTop: theme.spacing[2],
     textAlign: 'center',
+  },
+  // 合规勾选区域样式
+  complianceContainer: {
+    marginTop: theme.spacing[4],
+    padding: theme.spacing[4],
+    backgroundColor: theme.colors.background.secondary,
+    borderRadius: theme.borderRadius.lg,
+    borderWidth: 1,
+    borderColor: theme.colors.border.secondary,
+  },
+  complianceTitle: {
+    fontSize: theme.typography.fontSize.lg,
+    fontWeight: theme.typography.fontWeight.semibold,
+    color: theme.colors.text.primary,
+    marginBottom: theme.spacing[4],
+    textAlign: 'center',
+  },
+  checkboxContainer: {
+    marginBottom: theme.spacing[3],
+  },
+  checkboxRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+  },
+  checkboxTextContainer: {
+    flex: 1,
+    marginLeft: theme.spacing[3],
+  },
+  checkboxText: {
+    fontSize: theme.typography.fontSize.sm,
+    color: theme.colors.text.primary,
+    lineHeight: theme.typography.fontSize.sm * theme.typography.lineHeight.relaxed,
+    fontWeight: theme.typography.fontWeight.medium,
+  },
+  complianceNoticeContainer: {
+    marginTop: theme.spacing[4],
+    padding: theme.spacing[3],
+    backgroundColor: '#fff3cd',
+    borderRadius: theme.borderRadius.md,
+    borderLeftWidth: 4,
+    borderLeftColor: '#ffc107',
+  },
+  complianceNotice: {
+    fontSize: theme.typography.fontSize.xs,
+    color: '#856404',
+    lineHeight: theme.typography.fontSize.xs * theme.typography.lineHeight.relaxed,
+    textAlign: 'left',
+  },
+  termsTextRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+  },
+  termsLink: {
+    fontSize: theme.typography.fontSize.sm,
+    color: theme.colors.primary,
+    fontWeight: theme.typography.fontWeight.medium,
+    marginHorizontal: theme.spacing[1],
   },
 });
