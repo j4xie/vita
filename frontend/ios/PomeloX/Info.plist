@@ -19,7 +19,7 @@
     <key>CFBundlePackageType</key>
     <string>$(PRODUCT_BUNDLE_PACKAGE_TYPE)</string>
     <key>CFBundleShortVersionString</key>
-    <string>1.0.26</string>
+    <string>1.0.28</string>
     <key>CFBundleSignature</key>
     <string>????</string>
     <key>CFBundleURLTypes</key>
@@ -38,7 +38,7 @@
       </dict>
     </array>
     <key>CFBundleVersion</key>
-    <string>3</string>
+    <string>4</string>
     <key>LSMinimumSystemVersion</key>
     <string>12.0</string>
     <key>LSRequiresIPhoneOS</key>
@@ -105,7 +105,7 @@
       </dict>
     </dict>
     <key>NSCameraUsageDescription</key>
-    <string>The app accesses your camera to let you take photos.</string>
+    <string>PomeloX uses your camera to scan QR codes for activity check-ins, volunteer management, and accessing exclusive offers. For example, you can scan QR codes at events to check in, verify your attendance, and track volunteer hours.</string>
     <key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
     <string>This app needs access to your location to automatically detect your region for appropriate privacy policy content.</string>
     <key>NSLocationUsageDescription</key>

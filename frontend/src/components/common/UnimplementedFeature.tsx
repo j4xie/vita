@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useTranslation } from 'react-i18next';
 import { theme } from '../../theme';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
@@ -26,6 +27,7 @@ export const UnimplementedFeature: React.FC<UnimplementedFeatureProps> = ({
   featureName = '该功能',
   message
 }) => {
+  const { t } = useTranslation();
   const defaultMessage = `${featureName}正在开发中，敬请期待！`;
   const displayMessage = message || defaultMessage;
 

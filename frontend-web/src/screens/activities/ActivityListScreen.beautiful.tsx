@@ -105,24 +105,33 @@ export const BeautifulActivityListScreen: React.FC = () => {
     });
   }, [navigation]);
 
-  // 过滤活动 - 添加状态计算日志
+  // 过滤活动 - 使用实时状态计算和互斥逻辑
   const filteredActivities = activities.filter(activity => {
     const currentFilter = filterTabs[activeFilter];
     
-    // 🎯 Debug: USC活动状态检查
+    // ✅ 实时计算活动真实状态，不依赖可能过时的activity.status
+    const now = new Date();
+    const activityEnd = activity.endTime ? new Date(activity.endTime) : new Date(activity.startTime);
+    const isActivityEnded = activityEnd.getTime() < now.getTime();
+    
+    // 🎯 Debug: USC活动状态检查 - 增强调试信息
     if (activity.title.includes('USC')) {
-      console.log(`🎯 USC活动状态检查: ${activity.title}`, {
-        status: activity.status,
+      console.log(`🎯 USC活动实时状态检查: ${activity.title}`, {
+        originalStatus: activity.status,
+        calculatedEnded: isActivityEnded,
         currentFilter,
-        shouldShow: currentFilter === 'all' || activity.status === currentFilter,
-        startTime: activity.startTime,
-        endTime: activity.endTime
+        endTime: activityEnd.toISOString(),
+        currentTime: now.toISOString(),
+        shouldShow: currentFilter === 'all' || 
+                   (currentFilter === 'available' && !isActivityEnded) ||
+                   (currentFilter === 'ended' && isActivityEnded)
       });
     }
     
+    // ✅ 互斥过滤逻辑：ended和available绝对不会重复显示
     if (currentFilter === 'all') return true;
-    if (currentFilter === 'available') return activity.status === 'available';
-    if (currentFilter === 'ended') return activity.status === 'ended';
+    if (currentFilter === 'available') return !isActivityEnded; // 只显示未结束的活动
+    if (currentFilter === 'ended') return isActivityEnded;      // 只显示已结束的活动
     return true;
   });
 

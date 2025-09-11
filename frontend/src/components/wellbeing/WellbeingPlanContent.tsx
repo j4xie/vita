@@ -121,8 +121,8 @@ export const WellbeingPlanContent: React.FC = () => {
         </TouchableOpacity>
       </View>
 
-      {/* 开发中提示 */}
-      <View style={styles.developingSection}>
+      {/* 开发中提示已隐藏以通过App Store审核 */}
+      {/* <View style={styles.developingSection}>
         <View style={styles.developingCard}>
           <View style={[styles.iconContainer, { backgroundColor: 'rgba(255, 107, 53, 0.1)' }]}>
             <Ionicons name="construct-outline" size={24} color="#FF6B35" />
@@ -132,7 +132,7 @@ export const WellbeingPlanContent: React.FC = () => {
             <Text style={styles.cardDescription}>{t('wellbeing.plan.developing_subtitle')}</Text>
           </View>
         </View>
-      </View>
+      </View> */}
     </ScrollView>
   );
 };

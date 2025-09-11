@@ -54,24 +54,24 @@ export const RegisterChoiceScreen: React.FC = () => {
       // 检测失败时给用户选择
       Alert.alert(
         t('common.error'),
-        '无法自动检测您的地理位置，请手动选择：',
+        t('auth.register.form.area_detection_failed'),
         [
           {
-            text: '🇨🇳 中国用户',
+            text: t('auth.register.form.manual_select_china'),
             onPress: () => {
               setDetectedRegion('zh');
               setShowPrivacyModal(true);
             }
           },
           {
-            text: '🇺🇸 美国用户', 
+            text: t('auth.register.form.manual_select_usa'), 
             onPress: () => {
               setDetectedRegion('en');
               setShowPrivacyModal(true);
             }
           },
           {
-            text: '取消',
+            text: t('common.cancel'),
             style: 'cancel'
           }
         ]
@@ -83,8 +83,9 @@ export const RegisterChoiceScreen: React.FC = () => {
 
   const handlePrivacyAccept = () => {
     setShowPrivacyModal(false);
-    // 用户同意隐私协议后才能进入注册表单，传递地理检测结果
-    navigation.navigate('RegisterForm', {
+    // 用户同意隐私协议后进入身份选择页面
+    navigation.navigate('IdentityChoice', {
+      registrationType: 'phone',
       detectedRegion: detectedRegion,
       detectionResult: detectionResult
     });

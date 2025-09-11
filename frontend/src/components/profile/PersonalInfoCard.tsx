@@ -144,7 +144,7 @@ export const PersonalInfoCard: React.FC<PersonalInfoCardProps> = ({
       flex: 1, // 在同行布局中占据剩余空间
     },
     position: {
-      fontSize: 11,
+      fontSize: 16, // 提升至交互文字16pt（职位信息重要）
       fontWeight: '500',
       color: '#374151', // 深灰色文字
       textAlign: 'center',
@@ -188,7 +188,7 @@ export const PersonalInfoCard: React.FC<PersonalInfoCardProps> = ({
       backgroundColor: '#E3F2FD', // 淡蓝色PLUS标识
     },
     memberBadgeText: {
-      fontSize: 10,
+      fontSize: 14, // 提升至辅助信息最小14pt
       fontWeight: '600',
       color: '#666',
     },
@@ -213,7 +213,7 @@ export const PersonalInfoCard: React.FC<PersonalInfoCardProps> = ({
       marginBottom: 2,
     },
     statLabel: {
-      fontSize: 12,
+      fontSize: 14, // 提升至辅助信息最小14pt（统计标签）
       color: '#9CA3AF',
     },
     statDivider: {
@@ -276,7 +276,7 @@ export const PersonalInfoCard: React.FC<PersonalInfoCardProps> = ({
       elevation: 1,
     },
     qrCodeText: {
-      fontSize: 12,
+      fontSize: 14, // 提升至辅助信息最小14pt
       fontWeight: '600',
       color: '#374151', // 深灰色文字，适配白色背景
       marginLeft: 4,

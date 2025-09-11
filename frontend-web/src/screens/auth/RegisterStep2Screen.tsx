@@ -183,13 +183,11 @@ export const RegisterStep2Screen: React.FC = () => {
   const validateForm = (): boolean => {
     const newErrors: ValidationErrors = {};
 
-    // 验证用户名
-    if (!formData.userName.trim()) {
-      newErrors.userName = t('validation.username_required');
-    } else if (formData.userName.length < 6 || formData.userName.length > 20) {
-      newErrors.userName = t('validation.username_length');
-    } else if (!/^[a-zA-Z0-9]+$/.test(formData.userName)) {
-      newErrors.userName = t('validation.username_format');
+    // 验证邮箱（作为用户名）
+    if (!formData.email.trim()) {
+      newErrors.email = t('validation.email_required');
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      newErrors.email = t('validation.email_invalid');
     }
 
     // 验证昵称
@@ -271,7 +269,7 @@ export const RegisterStep2Screen: React.FC = () => {
       console.error('❌ 发送验证码网络错误:', error);
       Alert.alert(
         t('auth.register.sms.send_failed_title'), 
-        `网络连接失败，请检查网络设置\n错误: ${(error as Error).message}`
+        `${t('auth.register.errors.network_connection_failed')}\n错误: ${(error as Error).message}`
       );
     } finally {
       setLoading(false);
@@ -286,8 +284,8 @@ export const RegisterStep2Screen: React.FC = () => {
     
     // 显示进度提示
     Alert.alert(
-      '⏳ 正在注册',
-      '正在创建您的账户，请稍候...',
+      t('auth.register.errors.registration_progress'),
+      t('auth.register.errors.registration_progress_message'),
       [],
       { cancelable: false }
     );
@@ -299,24 +297,27 @@ export const RegisterStep2Screen: React.FC = () => {
       if (registrationType === 'invitation') {
         // ②邀请码注册：手机号和邮箱可填可不填，verCode不填
         registrationData = {
-          userName: formData.userName,
+          identity: 1, // 学生身份
+          userName: formData.email, // 使用邮箱作为用户名
           legalName: step1Data.legalName,
           nickName: formData.nickName,
           password: formData.password,
+          email: formData.email, // 邮箱必填
           sex: formData.sex,
           deptId: parseInt(step1Data.selectedSchool!.id),
           orgId: formData.selectedOrganization!.id,
           invCode: referralCode!, // 邀请码注册必须有invCode
           area: detectedRegion, // 地理检测结果（只读）
+          areaCode: detectedRegion === 'zh' ? '86' : '1', // 根据检测地区设置区号
           // 可选字段
           ...(step1Data.phoneNumber && { phonenumber: step1Data.phoneNumber }),
-          ...(formData.email && { email: formData.email }),
           // 不包含 verCode 和 bizId
         };
       } else {
         // ①手机验证码注册：invCode不填
         registrationData = {
-          userName: formData.userName,
+          identity: 1, // 学生身份
+          userName: formData.email, // 使用邮箱作为用户名
           legalName: step1Data.legalName,
           nickName: formData.nickName,
           password: formData.password,
@@ -326,6 +327,7 @@ export const RegisterStep2Screen: React.FC = () => {
           deptId: parseInt(step1Data.selectedSchool!.id),
           orgId: formData.selectedOrganization!.id,
           area: detectedRegion, // 地理检测结果（只读）
+          areaCode: detectedRegion === 'zh' ? '86' : '1', // 根据检测地区设置区号
           // 注意：由于短信服务未配置，暂时不包含验证码
           // verCode: formData.verificationCode,
           // bizId: bizId,
@@ -348,19 +350,19 @@ export const RegisterStep2Screen: React.FC = () => {
         
         // 显示登录进度
         Alert.alert(
-          '🔐 自动登录中',
-          '账户创建成功，正在为您自动登录...',
+          t('auth.register.errors.auto_login_progress'),
+          t('auth.register.auto_login_progress'),
           [],
           { cancelable: false }
         );
         
         // 注册成功后自动登录
         try {
-          console.log('开始自动登录，用户名:', formData.userName);
+          console.log('开始自动登录，邮箱用户名:', formData.email);
           
           // 使用注册时的凭据进行登录
           const loginResult = await login({
-            username: formData.userName, // 注意：登录API使用的是username而不是userName
+            username: formData.email, // 使用邮箱作为登录用户名
             password: formData.password,
           });
           
@@ -373,9 +375,9 @@ export const RegisterStep2Screen: React.FC = () => {
             
             Alert.alert(
               '🎉 ' + t('auth.register.success.title'),
-              `欢迎加入 PomeloX！\n\n✅ 账户创建成功\n✅ 自动登录成功\n🚀 即将进入应用首页`,
+              t('auth.register.welcome_message'),
               [{
-                text: '开始使用',
+                text: t('common.start_using'),
                 onPress: () => navigation.dispatch(
                   CommonActions.reset({
                     index: 0,
@@ -390,9 +392,9 @@ export const RegisterStep2Screen: React.FC = () => {
             // 登录失败，但注册成功
             Alert.alert(
               '✅ ' + t('auth.register.success.title'),
-              `账户创建成功！\n\n您的用户名：${formData.userName}\n请前往登录页面使用您的账户登录`,
+              t('auth.register.success.account_created', { username: formData.userName }),
               [{
-                text: '去登录',
+                text: t('common.go_login'),
                 onPress: () => navigation.dispatch(
                   CommonActions.reset({
                     index: 0,
@@ -407,9 +409,9 @@ export const RegisterStep2Screen: React.FC = () => {
           // 登录失败，但注册成功
           Alert.alert(
             '✅ ' + t('auth.register.success.title'),
-            `账户创建成功！\n\n您的用户名：${formData.userName}\n请前往登录页面使用您的账户登录`,
+            t('auth.register.success.account_created', { username: formData.userName }),
             [{
-              text: '去登录',
+              text: t('common.go_login'),
               onPress: () => navigation.dispatch(
                 CommonActions.reset({
                   index: 0,
@@ -426,7 +428,7 @@ export const RegisterStep2Screen: React.FC = () => {
         Alert.alert(''); 
         
         // 详细的错误处理
-        let errorTitle = '❌ 注册失败';
+        let errorTitle = t('auth.register.errors.registration_failed_title');
         let errorMessage = response.msg || t('auth.register.errors.register_failed_message');
         let suggestions = [];
         
@@ -434,53 +436,53 @@ export const RegisterStep2Screen: React.FC = () => {
         if (!response.msg) {
           switch (response.code) {
             case 500:
-              errorTitle = '🔧 服务器错误';
-              errorMessage = '服务器暂时不可用，请稍后重试';
-              suggestions = ['✓ 检查网络连接', '✓ 稍后重试', '✓ 联系客服'];
+              errorTitle = t('auth.register.errors.server_error_title');
+              errorMessage = t('auth.register.errors.server_temporarily_unavailable');
+              suggestions = [`✓ ${t('auth.register.errors.suggestions.check_network')}`, `✓ ${t('auth.register.errors.suggestions.retry_later')}`, `✓ ${t('auth.register.errors.suggestions.contact_support')}`];
               break;
             case 400:
-              errorTitle = '📝 信息格式错误';
-              errorMessage = '注册信息格式不正确，请检查后重试';
-              suggestions = ['✓ 检查用户名格式(6-20位)', '✓ 检查密码强度', '✓ 确认邮箱格式'];
+              errorTitle = t('auth.register.errors.error_titles.information_format_error');
+              errorMessage = t('auth.register.errors.registration_data_invalid');
+              suggestions = [`✓ ${t('auth.register.errors.suggestions.check_username_format')}`, `✓ ${t('auth.register.errors.suggestions.check_password_strength')}`, `✓ ${t('auth.register.errors.suggestions.check_email_format')}`];
               break;
             case 409:
-              errorTitle = '👥 信息已存在';
-              errorMessage = '用户名或邮箱已被使用';
-              suggestions = ['✓ 尝试其他用户名', '✓ 检查邮箱是否已注册', '✓ 联系客服找回账户'];
+              errorTitle = t('auth.register.errors.error_titles.information_exists');
+              errorMessage = t('auth.register.errors.username_or_email_exists');
+              suggestions = [`✓ ${t('auth.register.errors.suggestions.try_different_username')}`, `✓ ${t('auth.register.errors.suggestions.check_registered_email')}`, `✓ ${t('auth.register.errors.suggestions.contact_support_account')}`];
               break;
             default:
-              errorMessage = `注册失败 (错误码: ${response.code})`;
-              suggestions = ['✓ 稍后重试', '✓ 联系客服'];
+              errorMessage = t('auth.register.errors.error_messages.registration_failed_generic', { code: response.code });
+              suggestions = [`✓ ${t('auth.register.errors.suggestions.retry_later')}`, `✓ ${t('auth.register.errors.suggestions.contact_support')}`];
           }
         } else {
           // 特殊错误消息处理
           if (errorMessage.includes('注册功能') || errorMessage.includes('暂未开启')) {
-            errorTitle = '🚫 服务暂停';
-            errorMessage = '注册功能暂未开启';
-            suggestions = ['✓ 联系管理员开启', '✓ 使用推荐码注册'];
+            errorTitle = t('auth.register.errors.error_titles.service_suspended');
+            errorMessage = t('auth.register.errors.error_messages.service_suspended');
+            suggestions = [`✓ ${t('auth.register.errors.suggestions.contact_admin_enable')}`, `✓ ${t('auth.register.errors.suggestions.use_referral_code')}`];
           } else if (errorMessage.includes('用户名')) {
-            errorTitle = '👤 用户名问题';
-            errorMessage = '用户名已存在或格式不正确';
-            suggestions = ['✓ 尝试其他用户名', '✓ 6-20位字母数字组合'];
+            errorTitle = t('auth.register.errors.error_titles.username_problem');
+            errorMessage = t('auth.register.errors.error_messages.username_issue');
+            suggestions = [`✓ ${t('auth.register.errors.suggestions.try_different_username')}`, `✓ ${t('auth.register.errors.suggestions.check_username_format')}`];
           } else if (errorMessage.includes('验证码')) {
-            errorTitle = '📱 验证码错误';
-            errorMessage = '验证码错误或已过期';
-            suggestions = ['✓ 重新获取验证码', '✓ 检查短信'];
+            errorTitle = t('auth.register.errors.error_titles.verification_code_error');
+            errorMessage = t('auth.register.errors.error_messages.verification_code_error');
+            suggestions = [`✓ ${t('auth.register.errors.suggestions.get_new_code')}`, `✓ ${t('auth.register.errors.suggestions.check_sms')}`];
           } else if (errorMessage.includes('邮箱')) {
-            errorTitle = '📧 邮箱问题';
-            errorMessage = '邮箱格式不正确或已被使用';
-            suggestions = ['✓ 检查邮箱格式', '✓ 尝试其他邮箱'];
+            errorTitle = t('auth.register.errors.error_titles.email_problem');
+            errorMessage = t('auth.register.errors.error_messages.email_issue');
+            suggestions = [`✓ ${t('auth.register.errors.suggestions.check_email_format')}`, `✓ ${t('auth.register.errors.suggestions.try_different_email')}`];
           }
         }
         
         const fullMessage = errorMessage + 
-          (suggestions.length > 0 ? '\n\n建议解决方案:\n' + suggestions.join('\n') : '');
+          (suggestions.length > 0 ? `\n\n${t('common.suggestions')}:\n` + suggestions.join('\n') : '');
         
         Alert.alert(
           errorTitle,
           fullMessage,
           [
-            { text: '重试', onPress: () => setLoading(false) },
+            { text: t('common.retry'), onPress: () => setLoading(false) },
             { text: t('common.back'), style: 'cancel', onPress: () => navigation.goBack() }
           ]
         );
@@ -492,31 +494,31 @@ export const RegisterStep2Screen: React.FC = () => {
       Alert.alert('');
       
       // 网络错误的具体处理
-      let errorTitle = '🌐 网络错误';
-      let errorMessage = '网络连接失败，请检查网络后重试';
-      let suggestions = ['✓ 检查WiFi/数据连接', '✓ 重启网络', '✓ 稍后重试'];
+      let errorTitle = t('auth.register.errors.network_error_title');
+      let errorMessage = t('auth.register.errors.network_connection_failed');
+      let suggestions = [`✓ ${t('auth.register.errors.suggestions.check_wifi_data')}`, `✓ ${t('auth.register.errors.suggestions.restart_network')}`, `✓ ${t('auth.register.errors.suggestions.retry_later')}`];
       
       if (error instanceof Error) {
         if (error.message.includes('Network request failed')) {
-          errorMessage = 'SSL证书验证失败或网络不可达';
-          suggestions = ['✓ 检查网络连接', '✓ 尝试切换网络', '✓ 联系客服'];
+          errorMessage = t('auth.register.errors.error_messages.network_ssl_error');
+          suggestions = [`✓ ${t('auth.register.errors.suggestions.check_network')}`, `✓ ${t('common.switch_network')}`, `✓ ${t('auth.register.errors.suggestions.contact_support')}`];
         } else if (error.message.includes('timeout')) {
-          errorMessage = '请求超时，服务器响应缓慢';
-          suggestions = ['✓ 稍后重试', '✓ 检查网络速度'];
+          errorMessage = t('auth.register.errors.error_messages.timeout_message');
+          suggestions = [`✓ ${t('auth.register.errors.suggestions.retry_later')}`, `✓ ${t('auth.register.errors.suggestions.check_network_speed')}`];
         } else if (error.message.includes('500')) {
-          errorTitle = '🔧 服务器错误';
-          errorMessage = '服务器内部错误，请稍后重试';
-          suggestions = ['✓ 稍后重试', '✓ 联系客服'];
+          errorTitle = t('auth.register.errors.server_error_title');
+          errorMessage = t('auth.register.errors.error_messages.server_error_message');
+          suggestions = [`✓ ${t('auth.register.errors.suggestions.retry_later')}`, `✓ ${t('auth.register.errors.suggestions.contact_support')}`];
         }
       }
       
-      const fullMessage = errorMessage + '\n\n解决建议:\n' + suggestions.join('\n');
+      const fullMessage = errorMessage + `\n\n${t('common.suggestions')}:\n` + suggestions.join('\n');
       
       Alert.alert(
         errorTitle,
         fullMessage,
         [
-          { text: '重试', onPress: () => setLoading(false) },
+          { text: t('common.retry'), onPress: () => setLoading(false) },
           { text: t('common.back'), style: 'cancel', onPress: () => navigation.goBack() }
         ]
       );
@@ -709,19 +711,15 @@ export const RegisterStep2Screen: React.FC = () => {
               <Text style={styles.helpText}>{t('auth.register.form.email_help')}</Text>
             </View>
 
-            {/* 用户名 */}
+            {/* 用户名提示（邮箱即用户名） */}
             <View style={styles.inputContainer}>
-              <Text style={styles.label}>{t('auth.register.form.username_label')}</Text>
-              <TextInput
-                style={[styles.input, errors.userName && styles.inputError]}
-                placeholder={t('auth.register.form.username_placeholder')}
-                value={formData.userName}
-                onChangeText={(text) => updateFormData('userName', text)}
-                autoCapitalize="none"
-                autoCorrect={false}
-                placeholderTextColor={theme.colors.text.disabled}
-              />
-              {errors.userName && <Text style={styles.errorText}>{errors.userName}</Text>}
+              <Text style={styles.label}>{t('auth.register.form.login_info_label')}</Text>
+              <View style={styles.infoContainer}>
+                <Ionicons name="information-circle" size={20} color={theme.colors.primary} />
+                <Text style={styles.infoText}>
+                  {t('auth.register.form.email_as_username_info')}
+                </Text>
+              </View>
             </View>
 
             {/* 昵称 */}
@@ -1182,5 +1180,21 @@ const styles = StyleSheet.create({
     color: theme.colors.primary,
     fontWeight: theme.typography.fontWeight.medium,
     marginRight: theme.spacing[1],
+  },
+  infoContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: theme.colors.primary + '10',
+    paddingHorizontal: theme.spacing[3],
+    paddingVertical: theme.spacing[3],
+    borderRadius: theme.borderRadius.lg,
+  },
+  infoText: {
+    fontSize: theme.typography.fontSize.sm,
+    color: theme.colors.primary,
+    fontWeight: theme.typography.fontWeight.medium,
+    marginLeft: theme.spacing[2],
+    flex: 1,
+    lineHeight: theme.typography.fontSize.sm * 1.4,
   },
 });

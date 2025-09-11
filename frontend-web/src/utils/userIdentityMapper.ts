@@ -284,59 +284,118 @@ export const mapUserToIdentityData = (user: any): UserIdentityData => {
 /**
  * 生成用户身份QR码内容
  * @param userData 用户身份数据
+ * @param useHashFormat 是否使用哈希格式（默认true，避免Base64兼容性问题）
  * @returns QR码字符串
  */
-export const generateUserQRContent = (userData: UserIdentityData): string => {
+export const generateUserQRContent = async (userData: UserIdentityData, useHashFormat: boolean = true): Promise<string> => {
+  // ✅ 优先使用哈希格式，避免编码兼容性问题
+  if (useHashFormat) {
+    try {
+      const { generateUserIdentityHash } = require('./qrHashGenerator');
+      const hashCode = await generateUserIdentityHash(userData);
+      debugLog('🔐 [Web-生成身份码] 使用哈希格式生成成功:', hashCode);
+      return hashCode;
+    } catch (hashError) {
+      console.warn('⚠️ [Web-生成身份码] 哈希格式生成失败，降级到Base64:', hashError);
+      // 如果哈希生成失败，降级到Base64格式
+    }
+  }
+  
+  // ✅ 保留Base64格式作为降级方案
   try {
-    debugLog('🔧 [生成身份码] 开始生成用户身份码:', userData.userId);
+    debugLog('🔧 [Web-生成身份码] 开始生成用户身份码:', userData.userId);
     
+    // 验证输入数据
+    if (!userData) {
+      throw new Error('用户数据不能为空');
+    }
+    
+    if (!userData.userId || !userData.userName || !userData.legalName) {
+      throw new Error('缺少必要的用户信息');
+    }
+
     // 使用与解析逻辑匹配的数据结构 - 直接使用UserIdentityData格式
     const qrData: UserIdentityData = {
-      userId: userData.userId,
-      userName: userData.userName,
-      legalName: userData.legalName,
-      nickName: userData.nickName,
-      email: userData.email,
+      userId: userData.userId.toString().trim(),
+      userName: userData.userName.trim(),
+      legalName: userData.legalName.trim(),
+      nickName: userData.nickName?.trim() || userData.userName.trim(),
+      email: userData.email?.trim() || `${userData.userName}@example.com`,
       avatarUrl: userData.avatarUrl,
       studentId: userData.studentId,
       deptId: userData.deptId,
       currentOrganization: userData.currentOrganization,
-      memberOrganizations: userData.memberOrganizations,
+      memberOrganizations: userData.memberOrganizations || [],
       school: userData.school,
       position: userData.position,
-      type: 'user_identity', // 使用正确的类型标识
+      type: 'user_identity' as const, // 使用正确的类型标识
     };
     
+    // 验证关键数据字段
+    if (!qrData.type || qrData.type !== 'user_identity') {
+      throw new Error('身份码类型设置错误');
+    }
+
     // 生成QR码字符串 - 使用base64编码格式与扫描解析逻辑匹配
     const jsonString = JSON.stringify(qrData);
-    debugLog('📝 [生成身份码] JSON字符串长度:', jsonString.length);
+    debugLog('📝 [Web-生成身份码] JSON字符串长度:', jsonString.length);
+    debugLog('📋 [Web-生成身份码] JSON内容预览:', jsonString.substring(0, 100) + '...');
     
     // 如果数据太长，使用简化格式
-    if (jsonString.length > 800) {
-      const fallbackCode = `VG_USER_${userData.userId}_${userData.legalName}_${userData.position?.roleKey || 'user'}_${Date.now()}`;
-      debugLog('⚠️ [生成身份码] 数据太长，使用简化格式:', fallbackCode.substring(0, 50) + '...');
+    if (jsonString.length > 1000) {
+      const fallbackCode = `VG_USER_SIMPLE_${userData.userId}_${userData.legalName}_${userData.position?.roleKey || 'user'}_${Date.now()}`;
+      debugLog('⚠️ [Web-生成身份码] 数据太长，使用简化格式:', fallbackCode.substring(0, 50) + '...');
       return fallbackCode;
     }
     
-    // 编码为base64格式，与扫描解析逻辑匹配 - 使用React Native兼容的方案
-    const encodedString = encodeURIComponent(jsonString);
-    const base64Data = Base64.encode(encodedString);
-    const finalCode = `VG_USER_${base64Data}`;
+    // Web端使用btoa编码（与Web端atob解码匹配）
+    try {
+      const encodedString = encodeURIComponent(jsonString);
+      debugLog('🔗 [Web-生成身份码] URL编码完成，长度:', encodedString.length);
+      
+      const base64Data = btoa(encodedString);
+      debugLog('🔐 [Web-生成身份码] btoa编码完成，长度:', base64Data.length);
+      
+      const finalCode = `VG_USER_${base64Data}`;
+      
+      // 验证生成的二维码是否过长
+      if (finalCode.length > 2000) {
+        throw new Error('生成的二维码过长，可能导致扫描失败');
+      }
+      
+      debugLog('✅ [Web-生成身份码] 身份码生成成功:', {
+        finalCodeLength: finalCode.length,
+        finalCodePreview: finalCode.substring(0, 50) + '...',
+        dataStructure: {
+          userId: qrData.userId,
+          userName: qrData.userName,
+          legalName: qrData.legalName,
+          type: qrData.type,
+          hasEmail: !!qrData.email,
+          hasOrganization: !!qrData.currentOrganization
+        }
+      });
+      
+      return finalCode;
+    } catch (encodingError) {
+      console.error('❌ [Web-生成身份码] 编码过程失败:', encodingError);
+      // 使用简化的备用格式
+      const backupCode = `VG_USER_BACKUP_${userData.userId}_${encodeURIComponent(userData.legalName)}_${Date.now()}`;
+      debugLog('🔄 [Web-生成身份码] 使用备用简化格式:', backupCode);
+      return backupCode;
+    }
     
-    debugLog('✅ [生成身份码] 身份码生成成功:', {
-      finalCodeLength: finalCode.length,
-      finalCodePreview: finalCode.substring(0, 50) + '...',
-      dataStructure: {
-        userId: qrData.userId,
-        userName: qrData.userName,
-        legalName: qrData.legalName,
-        hasEmail: !!qrData.email
+  } catch (error) {
+    console.error('❌ [Web-生成身份码] 生成QR码内容失败:', error);
+    debugLog('🚨 [Web-生成身份码] 错误详情:', {
+      error: error instanceof Error ? error.message : '未知错误',
+      userData: {
+        userId: userData?.userId,
+        userName: userData?.userName,
+        legalName: userData?.legalName
       }
     });
-    
-    return finalCode;
-  } catch (error) {
-    console.error('生成QR码内容失败:', error);
-    return `VG_USER_${userData.userId || 'unknown'}_${Date.now()}`;
+    // 返回最基本的错误码格式
+    return `VG_USER_ERROR_${userData?.userId || 'unknown'}_${Date.now()}`;
   }
 };

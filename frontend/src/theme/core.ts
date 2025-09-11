@@ -75,12 +75,12 @@ export const CORE_BORDER_RADIUS = {
 // v1.1 字体系统 - 核心常量
 export const CORE_TYPOGRAPHY = {
   fontSize: {
-    xs: 10, sm: 12, base: 14, lg: 16, xl: 18,
-    '2xl': 20, '3xl': 24, '4xl': 32,
+    xs: 12, sm: 14, base: 16, lg: 18, xl: 20,
+    '2xl': 22, '3xl': 26, '4xl': 34,
     
-    // v1.1 语义化字体
-    title: 20, section: 16, body: 16, bodySmall: 15,
-    caption: 14, captionSmall: 13,
+    // v1.1 语义化字体 - 提高可读性
+    title: 22, section: 18, body: 17, bodySmall: 16,
+    caption: 15, captionSmall: 14,
   },
   
   fontWeight: {
@@ -91,9 +91,9 @@ export const CORE_TYPOGRAPHY = {
   },
   
   lineHeight: {
-    tight: 1.2,
-    normal: 1.4, // 匹配tokens
-    relaxed: 1.6, // 匹配tokens
+    tight: 1.3,
+    normal: 1.5, // 改善可读性
+    relaxed: 1.7, // 改善可读性
   },
 } as const;
 

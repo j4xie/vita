@@ -134,7 +134,7 @@ export const LoginScreen: React.FC = () => {
     // 🎨 缩放动画
     Animated.spring(buttonScaleAnim, {
       toValue: 0.95,
-      useNativeDriver: true,
+      useNativeDriver: false,
       tension: 150,
       friction: 8,
     }).start();
@@ -146,7 +146,7 @@ export const LoginScreen: React.FC = () => {
     // 恢复缩放
     Animated.spring(buttonScaleAnim, {
       toValue: 1,
-      useNativeDriver: true,
+      useNativeDriver: false,
       tension: 150,
       friction: 8,
     }).start();
@@ -159,10 +159,12 @@ export const LoginScreen: React.FC = () => {
       const msg = result.msg || '';
       const code = result.code;
       
-      // 用户相关错误 (通常返回500) - 统一返回凭证错误，不暴露具体原因
-      if (msg.includes('用户不存在') || msg.includes('用户名不存在') || msg.includes('邮箱不存在') || 
-          msg.includes('密码错误') || msg.includes('密码不正确')) {
-        return t('auth.errors.invalid_credentials');
+      // 用户相关错误 (通常返回500) - 根据后端具体信息分别处理
+      if (msg.includes('用户不存在') || msg.includes('用户名不存在') || msg.includes('邮箱不存在')) {
+        return t('auth.errors.user_not_found');
+      }
+      if (msg.includes('密码错误') || msg.includes('密码不正确')) {
+        return t('auth.errors.invalid_password');
       }
       if (msg.includes('账户锁定') || msg.includes('账户被锁')) {
         return t('auth.errors.account_locked');
@@ -314,7 +316,7 @@ export const LoginScreen: React.FC = () => {
   };
 
   const handleForgotPassword = () => {
-    Alert.alert(t('common.confirm'), t('alerts.feature_not_implemented'));
+    navigation.navigate('ForgotPassword');
   };
 
   const handleRegister = () => {

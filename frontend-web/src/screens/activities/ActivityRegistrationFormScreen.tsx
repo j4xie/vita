@@ -21,6 +21,7 @@ import { theme } from '../../theme';
 import { useUser } from '../../context/UserContext';
 import { pomeloXAPI } from '../../services/PomeloXAPI';
 import { useTabBarVerification } from '../../hooks/useTabBarStateGuard';
+import { SuccessNotificationModal } from '../../components/modals/SuccessNotificationModal';
 
 interface RegistrationFormData {
   legalName: string;
@@ -46,6 +47,7 @@ export const ActivityRegistrationFormScreen: React.FC = () => {
   });
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Partial<RegistrationFormData>>({});
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
 
   // 🛡️ TabBar状态守护：确保报名表单页面TabBar始终隐藏
   useTabBarVerification('ActivityRegistrationForm', { debugLogs: false });
@@ -152,9 +154,9 @@ export const ActivityRegistrationFormScreen: React.FC = () => {
       });
 
       if (result.code === 200) {
-        console.log('🎉 [报名] 报名成功，准备发送事件和返回页面');
+        console.log('🎉 [报名] 报名成功，显示成功提示');
         
-        // 🌐 Web端：先发送事件，确保状态更新，然后延迟返回页面
+        // 🌐 Web端：先发送事件，确保状态更新
         console.log('📡 [报名] 发送activityRegistered事件:', { activityId: activity.id });
         DeviceEventEmitter.emit('activityRegistered', { activityId: activity.id });
         
@@ -165,19 +167,8 @@ export const ActivityRegistrationFormScreen: React.FC = () => {
           timestamp: Date.now()
         });
         
-        // 🔄 延迟返回页面，确保事件处理完成
-        setTimeout(() => {
-          console.log('🔙 [报名] 延迟返回活动详情页面，确保状态已更新');
-          
-          // 🔧 发送页面跳转完成事件
-          DeviceEventEmitter.emit('navigationCompleted', { 
-            from: 'ActivityRegistrationForm',
-            to: 'ActivityDetail',
-            timestamp: Date.now()
-          });
-          
-          navigation.goBack();
-        }, 100); // 延迟100毫秒确保状态更新
+        // 🎊 显示成功提示弹窗
+        setShowSuccessModal(true);
       } else {
         console.error('❌ [报名] 报名失败:', {
           code: result.code,
@@ -208,6 +199,41 @@ export const ActivityRegistrationFormScreen: React.FC = () => {
 
   const handleBack = () => {
     navigation.goBack();
+  };
+
+  const handleSuccessModalClose = () => {
+    setShowSuccessModal(false);
+    
+    // 🔄 延迟返回页面，确保动画完成
+    setTimeout(() => {
+      console.log('🔙 [报名] 成功提示关闭，返回活动详情页面');
+      
+      // 🔧 发送页面跳转完成事件
+      DeviceEventEmitter.emit('navigationCompleted', { 
+        from: 'ActivityRegistrationForm',
+        to: 'ActivityDetail',
+        timestamp: Date.now()
+      });
+      
+      navigation.goBack();
+    }, 300); // 等待弹窗关闭动画完成
+  };
+
+  const handleViewActivity = () => {
+    setShowSuccessModal(false);
+    
+    // 🔄 立即返回页面
+    setTimeout(() => {
+      console.log('🔙 [报名] 用户选择查看活动，返回活动详情页面');
+      
+      DeviceEventEmitter.emit('navigationCompleted', { 
+        from: 'ActivityRegistrationForm',
+        to: 'ActivityDetail',
+        timestamp: Date.now()
+      });
+      
+      navigation.goBack();
+    }, 100);
   };
 
   const updateFormField = (field: keyof RegistrationFormData, value: string) => {
@@ -421,6 +447,18 @@ export const ActivityRegistrationFormScreen: React.FC = () => {
             </Text>
           </TouchableOpacity>
       </View>
+
+      {/* 成功提示弹窗 */}
+      <SuccessNotificationModal
+        visible={showSuccessModal}
+        onClose={handleSuccessModalClose}
+        onAction={handleViewActivity}
+        title={t('activities.registration.success_notification_title')}
+        message={t('activities.registration.success_notification_message')}
+        actionText={t('activities.registration.success_notification_action')}
+        icon="checkmark-circle"
+        duration={0} // 不自动关闭，需要用户操作
+      />
     </SafeAreaView>
   );
 };

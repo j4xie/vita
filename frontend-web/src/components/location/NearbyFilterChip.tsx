@@ -66,7 +66,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 20, // 药丸形状
-    minHeight: 32,
+    minHeight: 44, // 满足最小触控区域44pt标准
     gap: 4,
   },
   // 未选中状态 - 透明背景

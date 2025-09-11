@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useRef } from 'react';
 import {
   View,
   Text,
@@ -49,6 +49,9 @@ export const ExploreScreen: React.FC = () => {
     loadActivities();
   }, []);
 
+  // 防抖定时器引用
+  const refreshTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
   // 监听来自CustomTabBar的搜索事件
   useEffect(() => {
     console.log('🎧 注册搜索事件监听器');
@@ -62,6 +65,32 @@ export const ExploreScreen: React.FC = () => {
       subscription.remove();
     };
   }, []);
+
+  // 监听活动注册状态变化事件
+  useEffect(() => {
+    console.log('🎧 注册活动状态变化事件监听器');
+    const subscription = DeviceEventEmitter.addListener('activityRegistrationChanged', (eventData: any) => {
+      console.log('🔄 [EVENT] 收到活动状态变化事件:', eventData);
+      
+      // 使用防抖机制避免频繁刷新
+      if (refreshTimeoutRef.current) {
+        clearTimeout(refreshTimeoutRef.current);
+      }
+      
+      refreshTimeoutRef.current = setTimeout(() => {
+        console.log('🔄 [REFRESH] 刷新探索页面活动数据');
+        loadActivities(searchText.trim() || undefined);
+      }, 500); // 500ms防抖延迟
+    });
+
+    return () => {
+      console.log('🎧 移除活动状态变化事件监听器');
+      subscription.remove();
+      if (refreshTimeoutRef.current) {
+        clearTimeout(refreshTimeoutRef.current);
+      }
+    };
+  }, [searchText]);
 
   // 搜索防抖效果
   useEffect(() => {

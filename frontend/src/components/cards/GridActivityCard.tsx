@@ -296,23 +296,9 @@ const GridActivityCardComponent: React.FC<GridActivityCardProps> = ({
             {String(activity?.title || '')}
           </Text>
           
-          <View style={styles.detailsRow}>
-            <View style={styles.locationRow}>
-              <Ionicons 
-                name="location-outline" 
-                size={10} 
-                color="#666666" 
-                style={styles.locationIcon}
-              />
-              <Text style={styles.location} numberOfLines={1}>
-                {String(activity?.location || '')}
-              </Text>
-            </View>
-            
-            <Text style={styles.time}>
-              {formatActivityDateWithTimezone(activity as FrontendActivity, i18n.language as 'zh' | 'en')}
-            </Text>
-          </View>
+          <Text style={styles.time}>
+            {formatActivityDateWithTimezone(activity as FrontendActivity, i18n.language as 'zh' | 'en')}
+          </Text>
         </View>
       </Animated.View>
     </Animated.View>
@@ -453,11 +439,11 @@ const styles = StyleSheet.create({
     minHeight: 60, // 确保最小高度
   },
   title: {
-    fontSize: 14, // 更小的标题字体
+    fontSize: 16, // 提升至最小审核标准16pt
     fontWeight: '700',
     color: '#1A1A1A',
-    marginBottom: 6, // 稍大间距适配3行
-    lineHeight: 19, // 适配3行显示的行高
+    marginBottom: 6,
+    lineHeight: 20, // 调整行高
   },
   // 时间和地点布局
   detailsRow: {
@@ -478,8 +464,8 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   time: {
-    fontSize: 11, // 更小字体
-    color: '#666666',
+    fontSize: 13, // 提升至辅助信息最小13pt
+    color: '#555555', // 加深颜色提升对比度
     marginTop: 2,
   },
 });

@@ -24,7 +24,11 @@ import { ActivityListScreen } from '../screens/activities/ActivityListScreen';
 import { ActivityDetailScreen } from '../screens/activities/ActivityDetailScreen';
 import { ActivityRegistrationFormScreen } from '../screens/activities/ActivityRegistrationFormScreen';
 import { LoginScreen } from '../screens/auth/LoginScreen';
+import { ForgotPasswordScreen } from '../screens/auth/ForgotPasswordScreen';
+import { SetNewPasswordScreen } from '../screens/auth/SetNewPasswordScreen';
 import { RegisterChoiceScreen } from '../screens/auth/RegisterChoiceScreen';
+import { IdentityChoiceScreen } from '../screens/auth/IdentityChoiceScreen';
+import { ParentRegisterFormScreen } from '../screens/auth/ParentRegisterFormScreen';
 import { RegisterFormScreen } from '../screens/auth/RegisterFormScreen';
 import { RegisterStep1Screen } from '../screens/auth/RegisterStep1Screen';
 import { RegisterStep2Screen } from '../screens/auth/RegisterStep2Screen';
@@ -92,10 +96,38 @@ const AuthNavigator = () => {
     >
       <AuthStack.Screen name="Login" component={LoginScreen} />
       <AuthStack.Screen 
+        name="ForgotPassword" 
+        component={ForgotPasswordScreen}
+        options={{
+          ...pageTransitions.slideFromRight,
+        }}
+      />
+      <AuthStack.Screen 
+        name="SetNewPassword" 
+        component={SetNewPasswordScreen}
+        options={{
+          ...pageTransitions.slideFromRight,
+        }}
+      />
+      <AuthStack.Screen 
         name="RegisterChoice" 
         component={RegisterChoiceScreen}
         options={{
           ...pageTransitions.slideFromBottom,
+        }}
+      />
+      <AuthStack.Screen 
+        name="IdentityChoice" 
+        component={IdentityChoiceScreen}
+        options={{
+          ...pageTransitions.slideFromRight,
+        }}
+      />
+      <AuthStack.Screen 
+        name="ParentRegisterForm" 
+        component={ParentRegisterFormScreen}
+        options={{
+          ...pageTransitions.slideFromRight,
         }}
       />
       <AuthStack.Screen 
@@ -356,13 +388,14 @@ const ProfileNavigator = () => {
           headerShown: false,
         }}
       />
-      <ProfileStack.Screen 
+      {/* 会员卡功能已隐藏以通过App Store审核 */}
+      {/* <ProfileStack.Screen 
         name="MyCards" 
         component={MyCardsScreenWithProvider}
         options={{
           headerShown: false, // MyCardsScreen有自己的header
         }}
-      />
+      /> */}
       <ProfileStack.Screen 
         name="Terms" 
         component={TermsScreen}
@@ -437,8 +470,8 @@ const TabNavigator = () => {
           }}
         />
         
-        {/* 社区咨询 - 所有用户都可以访问 */}
-        <Tab.Screen 
+        {/* 社区咨询 - 已隐藏以通过App Store审核 */}
+        {/* <Tab.Screen 
           name="Community" 
           component={CommunityScreen}
           options={() => {
@@ -454,7 +487,7 @@ const TabNavigator = () => {
               },
             };
           }}
-        />
+        /> */}
         
         {/* 安心 - 所有用户都可以访问，内部根据权限显示不同功能 */}
         <Tab.Screen 
@@ -509,10 +542,10 @@ const TabNavigator = () => {
         />
         </Tab.Navigator>
         
-        {/* 全局悬浮AI助手按钮 - 已修复并重新启用 */}
-        <ErrorBoundary>
+        {/* 全局悬浮AI助手按钮 - 已隐藏以通过App Store审核 */}
+        {/* <ErrorBoundary>
           <FloatingAIButton />
-        </ErrorBoundary>
+        </ErrorBoundary> */}
       </View>
       </GlobalTouchHandler>
     </FilterProvider>
@@ -612,10 +645,38 @@ export const AppNavigator = () => {
             }}
           />
           <RootStack.Screen 
+            name="ForgotPassword" 
+            component={ForgotPasswordScreen}
+            options={{
+              ...pageTransitions.slideFromRight,
+            }}
+          />
+          <RootStack.Screen 
+            name="SetNewPassword" 
+            component={SetNewPasswordScreen}
+            options={{
+              ...pageTransitions.slideFromRight,
+            }}
+          />
+          <RootStack.Screen 
             name="RegisterChoice" 
             component={RegisterChoiceScreen}
             options={{
               ...pageTransitions.slideFromBottom,
+            }}
+          />
+          <RootStack.Screen 
+            name="IdentityChoice" 
+            component={IdentityChoiceScreen}
+            options={{
+              ...pageTransitions.slideFromRight,
+            }}
+          />
+          <RootStack.Screen 
+            name="ParentRegisterForm" 
+            component={ParentRegisterFormScreen}
+            options={{
+              ...pageTransitions.slideFromRight,
             }}
           />
           <RootStack.Screen 

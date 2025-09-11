@@ -558,7 +558,7 @@ const styles = StyleSheet.create({
     padding: 4,
   },
   subtitle: {
-    fontSize: 14,
+    fontSize: 16, // 提升至交互文字16pt
     marginLeft: 32,
   },
   
@@ -588,7 +588,7 @@ const styles = StyleSheet.create({
     borderColor: theme.colors.primary,
   },
   timeRangeText: {
-    fontSize: 14,
+    fontSize: 16, // 提升至交互文字16pt
     fontWeight: '500',
   },
   
@@ -604,7 +604,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   recordsCount: {
-    fontSize: 12,
+    fontSize: 14, // 提升至辅助信息最小14pt
   },
   recordsList: {
     flex: 1,
@@ -642,7 +642,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   recordDate: {
-    fontSize: 15,
+    fontSize: 16, // 提升至交互文字16pt
     fontWeight: '600',
     marginLeft: 6,
   },
@@ -656,7 +656,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
   },
   statusText: {
-    fontSize: 11,
+    fontSize: 13, // 提升至辅助信息最小13pt
     fontWeight: '600',
   },
   warningBadge: {
@@ -667,7 +667,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   warningText: {
-    fontSize: 9,
+    fontSize: 12, // 提升至徽标最小12pt
     fontWeight: '600',
     marginLeft: 2,
   },
@@ -682,12 +682,12 @@ const styles = StyleSheet.create({
     minHeight: 20,
   },
   timeLabel: {
-    fontSize: 13,
+    fontSize: 14, // 辅助信息最小14pt
     marginLeft: 6,
     flex: 1,
   },
   timeValue: {
-    fontSize: 13,
+    fontSize: 14, // 辅助信息最小14pt
     fontWeight: '500',
   },
   durationRow: {
@@ -699,7 +699,7 @@ const styles = StyleSheet.create({
     borderTopColor: 'rgba(0, 0, 0, 0.06)',
   },
   durationLabel: {
-    fontSize: 13,
+    fontSize: 16, // 提升至交互文字16pt（重要标签）
     marginLeft: 6,
     flex: 1,
   },
@@ -707,7 +707,7 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
   },
   durationValue: {
-    fontSize: 14,
+    fontSize: 16, // 提升至交互文字16pt（重要数值）
   },
   overtimeWarning: {
     flexDirection: 'row',
@@ -715,7 +715,7 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   overtimeText: {
-    fontSize: 10,
+    fontSize: 12, // 提升至徽标最小12pt
     fontWeight: '500',
     marginLeft: 2,
   },
@@ -730,7 +730,7 @@ const styles = StyleSheet.create({
     borderTopColor: 'rgba(0, 0, 0, 0.06)',
   },
   operatorText: {
-    fontSize: 11,
+    fontSize: 16, // 提升至交互文字16pt（操作人是重要信息）
     marginLeft: 4,
   },
   
@@ -740,7 +740,7 @@ const styles = StyleSheet.create({
     paddingVertical: 32,
   },
   loadingText: {
-    fontSize: 14,
+    fontSize: 16, // 提升至交互文字16pt
     marginTop: 8,
   },
   emptyContainer: {
@@ -748,7 +748,7 @@ const styles = StyleSheet.create({
     paddingVertical: 32,
   },
   emptyText: {
-    fontSize: 15,
+    fontSize: 16, // 提升至交互文字16pt
     textAlign: 'center',
     marginTop: 8,
   },

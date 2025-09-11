@@ -45,10 +45,12 @@ export const LoginScreen: React.FC = () => {
   // 表单验证状态
   const [errors, setErrors] = useState<{email?: string; password?: string}>({});
   const [focusedInput, setFocusedInput] = useState<string | null>(null);
+  const [formValid, setFormValid] = useState(false);
   
   // 动画状态
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(50)).current;
+  const buttonColorAnim = useRef(new Animated.Value(0)).current;
   
   // 入场动画
   useEffect(() => {
@@ -57,6 +59,22 @@ export const LoginScreen: React.FC = () => {
       slideInFromBottom(slideAnim, 600),
     ]).start();
   }, []);
+
+  // 🟢 表单验证状态监听 - 调整为更宽松的验证
+  useEffect(() => {
+    const isFormValid = email.trim().length > 0 && password.length > 0;
+    
+    if (isFormValid !== formValid) {
+      setFormValid(isFormValid);
+      
+      // 🎨 按钮颜色动画
+      Animated.timing(buttonColorAnim, {
+        toValue: isFormValid ? 1 : 0,
+        duration: 300,
+        useNativeDriver: false,
+      }).start();
+    }
+  }, [email, password, formValid]);
 
   const validateEmail = (email: string) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -90,10 +108,12 @@ export const LoginScreen: React.FC = () => {
       const msg = result.msg || '';
       const code = result.code;
       
-      // 用户相关错误 (通常返回500) - 统一返回凭证错误，不暴露具体原因
-      if (msg.includes('用户不存在') || msg.includes('用户名不存在') || msg.includes('邮箱不存在') || 
-          msg.includes('密码错误') || msg.includes('密码不正确')) {
-        return t('auth.errors.invalid_credentials');
+      // 用户相关错误 (通常返回500) - 根据后端具体信息分别处理
+      if (msg.includes('用户不存在') || msg.includes('用户名不存在') || msg.includes('邮箱不存在')) {
+        return t('auth.errors.user_not_found');
+      }
+      if (msg.includes('密码错误') || msg.includes('密码不正确')) {
+        return t('auth.errors.invalid_password');
       }
       if (msg.includes('账户锁定') || msg.includes('账户被锁')) {
         return t('auth.errors.account_locked');
@@ -152,6 +172,22 @@ export const LoginScreen: React.FC = () => {
     }
     
     return t('auth.errors.unknown_error');
+  };
+
+  // 🎨 动态按钮样式计算函数
+  const getButtonStyles = () => {
+    const backgroundColor = buttonColorAnim.interpolate({
+      inputRange: [0, 1],
+      outputRange: [theme.colors.text.disabled, theme.colors.primary], // 从灰色到橙色
+    });
+    const shadowOpacity = buttonColorAnim.interpolate({
+      inputRange: [0, 1],
+      outputRange: [0, 0.3],
+    });
+    return {
+      backgroundColor,
+      shadowOpacity,
+    };
   };
 
   const handleLogin = async () => {
@@ -233,7 +269,7 @@ export const LoginScreen: React.FC = () => {
   };
 
   const handleForgotPassword = () => {
-    Alert.alert(t('common.confirm'), t('alerts.feature_not_implemented'));
+    navigation.navigate('ForgotPassword');
   };
 
   const handleRegister = () => {
@@ -366,27 +402,30 @@ export const LoginScreen: React.FC = () => {
               </TouchableOpacity>
             </View>
 
-                {/* Login Button - Shadow优化 */}
-                <View style={[styles.loginButtonShadowContainer, loading && styles.loginButtonDisabled]}>
-                  <LinearGradient
-                    colors={[theme.colors.secondary, theme.colors.secondaryPressed]}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 0 }}
-                    style={styles.loginButton}
-                  >
+                {/* 🚀 Dynamic Login Button - 动态交互按钮 */}
+                <Animated.View style={[
+                  styles.loginButtonShadowContainer, 
+                  getButtonStyles(),
+                  (!formValid || loading) && styles.loginButtonDisabled
+                ]}>
                   <TouchableOpacity
                     style={styles.loginButtonInner}
                     onPress={handleLogin}
-                    disabled={loading}
+                    disabled={!formValid || loading}
+                    activeOpacity={0.9}
                   >
                     {loading ? (
                       <ActivityIndicator color={theme.colors.text.inverse} />
                     ) : (
-                      <Text style={styles.loginButtonText}>{t('auth.login.login_button')}</Text>
+                      <Text style={[
+                        styles.loginButtonText,
+                        !formValid && styles.loginButtonTextDisabled
+                      ]}>
+                        {t('auth.login.login_button')}
+                      </Text>
                     )}
                   </TouchableOpacity>
-                  </LinearGradient>
-                </View>
+                </Animated.View>
 
                 {/* Register Link */}
                 <View style={styles.registerContainer}>
@@ -582,33 +621,39 @@ const styles = StyleSheet.create({
     fontWeight: theme.typography.fontWeight.semibold,
   },
   
-  // Login Button Shadow容器 - 解决LinearGradient阴影冲突
+  // 🚀 Dynamic Login Button Shadow容器 - 增强交互版
   loginButtonShadowContainer: {
     borderRadius: theme.borderRadius.button,
-    backgroundColor: theme.colors.secondary, // solid background用于阴影优化
     marginBottom: theme.spacing.xl,
-    ...theme.shadows.button,
-  },
-  
-  loginButton: {
-    borderRadius: theme.borderRadius.button,
-    // 移除阴影，由loginButtonShadowContainer处理
+    shadowColor: theme.colors.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowRadius: 8,
+    elevation: 6,
+    // 背景色现在由 getButtonStyles() 动态计算
   },
   
   loginButtonInner: {
     paddingVertical: theme.spacing.lg,
     alignItems: 'center',
     justifyContent: 'center',
+    borderRadius: theme.borderRadius.button,
   },
   
   loginButtonDisabled: {
-    opacity: 0.6,
-    ...theme.shadows.none,
+    shadowOpacity: 0,
+    elevation: 0,
   },
+  
   loginButtonText: {
     fontSize: theme.typography.fontSize.xl,
     fontWeight: theme.typography.fontWeight.bold,
     color: theme.colors.text.inverse,
+    textAlign: 'center',
+  },
+  
+  loginButtonTextDisabled: {
+    color: theme.colors.text.secondary,
+    opacity: 0.7,
   },
   
   // Register Link

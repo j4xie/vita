@@ -33,7 +33,7 @@ export default defineConfig({
   // 全局测试配置
   use: {
     // 基础URL - 测试页面地址
-    baseURL: 'http://localhost:8081',
+    baseURL: 'http://localhost:8090',
     
     // 浏览器设置
     headless: false, // 显示浏览器窗口便于监控

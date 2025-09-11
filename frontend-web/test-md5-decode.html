@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>MD5 Activity Code Decoder Test</title>
+    <meta charset="utf-8">
+    <style>
+        body { font-family: Arial; margin: 20px; }
+        .test { padding: 15px; margin: 10px 0; border-radius: 8px; background: #f8f9fa; }
+        .success { background: #d4edda; color: #155724; }
+        .failed { background: #f8d7da; color: #721c24; }
+        .input { margin: 10px 0; }
+        input { padding: 8px; width: 400px; font-family: monospace; }
+        button { padding: 8px 16px; margin-left: 10px; }
+    </style>
+</head>
+<body>
+    <h2>🔐 MD5 Activity Code Decoder Test</h2>
+    
+    <div class="input">
+        <input type="text" id="hashInput" placeholder="输入32位MD5哈希值" value="487f7b22f68312d2c1bbc93b1aea445b">
+        <button onclick="testDecode()">🔍 测试破解</button>
+        <button onclick="testGenerate()">🔧 生成测试哈希</button>
+    </div>
+    
+    <div id="result" class="test">等待测试...</div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+    <script>
+        // 预计算哈希表
+        const precomputedHashes = {};
+        
+        // 初始化预计算哈希表
+        function initPrecomputedHashes() {
+            console.log('🔧 初始化预计算哈希表...');
+            
+            // 预计算1-200的活动ID
+            for (let i = 1; i <= 200; i++) {
+                const hash = CryptoJS.MD5(i.toString()).toString();
+                precomputedHashes[hash] = i;
+            }
+            
+            // 预计算常见前缀格式
+            const prefixes = ['UCI_', 'activity_', 'event_', 'pomelo_', 'ACT_'];
+            prefixes.forEach(prefix => {
+                for (let i = 1; i <= 50; i++) {
+                    const text = prefix + i;
+                    const hash = CryptoJS.MD5(text).toString();
+                    precomputedHashes[hash] = i;
+                }
+            });
+            
+            console.log('✅ 预计算哈希表初始化完成，条目:', Object.keys(precomputedHashes).length);
+        }
+
+        function decodeActivityHash(hash) {
+            const startTime = Date.now();
+            
+            console.log('🔐 开始破解哈希:', hash);
+            
+            // 验证哈希格式
+            if (!/^[a-f0-9]{32}$/.test(hash)) {
+                return { success: false, error: '不是32位MD5格式' };
+            }
+            
+            // 初始化预计算表
+            if (Object.keys(precomputedHashes).length === 0) {
+                initPrecomputedHashes();
+            }
+            
+            // 先查询预计算表
+            if (precomputedHashes[hash]) {
+                const result = {
+                    success: true,
+                    activityId: precomputedHashes[hash],
+                    originalText: precomputedHashes[hash].toString(),
+                    attempts: 1,
+                    timeMs: Date.now() - startTime
+                };
+                console.log('⚡ 预计算表命中:', result);
+                return result;
+            }
+            
+            let attempts = 0;
+            
+            // 策略1: 纯数字ID (1-1000)
+            console.log('🔢 尝试纯数字ID...');
+            for (let i = 1; i <= 1000; i++) {
+                attempts++;
+                const testHash = CryptoJS.MD5(i.toString()).toString();
+                if (testHash === hash) {
+                    const result = {
+                        success: true,
+                        activityId: i,
+                        originalText: i.toString(),
+                        attempts,
+                        timeMs: Date.now() - startTime
+                    };
+                    console.log('🎯 破解成功（纯数字）:', result);
+                    return result;
+                }
+            }
+            
+            // 策略2: UCI前缀格式
+            console.log('🏫 尝试UCI前缀格式...');
+            for (let i = 1; i <= 100; i++) {
+                attempts++;
+                const text = `UCI_${i}`;
+                const testHash = CryptoJS.MD5(text).toString();
+                if (testHash === hash) {
+                    const result = {
+                        success: true,
+                        activityId: i,
+                        originalText: text,
+                        attempts,
+                        timeMs: Date.now() - startTime
+                    };
+                    console.log('🎯 破解成功（UCI格式）:', result);
+                    return result;
+                }
+            }
+            
+            return {
+                success: false,
+                attempts,
+                timeMs: Date.now() - startTime
+            };
+        }
+
+        function testDecode() {
+            const hash = document.getElementById('hashInput').value.trim();
+            const resultDiv = document.getElementById('result');
+            
+            if (!hash) {
+                resultDiv.innerHTML = '❌ 请输入MD5哈希值';
+                resultDiv.className = 'test failed';
+                return;
+            }
+            
+            resultDiv.innerHTML = '🔄 正在破解，请稍候...';
+            resultDiv.className = 'test';
+            
+            // 延迟执行以显示进度
+            setTimeout(() => {
+                const result = decodeActivityHash(hash);
+                
+                if (result.success) {
+                    resultDiv.innerHTML = `
+                        <strong>✅ 破解成功!</strong><br><br>
+                        <strong>原始内容:</strong> ${result.originalText}<br>
+                        <strong>活动ID:</strong> ${result.activityId}<br>
+                        <strong>尝试次数:</strong> ${result.attempts}<br>
+                        <strong>耗时:</strong> ${result.timeMs}ms<br>
+                        <br>
+                        🎯 现在可以用活动ID ${result.activityId} 调用签到API!
+                    `;
+                    resultDiv.className = 'test success';
+                } else {
+                    resultDiv.innerHTML = `
+                        <strong>❌ 破解失败</strong><br><br>
+                        <strong>尝试次数:</strong> ${result.attempts || 'N/A'}<br>
+                        <strong>耗时:</strong> ${result.timeMs || 'N/A'}ms<br>
+                        <strong>错误:</strong> ${result.error || '在常见格式中未找到匹配'}
+                    `;
+                    resultDiv.className = 'test failed';
+                }
+            }, 100);
+        }
+
+        function testGenerate() {
+            const resultDiv = document.getElementById('result');
+            
+            resultDiv.innerHTML = '🔧 生成测试哈希值...';
+            resultDiv.className = 'test';
+            
+            setTimeout(() => {
+                const examples = [];
+                
+                // 生成一些示例
+                for (let i = 1; i <= 5; i++) {
+                    const hash = CryptoJS.MD5(i.toString()).toString();
+                    examples.push(`ID ${i}: ${hash}`);
+                }
+                
+                examples.push(`UCI_1: ${CryptoJS.MD5('UCI_1').toString()}`);
+                examples.push(`activity_20: ${CryptoJS.MD5('activity_20').toString()}`);
+                
+                resultDiv.innerHTML = `
+                    <strong>🔧 示例MD5哈希值:</strong><br><br>
+                    ${examples.join('<br>')}
+                    <br><br>
+                    点击任意哈希值测试破解功能
+                `;
+                resultDiv.className = 'test';
+            }, 100);
+        }
+
+        // 页面加载时初始化
+        window.onload = function() {
+            console.log('🚀 MD5解码器测试页面已加载');
+            // 自动测试一下预设的哈希
+            // testDecode();
+        };
+    </script>
+</body>
+</html>

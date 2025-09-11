@@ -182,7 +182,7 @@ export const UserIdentityQRModal: React.FC<IdentityQRCodeProps> = ({
       textAlign: 'center',
     },
     userEmail: {
-      fontSize: 14,
+      fontSize: 16, // 提升至交互文字16pt（用户信息重要）
       color: isDarkMode ? '#9CA3AF' : '#6B7280',
       textAlign: 'center',
     },
@@ -191,18 +191,18 @@ export const UserIdentityQRModal: React.FC<IdentityQRCodeProps> = ({
       marginBottom: 12,
     },
     combinedOrgSchoolText: {
-      fontSize: 14,
+      fontSize: 16, // 提升至交互文字16pt（部门信息重要）
       fontWeight: '500',
       color: isDarkMode ? '#D1D5DB' : '#374151',
       textAlign: 'center',
     },
     separator: {
-      fontSize: 14,
+      fontSize: 16, // 提升至交互文字16pt（与部门信息保持一致）
       fontWeight: '400',
       color: isDarkMode ? '#9CA3AF' : '#9CA3AF',
     },
     schoolNameInline: {
-      fontSize: 14,
+      fontSize: 16, // 提升至交互文字16pt（学校信息重要）
       fontWeight: '400',
       color: isDarkMode ? '#9CA3AF' : '#6B7280',
     },
@@ -211,7 +211,7 @@ export const UserIdentityQRModal: React.FC<IdentityQRCodeProps> = ({
       marginBottom: 12,
     },
     organizationName: {
-      fontSize: 14,
+      fontSize: 16, // 提升至交互文字16pt（组织信息重要）
       fontWeight: '500',
       color: isDarkMode ? '#D1D5DB' : '#374151',
       textAlign: 'center',
@@ -221,7 +221,7 @@ export const UserIdentityQRModal: React.FC<IdentityQRCodeProps> = ({
       marginBottom: 12,
     },
     schoolName: {
-      fontSize: 13,
+      fontSize: 16, // 提升至交互文字16pt（部门信息重要）
       fontWeight: '400',
       color: isDarkMode ? '#9CA3AF' : '#6B7280',
       textAlign: 'center',
@@ -231,7 +231,7 @@ export const UserIdentityQRModal: React.FC<IdentityQRCodeProps> = ({
       marginBottom: 20,
     },
     positionName: {
-      fontSize: 12,
+      fontSize: 14, // 提升至辅助信息最小14pt（职位信息）
       fontWeight: '600',
       color: '#FF6B35',
       textAlign: 'center',
@@ -252,7 +252,7 @@ export const UserIdentityQRModal: React.FC<IdentityQRCodeProps> = ({
       alignItems: 'center',
     },
     qrLabel: {
-      fontSize: 12,
+      fontSize: 14, // 提升至辅助信息最小14pt（说明文字）
       color: '#6B7280',
       textAlign: 'center',
     },
@@ -278,12 +278,12 @@ export const UserIdentityQRModal: React.FC<IdentityQRCodeProps> = ({
       backgroundColor: '#FF6B35',
     },
     saveButtonText: {
-      fontSize: 14,
+      fontSize: 16, // 按钮文字最小16pt
       fontWeight: '600',
       color: isDarkMode ? '#FFFFFF' : '#374151',
     },
     shareButtonText: {
-      fontSize: 14,
+      fontSize: 16, // 按钮文字最小16pt
       fontWeight: '600',
       color: '#FFFFFF',
     },

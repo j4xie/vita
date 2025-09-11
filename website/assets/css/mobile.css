@@ -747,7 +747,7 @@ body {
 }
 
 .mobile-tabbar-text {
-  font-size: 10px;
+  font-size: 14px; /* 提升至最小辅助字号14px */
   font-weight: 500;
 }
 

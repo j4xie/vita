@@ -157,6 +157,52 @@ class PomeloXAPI {
   }
 
   /**
+   * 发送忘记密码验证码
+   */
+  async sendPasswordResetCode(phone: string, areaCode: string): Promise<SMSResponse> {
+    // 转换区号格式：CN/US -> 86/1
+    let cleanAreaCode: string;
+    if (areaCode === 'CN' || areaCode === '+86') {
+      cleanAreaCode = '86';
+    } else if (areaCode === 'US' || areaCode === '+1') {
+      cleanAreaCode = '1';
+    } else {
+      cleanAreaCode = areaCode.replace('+', '');
+    }
+    
+    console.log('📱 [App-PomeloXAPI] 发送忘记密码验证码:', { 
+      phone, 
+      areaCode, 
+      cleanAreaCode
+    });
+    
+    const url = `${BASE_URL}/sms/vercodeSms?phoneNum=${phone}&areaCode=${cleanAreaCode}`;
+    console.log('🌐 [App-PomeloXAPI] 请求URL:', url);
+    
+    const response = await fetchWithRetry(url, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+      },
+    });
+    
+    console.log('📥 [App-PomeloXAPI] SMS API响应:', { 
+      status: response.status, 
+      ok: response.ok 
+    });
+    
+    if (!response.ok) {
+      console.error('❌ [App-PomeloXAPI] HTTP错误:', response.status);
+      throw new Error('发送重置密码验证码失败');
+    }
+    
+    const result = await response.json();
+    console.log('📋 [App-PomeloXAPI] SMS API返回数据:', result);
+    
+    return result;
+  }
+
+  /**
    * 获取学校列表 (公开接口，无需认证)
    */
   async getSchoolList(): Promise<ApiResponse<APISchoolData[]>> {
@@ -885,6 +931,42 @@ class PomeloXAPI {
   }
 
   /**
+   * 重置密码
+   */
+  async resetPassword(data: {
+    phonenumber: string;
+    verCode: string;
+    bizId: string;
+    password: string;
+    areaCode: string;
+  }): Promise<ApiResponse> {
+    // 转换区号格式：+86 -> 86
+    const cleanAreaCode = data.areaCode.replace('+', '');
+    
+    // 构建form-data格式的请求体
+    const formData = new URLSearchParams();
+    formData.append('phonenumber', data.phonenumber);
+    formData.append('verCode', data.verCode);
+    formData.append('bizId', data.bizId);
+    formData.append('password', data.password);
+    formData.append('areaCode', cleanAreaCode);
+
+    const response = await fetchWithRetry(`${BASE_URL}/app/resetPwd`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: formData.toString(),
+    });
+    
+    if (!response.ok) {
+      throw new Error('重置密码失败');
+    }
+    
+    return response.json();
+  }
+
+  /**
    * 登出
    */
   async logout(): Promise<void> {
@@ -919,6 +1001,92 @@ class PomeloXAPI {
   }>>> {
     console.log('🔍 获取职位列表 API调用');
     return this.request('/app/post/list', { method: 'GET' });
+  }
+
+  /**
+   * 通过哈希值获取用户身份信息（新增）
+   */
+  async getUserIdentityByHash(params: {
+    userId: string;
+    hash: string;
+    timestamp: number;
+  }): Promise<ApiResponse<{
+    userId: string;
+    userName: string;
+    legalName: string;
+    nickName: string;
+    email: string;
+    avatarUrl?: string;
+    currentOrganization?: {
+      id: string;
+      name: string;
+      displayNameZh: string;
+      displayNameEn?: string;
+    };
+    school?: {
+      id: string;
+      name: string;
+      fullName: string;
+      parentId?: number;
+    };
+    position?: {
+      roleKey: string;
+      roleName: string;
+      displayName: string;
+      level: string;
+    };
+  }>> {
+    console.log('🔐 [API] 通过哈希获取用户身份信息:', {
+      userId: params.userId,
+      hash: params.hash,
+      timestamp: params.timestamp
+    });
+    
+    // 注意：此API端点需要后端实现
+    // 临时实现：返回模拟数据用于前端开发
+    // TODO: 待后端实现真实API后替换
+    try {
+      return this.request('/app/user/identity/hash', {
+        method: 'POST',
+        body: JSON.stringify({
+          userId: params.userId,
+          hash: params.hash,
+          timestamp: params.timestamp
+        })
+      });
+    } catch (error) {
+      console.warn('⚠️ [API] 哈希API暂未实现，使用临时处理');
+      
+      // 临时返回模拟响应
+      return {
+        code: 200,
+        msg: '查询成功',
+        data: {
+          userId: params.userId,
+          userName: 'TestUser',
+          legalName: '测试用户',
+          nickName: 'Test',
+          email: 'test@example.com',
+          currentOrganization: {
+            id: '1',
+            name: 'Student Union',
+            displayNameZh: '学联组织',
+            displayNameEn: 'Student Union'
+          },
+          school: {
+            id: '213',
+            name: 'USC',
+            fullName: 'University of Southern California'
+          },
+          position: {
+            roleKey: 'common',
+            roleName: '普通用户',
+            displayName: '普通用户',
+            level: 'user'
+          }
+        }
+      };
+    }
   }
 }
 

@@ -20,7 +20,7 @@ import { getWebInputStyles } from '../../utils/webInputStyles';
 interface ReferralCodeInputSheetProps {
   visible: boolean;
   onClose: () => void;
-  onSubmit: (code: string) => void;
+  onSubmit: (code: string, setError: (error: string) => void) => void;
 }
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
@@ -42,10 +42,16 @@ export const ReferralCodeInputSheet: React.FC<ReferralCodeInputSheetProps> = ({
       console.log('✅ [ReferralCodeInputSheet] 显示推荐码输入Sheet');
       setCode('');
       setError('');
+      
       // 延迟聚焦，确保Sheet动画完成
-      setTimeout(() => {
+      const focusTimer = setTimeout(() => {
         inputRef.current?.focus();
       }, 300);
+      
+      // 清理定时器，防止内存泄漏
+      return () => {
+        clearTimeout(focusTimer);
+      };
     }
   }, [visible]);
 
@@ -96,8 +102,8 @@ export const ReferralCodeInputSheet: React.FC<ReferralCodeInputSheetProps> = ({
       finalCode = trimmedCode.replace('VG_REF_', '');
     }
     
-    onSubmit(finalCode);
-    onClose();
+    // 调用父组件的验证逻辑，传递setError函数
+    onSubmit(finalCode, setError);
   };
 
   // 处理取消
@@ -426,6 +432,8 @@ const styles = StyleSheet.create({
     color: theme.colors.background.primary,
   },
 });
+
+
 
 
 

@@ -387,9 +387,27 @@ export const RegisterFormScreen: React.FC = () => {
 
   // 解析注册错误为用户友好提示
   const parseRegistrationError = (errorMsg: string): string => {
-    if (errorMsg.includes('phonenumber')) return t('validation.phone_format_error');
-    if (errorMsg.includes('email')) return t('validation.email_format_error');
-    if (errorMsg.includes('userName')) return t('validation.username_already_exists');
+    console.log('🔍 [注册错误解析] 原始错误信息:', errorMsg);
+    
+    // 添加更多具体的错误匹配模式
+    if (errorMsg.includes('userName') || errorMsg.includes('用户名')) {
+      if (errorMsg.includes('已存在') || errorMsg.includes('失败') || errorMsg.includes('exist')) {
+        return '用户名已被使用，请换一个用户名';
+      }
+      return t('validation.username_already_exists');
+    }
+    if (errorMsg.includes('phonenumber') || errorMsg.includes('手机号')) {
+      if (errorMsg.includes('已存在') || errorMsg.includes('exist')) {
+        return '手机号已被注册，请使用其他手机号或尝试找回密码';
+      }
+      return t('validation.phone_format_error');
+    }
+    if (errorMsg.includes('email') || errorMsg.includes('邮箱')) {
+      if (errorMsg.includes('已存在') || errorMsg.includes('exist')) {
+        return '邮箱已被注册，请使用其他邮箱';
+      }
+      return t('validation.email_format_error');
+    }
     if (errorMsg.includes('Duplicate entry')) return t('validation.duplicate_registration');
     if (errorMsg.includes('too long')) return t('validation.field_too_long');
     if (errorMsg.includes('constraint')) return t('validation.data_constraint_error');
@@ -397,15 +415,15 @@ export const RegisterFormScreen: React.FC = () => {
     // 邀请码相关错误
     if (errorMsg.includes('invCode') || errorMsg.includes('邀请码')) {
       if (errorMsg.includes('不存在') || errorMsg.includes('无效') || errorMsg.includes('invalid')) {
-        return '邀请码不存在或已失效，请检查邀请码是否正确';
+        return t('auth.register.errors.invitation_code_invalid');
       }
       if (errorMsg.includes('已使用') || errorMsg.includes('used')) {
-        return '此邀请码已被使用，请联系邀请人获取新的邀请码';
+        return t('auth.register.errors.invitation_code_used');
       }
       if (errorMsg.includes('过期') || errorMsg.includes('expired')) {
-        return '邀请码已过期，请联系邀请人重新生成邀请码';
+        return t('auth.register.errors.invitation_code_expired');
       }
-      return '邀请码验证失败，请检查邀请码是否正确';
+      return t('auth.register.errors.invitation_code_verification_failed');
     }
     
     return t('auth.register.error_message');
@@ -468,7 +486,7 @@ export const RegisterFormScreen: React.FC = () => {
       
       if (emptyFields.length > 0) {
         console.error('❌ 发现空值字段:', emptyFields);
-        SafeAlert.alert(t('auth.register.error_title'), `以下字段不能为空: ${emptyFields.join(', ')}`);
+        SafeAlert.alert(t('auth.register.error_title'), `${t('auth.register.errors.required_fields_empty')}: ${emptyFields.join(', ')}`);
         return;
       } else {
         console.log('✅ 所有必填字段都有值');
@@ -561,16 +579,16 @@ export const RegisterFormScreen: React.FC = () => {
         SafeAlert.alert(t('auth.register.error_title'), friendlyError);
       }
     } catch (error) {
-      console.error('🚨 注册失败完整错误信息:', {
+      console.error('🚨 Registration failed with complete error info:', {
         error: error,
         message: error.message,
         stack: error.stack,
         name: error.name
       });
       
-      // 检查是否是网络错误
+      // Check if it's a network error
       if (error.message?.includes('fetch') || error.message?.includes('network')) {
-        SafeAlert.alert(t('auth.register.error_title'), '网络连接失败，请检查网络后重试');
+        SafeAlert.alert(t('auth.register.error_title'), t('auth.register.errors.network_connection_failed'));
       } else {
         const friendlyError = parseRegistrationError(error.message || '');
         SafeAlert.alert(t('auth.register.error_title'), friendlyError);
@@ -794,8 +812,8 @@ export const RegisterFormScreen: React.FC = () => {
 
   const renderStep3 = () => (
     <View style={styles.stepContainer}>
-      <Text style={styles.stepTitle}>{t('auth.register.form.phone_label')}</Text>
-      <Text style={styles.stepSubtitle}>请输入您的手机号码，用于接收验证码</Text>
+      <Text style={styles.stepTitle}>{t('auth.register.form.contact_info')}</Text>
+      <Text style={styles.stepSubtitle}>{t('auth.register.form.contact_info_desc')}</Text>
 
       <View style={styles.phoneTypeContainer}>
         <TouchableOpacity
@@ -855,11 +873,11 @@ export const RegisterFormScreen: React.FC = () => {
             </View>
             <View style={styles.checkboxTextContainer}>
               <View style={styles.termsTextRow}>
-                <Text style={styles.checkboxText}>我已阅读并同意</Text>
+                <Text style={styles.checkboxText}>{t('auth.register.form.terms_checkbox')}</Text>
                 <TouchableOpacity onPress={() => handleTermsPress('terms')}>
                   <Text style={styles.termsLink}>《{t('auth.register.sms.service_terms')}》</Text>
                 </TouchableOpacity>
-                <Text style={styles.checkboxText}>和</Text>
+                <Text style={styles.checkboxText}>{t('auth.register.and')}</Text>
                 <TouchableOpacity onPress={() => handleTermsPress('privacy')}>
                   <Text style={styles.termsLink}>《{t('auth.register.sms.privacy_policy')}》</Text>
                 </TouchableOpacity>

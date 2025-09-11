@@ -49,12 +49,13 @@ export const RegisterStep1Screen: React.FC = () => {
   const [schoolsLoading, setSchoolsLoading] = useState(true);
   const [schools, setSchools] = useState<SchoolData[]>([]);
   
-  const [formData, setFormData] = useState<RegistrationStep1Data>({
+  const [formData, setFormData] = useState<RegistrationStep1Data & { areaCode: '86' | '1' }>({
     firstName: '',
     lastName: '',
     phoneNumber: '',
     selectedSchool: null,
     generatedEmail: '',
+    areaCode: detectedRegion === 'zh' ? '86' : '1', // 根据地理检测设置默认区号
   });
 
   const [errors, setErrors] = useState<ValidationErrors>({});
@@ -122,15 +123,19 @@ export const RegisterStep1Screen: React.FC = () => {
     // 验证手机号（邀请码注册时可选）
     if (registrationType === 'invitation') {
       // 邀请码注册：手机号可选
-      if (formData.phoneNumber && !validatePhoneNumber(formData.phoneNumber)) {
-        newErrors.phoneNumber = t('validation.phone_china_invalid');
+      if (formData.phoneNumber && !validatePhoneNumber(formData.phoneNumber, formData.areaCode)) {
+        newErrors.phoneNumber = formData.areaCode === '86' 
+          ? t('validation.phone_china_invalid')
+          : t('validation.phone_us_invalid');
       }
     } else {
       // 手机验证码注册：手机号必填
       if (!formData.phoneNumber) {
         newErrors.phoneNumber = t('validation.phone_required');
-      } else if (!validatePhoneNumber(formData.phoneNumber)) {
-        newErrors.phoneNumber = t('validation.phone_china_invalid');
+      } else if (!validatePhoneNumber(formData.phoneNumber, formData.areaCode)) {
+        newErrors.phoneNumber = formData.areaCode === '86' 
+          ? t('validation.phone_china_invalid')
+          : t('validation.phone_us_invalid');
       }
     }
 
@@ -351,10 +356,28 @@ export const RegisterStep1Screen: React.FC = () => {
                 }
               </Text>
               <View style={styles.phoneInputWrapper}>
-                <Text style={styles.phonePrefix}>+86</Text>
+                <TouchableOpacity 
+                  style={styles.areaCodeSelector}
+                  onPress={() => {
+                    Alert.alert(
+                      t('auth.register.parent.select_area_code'),
+                      '',
+                      [
+                        { text: t('auth.register.parent.area_code_china'), onPress: () => updateFormData('areaCode', '86') },
+                        { text: t('auth.register.parent.area_code_usa'), onPress: () => updateFormData('areaCode', '1') },
+                        { text: t('common.cancel'), style: 'cancel' }
+                      ]
+                    );
+                  }}
+                >
+                  <Text style={styles.areaCodeText}>
+                    {formData.areaCode === '86' ? t('auth.register.parent.area_code_china') : t('auth.register.parent.area_code_usa')}
+                  </Text>
+                  <Ionicons name="chevron-down" size={16} color={theme.colors.text.secondary} />
+                </TouchableOpacity>
                 <TextInput
                   style={[styles.phoneInput, errors.phoneNumber && styles.inputError]}
-                  placeholder="13812345678"
+                  placeholder={formData.areaCode === '86' ? '13812345678' : '(555) 123-4567'}
                   value={formData.phoneNumber}
                   onChangeText={(text) => updateFormData('phoneNumber', text)}
                   keyboardType="phone-pad"
@@ -550,12 +573,11 @@ const styles = StyleSheet.create({
   },
   phoneInputWrapper: {
     flexDirection: 'row',
-    alignItems: 'center',
     backgroundColor: theme.colors.background.secondary,
     borderRadius: theme.borderRadius.lg,
-    paddingHorizontal: theme.spacing[4],
     borderWidth: 1,
     borderColor: 'transparent',
+    overflow: 'hidden',
   },
   phonePrefix: {
     fontSize: theme.typography.fontSize.base,
@@ -565,7 +587,8 @@ const styles = StyleSheet.create({
   },
   phoneInput: {
     flex: 1,
-    paddingVertical: theme.spacing[3],
+    paddingHorizontal: theme.spacing[3],
+    paddingVertical: theme.spacing[4],
     fontSize: theme.typography.fontSize.base,
     color: theme.colors.text.primary,
   },
@@ -609,5 +632,20 @@ const styles = StyleSheet.create({
     color: theme.colors.primary,
     fontWeight: theme.typography.fontWeight.medium,
     marginLeft: theme.spacing[2],
+  },
+  areaCodeSelector: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: theme.spacing[3],
+    paddingVertical: theme.spacing[4],
+    backgroundColor: theme.colors.background.tertiary,
+    borderRightWidth: 1,
+    borderRightColor: theme.colors.border,
+  },
+  areaCodeText: {
+    fontSize: theme.typography.fontSize.sm,
+    color: theme.colors.text.primary,
+    fontWeight: theme.typography.fontWeight.medium,
+    marginRight: theme.spacing[1],
   },
 });

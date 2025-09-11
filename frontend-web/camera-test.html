@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>摄像头测试</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        video { border: 2px solid #333; border-radius: 10px; max-width: 100%; }
+        .status { padding: 10px; margin: 10px 0; border-radius: 5px; }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        .info { background: #d1ecf1; color: #0c5460; }
+        button { padding: 10px 20px; margin: 5px; border: none; border-radius: 5px; cursor: pointer; }
+        .btn-primary { background: #007bff; color: white; }
+        .btn-success { background: #28a745; color: white; }
+    </style>
+</head>
+<body>
+    <h1>📹 摄像头权限测试</h1>
+    
+    <div id="status" class="status info">准备测试摄像头权限...</div>
+    
+    <div>
+        <button id="testCamera" class="btn-primary">🎥 测试摄像头</button>
+        <button id="testQR" class="btn-success" style="display: none;">📱 测试QR扫描</button>
+    </div>
+    
+    <video id="video" width="400" height="300" autoplay playsinline style="display: none;"></video>
+    
+    <div id="result" style="margin-top: 20px; padding: 10px; background: #f8f9fa; border-radius: 5px; display: none;">
+        <strong>测试结果：</strong>
+        <div id="resultContent"></div>
+    </div>
+
+    <script>
+        const statusDiv = document.getElementById('status');
+        const video = document.getElementById('video');
+        const testCameraBtn = document.getElementById('testCamera');
+        const testQRBtn = document.getElementById('testQR');
+        const result = document.getElementById('result');
+        const resultContent = document.getElementById('resultContent');
+
+        function updateStatus(message, type = 'info') {
+            statusDiv.className = `status ${type}`;
+            statusDiv.textContent = message;
+            console.log(`[${type.toUpperCase()}] ${message}`);
+        }
+
+        function showResult(content) {
+            resultContent.innerHTML = content;
+            result.style.display = 'block';
+        }
+
+        testCameraBtn.addEventListener('click', async () => {
+            updateStatus('正在请求摄像头权限...', 'info');
+            
+            try {
+                // 测试摄像头访问
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    video: { 
+                        facingMode: 'environment',
+                        width: { ideal: 640 },
+                        height: { ideal: 480 }
+                    }
+                });
+                
+                updateStatus('✅ 摄像头权限获取成功！', 'success');
+                
+                // 显示视频流
+                video.srcObject = stream;
+                video.style.display = 'block';
+                
+                // 启用QR测试按钮
+                testQRBtn.style.display = 'inline-block';
+                
+                showResult(`
+                    ✅ 摄像头访问成功！<br>
+                    📹 视频流已启动<br>
+                    🔄 现在可以测试QR扫描功能
+                `);
+                
+            } catch (error) {
+                console.error('摄像头访问失败:', error);
+                updateStatus(`❌ 摄像头访问失败: ${error.message}`, 'error');
+                
+                let errorHelp = '';
+                if (error.name === 'NotAllowedError') {
+                    errorHelp = '<br>💡 解决方案：<br>1. 点击地址栏的🔒图标<br>2. 允许摄像头权限<br>3. 刷新页面重试';
+                } else if (error.name === 'NotFoundError') {
+                    errorHelp = '<br>💡 没有找到摄像头设备';
+                } else if (error.name === 'SecurityError') {
+                    errorHelp = '<br>💡 需要HTTPS环境才能访问摄像头';
+                }
+                
+                showResult(`❌ 错误：${error.message}${errorHelp}`);
+            }
+        });
+
+        testQRBtn.addEventListener('click', async () => {
+            updateStatus('正在加载QR扫描库...', 'info');
+            
+            try {
+                // 动态加载QR Scanner库
+                if (!window.QrScanner) {
+                    const script = document.createElement('script');
+                    script.src = 'https://cdn.jsdelivr.net/npm/qr-scanner@1.4.2/qr-scanner.umd.min.js';
+                    
+                    await new Promise((resolve, reject) => {
+                        script.onload = resolve;
+                        script.onerror = reject;
+                        document.head.appendChild(script);
+                    });
+                }
+                
+                updateStatus('正在启动QR扫描器...', 'info');
+                
+                const scanner = new QrScanner(
+                    video,
+                    (result) => {
+                        updateStatus('🎯 QR码扫描成功！', 'success');
+                        showResult(`
+                            🎯 扫描成功！<br>
+                            📄 内容: <code>${result.data}</code><br>
+                            ⏰ 时间: ${new Date().toLocaleTimeString()}
+                        `);
+                        
+                        // 播放成功音效
+                        try {
+                            const audio = new Audio('data:audio/wav;base64,UklGRn4AAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQoAAAAC');
+                            audio.play().catch(() => {});
+                        } catch (e) {}
+                    },
+                    {
+                        highlightScanRegion: true,
+                        highlightCodeOutline: true,
+                        maxScansPerSecond: 10
+                    }
+                );
+                
+                await scanner.start();
+                updateStatus('✅ QR扫描器已启动！请扫描二维码', 'success');
+                
+            } catch (error) {
+                console.error('QR扫描器启动失败:', error);
+                updateStatus(`❌ QR扫描器失败: ${error.message}`, 'error');
+                showResult(`❌ QR扫描器错误：${error.message}`);
+            }
+        });
+
+        // 页面加载完成后的提示
+        window.addEventListener('load', () => {
+            const isHTTPS = location.protocol === 'https:';
+            if (!isHTTPS) {
+                updateStatus('⚠️ 警告：当前不是HTTPS环境，摄像头可能无法访问', 'error');
+                showResult('⚠️ 请使用HTTPS访问以确保摄像头权限正常工作');
+            } else {
+                updateStatus('✅ HTTPS环境正常，可以开始测试', 'success');
+            }
+        });
+    </script>
+</body>
+</html>

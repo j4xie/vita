@@ -27,6 +27,7 @@ import { FrontendActivity } from '../../utils/activityAdapter';
 import { useUser } from '../../context/UserContext';
 import { UltraFastImage } from '../../components/common/UltraFastImage';
 import { imageCacheManager } from '../../utils/ImageCacheManager';
+import { SuccessNotificationModal } from '../../components/modals/SuccessNotificationModal';
 
 const { width: screenWidth } = Dimensions.get('window');
 
@@ -60,6 +61,7 @@ export const ActivityDetailScreen: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [isFavorited, setIsFavorited] = useState(false);
   const [isLoadingActivity, setIsLoadingActivity] = useState(false);
+  const [showCheckinSuccessModal, setShowCheckinSuccessModal] = useState(false);
 
   // 🛡️ TabBar状态守护：确保活动详情页面TabBar始终隐藏
   useTabBarVerification('ActivityDetail', { debugLogs: false });
@@ -392,12 +394,10 @@ export const ActivityDetailScreen: React.FC = () => {
                 // 发送签到成功事件，更新活动列表
                 DeviceEventEmitter.emit('activitySignedIn', { activityId: activity.id });
                 
-                Alert.alert(
-                  t('activityDetail.checkin_success'), 
-                  t('activityDetail.checkin_success_message')
-                );
+                // 🎊 显示签到成功提示弹窗
+                setShowCheckinSuccessModal(true);
                 
-                // 返回活动详情页面
+                // 返回活动详情页面 (由弹窗处理)
                 navigation.goBack();
               } else {
                 // 详细的错误处理
@@ -539,6 +539,16 @@ export const ActivityDetailScreen: React.FC = () => {
 
   const handleFavorite = () => {
     setIsFavorited(!isFavorited);
+  };
+
+  const handleCheckinSuccessModalClose = () => {
+    setShowCheckinSuccessModal(false);
+  };
+
+  const handleContinueParticipating = () => {
+    setShowCheckinSuccessModal(false);
+    // 可以导航到其他相关页面，比如志愿服务记录页面
+    console.log('🎯 用户选择继续参与活动');
   };
 
   // 格式化时间为12小时制
@@ -747,6 +757,18 @@ export const ActivityDetailScreen: React.FC = () => {
           </TouchableOpacity>
         </View>
       </View>
+
+      {/* 签到成功提示弹窗 */}
+      <SuccessNotificationModal
+        visible={showCheckinSuccessModal}
+        onClose={handleCheckinSuccessModalClose}
+        onAction={handleContinueParticipating}
+        title={t('activityDetail.checkin_success_notification_title')}
+        message={t('activityDetail.checkin_success_notification_message')}
+        actionText={t('activityDetail.checkin_success_notification_action')}
+        icon="checkmark-circle"
+        duration={4000} // 4秒后自动关闭
+      />
     </SafeAreaView>
   );
 };

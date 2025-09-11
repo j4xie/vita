@@ -14,6 +14,7 @@ import { useTranslation } from 'react-i18next';
 import * as Haptics from 'expo-haptics';
 
 import { theme } from '../../theme';
+import { typography } from '../../theme/typography';
 import { useTheme } from '../../context/ThemeContext';
 import { getLastVolunteerRecord, volunteerSignRecord } from '../../services/volunteerAPI';
 import { UserIdentityData } from '../../types/userIdentity';
@@ -314,7 +315,7 @@ const VolunteerQuickActionModalComponent: React.FC<VolunteerQuickActionModalProp
       marginBottom: 4,
     },
     userDetails: {
-      fontSize: 14,
+      fontSize: 16, // 提升至交互文字16pt
       color: isDarkMode ? '#9CA3AF' : '#6B7280',
       textAlign: 'center',
     },
@@ -349,9 +350,9 @@ const VolunteerQuickActionModalComponent: React.FC<VolunteerQuickActionModalProp
       color: isDarkMode ? '#9CA3AF' : '#6B7280',
     },
     statusDetails: {
-      fontSize: 14,
+      fontSize: 16, // 提升至交互文字16pt
       textAlign: 'center',
-      lineHeight: 20,
+      lineHeight: 22,
     },
     statusDetailsActive: {
       color: '#059669',
@@ -365,7 +366,7 @@ const VolunteerQuickActionModalComponent: React.FC<VolunteerQuickActionModalProp
     },
     loadingText: {
       marginTop: 12,
-      fontSize: 14,
+      fontSize: 16, // 提升至交互文字16pt
       color: isDarkMode ? '#9CA3AF' : '#6B7280',
     },
     actions: {
@@ -378,7 +379,7 @@ const VolunteerQuickActionModalComponent: React.FC<VolunteerQuickActionModalProp
       alignItems: 'center',
       justifyContent: 'center',
       paddingVertical: 14,
-      paddingHorizontal: 16,
+      paddingHorizontal: typography.adaptiveButtonSize(16), // iPad: 24, iPhone: 16
       borderRadius: 12,
       gap: 8,
     },
@@ -392,7 +393,7 @@ const VolunteerQuickActionModalComponent: React.FC<VolunteerQuickActionModalProp
       opacity: 0.5,
     },
     buttonText: {
-      fontSize: 14,
+      fontSize: typography.adaptiveFontSize(16), // iPad: 24pt, iPhone: 16pt
       fontWeight: '600',
       color: '#FFFFFF',
     },

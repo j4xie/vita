@@ -13,6 +13,7 @@ import {
   Dimensions,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { typography } from '../../theme/typography';
 import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
@@ -1035,9 +1036,10 @@ const styles = StyleSheet.create({
   },
 
   tabLabel: {
-    fontSize: 11, // 恢复到11pt
+    fontSize: Platform.OS === 'ios' && (Dimensions.get('window').width >= 768) ? 24 : 16, // 强制iPad 24pt
+    fontWeight: '500', // Medium字重
     textAlign: 'center',
-    lineHeight: 13, // 恢复行高
+    lineHeight: Platform.OS === 'ios' && (Dimensions.get('window').width >= 768) ? 30 : 20, // 强制iPad行高
     // transform和color在JSX中动态设置
   },
 

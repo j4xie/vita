@@ -288,6 +288,27 @@ export const PrivacyAgreementModal: React.FC<PrivacyAgreementModalProps> = ({
                 <Text style={styles.contentText}>
                   {t('auth.register.privacy.data_protection')}
                 </Text>
+
+                {/* SMS Consent Section */}
+                <View style={styles.smsConsentBox}>
+                  <Text style={styles.smsConsentTitle}>
+                    📱 {t('auth.register.sms.consent_title')}
+                  </Text>
+                  <Text style={styles.smsConsentText}>
+                    ✅ <Text style={styles.smsConsentBold}>{t('auth.register.sms.consent_text')}</Text> - {t('auth.register.sms.consent_description')}
+                  </Text>
+                  <View style={styles.smsPurposesList}>
+                    <Text style={styles.smsPurposeItem}>• {t('auth.register.sms.consent_purposes.authentication')}</Text>
+                    <Text style={styles.smsPurposeItem}>• {t('auth.register.sms.consent_purposes.notifications')}</Text>
+                    <Text style={styles.smsPurposeItem}>• {t('auth.register.sms.consent_purposes.services')}</Text>
+                  </View>
+                  <Text style={styles.smsNoticeText}>
+                    <Text style={styles.smsNoticeBold}>
+                      {t('auth.register.sms.consent_text') === '我同意接收短信' ? '注意：' : 'Notice: '}
+                    </Text>
+                    {t('auth.register.sms.consent_notice')}
+                  </Text>
+                </View>
               </ScrollView>
 
               {/* Action Buttons */}
@@ -507,5 +528,48 @@ const styles = StyleSheet.create({
   },
   regionButtonTextActive: {
     color: theme.colors.text.inverse,
+  },
+  // SMS Consent Styles
+  smsConsentBox: {
+    backgroundColor: '#fff3cd',
+    borderLeftWidth: 4,
+    borderLeftColor: '#ffc107',
+    padding: theme.spacing[4],
+    marginVertical: theme.spacing[4],
+    borderRadius: theme.borderRadius.lg,
+  },
+  smsConsentTitle: {
+    fontSize: theme.typography.fontSize.lg,
+    fontWeight: theme.typography.fontWeight.bold,
+    color: '#856404',
+    marginBottom: theme.spacing[3],
+  },
+  smsConsentText: {
+    fontSize: theme.typography.fontSize.sm,
+    color: '#856404',
+    lineHeight: theme.typography.fontSize.sm * theme.typography.lineHeight.relaxed,
+    marginBottom: theme.spacing[2],
+  },
+  smsConsentBold: {
+    fontWeight: theme.typography.fontWeight.bold,
+  },
+  smsPurposesList: {
+    marginVertical: theme.spacing[2],
+    paddingLeft: theme.spacing[2],
+  },
+  smsPurposeItem: {
+    fontSize: theme.typography.fontSize.sm,
+    color: '#856404',
+    lineHeight: theme.typography.fontSize.sm * theme.typography.lineHeight.relaxed,
+    marginBottom: theme.spacing[1],
+  },
+  smsNoticeText: {
+    fontSize: theme.typography.fontSize.xs,
+    color: '#856404',
+    lineHeight: theme.typography.fontSize.xs * theme.typography.lineHeight.relaxed,
+    marginTop: theme.spacing[2],
+  },
+  smsNoticeBold: {
+    fontWeight: theme.typography.fontWeight.bold,
   },
 });

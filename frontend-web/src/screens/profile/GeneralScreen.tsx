@@ -23,7 +23,9 @@ import { DeviceEventEmitter } from 'react-native';
 import { theme } from '../../theme';
 import { useLanguage } from '../../context/LanguageContext';
 import { useTheme } from '../../context/ThemeContext';
+import { useUser } from '../../context/UserContext';
 import { useAllDarkModeStyles } from '../../hooks/useDarkModeStyles';
+import { getCurrentToken } from '../../services/authAPI';
 
 interface SettingRowProps {
   title: string;
@@ -31,6 +33,7 @@ interface SettingRowProps {
   onPress: () => void;
   value?: string;
   isLast?: boolean;
+  isDangerous?: boolean;
 }
 
 const SettingRow: React.FC<SettingRowProps> = ({
@@ -39,6 +42,7 @@ const SettingRow: React.FC<SettingRowProps> = ({
   onPress,
   value,
   isLast = false,
+  isDangerous = false,
 }) => {
   const themeContext = useTheme();
   const isDarkMode = themeContext.isDarkMode;
@@ -114,14 +118,14 @@ const SettingRow: React.FC<SettingRowProps> = ({
         <Ionicons
           name={icon}
           size={24}
-          color={theme.colors.primary}
+          color={isDangerous ? '#DC2626' : theme.colors.primary}
           style={rowStyles.settingIcon}
         />
         <Text
           style={[
             rowStyles.settingText,
             isDarkMode && rowStyles.settingTextDark,
-            { color: isDarkMode ? '#ffffff' : '#000000' }
+            { color: isDangerous ? '#DC2626' : (isDarkMode ? '#ffffff' : '#000000') }
           ]}
           allowFontScaling={true}
           maxFontSizeMultiplier={1.4}
@@ -159,6 +163,7 @@ export const GeneralScreen: React.FC = () => {
   const { isDarkMode, styles: dmStyles, gradients: dmGradients } = darkModeSystem;
   const insets = useSafeAreaInsets();
   const { currentLanguage, getLanguageDisplayName } = useLanguage();
+  const { user, logout } = useUser();
 
   // Modal states
 
@@ -354,6 +359,69 @@ export const GeneralScreen: React.FC = () => {
     }
   };
 
+  // Delete account functions
+  const handleDeleteAccountPress = () => {
+    Alert.alert(
+      t('profile.account.deleteAccountConfirm'),
+      t('profile.account.deleteAccountWarning'),
+      [
+        {
+          text: t('profile.account.cancel'),
+          style: 'cancel',
+        },
+        {
+          text: t('profile.account.deleteAccount'),
+          style: 'destructive',
+          onPress: performDeleteAccount,
+        },
+      ]
+    );
+  };
+
+  const performDeleteAccount = async () => {
+    try {
+      const token = await getCurrentToken();
+      if (!token || !user?.id) {
+        throw new Error('No authentication token or user ID');
+      }
+
+      // Call delete account API (接口20) - Web版本使用相同的API
+      const response = await fetch(`https://www.vitaglobal.icu/app/user/logoff?userId=${user.id}`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`Delete account failed: ${response.status}`);
+      }
+
+      // Clear all local data and logout
+      await logout();
+      
+      // For web, redirect to auth or refresh page
+      Alert.alert(
+        t('common.success'),
+        'Account deleted successfully',
+        [
+          {
+            text: t('common.confirm'),
+            onPress: () => {
+              window.location.reload(); // Web specific navigation
+            }
+          }
+        ]
+      );
+    } catch (error) {
+      console.error('Delete account error:', error);
+      Alert.alert(
+        t('common.error'),
+        'Failed to delete account. Please try again later.',
+        [{ text: t('common.confirm') }]
+      );
+    }
+  };
 
   const getRegionDisplayValue = () => {
     try {
@@ -400,6 +468,18 @@ export const GeneralScreen: React.FC = () => {
       onPress: handleDataPress,
     },
   ];
+
+  // Account management items - only show for authenticated users
+  const accountItems = user ? [
+    {
+      id: 'delete-account',
+      title: t('profile.general.deleteAccount'),
+      icon: 'trash-outline' as keyof typeof Ionicons.glyphMap,
+      value: '',
+      onPress: handleDeleteAccountPress,
+      isDangerous: true, // Mark as dangerous action
+    },
+  ] : [];
 
   const styles = StyleSheet.create({
     container: {
@@ -502,6 +582,32 @@ export const GeneralScreen: React.FC = () => {
               ))}
             </View>
           </View>
+
+          {/* 账户管理 - 仅对已登录用户显示 */}
+          {user && accountItems.length > 0 && (
+            <View style={styles.groupContainer}>
+              <Text style={[
+                styles.groupTitle,
+                { color: isDarkMode ? dmStyles.text.secondary.color : '#8e8e93' }
+              ]}>{t('profile.general.sectionAccountManagement')}</Text>
+              <View style={[
+                styles.listContainer,
+                { backgroundColor: isDarkMode ? dmStyles.card.contentSection.backgroundColor : '#ffffff' }
+              ]}>
+                {accountItems.map((item, index) => (
+                  <SettingRow
+                    key={item.id}
+                    title={item.title}
+                    icon={item.icon}
+                    value={item.value}
+                    onPress={item.onPress}
+                    isLast={index === accountItems.length - 1}
+                    isDangerous={item.isDangerous}
+                  />
+                ))}
+              </View>
+            </View>
+          )}
         </ScrollView>
       </SafeAreaView>
 

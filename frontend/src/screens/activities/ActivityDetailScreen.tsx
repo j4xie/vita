@@ -454,41 +454,66 @@ export const ActivityDetailScreen: React.FC = () => {
     }
   };
 
-  // ✅ 监听报名成功事件 - 立即更新机制
+  // ✅ 监听活动状态变化事件 - 立即更新机制
   useEffect(() => {
-    const registrationListener = DeviceEventEmitter.addListener('activityRegistered', (data: { activityId: string }) => {
+    const registrationListener = DeviceEventEmitter.addListener('activityRegistrationChanged', (data: { activityId: string; action: string }) => {
       if (data.activityId === activity.id) {
-        console.log('📋 [ActivityDetail] 收到活动报名成功事件:', {
+        console.log('📋 [ActivityDetail] 收到活动状态变化事件:', {
           activityId: data.activityId,
+          action: data.action,
           currentRegisteredCount: activity.registeredCount,
           currentAttendees: activity.attendees
         });
         
-        // ✅ 立即更新状态
-        setRegistrationStatus('registered');
-        setIsRegistered(true);
-        
-        // ✅ 立即更新本地显示的报名人数
-        setActivity(prev => {
-          const newRegisteredCount = (prev.registeredCount || 0) + 1;
-          const newAttendees = (prev.attendees || 0) + 1;
-          
-          console.log('📈 [ActivityDetail] 立即更新报名人数:', {
-            原始registeredCount: prev.registeredCount,
-            新registeredCount: newRegisteredCount,
-            原始attendees: prev.attendees,
-            新attendees: newAttendees
-          });
-          
-          return {
-            ...prev,
-            registeredCount: newRegisteredCount,
-            attendees: newAttendees
-          };
-        });
-        
-        // ✅ 不需要重新发送事件，避免循环依赖
-        // 事件已经由 RegistrationForm 发送了
+        // ✅ 根据不同的操作类型更新状态
+        switch (data.action) {
+          case 'register':
+            setRegistrationStatus('registered');
+            setIsRegistered(true);
+            // 更新报名人数
+            setActivity(prev => {
+              const newRegisteredCount = (prev.registeredCount || 0) + 1;
+              const newAttendees = (prev.attendees || 0) + 1;
+              console.log('📈 [ActivityDetail] 报名成功，更新人数:', {
+                原始registeredCount: prev.registeredCount,
+                新registeredCount: newRegisteredCount
+              });
+              return {
+                ...prev,
+                registeredCount: newRegisteredCount,
+                attendees: newAttendees
+              };
+            });
+            break;
+            
+          case 'cancel_registration':
+            setRegistrationStatus('upcoming');
+            setIsRegistered(false);
+            // 更新报名人数（减少）
+            setActivity(prev => {
+              const newRegisteredCount = Math.max((prev.registeredCount || 0) - 1, 0);
+              const newAttendees = Math.max((prev.attendees || 0) - 1, 0);
+              console.log('📉 [ActivityDetail] 取消报名，更新人数:', {
+                原始registeredCount: prev.registeredCount,
+                新registeredCount: newRegisteredCount
+              });
+              return {
+                ...prev,
+                registeredCount: newRegisteredCount,
+                attendees: newAttendees
+              };
+            });
+            break;
+            
+          case 'checkin_success':
+            setRegistrationStatus('checked_in');
+            setIsRegistered(true);
+            console.log('✅ [ActivityDetail] 签到成功，更新状态为已签到');
+            break;
+            
+          default:
+            console.log('🔍 [ActivityDetail] 未知的活动状态变化类型:', data.action);
+        }
         
         // ✅ 延迟获取后端最新数据确保同步
         setTimeout(async () => {

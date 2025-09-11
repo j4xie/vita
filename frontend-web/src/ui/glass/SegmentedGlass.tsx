@@ -136,7 +136,7 @@ export const SegmentedGlass: React.FC<SegmentedGlassProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    height: 48, // 标准分段控件高度
+    height: 52, // 调整以适应44pt按钮 + padding
     borderRadius: Glass.radius.capsule,
     overflow: 'hidden',
   },
@@ -169,7 +169,7 @@ const styles = StyleSheet.create({
 
   segmentButton: {
     flex: 1,
-    height: 40,
+    height: 44, // 满足最小触控区域44pt标准
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: 16,

@@ -183,13 +183,11 @@ export const RegisterStep2Screen: React.FC = () => {
   const validateForm = (): boolean => {
     const newErrors: ValidationErrors = {};
 
-    // 验证用户名
-    if (!formData.userName.trim()) {
-      newErrors.userName = t('validation.username_required');
-    } else if (formData.userName.length < 6 || formData.userName.length > 20) {
-      newErrors.userName = t('validation.username_length');
-    } else if (!/^[a-zA-Z0-9]+$/.test(formData.userName)) {
-      newErrors.userName = t('validation.username_format');
+    // 验证邮箱（作为用户名）
+    if (!formData.email.trim()) {
+      newErrors.email = t('validation.email_required');
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      newErrors.email = t('validation.email_invalid');
     }
 
     // 验证昵称
@@ -286,8 +284,8 @@ export const RegisterStep2Screen: React.FC = () => {
     
     // 显示进度提示
     Alert.alert(
-      '⏳ 正在注册',
-      '正在创建您的账户，请稍候...',
+      '⏳ ' + t('auth.register.processing_registration'),
+      t('auth.register.auto_login_message'),
       [],
       { cancelable: false }
     );
@@ -299,24 +297,27 @@ export const RegisterStep2Screen: React.FC = () => {
       if (registrationType === 'invitation') {
         // ②邀请码注册：手机号和邮箱可填可不填，verCode不填
         registrationData = {
-          userName: formData.userName,
+          identity: 1, // 学生身份
+          userName: formData.email, // 使用邮箱作为用户名
           legalName: step1Data.legalName,
           nickName: formData.nickName,
           password: formData.password,
+          email: formData.email, // 邮箱必填
           sex: formData.sex,
           deptId: parseInt(step1Data.selectedSchool!.id),
           orgId: formData.selectedOrganization!.id,
           invCode: referralCode!, // 邀请码注册必须有invCode
           area: detectedRegion, // 地理检测结果（只读）
+          areaCode: (step1Data as any).areaCode || (detectedRegion === 'zh' ? '86' : '1'), // 使用Step1选择的区号
           // 可选字段
           ...(step1Data.phoneNumber && { phonenumber: step1Data.phoneNumber }),
-          ...(formData.email && { email: formData.email }),
           // 不包含 verCode 和 bizId
         };
       } else {
         // ①手机验证码注册：invCode不填
         registrationData = {
-          userName: formData.userName,
+          identity: 1, // 学生身份
+          userName: formData.email, // 使用邮箱作为用户名
           legalName: step1Data.legalName,
           nickName: formData.nickName,
           password: formData.password,
@@ -326,6 +327,7 @@ export const RegisterStep2Screen: React.FC = () => {
           deptId: parseInt(step1Data.selectedSchool!.id),
           orgId: formData.selectedOrganization!.id,
           area: detectedRegion, // 地理检测结果（只读）
+          areaCode: (step1Data as any).areaCode || (detectedRegion === 'zh' ? '86' : '1'), // 使用Step1选择的区号
           // 注意：由于短信服务未配置，暂时不包含验证码
           // verCode: formData.verificationCode,
           // bizId: bizId,
@@ -348,19 +350,19 @@ export const RegisterStep2Screen: React.FC = () => {
         
         // 显示登录进度
         Alert.alert(
-          '🔐 自动登录中',
-          '账户创建成功，正在为您自动登录...',
+          '🔐 ' + t('auth.register.auto_login_title'),
+          t('auth.register.auto_login_message'),
           [],
           { cancelable: false }
         );
         
         // 注册成功后自动登录
         try {
-          console.log('开始自动登录，用户名:', formData.userName);
+          console.log('开始自动登录，邮箱用户名:', formData.email);
           
           // 使用注册时的凭据进行登录
           const loginResult = await login({
-            username: formData.userName, // 注意：登录API使用的是username而不是userName
+            username: formData.email, // 使用邮箱作为登录用户名
             password: formData.password,
           });
           
@@ -390,7 +392,7 @@ export const RegisterStep2Screen: React.FC = () => {
             // 登录失败，但注册成功
             Alert.alert(
               '✅ ' + t('auth.register.success.title'),
-              `账户创建成功！\n\n您的用户名：${formData.userName}\n请前往登录页面使用您的账户登录`,
+              `账户创建成功！\n\n您的登录邮箱：${formData.email}\n请前往登录页面使用您的账户登录`,
               [{
                 text: '去登录',
                 onPress: () => navigation.dispatch(
@@ -407,7 +409,7 @@ export const RegisterStep2Screen: React.FC = () => {
           // 登录失败，但注册成功
           Alert.alert(
             '✅ ' + t('auth.register.success.title'),
-            `账户创建成功！\n\n您的用户名：${formData.userName}\n请前往登录页面使用您的账户登录`,
+            `账户创建成功！\n\n您的登录邮箱：${formData.email}\n请前往登录页面使用您的账户登录`,
             [{
               text: '去登录',
               onPress: () => navigation.dispatch(
@@ -709,19 +711,15 @@ export const RegisterStep2Screen: React.FC = () => {
               <Text style={styles.helpText}>{t('auth.register.form.email_help')}</Text>
             </View>
 
-            {/* 用户名 */}
+            {/* 用户名提示（邮箱即用户名） */}
             <View style={styles.inputContainer}>
-              <Text style={styles.label}>{t('auth.register.form.username_label')}</Text>
-              <TextInput
-                style={[styles.input, errors.userName && styles.inputError]}
-                placeholder={t('auth.register.form.username_placeholder')}
-                value={formData.userName}
-                onChangeText={(text) => updateFormData('userName', text)}
-                autoCapitalize="none"
-                autoCorrect={false}
-                placeholderTextColor={theme.colors.text.disabled}
-              />
-              {errors.userName && <Text style={styles.errorText}>{errors.userName}</Text>}
+              <Text style={styles.label}>{t('auth.register.form.login_info_label')}</Text>
+              <View style={styles.infoContainer}>
+                <Ionicons name="information-circle" size={20} color={theme.colors.primary} />
+                <Text style={styles.infoText}>
+                  {t('auth.register.form.email_as_username_info')}
+                </Text>
+              </View>
             </View>
 
             {/* 昵称 */}
@@ -1183,5 +1181,21 @@ const styles = StyleSheet.create({
     color: theme.colors.primary,
     fontWeight: theme.typography.fontWeight.medium,
     marginRight: theme.spacing[1],
+  },
+  infoContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: theme.colors.primary + '10',
+    paddingHorizontal: theme.spacing[3],
+    paddingVertical: theme.spacing[3],
+    borderRadius: theme.borderRadius.lg,
+  },
+  infoText: {
+    fontSize: theme.typography.fontSize.sm,
+    color: theme.colors.primary,
+    fontWeight: theme.typography.fontWeight.medium,
+    marginLeft: theme.spacing[2],
+    flex: 1,
+    lineHeight: theme.typography.fontSize.sm * 1.4,
   },
 });

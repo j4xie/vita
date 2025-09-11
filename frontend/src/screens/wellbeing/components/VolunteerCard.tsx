@@ -464,11 +464,11 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   phone: {
-    fontSize: 15,
+    fontSize: 16, // 提升至最小交互文字16pt
     marginBottom: 2,
   },
   school: {
-    fontSize: 13,
+    fontSize: 14, // 提升至辅助信息最小14pt
   },
   statusBadge: {
     paddingHorizontal: 8,
@@ -489,11 +489,11 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   workingDuration: {
-    fontSize: 11,
+    fontSize: 16, // 提升至交互文字16pt（时长信息重要）
     fontWeight: '600',
   },
   totalHoursPreview: {
-    fontSize: 11,
+    fontSize: 16, // 提升至交互文字16pt（小时数重要）
     fontWeight: '400',
     marginTop: 2,
   },

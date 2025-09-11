@@ -8,35 +8,26 @@ interface WebTextInputProps extends RNTextInputProps {
 export const WebTextInput = forwardRef<RNTextInput, WebTextInputProps>((props, ref) => {
   const [debugInfo, setDebugInfo] = useState<any>({});
   const internalRef = useRef<RNTextInput>(null);
-  const debugMode = props.debugMode !== false; // 默认开启调试模式
+  const debugMode = props.debugMode === true; // 默认关闭调试模式
   
   // 统一ref处理
   const inputRef = ref || internalRef;
 
-  // Web环境调试信息收集
+  // Web环境调试信息收集（只在组件初始化时执行一次）
   useEffect(() => {
     if (Platform.OS === 'web' && debugMode) {
-      const updateDebugInfo = () => {
-        setDebugInfo({
-          timestamp: new Date().toLocaleTimeString(),
-          placeholder: props.placeholder,
-          value: props.value,
-          editable: props.editable !== false,
-          disabled: props.disabled || false,
-          hasOnChangeText: !!props.onChangeText,
-          hasOnFocus: !!props.onFocus,
-          autoFocus: props.autoFocus,
-          readOnly: props.readOnly,
-        });
-      };
-      
-      updateDebugInfo();
-      
-      // 定期更新调试信息
-      const interval = setInterval(updateDebugInfo, 5000);
-      return () => clearInterval(interval);
+      setDebugInfo({
+        timestamp: new Date().toLocaleTimeString(),
+        placeholder: props.placeholder,
+        editable: props.editable !== false,
+        disabled: props.disabled || false,
+        hasOnChangeText: !!props.onChangeText,
+        hasOnFocus: !!props.onFocus,
+        autoFocus: props.autoFocus,
+        readOnly: props.readOnly,
+      });
     }
-  }, [props.placeholder, props.value, props.editable, props.disabled, props.onChangeText, props.onFocus, debugMode]);
+  }, [debugMode]); // 大幅减少依赖项，避免频繁重新创建
 
   // 在Web环境下，使用增强的TextInput
   if (Platform.OS === 'web') {

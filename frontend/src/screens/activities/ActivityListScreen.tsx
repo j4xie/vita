@@ -848,28 +848,46 @@ export const ActivityListScreen: React.FC = () => {
       });
     }
     
-    // 基于时间的状态匹配 - 前端实时计算确保准确性
+    // ✅ 统一状态计算 - 避免重复计算
     const currentFilterKey = filterTabs[activeFilter];
     let matchesFilter = true;
     
     if (currentFilterKey !== 'all') {
+      // 计算活动的真实状态
       const now = new Date();
       const activityStart = new Date(activity.date + ' ' + (activity.time || '00:00'));
       const activityEnd = activity.endDate ? new Date(activity.endDate + ' 23:59:59') : activityStart;
       
-      // 前端实时计算活动状态，不依赖后端可能过时的状态
+      // 实时计算活动是否已结束
+      const isActivityEnded = activityEnd.getTime() < now.getTime();
+      
+      // ✅ 互斥过滤逻辑：确保ended和available不会重复显示同一个活动
       switch(currentFilterKey) {
-        case 'upcoming':
-          // 即将开始：活动开始时间在现在之后
-          matchesFilter = activityStart.getTime() > now.getTime();
+        case 'available':
+          // 可报名：只显示未结束的活动
+          matchesFilter = !isActivityEnded;
           break;
         case 'ended':
-          // 已结束：活动结束时间在现在之前
-          matchesFilter = activityEnd.getTime() < now.getTime();
+          // 已结束：只显示已结束的活动
+          matchesFilter = isActivityEnded;
+          break;
+        case 'upcoming':
+          // 即将开始：活动开始时间在现在之后且未结束
+          matchesFilter = activityStart.getTime() > now.getTime() && !isActivityEnded;
           break;
         default:
           matchesFilter = true;
       }
+      
+      // 调试状态计算
+      console.log('🔍 [STATUS-DEBUG] 活动状态计算:', {
+        title: activity.title.substring(0, 20) + '...',
+        filterKey: currentFilterKey,
+        isEnded: isActivityEnded,
+        matchesFilter,
+        endTime: activityEnd.toISOString(),
+        currentTime: now.toISOString()
+      });
     }
     
     // 过滤器匹配

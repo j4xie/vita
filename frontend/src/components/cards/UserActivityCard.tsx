@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   Platform,
   Alert,
+  DeviceEventEmitter,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
@@ -135,6 +136,14 @@ export const UserActivityCard: React.FC<UserActivityCardProps> = ({
         if (onCancelRegistration) {
           onCancelRegistration(activity.id);
         }
+        
+        // 发送全局事件通知其他页面更新状态
+        console.log('🔄 发送活动状态变化事件:', { activityId: activity.id, action: 'cancel_registration' });
+        DeviceEventEmitter.emit('activityRegistrationChanged', {
+          activityId: activity.id,
+          action: 'cancel_registration',
+          timestamp: Date.now()
+        });
       } else {
         throw new Error(response.msg || '取消报名失败');
       }
@@ -288,13 +297,13 @@ const styles = StyleSheet.create({
   },
   
   activityTime: {
-    fontSize: 14,
+    fontSize: 16, // 提升至交互文字16pt
     color: '#6B7280',
     marginBottom: 2,
   },
   
   activityLocation: {
-    fontSize: 13,
+    fontSize: 14, // 提升至辅助信息最小14pt
     color: '#9CA3AF',
     flexDirection: 'row',
     alignItems: 'center',
@@ -322,7 +331,7 @@ const styles = StyleSheet.create({
   
   scanButtonText: {
     color: '#FFFFFF',
-    fontSize: 12,
+    fontSize: 16, // 按钮文字最小16pt
     fontWeight: '500',
     marginLeft: 3,
   },
@@ -341,7 +350,7 @@ const styles = StyleSheet.create({
   
   cancelButtonText: {
     color: '#EF4444',
-    fontSize: 12,
+    fontSize: 16, // 按钮文字最小16pt
     fontWeight: '500',
     marginLeft: 3,
   },

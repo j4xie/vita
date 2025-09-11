@@ -174,14 +174,7 @@ export const AccessibleTouchable: React.FC<AccessibleTouchableProps> = ({
         {children}
       </View>
       
-      {/* 屏幕阅读器模式下的额外提示 */}
-      {isScreenReaderEnabled && accessibilityHint && (
-        <View style={styles.screenReaderHint}>
-          <Text style={styles.screenReaderHintText}>
-            {accessibilityHint}
-          </Text>
-        </View>
-      )}
+      {/* 屏幕阅读器模式下的额外提示 - 使用无障碍语义，不需要可视文本 */}
     </TouchableOpacity>
   );
 };
@@ -342,12 +335,10 @@ const styles = StyleSheet.create({
     position: 'absolute',
     left: -10000,
     top: -10000,
-    width: 1,
-    height: 1,
-  },
-  
-  screenReaderHintText: {
-    fontSize: 1,
+    width: 0,
+    height: 0,
+    opacity: 0,
+    overflow: 'hidden',
   },
   
   iconButton: {

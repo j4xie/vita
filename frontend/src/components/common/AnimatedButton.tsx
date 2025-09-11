@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { theme } from '../../theme';
+import { typography } from '../../theme/typography';
 import { BRAND_GLASS, BRAND_INTERACTIONS, BRAND_GRADIENT, RESTRAINED_COLORS } from '../../theme/core';
 import { scaleIn, scaleOut, bounce } from '../../utils/animations';
 
@@ -107,24 +108,24 @@ export const AnimatedButton: React.FC<AnimatedButtonProps> = ({
     return configs[variant];
   };
 
-  // 获取尺寸配置
+  // 获取尺寸配置（iPad按钮宽度1.5倍）
   const getSizeConfig = () => {
     const configs = {
       small: {
         paddingVertical: theme.spacing.sm,
-        paddingHorizontal: theme.spacing.md,
+        paddingHorizontal: typography.adaptiveButtonSize(theme.spacing.md),
         fontSize: theme.typography.fontSize.sm,
         borderRadius: RESTRAINED_COLORS.L2_EMPHASIS.borderRadius.compact,
       },
       medium: {
         paddingVertical: theme.spacing.md,
-        paddingHorizontal: theme.spacing.lg,
+        paddingHorizontal: typography.adaptiveButtonSize(theme.spacing.lg),
         fontSize: theme.typography.fontSize.base,
         borderRadius: RESTRAINED_COLORS.L2_EMPHASIS.borderRadius.button,
       },
       large: {
         paddingVertical: theme.spacing.lg,
-        paddingHorizontal: theme.spacing.xl,
+        paddingHorizontal: typography.adaptiveButtonSize(theme.spacing.xl),
         fontSize: theme.typography.fontSize.lg,
         borderRadius: RESTRAINED_COLORS.L2_EMPHASIS.borderRadius.button,
       },

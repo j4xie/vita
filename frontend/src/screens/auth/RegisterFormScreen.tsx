@@ -66,6 +66,8 @@ export const RegisterFormScreen: React.FC = () => {
   const [verificationCode, setVerificationCode] = useState('');
   const [countdown, setCountdown] = useState(0);
   const [agreedToTerms, setAgreedToTerms] = useState(false);
+  const [agreedToPrivacy, setAgreedToPrivacy] = useState(false);
+  const [agreedToSMS, setAgreedToSMS] = useState(false);
   
   // 地域检测状态
   const [regionDetecting, setRegionDetecting] = useState(false);
@@ -212,6 +214,17 @@ export const RegisterFormScreen: React.FC = () => {
           : t('validation.phone_usa_invalid');
       }
     }
+
+    // 验证合规勾选
+    if (!agreedToPrivacy) {
+      Alert.alert(t('common.error'), t('auth.register.sms.terms_privacy_checkbox'));
+      return false;
+    }
+    
+    if (!agreedToSMS) {
+      Alert.alert(t('common.error'), t('auth.register.sms.sms_consent_checkbox'));
+      return false;
+    }
     
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -354,12 +367,45 @@ export const RegisterFormScreen: React.FC = () => {
 
   // 解析注册错误为用户友好提示
   const parseRegistrationError = (errorMsg: string): string => {
-    if (errorMsg.includes('phonenumber')) return t('validation.phone_format_error');
-    if (errorMsg.includes('email')) return t('validation.email_format_error');
-    if (errorMsg.includes('userName')) return t('validation.username_already_exists');
+    console.log('🔍 [App-注册错误解析] 原始错误信息:', errorMsg);
+    
+    // 添加更多具体的错误匹配模式
+    if (errorMsg.includes('userName') || errorMsg.includes('用户名')) {
+      if (errorMsg.includes('已存在') || errorMsg.includes('失败') || errorMsg.includes('exist')) {
+        return '用户名已被使用，请换一个用户名';
+      }
+      return t('validation.username_already_exists');
+    }
+    if (errorMsg.includes('phonenumber') || errorMsg.includes('手机号')) {
+      if (errorMsg.includes('已存在') || errorMsg.includes('exist')) {
+        return '手机号已被注册，请使用其他手机号或尝试找回密码';
+      }
+      return t('validation.phone_format_error');
+    }
+    if (errorMsg.includes('email') || errorMsg.includes('邮箱')) {
+      if (errorMsg.includes('已存在') || errorMsg.includes('exist')) {
+        return '邮箱已被注册，请使用其他邮箱';
+      }
+      return t('validation.email_format_error');
+    }
     if (errorMsg.includes('Duplicate entry')) return t('validation.duplicate_registration');
     if (errorMsg.includes('too long')) return t('validation.field_too_long');
     if (errorMsg.includes('constraint')) return t('validation.data_constraint_error');
+    
+    // 邀请码相关错误
+    if (errorMsg.includes('invCode') || errorMsg.includes('邀请码')) {
+      if (errorMsg.includes('不存在') || errorMsg.includes('无效') || errorMsg.includes('invalid')) {
+        return '邀请码不存在或已失效，请检查邀请码是否正确';
+      }
+      if (errorMsg.includes('已使用') || errorMsg.includes('used')) {
+        return '此邀请码已被使用，请联系邀请人获取新的邀请码';
+      }
+      if (errorMsg.includes('过期') || errorMsg.includes('expired')) {
+        return '邀请码已过期，请联系邀请人重新生成邀请码';
+      }
+      return '邀请码验证失败，请检查邀请码是否正确';
+    }
+    
     return t('auth.register.error_message');
   };
 
@@ -383,7 +429,7 @@ export const RegisterFormScreen: React.FC = () => {
         deptId: formData.universityId, // 传递学校ID，确保用户关联正确的学校
         orgId: formData.organizationId,
         invCode: formData.referralCode,
-        area: formData.area, // 地域选择
+        areaCode: formData.area, // 修复：API期望areaCode字段而不是area
       };
 
       console.log('📋 邀请码注册数据:', {
@@ -622,6 +668,52 @@ export const RegisterFormScreen: React.FC = () => {
         />
         {errors.confirmPassword && <Text style={styles.errorText}>{errors.confirmPassword}</Text>}
       </View>
+
+      {/* 移动到第2步的性别选择 */}
+      <View style={styles.inputContainer}>
+        <Text style={styles.label}>{t('auth.register.form.gender_label')}</Text>
+        <View style={styles.genderContainer}>
+          <TouchableOpacity
+            style={[styles.genderButton, formData.sex === '0' && styles.genderActive]}
+            onPress={() => updateFormData('sex', '0')}
+          >
+            <Text style={[styles.genderText, formData.sex === '0' && styles.genderTextActive]}>
+              {t('auth.register.form.gender_male')}
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.genderButton, formData.sex === '1' && styles.genderActive]}
+            onPress={() => updateFormData('sex', '1')}
+          >
+            <Text style={[styles.genderText, formData.sex === '1' && styles.genderTextActive]}>
+              {t('auth.register.form.gender_female')}
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.genderButton, formData.sex === '2' && styles.genderActive]}
+            onPress={() => updateFormData('sex', '2')}
+          >
+            <Text style={[styles.genderText, formData.sex === '2' && styles.genderTextActive]}>
+              {t('auth.register.form.gender_unknown')}
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      {/* 移动到第2步的推荐组织 */}
+      <View style={styles.inputContainer}>
+        <Text style={styles.label}>{t('auth.register.form.organization_label')}</Text>
+        <OrganizationSelector
+          value={formData.organization}
+          selectedId={formData.organizationId}
+          onSelect={(organization) => {
+            updateFormData('organization', organization.name);
+            updateFormData('organizationId', organization.id.toString());
+          }}
+          placeholder={t('auth.register.form.organization_placeholder')}
+          error={errors.organization}
+        />
+      </View>
     </View>
   );
 
@@ -656,7 +748,7 @@ export const RegisterFormScreen: React.FC = () => {
       </View>
 
       <View style={styles.inputContainer}>
-        <Text style={styles.label}>{t('auth.register.form.phone_label')}</Text>
+        <Text style={styles.label}>{t('auth.register.form.phone_label')} *</Text>
         <View style={styles.phoneInputWrapper}>
           <Text style={styles.phonePrefix}>
             +{formData.phoneType === 'CN' ? '86' : '1'}
@@ -673,73 +765,63 @@ export const RegisterFormScreen: React.FC = () => {
         {errors.phoneNumber && <Text style={styles.errorText}>{errors.phoneNumber}</Text>}
       </View>
 
-      <View style={styles.inputContainer}>
-        <Text style={styles.label}>{t('auth.register.form.gender_label')}</Text>
-        <View style={styles.genderContainer}>
-          <TouchableOpacity
-            style={[styles.genderButton, formData.sex === '0' && styles.genderActive]}
-            onPress={() => updateFormData('sex', '0')}
+      {/* 合规勾选区域 */}
+      <View style={styles.complianceContainer}>
+        {/* 服务条款和隐私政策勾选 */}
+        <View style={styles.checkboxContainer}>
+          <TouchableOpacity 
+            onPress={() => setAgreedToPrivacy(!agreedToPrivacy)}
+            style={styles.checkboxRow}
           >
-            <Text style={[styles.genderText, formData.sex === '0' && styles.genderTextActive]}>
-              {t('auth.register.form.gender_male')}
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.genderButton, formData.sex === '1' && styles.genderActive]}
-            onPress={() => updateFormData('sex', '1')}
-          >
-            <Text style={[styles.genderText, formData.sex === '1' && styles.genderTextActive]}>
-              {t('auth.register.form.gender_female')}
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.genderButton, formData.sex === '2' && styles.genderActive]}
-            onPress={() => updateFormData('sex', '2')}
-          >
-            <Text style={[styles.genderText, formData.sex === '2' && styles.genderTextActive]}>
-              {t('auth.register.form.gender_unknown')}
-            </Text>
+            <View style={[styles.checkbox, agreedToPrivacy && styles.checkboxChecked]}>
+              {agreedToPrivacy && (
+                <Ionicons name="checkmark" size={16} color={theme.colors.text.inverse} />
+              )}
+            </View>
+            <View style={styles.checkboxTextContainer}>
+              <View style={styles.termsTextRow}>
+                <Text style={styles.checkboxText}>{t('auth.register.form.terms_checkbox')}</Text>
+                <TouchableOpacity onPress={() => handleTermsPress('terms')}>
+                  <Text style={styles.termsLink}>《{t('auth.register.sms.service_terms')}》</Text>
+                </TouchableOpacity>
+                <Text style={styles.checkboxText}>{t('auth.register.and')}</Text>
+                <TouchableOpacity onPress={() => handleTermsPress('privacy')}>
+                  <Text style={styles.termsLink}>《{t('auth.register.sms.privacy_policy')}》</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
           </TouchableOpacity>
         </View>
-      </View>
 
-      <View style={styles.inputContainer}>
-        <Text style={styles.label}>{t('auth.register.form.organization_label')}</Text>
-        <OrganizationSelector
-          value={formData.organization}
-          selectedId={formData.organizationId}
-          onSelect={(organization) => {
-            updateFormData('organization', organization.name);
-            updateFormData('organizationId', organization.id.toString());
-          }}
-          placeholder={t('auth.register.form.organization_placeholder')}
-          error={errors.organization}
-        />
-      </View>
+        {/* 短信接收同意勾选 */}
+        <View style={styles.checkboxContainer}>
+          <TouchableOpacity 
+            onPress={() => setAgreedToSMS(!agreedToSMS)}
+            style={styles.checkboxRow}
+          >
+            <View style={[styles.checkbox, agreedToSMS && styles.checkboxChecked]}>
+              {agreedToSMS && (
+                <Ionicons name="checkmark" size={16} color={theme.colors.text.inverse} />
+              )}
+            </View>
+            <View style={styles.checkboxTextContainer}>
+              <Text style={styles.checkboxText}>
+                {t('auth.register.sms.sms_consent_checkbox')}
+              </Text>
+            </View>
+          </TouchableOpacity>
+        </View>
 
-      <View style={styles.termsContainer}>
-        <TouchableOpacity onPress={() => setAgreedToTerms(!agreedToTerms)}>
-          <View style={[styles.checkbox, agreedToTerms && styles.checkboxChecked]}>
-            {agreedToTerms && (
-              <Ionicons name="checkmark" size={16} color={theme.colors.text.inverse} />
-            )}
-          </View>
-        </TouchableOpacity>
-        <View style={styles.termsTextContainer}>
-          <Text style={styles.termsText}>
-            {t('auth.register.form.terms_checkbox')}
-            <TouchableOpacity onPress={() => handleTermsPress('terms')}>
-              <Text style={styles.termsLink}> {t('auth.register.terms_of_service')} </Text>
-            </TouchableOpacity>
-            {t('auth.register.and')}
-            <TouchableOpacity onPress={() => handleTermsPress('privacy')}>
-              <Text style={styles.termsLink}> {t('auth.register.privacy_policy')}</Text>
-            </TouchableOpacity>
+        {/* 合规说明文本 */}
+        <View style={styles.complianceNoticeContainer}>
+          <Text style={styles.complianceNotice}>
+            {t('auth.register.sms.compliance_notice')}
           </Text>
         </View>
       </View>
     </View>
   );
+
 
   return (
     <SafeAreaView style={styles.container}>
@@ -777,10 +859,10 @@ export const RegisterFormScreen: React.FC = () => {
                 style={[
                   styles.nextButton,
                   loading && styles.nextButtonDisabled,
-                  currentStep === 3 && !agreedToTerms && styles.nextButtonDisabled
+                  currentStep === 3 && (!agreedToPrivacy || !agreedToSMS) && styles.nextButtonDisabled
                 ]}
                 onPress={handleNext}
-                disabled={loading || (currentStep === 3 && !agreedToTerms)}
+                disabled={loading || (currentStep === 3 && (!agreedToPrivacy || !agreedToSMS))}
               >
                 {loading ? (
                   <View style={styles.loadingContainer}>
@@ -1216,5 +1298,63 @@ const styles = StyleSheet.create({
     color: theme.colors.text.inverse,
     marginTop: theme.spacing[2],
     textAlign: 'center',
+  },
+  // 合规勾选区域样式
+  complianceContainer: {
+    marginTop: theme.spacing[4],
+    padding: theme.spacing[4],
+    backgroundColor: theme.colors.background.secondary,
+    borderRadius: theme.borderRadius.lg,
+    borderWidth: 1,
+    borderColor: theme.colors.border.secondary,
+  },
+  complianceTitle: {
+    fontSize: theme.typography.fontSize.lg,
+    fontWeight: theme.typography.fontWeight.semibold,
+    color: theme.colors.text.primary,
+    marginBottom: theme.spacing[4],
+    textAlign: 'center',
+  },
+  checkboxContainer: {
+    marginBottom: theme.spacing[3],
+  },
+  checkboxRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+  },
+  checkboxTextContainer: {
+    flex: 1,
+    marginLeft: theme.spacing[3],
+  },
+  checkboxText: {
+    fontSize: theme.typography.fontSize.sm,
+    color: theme.colors.text.primary,
+    lineHeight: theme.typography.fontSize.sm * theme.typography.lineHeight.relaxed,
+    fontWeight: theme.typography.fontWeight.medium,
+  },
+  complianceNoticeContainer: {
+    marginTop: theme.spacing[4],
+    padding: theme.spacing[3],
+    backgroundColor: '#fff3cd',
+    borderRadius: theme.borderRadius.md,
+    borderLeftWidth: 4,
+    borderLeftColor: '#ffc107',
+  },
+  complianceNotice: {
+    fontSize: theme.typography.fontSize.xs,
+    color: '#856404',
+    lineHeight: theme.typography.fontSize.xs * theme.typography.lineHeight.relaxed,
+    textAlign: 'left',
+  },
+  termsTextRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+  },
+  termsLink: {
+    fontSize: theme.typography.fontSize.sm,
+    color: theme.colors.primary,
+    fontWeight: theme.typography.fontWeight.medium,
+    marginHorizontal: theme.spacing[1],
   },
 });

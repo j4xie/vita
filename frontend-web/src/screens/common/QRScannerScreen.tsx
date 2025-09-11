@@ -17,8 +17,10 @@ import { WebHaptics as Haptics } from '../../utils/WebHaptics';
 import { WebCameraView } from '../../components/web/WebCameraView';
 import { EnhancedWebCameraView } from '../../components/web/EnhancedWebCameraView';
 import { SimpleQRScanner } from '../../components/web/SimpleQRScanner';
+import { NativeQRScanner } from '../../components/web/NativeQRScanner';
 import { ReferralCodeInputSheet } from '../../components/sheets/ReferralCodeInputSheet';
 import { ScanFeedbackOverlay, QRCodeBounds } from '../../components/common/ScanFeedbackOverlay';
+import { ScannedUserInfoModal } from '../../components/modals/ScannedUserInfoModal';
 
 import { theme } from '../../theme';
 import { useOrganization } from '../../context/OrganizationContext';
@@ -29,6 +31,7 @@ import { Organization } from '../../types/organization';
 import { UserIdentityData, ParsedUserQRCode } from '../../types/userIdentity';
 import { pomeloXAPI } from '../../services/PomeloXAPI';
 import { useUser } from '../../context/UserContext';
+import { decodeActivityHash } from '../../utils/md5Decoder';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 const scanAreaSize = screenWidth * 0.7;
@@ -87,19 +90,35 @@ export const QRScannerScreen: React.FC = () => {
   const [scanResult, setScanResult] = useState<MerchantQRScanResult | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
 
+  // 用户身份码扫描相关状态
+  const [showUserInfoModal, setShowUserInfoModal] = useState(false);
+  const [scannedUserData, setScannedUserData] = useState<UserIdentityData | null>(null);
+
   // 用于保存扫描数据的ref
   const scannedDataRef = useRef<string>('');
 
   const handleBarCodeScanned = ({ type, data, bounds }: { type: string; data: string; bounds?: any }) => {
-    if (scanned || isProcessing) return;
+    console.log('🔎 [QRScanner Web] handleBarCodeScanned 被调用:', {
+      type, 
+      data: data?.substring(0, 50), 
+      bounds,
+      currentState: { scanned, isProcessing }
+    });
     
-    console.log('🔎 [QRScanner Web] 检测到二维码:', { type, data: data?.substring(0, 50), bounds });
+    if (scanned || isProcessing) {
+      console.log('⏭️ [QRScanner Web] 跳过处理，状态:', { scanned, isProcessing });
+      return;
+    }
+    
+    console.log('✅ [QRScanner Web] 开始处理扫码结果');
     
     // 保存扫描数据
     scannedDataRef.current = data;
+    console.log('💾 [QRScanner Web] 保存扫描数据到ref');
     
     // 设置扫码状态和二维码位置
     setScanned(true);
+    console.log('🔒 [QRScanner Web] 设置scanned状态为true');
     
     // 如果有边界信息，保存用于定位圆圈
     if (bounds) {
@@ -107,50 +126,84 @@ export const QRScannerScreen: React.FC = () => {
         origin: { x: bounds.origin.x, y: bounds.origin.y },
         size: { width: bounds.size.width, height: bounds.size.height }
       });
+      console.log('📍 [QRScanner Web] 设置QR码边界信息');
     }
     
     // 显示扫码反馈动画
     setShowScanFeedback(true);
+    console.log('🎬 [QRScanner Web] 显示扫码反馈动画');
     
     // Web端触觉反馈（在ScanFeedbackOverlay中处理）
     if (Platform.OS === 'ios') {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     }
+    
+    // 直接延迟调用处理函数，不依赖动画回调
+    console.log('⚡ [QRScanner Web] 设置直接处理定时器');
+    setTimeout(() => {
+      console.log('⏰ [QRScanner Web] 直接处理定时器触发');
+      handleScanFeedbackComplete();
+    }, 1000);
   };
 
   // 扫码反馈动画完成后处理扫描结果
   const handleScanFeedbackComplete = () => {
+    console.log('🎬 [QRScanner] handleScanFeedbackComplete 被调用');
     setShowScanFeedback(false);
     
     // 获取最后扫描的数据
     const lastScannedData = scannedDataRef.current;
+    console.log('📋 [QRScanner] 扫描数据检查:', {
+      hasData: !!lastScannedData,
+      dataLength: lastScannedData?.length,
+      purpose,
+      states: { scanned, isProcessing }
+    });
+    
     if (!lastScannedData) {
-      console.warn('⚠️ [QRScanner Web] 扫码数据丢失');
+      console.warn('⚠️ [QRScanner Web] 扫码数据丢失，重置状态');
       setScanned(false);
+      setIsProcessing(false);
       return;
     }
     
     console.log('✅ [QRScanner Web] 开始处理扫码结果:', lastScannedData.substring(0, 50));
+    console.log('🎯 [QRScanner] 处理purpose:', purpose);
+    
+    // 设置处理状态
+    setIsProcessing(true);
     
     // 根据不同用途处理扫描结果
-    switch (purpose) {
-      case 'register':
-        handleRegisterCode(lastScannedData);
-        break;
-      case 'verify':
-        handleVerifyCode(lastScannedData);
-        break;
-      case 'membership_card':
-        handleMembershipCardScan(lastScannedData);
-        break;
-      case 'user_identity':
-        handleUserIdentityScan(lastScannedData);
-        break;
-      case 'activity_signin':
-        handleActivitySignInScan(lastScannedData);
-        break;
-      default:
-        handleGeneralScan(lastScannedData);
+    try {
+      switch (purpose) {
+        case 'register':
+          console.log('📝 [QRScanner] 处理注册码');
+          handleRegisterCode(lastScannedData);
+          break;
+        case 'verify':
+          console.log('✅ [QRScanner] 处理验证码');
+          handleVerifyCode(lastScannedData);
+          break;
+        case 'membership_card':
+          console.log('💳 [QRScanner] 处理会员卡');
+          handleMembershipCardScan(lastScannedData);
+          break;
+        case 'user_identity':
+          console.log('🆔 [QRScanner] 处理用户身份码');
+          handleUserIdentityScan(lastScannedData);
+          break;
+        case 'activity_signin':
+          console.log('🏃 [QRScanner] 处理活动签到');
+          handleActivitySignInScan(lastScannedData);
+          break;
+        default:
+          console.log('🔍 [QRScanner] 处理通用扫描');
+          handleGeneralScan(lastScannedData);
+      }
+    } catch (error) {
+      console.error('❌ [QRScanner] 处理扫描结果异常:', error);
+      setScanned(false);
+      setIsProcessing(false);
     }
   };
 
@@ -187,7 +240,7 @@ export const QRScannerScreen: React.FC = () => {
                 text: t('qr.results.continue_register'),
                 onPress: () => {
                   // 跳转到新的注册流程，并标记为邀请码注册
-                  navigation.navigate('RegisterStep1', { 
+                  navigation.navigate('IdentityChoice', { 
                     referralCode,
                     hasReferralCode: true,
                     registrationType: 'invitation', // 标记为邀请码注册
@@ -223,7 +276,7 @@ export const QRScannerScreen: React.FC = () => {
             {
               text: t('qr.results.continue_register'),
               onPress: () => {
-                navigation.navigate('RegisterStep1', { 
+                navigation.navigate('IdentityChoice', { 
                   referralCode,
                   hasReferralCode: true,
                   registrationType: 'invitation'
@@ -331,10 +384,21 @@ export const QRScannerScreen: React.FC = () => {
       const activityId = parseActivityQRCode(qrData);
       
       if (!activityId) {
-        showScanError(
-          t('qr.results.invalid_qr_title'),
-          t('qr.results.invalid_activity_qr_message')
-        );
+        console.log('❌ [活动签到] 无法解析活动ID，可能是哈希格式');
+        
+        // 如果是32位哈希，尝试特殊处理
+        if (/^[a-f0-9]{32}$/.test(qrData)) {
+          console.log('🔐 [活动签到] 检测到32位哈希，显示特殊提示');
+          showScanError(
+            '活动码格式不支持',
+            `检测到活动相关哈希码：${qrData}\n\n当前不支持此格式的活动码。请联系管理员获取标准格式的活动签到码。`
+          );
+        } else {
+          showScanError(
+            t('qr.results.invalid_qr_title'),
+            `无法识别的活动码格式：${qrData.substring(0, 50)}\n\n请扫描标准格式的活动签到码。`
+          );
+        }
         return;
       }
 
@@ -412,28 +476,55 @@ export const QRScannerScreen: React.FC = () => {
 
   const parseActivityQRCode = (qrData: string): number | null => {
     try {
-      // 假设活动二维码格式为: VG_ACTIVITY_{activityId} 或包含JSON的base64
+      console.log('🔍 [活动码解析] 开始解析活动QR码:', qrData.substring(0, 50));
+      
+      // 标准活动二维码格式: VG_ACTIVITY_{activityId} 或包含JSON的base64
       if (qrData.startsWith('VG_ACTIVITY_')) {
+        console.log('📝 [活动码解析] 标准VG_ACTIVITY_格式');
         const data = qrData.replace('VG_ACTIVITY_', '');
         // 尝试解析为JSON
         try {
           const activityData = JSON.parse(atob(data));
+          console.log('✅ [活动码解析] JSON解析成功，活动ID:', activityData.activityId);
           return activityData.activityId;
         } catch {
           // 如果不是JSON，可能直接是活动ID
-          return parseInt(data);
+          const id = parseInt(data);
+          console.log('📊 [活动码解析] 直接数字解析，活动ID:', id);
+          return isNaN(id) ? null : id;
         }
       }
       
-      // 尝试直接解析为数字
-      const directId = parseInt(qrData);
-      if (!isNaN(directId)) {
+      // 纯数字ID
+      if (/^\d+$/.test(qrData)) {
+        const directId = parseInt(qrData);
+        console.log('🔢 [活动码解析] 纯数字ID:', directId);
         return directId;
       }
       
+      // 32位哈希（尝试MD5破解）
+      if (/^[a-f0-9]{32}$/.test(qrData)) {
+        console.log('🔐 [活动码解析] 32位哈希，尝试MD5破解');
+        const decodeResult = decodeActivityHash(qrData);
+        
+        if (decodeResult.success && decodeResult.activityId) {
+          console.log('🎯 [活动码解析] MD5破解成功:', {
+            activityId: decodeResult.activityId,
+            originalText: decodeResult.originalText,
+            attempts: decodeResult.attempts,
+            timeMs: decodeResult.timeMs
+          });
+          return decodeResult.activityId;
+        } else {
+          console.log('❌ [活动码解析] MD5破解失败，尝试次数:', decodeResult.attempts);
+          return null;
+        }
+      }
+      
+      console.log('❌ [活动码解析] 无法识别的格式');
       return null;
     } catch (error) {
-      console.error('Error parsing activity QR code:', error);
+      console.error('❌ [活动码解析] 解析异常:', error);
       return null;
     }
   };
@@ -508,152 +599,407 @@ export const QRScannerScreen: React.FC = () => {
   };
 
   const handleGeneralScan = (data: string) => {
-    // 首先检查是否为用户身份码
+    console.log('🔍 [QRScanner] handleGeneralScan 处理数据:', data.substring(0, 100));
+    
+    // 智能QR码类型识别
+    const qrType = identifyQRCodeType(data);
+    console.log('🧠 [QRScanner] QR码类型识别结果:', qrType);
+    
+    switch (qrType.type) {
+      case 'user_identity':
+        console.log('🆔 [QRScanner] 识别为用户身份码，转发处理');
+        handleUserIdentityScan(data);
+        return;
+        
+      case 'activity':
+      case 'activity_hash':
+        console.log('🏃 [QRScanner] 识别为活动码，转发处理');
+        handleActivitySignInScan(data);
+        return;
+        
+      case 'referral':
+        console.log('📝 [QRScanner] 识别为推荐码，转发处理');
+        handleRegisterCode(data);
+        return;
+        
+      case 'unknown':
+      default:
+        console.log('📄 [QRScanner] 未知QR码类型，显示详细信息');
+        showUnknownQRResult(data, qrType);
+        return;
+    }
+  };
+
+  // QR码类型智能识别函数
+  const identifyQRCodeType = (data: string) => {
+    console.log('🔍 [QRScanner] 分析QR码格式:', data.substring(0, 50));
+    
+    // 用户身份码格式 (支持新旧两种格式)
     if (data.startsWith('VG_USER_')) {
-      handleUserIdentityScan(data);
-      return;
+      return { type: 'user_identity', confidence: 'high', format: 'VG_USER_' };
     }
-
-    // 检查是否为活动签到码
-    if (data.startsWith('VG_ACTIVITY_') || /^\d+$/.test(data)) {
-      handleActivitySignInScan(data);
-      return;
+    
+    // ✅ 新版哈希格式身份码
+    if (data.startsWith('VG_HASH_')) {
+      return { type: 'user_identity', confidence: 'high', format: 'VG_HASH_' };
     }
+    
+    // 标准活动码
+    if (data.startsWith('VG_ACTIVITY_')) {
+      return { type: 'activity', confidence: 'high', format: 'VG_ACTIVITY_' };
+    }
+    
+    // 推荐码格式
+    if (data.startsWith('VG_REF_') || /^[A-Z0-9]{8}$/.test(data)) {
+      return { type: 'referral', confidence: 'high', format: data.startsWith('VG_REF_') ? 'VG_REF_' : 'direct' };
+    }
+    
+    // 纯数字（可能是活动ID）
+    if (/^\d+$/.test(data) && data.length >= 1 && data.length <= 10) {
+      return { type: 'activity', confidence: 'medium', format: 'numeric_id' };
+    }
+    
+    // URL格式
+    if (data.startsWith('http://') || data.startsWith('https://')) {
+      return { type: 'url', confidence: 'high', format: 'url' };
+    }
+    
+    // 32位十六进制（可能是活动哈希）
+    if (/^[a-f0-9]{32}$/.test(data)) {
+      console.log('🎯 [QRScanner] 检测到32位哈希，可能是活动相关');
+      return { type: 'activity_hash', confidence: 'medium', format: 'md5_hash' };
+    }
+    
+    // 64位十六进制
+    if (/^[a-f0-9]{64}$/.test(data)) {
+      return { type: 'hash', confidence: 'medium', format: 'sha256_hash' };
+    }
+    
+    return { type: 'unknown', confidence: 'low', format: 'unrecognized' };
+  };
 
+  // 显示未知QR码的详细结果
+  const showUnknownQRResult = (data: string, qrType: any) => {
+    console.log('📄 [QRScanner] 显示未知QR码结果，类型:', qrType);
+    const formatInfo = getQRFormatInfo(qrType);
+    
+    console.log('🔔 [QRScanner] 准备显示Alert:', {
+      title: t('qr.results.scan_result') || '扫描结果',
+      description: formatInfo.description,
+      data: data.substring(0, 50)
+    });
+    
+    // 重置处理状态，确保Alert能正常显示
+    setIsProcessing(false);
+    
     Alert.alert(
-      t('qr.results.scan_result'),
-      data,
+      '扫描结果',
+      `扫描内容：${data.substring(0, 50)}${data.length > 50 ? '...' : ''}\n\n识别类型：${formatInfo.description}\n格式：${qrType.format}\n\n${formatInfo.suggestion}`,
       [
         {
-          text: '确定',
-          onPress: () => setScanned(false),
+          text: '重新扫描',
+          onPress: () => {
+            console.log('🔄 [QRScanner] 重置扫描状态，允许继续扫描');
+            setScanned(false);
+            setIsProcessing(false);
+            scannedDataRef.current = '';
+          },
+        },
+        {
+          text: '返回',
+          style: 'cancel',
+          onPress: () => navigation.goBack(),
         },
       ]
     );
+    
+    console.log('📢 [QRScanner] Alert显示完成');
+  };
+
+  // 获取QR码格式说明
+  const getQRFormatInfo = (qrType: any) => {
+    switch (qrType.type) {
+      case 'activity_hash':
+        return {
+          description: '活动哈希码',
+          suggestion: '检测到可能是活动相关的哈希码，已尝试进行活动签到处理。'
+        };
+      case 'hash':
+        return {
+          description: '哈希值',
+          suggestion: '这不是PomeloX用户身份码。请扫描以"VG_USER_"开头的身份码。'
+        };
+      case 'url':
+        return {
+          description: '网址链接',
+          suggestion: '这是一个网站链接，不是PomeloX身份码。'
+        };
+      default:
+        return {
+          description: '未知格式',
+          suggestion: '无法识别此QR码类型。\n\n支持的格式：\n• 用户身份码：VG_USER_...\n• 活动码：VG_ACTIVITY_...\n• 推荐码：VG_REF_... 或 8位字符'
+        };
+    }
   };
 
   // ==================== 用户身份码扫描处理 ====================
 
-  const handleUserIdentityScan = (qrData: string) => {
+  const handleUserIdentityScan = async (qrData: string) => {
     try {
-      console.log('🔎 [QR扫描] 开始处理用户身份码扫描');
+      console.log('🔎 [Web-QR扫描] 开始处理用户身份码扫描，数据:', qrData.substring(0, 100));
+      
+      // ✅ 检查是否为新的哈希格式
+      if (qrData.startsWith('VG_HASH_')) {
+        console.log('🔐 [Web-QR扫描] 检测到哈希格式身份码');
+        await handleHashIdentityScan(qrData);
+        return;
+      }
+      
+      // ✅ 检查旧的Base64格式
+      if (!qrData.startsWith('VG_USER_')) {
+        console.log('❌ [Web-QR扫描] 不是标准身份码格式');
+        showScanError(
+          '身份码格式错误', 
+          `扫描到的不是PomeloX用户身份码。\n\n扫描内容：${qrData.substring(0, 50)}\n\n支持格式："VG_USER_"(旧版) 或 "VG_HASH_"(新版)`
+        );
+        return;
+      }
+      
       const parsedUser = parseUserIdentityQR(qrData);
       
       if (!parsedUser.isValid) {
-        console.log('❌ [QR扫描] 身份码无效:', parsedUser.error);
-        showScanError(t('qr.errors.invalid_user_code'), parsedUser.error || t('qr.errors.scan_valid_user_qr'));
+        console.log('❌ [QR扫描] 身份码解析失败:', parsedUser.error);
+        showScanError(
+          '身份码解析失败', 
+          `${parsedUser.error}\n\n请确保扫描的是有效的PomeloX用户身份码。`
+        );
         return;
       }
 
       if (!parsedUser.data) {
         console.log('❌ [QR扫描] 身份码数据为空');
-        showScanError(t('qr.errors.identity_data_error'), t('qr.errors.cannot_read_user_info'));
+        showScanError(
+          '身份码数据错误', 
+          '身份码中没有用户信息，请重新生成身份码。'
+        );
         return;
       }
 
       console.log('✅ [QR扫描] 身份码解析成功，显示用户信息');
-      // 显示用户信息
+      setIsProcessing(false); // 重置处理状态
       showUserInfo(parsedUser.data);
 
     } catch (error) {
       console.error('❌ [QR扫描] 处理用户身份码异常:', error);
-      showScanError(t('qr.errors.scan_failed'), t('qr.errors.process_user_code_error'));
+      showScanError(
+        '扫描失败', 
+        `处理身份码时发生错误：${error instanceof Error ? error.message : '未知错误'}\n\n请重试或联系技术支持。`
+      );
+    }
+  };
+
+  // ==================== 哈希格式身份码处理 (Web端) ====================
+  
+  const handleHashIdentityScan = async (qrData: string) => {
+    try {
+      console.log('🔐 [Web-QR哈希扫描] 开始处理哈希格式身份码');
+      setIsProcessing(true);
+      
+      // 导入哈希解析工具
+      const { parseHashIdentityQR } = require('../../utils/qrHashGenerator');
+      const hashResult = parseHashIdentityQR(qrData);
+      
+      if (!hashResult.isValid) {
+        console.log('❌ [Web-QR哈希扫描] 哈希格式无效:', hashResult.error);
+        showScanError(
+          '身份码格式错误',
+          `${hashResult.error}\n\n请确保扫描的是有效的新版PomeloX身份码。`
+        );
+        return;
+      }
+      
+      // ✅ 通过API查询用户详细信息
+      console.log('🌐 [Web-QR哈希扫描] 查询用户信息:', {
+        userId: hashResult.userId,
+        hash: hashResult.hash,
+        timestamp: hashResult.timestamp
+      });
+      
+      try {
+        // 调用后端API获取用户详细信息
+        const userResponse = await pomeloXAPI.getUserIdentityByHash({
+          userId: hashResult.userId!,
+          hash: hashResult.hash!,
+          timestamp: hashResult.timestamp!
+        });
+        
+        if (userResponse.code === 200 && userResponse.data) {
+          console.log('✅ [Web-QR哈希扫描] 用户信息查询成功');
+          showUserInfo(userResponse.data);
+        } else {
+          console.log('❌ [Web-QR哈希扫描] 用户信息查询失败:', userResponse.msg);
+          showScanError(
+            '用户不存在',
+            `${userResponse.msg || '身份码可能已失效或用户不存在'}\n\n请联系该用户重新生成身份码。`
+          );
+        }
+      } catch (apiError) {
+        console.error('❌ [Web-QR哈希扫描] API查询失败:', apiError);
+        showScanError(
+          '网络错误',
+          '无法获取用户信息，请检查网络连接后重试。'
+        );
+      }
+      
+    } catch (error) {
+      console.error('❌ [Web-QR哈希扫描] 处理哈希身份码异常:', error);
+      showScanError(
+        '扫描失败',
+        '哈希身份码处理异常，请重试或联系技术支持。'
+      );
+    } finally {
+      setIsProcessing(false);
     }
   };
 
   const parseUserIdentityQR = (qrData: string): ParsedUserQRCode => {
     try {
-      console.log('🔍 [QR解析] 开始解析用户身份码:', qrData?.substring(0, 50) + '...');
+      console.log('🔍 [Web-QR解析] 开始解析用户身份码:', qrData?.substring(0, 50) + '...');
       
+      if (!qrData || typeof qrData !== 'string') {
+        console.log('❌ [Web-QR解析] QR数据为空或格式错误');
+        return {
+          isValid: false,
+          error: 'QR码数据无效'
+        };
+      }
+
       if (!qrData.startsWith('VG_USER_')) {
-        console.log('❌ [QR解析] 非用户身份码格式');
+        console.log('❌ [Web-QR解析] 非用户身份码格式, 实际格式:', qrData.substring(0, 20));
         return {
           isValid: false,
           error: '不是有效的用户身份码格式'
         };
       }
 
-      const base64Data = qrData.replace('VG_USER_', '');
-      console.log('🔑 [QR解析] 提取的base64数据长度:', base64Data.length);
+      const base64Data = qrData.replace('VG_USER_', '').trim();
+      console.log('🔑 [Web-QR解析] 提取的base64数据长度:', base64Data.length);
       
-      const encodedString = atob(base64Data);
-      console.log('🗜️ [QR解析] atob解码后的字符串长度:', encodedString.length);
-      
-      const jsonString = decodeURIComponent(encodedString);
-      console.log('📜 [QR解析] decodeURIComponent后的JSON字符串长度:', jsonString.length);
-      
-      const userData: UserIdentityData = JSON.parse(jsonString);
-      console.log('✅ [QR解析] JSON解析成功:', {
-        userId: userData.userId,
-        userName: userData.userName,
-        legalName: userData.legalName,
-        type: userData.type,
-        hasOrganization: !!userData.currentOrganization
-      });
-
-      // 验证必要字段
-      if (!userData.userId || !userData.userName || !userData.legalName) {
-        console.log('⚠️ [QR解析] 缺少必要字段:', {
-          hasUserId: !!userData.userId,
-          hasUserName: !!userData.userName,
-          hasLegalName: !!userData.legalName
-        });
+      if (!base64Data) {
+        console.log('❌ [Web-QR解析] base64数据为空');
         return {
           isValid: false,
-          error: '身份码缺少必要信息'
+          error: '身份码数据为空'
         };
       }
 
-      console.log('✨ [QR解析] 身份码解析成功!');
+      let encodedString: string;
+      let jsonString: string;
+      let userData: UserIdentityData;
+
+      // Web端使用atob解码（与App端生成的Base64兼容）
+      try {
+        encodedString = atob(base64Data);
+        console.log('🗜️ [Web-QR解析] atob解码成功，长度:', encodedString.length);
+      } catch (atobError) {
+        console.error('❌ [Web-QR解析] atob解码失败:', atobError);
+        return {
+          isValid: false,
+          error: '身份码编码格式错误，无法解码'
+        };
+      }
+
+      // 尝试URL解码
+      try {
+        jsonString = decodeURIComponent(encodedString);
+        console.log('📜 [Web-QR解析] URL解码成功，长度:', jsonString.length);
+      } catch (urlError) {
+        console.log('⚠️ [Web-QR解析] URL解码失败，直接使用原字符串:', urlError);
+        jsonString = encodedString;
+      }
+
+      // 尝试JSON解析
+      try {
+        userData = JSON.parse(jsonString);
+        console.log('✅ [Web-QR解析] JSON解析成功:', {
+          userId: userData.userId,
+          userName: userData.userName,
+          legalName: userData.legalName,
+          type: userData.type,
+          hasOrganization: !!userData.currentOrganization
+        });
+      } catch (jsonError) {
+        console.error('❌ [Web-QR解析] JSON解析失败:', jsonError);
+        console.log('📝 [Web-QR解析] 原始JSON字符串:', jsonString.substring(0, 200) + '...');
+        return {
+          isValid: false,
+          error: '身份码内容格式错误，无法解析JSON数据'
+        };
+      }
+
+      // 验证数据结构
+      if (!userData || typeof userData !== 'object') {
+        console.log('❌ [Web-QR解析] 解析结果不是有效对象');
+        return {
+          isValid: false,
+          error: '身份码数据结构错误'
+        };
+      }
+
+      // 验证必要字段
+      if (!userData.userId || !userData.userName || !userData.legalName) {
+        console.log('⚠️ [Web-QR解析] 缺少必要字段:', {
+          hasUserId: !!userData.userId,
+          hasUserName: !!userData.userName,
+          hasLegalName: !!userData.legalName,
+          actualFields: Object.keys(userData)
+        });
+        return {
+          isValid: false,
+          error: '身份码缺少必要信息（用户ID、用户名或姓名）'
+        };
+      }
+
+      // 验证数据类型
+      if (userData.type !== 'user_identity') {
+        console.log('⚠️ [Web-QR解析] 身份码类型不匹配:', userData.type);
+        return {
+          isValid: false,
+          error: '不是用户身份码类型'
+        };
+      }
+
+      console.log('✨ [Web-QR解析] 身份码解析完全成功!');
       return {
         isValid: true,
         data: userData
       };
 
     } catch (error) {
-      console.error('❌ [QR解析] 解析异常:', error);
+      console.error('❌ [Web-QR解析] 解析过程发生未捕获异常:', error);
       return {
         isValid: false,
-        error: '身份码格式错误，无法解析'
+        error: `解析异常: ${error instanceof Error ? error.message : '未知错误'}`
       };
     }
   };
 
   const showUserInfo = (userData: UserIdentityData) => {
-    // 触觉反馈
-    if (Platform.OS === 'ios') {
+    // Web端触觉反馈
+    if (Platform.OS === 'web') {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     }
 
-    const organizationText = userData.currentOrganization 
-      ? `\n组织：${userData.currentOrganization.displayNameZh}`
-      : '';
+    console.log('✅ [Web-QR扫描] 显示用户信息模态框:', {
+      userId: userData.userId,
+      legalName: userData.legalName,
+      position: userData.position?.displayName,
+      organization: userData.currentOrganization?.displayNameZh
+    });
 
-    Alert.alert(
-      '用户身份信息',
-      `姓名：${userData.legalName}\n英文名：${userData.nickName}\n邮箱：${userData.email}${organizationText}`,
-      [
-        {
-          text: '查看详情',
-          onPress: () => {
-            // 跳转到用户详情页面
-            navigation.navigate('UserDetail', {
-              userData: userData,
-              fromQRScan: true
-            });
-          }
-        },
-        {
-          text: '继续扫描',
-          onPress: () => setScanned(false)
-        },
-        {
-          text: '返回',
-          style: 'cancel',
-          onPress: () => navigation.goBack()
-        }
-      ]
-    );
+    // 使用新的高级用户信息展示组件（Web端适配）
+    setScannedUserData(userData);
+    setShowUserInfoModal(true);
   };
 
   // ==================== 商家会员卡扫描处理 ====================
@@ -844,7 +1190,9 @@ export const QRScannerScreen: React.FC = () => {
         {
           text: '重新扫描',
           onPress: () => {
+            console.log('🔄 [QRScanner] 重新扫描，重置状态');
             setScanned(false);
+            setIsProcessing(false);
             setQRCodeBounds(undefined);
             scannedDataRef.current = '';
           }
@@ -892,15 +1240,88 @@ export const QRScannerScreen: React.FC = () => {
     }
   };
 
-  const handleReferralCodeSubmit = (code: string) => {
+  const handleReferralCodeSubmit = async (code: string, setError: (error: string) => void) => {
     console.log('📝 [QRScannerScreen] 用户手动输入推荐码:', code);
-    setShowReferralInputSheet(false);
+    const trimmedCode = code.trim();
     
-    if (code.trim()) {
-      navigation.navigate('RegisterForm', { 
-        referralCode: code.trim(),
-        hasReferralCode: true 
+    try {
+      console.log('🔍 开始验证邀请码:', trimmedCode);
+      
+      // 先进行格式验证
+      const formatValidation = await validateInvitationCode(trimmedCode);
+      if (!formatValidation.valid) {
+        console.log('❌ 邀请码格式错误:', formatValidation.message);
+        setError('邀请码错误');
+        return; // 不关闭Sheet，让用户看到错误并重新输入
+      }
+      
+      // 格式正确，使用临时注册数据验证邀请码有效性
+      const tempTestData = {
+        userName: 'temptest' + Date.now(),
+        legalName: '临时验证用户',
+        nickName: 'TempTest',
+        password: 'temp123',
+        phonenumber: `199${Date.now().toString().slice(-8)}`, // 更唯一的手机号
+        email: `temp${Date.now()}@test.edu`,
+        sex: '0',
+        deptId: '203',
+        orgId: '1',
+        invCode: trimmedCode,
+        areaCode: 'zh'
+      };
+      
+      // 构建验证请求
+      const formData = new URLSearchParams();
+      Object.entries(tempTestData).forEach(([key, value]) => {
+        formData.append(key, value.toString());
       });
+      
+      console.log('🔍 使用临时数据验证邀请码有效性...');
+      const response = await fetch('https://www.vitaglobal.icu/app/user/add', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'Accept': 'application/json',
+        },
+        body: formData.toString(),
+      });
+      
+      const result = await response.json();
+      console.log('🌐 邀请码验证结果:', { code: result.code, msg: result.msg });
+      
+      // 分析验证结果
+      if (result.code === 200) {
+        console.log('✅ 邀请码验证通过，跳转注册页面');
+        // 验证成功，关闭Sheet并跳转
+        setShowReferralInputSheet(false);
+        navigation.navigate('IdentityChoice', { 
+          referralCode: trimmedCode,
+          hasReferralCode: true,
+          registrationType: 'invitation'
+        });
+      } else if (result.msg?.includes('手机号码已存在')) {
+        console.log('⚠️ 手机号重复，但邀请码格式正确，允许跳转');
+        // 手机号重复不影响邀请码验证，允许跳转
+        setShowReferralInputSheet(false);
+        navigation.navigate('IdentityChoice', { 
+          referralCode: trimmedCode,
+          hasReferralCode: true,
+          registrationType: 'invitation'
+        });
+      } else if (result.msg?.includes('邀请码失效') || result.msg?.includes('邀请码')) {
+        console.log('❌ 邀请码验证失败:', result.msg);
+        setError('邀请码错误');
+        return; // 保持Sheet打开，显示错误
+      } else {
+        console.log('❓ 其他验证错误:', result.msg);
+        setError('邀请码错误');
+        return; // 保持Sheet打开，显示错误
+      }
+      
+    } catch (error) {
+      console.error('🚨 邀请码验证出错:', error);
+      setError('邀请码错误');
+      return; // 保持Sheet打开，显示错误
     }
   };
 
@@ -954,13 +1375,17 @@ export const QRScannerScreen: React.FC = () => {
     console.log('📹 [QRScannerScreen] 渲染摄像头组件, Platform.OS:', Platform.OS);
     
     if (Platform.OS === 'web') {
-      console.log('🌐 [QRScannerScreen] 使用SimpleQRScanner组件');
+      console.log('🌐 [QRScannerScreen] 使用NativeQRScanner组件');
       return (
-        <SimpleQRScanner
+        <NativeQRScanner
           style={StyleSheet.absoluteFillObject}
           onScan={(data) => {
-            if (!scanned) {
+            console.log('📲 [QRScannerScreen] NativeQRScanner回调触发:', data?.substring(0, 50));
+            if (!scanned && !isProcessing) {
+              console.log('✅ [QRScannerScreen] 状态允许，处理扫描结果');
               handleBarCodeScanned({ type: 'qr', data });
+            } else {
+              console.log('⏭️ [QRScannerScreen] 跳过扫描，状态:', { scanned, isProcessing });
             }
           }}
         />
@@ -1057,6 +1482,22 @@ export const QRScannerScreen: React.FC = () => {
         onClose={() => setShowReferralInputSheet(false)}
         onSubmit={handleReferralCodeSubmit}
       />
+
+      {/* 用户身份信息模态框 */}
+      {scannedUserData && (
+        <ScannedUserInfoModal
+          visible={showUserInfoModal}
+          onClose={() => {
+            console.log('🔄 [QRScanner] 关闭用户信息模态框，重置状态');
+            setShowUserInfoModal(false);
+            setScannedUserData(null);
+            setScanned(false); // 允许继续扫描
+            setIsProcessing(false); // 重置处理状态
+            scannedDataRef.current = ''; // 清空扫描数据
+          }}
+          scannedUserData={scannedUserData}
+        />
+      )}
 
       {/* 组织切换模态框 */}
       <OrganizationSwitchModal

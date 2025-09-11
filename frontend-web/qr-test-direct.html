@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Direct QR Test</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        body { font-family: Arial; margin: 20px; }
+        video { width: 100%; max-width: 400px; border: 2px solid blue; }
+        .result { margin: 20px 0; padding: 15px; background: #f0f0f0; border-radius: 8px; }
+        .success { background: #d4edda; color: #155724; border: 2px solid green; }
+    </style>
+</head>
+<body>
+    <h2>🔍 Direct QR Scanner Test</h2>
+    <div id="status">正在初始化...</div>
+    <video id="video" autoplay playsinline muted></video>
+    <div id="result" class="result">等待扫描...</div>
+
+    <script src="https://cdn.jsdelivr.net/npm/qr-scanner@1.4.2/qr-scanner.umd.min.js"></script>
+    <script>
+        const video = document.getElementById('video');
+        const status = document.getElementById('status');
+        const result = document.getElementById('result');
+
+        console.log('🚀 Direct QR Test: 开始');
+
+        async function init() {
+            try {
+                status.textContent = '启动摄像头...';
+                
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    video: { 
+                        facingMode: 'environment',
+                        width: 640,
+                        height: 480
+                    }
+                });
+                
+                video.srcObject = stream;
+                await video.play();
+                
+                status.textContent = '创建QR扫描器...';
+                console.log('📹 摄像头OK，创建扫描器');
+                
+                // 简单的QR扫描器
+                const scanner = new QrScanner(
+                    video,
+                    (qrResult) => {
+                        console.log('🎯 QR扫描成功!', qrResult);
+                        const data = typeof qrResult === 'string' ? qrResult : qrResult.data;
+                        result.className = 'result success';
+                        result.innerHTML = `
+                            <strong>✅ 扫描成功!</strong><br>
+                            内容: ${data}<br>
+                            时间: ${new Date().toLocaleTimeString()}
+                        `;
+                    }
+                );
+                
+                await scanner.start();
+                status.textContent = '✅ 扫描器已启动，请扫描QR码';
+                console.log('✅ QR扫描器启动完成');
+                
+            } catch (error) {
+                console.error('❌ 初始化失败:', error);
+                status.textContent = '❌ 失败: ' + error.message;
+                result.innerHTML = '错误: ' + error.message;
+            }
+        }
+
+        init();
+    </script>
+</body>
+</html>

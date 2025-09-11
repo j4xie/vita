@@ -1,4 +1,40 @@
-import { Platform } from 'react-native';
+import { Platform, Dimensions } from 'react-native';
+
+// iPad检测和字体适配（使用更可靠的检测方法）
+const { width, height } = Dimensions.get('window');
+const screenData = Dimensions.get('screen');
+const isIPad = Platform.OS === 'ios' && (
+  width >= 768 || 
+  height >= 768 || 
+  screenData.width >= 768 ||
+  screenData.height >= 768 ||
+  Platform.isPad === true
+);
+
+// 调试信息：打印设备检测结果
+console.log('🎯 [TYPOGRAPHY] Device Detection:', {
+  width,
+  height,
+  screenWidth: screenData.width,
+  screenHeight: screenData.height,
+  isPad: Platform.isPad,
+  isIPad,
+  deviceFontScale: isIPad ? 1.5 : 1.0
+});
+
+// iPad字体和按钮缩放系数（大屏幕需要更大字体和按钮确保Apple审核通过）
+const deviceFontScale = isIPad ? 1.5 : 1.0;
+const deviceButtonScale = isIPad ? 1.5 : 1.0;
+
+// 设备适配字体计算函数
+const adaptiveFontSize = (baseSize: number) => {
+  return Math.round(baseSize * deviceFontScale);
+};
+
+// 设备适配按钮尺寸计算函数
+const adaptiveButtonSize = (baseSize: number) => {
+  return Math.round(baseSize * deviceButtonScale);
+};
 
 // 国际化字体配置
 const fontFamily = Platform.select({
@@ -39,36 +75,110 @@ const calculateFontSize = (baseSize: number, language: 'chinese' | 'english' = '
   return Math.round(baseSize * fontSizeMultiplier[language]);
 };
 
+// 🎯 无障碍性优化 - 标准化字体尺寸系统
+export const typeScale = {
+  // 标题层级
+  titleLg: { 
+    fontSize: 24, 
+    lineHeight: 30, 
+    fontWeight: '700' as const,
+    fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Noto Sans CJK SC'
+  },
+  titleMd: { 
+    fontSize: 20, 
+    lineHeight: 26, 
+    fontWeight: '600' as const,
+    fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Noto Sans CJK SC'
+  },
+  titleSm: { 
+    fontSize: 18, 
+    lineHeight: 24, 
+    fontWeight: '600' as const,
+    fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Noto Sans CJK SC'
+  },
+  
+  // 正文系统 - 基线17pt
+  body: { 
+    fontSize: 17, 
+    lineHeight: 24, 
+    fontWeight: '400' as const,
+    fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Noto Sans CJK SC'
+  },
+  bodyLarge: { 
+    fontSize: 19, 
+    lineHeight: 26, 
+    fontWeight: '400' as const,
+    fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Noto Sans CJK SC'
+  },
+  
+  // 按钮文本 - 最小17pt
+  button: { 
+    fontSize: 17, 
+    lineHeight: 22, 
+    fontWeight: '600' as const,
+    fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Noto Sans CJK SC'
+  },
+  buttonLarge: { 
+    fontSize: 19, 
+    lineHeight: 24, 
+    fontWeight: '600' as const,
+    fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Noto Sans CJK SC'
+  },
+  
+  // 辅助信息 - 最小14pt
+  small: { 
+    fontSize: 14, 
+    lineHeight: 20, 
+    fontWeight: '400' as const,
+    fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Noto Sans CJK SC'
+  },
+  
+  // 徽标/标签 - 最小12pt，不可交互
+  badge: { 
+    fontSize: 12, 
+    lineHeight: 16, 
+    fontWeight: '600' as const,
+    fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Noto Sans CJK SC'
+  },
+};
+
 export const typography = {
   // 字体家族
   fontFamily,
   fontSizeMultiplier,
   calculateFontSize,
   
-  // 基础字体大小
+  // iPad适配
+  isIPad,
+  deviceFontScale,
+  deviceButtonScale,
+  adaptiveFontSize,
+  adaptiveButtonSize,
+  
+  // 基础字体大小（iPad自动放大1.5倍）
   fontSize: {
-    xs: 12,
-    sm: 14,
-    base: 16,
-    lg: 18,
-    xl: 20,
-    '2xl': 24,
-    '3xl': 30,
-    '4xl': 36,
-    '5xl': 48,
+    xs: adaptiveFontSize(14), // iPad: 21pt, iPhone: 14pt
+    sm: adaptiveFontSize(16), // iPad: 24pt, iPhone: 16pt
+    base: adaptiveFontSize(17), // iPad: 26pt, iPhone: 17pt
+    lg: adaptiveFontSize(18), // iPad: 27pt, iPhone: 18pt
+    xl: adaptiveFontSize(20), // iPad: 30pt, iPhone: 20pt
+    '2xl': adaptiveFontSize(24), // iPad: 36pt, iPhone: 24pt
+    '3xl': adaptiveFontSize(30),
+    '4xl': adaptiveFontSize(36),
+    '5xl': adaptiveFontSize(48),
   },
   
-  // 国际化字体大小（针对中文优化）
+  // 国际化字体大小（针对中文优化 + iPad适配）
   fontSizeChinese: {
-    xs: calculateFontSize(12),
-    sm: calculateFontSize(14),
-    base: calculateFontSize(16),
-    lg: calculateFontSize(18),
-    xl: calculateFontSize(20),
-    '2xl': calculateFontSize(24),
-    '3xl': calculateFontSize(30),
-    '4xl': calculateFontSize(36),
-    '5xl': calculateFontSize(48),
+    xs: adaptiveFontSize(calculateFontSize(14)), // iPad自动放大
+    sm: adaptiveFontSize(calculateFontSize(16)), // iPad自动放大
+    base: adaptiveFontSize(calculateFontSize(17)), // iPad自动放大
+    lg: adaptiveFontSize(calculateFontSize(18)),
+    xl: adaptiveFontSize(calculateFontSize(20)),
+    '2xl': adaptiveFontSize(calculateFontSize(24)),
+    '3xl': adaptiveFontSize(calculateFontSize(30)),
+    '4xl': adaptiveFontSize(calculateFontSize(36)),
+    '5xl': adaptiveFontSize(calculateFontSize(48)),
   },
   
   // 字重
@@ -133,9 +243,9 @@ export const typography = {
       lineHeight: 1.35,
     },
     
-    // 正文样式
+    // 正文样式 - 新基线17pt
     body: {
-      fontSize: calculateFontSize(16),
+      fontSize: calculateFontSize(17),
       fontWeight: '400' as const,
       lineHeight: 1.5,
     },

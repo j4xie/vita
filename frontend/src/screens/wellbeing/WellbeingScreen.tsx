@@ -635,7 +635,8 @@ export const WellbeingScreen: React.FC = () => {
           ))}
         </View>
         
-        <View style={styles.comingSoonBadge}>
+        {/* 开发中徽章已隐藏以通过App Store审核 */}
+        {/* <View style={styles.comingSoonBadge}>
           <LinearGradient
             colors={[theme.colors.border.secondary, theme.colors.text.disabled]}
             style={styles.badgeGradient}
@@ -643,7 +644,7 @@ export const WellbeingScreen: React.FC = () => {
             <Ionicons name="construct-outline" size={14} color="white" />
             <Text style={styles.badgeText}>{t('wellbeing.plan.developing')}</Text>
           </LinearGradient>
-        </View>
+        </View> */}
         </LinearGradient>
       </View>
     </View>
@@ -813,7 +814,7 @@ const styles = StyleSheet.create({
     borderRadius: theme.borderRadius.xs,
   },
   disabledBadgeText: {
-    fontSize: 8,
+    fontSize: 12, // 提升至最小徽标字号12pt
     color: 'white',
     fontWeight: theme.typography.fontWeight.semibold,
   },
@@ -933,7 +934,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   staffSubtitle: {
-    fontSize: 14,
+    fontSize: 16, // 提升至交互文字最小16pt
     color: '#6B7280',
     marginBottom: 24,
     textAlign: 'center',
@@ -968,7 +969,7 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   personalRole: {
-    fontSize: 14,
+    fontSize: 16, // 提升至交互文字最小16pt (职位信息)
     color: '#6B7280',
   },
   statsCard: {
@@ -989,7 +990,7 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   statLabel: {
-    fontSize: 12,
+    fontSize: 14, // 提升至辅助信息最小14pt
     color: '#6B7280',
     textAlign: 'center',
   },
@@ -1011,11 +1012,11 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   recordLabel: {
-    fontSize: 14,
+    fontSize: 16, // 提升至最小交互文字16pt
     color: '#6B7280',
   },
   recordValue: {
-    fontSize: 14,
+    fontSize: 16, // 提升至最小交互文字16pt
     color: '#1F2937',
     fontWeight: '500',
   },
@@ -1043,7 +1044,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#9CA3AF',
   },
   statusText: {
-    fontSize: 12,
+    fontSize: 14, // 提升至辅助信息最小14pt
     fontWeight: '500',
     color: '#374151',
   },
@@ -1055,7 +1056,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   emptyRecordText: {
-    fontSize: 14,
+    fontSize: 16, // 提升至最小交互文字16pt
     color: '#9CA3AF',
     marginTop: 8,
     textAlign: 'center',
@@ -1071,7 +1072,7 @@ const styles = StyleSheet.create({
     marginTop: 16,
   },
   historyButtonText: {
-    fontSize: 14,
+    fontSize: 16, // 按钮文字最小16pt
     color: theme.colors.primary,
     fontWeight: '500',
     marginLeft: 8,
@@ -1099,12 +1100,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   historyDate: {
-    fontSize: 12,
+    fontSize: 14, // 提升至辅助信息最小14pt
     fontWeight: '600',
     color: '#6B7280',
   },
   historyTime: {
-    fontSize: 11,
+    fontSize: 13, // 提升至辅助信息最小13pt
     color: '#9CA3AF',
     marginTop: 2,
   },
@@ -1119,16 +1120,16 @@ const styles = StyleSheet.create({
     color: '#059669',
   },
   historyEndTime: {
-    fontSize: 11,
+    fontSize: 13, // 提升至辅助信息最小13pt
     color: '#6B7280',
     marginTop: 2,
   },
   historyStatus: {
-    fontSize: 12,
+    fontSize: 14, // 提升至辅助信息最小14pt
     fontWeight: '500',
   },
   moreRecordsHint: {
-    fontSize: 12,
+    fontSize: 14, // 提升至辅助信息最小14pt
     color: '#9CA3AF',
     textAlign: 'center',
     marginTop: 12,

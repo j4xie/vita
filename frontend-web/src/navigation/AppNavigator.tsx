@@ -30,7 +30,11 @@ import { BeautifulActivityListScreen as ActivityListScreen } from '../screens/ac
 import { ActivityDetailScreen } from '../screens/activities/ActivityDetailScreen';
 import { ActivityRegistrationFormScreen } from '../screens/activities/ActivityRegistrationFormScreen';
 import { LoginScreen } from '../screens/auth/LoginScreen';
+import { ForgotPasswordScreen } from '../screens/auth/ForgotPasswordScreen';
+import { SetNewPasswordScreen } from '../screens/auth/SetNewPasswordScreen';
 import { RegisterChoiceScreen } from '../screens/auth/RegisterChoiceScreen';
+import { IdentityChoiceScreen } from '../screens/auth/IdentityChoiceScreen';
+import { ParentRegisterFormScreen } from '../screens/auth/ParentRegisterFormScreen';
 import { RegisterFormScreen } from '../screens/auth/RegisterFormScreen';
 import { RegisterStep1Screen } from '../screens/auth/RegisterStep1Screen';
 import { RegisterStep2Screen } from '../screens/auth/RegisterStep2Screen';
@@ -100,10 +104,38 @@ const AuthNavigator = () => {
     >
       <AuthStack.Screen name="Login" component={LoginScreen} />
       <AuthStack.Screen 
+        name="ForgotPassword" 
+        component={ForgotPasswordScreen}
+        options={{
+          ...pageTransitions.slideFromRight,
+        }}
+      />
+      <AuthStack.Screen 
+        name="SetNewPassword" 
+        component={SetNewPasswordScreen}
+        options={{
+          ...pageTransitions.slideFromRight,
+        }}
+      />
+      <AuthStack.Screen 
         name="RegisterChoice" 
         component={RegisterChoiceScreen}
         options={{
           ...pageTransitions.slideFromBottom,
+        }}
+      />
+      <AuthStack.Screen 
+        name="IdentityChoice" 
+        component={IdentityChoiceScreen}
+        options={{
+          ...pageTransitions.slideFromRight,
+        }}
+      />
+      <AuthStack.Screen 
+        name="ParentRegisterForm" 
+        component={ParentRegisterFormScreen}
+        options={{
+          ...pageTransitions.slideFromRight,
         }}
       />
       <AuthStack.Screen 
@@ -634,10 +666,38 @@ export const AppNavigator = () => {
             }}
           />
           <RootStack.Screen 
+            name="ForgotPassword" 
+            component={ForgotPasswordScreen}
+            options={{
+              ...pageTransitions.slideFromRight,
+            }}
+          />
+          <RootStack.Screen 
+            name="SetNewPassword" 
+            component={SetNewPasswordScreen}
+            options={{
+              ...pageTransitions.slideFromRight,
+            }}
+          />
+          <RootStack.Screen 
             name="RegisterChoice" 
             component={RegisterChoiceScreen}
             options={{
               ...pageTransitions.slideFromBottom,
+            }}
+          />
+          <RootStack.Screen 
+            name="IdentityChoice" 
+            component={IdentityChoiceScreen}
+            options={{
+              ...pageTransitions.slideFromRight,
+            }}
+          />
+          <RootStack.Screen 
+            name="ParentRegisterForm" 
+            component={ParentRegisterFormScreen}
+            options={{
+              ...pageTransitions.slideFromRight,
             }}
           />
           <RootStack.Screen 

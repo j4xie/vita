@@ -155,13 +155,12 @@ export const ActivityRegistrationFormScreen: React.FC = () => {
             {
               text: t('common.confirm'),
               onPress: () => {
-                // ✅ 发送报名成功事件，带着更详细的信息
-                console.log('📡 [报名] 发送activityRegistered事件:', { activityId: activity.id });
-                const newRegisteredCount = (activity.registeredCount || activity.attendees || 0) + 1;
-                DeviceEventEmitter.emit('activityRegistered', { 
+                // ✅ 发送报名成功事件，使用统一的事件格式
+                console.log('📡 [报名] 发送activityRegistrationChanged事件:', { activityId: activity.id });
+                DeviceEventEmitter.emit('activityRegistrationChanged', { 
                   activityId: activity.id,
-                  newRegisteredCount,
-                  source: 'RegistrationForm'
+                  action: 'register',
+                  timestamp: Date.now()
                 });
                 
                 // ✅ 返回活动详情页面

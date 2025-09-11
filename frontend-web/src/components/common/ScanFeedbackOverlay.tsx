@@ -98,8 +98,14 @@ export const ScanFeedbackOverlay: React.FC<ScanFeedbackOverlayProps> = ({
 
       // 3. 动画完成回调
       const timer = setTimeout(() => {
-        console.log('✅ [ScanFeedback] 扫码反馈动画完成');
-        onAnimationComplete?.();
+        console.log('✅ [ScanFeedback] 扫码反馈动画完成，调用回调');
+        console.log('🔔 [ScanFeedback] onAnimationComplete存在:', !!onAnimationComplete);
+        try {
+          onAnimationComplete?.();
+          console.log('📞 [ScanFeedback] 回调执行成功');
+        } catch (error) {
+          console.error('❌ [ScanFeedback] 回调执行失败:', error);
+        }
       }, 800); // 总动画时长
 
       return () => clearTimeout(timer);

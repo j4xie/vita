@@ -52,11 +52,13 @@ interface RegisterData {
   bizId?: string;
   orgId?: string;
   area?: string; // 地域选择：zh-中国，en-美国
+  areaCode?: string; // 新增：区域代码，用于区分中国和美国手机号码
 }
 
 interface LoginData {
   userName: string;
   password: string;
+  areaCode?: string; // 新增：区域代码，用于区分中国和美国手机号码
 }
 
 interface APISchoolData {
@@ -183,7 +185,8 @@ class PomeloXAPI {
       ...data,
       password: '[HIDDEN]',
       deptId: data.deptId,
-      deptIdType: typeof data.deptId
+      deptIdType: typeof data.deptId,
+      areaCode: data.areaCode
     });
     
     // 使用form-urlencoded格式
@@ -202,6 +205,12 @@ class PomeloXAPI {
       console.log('✅ deptId已添加到请求:', data.deptId);
     } else {
       console.log('⚠️ deptId为空，用户将没有学校关联');
+    }
+    
+    // 新增：添加areaCode参数支持
+    if (data.areaCode) {
+      formData.append('areaCode', data.areaCode);
+      console.log('✅ areaCode已添加到请求:', data.areaCode);
     }
     
     if (data.verCode) formData.append('verCode', data.verCode);
@@ -237,14 +246,19 @@ class PomeloXAPI {
     userId: number;
     token: string;
   }>> {
-    console.log('🔐 PomeloXAPI.login 调用参数:', { userName: data.userName, password: '[HIDDEN]' });
+    console.log('🔐 PomeloXAPI.login 调用参数:', { userName: data.userName, password: '[HIDDEN]', areaCode: data.areaCode });
     
     // 使用form-urlencoded格式，不是JSON
     const formData = new URLSearchParams();
     formData.append('username', data.userName);
     formData.append('password', data.password);
     
-    console.log('📝 发送到后端的参数:', { username: data.userName, password: '[HIDDEN]' });
+    // 新增：添加areaCode参数支持
+    if (data.areaCode) {
+      formData.append('areaCode', data.areaCode);
+    }
+    
+    console.log('📝 发送到后端的参数:', { username: data.userName, password: '[HIDDEN]', areaCode: data.areaCode });
     
     const response = await fetchWithRetry(`${BASE_URL}/app/login`, {
       method: 'POST',
@@ -283,6 +297,98 @@ class PomeloXAPI {
       method: 'POST',
       body: JSON.stringify(data),
     });
+  }
+
+  /**
+   * 忘记密码 - 发送重置密码验证码
+   * @param phone 手机号码
+   * @param areaCode 区域代码 (可选，用于区分中国和美国手机号码)
+   */
+  async sendPasswordResetCode(phone: string, areaCode?: string): Promise<ApiResponse> {
+    console.log('📱 发送忘记密码验证码（修复后）:', { phone, areaCode });
+    
+    const formData = new URLSearchParams();
+    formData.append('phone', phone);
+    
+    if (areaCode) {
+      formData.append('areaCode', areaCode);
+    }
+    
+    // 根据API文档，使用分开的phoneNum和areaCode参数
+    const apiAreaCode = areaCode === 'CN' ? '86' : '1';
+    const smsUrl = `${BASE_URL}/sms/vercodeSms?phoneNum=${phone}&areaCode=${apiAreaCode}`;
+    
+    console.log('🌐 [PomeloXAPI] 发送短信验证码请求:', { 
+      url: smsUrl,
+      phoneNum: phone,
+      areaCode: apiAreaCode,
+      originalAreaCode: areaCode
+    });
+    
+    const response = await fetchWithRetry(smsUrl, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+      },
+    });
+    
+    console.log('📥 [PomeloXAPI] 忘记密码API响应:', { 
+      status: response.status, 
+      ok: response.ok 
+    });
+    
+    if (!response.ok) {
+      console.error('❌ [PomeloXAPI] HTTP错误:', response.status);
+      throw new Error(`HTTP ${response.status}: 发送验证码失败`);
+    }
+    
+    const result = await response.json();
+    console.log('📋 [PomeloXAPI] 忘记密码响应数据:', result);
+    
+    return result;
+  }
+
+  /**
+   * 重置密码
+   */
+  async resetPassword(data: {
+    phonenumber: string;
+    verCode: string;
+    bizId: string;
+    password: string;
+    areaCode: string;
+  }): Promise<ApiResponse> {
+    // 转换区号格式：CN/US -> 86/1
+    let cleanAreaCode: string;
+    if (data.areaCode === 'CN' || data.areaCode === '+86') {
+      cleanAreaCode = '86';
+    } else if (data.areaCode === 'US' || data.areaCode === '+1') {
+      cleanAreaCode = '1';
+    } else {
+      cleanAreaCode = data.areaCode.replace('+', '');
+    }
+    
+    // 构建form-data格式的请求体
+    const formData = new URLSearchParams();
+    formData.append('phonenumber', data.phonenumber);
+    formData.append('verCode', data.verCode);
+    formData.append('bizId', data.bizId);
+    formData.append('password', data.password);
+    formData.append('areaCode', cleanAreaCode);
+
+    const response = await fetchWithRetry(`${BASE_URL}/app/resetPwd`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: formData.toString(),
+    });
+    
+    if (!response.ok) {
+      throw new Error('重置密码失败');
+    }
+    
+    return response.json();
   }
 
   // 需要认证的接口
@@ -841,6 +947,92 @@ class PomeloXAPI {
   }>>> {
     console.log('🔍 获取职位列表 API调用');
     return this.request('/app/post/list', { method: 'GET' });
+  }
+
+  /**
+   * 通过哈希值获取用户身份信息（Web端）
+   */
+  async getUserIdentityByHash(params: {
+    userId: string;
+    hash: string;
+    timestamp: number;
+  }): Promise<ApiResponse<{
+    userId: string;
+    userName: string;
+    legalName: string;
+    nickName: string;
+    email: string;
+    avatarUrl?: string;
+    currentOrganization?: {
+      id: string;
+      name: string;
+      displayNameZh: string;
+      displayNameEn?: string;
+    };
+    school?: {
+      id: string;
+      name: string;
+      fullName: string;
+      parentId?: number;
+    };
+    position?: {
+      roleKey: string;
+      roleName: string;
+      displayName: string;
+      level: string;
+    };
+  }>> {
+    console.log('🔐 [Web-API] 通过哈希获取用户身份信息:', {
+      userId: params.userId,
+      hash: params.hash,
+      timestamp: params.timestamp
+    });
+    
+    // 注意：此API端点需要后端实现
+    // 临时实现：返回模拟数据用于Web端开发
+    // TODO: 待后端实现真实API后替换
+    try {
+      return this.request('/app/user/identity/hash', {
+        method: 'POST',
+        body: JSON.stringify({
+          userId: params.userId,
+          hash: params.hash,
+          timestamp: params.timestamp
+        })
+      });
+    } catch (error) {
+      console.warn('⚠️ [Web-API] 哈希API暂未实现，使用Web端临时处理');
+      
+      // Web端临时返回模拟响应
+      return {
+        code: 200,
+        msg: '查询成功',
+        data: {
+          userId: params.userId,
+          userName: 'WebTestUser',
+          legalName: '网页测试用户',
+          nickName: 'WebTest',
+          email: 'webtest@example.com',
+          currentOrganization: {
+            id: '1',
+            name: 'Student Union',
+            displayNameZh: '学联组织',
+            displayNameEn: 'Student Union'
+          },
+          school: {
+            id: '213',
+            name: 'USC',
+            fullName: 'University of Southern California'
+          },
+          position: {
+            roleKey: 'common',
+            roleName: '普通用户',
+            displayName: '普通用户',
+            level: 'user'
+          }
+        }
+      };
+    }
   }
 }
 

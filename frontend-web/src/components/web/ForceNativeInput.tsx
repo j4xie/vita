@@ -32,31 +32,21 @@ export const ForceNativeInput = forwardRef<HTMLInputElement, ForceNativeInputPro
     setValue(newValue);
     props.onChangeText?.(newValue);
     
-    console.log('🔥 [ForceNativeInput] 原生输入事件:', {
-      value: newValue,
-      placeholder: props.placeholder,
-      timestamp: new Date().toLocaleTimeString()
-    });
+    // console.log('🔥 [ForceNativeInput] 原生输入事件:', newValue);
   };
 
   const handleFocus = (e: React.FocusEvent<HTMLInputElement>) => {
     setFocused(true);
     props.onFocus?.(e as any);
     
-    console.log('🎯 [ForceNativeInput] 原生聚焦事件:', {
-      placeholder: props.placeholder,
-      value: e.target.value
-    });
+    // console.log('🎯 [ForceNativeInput] 原生聚焦事件');
   };
 
   const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
     setFocused(false);
     props.onBlur?.(e as any);
     
-    console.log('👋 [ForceNativeInput] 原生失焦事件:', {
-      placeholder: props.placeholder,
-      value: e.target.value
-    });
+    // console.log('👋 [ForceNativeInput] 原生失焦事件');
   };
 
   // 将React Native样式转换为CSS样式
@@ -77,7 +67,9 @@ export const ForceNativeInput = forwardRef<HTMLInputElement, ForceNativeInputPro
       fontSize: '16px',
       fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
       backgroundColor: '#FFFFFF',
-      border: '1px solid #D1D5DB',
+      borderWidth: '1px',
+      borderStyle: 'solid',
+      borderColor: '#D1D5DB',
       borderRadius: '8px',
       color: '#374151',
       // Web必需样式
@@ -187,11 +179,7 @@ export const ForceNativeInput = forwardRef<HTMLInputElement, ForceNativeInputPro
       spellCheck={props.spellCheck}
       style={convertStyle(props.style)}
       onKeyDown={(e) => {
-        console.log('⌨️ [ForceNativeInput] 按键事件:', e.key);
         props.onKeyPress?.(e as any);
-      }}
-      onClick={() => {
-        console.log('🖱️ [ForceNativeInput] 点击事件');
       }}
       // 标识符，防止被WebInputFix处理
       data-force-native="true"

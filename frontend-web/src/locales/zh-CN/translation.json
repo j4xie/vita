@@ -78,7 +78,12 @@
     "scroll_to_submit": "滑动到底部提交",
     "english_name": "英文名",
     "organization": "组织",
-    "school": "学校"
+    "school": "学校",
+    "start_using": "开始使用",
+    "go_login": "去登录",
+    "suggestions": "建议解决方案",
+    "switch_network": "尝试切换网络",
+    "manual_location_prompt": "无法自动检测您的地理位置，请手动选择："
   },
   "language": {
     "selection": {
@@ -187,6 +192,47 @@
       "register_link": "立即注册",
       "skip": "跳过"
     },
+    "forgot_password": {
+      "title": "忘记密码",
+      "reset_password": "重置密码",
+      "subtitle": "请输入您的手机号码，我们将发送验证码帮助您重置密码",
+      "area_code_label": "选择地区",
+      "phone_label": "手机号码",
+      "send_code": "发送验证码",
+      "resend_code": "重新发送",
+      "resend_after": "{{seconds}}秒后可重新发送",
+      "code_sent_title": "验证码已发送",
+      "code_sent_message": "验证码已发送至 {{phone}}，请查收短信",
+      "code_sent_success": "验证码发送成功！",
+      "check_sms_instruction": "请查看短信中的验证码，按照提示完成密码重置",
+      "send_code_failed": "验证码发送失败",
+      "send_code_error": "发送验证码时出现错误，请稍后重试",
+      "verification_code_label": "验证码",
+      "verification_code_placeholder": "请输入6位验证码",
+      "verify_code_button": "验证并继续",
+      "verify_code_error": "验证码验证失败，请稍后重试"
+    },
+    "reset_password": {
+      "title": "重置密码",
+      "set_new_password": "设置新密码",
+      "subtitle": "请设置您的新密码，确保密码安全性强",
+      "new_password_label": "新密码",
+      "new_password_placeholder": "请输入新密码",
+      "password_hint": "至少6位数字或字符（推荐6位数字）",
+      "confirm_password_label": "确认密码",
+      "confirm_password_placeholder": "请再次输入新密码",
+      "reset_button": "重置密码",
+      "success_title": "密码重置成功",
+      "success_message": "您的密码已成功重置，请使用新密码登录",
+      "reset_failed": "密码重置失败，请稍后重试"
+    },
+    "password": {
+      "strength": {
+        "weak": "弱",
+        "medium": "中等",
+        "strong": "强"
+      }
+    },
     "guest_prompt": "点击访问完整功能",
     "register": {
       "choice_title": "选择注册方式",
@@ -204,6 +250,17 @@
         "manage_registrations": "管理您的报名记录",
         "receive_notifications": "接收活动更新通知"
       },
+      "identity": {
+        "title": "身份选择",
+        "who_are_you": "请问您的身份是？",
+        "choose_description": "请选择您的身份类型，以获得最佳的注册体验",
+        "student": "我是学生",
+        "student_description": "我要为自己注册PomeloX账号",
+        "parent": "我是家长",
+        "parent_description": "我要为孩子注册PomeloX账号",
+        "continue": "继续",
+        "please_select": "请选择您的身份类型"
+      },
       "student_option": "学生注册",
       "organization_option": "组织注册",
       "form_title": "注册账户",
@@ -213,12 +270,19 @@
       "terms_of_service": "服务条款",
       "privacy_policy": "隐私政策",
       "and": "和",
+      "go_login": "去登录",
       "success_title": "注册成功",
       "success_message": "恭喜您注册成功！欢迎加入PomeloX",
       "auto_login_success": "注册成功！欢迎使用PomeloX",
       "success_please_login": "注册成功！请前往登录页面使用您的账号登录",
+      "success": {
+        "title": "注册成功",
+        "account_created": "账户创建成功！\n\n您的用户名：{{username}}\n请前往登录页面使用您的账户登录"
+      },
       "processing_registration": "正在处理注册信息...",
       "auto_login_processing": "正在自动登录...",
+      "auto_login_progress": "账户创建成功，正在为您自动登录...",
+      "welcome_message": "欢迎加入 PomeloX！\n\n✅ 账户创建成功\n✅ 自动登录成功\n🚀 即将进入应用首页",
       "error_title": "注册失败",
       "error_message": "注册过程中发生错误，请稍后重试",
       "privacy": {
@@ -328,13 +392,80 @@
         "school_load_failed": "加载学校列表失败",
         "organization_load_failed": "加载组织列表失败",
         "register_failed": "注册失败",
-        "register_failed_message": "注册失败，请检查信息后重试"
+        "register_failed_message": "注册失败，请检查信息后重试",
+        "server_temporarily_unavailable": "服务器暂时不可用，请稍后重试",
+        "registration_data_invalid": "注册信息格式不正确，请检查后重试",
+        "username_or_email_exists": "用户名或邮箱已被使用",
+        "network_connection_failed": "网络连接失败，请检查网络后重试",
+        "invitation_code_invalid": "邀请码不存在或已失效，请检查邀请码是否正确",
+        "invitation_code_used": "此邀请码已被使用，请联系邀请人获取新的邀请码",
+        "invitation_code_expired": "邀请码已过期，请联系邀请人重新生成邀请码",
+        "invitation_code_verification_failed": "邀请码验证失败，请检查邀请码是否正确",
+        "required_fields_empty": "以下字段不能为空",
+        "registration_progress": "正在注册",
+        "registration_progress_message": "正在创建您的账户，请稍候...",
+        "auto_login_progress": "自动登录中",
+        "server_error_title": "服务器错误",
+        "network_error_title": "网络错误",
+        "registration_failed_title": "注册失败",
+        "suggestions": {
+          "check_network": "检查网络连接",
+          "retry_later": "稍后重试",
+          "contact_support": "联系客服",
+          "check_username_format": "检查用户名格式(6-20位)",
+          "check_password_strength": "检查密码强度",
+          "check_email_format": "确认邮箱格式",
+          "try_different_username": "尝试其他用户名",
+          "check_registered_email": "检查邮箱是否已注册",
+          "contact_support_account": "联系客服找回账户",
+          "get_new_code": "重新获取验证码",
+          "check_sms": "检查短信",
+          "contact_admin_enable": "联系管理员开启",
+          "use_referral_code": "使用推荐码注册",
+          "try_different_email": "尝试其他邮箱",
+          "check_wifi_data": "检查WiFi/数据连接",
+          "restart_network": "重启网络",
+          "check_network_speed": "检查网络速度"
+        },
+        "error_messages": {
+          "registration_failed_generic": "注册失败 (错误码: {{code}})",
+          "server_error_message": "服务器内部错误，请稍后重试",
+          "timeout_message": "请求超时，服务器响应缓慢",
+          "network_ssl_error": "SSL证书验证失败或网络不可达",
+          "service_suspended": "注册功能暂未开启",
+          "username_issue": "用户名已存在或格式不正确",
+          "verification_code_error": "验证码错误或已过期",
+          "email_issue": "邮箱格式不正确或已被使用"
+        },
+        "error_titles": {
+          "information_format_error": "信息格式错误",
+          "information_exists": "信息已存在",
+          "service_suspended": "服务暂停",
+          "username_problem": "用户名问题",
+          "verification_code_error": "验证码错误",
+          "email_problem": "邮箱问题"
+        }
       },
       "sms": {
         "code_sent_title": "验证码已发送",
         "code_sent_message": "验证码已发送到您的手机号码 +86 {{phoneNumber}}",
         "send_failed_title": "发送失败",
-        "send_failed_message": "验证码发送失败，请稍后重试"
+        "send_failed_message": "验证码发送失败，请稍后重试",
+        "consent_title": "短信服务条款",
+        "consent_text": "我同意接收短信",
+        "consent_description": "通过注册或使用我们的服务，您同意我们可能向您发送短信，用于：",
+        "consent_purposes": {
+          "authentication": "身份验证：账户注册、登录验证码",
+          "notifications": "重要通知：活动提醒、安全警报、服务更新",
+          "services": "服务通知：预约确认、志愿服务时间安排"
+        },
+        "consent_notice": "我们会向您发送短信进行身份验证和重要通知。标准短信费用可能适用。您可以随时回复\"STOP\"来取消订阅营销短信，但身份验证短信无法取消。查看我们的隐私政策了解更多信息。",
+        "compliance_title": "短信服务合规声明",
+        "terms_privacy_checkbox": "我已阅读并同意《服务条款》和《隐私政策》",
+        "sms_consent_checkbox": "我同意接收短信验证码",
+        "compliance_notice": "短信费用和数据费用可能适用。输入您的手机号码即可从PomeloX接收一次性密码短信到您的手机。短信内容可能有所不同。回复\"HELP\"获取帮助。回复\"STOP\"取消。",
+        "service_terms": "服务条款",
+        "privacy_policy": "隐私政策"
       }
     },
     "validation": {
@@ -342,9 +473,15 @@
         "legal_name_required": "请输入法定名",
         "nickname_required": "请输入昵称",
         "phone_required": "请输入电话号码",
+        "phone_invalid_cn": "请输入有效的中国手机号（11位数字，以1开头）",
+        "phone_invalid_us": "请输入有效的美国电话号码（10位数字）",
         "email_required": "请输入邮箱",
         "email_format": "邮箱格式不正确",
-        "verification_code_format": "验证码格式不正确"
+        "verification_code_required": "请输入验证码",
+        "verification_code_format": "验证码格式不正确",
+        "password_format": "密码至少6位，需包含字母和数字",
+        "confirm_password_required": "请再次输入密码",
+        "password_mismatch": "两次输入的密码不一致"
       },
       "username_required": "请输入用户名",
       "username_length": "用户名长度为6-20位",
@@ -509,6 +646,9 @@
       "checkin_option": "立即签到",
       "checkin_prompt_title": "开始志愿服务",
       "checkin_prompt_message": "报名成功！是否立即前往签到页面开始志愿服务？",
+      "success_notification_title": "🎉 报名成功！",
+      "success_notification_message": "您已成功报名该活动",
+      "success_notification_action": "立即查看",
       "failed_title": "报名失败",
       "failed_message": "报名失败，请稍后重试",
       "register_now": "立即报名"
@@ -556,6 +696,10 @@
       "logout": "退出登录",
       "logoutConfirm": "确认退出",
       "logoutMessage": "您确定要退出登录吗？",
+      "deleteAccount": "删除账户",
+      "deleteAccountConfirm": "删除账户",
+      "deleteAccountMessage": "您确定要永久删除您的账户吗？此操作不可撤销，将删除所有数据。",
+      "deleteAccountWarning": "警告：这将永久删除您的所有账户数据，包括活动、志愿时长和个人信息。",
       "cancel": "取消",
       "sectionAccountInfo": "账户信息",
       "sectionPrivacySecurity": "隐私与安全",
@@ -622,7 +766,9 @@
       "clearFailedMessage": "清除缓存时发生错误，请稍后再试。",
       "cacheSizeFallback": "128 MB",
       "sectionDisplayAppearance": "显示与外观",
-      "sectionStoragePerformance": "存储与性能",
+      "sectionStoragePerformance": "存储与性能", 
+      "sectionAccountManagement": "账户管理",
+      "deleteAccount": "删除账户",
       "regionTimezoneMessage": "地区时区设置功能即将推出",
       "darkModePattern": "深色模式",
       "light_mode": "浅色模式",
@@ -1271,6 +1417,9 @@
     "registration_failed_message": "报名失败，请稍后重试",
     "checkin_success": "签到成功",
     "checkin_success_message": "您已成功签到！",
+    "checkin_success_notification_title": "✅ 签到成功！",
+    "checkin_success_notification_message": "您已成功签到该活动",
+    "checkin_success_notification_action": "继续参与",
     "checkin_failed": "签到失败",
     "checkin_failed_message": "签到失败，请稍后重试",
     "checkin_now": "立即签到",

@@ -8,6 +8,7 @@ import {
   Dimensions,
   Platform,
   Modal,
+  DeviceEventEmitter,
 } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { useNavigation, useRoute } from '@react-navigation/native';
@@ -15,6 +16,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import * as Haptics from 'expo-haptics';
 import { ScanFeedbackOverlay, QRCodeBounds } from '../../components/common/ScanFeedbackOverlay';
+import { ScannedUserInfoModal } from '../../components/modals/ScannedUserInfoModal';
 
 import { theme } from '../../theme';
 import { useOrganization } from '../../context/OrganizationContext';
@@ -27,9 +29,39 @@ import { pomeloXAPI } from '../../services/PomeloXAPI';
 import { useUser } from '../../context/UserContext';
 import { WebCameraView, WebCameraViewRef } from '../../components/web/WebCameraView';
 import { useWebCameraPermissions } from '../../hooks/useWebCameraPermissions';
+import { decodeActivityHash } from '../../utils/md5Decoder';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 const scanAreaSize = screenWidth * 0.7;
+
+// ✅ 手动Base64解码函数 - 向后兼容旧版本身份码
+const base64ManualDecode = (base64Data: string): string => {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
+  let result = '';
+  let buffer = 0;
+  let bitsCollected = 0;
+  
+  // 清理Base64数据（移除空格和换行符）
+  const cleanData = base64Data.replace(/[^A-Za-z0-9+/=]/g, '');
+  
+  for (let i = 0; i < cleanData.length; i++) {
+    const char = cleanData[i];
+    if (char === '=') break; // 遇到填充字符停止
+    
+    const charIndex = chars.indexOf(char);
+    if (charIndex === -1) continue; // 跳过无效字符
+    
+    buffer = (buffer << 6) | charIndex;
+    bitsCollected += 6;
+    
+    if (bitsCollected >= 8) {
+      result += String.fromCharCode((buffer >> (bitsCollected - 8)) & 255);
+      bitsCollected -= 8;
+    }
+  }
+  
+  return result;
+};
 
 export const QRScannerScreen: React.FC = () => {
   const { t } = useTranslation();
@@ -98,6 +130,10 @@ export const QRScannerScreen: React.FC = () => {
   const [showOrganizationSwitchModal, setShowOrganizationSwitchModal] = useState(false);
   const [scanResult, setScanResult] = useState<MerchantQRScanResult | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
+
+  // 用户身份码扫描相关状态
+  const [showUserInfoModal, setShowUserInfoModal] = useState(false);
+  const [scannedUserData, setScannedUserData] = useState<UserIdentityData | null>(null);
 
   // 组件卸载时停止摄像头
   useEffect(() => {
@@ -207,8 +243,8 @@ export const QRScannerScreen: React.FC = () => {
               {
                 text: t('qr.results.continue_register'),
                 onPress: () => {
-                  // 跳转到新的注册流程，并标记为邀请码注册
-                  navigation.navigate('RegisterStep1', { 
+                  // 跳转到身份选择，然后再到注册流程
+                  navigation.navigate('IdentityChoice', { 
                     referralCode,
                     hasReferralCode: true,
                     registrationType: 'invitation', // 标记为邀请码注册
@@ -244,7 +280,7 @@ export const QRScannerScreen: React.FC = () => {
             {
               text: t('qr.results.continue_register'),
               onPress: () => {
-                navigation.navigate('RegisterStep1', { 
+                navigation.navigate('IdentityChoice', { 
                   referralCode,
                   hasReferralCode: true,
                   registrationType: 'invitation'
@@ -479,6 +515,24 @@ export const QRScannerScreen: React.FC = () => {
         return directId;
       }
       
+      // 32位哈希（尝试MD5破解）
+      if (/^[a-f0-9]{32}$/.test(qrData)) {
+        console.log('🔐 [活动码解析] 检测到32位哈希，尝试MD5破解');
+        const decodeResult = decodeActivityHash(qrData);
+        
+        if (decodeResult.success && decodeResult.activityId) {
+          console.log('🎯 [活动码解析] MD5破解成功:', {
+            activityId: decodeResult.activityId,
+            originalText: decodeResult.originalText,
+            timeMs: decodeResult.timeMs
+          });
+          return decodeResult.activityId;
+        } else {
+          console.log('❌ [活动码解析] MD5破解失败');
+          return null;
+        }
+      }
+      
       return null;
     } catch (error) {
       console.error('Error parsing activity QR code:', error);
@@ -495,6 +549,14 @@ export const QRScannerScreen: React.FC = () => {
         if (Platform.OS === 'ios') {
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         }
+        
+        // 发送签到成功事件通知其他页面更新状态
+        console.log('🔄 发送活动签到成功事件:', { activityId, action: 'checkin_success' });
+        DeviceEventEmitter.emit('activityRegistrationChanged', {
+          activityId: activityId,
+          action: 'checkin_success',
+          timestamp: Date.now()
+        });
         
         Alert.alert(
           t('qr.results.signin_success_title'),
@@ -554,20 +616,36 @@ export const QRScannerScreen: React.FC = () => {
 
   // ==================== 用户身份码扫描处理 ====================
 
-  const handleUserIdentityScan = (qrData: string) => {
+  const handleUserIdentityScan = async (qrData: string) => {
     try {
       console.log('🔎 [QR扫描] 开始处理用户身份码扫描');
+      
+      // ✅ 检查是否为新的哈希格式
+      if (qrData.startsWith('VG_HASH_')) {
+        await handleHashIdentityScan(qrData);
+        return;
+      }
+      
+      // ✅ 降级到Base64格式处理
       const parsedUser = parseUserIdentityQR(qrData);
       
       if (!parsedUser.isValid) {
         console.log('❌ [QR扫描] 身份码无效:', parsedUser.error);
-        showScanError(t('qr.errors.invalid_user_code'), parsedUser.error || t('qr.errors.scan_valid_user_qr'));
+        showScanError(
+          t('qr.errors.invalid_user_code'),
+          parsedUser.error || t('qr.errors.scan_valid_user_qr'),
+          parsedUser.error
+        );
         return;
       }
 
       if (!parsedUser.data) {
         console.log('❌ [QR扫描] 身份码数据为空');
-        showScanError(t('qr.errors.identity_data_error'), t('qr.errors.cannot_read_user_info'));
+        showScanError(
+          t('qr.errors.identity_data_error'),
+          t('qr.errors.cannot_read_user_info'),
+          '解析结果为空'
+        );
         return;
       }
 
@@ -577,7 +655,76 @@ export const QRScannerScreen: React.FC = () => {
 
     } catch (error) {
       console.error('❌ [QR扫描] 处理用户身份码异常:', error);
-      showScanError(t('qr.errors.scan_failed'), t('qr.errors.process_user_code_error'));
+      const errorMessage = error instanceof Error ? error.message : '未知错误';
+      showScanError(
+        t('qr.errors.scan_failed'),
+        t('qr.errors.process_user_code_error'),
+        errorMessage
+      );
+    }
+  };
+
+  // ==================== 哈希格式身份码处理 ====================
+  
+  const handleHashIdentityScan = async (qrData: string) => {
+    try {
+      console.log('🔐 [QR哈希扫描] 开始处理哈希格式身份码');
+      setIsProcessing(true);
+      
+      // 导入哈希解析工具
+      const { parseHashIdentityQR } = require('../../utils/qrHashGenerator');
+      const hashResult = parseHashIdentityQR(qrData);
+      
+      if (!hashResult.isValid) {
+        console.log('❌ [QR哈希扫描] 哈希格式无效:', hashResult.error);
+        showScanError(
+          t('qr.errors.invalid_hash_format') || '身份码格式错误',
+          hashResult.error || '请使用有效的身份码'
+        );
+        return;
+      }
+      
+      // ✅ 通过API查询用户详细信息
+      console.log('🌐 [QR哈希扫描] 查询用户信息:', {
+        userId: hashResult.userId,
+        hash: hashResult.hash,
+        timestamp: hashResult.timestamp
+      });
+      
+      try {
+        // 调用后端API获取用户详细信息
+        const userResponse = await pomeloXAPI.getUserIdentityByHash({
+          userId: hashResult.userId!,
+          hash: hashResult.hash!,
+          timestamp: hashResult.timestamp!
+        });
+        
+        if (userResponse.code === 200 && userResponse.data) {
+          console.log('✅ [QR哈希扫描] 用户信息查询成功');
+          showUserInfo(userResponse.data);
+        } else {
+          console.log('❌ [QR哈希扫描] 用户信息查询失败:', userResponse.msg);
+          showScanError(
+            t('qr.errors.user_not_found') || '用户不存在',
+            userResponse.msg || '身份码可能已失效或用户不存在'
+          );
+        }
+      } catch (apiError) {
+        console.error('❌ [QR哈希扫描] API查询失败:', apiError);
+        showScanError(
+          t('qr.errors.network_error') || '网络错误',
+          '无法获取用户信息，请检查网络连接后重试'
+        );
+      }
+      
+    } catch (error) {
+      console.error('❌ [QR哈希扫描] 处理哈希身份码异常:', error);
+      showScanError(
+        t('qr.errors.scan_failed') || '扫描失败',
+        '哈希身份码处理异常，请重试'
+      );
+    } finally {
+      setIsProcessing(false);
     }
   };
 
@@ -585,56 +732,169 @@ export const QRScannerScreen: React.FC = () => {
     try {
       console.log('🔍 [QR解析] 开始解析用户身份码:', qrData?.substring(0, 50) + '...');
       
+      if (!qrData || typeof qrData !== 'string') {
+        console.log('❌ [QR解析] QR数据为空或格式错误');
+        return {
+          isValid: false,
+          error: 'QR码数据无效'
+        };
+      }
+
       if (!qrData.startsWith('VG_USER_')) {
-        console.log('❌ [QR解析] 非用户身份码格式');
+        console.log('❌ [QR解析] 非用户身份码格式, 实际格式:', qrData.substring(0, 20));
         return {
           isValid: false,
           error: '不是有效的用户身份码格式'
         };
       }
 
-      const base64Data = qrData.replace('VG_USER_', '');
+      const base64Data = qrData.replace('VG_USER_', '').trim();
       console.log('🔑 [QR解析] 提取的base64数据长度:', base64Data.length);
       
-      const encodedString = atob(base64Data);
-      console.log('🗜️ [QR解析] atob解码后的字符串长度:', encodedString.length);
+      if (!base64Data) {
+        console.log('❌ [QR解析] base64数据为空');
+        return {
+          isValid: false,
+          error: '身份码数据为空'
+        };
+      }
+
+      let encodedString: string;
+      let jsonString: string;
+      let userData: UserIdentityData;
+
+      // ✅ 增强Base64解码兼容性 - 支持多种解码方案
+      let base64DecodeSuccess = false;
       
-      const jsonString = decodeURIComponent(encodedString);
-      console.log('📜 [QR解析] decodeURIComponent后的JSON字符串长度:', jsonString.length);
-      
-      const userData: UserIdentityData = JSON.parse(jsonString);
-      console.log('✅ [QR解析] JSON解析成功:', {
-        userId: userData.userId,
-        userName: userData.userName,
-        legalName: userData.legalName,
-        type: userData.type,
-        hasOrganization: !!userData.currentOrganization
-      });
+      // 方案1: React Native Base64库
+      try {
+        const Base64 = require('react-native-base64');
+        encodedString = Base64.decode(base64Data);
+        base64DecodeSuccess = true;
+        console.log('🗜️ [QR解析] RN Base64解码成功，长度:', encodedString.length);
+      } catch (base64Error) {
+        console.log('⚠️ [QR解析] RN Base64库解码失败:', base64Error?.message || base64Error);
+        
+        // 方案2: 原生atob方法
+        try {
+          encodedString = atob(base64Data);
+          base64DecodeSuccess = true;
+          console.log('🗜️ [QR解析] atob解码成功，长度:', encodedString.length);
+        } catch (atobError) {
+          console.log('⚠️ [QR解析] atob解码失败:', atobError?.message || atobError);
+          
+          // 方案3: 手动Base64解码（向后兼容）
+          try {
+            encodedString = base64ManualDecode(base64Data);
+            base64DecodeSuccess = true;
+            console.log('🗜️ [QR解析] 手动Base64解码成功，长度:', encodedString.length);
+          } catch (manualError) {
+            console.error('❌ [QR解析] 所有Base64解码方法都失败:', { base64Error, atobError, manualError });
+            return {
+              isValid: false,
+              error: '身份码编码格式不支持，请使用最新版本的PomeloX生成身份码'
+            };
+          }
+        }
+      }
+
+      // 尝试URL解码
+      try {
+        jsonString = decodeURIComponent(encodedString);
+        console.log('📜 [QR解析] URL解码成功，长度:', jsonString.length);
+      } catch (urlError) {
+        console.log('⚠️ [QR解析] URL解码失败，直接使用原字符串:', urlError);
+        jsonString = encodedString;
+      }
+
+      // ✅ 增强JSON解析 - 容错处理parentId等特殊字段
+      try {
+        userData = JSON.parse(jsonString);
+        
+        // ✅ 数据清理和容错处理
+        if (userData && typeof userData === 'object') {
+          // 处理school.parentId字段可能的问题
+          if (userData.school && userData.school.parentId !== undefined) {
+            // 确保parentId是有效的数字或null
+            const parentId = userData.school.parentId;
+            if (parentId === null || parentId === undefined || parentId === '') {
+              userData.school.parentId = undefined;
+            } else if (typeof parentId === 'string') {
+              const numParentId = parseInt(parentId, 10);
+              userData.school.parentId = isNaN(numParentId) ? undefined : numParentId;
+            } else if (typeof parentId !== 'number') {
+              userData.school.parentId = undefined;
+            }
+          }
+          
+          // 清理可能的空值字段
+          ['userId', 'userName', 'legalName'].forEach(field => {
+            if (userData[field] && typeof userData[field] === 'string') {
+              userData[field] = userData[field].trim();
+            }
+          });
+        }
+        
+        console.log('✅ [QR解析] JSON解析和清理成功:', {
+          userId: userData.userId,
+          userName: userData.userName,
+          legalName: userData.legalName,
+          type: userData.type,
+          hasOrganization: !!userData.currentOrganization,
+          schoolParentId: userData.school?.parentId
+        });
+      } catch (jsonError) {
+        console.error('❌ [QR解析] JSON解析失败:', jsonError);
+        console.log('📝 [QR解析] 原始JSON字符串:', jsonString.substring(0, 200) + '...');
+        return {
+          isValid: false,
+          error: '身份码内容格式错误，数据可能已损坏或版本不兼容'
+        };
+      }
+
+      // 验证数据结构
+      if (!userData || typeof userData !== 'object') {
+        console.log('❌ [QR解析] 解析结果不是有效对象');
+        return {
+          isValid: false,
+          error: '身份码数据结构错误'
+        };
+      }
 
       // 验证必要字段
       if (!userData.userId || !userData.userName || !userData.legalName) {
         console.log('⚠️ [QR解析] 缺少必要字段:', {
           hasUserId: !!userData.userId,
           hasUserName: !!userData.userName,
-          hasLegalName: !!userData.legalName
+          hasLegalName: !!userData.legalName,
+          actualFields: Object.keys(userData)
         });
         return {
           isValid: false,
-          error: '身份码缺少必要信息'
+          error: '身份码缺少必要信息（用户ID、用户名或姓名）'
         };
       }
 
-      console.log('✨ [QR解析] 身份码解析成功!');
+      // 验证数据类型
+      if (userData.type !== 'user_identity') {
+        console.log('⚠️ [QR解析] 身份码类型不匹配:', userData.type);
+        return {
+          isValid: false,
+          error: '不是用户身份码类型'
+        };
+      }
+
+      console.log('✨ [QR解析] 身份码解析完全成功!');
       return {
         isValid: true,
         data: userData
       };
 
     } catch (error) {
-      console.error('❌ [QR解析] 解析异常:', error);
+      console.error('❌ [QR解析] 解析过程发生未捕获异常:', error);
       return {
         isValid: false,
-        error: '身份码格式错误，无法解析'
+        error: `解析异常: ${error instanceof Error ? error.message : '未知错误'}`
       };
     }
   };
@@ -645,33 +905,16 @@ export const QRScannerScreen: React.FC = () => {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     }
 
-    const organizationText = userData.currentOrganization 
-      ? `\n组织：${userData.currentOrganization.displayNameZh}`
-      : '';
+    console.log('✅ [QR扫描] 显示用户信息模态框:', {
+      userId: userData.userId,
+      legalName: userData.legalName,
+      position: userData.position?.displayName,
+      organization: userData.currentOrganization?.displayNameZh
+    });
 
-    Alert.alert(
-      '用户身份信息',
-      `姓名：${userData.legalName}\n英文名：${userData.nickName}\n邮箱：${userData.email}${organizationText}`,
-      [
-        {
-          text: '查看详情',
-          onPress: () => {
-            // TODO: 跳转到用户详情页面
-            console.log('Navigate to user profile:', userData.userId);
-            navigation.goBack();
-          }
-        },
-        {
-          text: '继续扫描',
-          onPress: () => setScanned(false)
-        },
-        {
-          text: '返回',
-          style: 'cancel',
-          onPress: () => navigation.goBack()
-        }
-      ]
-    );
+    // 使用新的高级用户信息展示组件
+    setScannedUserData(userData);
+    setShowUserInfoModal(true);
   };
 
   // ==================== 商家会员卡扫描处理 ====================
@@ -847,7 +1090,7 @@ export const QRScannerScreen: React.FC = () => {
     }
   };
 
-  const showScanError = (title: string, message: string) => {
+  const showScanError = (title: string, message: string, errorDetails?: string) => {
     // 隐藏扫码反馈覆盖层
     setShowScanFeedback(false);
     
@@ -855,13 +1098,29 @@ export const QRScannerScreen: React.FC = () => {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
     }
 
+    console.log('🚨 [QR扫描] 显示错误信息:', { title, message, errorDetails });
+
+    // 根据错误类型提供更详细的用户提示
+    let detailedMessage = message;
+    if (errorDetails) {
+      // 将技术错误转换为用户友好的提示
+      if (errorDetails.includes('Base64') || errorDetails.includes('编码')) {
+        detailedMessage += '\n\n💡 建议：请确保扫描完整清晰的二维码';
+      } else if (errorDetails.includes('JSON') || errorDetails.includes('解析')) {
+        detailedMessage += '\n\n💡 建议：此二维码可能已损坏，请重新生成';
+      } else if (errorDetails.includes('字段') || errorDetails.includes('信息')) {
+        detailedMessage += '\n\n💡 建议：身份码信息不完整，请联系管理员';
+      }
+    }
+
     Alert.alert(
       title,
-      message,
+      detailedMessage,
       [
         {
           text: '重新扫描',
           onPress: () => {
+            console.log('🔄 [QR扫描] 用户选择重新扫描');
             setScanned(false);
             setQRCodeBounds(undefined);
             scannedDataRef.current = '';
@@ -870,7 +1129,10 @@ export const QRScannerScreen: React.FC = () => {
         {
           text: '返回',
           style: 'cancel',
-          onPress: () => navigation.goBack()
+          onPress: () => {
+            console.log('↩️ [QR扫描] 用户选择返回');
+            navigation.goBack();
+          }
         }
       ]
     );
@@ -912,9 +1174,10 @@ export const QRScannerScreen: React.FC = () => {
             text: t('qr.scanning.confirm'),
             onPress: (text) => {
               if (text) {
-                navigation.navigate('RegisterForm', { 
+                navigation.navigate('IdentityChoice', { 
                   referralCode: text,
-                  hasReferralCode: true 
+                  hasReferralCode: true,
+                  registrationType: 'invitation'
                 });
               }
             },
@@ -1062,6 +1325,19 @@ export const QRScannerScreen: React.FC = () => {
         onOrganizationSelect={handleOrganizationSwitch}
         merchantName={scanResult?.error?.message || ''}
       />
+
+      {/* 用户身份信息模态框 */}
+      {scannedUserData && (
+        <ScannedUserInfoModal
+          visible={showUserInfoModal}
+          onClose={() => {
+            setShowUserInfoModal(false);
+            setScannedUserData(null);
+            setScanned(false); // 允许继续扫描
+          }}
+          scannedUserData={scannedUserData}
+        />
+      )}
     </View>
   );
 };

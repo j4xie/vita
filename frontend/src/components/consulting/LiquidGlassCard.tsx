@@ -123,7 +123,7 @@ export const LiquidGlassCard: React.FC<LiquidGlassCardProps> = ({
                 />
               ) : (
                 <Text style={{ 
-                  fontSize: 13, 
+                  fontSize: 14, // 辅助信息最小14pt
                   fontWeight: '700', 
                   color: '#2B2B2B' 
                 }}>
@@ -134,7 +134,7 @@ export const LiquidGlassCard: React.FC<LiquidGlassCardProps> = ({
             
             {/* 学校名 */}
             <Text style={{ 
-              fontSize: 13, 
+              fontSize: 14, // 辅助信息最小14pt
               color: Glass.textMain, 
               opacity: 0.85 
             }}>
@@ -196,16 +196,16 @@ const styles = StyleSheet.create({
   },
   
   badgeText: {
-    fontSize: 13,
+    fontSize: 14, // 辅助信息最小14pt
     fontWeight: '700',
   },
   
   titleText: {
-    fontSize: 13,
+    fontSize: 14, // 辅助信息最小14pt
     color: '#111',
     opacity: 0.85,
     textAlign: 'center',
-    lineHeight: 16,
+    lineHeight: 18, // 调整为合适的行高
   },
 
   titleTextSelected: {

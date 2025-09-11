@@ -8,6 +8,7 @@ import {
   Platform,
   AccessibilityInfo,
   useColorScheme,
+  Dimensions,
 } from 'react-native';
 import Animated, {
   useAnimatedStyle,
@@ -17,6 +18,7 @@ import Animated, {
   Easing,
 } from 'react-native-reanimated';
 import { theme } from '../../theme';
+import { typography } from '../../theme/typography';
 import { LIQUID_GLASS_LAYERS } from '../../theme/core';
 import { usePerformanceDegradation } from '../../hooks/usePerformanceDegradation';
 
@@ -212,10 +214,10 @@ const styles = StyleSheet.create({
   
   // 文字样式
   segmentText: {
-    fontSize: 14, // 系统标准字号
+    fontSize: Platform.OS === 'ios' && (Dimensions.get('window').width >= 768) ? 26 : 17, // 强制iPad 26pt
     fontWeight: '600', // 半粗体
     textAlign: 'center',
-    lineHeight: 16,
+    lineHeight: Platform.OS === 'ios' && (Dimensions.get('window').width >= 768) ? 32 : 22, // 强制iPad行高
   },
   
   // 选中文字 - 深色

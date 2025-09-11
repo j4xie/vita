@@ -13,11 +13,12 @@ const BASE_URL = 'https://www.vitaglobal.icu';
 /**
  * 发送短信验证码
  * @param phoneNumber 手机号
+ * @param areaCode 国际区号
  * @returns 短信验证码响应
  */
-export const sendSMSVerificationCode = async (phoneNumber: string): Promise<SMSVerificationResponse> => {
+export const sendSMSVerificationCode = async (phoneNumber: string, areaCode: '86' | '1' = '86'): Promise<SMSVerificationResponse> => {
   try {
-    const response = await fetch(`${BASE_URL}/sms/vercodeSms?phoneNum=${phoneNumber}`, {
+    const response = await fetch(`${BASE_URL}/sms/vercodeSms?phoneNum=${phoneNumber}&areaCode=${areaCode}`, {
       method: 'GET',
       headers: {
         'Accept': 'application/json',
@@ -217,9 +218,13 @@ export const checkEmailAvailability = async (email: string): Promise<{ available
 };
 
 /**
- * 验证邀请码是否有效
+ * 验证邀请码格式
  * @param invCode 邀请码
- * @returns 验证结果和邀请码信息
+ * @returns 验证结果
+ * 
+ * 注意：根据API文档，邀请码的实际有效性验证在注册时进行
+ * 接口14 (/app/invitation/invInfo) 需要管理员权限，普通用户无法调用
+ * 因此这里只进行格式验证，真实验证交给注册接口处理
  */
 export const validateInvitationCode = async (invCode: string): Promise<{
   valid: boolean;
@@ -233,30 +238,28 @@ export const validateInvitationCode = async (invCode: string): Promise<{
   message?: string;
 }> => {
   try {
-    // 由于API文档中没有validate接口，我们简单验证邀请码格式
-    // 邀请码应该是8位字母数字组合，如API文档示例中的Y7MW5HBV
+    // 邀请码格式验证：8位大写字母+数字组合（如API文档示例：Y7MW5HBV）
     const isValidFormat = /^[A-Z0-9]{8}$/.test(invCode);
-    
-    if (isValidFormat) {
-      // 返回格式有效的响应，实际验证在注册时进行
-      return {
-        valid: true,
-        data: {
-          inviterName: '管理员', // 模拟数据，实际注册时由后端验证
-          organizationName: '学联组织',
-        },
-        message: '邀请码格式有效'
-      };
-    } else {
+    if (!isValidFormat) {
       return {
         valid: false,
-        message: '邀请码格式不正确，应为8位字母数字组合'
+        message: '邀请码格式不正确，应为8位大写字母数字组合（如：Y7MW5HBV）'
       };
     }
+
+    // 格式验证通过，真实有效性将在注册时由后端验证
+    // 如果邀请码不存在或已过期，注册接口会返回相应错误
+    console.log('🔍 邀请码格式验证通过:', invCode);
+    return {
+      valid: true,
+      message: '邀请码格式正确，将在注册时验证有效性'
+    };
   } catch (error) {
     console.error('验证邀请码失败:', error);
-    // 网络错误时假设有效
-    return { valid: true };
+    return { 
+      valid: false, 
+      message: '邀请码验证出错，请重试' 
+    };
   }
 };
 
@@ -275,9 +278,18 @@ export const validateEmailFormat = (email: string): boolean => {
  * @param phoneNumber 手机号
  * @returns 是否为有效手机号
  */
-export const validatePhoneNumber = (phoneNumber: string): boolean => {
-  const phoneRegex = /^1[3-9]\d{9}$/;
-  return phoneRegex.test(phoneNumber);
+export const validatePhoneNumber = (phoneNumber: string, areaCode: '86' | '1' = '86'): boolean => {
+  if (areaCode === '86') {
+    // 中国手机号验证：1开头，第二位3-9，总共11位
+    const chinaPhoneRegex = /^1[3-9]\d{9}$/;
+    return chinaPhoneRegex.test(phoneNumber);
+  } else {
+    // 美国手机号验证：支持多种格式
+    // 1234567890, (123) 456-7890, 123-456-7890, 123.456.7890
+    const cleanPhone = phoneNumber.replace(/\D/g, ''); // 移除所有非数字字符
+    const usPhoneRegex = /^[2-9]\d{2}[2-9]\d{2}\d{4}$/; // 美国手机号格式
+    return cleanPhone.length === 10 && usPhoneRegex.test(cleanPhone);
+  }
 };
 
 /**

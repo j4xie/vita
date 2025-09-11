@@ -115,7 +115,7 @@ const SettingRow: React.FC<SettingRowProps> = ({
     },
     badgeText: {
       color: '#ffffff',
-      fontSize: 12,
+      fontSize: 14, // 提升至辅助信息最小14pt
       fontWeight: '600',
     },
   });
@@ -578,6 +578,7 @@ export const ProfileHomeScreen: React.FC = () => {
     }
   };
 
+
   const settingItems = [
     {
       id: 'notifications',
@@ -786,7 +787,7 @@ export const ProfileHomeScreen: React.FC = () => {
       borderRadius: 8,
     },
     membershipBadgeText: {
-      fontSize: 12,
+      fontSize: 14, // 提升至辅助信息最小14pt
       fontWeight: '500',
       color: '#6B7280',
     },
@@ -845,7 +846,7 @@ export const ProfileHomeScreen: React.FC = () => {
     },
 
     cardCountText: {
-      fontSize: 11,
+      fontSize: 13, // 提升至辅助信息最小13pt
       fontWeight: '600',
       color: '#FFFFFF',
     },
@@ -907,7 +908,7 @@ export const ProfileHomeScreen: React.FC = () => {
       marginBottom: 4,
     },
     serviceDesc: {
-      fontSize: 12,
+      fontSize: 14, // 提升至辅助信息最小14pt
       color: '#666',
     },
     
@@ -943,7 +944,7 @@ export const ProfileHomeScreen: React.FC = () => {
       marginBottom: 6,
     },
     toolLabel: {
-      fontSize: 12,
+      fontSize: 14, // 提升至辅助信息最小14pt
       color: '#000',
       textAlign: 'center',
     },
@@ -1031,12 +1032,12 @@ export const ProfileHomeScreen: React.FC = () => {
       marginRight: 12,
     },
     reviewMetaText: {
-      fontSize: 12, // 12-13pt Secondary灰
+      fontSize: 14, // 提升至辅助信息最小14pt
       color: '#9CA3AF',
       marginLeft: 4,
     },
     reviewDate: {
-      fontSize: 12,
+      fontSize: 14, // 提升至辅助信息最小14pt
       color: '#9CA3AF',
       marginLeft: 'auto',
     },
@@ -1208,7 +1209,8 @@ export const ProfileHomeScreen: React.FC = () => {
                 </View>
               </TouchableOpacity>
               
-              <View style={styles.activitySeparator} />
+              {/* 收藏功能已隐藏以通过App Store审核 */}
+              {/* <View style={styles.activitySeparator} />
               
               <TouchableOpacity 
                 style={styles.activityItem}
@@ -1233,9 +1235,10 @@ export const ProfileHomeScreen: React.FC = () => {
                 </View>
               </TouchableOpacity>
               
-              <View style={styles.activitySeparator} />
+              <View style={styles.activitySeparator} /> */}
               
-              <TouchableOpacity 
+              {/* 评价功能已隐藏以通过App Store审核 */}
+              {/* <TouchableOpacity 
                 style={styles.activityItem}
                 onPress={isAuthenticated && user?.id ? () => {} : handleUnauthenticatedPress}
               >
@@ -1256,12 +1259,12 @@ export const ProfileHomeScreen: React.FC = () => {
                     {isAuthenticated && user?.id ? activityStats.pendingReview : '--'}
                   </Text>
                 </View>
-              </TouchableOpacity>
+              </TouchableOpacity> */}
             </View>
           </View>
 
-          {/* 会员卡区域 - 替换核销服务 */}
-          <View style={styles.membershipSection}>
+          {/* 会员卡区域已隐藏以通过App Store审核 */}
+          {/* <View style={styles.membershipSection}>
             <Text style={styles.sectionTitle}>{t('profile.my_membership')}</Text>
             <View style={styles.membershipCardL1}>
               <View style={styles.membershipHeader}>
@@ -1271,7 +1274,6 @@ export const ProfileHomeScreen: React.FC = () => {
                 </View>
               </View>
               
-              {/* 会员卡入口和升级按钮 */}
               <View style={styles.membershipActions}>
                 <TouchableOpacity 
                   style={styles.myCardsButton}
@@ -1284,8 +1286,6 @@ export const ProfileHomeScreen: React.FC = () => {
                   </View>
                 </TouchableOpacity>
 
-                {/* 组织切换按钮已移除 */}
-
                 <TouchableOpacity 
                   style={styles.upgradeButtonDawn}
                   onPress={() => {
@@ -1296,7 +1296,7 @@ export const ProfileHomeScreen: React.FC = () => {
                 </TouchableOpacity>
               </View>
             </View>
-          </View>
+          </View> */}
 
           {/* 我的评价/笔记区 - 暂时隐藏 */}
           {/* 
@@ -1359,6 +1359,7 @@ export const ProfileHomeScreen: React.FC = () => {
                 />
                 <Text style={styles.logoutText}>{t('profile.account.logout')}</Text>
               </TouchableOpacity>
+              
             </View>
           )}
           

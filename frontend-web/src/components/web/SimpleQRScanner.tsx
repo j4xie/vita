@@ -1,4 +1,4 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import { View, StyleSheet } from 'react-native';
 
 interface SimpleQRScannerProps {
@@ -9,6 +9,10 @@ interface SimpleQRScannerProps {
 export const SimpleQRScanner: React.FC<SimpleQRScannerProps> = ({ onScan, style }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const scannerRef = useRef<any>(null);
+  const [lastScanned, setLastScanned] = useState<string>('');
+  const [isScanning, setIsScanning] = useState(false);
+  const lastScannedRef = useRef<string>('');
+  const isScanningRef = useRef<boolean>(false);
 
   useEffect(() => {
     let isMounted = true;
@@ -59,7 +63,14 @@ export const SimpleQRScanner: React.FC<SimpleQRScannerProps> = ({ onScan, style 
             script.src = 'https://cdn.jsdelivr.net/npm/qr-scanner@1.4.2/qr-scanner.umd.min.js';
             script.onload = () => {
               console.log('✅ SimpleQRScanner: QR Scanner库加载成功');
-              // 新版本不再需要设置 WORKER_PATH
+              
+              // 确保Worker路径设置正确（重要！）
+              const QrScanner = (window as any).QrScanner;
+              if (QrScanner.WORKER_PATH === undefined) {
+                QrScanner.WORKER_PATH = 'https://cdn.jsdelivr.net/npm/qr-scanner@1.4.2/qr-scanner-worker.min.js';
+                console.log('🔧 SimpleQRScanner: 设置Worker路径');
+              }
+              
               resolve();
             };
             script.onerror = () => {
@@ -78,49 +89,78 @@ export const SimpleQRScanner: React.FC<SimpleQRScannerProps> = ({ onScan, style 
         
         const scanner = new QrScanner(
           video,
-          (result: { data: string }) => {
-            console.log('🎯 SimpleQRScanner: 检测到QR码:', result.data);
+          (result: any) => {
+            // 兼容不同版本的QrScanner返回格式
+            const currentData = typeof result === 'string' ? result : result.data;
+            console.log('🎯 SimpleQRScanner: 检测到QR码:', currentData);
             
-            // 调用回调，触发ScanFeedbackOverlay
-            onScan(result.data);
+            // 简化逻辑，直接调用回调
+            if (currentData && currentData.trim()) {
+              console.log('✅ SimpleQRScanner: 立即触发回调，数据:', currentData.substring(0, 50));
+              
+              try {
+                onScan(currentData);
+                console.log('📞 SimpleQRScanner: onScan回调执行成功');
+              } catch (error) {
+                console.error('❌ SimpleQRScanner: onScan回调执行失败:', error);
+              }
+            } else {
+              console.log('⚠️ SimpleQRScanner: 无效的QR数据');
+            }
           },
           {
+            // 更激进的扫描配置
             highlightScanRegion: true,
             highlightCodeOutline: true,
-            maxScansPerSecond: 20, // 增加扫描频率
+            maxScansPerSecond: 10, // 提高扫描频率
             returnDetailedScanResult: false,
-            // 降低扫描要求
+            // 使用更大的扫描区域
             calculateScanRegion: (video) => {
+              console.log('📐 SimpleQRScanner: 计算扫描区域, 视频尺寸:', {
+                width: video.videoWidth,
+                height: video.videoHeight
+              });
               return {
                 x: 0,
-                y: 0, 
+                y: 0,
                 width: video.videoWidth,
                 height: video.videoHeight
               };
+            },
+            // 添加更多选项提高检测率
+            preferredCamera: 'environment',
+            onDecodeError: (error) => {
+              // 不打印解码错误，避免控制台刷屏
+              // console.log('⚠️ SimpleQRScanner: 解码错误（正常）:', error.message);
             }
           }
         );
         
-        // 添加调试：每2秒检查一次扫描状态
-        const debugInterval = setInterval(() => {
-          console.log('🔍 SimpleQRScanner: 扫描器状态检查', {
-            isActive: scanner ? true : false,
-            videoSize: `${video.videoWidth}x${video.videoHeight}`,
-            videoPlaying: !video.paused,
-            currentTime: video.currentTime
-          });
-        }, 2000);
-        
-        // 清理调试定时器
-        setTimeout(() => {
-          clearInterval(debugInterval);
-        }, 30000);
+        // 移除调试定时器，避免内存泄漏
         
         scannerRef.current = scanner;
         
         // 5. 启动扫描器
         await scanner.start();
         console.log('✅ SimpleQRScanner: 扫描器启动成功');
+        
+        // 添加调试定时器，检查扫描器状态
+        const debugInterval = setInterval(() => {
+          console.log('🔍 SimpleQRScanner 调试状态:', {
+            isActive: scanner._active,
+            hasVideo: !!video.srcObject,
+            videoReady: video.readyState === 4,
+            videoSize: `${video.videoWidth}x${video.videoHeight}`,
+            scannerState: { lastScanned, isScanning }
+          });
+        }, 10000); // 每10秒检查一次
+        
+        // 在清理时停止调试定时器
+        const originalStop = scanner.stop;
+        scanner.stop = function() {
+          clearInterval(debugInterval);
+          return originalStop.call(this);
+        };
         
       } catch (error) {
         console.error('❌ SimpleQRScanner: 初始化失败:', error);

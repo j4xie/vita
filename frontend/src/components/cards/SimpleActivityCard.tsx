@@ -452,23 +452,9 @@ const SimpleActivityCardComponent: React.FC<SimpleActivityCardProps> = ({
           {String(activity?.title || '')}
         </Text>
         
-        <View style={styles.detailsRow}>
-          <View style={styles.locationRow}>
-            <Ionicons 
-              name="location-outline" 
-              size={12} 
-              color="#666666" 
-              style={styles.locationIcon}
-            />
-            <Text style={styles.location} numberOfLines={1}>
-              {String(activity?.location || '')}
-            </Text>
-          </View>
-          
-          <Text style={styles.time}>
-            {formatActivityDateWithTimezone(activity as FrontendActivity, i18n.language as 'zh' | 'en')}
-          </Text>
-        </View>
+        <Text style={styles.time}>
+          {formatActivityDateWithTimezone(activity as FrontendActivity, i18n.language as 'zh' | 'en')}
+        </Text>
       </View>
       </Animated.View>
     </Animated.View>
@@ -641,36 +627,16 @@ const styles = StyleSheet.create({
     zIndex: 2, // 确保在遮罩上方
   },
   title: {
-    fontSize: 16, // 从18减少到16
+    fontSize: 17, // 正文内容标准17pt基线
     fontWeight: '700',
     color: '#1A1A1A', // 小红书风格深色文字
     marginBottom: 6, // 从8减少到6
     // 移除阴影，在白色背景上不需要
   },
-  // 新增：时间和地点同行布局
-  detailsRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  locationRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-  },
-  locationIcon: {
-    marginRight: 3, // 从4减少到3
-  },
-  location: {
-    fontSize: 13, // 从14减少到13
-    color: '#666666', // 小红书风格中灰色
-    flex: 1,
-    // 移除阴影和透明度，在白色背景上不需要
-  },
   time: {
-    fontSize: 12, // 从13减少到12
-    color: '#666666', // 小红书风格中灰色
-    marginLeft: 8, // 添加左边距，与地点分开
-    // 移除阴影和透明度，在白色背景上不需要
+    fontSize: 13, // Caption1标准13pt，识别性高但不喧宾夺主
+    fontWeight: '400', // Regular字重，说明性文字
+    color: '#555555', // 加深颜色提升对比度
+    marginTop: 4, // 与活动名称的垂直间距
   },
 });

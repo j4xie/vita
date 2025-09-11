@@ -78,7 +78,12 @@
     "scroll_to_submit": "Scroll to submit",
     "english_name": "English Name",
     "organization": "Organization",
-    "school": "School"
+    "school": "School",
+    "start_using": "Start Using",
+    "go_login": "Go to Login",
+    "suggestions": "Suggested Solutions",
+    "switch_network": "Try switching network",
+    "manual_location_prompt": "Unable to auto-detect your location, please choose manually:"
   },
   "language": {
     "selection": {
@@ -190,6 +195,47 @@
       "register_link": "Sign Up Now",
       "skip": "Skip"
     },
+    "forgot_password": {
+      "title": "Forgot Password",
+      "reset_password": "Reset Password",
+      "subtitle": "Enter your phone number and we'll send you a verification code to help reset your password",
+      "area_code_label": "Select Region",
+      "phone_label": "Phone Number",
+      "send_code": "Send Code",
+      "resend_code": "Resend",
+      "resend_after": "Resend in {{seconds}}s",
+      "code_sent_title": "Code Sent",
+      "code_sent_message": "Verification code sent to {{phone}}, please check your SMS",
+      "code_sent_success": "Verification code sent successfully!",
+      "check_sms_instruction": "Please check the verification code in your SMS and follow the instructions to reset your password",
+      "send_code_failed": "Failed to send verification code",
+      "send_code_error": "Error occurred while sending verification code, please try again later",
+      "verification_code_label": "Verification Code",
+      "verification_code_placeholder": "Enter 6-digit verification code",
+      "verify_code_button": "Verify and Continue",
+      "verify_code_error": "Verification code validation failed, please try again later"
+    },
+    "reset_password": {
+      "title": "Reset Password",
+      "set_new_password": "Set New Password",
+      "subtitle": "Please set your new password. Make sure it's strong and secure",
+      "new_password_label": "New Password",
+      "new_password_placeholder": "Enter your new password",
+      "password_hint": "Minimum 6 digits or characters",
+      "confirm_password_label": "Confirm Password",
+      "confirm_password_placeholder": "Enter your new password again",
+      "reset_button": "Reset Password",
+      "success_title": "Password Reset Successfully",
+      "success_message": "Your password has been reset successfully. Please login with your new password",
+      "reset_failed": "Password reset failed, please try again later"
+    },
+    "password": {
+      "strength": {
+        "weak": "Weak",
+        "medium": "Medium",
+        "strong": "Strong"
+      }
+    },
     "guest_prompt": "Tap to access full features",
     "verification": {
       "title": "SMS Verification",
@@ -218,6 +264,17 @@
         "manage_registrations": "Track registrations",
         "receive_notifications": "Get updates"
       },
+      "identity": {
+        "title": "Identity Selection",
+        "who_are_you": "What's your identity?",
+        "choose_description": "Please select your identity type for the best registration experience",
+        "student": "I am a Student",
+        "student_description": "I want to register a PomeloX account for myself",
+        "parent": "I am a Parent",
+        "parent_description": "I want to register a PomeloX account for my child",
+        "continue": "Continue",
+        "please_select": "Please select your identity type"
+      },
       "student_option": "Student Registration",
       "organization_option": "Organization Registration",
       "form_title": "Create Account",
@@ -227,12 +284,19 @@
       "terms_of_service": "Terms of Service",
       "privacy_policy": "Privacy Policy",
       "and": "and",
+      "go_login": "Go to Login",
       "success_title": "Registration Successful",
       "success_message": "Congratulations! You have successfully registered. Welcome to PomeloX",
       "auto_login_success": "Welcome to PomeloX!",
       "success_please_login": "Registration successful! Please go to the login page to sign in with your account",
+      "success": {
+        "title": "Registration Successful",
+        "account_created": "Account created successfully!\n\nYour username: {{username}}\nPlease go to the login page to sign in with your account"
+      },
       "processing_registration": "Processing registration...",
       "auto_login_processing": "Auto-login in progress...",
+      "auto_login_progress": "Account created successfully, logging you in automatically...",
+      "welcome_message": "Welcome to PomeloX!\n\n✅ Account created successfully\n✅ Auto-login successful\n🚀 Redirecting to app home",
       "error_title": "Registration Failed",
       "error_message": "An error occurred during registration. Please try again later",
       "privacy": {
@@ -339,13 +403,80 @@
         "school_load_failed": "Failed to load school list",
         "organization_load_failed": "Failed to load organization list",
         "register_failed": "Registration Failed",
-        "register_failed_message": "Registration failed, please check your information and try again"
+        "register_failed_message": "Registration failed, please check your information and try again",
+        "server_temporarily_unavailable": "Server temporarily unavailable, please try again later",
+        "registration_data_invalid": "Registration data format is invalid, please check and try again",
+        "username_or_email_exists": "Username or email already exists",
+        "network_connection_failed": "Network connection failed, please check your network and try again",
+        "invitation_code_invalid": "Invitation code does not exist or has expired, please check if the invitation code is correct",
+        "invitation_code_used": "This invitation code has been used, please contact the inviter for a new invitation code",
+        "invitation_code_expired": "Invitation code has expired, please contact the inviter to generate a new invitation code",
+        "invitation_code_verification_failed": "Invitation code verification failed, please check if the invitation code is correct",
+        "required_fields_empty": "The following fields cannot be empty",
+        "registration_progress": "Registering",
+        "registration_progress_message": "Creating your account, please wait...",
+        "auto_login_progress": "Auto-login in progress",
+        "server_error_title": "Server Error",
+        "network_error_title": "Network Error",
+        "registration_failed_title": "Registration Failed",
+        "suggestions": {
+          "check_network": "Check network connection",
+          "retry_later": "Try again later",
+          "contact_support": "Contact support",
+          "check_username_format": "Check username format (6-20 characters)",
+          "check_password_strength": "Check password strength",
+          "check_email_format": "Confirm email format",
+          "try_different_username": "Try a different username",
+          "check_registered_email": "Check if email is already registered",
+          "contact_support_account": "Contact support to recover account",
+          "get_new_code": "Get new verification code",
+          "check_sms": "Check SMS",
+          "contact_admin_enable": "Contact admin to enable",
+          "use_referral_code": "Use referral code registration",
+          "try_different_email": "Try a different email",
+          "check_wifi_data": "Check WiFi/data connection",
+          "restart_network": "Restart network",
+          "check_network_speed": "Check network speed"
+        },
+        "error_messages": {
+          "registration_failed_generic": "Registration failed (Error code: {{code}})",
+          "server_error_message": "Internal server error, please try again later",
+          "timeout_message": "Request timeout, server response is slow",
+          "network_ssl_error": "SSL certificate verification failed or network unreachable",
+          "service_suspended": "Registration feature is temporarily disabled",
+          "username_issue": "Username already exists or format is incorrect",
+          "verification_code_error": "Verification code error or expired",
+          "email_issue": "Email format is incorrect or already in use"
+        },
+        "error_titles": {
+          "information_format_error": "Information Format Error",
+          "information_exists": "Information Already Exists",
+          "service_suspended": "Service Suspended",
+          "username_problem": "Username Problem",
+          "verification_code_error": "Verification Code Error",
+          "email_problem": "Email Problem"
+        }
       },
       "sms": {
         "code_sent_title": "Verification Code Sent",
         "code_sent_message": "Verification code sent to your phone number +{{countryCode}} {{phoneNumber}}",
         "send_failed_title": "Send Failed",
-        "send_failed_message": "Failed to send verification code, please try again later"
+        "send_failed_message": "Failed to send verification code, please try again later",
+        "consent_title": "SMS Service Terms",
+        "consent_text": "I agree to receive text messages",
+        "consent_description": "By registering or using our services, you agree that we may send you text messages for:",
+        "consent_purposes": {
+          "authentication": "Authentication: Account registration and login verification codes",
+          "notifications": "Important Notifications: Activity reminders, security alerts, service updates",
+          "services": "Service Notifications: Appointment confirmations, volunteer service schedules"
+        },
+        "consent_notice": "We will send you text messages for authentication and important notifications. Message and data rates may apply. You may reply \\\"STOP\\\" to cancel marketing messages at any time, but authentication messages cannot be cancelled. View our Privacy Policy for more information.",
+        "compliance_title": "SMS Service Compliance Notice",
+        "terms_privacy_checkbox": "Read and agree《Service terms》and《Privacy policy》",
+        "sms_consent_checkbox": "I agree to receive text message",
+        "compliance_notice": "Message and data may rates apply. Enter your phone number to receive one time passcode message to your phone from PomeloX. Msg may vary Reply \"HELP\" for help. Reply \"STOP\" to cancel.",
+        "service_terms": "Service terms",
+        "privacy_policy": "Privacy policy"
       }
     },
     "validation": {
@@ -353,9 +484,15 @@
         "legal_name_required": "Legal name is required",
         "nickname_required": "Nickname is required",
         "phone_required": "Phone number is required",
+        "phone_invalid_cn": "Please enter a valid Chinese phone number (11 digits starting with 1)",
+        "phone_invalid_us": "Please enter a valid US phone number (10 digits)",
         "email_required": "Email is required",
         "email_format": "Invalid email format",
-        "verification_code_format": "Invalid verification code format"
+        "verification_code_required": "Verification code is required",
+        "verification_code_format": "Invalid verification code format",
+        "password_format": "Password must be at least 6 characters with letters and numbers",
+        "confirm_password_required": "Please confirm your password",
+        "password_mismatch": "Passwords do not match"
       },
       "username_required": "Username is required",
       "username_length": "Username must be 6-20 characters",
@@ -516,6 +653,9 @@
       "checkin_option": "Check-in Now",
       "checkin_prompt_title": "Start Volunteer Service",
       "checkin_prompt_message": "Registration successful! Would you like to go to the check-in page to start your volunteer service?",
+      "success_notification_title": "🎉 Registration Successful!",
+      "success_notification_message": "You have successfully registered for this activity",
+      "success_notification_action": "View Details",
       "failed_title": "Registration Failed",
       "failed_message": "Registration failed, please try again later",
       "register_now": "Register Now"
@@ -561,8 +701,12 @@
     "logout": "Logout",
     "account": {
       "logout": "Logout",
-      "logoutConfirm": "Confirm Logout",
+      "logoutConfirm": "Confirm Logout", 
       "logoutMessage": "Are you sure you want to logout?",
+      "deleteAccount": "Delete Account",
+      "deleteAccountConfirm": "Delete Account",
+      "deleteAccountMessage": "Are you sure you want to permanently delete your account? This action cannot be undone and will remove all your data.",
+      "deleteAccountWarning": "Warning: This will permanently delete all your account data including activities, volunteer hours, and personal information.",
       "cancel": "Cancel",
       "sectionAccountInfo": "Account Information",
       "sectionPrivacySecurity": "Privacy & Security",
@@ -635,6 +779,8 @@
       "cacheSizeFallback": "128 MB",
       "sectionDisplayAppearance": "Display & Appearance",
       "sectionStoragePerformance": "Storage & Performance",
+      "sectionAccountManagement": "Account Management",
+      "deleteAccount": "Delete Account",
       "regionTimezoneMessage": "Coming soon",
       "darkModePattern": "Dark Mode Pattern",
       "activityLayout": "Activity Layout",
@@ -1238,6 +1384,9 @@
     "registration_failed_message": "Registration failed, please try again later",
     "checkin_success": "Check-in Successful",
     "checkin_success_message": "You have successfully checked in!",
+    "checkin_success_notification_title": "✅ Check-in Successful!",
+    "checkin_success_notification_message": "You have successfully checked in to this activity",
+    "checkin_success_notification_action": "Continue Participating",
     "checkin_failed": "Check-in Failed",
     "checkin_failed_message": "Check-in failed, please try again later",
     "checkin_now": "Check In Now",
