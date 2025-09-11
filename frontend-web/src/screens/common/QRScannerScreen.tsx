@@ -31,7 +31,7 @@ import { Organization } from '../../types/organization';
 import { UserIdentityData, ParsedUserQRCode } from '../../types/userIdentity';
 import { pomeloXAPI } from '../../services/PomeloXAPI';
 import { useUser } from '../../context/UserContext';
-import { decodeActivityHash } from '../../utils/md5Decoder';
+import { extractActivityIdFromHash, isActivityHash } from '../../utils/hashActivityDecoder';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 const scanAreaSize = screenWidth * 0.7;
@@ -502,21 +502,19 @@ export const QRScannerScreen: React.FC = () => {
         return directId;
       }
       
-      // 32位哈希（尝试MD5破解）
-      if (/^[a-f0-9]{32}$/.test(qrData)) {
-        console.log('🔐 [活动码解析] 32位哈希，尝试MD5破解');
-        const decodeResult = decodeActivityHash(qrData);
+      // 32位哈希（直接提取活动ID）
+      if (isActivityHash(qrData)) {
+        console.log('🔐 [活动码解析] 检测到哈希格式，直接提取活动ID');
+        const extractResult = extractActivityIdFromHash(qrData);
         
-        if (decodeResult.success && decodeResult.activityId) {
-          console.log('🎯 [活动码解析] MD5破解成功:', {
-            activityId: decodeResult.activityId,
-            originalText: decodeResult.originalText,
-            attempts: decodeResult.attempts,
-            timeMs: decodeResult.timeMs
+        if (extractResult.success && extractResult.activityId) {
+          console.log('✅ [活动码解析] 活动ID提取成功:', {
+            activityId: extractResult.activityId,
+            method: extractResult.method
           });
-          return decodeResult.activityId;
+          return extractResult.activityId;
         } else {
-          console.log('❌ [活动码解析] MD5破解失败，尝试次数:', decodeResult.attempts);
+          console.log('❌ [活动码解析] 无法从哈希中提取有效活动ID');
           return null;
         }
       }
