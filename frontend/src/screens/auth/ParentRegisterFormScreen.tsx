@@ -32,6 +32,8 @@ import {
 } from '../../services/registrationAPI';
 import { useUser } from '../../context/UserContext';
 import { login } from '../../services/authAPI';
+import { LiquidSuccessModal } from '../../components/modals/LiquidSuccessModal';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 interface RouteParams {
   registrationType?: 'phone' | 'invitation';
@@ -43,7 +45,8 @@ interface RouteParams {
 }
 
 interface ParentFormData {
-  legalName: string;           // 家长法定姓名
+  firstName: string;          // 家长名字
+  lastName: string;           // 家长姓氏
   email: string;              // 邮箱（同时作为用户名）
   phoneNumber: string;        // 手机号
   password: string;           // 密码
@@ -55,7 +58,8 @@ interface ParentFormData {
 }
 
 interface ValidationErrors {
-  legalName?: string;
+  firstName?: string;
+  lastName?: string;
   email?: string;
   phoneNumber?: string;
   password?: string;
@@ -85,7 +89,8 @@ export const ParentRegisterFormScreen: React.FC = () => {
   const [bizId, setBizId] = useState<string>('');
 
   const [formData, setFormData] = useState<ParentFormData>({
-    legalName: '',
+    firstName: '',
+    lastName: '',
     email: '',
     phoneNumber: '',
     password: '',
@@ -97,6 +102,9 @@ export const ParentRegisterFormScreen: React.FC = () => {
   });
 
   const [errors, setErrors] = useState<ValidationErrors>({});
+  
+  // 🔧 成功弹窗状态 - 与其他注册页面保持一致
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
 
   // 加载学校列表
   useEffect(() => {
@@ -110,7 +118,17 @@ export const ParentRegisterFormScreen: React.FC = () => {
       
       if (response.code === 200 && response.data) {
         const schoolData = createSchoolDataFromBackend(response.data);
-        setSchools(schoolData);
+        // 过滤掉非学校的组织机构（如CU总部等）
+        const filteredSchools = schoolData.filter(school => {
+          // 排除CU总部和其他非学校组织
+          const excludedOrganizations = ['CU', '总部', 'Headquarters', 'Chinese Union'];
+          const schoolInfo = `${school.abbreviation} ${school.name}`.toLowerCase();
+          
+          return !excludedOrganizations.some(org => 
+            schoolInfo.includes(org.toLowerCase())
+          );
+        });
+        setSchools(filteredSchools);
       } else {
         Alert.alert(t('common.error'), t('auth.register.errors.school_load_failed'));
       }
@@ -136,11 +154,18 @@ export const ParentRegisterFormScreen: React.FC = () => {
   const validateForm = (): boolean => {
     const newErrors: ValidationErrors = {};
 
-    // 验证家长法定姓名
-    if (!formData.legalName.trim()) {
-      newErrors.legalName = t('validation.parent_name_required');
-    } else if (formData.legalName.length > 50) {
-      newErrors.legalName = t('validation.name_too_long');
+    // 验证家长名字
+    if (!formData.firstName.trim()) {
+      newErrors.firstName = t('validation.parent_first_name_required');
+    } else if (formData.firstName.length > 25) {
+      newErrors.firstName = t('validation.first_name_too_long');
+    }
+
+    // 验证家长姓氏
+    if (!formData.lastName.trim()) {
+      newErrors.lastName = t('validation.parent_last_name_required');
+    } else if (formData.lastName.length > 25) {
+      newErrors.lastName = t('validation.last_name_too_long');
     }
 
     // 验证邮箱
@@ -162,16 +187,10 @@ export const ParentRegisterFormScreen: React.FC = () => {
       newErrors.confirmPassword = t('validation.password_mismatch');
     }
 
-    // 验证手机号（普通注册时必填，邀请码注册时可选）
-    if (registrationType === 'phone') {
-      if (!formData.phoneNumber) {
-        newErrors.phoneNumber = t('validation.phone_required');
-      } else if (!validatePhoneNumber(formData.phoneNumber, formData.areaCode)) {
-        newErrors.phoneNumber = formData.areaCode === '86' 
-          ? t('validation.phone_china_invalid')
-          : t('validation.phone_us_invalid');
-      }
-    } else if (formData.phoneNumber && !validatePhoneNumber(formData.phoneNumber, formData.areaCode)) {
+    // 验证手机号（所有情况下都是必填）
+    if (!formData.phoneNumber) {
+      newErrors.phoneNumber = t('validation.phone_required');
+    } else if (!validatePhoneNumber(formData.phoneNumber, formData.areaCode)) {
       newErrors.phoneNumber = formData.areaCode === '86' 
         ? t('validation.phone_china_invalid')
         : t('validation.phone_us_invalid');
@@ -247,19 +266,13 @@ export const ParentRegisterFormScreen: React.FC = () => {
     if (!validateForm()) return;
 
     setLoading(true);
-    Alert.alert(
-      '⏳ ' + t('auth.register.parent.registering_title'),
-      t('auth.register.parent.registering_message'),
-      [],
-      { cancelable: false }
-    );
 
     try {
       // 构建家长注册请求数据
       const registrationData = {
         identity: 2, // 家长
         userName: formData.email, // 邮箱作为用户名
-        legalName: formData.legalName,
+        legalName: `${formData.firstName} ${formData.lastName}`, // 合并姓名
         nickName: formData.email.split('@')[0], // 使用邮箱前缀作为昵称
         password: formData.password,
         email: formData.email,
@@ -286,40 +299,48 @@ export const ParentRegisterFormScreen: React.FC = () => {
       if (response.code === 200) {
         console.log('✅ 家长注册成功！开始自动登录...');
         
-        Alert.alert(''); // 关闭进度提示
-        
-        // 显示登录进度
-        Alert.alert(
-          '🔐 ' + t('auth.register.auto_login_title'),
-          t('auth.register.auto_login_message'),
-          [],
-          { cancelable: false }
-        );
-        
         try {
+          // 🔧 关键修复：使用与注册API完全相同的userName值
+          const registrationUserName = registrationData.userName; // 使用实际发送给后端的userName
+          console.log('🔑 家长注册尝试登录参数:', {
+            username: registrationUserName,
+            password: '[HIDDEN]',
+            注册时发送的userName: registrationData.userName,
+            注册时发送的email: registrationData.email,
+            formData中的email: formData.email
+          });
+          
           const loginResult = await login({
-            username: formData.email,
+            username: registrationUserName, // 使用注册时的实际userName
             password: formData.password,
           });
           
+          console.log('📡 家长登录API响应:', {
+            code: loginResult.code,
+            msg: loginResult.msg,
+            hasData: !!loginResult.data,
+            tokenPreview: loginResult.data?.token?.substring(0, 20) + '...' || 'No token'
+          });
+          
           if (loginResult.code === 200 && loginResult.data) {
+            // 🔧 Web端解决方案：手动保存token到AsyncStorage
+            console.log('💾 家长注册开始手动保存token...');
+            await AsyncStorage.setItem('@pomelox_token', loginResult.data.token);
+            await AsyncStorage.setItem('@pomelox_user_id', loginResult.data.userId.toString());
+            
+            // 验证token保存
+            const savedToken = await AsyncStorage.getItem('@pomelox_token');
+            console.log('✅ 家长注册Token保存验证:', {
+              tokenSaved: !!savedToken,
+              tokenMatch: savedToken === loginResult.data.token
+            });
+            
             await userLogin(loginResult.data.token);
             console.log('✅ 家长账户自动登录成功！');
             
-            Alert.alert(
-              '🎉 ' + t('auth.register.parent.success_title'),
-              t('auth.register.parent.success_message'),
-              [{
-                text: t('auth.register.parent.start_using'),
-                onPress: () => navigation.dispatch(
-                  CommonActions.reset({
-                    index: 0,
-                    routes: [{ name: 'Main' }],
-                  })
-                )
-              }],
-              { cancelable: false }
-            );
+            // 🔧 使用LiquidSuccessModal替代Alert - 统一用户体验
+            setLoading(false);
+            setShowSuccessModal(true);
           } else {
             // 注册成功但登录失败
             Alert.alert(
@@ -381,6 +402,29 @@ export const ParentRegisterFormScreen: React.FC = () => {
 
   const handleBack = () => {
     navigation.goBack();
+  };
+
+  // 🔧 统一的成功Modal处理函数 - 与其他注册页面保持一致
+  const handleSuccessModalClose = () => {
+    setShowSuccessModal(false);
+    // 🎯 跳转到Profile页面，与其他注册页面保持一致
+    navigation.dispatch(
+      CommonActions.reset({
+        index: 0,
+        routes: [{
+          name: 'Main',
+          state: {
+            routes: [
+              { name: 'Explore' },
+              { name: 'Community' },
+              { name: 'Wellbeing' },
+              { name: 'Profile' }
+            ],
+            index: 3, // Profile标签页的索引
+          }
+        }],
+      })
+    );
   };
 
   const renderSchoolPicker = () => (
@@ -499,17 +543,31 @@ export const ParentRegisterFormScreen: React.FC = () => {
                 </View>
               )}
 
-              {/* 家长法定姓名 */}
-              <View style={styles.inputContainer}>
-                <Text style={styles.label}>{t('auth.register.parent.legal_name_label')}</Text>
-                <TextInput
-                  style={[styles.input, errors.legalName && styles.inputError]}
-                  placeholder={t('auth.register.parent.legal_name_placeholder')}
-                  value={formData.legalName}
-                  onChangeText={(text) => updateFormData('legalName', text)}
-                  placeholderTextColor={theme.colors.text.disabled}
-                />
-                {errors.legalName && <Text style={styles.errorText}>{errors.legalName}</Text>}
+              {/* 家长姓名 - 分成两个字段 */}
+              <View style={styles.nameRowContainer}>
+                <View style={[styles.inputContainer, styles.nameFieldContainer]}>
+                  <Text style={styles.label}>{t('auth.register.parent.first_name_label')}</Text>
+                  <TextInput
+                    style={[styles.input, errors.firstName && styles.inputError]}
+                    placeholder={t('auth.register.parent.first_name_placeholder')}
+                    value={formData.firstName}
+                    onChangeText={(text) => updateFormData('firstName', text)}
+                    placeholderTextColor={theme.colors.text.disabled}
+                  />
+                  {errors.firstName && <Text style={styles.errorText}>{errors.firstName}</Text>}
+                </View>
+                
+                <View style={[styles.inputContainer, styles.nameFieldContainer]}>
+                  <Text style={styles.label}>{t('auth.register.parent.last_name_label')}</Text>
+                  <TextInput
+                    style={[styles.input, errors.lastName && styles.inputError]}
+                    placeholder={t('auth.register.parent.last_name_placeholder')}
+                    value={formData.lastName}
+                    onChangeText={(text) => updateFormData('lastName', text)}
+                    placeholderTextColor={theme.colors.text.disabled}
+                  />
+                  {errors.lastName && <Text style={styles.errorText}>{errors.lastName}</Text>}
+                </View>
               </View>
 
               {/* 邮箱（作为用户名） */}
@@ -532,10 +590,7 @@ export const ParentRegisterFormScreen: React.FC = () => {
               {/* 手机号输入 */}
               <View style={styles.inputContainer}>
                 <Text style={styles.label}>
-                  {registrationType === 'invitation' 
-                    ? t('auth.register.parent.phone_label_optional')
-                    : t('auth.register.parent.phone_label')
-                  }
+                  {t('auth.register.parent.phone_label')}
                 </Text>
                 <View style={styles.phoneInputWrapper}>
                   <TouchableOpacity 
@@ -658,6 +713,16 @@ export const ParentRegisterFormScreen: React.FC = () => {
           </ScrollView>
         </TouchableWithoutFeedback>
       </View>
+      
+      {/* 🔧 成功Modal - 与其他注册页面保持一致的体验 */}
+      <LiquidSuccessModal
+        visible={showSuccessModal}
+        onClose={handleSuccessModalClose}
+        title={t('auth.register.parent.success_title')}
+        message={t('auth.register.parent.success_message')}
+        confirmText={t('auth.register.parent.start_using')}
+        icon="checkmark-circle"
+      />
     </SafeAreaView>
   );
 };
@@ -889,5 +954,14 @@ const styles = StyleSheet.create({
     fontSize: theme.typography.fontSize.lg,
     fontWeight: theme.typography.fontWeight.semibold,
     color: theme.colors.text.inverse,
+  },
+  nameRowContainer: {
+    flexDirection: 'row',
+    gap: theme.spacing[3],
+    marginBottom: theme.spacing[5],
+  },
+  nameFieldContainer: {
+    flex: 1,
+    marginBottom: 0,
   },
 });

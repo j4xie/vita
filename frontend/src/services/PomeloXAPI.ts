@@ -4,6 +4,7 @@ import { getCurrentToken } from './authAPI';
 import { Platform, DeviceEventEmitter } from 'react-native';
 import { notifyRegistrationSuccess, scheduleActivityReminder } from './smartAlertSystem';
 
+// 🔧 强制使用生产环境API - 遵循CLAUDE规范
 const BASE_URL = 'https://www.vitaglobal.icu';
 
 // 检测是否为iOS模拟器
@@ -52,11 +53,13 @@ interface RegisterData {
   bizId?: string;
   orgId?: string;
   area?: string; // 地域选择：zh-中国，en-美国
+  areaCode?: string; // 新增：区域代码，用于区分中国和美国手机号码
 }
 
 interface LoginData {
   userName: string;
   password: string;
+  areaCode?: string; // 新增：区域代码，用于区分中国和美国手机号码
 }
 
 interface APISchoolData {
@@ -157,52 +160,6 @@ class PomeloXAPI {
   }
 
   /**
-   * 发送忘记密码验证码
-   */
-  async sendPasswordResetCode(phone: string, areaCode: string): Promise<SMSResponse> {
-    // 转换区号格式：CN/US -> 86/1
-    let cleanAreaCode: string;
-    if (areaCode === 'CN' || areaCode === '+86') {
-      cleanAreaCode = '86';
-    } else if (areaCode === 'US' || areaCode === '+1') {
-      cleanAreaCode = '1';
-    } else {
-      cleanAreaCode = areaCode.replace('+', '');
-    }
-    
-    console.log('📱 [App-PomeloXAPI] 发送忘记密码验证码:', { 
-      phone, 
-      areaCode, 
-      cleanAreaCode
-    });
-    
-    const url = `${BASE_URL}/sms/vercodeSms?phoneNum=${phone}&areaCode=${cleanAreaCode}`;
-    console.log('🌐 [App-PomeloXAPI] 请求URL:', url);
-    
-    const response = await fetchWithRetry(url, {
-      method: 'GET',
-      headers: {
-        'Accept': 'application/json',
-      },
-    });
-    
-    console.log('📥 [App-PomeloXAPI] SMS API响应:', { 
-      status: response.status, 
-      ok: response.ok 
-    });
-    
-    if (!response.ok) {
-      console.error('❌ [App-PomeloXAPI] HTTP错误:', response.status);
-      throw new Error('发送重置密码验证码失败');
-    }
-    
-    const result = await response.json();
-    console.log('📋 [App-PomeloXAPI] SMS API返回数据:', result);
-    
-    return result;
-  }
-
-  /**
    * 获取学校列表 (公开接口，无需认证)
    */
   async getSchoolList(): Promise<ApiResponse<APISchoolData[]>> {
@@ -229,7 +186,8 @@ class PomeloXAPI {
       ...data,
       password: '[HIDDEN]',
       deptId: data.deptId,
-      deptIdType: typeof data.deptId
+      deptIdType: typeof data.deptId,
+      areaCode: data.areaCode
     });
     
     // 使用form-urlencoded格式
@@ -250,10 +208,17 @@ class PomeloXAPI {
       console.log('⚠️ deptId为空，用户将没有学校关联');
     }
     
+    // 新增：添加areaCode参数支持
+    if (data.areaCode) {
+      formData.append('areaCode', data.areaCode);
+      console.log('✅ areaCode已添加到请求:', data.areaCode);
+    }
+    
     if (data.verCode) formData.append('verCode', data.verCode);
     if (data.invCode) formData.append('invCode', data.invCode);
     if (data.bizId) formData.append('bizId', data.bizId);
     if (data.orgId) formData.append('orgId', data.orgId);
+    if (data.area) formData.append('area', data.area);
     
     console.log('🌐 发送到后端的最终参数:', [...formData.entries()].reduce((acc, [key, value]) => {
       acc[key] = key === 'password' ? '[HIDDEN]' : value;
@@ -283,14 +248,19 @@ class PomeloXAPI {
     userId: number;
     token: string;
   }>> {
-    console.log('🔐 PomeloXAPI.login 调用参数:', { userName: data.userName, password: '[HIDDEN]' });
+    console.log('🔐 PomeloXAPI.login 调用参数:', { userName: data.userName, password: '[HIDDEN]', areaCode: data.areaCode });
     
     // 使用form-urlencoded格式，不是JSON
     const formData = new URLSearchParams();
     formData.append('username', data.userName);
     formData.append('password', data.password);
     
-    console.log('📝 发送到后端的参数:', { username: data.userName, password: '[HIDDEN]' });
+    // 新增：添加areaCode参数支持
+    if (data.areaCode) {
+      formData.append('areaCode', data.areaCode);
+    }
+    
+    console.log('📝 发送到后端的参数:', { username: data.userName, password: '[HIDDEN]', areaCode: data.areaCode });
     
     const response = await fetchWithRetry(`${BASE_URL}/app/login`, {
       method: 'POST',
@@ -329,6 +299,98 @@ class PomeloXAPI {
       method: 'POST',
       body: JSON.stringify(data),
     });
+  }
+
+  /**
+   * 忘记密码 - 发送重置密码验证码
+   * @param phone 手机号码
+   * @param areaCode 区域代码 (可选，用于区分中国和美国手机号码)
+   */
+  async sendPasswordResetCode(phone: string, areaCode?: string): Promise<ApiResponse> {
+    console.log('📱 发送忘记密码验证码（修复后）:', { phone, areaCode });
+    
+    const formData = new URLSearchParams();
+    formData.append('phone', phone);
+    
+    if (areaCode) {
+      formData.append('areaCode', areaCode);
+    }
+    
+    // 根据API文档，使用分开的phoneNum和areaCode参数
+    const apiAreaCode = areaCode === 'CN' ? '86' : '1';
+    const smsUrl = `${BASE_URL}/sms/vercodeSms?phoneNum=${phone}&areaCode=${apiAreaCode}`;
+    
+    console.log('🌐 [PomeloXAPI] 发送短信验证码请求:', { 
+      url: smsUrl,
+      phoneNum: phone,
+      areaCode: apiAreaCode,
+      originalAreaCode: areaCode
+    });
+    
+    const response = await fetchWithRetry(smsUrl, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+      },
+    });
+    
+    console.log('📥 [PomeloXAPI] 忘记密码API响应:', { 
+      status: response.status, 
+      ok: response.ok 
+    });
+    
+    if (!response.ok) {
+      console.error('❌ [PomeloXAPI] HTTP错误:', response.status);
+      throw new Error(`HTTP ${response.status}: 发送验证码失败`);
+    }
+    
+    const result = await response.json();
+    console.log('📋 [PomeloXAPI] 忘记密码响应数据:', result);
+    
+    return result;
+  }
+
+  /**
+   * 重置密码
+   */
+  async resetPassword(data: {
+    phonenumber: string;
+    verCode: string;
+    bizId: string;
+    password: string;
+    areaCode: string;
+  }): Promise<ApiResponse> {
+    // 转换区号格式：CN/US -> 86/1
+    let cleanAreaCode: string;
+    if (data.areaCode === 'CN' || data.areaCode === '+86') {
+      cleanAreaCode = '86';
+    } else if (data.areaCode === 'US' || data.areaCode === '+1') {
+      cleanAreaCode = '1';
+    } else {
+      cleanAreaCode = data.areaCode.replace('+', '');
+    }
+    
+    // 构建form-data格式的请求体
+    const formData = new URLSearchParams();
+    formData.append('phonenumber', data.phonenumber);
+    formData.append('verCode', data.verCode);
+    formData.append('bizId', data.bizId);
+    formData.append('password', data.password);
+    formData.append('areaCode', cleanAreaCode);
+
+    const response = await fetchWithRetry(`${BASE_URL}/app/resetPwd`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: formData.toString(),
+    });
+    
+    if (!response.ok) {
+      throw new Error('重置密码失败');
+    }
+    
+    return response.json();
   }
 
   // 需要认证的接口
@@ -581,89 +643,7 @@ class PomeloXAPI {
       
       if (fallbackResponse.ok) {
         const fallbackResult = await fallbackResponse.json();
-        console.log('✅ [FALLBACK] 基础活动列表获取成功，开始补充个性化状态数据');
-        
-        // 🔧 关键修复：如果有用户ID，为每个活动补充signStatus状态
-        if (params.userId && fallbackResult.code === 200 && fallbackResult.rows) {
-          console.log('🔍 [FALLBACK] 开始为用户补充活动状态:', { 
-            userId: params.userId, 
-            activitiesCount: fallbackResult.rows.length 
-          });
-          
-          try {
-            // 🔧 性能优化：限制并发数量，避免过多同时请求
-            const batchSize = 5; // 每次最多5个并发请求
-            const statusResults: Array<{activityId: number, signStatus: number | null}> = [];
-            
-            for (let i = 0; i < fallbackResult.rows.length; i += batchSize) {
-              const batch = fallbackResult.rows.slice(i, i + batchSize);
-              const batchPromises = batch.map(async (activity: any) => {
-                try {
-                  const signInfo = await this.getSignInfo(activity.id, params.userId!);
-                  return {
-                    activityId: activity.id,
-                    signStatus: signInfo.code === 200 ? signInfo.data : null // ✅ 失败时返回null而不是0
-                  };
-                } catch (error) {
-                  console.warn(`获取活动${activity.id}状态失败:`, error);
-                  return {
-                    activityId: activity.id,
-                    signStatus: null // ✅ 异常时也返回null，保持原状态
-                  };
-                }
-              });
-              
-              const batchResults = await Promise.allSettled(batchPromises); // ✅ 使用allSettled避免单个失败影响整批
-              
-              // ✅ 处理Promise.allSettled的结果
-              batchResults.forEach((result, index) => {
-                if (result.status === 'fulfilled') {
-                  statusResults.push(result.value);
-                } else {
-                  console.warn(`批量获取状态失败:`, result.reason);
-                  statusResults.push({
-                    activityId: batch[index].id,
-                    signStatus: null
-                  });
-                }
-              });
-              
-              // 🔧 添加小延迟避免服务器压力
-              if (i + batchSize < fallbackResult.rows.length) {
-                await new Promise(resolve => setTimeout(resolve, 100));
-              }
-            }
-            
-            // ✅ 构建状态映射，只更新成功获取的状态
-            const statusMap = new Map();
-            statusResults.forEach(result => {
-              if (result.signStatus !== null) {
-                statusMap.set(result.activityId, result.signStatus);
-              }
-            });
-            
-            // 将状态数据合并到活动列表中，只覆盖成功获取的状态
-            fallbackResult.rows = fallbackResult.rows.map((activity: any) => {
-              const currentSignStatus = statusMap.get(activity.id);
-              return {
-                ...activity,
-                signStatus: currentSignStatus !== undefined ? currentSignStatus : (activity.signStatus || 0)
-              };
-            });
-            
-            console.log('✅ [FALLBACK] 个性化状态数据补充完成:', {
-              successfulUpdates: statusMap.size,
-              failedUpdates: statusResults.length - statusMap.size,
-              totalActivities: fallbackResult.rows.length,
-              statusSample: Array.from(statusMap.entries()).slice(0, 3)
-            });
-            
-          } catch (error) {
-            console.error('❌ [FALLBACK] 补充状态数据失败:', error);
-            // 即使状态补充失败，也返回基础数据，不影响主功能
-          }
-        }
-        
+        console.log('✅ [FALLBACK] 基础活动列表获取成功，无个性化数据');
         return fallbackResult;
       } else {
         throw new Error('Fallback API also failed');
@@ -703,16 +683,25 @@ class PomeloXAPI {
    */
   async enrollActivity(activityId: number, userId: number, isCancel?: boolean): Promise<ApiResponse<number>> {
     try {
+      // 🔧 参数验证和类型转换
+      const validActivityId = Number(activityId);
+      const validUserId = Number(userId);
+      
+      if (!validActivityId || !validUserId || validActivityId <= 0 || validUserId <= 0) {
+        throw new Error(`参数无效: activityId=${activityId}, userId=${userId}`);
+      }
+      
       const action = isCancel ? '取消报名' : '报名';
       console.log(`🌐 [PomeloXAPI] 发起活动${action}请求:`, {
-        url: `/app/activity/enroll?activityId=${activityId}&userId=${userId}${isCancel ? '&isCancel=1' : ''}`,
+        originalParams: { activityId, userId, isCancel },
+        validatedParams: { activityId: validActivityId, userId: validUserId, isCancel },
+        url: `/app/activity/enroll?activityId=${validActivityId}&userId=${validUserId}${isCancel ? '&isCancel=1' : ''}`,
         method: 'GET',
-        isCancel,
         timestamp: new Date().toISOString()
       });
       
       // 构建请求URL，根据isCancel参数决定是否添加isCancel=1
-      const url = `/app/activity/enroll?activityId=${activityId}&userId=${userId}${isCancel ? '&isCancel=1' : ''}`;
+      const url = `/app/activity/enroll?activityId=${validActivityId}&userId=${validUserId}${isCancel ? '&isCancel=1' : ''}`;
       
       const response = await this.request(url, {
         method: 'GET',
@@ -720,12 +709,28 @@ class PomeloXAPI {
       
       console.log(`📡 [PomeloXAPI] 活动${action}响应:`, {
         response,
-        success: response.code === 200,
+        success: response.code === 200 && response.data > 0,
+        code: response.code,
+        data: response.data,
+        actualSuccess: response.code === 200 && response.data > 0,
         timestamp: new Date().toISOString()
       });
 
+      // 🔧 根据API文档修复：只有当 code=200 且 data>0 时才算真正成功
+      const isActuallySuccessful = response.code === 200 && response.data != null && response.data > 0;
+      
+      if (!isActuallySuccessful) {
+        console.error(`❌ [PomeloXAPI] 活动${action}失败:`, {
+          code: response.code,
+          data: response.data,
+          msg: response.msg,
+          reason: response.code !== 200 ? 'HTTP错误' : 'data值无效（应>0）'
+        });
+        throw new Error(`活动${action}失败: ${response.msg || '未知错误'}`);
+      }
+
       // 操作成功后的处理
-      if (response.code === 200) {
+      if (isActuallySuccessful) {
         if (!isCancel) {
           // 报名成功后发送本地通知
           try {
@@ -748,10 +753,10 @@ class PomeloXAPI {
             // 不影响报名流程
           }
 
-          // 发送报名事件
+          // 发送报名事件 - 使用React Native事件
           DeviceEventEmitter.emit('activityRegistered', { activityId, userId });
         } else {
-          // 发送取消报名事件
+          // 发送取消报名事件 - 使用React Native事件
           DeviceEventEmitter.emit('activityCancelled', { activityId, userId });
         }
       }
@@ -931,42 +936,6 @@ class PomeloXAPI {
   }
 
   /**
-   * 重置密码
-   */
-  async resetPassword(data: {
-    phonenumber: string;
-    verCode: string;
-    bizId: string;
-    password: string;
-    areaCode: string;
-  }): Promise<ApiResponse> {
-    // 转换区号格式：+86 -> 86
-    const cleanAreaCode = data.areaCode.replace('+', '');
-    
-    // 构建form-data格式的请求体
-    const formData = new URLSearchParams();
-    formData.append('phonenumber', data.phonenumber);
-    formData.append('verCode', data.verCode);
-    formData.append('bizId', data.bizId);
-    formData.append('password', data.password);
-    formData.append('areaCode', cleanAreaCode);
-
-    const response = await fetchWithRetry(`${BASE_URL}/app/resetPwd`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      body: formData.toString(),
-    });
-    
-    if (!response.ok) {
-      throw new Error('重置密码失败');
-    }
-    
-    return response.json();
-  }
-
-  /**
    * 登出
    */
   async logout(): Promise<void> {
@@ -1003,91 +972,6 @@ class PomeloXAPI {
     return this.request('/app/post/list', { method: 'GET' });
   }
 
-  /**
-   * 通过哈希值获取用户身份信息（新增）
-   */
-  async getUserIdentityByHash(params: {
-    userId: string;
-    hash: string;
-    timestamp: number;
-  }): Promise<ApiResponse<{
-    userId: string;
-    userName: string;
-    legalName: string;
-    nickName: string;
-    email: string;
-    avatarUrl?: string;
-    currentOrganization?: {
-      id: string;
-      name: string;
-      displayNameZh: string;
-      displayNameEn?: string;
-    };
-    school?: {
-      id: string;
-      name: string;
-      fullName: string;
-      parentId?: number;
-    };
-    position?: {
-      roleKey: string;
-      roleName: string;
-      displayName: string;
-      level: string;
-    };
-  }>> {
-    console.log('🔐 [API] 通过哈希获取用户身份信息:', {
-      userId: params.userId,
-      hash: params.hash,
-      timestamp: params.timestamp
-    });
-    
-    // 注意：此API端点需要后端实现
-    // 临时实现：返回模拟数据用于前端开发
-    // TODO: 待后端实现真实API后替换
-    try {
-      return this.request('/app/user/identity/hash', {
-        method: 'POST',
-        body: JSON.stringify({
-          userId: params.userId,
-          hash: params.hash,
-          timestamp: params.timestamp
-        })
-      });
-    } catch (error) {
-      console.warn('⚠️ [API] 哈希API暂未实现，使用临时处理');
-      
-      // 临时返回模拟响应
-      return {
-        code: 200,
-        msg: '查询成功',
-        data: {
-          userId: params.userId,
-          userName: 'TestUser',
-          legalName: '测试用户',
-          nickName: 'Test',
-          email: 'test@example.com',
-          currentOrganization: {
-            id: '1',
-            name: 'Student Union',
-            displayNameZh: '学联组织',
-            displayNameEn: 'Student Union'
-          },
-          school: {
-            id: '213',
-            name: 'USC',
-            fullName: 'University of Southern California'
-          },
-          position: {
-            roleKey: 'common',
-            roleName: '普通用户',
-            displayName: '普通用户',
-            level: 'user'
-          }
-        }
-      };
-    }
-  }
 }
 
 export const pomeloXAPI = new PomeloXAPI();

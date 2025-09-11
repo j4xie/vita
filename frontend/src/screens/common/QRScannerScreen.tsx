@@ -17,6 +17,7 @@ import { useTranslation } from 'react-i18next';
 import * as Haptics from 'expo-haptics';
 import { ScanFeedbackOverlay, QRCodeBounds } from '../../components/common/ScanFeedbackOverlay';
 import { ScannedUserInfoModal } from '../../components/modals/ScannedUserInfoModal';
+import { LiquidSuccessModal } from '../../components/modals/LiquidSuccessModal';
 
 import { theme } from '../../theme';
 import { useOrganization } from '../../context/OrganizationContext';
@@ -27,9 +28,7 @@ import { Organization } from '../../types/organization';
 import { UserIdentityData, ParsedUserQRCode } from '../../types/userIdentity';
 import { pomeloXAPI } from '../../services/PomeloXAPI';
 import { useUser } from '../../context/UserContext';
-import { WebCameraView, WebCameraViewRef } from '../../components/web/WebCameraView';
-import { useWebCameraPermissions } from '../../hooks/useWebCameraPermissions';
-import { decodeActivityHash } from '../../utils/md5Decoder';
+import { extractActivityIdFromHash, isActivityHash } from '../../utils/hashActivityDecoder';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 const scanAreaSize = screenWidth * 0.7;
@@ -99,16 +98,11 @@ export const QRScannerScreen: React.FC = () => {
     }
   };
   
-  // 原生和Web平台的相机权限处理
-  const [nativePermission, requestNativePermission] = Platform.OS !== 'web' ? useCameraPermissions() : [null, () => Promise.resolve({ granted: false, status: 'denied' as const })];
-  const [webPermission, requestWebPermission] = Platform.OS === 'web' ? useWebCameraPermissions() : [null, () => Promise.resolve({ granted: false, status: 'denied' as const })];
-  
-  const permission = Platform.OS === 'web' ? webPermission : nativePermission;
-  const requestPermission = Platform.OS === 'web' ? requestWebPermission : requestNativePermission;
+  // 移动端相机权限处理
+  const [permission, requestPermission] = useCameraPermissions();
   
   const [scanned, setScanned] = useState(false);
   const [torchOn, setTorchOn] = useState(false);
-  const webCameraRef = useRef<WebCameraViewRef>(null);
   
   // 扫码反馈状态
   const [showScanFeedback, setShowScanFeedback] = useState(false);
@@ -134,18 +128,49 @@ export const QRScannerScreen: React.FC = () => {
   // 用户身份码扫描相关状态
   const [showUserInfoModal, setShowUserInfoModal] = useState(false);
   const [scannedUserData, setScannedUserData] = useState<UserIdentityData | null>(null);
+  
+  // 🔧 成功弹窗状态 - 统一用户体验
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [successModalConfig, setSuccessModalConfig] = useState({
+    title: '',
+    message: '',
+    icon: 'checkmark-circle' as keyof typeof Ionicons.glyphMap,
+  });
 
   // 组件卸载时停止摄像头
   useEffect(() => {
     return () => {
-      if (Platform.OS === 'web' && webCameraRef.current) {
-        webCameraRef.current.stopCamera();
-      }
     };
   }, []);
 
   // 用于保存扫描数据的ref
   const scannedDataRef = useRef<string>('');
+
+  // 🔧 统一的成功Modal处理函数
+  const displaySuccessModal = (title: string, message: string, icon: keyof typeof Ionicons.glyphMap = 'checkmark-circle') => {
+    setSuccessModalConfig({ title, message, icon });
+    setShowSuccessModal(true);
+  };
+
+  const handleSuccessModalClose = () => {
+    setShowSuccessModal(false);
+    
+    // 根据成功类型决定后续行为
+    if (successModalConfig.title.includes('核销') || successModalConfig.title.includes('checkin')) {
+      navigation.goBack(); // 核销成功返回上一页
+    } else if (successModalConfig.title.includes('签到') || successModalConfig.title.includes('signin')) {
+      // 签到成功的导航逻辑
+      const returnScreen = route.params?.returnScreen;
+      if (returnScreen) {
+        navigation.navigate(returnScreen);
+      } else {
+        navigation.goBack();
+      }
+    } else {
+      setScanned(false); // 其他情况允许继续扫描
+    }
+    setScanResult(null);
+  };
 
   const handleBarCodeScanned = ({ type, data, bounds }: { type: string; data: string; bounds?: any }) => {
     if (scanned || isProcessing) return;
@@ -311,15 +336,11 @@ export const QRScannerScreen: React.FC = () => {
   const handleVerifyCode = (code: string) => {
     // 处理活动核销二维码
     if (code.startsWith('VG_EVENT_')) {
-      Alert.alert(
+      // 🔧 使用LiquidSuccessModal替代Alert - 活动核销成功
+      displaySuccessModal(
         t('qr.results.checkin_success_title'),
         t('qr.results.checkin_success_message'),
-        [
-          {
-            text: t('qr.results.confirm'),
-            onPress: () => navigation.goBack(),
-          },
-        ]
+        'checkmark-circle'
       );
     } else {
       Alert.alert(
@@ -515,20 +536,19 @@ export const QRScannerScreen: React.FC = () => {
         return directId;
       }
       
-      // 32位哈希（尝试MD5破解）
-      if (/^[a-f0-9]{32}$/.test(qrData)) {
-        console.log('🔐 [活动码解析] 检测到32位哈希，尝试MD5破解');
-        const decodeResult = decodeActivityHash(qrData);
+      // 32位哈希（直接提取活动ID）
+      if (isActivityHash(qrData)) {
+        console.log('🔐 [活动码解析] 检测到哈希格式，直接提取活动ID');
+        const extractResult = extractActivityIdFromHash(qrData);
         
-        if (decodeResult.success && decodeResult.activityId) {
-          console.log('🎯 [活动码解析] MD5破解成功:', {
-            activityId: decodeResult.activityId,
-            originalText: decodeResult.originalText,
-            timeMs: decodeResult.timeMs
+        if (extractResult.success && extractResult.activityId) {
+          console.log('✅ [活动码解析] 活动ID提取成功:', {
+            activityId: extractResult.activityId,
+            method: extractResult.method
           });
-          return decodeResult.activityId;
+          return extractResult.activityId;
         } else {
-          console.log('❌ [活动码解析] MD5破解失败');
+          console.log('❌ [活动码解析] 无法从哈希中提取有效活动ID');
           return null;
         }
       }
@@ -541,6 +561,15 @@ export const QRScannerScreen: React.FC = () => {
   };
 
   const performSignIn = async (activityId: number) => {
+    // 🔒 防重复提交保护
+    if (isProcessing) {
+      console.log('⏭️ [QR签到] 正在处理中，跳过重复请求');
+      return;
+    }
+    
+    setIsProcessing(true);
+    console.log('🔄 [QR签到] 开始执行签到操作');
+    
     try {
       const result = await pomeloXAPI.signInActivity(activityId, parseInt(user?.id || '0'));
       
@@ -558,21 +587,11 @@ export const QRScannerScreen: React.FC = () => {
           timestamp: Date.now()
         });
         
-        Alert.alert(
+        // 🔧 使用LiquidSuccessModal替代Alert - 活动签到成功
+        displaySuccessModal(
           t('qr.results.signin_success_title'),
           t('qr.results.signin_success_message'),
-          [
-            {
-              text: t('common.confirm'),
-              onPress: () => {
-                if (returnScreen) {
-                  navigation.navigate(returnScreen);
-                } else {
-                  navigation.goBack();
-                }
-              },
-            },
-          ]
+          'checkmark-circle'
         );
       } else {
         showScanError(
@@ -586,6 +605,10 @@ export const QRScannerScreen: React.FC = () => {
         t('qr.results.signin_failed_title'),
         t('common.network_error')
       );
+    } finally {
+      // 🔓 确保在所有情况下都重置处理状态
+      setIsProcessing(false);
+      console.log('🔓 [QR签到] 重置isProcessing状态');
     }
   };
 
@@ -692,21 +715,35 @@ export const QRScannerScreen: React.FC = () => {
       });
       
       try {
-        // 调用后端API获取用户详细信息
-        const userResponse = await pomeloXAPI.getUserIdentityByHash({
-          userId: hashResult.userId!,
-          hash: hashResult.hash!,
-          timestamp: hashResult.timestamp!
-        });
+        // ✅ 使用现有的用户信息API (零后端改动)
+        const userResponse = await pomeloXAPI.getUserInfo(parseInt(hashResult.userId!));
         
         if (userResponse.code === 200 && userResponse.data) {
           console.log('✅ [QR哈希扫描] 用户信息查询成功');
-          showUserInfo(userResponse.data);
+          
+          // ✅ 本地验证哈希确保安全性
+          const { validateIdentityHash } = require('../../utils/qrHashGenerator');
+          const isValidHash = await validateIdentityHash(
+            userResponse.data,
+            hashResult.timestamp!,
+            hashResult.hash!
+          );
+          
+          if (isValidHash) {
+            console.log('🔐 [QR哈希验证] 身份码哈希验证通过');
+            showUserInfo(userResponse.data);
+          } else {
+            console.log('❌ [QR哈希验证] 身份码哈希验证失败');
+            showScanError(
+              t('qr.errors.invalid_hash') || '身份码验证失败',
+              '身份码可能已被篡改或数据不匹配，请重新生成'
+            );
+          }
         } else {
           console.log('❌ [QR哈希扫描] 用户信息查询失败:', userResponse.msg);
           showScanError(
             t('qr.errors.user_not_found') || '用户不存在',
-            userResponse.msg || '身份码可能已失效或用户不存在'
+            userResponse.msg || '用户ID不存在或账户已停用'
           );
         }
       } catch (apiError) {
@@ -1149,10 +1186,6 @@ export const QRScannerScreen: React.FC = () => {
   };
 
   const handleBack = () => {
-    // Web平台需要先停止摄像头
-    if (Platform.OS === 'web' && webCameraRef.current) {
-      webCameraRef.current.stopCamera();
-    }
     navigation.goBack();
   };
 
@@ -1232,28 +1265,15 @@ export const QRScannerScreen: React.FC = () => {
 
   return (
     <View style={styles.container}>
-      {Platform.OS === 'web' ? (
-        <WebCameraView
-          ref={webCameraRef}
-          style={StyleSheet.absoluteFillObject}
-          facing="back"
-          enableTorch={torchOn}
-          onBarcodeScanned={scanned ? undefined : handleBarCodeScanned}
-          barcodeScannerSettings={{
-            barcodeTypes: ['qr'],
-          }}
-        />
-      ) : (
-        <CameraView
-          style={StyleSheet.absoluteFillObject}
-          facing="back"
-          enableTorch={torchOn}
-          onBarcodeScanned={scanned ? undefined : handleBarCodeScanned}
-          barcodeScannerSettings={{
-            barcodeTypes: ['qr'],
-          }}
-        />
-      )}
+      <CameraView
+        style={StyleSheet.absoluteFillObject}
+        facing="back"
+        enableTorch={torchOn}
+        onBarcodeScanned={scanned ? undefined : handleBarCodeScanned}
+        barcodeScannerSettings={{
+          barcodeTypes: ['qr'],
+        }}
+      />
 
       {/* Overlay */}
       <View style={styles.overlay}>
@@ -1338,6 +1358,16 @@ export const QRScannerScreen: React.FC = () => {
           scannedUserData={scannedUserData}
         />
       )}
+      
+      {/* 🔧 统一的成功弹窗 - 与活动报名保持一致 */}
+      <LiquidSuccessModal
+        visible={showSuccessModal}
+        onClose={handleSuccessModalClose}
+        title={successModalConfig.title}
+        message={successModalConfig.message}
+        confirmText={t('common.confirm')}
+        icon={successModalConfig.icon}
+      />
     </View>
   );
 };
