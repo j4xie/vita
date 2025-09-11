@@ -18,6 +18,7 @@ import { LIQUID_GLASS_LAYERS, DAWN_GRADIENTS } from '../../theme/core';
 import { pomeloXAPI } from '../../services/PomeloXAPI';
 import { useUser } from '../../context/UserContext';
 import { login } from '../../services/authAPI';
+import { LiquidSuccessModal } from '../../components/modals/LiquidSuccessModal';
 
 export const VerificationScreen: React.FC = () => {
   const navigation = useNavigation<any>();
@@ -30,6 +31,7 @@ export const VerificationScreen: React.FC = () => {
   const [verificationCode, setVerificationCode] = useState(['', '', '', '', '', '']);
   const [loading, setLoading] = useState(false);
   const [resendCountdown, setResendCountdown] = useState(0);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
 
   const handleCodeChange = (index: number, value: string) => {
     if (value.length > 1) return;
@@ -48,6 +50,30 @@ export const VerificationScreen: React.FC = () => {
     if (key === 'Backspace' && !verificationCode[index] && index > 0) {
       inputRefs.current[index - 1]?.focus();
     }
+  };
+
+  // 处理成功弹窗关闭后的跳转
+  const handleSuccessModalClose = () => {
+    setShowSuccessModal(false);
+    
+    // 跳转到主页面，并设置初始Tab为Profile
+    navigation.dispatch(
+      CommonActions.reset({
+        index: 0,
+        routes: [{
+          name: 'Main',
+          state: {
+            routes: [
+              { name: 'Explore' },
+              { name: 'Community' },
+              { name: 'Wellbeing' },
+              { name: 'Profile' }
+            ],
+            index: 3, // Profile标签页的索引
+          }
+        }],
+      })
+    );
   };
 
   const handleVerifyAndRegister = async () => {
@@ -106,51 +132,21 @@ export const VerificationScreen: React.FC = () => {
             // 登录成功，更新用户状态
             await userLogin(loginResult.data.token);
             
-            Alert.alert(
-              t('auth.register.success_title'),
-              t('auth.register.auto_login_success'),
-              [{
-                text: t('common.confirm'),
-                onPress: () => navigation.dispatch(
-                  CommonActions.reset({
-                    index: 0,
-                    routes: [{ name: 'Main' }],
-                  })
-                )
-              }]
-            );
+            // 显示成功弹窗
+            setLoading(false);
+            setShowSuccessModal(true);
           } else {
             // 登录失败，但注册成功
-            Alert.alert(
-              t('auth.register.success_title'),
-              t('auth.register.success_please_login'),
-              [{
-                text: t('common.confirm'),
-                onPress: () => navigation.dispatch(
-                  CommonActions.reset({
-                    index: 0,
-                    routes: [{ name: 'Login' }],
-                  })
-                )
-              }]
-            );
+            // 显示成功弹窗
+            setLoading(false);
+            setShowSuccessModal(true);
           }
         } catch (loginError) {
           console.error('自动登录失败:', loginError);
           // 登录失败，但注册成功
-          Alert.alert(
-            t('auth.register.success_title'),
-            t('auth.register.success_please_login'),
-            [{
-              text: t('common.confirm'),
-              onPress: () => navigation.dispatch(
-                CommonActions.reset({
-                  index: 0,
-                  routes: [{ name: 'Login' }],
-                })
-              )
-            }]
-          );
+          // 显示成功弹窗
+          setLoading(false);
+          setShowSuccessModal(true);
         }
       } else {
         console.error('❌ [注册] API返回错误:', {
@@ -285,6 +281,16 @@ export const VerificationScreen: React.FC = () => {
           </TouchableOpacity>
         </View>
       </View>
+
+      {/* 注册成功弹窗 */}
+      <LiquidSuccessModal
+        visible={showSuccessModal}
+        onClose={handleSuccessModalClose}
+        title={t('auth.register.success_title')}
+        message={t('auth.register.success_message')}
+        confirmText={t('common.confirm')}
+        icon="checkmark-circle"
+      />
     </SafeAreaView>
   );
 };

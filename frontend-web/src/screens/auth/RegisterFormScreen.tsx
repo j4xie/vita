@@ -9,7 +9,7 @@ import {
   ScrollView,
   ActivityIndicator,
   Keyboard,
-  TouchableWithoutFeedback,
+  Pressable,
   Platform,
   DeviceEventEmitter,
 } from 'react-native';
@@ -32,6 +32,8 @@ import { SafeAlert } from '../../utils/SafeAlert';
 import { WebTextInput } from '../../components/web/WebTextInput';
 import { ForceNativeInput } from '../../components/web/ForceNativeInput';
 import { validateInvitationCode } from '../../services/registrationAPI';
+import { LiquidSuccessModal } from '../../components/modals/LiquidSuccessModal';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 interface FormData {
   userName: string;
@@ -74,6 +76,9 @@ export const RegisterFormScreen: React.FC = () => {
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [agreedToPrivacy, setAgreedToPrivacy] = useState(false);
   const [agreedToSMS, setAgreedToSMS] = useState(false);
+  
+  // 成功弹窗状态
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
   
   // 地域检测状态
   const [regionDetecting, setRegionDetecting] = useState(false);
@@ -217,17 +222,33 @@ export const RegisterFormScreen: React.FC = () => {
   const validateStep3 = () => {
     const newErrors: Partial<FormData> = {};
     
-    if (!formData.phoneNumber) {
-      newErrors.phoneNumber = t('validation.phone_required');
+    // 推荐码注册时手机号为可选，普通注册时为必填
+    if (!hasReferralCode) {
+      if (!formData.phoneNumber) {
+        newErrors.phoneNumber = t('validation.phone_required');
+      } else {
+        const phoneRegex = formData.phoneType === 'CN' 
+          ? /^1[3-9]\d{9}$/
+          : /^\d{10}$/;
+        
+        if (!phoneRegex.test(formData.phoneNumber)) {
+          newErrors.phoneNumber = formData.phoneType === 'CN' 
+            ? t('validation.phone_china_invalid')
+            : t('validation.phone_usa_invalid');
+        }
+      }
     } else {
-      const phoneRegex = formData.phoneType === 'CN' 
-        ? /^1[3-9]\d{9}$/
-        : /^\d{10}$/;
-      
-      if (!phoneRegex.test(formData.phoneNumber)) {
-        newErrors.phoneNumber = formData.phoneType === 'CN' 
-          ? t('validation.phone_china_invalid')
-          : t('validation.phone_usa_invalid');
+      // 推荐码注册时，如果填写了手机号则验证格式
+      if (formData.phoneNumber) {
+        const phoneRegex = formData.phoneType === 'CN' 
+          ? /^1[3-9]\d{9}$/
+          : /^\d{10}$/;
+        
+        if (!phoneRegex.test(formData.phoneNumber)) {
+          newErrors.phoneNumber = formData.phoneType === 'CN' 
+            ? t('validation.phone_china_invalid')
+            : t('validation.phone_usa_invalid');
+        }
       }
     }
 
@@ -308,7 +329,21 @@ export const RegisterFormScreen: React.FC = () => {
           t('auth.register.sms.code_sent_message', {
             countryCode: formData.phoneType === 'CN' ? '86' : '1',
             phoneNumber: formData.phoneNumber
-          })
+          }),
+          [{
+            text: t('common.confirm'),
+            onPress: () => {
+              // 在确认后导航到验证码页面
+              navigation.navigate('Verification', { 
+                formData: {
+                  ...formData,
+                  bizId: result.bizId
+                },
+                phoneNumber: formData.phoneNumber,
+                phoneType: formData.phoneType 
+              });
+            }
+          }]
         );
         
         // 开始倒计时
@@ -322,15 +357,6 @@ export const RegisterFormScreen: React.FC = () => {
             return prev - 1;
           });
         }, 1000);
-        
-        navigation.navigate('Verification', { 
-          formData: {
-            ...formData,
-            bizId: result.bizId
-          },
-          phoneNumber: formData.phoneNumber,
-          phoneType: formData.phoneType 
-        });
       } else {
         SafeAlert.alert(t('auth.register.sms.send_failed_title'), t('auth.register.sms.send_failed_message'));
       }
@@ -350,7 +376,7 @@ export const RegisterFormScreen: React.FC = () => {
   };
 
   // 智能输入组件选择器 - Web环境使用ForceNativeInput，保证输入正常工作
-  const WebTextInput = Platform.OS === 'web' ? ForceNativeInput : WebTextInput;
+  const SmartTextInput = Platform.OS === 'web' ? ForceNativeInput : WebTextInput;
 
   // 根据学校更新邮箱域名
   const handleSchoolSelect = (school: any) => {
@@ -383,6 +409,30 @@ export const RegisterFormScreen: React.FC = () => {
   // 处理条款和隐私政策点击
   const handleTermsPress = (type: 'terms' | 'privacy') => {
     navigation.navigate('Terms', { type, area: formData.area });
+  };
+
+  // 处理成功弹窗关闭后的跳转
+  const handleSuccessModalClose = () => {
+    setShowSuccessModal(false);
+    
+    // 跳转到主页面，并设置初始Tab为Profile
+    navigation.dispatch(
+      CommonActions.reset({
+        index: 0,
+        routes: [{ 
+          name: 'Main',
+          state: {
+            routes: [
+              { name: 'Explore' },
+              { name: 'Community' },
+              { name: 'Wellbeing' },
+              { name: 'Profile' }
+            ],
+            index: 3, // Profile标签页的索引
+          }
+        }],
+      })
+    );
   };
 
   // 解析注册错误为用户友好提示
@@ -434,22 +484,26 @@ export const RegisterFormScreen: React.FC = () => {
     setLoading(true);
     setLoadingMessage(t('auth.register.processing_registration'));
     try {
-      const phoneNumber = formData.phoneType === 'CN' 
-        ? formData.phoneNumber // 中国手机号直接使用11位格式
-        : `1${formData.phoneNumber}`; // 美国号码保持+1前缀
+      const phoneNumber = formData.phoneNumber ? (
+        formData.phoneType === 'CN' 
+          ? formData.phoneNumber // 中国手机号直接使用11位格式
+          : `1${formData.phoneNumber}` // 美国号码保持+1前缀
+      ) : '';
 
       const registrationData = {
         userName: formData.userName,
         legalName: formData.legalName,
         nickName: formData.englishNickname,
         password: formData.password,
-        phonenumber: phoneNumber,
         email: formData.email,
         sex: formData.sex,
         deptId: formData.universityId, // 传递学校ID，确保用户关联正确的学校
         orgId: formData.organizationId,
         invCode: formData.referralCode,
-        areaCode: formData.area, // 修复：API期望areaCode字段而不是area
+        area: formData.area, // 地域字段
+        areaCode: formData.area, // API期望areaCode字段，映射相同值
+        // 推荐码注册时手机号可选，只在有值时传递
+        ...(phoneNumber && { phonenumber: phoneNumber }),
       };
 
       console.log('📋 邀请码注册数据:', {
@@ -513,46 +567,68 @@ export const RegisterFormScreen: React.FC = () => {
           console.log('注册成功，开始自动登录...');
           setLoadingMessage(t('auth.register.auto_login_processing'));
           
-          // 使用注册时的凭据进行登录
-          const loginResult = await login({
-            username: formData.userName, // 注意：登录API使用的是username而不是userName
-            password: formData.password,
+          // 使用真实的登录API，直接调用https://www.vitaglobal.icu/app/login
+          console.log('🔐 自动登录参数:', { username: formData.email, password: '[HIDDEN]' });
+          
+          const formData_login = new URLSearchParams();
+          formData_login.append('username', formData.email);
+          formData_login.append('password', formData.password);
+          
+          const loginResponse = await fetch('https://www.vitaglobal.icu/app/login', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: formData_login.toString(),
+          });
+          
+          const loginResult = await loginResponse.json();
+          
+          console.log('🔐 登录API响应:', {
+            code: loginResult.code,
+            msg: loginResult.msg,
+            hasToken: !!loginResult.data?.token,
+            hasUserId: !!loginResult.data?.userId
           });
           
           if (loginResult.code === 200 && loginResult.data) {
+            // 手动保存token和userId到正确的存储位置
+            await AsyncStorage.setItem('@pomelox_token', loginResult.data.token);
+            await AsyncStorage.setItem('@pomelox_user_id', loginResult.data.userId.toString());
+            
+            console.log('✅ Token已保存到本地存储');
+            
             // 登录成功，更新用户状态
             await userLogin(loginResult.data.token);
             
-            SafeAlert.alert(
-              t('auth.register.success_title'),
-              t('auth.register.auto_login_success'),
-              [{
-                text: t('common.confirm'),
-                onPress: () => {
-                  // 🔧 发送注册完成事件，用于TabBar位置修复
-                  DeviceEventEmitter.emit('registrationCompleted', { 
-                    userId: result.data?.id,
-                    timestamp: Date.now()
-                  });
-                  
-                  // 🔧 发送页面跳转完成事件
-                  DeviceEventEmitter.emit('navigationCompleted', { 
-                    from: 'RegisterForm',
-                    to: 'Main',
-                    timestamp: Date.now()
-                  });
-                  
-                  navigation.dispatch(
-                    CommonActions.reset({
-                      index: 0,
-                      routes: [{ name: 'Main' }],
-                    })
-                  );
-                }
-              }]
-            );
+            // 强制刷新用户信息，确保UserContext状态正确
+            console.log('🔄 强制刷新用户信息...');
+            await new Promise(resolve => setTimeout(resolve, 100)); // 短暂延迟确保状态更新
+            
+            // 🔧 发送注册完成事件，用于TabBar位置修复
+            DeviceEventEmitter.emit('registrationCompleted', { 
+              userId: result.data?.id,
+              timestamp: Date.now()
+            });
+            
+            // 🔧 发送页面跳转完成事件
+            DeviceEventEmitter.emit('navigationCompleted', { 
+              from: 'RegisterForm',
+              to: 'Profile',
+              timestamp: Date.now()
+            });
+            
+            // 显示成功弹窗，不区分平台，统一使用LiquidSuccessModal
+            setLoading(false);
+            setShowSuccessModal(true);
           } else {
-            // 登录失败，但注册成功
+            // 登录失败，但注册成功 - 添加详细错误日志
+            console.error('❌ 自动登录失败:', {
+              code: loginResult.code,
+              msg: loginResult.msg,
+              usedEmail: formData.email,
+              timestamp: new Date().toISOString()
+            });
             SafeAlert.alert(
               t('auth.register.success_title'),
               t('auth.register.success_please_login'),
@@ -563,7 +639,12 @@ export const RegisterFormScreen: React.FC = () => {
             );
           }
         } catch (loginError) {
-          console.error('自动登录失败:', loginError);
+          console.error('❌ 自动登录异常:', {
+            error: loginError instanceof Error ? loginError.message : String(loginError),
+            usedEmail: formData.email,
+            stack: loginError instanceof Error ? loginError.stack : null,
+            timestamp: new Date().toISOString()
+          });
           // 登录失败，但注册成功
           SafeAlert.alert(
             t('auth.register.success_title'),
@@ -637,7 +718,7 @@ export const RegisterFormScreen: React.FC = () => {
 
       <View style={styles.inputContainer}>
         <Text style={styles.label}>{t('auth.register.form.username_label')}</Text>
-        <WebTextInput
+        <SmartTextInput
           style={[styles.input, errors.userName && styles.inputError]}
           placeholder={t('auth.register.form.username_placeholder')}
           value={formData.userName}
@@ -655,7 +736,7 @@ export const RegisterFormScreen: React.FC = () => {
       <View style={styles.inputContainer}>
         <Text style={styles.label}>{t('auth.register.form.legal_name_label')}</Text>
         <Text style={styles.fieldDescription}>{t('auth.register.form.legal_name_description')}</Text>
-        <WebTextInput
+        <SmartTextInput
           style={[styles.input, errors.legalName && styles.inputError]}
           placeholder={t('auth.register.form.legal_name_placeholder')}
           value={formData.legalName}
@@ -670,7 +751,7 @@ export const RegisterFormScreen: React.FC = () => {
 
       <View style={styles.inputContainer}>
         <Text style={styles.label}>{t('auth.register.form.english_nickname_label')}</Text>
-        <WebTextInput
+        <SmartTextInput
           style={[styles.input, errors.englishNickname && styles.inputError]}
           placeholder={t('auth.register.form.english_nickname_placeholder')}
           value={formData.englishNickname}
@@ -705,7 +786,7 @@ export const RegisterFormScreen: React.FC = () => {
         <Text style={styles.label}>{t('auth.register.form.email_label')}</Text>
         {SchoolEmailService.getEmailDomainByName(formData.university) ? (
           <View style={styles.emailInputWrapper}>
-            <WebTextInput
+            <SmartTextInput
               style={[styles.emailPrefixInput, errors.email && styles.inputError]}
               placeholder={t('auth.register.form.email_prefix_placeholder')}
               value={formData.emailPrefix}
@@ -720,7 +801,7 @@ export const RegisterFormScreen: React.FC = () => {
             <Text style={styles.emailDomain}>@{SchoolEmailService.getEmailDomainByName(formData.university)}</Text>
           </View>
         ) : (
-          <WebTextInput
+          <SmartTextInput
             style={[styles.input, errors.email && styles.inputError]}
             placeholder={t('auth.register.form.email_placeholder')}
             value={formData.email}
@@ -738,7 +819,7 @@ export const RegisterFormScreen: React.FC = () => {
 
       <View style={styles.inputContainer}>
         <Text style={styles.label}>{t('auth.register.form.password_label')}</Text>
-        <WebTextInput
+        <SmartTextInput
           style={[styles.input, errors.password && styles.inputError]}
           placeholder={t('auth.register.form.password_placeholder')}
           value={formData.password}
@@ -751,7 +832,7 @@ export const RegisterFormScreen: React.FC = () => {
 
       <View style={styles.inputContainer}>
         <Text style={styles.label}>{t('auth.register.form.confirm_password_label')}</Text>
-        <WebTextInput
+        <SmartTextInput
           style={[styles.input, errors.confirmPassword && styles.inputError]}
           placeholder={t('auth.register.form.confirm_password_placeholder')}
           value={formData.confirmPassword}
@@ -841,12 +922,14 @@ export const RegisterFormScreen: React.FC = () => {
       </View>
 
       <View style={styles.inputContainer}>
-        <Text style={styles.label}>{t('auth.register.form.phone_label')} *</Text>
+        <Text style={styles.label}>
+          {t('auth.register.form.phone_label')} {hasReferralCode ? t('common.optional') : '*'}
+        </Text>
         <View style={styles.phoneInputWrapper}>
           <Text style={styles.phonePrefix}>
             +{formData.phoneType === 'CN' ? '86' : '1'}
           </Text>
-          <WebTextInput
+          <SmartTextInput
             style={[styles.phoneInput, errors.phoneNumber && styles.inputError]}
             placeholder={formData.phoneType === 'CN' ? '13812345678' : '2025551234'}
             value={formData.phoneNumber}
@@ -933,16 +1016,15 @@ export const RegisterFormScreen: React.FC = () => {
 
         {renderProgressBar()}
 
-        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+        <Pressable onPress={Keyboard.dismiss}>
           <ScrollView
             ref={scrollRef}
             contentContainerStyle={styles.scrollContent}
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
             keyboardDismissMode="on-drag"
-          keyboardShouldPersistTaps="handled"
-          contentInsetAdjustmentBehavior="automatic"
-        >
+            contentInsetAdjustmentBehavior="automatic"
+          >
           <View style={styles.formContainer}>
             {renderStepContent()}
             
@@ -975,8 +1057,18 @@ export const RegisterFormScreen: React.FC = () => {
             </View>
           </View>
           </ScrollView>
-        </TouchableWithoutFeedback>
+        </Pressable>
       </View>
+
+      {/* 注册成功弹窗 */}
+      <LiquidSuccessModal
+        visible={showSuccessModal}
+        onClose={handleSuccessModalClose}
+        title={t('auth.register.success_title')}
+        message={t('auth.register.success_message')}
+        confirmText={t('common.confirm')}
+        icon="checkmark-circle"
+      />
     </SafeAreaView>
   );
 };

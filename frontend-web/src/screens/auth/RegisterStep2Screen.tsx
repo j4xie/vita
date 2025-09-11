@@ -2,18 +2,19 @@ import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
-  TextInput,
   TouchableOpacity,
   StyleSheet,
   SafeAreaView,
   ScrollView,
   Alert,
   ActivityIndicator,
-  Modal,
-  FlatList,
   Keyboard,
-  TouchableWithoutFeedback,
+  Pressable,
+  Platform,
 } from 'react-native';
+import { ForceNativeInput } from '../../components/web/ForceNativeInput';
+import { WebTextInput } from '../../components/web/WebTextInput';
+import { WebOrganizationSelector } from '../../components/web/WebOrganizationSelector';
 import { useNavigation, useRoute, CommonActions } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
@@ -39,6 +40,9 @@ import {
 } from '../../services/registrationAPI';
 import { useUser } from '../../context/UserContext';
 import { login } from '../../services/authAPI';
+import { pomeloXAPI } from '../../services/PomeloXAPI';
+import { LiquidSuccessModal } from '../../components/modals/LiquidSuccessModal';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 interface RouteParams {
   step1Data: RegistrationStep1Data & { legalName: string };
@@ -54,6 +58,9 @@ export const RegisterStep2Screen: React.FC = () => {
   const route = useRoute<any>();
   const { t } = useTranslation();
   const { login: userLogin } = useUser();
+
+  // 智能输入组件选择器 - Web环境使用ForceNativeInput，保证输入正常工作
+  const SmartTextInput = Platform.OS === 'web' ? ForceNativeInput : WebTextInput;
   
   const { 
     step1Data, 
@@ -70,13 +77,16 @@ export const RegisterStep2Screen: React.FC = () => {
   const [countdown, setCountdown] = useState(0);
   const [smsCodeSent, setSmsCodeSent] = useState(false);
   const [bizId, setBizId] = useState<string>('');
-  const [organizationModalVisible, setOrganizationModalVisible] = useState(false);
+  // Modal removed - using dropdown selector instead
   
   // 实时验证状态
   const [userNameChecking, setUserNameChecking] = useState(false);
   const [userNameAvailable, setUserNameAvailable] = useState<boolean | null>(null);
   const [emailChecking, setEmailChecking] = useState(false);
   const [emailAvailable, setEmailAvailable] = useState<boolean | null>(null);
+  
+  // 成功弹窗状态
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
   
   const [formData, setFormData] = useState<RegistrationStep2Data>({
     email: step1Data.generatedEmail,
@@ -229,8 +239,14 @@ export const RegisterStep2Screen: React.FC = () => {
 
     setLoading(true);
     try {
-      console.log('🔥 开始发送验证码，手机号:', step1Data.phoneNumber);
-      const response = await sendSMSVerificationCode(step1Data.phoneNumber);
+      console.log('🔥 开始发送验证码，手机号:', step1Data.phoneNumber, '区号:', step1Data.areaCode);
+      
+      // 格式化手机号：区号+手机号
+      const fullPhoneNumber = step1Data.areaCode === '86' 
+        ? step1Data.phoneNumber // 中国手机号直接使用
+        : `${step1Data.areaCode}${step1Data.phoneNumber}`; // 其他区号需要加前缀
+      
+      const response = await sendSMSVerificationCode(fullPhoneNumber, step1Data.areaCode);
       
       console.log('📱 短信接口响应:', response);
       
@@ -242,7 +258,7 @@ export const RegisterStep2Screen: React.FC = () => {
         Alert.alert(
           t('auth.register.sms.code_sent_title'),
           t('auth.register.sms.code_sent_message', {
-            countryCode: '86',
+            countryCode: step1Data.areaCode,
             phoneNumber: step1Data.phoneNumber
           })
         );
@@ -327,10 +343,10 @@ export const RegisterStep2Screen: React.FC = () => {
           deptId: parseInt(step1Data.selectedSchool!.id),
           orgId: formData.selectedOrganization!.id,
           area: detectedRegion, // 地理检测结果（只读）
-          areaCode: detectedRegion === 'zh' ? '86' : '1', // 根据检测地区设置区号
-          // 注意：由于短信服务未配置，暂时不包含验证码
-          // verCode: formData.verificationCode,
-          // bizId: bizId,
+          areaCode: step1Data.areaCode, // 使用用户选择的区号
+          // 手机验证码注册必需字段
+          verCode: formData.verificationCode,
+          bizId: bizId,
           // 不包含 invCode
         };
       }
@@ -345,13 +361,10 @@ export const RegisterStep2Screen: React.FC = () => {
       if (response.code === 200) {
         console.log('✅ 注册成功！开始自动登录流程...');
         
-        // 先关闭进度对话框
-        Alert.alert(''); // 关闭之前的进度提示
-        
         // 显示登录进度
         Alert.alert(
-          t('auth.register.errors.auto_login_progress'),
-          t('auth.register.auto_login_progress'),
+          '🔐 ' + t('auth.register.auto_login_title'),
+          t('auth.register.auto_login_message'),
           [],
           { cancelable: false }
         );
@@ -359,34 +372,48 @@ export const RegisterStep2Screen: React.FC = () => {
         // 注册成功后自动登录
         try {
           console.log('开始自动登录，邮箱用户名:', formData.email);
+          console.log('API Base URL:', process.env.EXPO_PUBLIC_API_URL);
           
-          // 使用注册时的凭据进行登录
-          const loginResult = await login({
-            username: formData.email, // 使用邮箱作为登录用户名
-            password: formData.password,
+          // 使用真实的登录API，直接调用https://www.vitaglobal.icu/app/login
+          const formData_login = new URLSearchParams();
+          formData_login.append('username', formData.email);
+          formData_login.append('password', formData.password);
+          
+          const loginResponse = await fetch('https://www.vitaglobal.icu/app/login', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: formData_login.toString(),
           });
           
+          const loginResult = await loginResponse.json();
+          
           console.log('登录响应:', loginResult);
+          console.log('登录响应详情:', {
+            code: loginResult.code,
+            hasData: !!loginResult.data,
+            dataKeys: loginResult.data ? Object.keys(loginResult.data) : [],
+          });
           
           if (loginResult.code === 200 && loginResult.data) {
+            // 手动保存token和userId到正确的存储位置
+            await AsyncStorage.setItem('@pomelox_token', loginResult.data.token);
+            await AsyncStorage.setItem('@pomelox_user_id', loginResult.data.userId.toString());
+            
+            console.log('✅ Token已保存到本地存储');
+            
             // 登录成功，更新用户状态
+            console.log('🔐 开始调用userLogin，token:', loginResult.data.token?.substring(0, 20) + '...');
             await userLogin(loginResult.data.token);
             console.log('✅ 自动登录成功！');
             
-            Alert.alert(
-              '🎉 ' + t('auth.register.success.title'),
-              t('auth.register.welcome_message'),
-              [{
-                text: t('common.start_using'),
-                onPress: () => navigation.dispatch(
-                  CommonActions.reset({
-                    index: 0,
-                    routes: [{ name: 'Main' }],
-                  })
-                )
-              }],
-              { cancelable: false }
-            );
+            // 显示成功信息并自动跳转
+            console.log('🎉 注册和登录都成功！正在显示成功Alert...');
+            
+            // 显示成功弹窗而不是Alert
+            setLoading(false);
+            setShowSuccessModal(true);
           } else {
             console.warn('⚠️ 自动登录失败，但注册成功');
             // 登录失败，但注册成功
@@ -527,6 +554,30 @@ export const RegisterStep2Screen: React.FC = () => {
     }
   };
 
+  // 处理成功弹窗关闭后的跳转
+  const handleSuccessModalClose = () => {
+    setShowSuccessModal(false);
+    
+    // 跳转到主页面，并设置初始Tab为Profile
+    navigation.dispatch(
+      CommonActions.reset({
+        index: 0,
+        routes: [{ 
+          name: 'Main',
+          state: {
+            routes: [
+              { name: 'Explore' },
+              { name: 'Community' },
+              { name: 'Wellbeing' },
+              { name: 'Profile' }
+            ],
+            index: 3, // Profile标签页的索引
+          }
+        }],
+      })
+    );
+  };
+
   const handleBack = () => {
     navigation.goBack();
   };
@@ -534,29 +585,15 @@ export const RegisterStep2Screen: React.FC = () => {
   const renderOrganizationSelector = () => (
     <View style={styles.inputContainer}>
       <Text style={styles.label}>{t('auth.register.form.organization_label')}</Text>
-      <TouchableOpacity
-        style={[styles.organizationSelector, errors.selectedOrganization && styles.inputError]}
-        onPress={() => {
-          if (!organizationsLoading && organizations.length > 0) {
-            setOrganizationModalVisible(true);
-          }
-        }}
-        disabled={organizationsLoading}
-      >
-        {organizationsLoading ? (
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator size="small" color={theme.colors.primary} />
-            <Text style={styles.loadingText}>{t('auth.register.form.loading_organizations')}</Text>
-          </View>
-        ) : (
-          <View style={styles.selectorContent}>
-            <Text style={[styles.selectorText, !formData.selectedOrganization && styles.placeholderText]}>
-              {formData.selectedOrganization?.name || t('auth.register.form.organization_placeholder')}
-            </Text>
-            <Ionicons name="chevron-down" size={20} color={theme.colors.text.secondary} />
-          </View>
-        )}
-      </TouchableOpacity>
+      <WebOrganizationSelector
+        organizations={organizations}
+        selectedOrganization={formData.selectedOrganization}
+        onOrganizationSelect={(organization) => updateFormData('selectedOrganization', organization)}
+        placeholder={t('auth.register.form.organization_placeholder')}
+        loading={organizationsLoading}
+        error={!!errors.selectedOrganization}
+        accessibilityLabel={t('auth.register.form.organization_label')}
+      />
       {errors.selectedOrganization && <Text style={styles.errorText}>{errors.selectedOrganization}</Text>}
     </View>
   );
@@ -593,56 +630,7 @@ export const RegisterStep2Screen: React.FC = () => {
     </View>
   );
 
-  const renderOrganizationModal = () => (
-    <Modal
-      visible={organizationModalVisible}
-      animationType="slide"
-      transparent={true}
-      onRequestClose={() => setOrganizationModalVisible(false)}
-    >
-      <View style={styles.modalOverlay}>
-        <View style={styles.modalContainer}>
-          <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>{t('auth.register.form.organization_label')}</Text>
-            <TouchableOpacity
-              onPress={() => setOrganizationModalVisible(false)}
-              style={styles.modalCloseButton}
-            >
-              <Ionicons name="close" size={24} color={theme.colors.text.primary} />
-            </TouchableOpacity>
-          </View>
-          
-          <FlatList
-            data={organizations}
-            keyExtractor={(item) => item.id.toString()}
-            renderItem={({ item }) => (
-              <TouchableOpacity
-                style={[
-                  styles.organizationItem,
-                  formData.selectedOrganization?.id === item.id && styles.organizationItemSelected
-                ]}
-                onPress={() => {
-                  updateFormData('selectedOrganization', item);
-                  setOrganizationModalVisible(false);
-                }}
-              >
-                <Text style={[
-                  styles.organizationItemText,
-                  formData.selectedOrganization?.id === item.id && styles.organizationItemTextSelected
-                ]}>
-                  {item.name}
-                </Text>
-                {formData.selectedOrganization?.id === item.id && (
-                  <Ionicons name="checkmark" size={20} color={theme.colors.primary} />
-                )}
-              </TouchableOpacity>
-            )}
-            showsVerticalScrollIndicator={false}
-          />
-        </View>
-      </View>
-    </Modal>
-  );
+  // Modal removed - using WebOrganizationSelector dropdown instead
 
   return (
     <SafeAreaView style={styles.container}>
@@ -666,7 +654,7 @@ export const RegisterStep2Screen: React.FC = () => {
           <Text style={styles.progressText}>{t('auth.register.form.progress', { current: 2, total: 2 })}</Text>
         </View>
 
-        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+        <Pressable onPress={Keyboard.dismiss}>
           <ScrollView
             ref={scrollViewRef}
             contentContainerStyle={styles.scrollContent}
@@ -702,7 +690,7 @@ export const RegisterStep2Screen: React.FC = () => {
             {/* 邮箱显示 */}
             <View style={styles.inputContainer}>
               <Text style={styles.label}>{t('auth.register.form.email_label')}</Text>
-              <TextInput
+              <SmartTextInput
                 style={[styles.input, styles.inputDisabled]}
                 value={formData.email}
                 editable={false}
@@ -725,7 +713,7 @@ export const RegisterStep2Screen: React.FC = () => {
             {/* 昵称 */}
             <View style={styles.inputContainer}>
               <Text style={styles.label}>{t('auth.register.form.nickname_label')}</Text>
-              <TextInput
+              <SmartTextInput
                 style={[styles.input, errors.nickName && styles.inputError]}
                 placeholder={t('auth.register.form.nickname_placeholder')}
                 value={formData.nickName}
@@ -738,7 +726,7 @@ export const RegisterStep2Screen: React.FC = () => {
             {/* 密码 */}
             <View style={styles.inputContainer}>
               <Text style={styles.label}>{t('auth.register.form.password_label')}</Text>
-              <TextInput
+              <SmartTextInput
                 style={[styles.input, errors.password && styles.inputError]}
                 placeholder={t('auth.register.form.password_placeholder')}
                 value={formData.password}
@@ -752,7 +740,7 @@ export const RegisterStep2Screen: React.FC = () => {
             {/* 确认密码 */}
             <View style={styles.inputContainer}>
               <Text style={styles.label}>{t('auth.register.form.confirm_password_label')}</Text>
-              <TextInput
+              <SmartTextInput
                 style={[styles.input, errors.confirmPassword && styles.inputError]}
                 placeholder={t('auth.register.form.confirm_password_placeholder')}
                 value={formData.confirmPassword}
@@ -769,12 +757,12 @@ export const RegisterStep2Screen: React.FC = () => {
             {/* 组织选择 */}
             {renderOrganizationSelector()}
 
-            {/* 手机验证码 - 暂时隐藏，因为短信服务未配置 */}
-            {false && (
+            {/* 手机验证码 - 只对普通注册用户显示 */}
+            {registrationType === 'phone' && (
             <View style={styles.inputContainer}>
               <Text style={styles.label}>{t('auth.register.form.verification_code_label')}</Text>
               <View style={styles.verificationContainer}>
-                <TextInput
+                <SmartTextInput
                   style={[styles.verificationInput, errors.verificationCode && styles.inputError]}
                   placeholder={t('auth.register.form.verification_code_placeholder')}
                   value={formData.verificationCode}
@@ -821,7 +809,7 @@ export const RegisterStep2Screen: React.FC = () => {
             </View>
           </View>
           </ScrollView>
-        </TouchableWithoutFeedback>
+        </Pressable>
       </View>
       
       {/* 浮动滚动提示 */}
@@ -841,7 +829,17 @@ export const RegisterStep2Screen: React.FC = () => {
       )}
       
       {/* 组织选择Modal */}
-      {renderOrganizationModal()}
+      {/* Modal removed - now using dropdown selector */}
+
+      {/* 注册成功弹窗 */}
+      <LiquidSuccessModal
+        visible={showSuccessModal}
+        onClose={handleSuccessModalClose}
+        title={t('auth.register.success_title')}
+        message={t('auth.register.success_message')}
+        confirmText={t('common.confirm')}
+        icon="checkmark-circle"
+      />
     </SafeAreaView>
   );
 };
