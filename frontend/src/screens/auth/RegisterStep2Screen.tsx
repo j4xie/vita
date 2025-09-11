@@ -39,6 +39,8 @@ import {
 } from '../../services/registrationAPI';
 import { useUser } from '../../context/UserContext';
 import { login } from '../../services/authAPI';
+import { LiquidSuccessModal } from '../../components/modals/LiquidSuccessModal';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 interface RouteParams {
   step1Data: RegistrationStep1Data & { legalName: string };
@@ -77,6 +79,9 @@ export const RegisterStep2Screen: React.FC = () => {
   const [userNameAvailable, setUserNameAvailable] = useState<boolean | null>(null);
   const [emailChecking, setEmailChecking] = useState(false);
   const [emailAvailable, setEmailAvailable] = useState<boolean | null>(null);
+  
+  // 成功弹窗状态
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
   
   const [formData, setFormData] = useState<RegistrationStep2Data>({
     email: step1Data.generatedEmail,
@@ -282,13 +287,7 @@ export const RegisterStep2Screen: React.FC = () => {
     setLoading(true);
     console.log('🚀 开始注册流程...');
     
-    // 显示进度提示
-    Alert.alert(
-      '⏳ ' + t('auth.register.processing_registration'),
-      t('auth.register.auto_login_message'),
-      [],
-      { cancelable: false }
-    );
+    // 注册处理中（不显示弹窗，避免多个弹窗）
     
     try {
       // 构建注册请求数据 - 根据注册类型决定字段
@@ -345,56 +344,63 @@ export const RegisterStep2Screen: React.FC = () => {
       if (response.code === 200) {
         console.log('✅ 注册成功！开始自动登录流程...');
         
-        // 先关闭进度对话框
-        Alert.alert(''); // 关闭之前的进度提示
-        
-        // 显示登录进度
-        Alert.alert(
-          '🔐 ' + t('auth.register.auto_login_title'),
-          t('auth.register.auto_login_message'),
-          [],
-          { cancelable: false }
-        );
-        
-        // 注册成功后自动登录
         try {
-          console.log('开始自动登录，邮箱用户名:', formData.email);
+          // 🔧 关键修复：使用与注册API完全相同的userName值
+          const registrationUserName = registrationData.userName; // 使用实际发送给后端的userName
+          console.log('🔑 尝试登录参数:', {
+            username: registrationUserName,
+            password: '[HIDDEN]',
+            注册时发送的userName: registrationData.userName,
+            注册时发送的email: registrationData.email,
+            formData中的email: formData.email,
+            step1Data中的generatedEmail: step1Data.generatedEmail
+          });
           
-          // 使用注册时的凭据进行登录
           const loginResult = await login({
-            username: formData.email, // 使用邮箱作为登录用户名
+            username: registrationUserName, // 使用注册时的实际userName
             password: formData.password,
           });
           
-          console.log('登录响应:', loginResult);
+          console.log('📡 登录API响应:', {
+            code: loginResult.code,
+            msg: loginResult.msg,
+            hasData: !!loginResult.data,
+            tokenPreview: loginResult.data?.token?.substring(0, 20) + '...' || 'No token'
+          });
           
           if (loginResult.code === 200 && loginResult.data) {
-            // 登录成功，更新用户状态
-            await userLogin(loginResult.data.token);
-            console.log('✅ 自动登录成功！');
+            // 🔧 Web端解决方案：手动保存token到AsyncStorage
+            console.log('💾 开始手动保存token到AsyncStorage...');
+            await AsyncStorage.setItem('@pomelox_token', loginResult.data.token);
+            await AsyncStorage.setItem('@pomelox_user_id', loginResult.data.userId.toString());
             
-            Alert.alert(
-              '🎉 ' + t('auth.register.success.title'),
-              `欢迎加入 PomeloX！\n\n✅ 账户创建成功\n✅ 自动登录成功\n🚀 即将进入应用首页`,
-              [{
-                text: '开始使用',
-                onPress: () => navigation.dispatch(
-                  CommonActions.reset({
-                    index: 0,
-                    routes: [{ name: 'Main' }],
-                  })
-                )
-              }],
-              { cancelable: false }
-            );
+            // 验证token是否正确保存
+            const savedToken = await AsyncStorage.getItem('@pomelox_token');
+            const savedUserId = await AsyncStorage.getItem('@pomelox_user_id');
+            console.log('✅ Token保存验证:', {
+              tokenSaved: !!savedToken,
+              userIdSaved: !!savedUserId,
+              tokenMatch: savedToken === loginResult.data.token,
+              userIdMatch: savedUserId === loginResult.data.userId.toString()
+            });
+            
+            // 然后调用UserContext的login方法
+            console.log('🔄 调用UserContext.login...');
+            await userLogin(loginResult.data.token);
+            console.log('✅ 自动登录成功！UserContext已更新');
+            
+            // 🔧 使用LiquidSuccessModal替代Alert
+            setLoading(false);
+            setShowSuccessModal(true);
           } else {
-            console.warn('⚠️ 自动登录失败，但注册成功');
             // 登录失败，但注册成功
+            console.log('❌ 自动登录失败，但注册成功:', loginResult);
+            setLoading(false);
             Alert.alert(
-              '✅ ' + t('auth.register.success.title'),
-              `账户创建成功！\n\n您的登录邮箱：${formData.email}\n请前往登录页面使用您的账户登录`,
+              t('auth.register.success.title'),
+              t('auth.register.success.manual_login_message'),
               [{
-                text: '去登录',
+                text: t('auth.register.success.go_login'),
                 onPress: () => navigation.dispatch(
                   CommonActions.reset({
                     index: 0,
@@ -406,12 +412,12 @@ export const RegisterStep2Screen: React.FC = () => {
           }
         } catch (loginError) {
           console.error('❌ 自动登录失败:', loginError);
-          // 登录失败，但注册成功
+          setLoading(false);
           Alert.alert(
-            '✅ ' + t('auth.register.success.title'),
-            `账户创建成功！\n\n您的登录邮箱：${formData.email}\n请前往登录页面使用您的账户登录`,
+            t('auth.register.success.title'),
+            t('auth.register.success.manual_login_message'),
             [{
-              text: '去登录',
+              text: t('auth.register.success.go_login'),
               onPress: () => navigation.dispatch(
                 CommonActions.reset({
                   index: 0,
@@ -423,9 +429,6 @@ export const RegisterStep2Screen: React.FC = () => {
         }
       } else {
         console.error('❌ 注册失败，错误码:', response.code, '错误信息:', response.msg);
-        
-        // 先关闭进度对话框
-        Alert.alert(''); 
         
         // 详细的错误处理
         let errorTitle = '❌ 注册失败';
@@ -490,9 +493,6 @@ export const RegisterStep2Screen: React.FC = () => {
     } catch (error) {
       console.error('❌ 注册网络错误:', error);
       
-      // 先关闭进度对话框
-      Alert.alert('');
-      
       // 网络错误的具体处理
       let errorTitle = '🌐 网络错误';
       let errorMessage = '网络连接失败，请检查网络后重试';
@@ -529,6 +529,29 @@ export const RegisterStep2Screen: React.FC = () => {
 
   const handleBack = () => {
     navigation.goBack();
+  };
+
+  // 🔧 统一的成功Modal处理函数
+  const handleSuccessModalClose = () => {
+    setShowSuccessModal(false);
+    // 🎯 跳转到Profile页面，与Web端保持一致
+    navigation.dispatch(
+      CommonActions.reset({
+        index: 0,
+        routes: [{
+          name: 'Main',
+          state: {
+            routes: [
+              { name: 'Explore' },
+              { name: 'Community' },
+              { name: 'Wellbeing' },
+              { name: 'Profile' }
+            ],
+            index: 3, // Profile标签页的索引
+          }
+        }],
+      })
+    );
   };
 
   const renderOrganizationSelector = () => (
@@ -842,6 +865,16 @@ export const RegisterStep2Screen: React.FC = () => {
       
       {/* 组织选择Modal */}
       {renderOrganizationModal()}
+      
+      {/* 🔧 成功Modal - 与Web端保持一致的体验 */}
+      <LiquidSuccessModal
+        visible={showSuccessModal}
+        onClose={handleSuccessModalClose}
+        title={t('auth.register.success.title')}
+        message={t('auth.register.success.message')}
+        confirmText={t('auth.register.success.start_using')}
+        icon="checkmark-circle"
+      />
     </SafeAreaView>
   );
 };

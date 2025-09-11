@@ -18,6 +18,8 @@ import { LIQUID_GLASS_LAYERS, DAWN_GRADIENTS } from '../../theme/core';
 import { pomeloXAPI } from '../../services/PomeloXAPI';
 import { useUser } from '../../context/UserContext';
 import { login } from '../../services/authAPI';
+import { LiquidSuccessModal } from '../../components/modals/LiquidSuccessModal';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export const VerificationScreen: React.FC = () => {
   const navigation = useNavigation<any>();
@@ -30,6 +32,9 @@ export const VerificationScreen: React.FC = () => {
   const [verificationCode, setVerificationCode] = useState(['', '', '', '', '', '']);
   const [loading, setLoading] = useState(false);
   const [resendCountdown, setResendCountdown] = useState(0);
+  
+  // 成功弹窗状态
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
 
   const handleCodeChange = (index: number, value: string) => {
     if (value.length > 1) return;
@@ -96,31 +101,44 @@ export const VerificationScreen: React.FC = () => {
         try {
           console.log('注册成功，开始自动登录...');
           
-          // 使用注册时的凭据进行登录
+          // 🔧 修复：使用与注册时相同的用户名（应为email）
+          const loginUsername = formData.userName || formData.email; // 确保使用正确的用户名
+          console.log('🔑 VerificationScreen登录参数:', {
+            username: loginUsername,
+            password: '[HIDDEN]',
+            注册时的userName: formData.userName,
+            注册时的email: formData.email
+          });
+          
           const loginResult = await login({
-            username: formData.userName, // 注意：登录API使用的是username而不是userName
+            username: loginUsername, // 使用email作为username
             password: formData.password,
           });
           
           if (loginResult.code === 200 && loginResult.data) {
+            // 🔧 Web端解决方案：手动保存token到AsyncStorage
+            console.log('💾 VerificationScreen开始手动保存token...');
+            await AsyncStorage.setItem('@pomelox_token', loginResult.data.token);
+            await AsyncStorage.setItem('@pomelox_user_id', loginResult.data.userId.toString());
+            
+            // 验证token保存
+            const savedToken = await AsyncStorage.getItem('@pomelox_token');
+            console.log('✅ VerificationScreen Token保存验证:', {
+              tokenSaved: !!savedToken,
+              tokenMatch: savedToken === loginResult.data.token
+            });
+            
             // 登录成功，更新用户状态
             await userLogin(loginResult.data.token);
+            console.log('✅ VerificationScreen自动登录成功！');
             
-            Alert.alert(
-              t('auth.register.success_title'),
-              t('auth.register.auto_login_success'),
-              [{
-                text: t('common.confirm'),
-                onPress: () => navigation.dispatch(
-                  CommonActions.reset({
-                    index: 0,
-                    routes: [{ name: 'Main' }],
-                  })
-                )
-              }]
-            );
+            // 🔧 使用LiquidSuccessModal替代Alert
+            setLoading(false);
+            setShowSuccessModal(true);
           } else {
             // 登录失败，但注册成功
+            console.log('❌ VerificationScreen自动登录失败:', loginResult);
+            setLoading(false);
             Alert.alert(
               t('auth.register.success_title'),
               t('auth.register.success_please_login'),
@@ -177,6 +195,29 @@ export const VerificationScreen: React.FC = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  // 🔧 统一的成功弹窗处理函数
+  const handleSuccessModalClose = () => {
+    setShowSuccessModal(false);
+    // 🎯 跳转到Profile页面，与Web端保持一致
+    navigation.dispatch(
+      CommonActions.reset({
+        index: 0,
+        routes: [{
+          name: 'Main',
+          state: {
+            routes: [
+              { name: 'Explore' },
+              { name: 'Community' },
+              { name: 'Wellbeing' },
+              { name: 'Profile' }
+            ],
+            index: 3, // Profile标签页的索引
+          }
+        }],
+      })
+    );
   };
 
   const handleResendCode = async () => {
@@ -285,6 +326,16 @@ export const VerificationScreen: React.FC = () => {
           </TouchableOpacity>
         </View>
       </View>
+      
+      {/* 🔧 成功弹窗 - 与Web端保持一致的体验 */}
+      <LiquidSuccessModal
+        visible={showSuccessModal}
+        onClose={handleSuccessModalClose}
+        title={t('auth.register.success.title')}
+        message={t('auth.register.success.message')}
+        confirmText={t('auth.register.success.start_using')}
+        icon="checkmark-circle"
+      />
     </SafeAreaView>
   );
 };
