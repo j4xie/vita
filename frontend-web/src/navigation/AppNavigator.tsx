@@ -35,6 +35,7 @@ import { SetNewPasswordScreen } from '../screens/auth/SetNewPasswordScreen';
 import { RegisterChoiceScreen } from '../screens/auth/RegisterChoiceScreen';
 import { IdentityChoiceScreen } from '../screens/auth/IdentityChoiceScreen';
 import { ParentRegisterFormScreen } from '../screens/auth/ParentRegisterFormScreen';
+import { InvitationParentRegisterScreen } from '../screens/auth/InvitationParentRegisterScreen';
 import { RegisterFormScreen } from '../screens/auth/RegisterFormScreen';
 import { RegisterStep1Screen } from '../screens/auth/RegisterStep1Screen';
 import { RegisterStep2Screen } from '../screens/auth/RegisterStep2Screen';
@@ -63,6 +64,7 @@ import { WellbeingScreen } from '../screens/wellbeing/WellbeingScreen';
 import { SearchScreen } from '../screens/search/SearchScreen';
 import SchoolDetailScreen from '../screens/wellbeing/SchoolDetailScreen';
 import { VolunteerCheckInScreen } from '../screens/volunteer/VolunteerCheckInScreen';
+import { VolunteerManagementScreen } from '../screens/volunteer/VolunteerManagementScreen';
 import { FloatingAIButton } from '../components/common/FloatingAIButton';
 import { GlobalTouchHandler } from '../components/common/GlobalTouchHandler';
 import { ErrorBoundary } from '../components/common/ErrorBoundary';
@@ -134,6 +136,13 @@ const AuthNavigator = () => {
       <AuthStack.Screen 
         name="ParentRegisterForm" 
         component={ParentRegisterFormScreen}
+        options={{
+          ...pageTransitions.slideFromRight,
+        }}
+      />
+      <AuthStack.Screen 
+        name="InvitationParentRegister" 
+        component={InvitationParentRegisterScreen}
         options={{
           ...pageTransitions.slideFromRight,
         }}
@@ -227,6 +236,13 @@ const WellbeingNavigator = () => {
       <WellbeingStack.Screen 
         name="VolunteerCheckIn" 
         component={VolunteerCheckInScreen}
+        options={{
+          ...pageTransitions.slideFromRight,
+        }}
+      />
+      <WellbeingStack.Screen 
+        name="VolunteerManagement" 
+        component={VolunteerManagementScreen}
         options={{
           ...pageTransitions.slideFromRight,
         }}
@@ -696,6 +712,13 @@ export const AppNavigator = () => {
           <RootStack.Screen 
             name="ParentRegisterForm" 
             component={ParentRegisterFormScreen}
+            options={{
+              ...pageTransitions.slideFromRight,
+            }}
+          />
+          <RootStack.Screen 
+            name="InvitationParentRegister" 
+            component={InvitationParentRegisterScreen}
             options={{
               ...pageTransitions.slideFromRight,
             }}

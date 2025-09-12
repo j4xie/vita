@@ -10,6 +10,7 @@
     "confirm": "Confirm",
     "cancel": "Cancel",
     "save": "Save",
+    "optional": "(optional)",
     "skip": "Skip",
     "next": "Next",
     "back": "Back",
@@ -118,7 +119,7 @@
   "form": {
     "errors": {
       "legalNameRequired": "Please enter legal name",
-      "englishNicknameRequired": "Enter English nickname",
+      "englishNicknameRequired": "Enter Preferred name",
       "universityRequired": "Please enter university",
       "emailRequired": "Enter school email",
       "emailInvalid": "Invalid school email",
@@ -131,7 +132,7 @@
     },
     "labels": {
       "legalName": "Legal Name *",
-      "englishNickname": "English Nickname *",
+      "englishNickname": "Preferred Name *",
       "university": "University *",
       "schoolEmail": "School Email * (login account)",
       "password": "Set Password *",
@@ -140,7 +141,7 @@
     },
     "placeholders": {
       "legalName": "Enter full name",
-      "englishNickname": "Enter nickname",
+      "englishNickname": "Enter preferred name",
       "university": "Enter university",
       "password": "8+ chars, letters & numbers",
       "confirmPassword": "Confirm password"
@@ -306,12 +307,17 @@
         "accept_button": "I Agree and Continue",
         "accept_simple": "Agree",
         "decline_button": "Decline",
-        "content": "Welcome to PomeloX application. We highly value your privacy rights. This privacy policy is designed to explain how we collect, use, store, and protect your personal information.\n\n## Service Provider Information\n\n**Service Provider (China):** Shanghai Grapefruit Smart Technology Co., Ltd.\n**Overseas Collaborative Entity:** American Promotion Company, Inc. (as overseas collaborative partner)\n\n## Information We Collect\n\nTo provide you with the best service experience, we need to collect the following personal information:\n\n• **Identity Information**: Legal name and English nickname for identity verification and personalized services\n• **Contact Information**: Email address and phone number for account verification, important notifications, and security alerts\n• **Academic Information**: University affiliation for matching relevant activities and services\n• **Basic Profile**: Gender and other basic information for personalized recommendations\n• **Activity Information**: Activity registrations, check-in/check-out records, volunteer service records\n\n## Purpose of Information Use\n\nYour personal information will only be used for the following legitimate purposes:\n\n• Create and manage your user account\n• Provide activity registration and management services\n• Send important service notifications and security alerts\n• Improve our service quality and user experience\n• Ensure platform security and prevent fraudulent activities\n• AI Q&A and study abroad guidance services\n• Wellbeing Plan and volunteer coordination services\n\n## Third-Party Services\n\nTo provide complete services, we may use the following third-party services:\n\n• **Gmail SMTP**: For sending verification emails and activity notifications\n• **Cloudflare R2**: For securely storing activity images and user avatars\n• **Firebase FCM**: For pushing important activity reminders\n• **Google OAuth**: Optional third-party login method\n\nThese service providers all follow strict data protection standards, and we do not provide them with personal information beyond what is necessary for the service.",
+        "content": "Welcome to PomeloX application. We highly value your privacy rights. This privacy policy is designed to explain how we collect, use, store, and protect your personal information.\n\n## Service Provider Information\n\n**Service Provider (China):** Shanghai Grapefruit Smart Technology Co., Ltd.\n**Overseas Collaborative Entity:** American Promotion Company, Inc. (as overseas collaborative partner)\n\n## Information We Collect\n\nTo provide you with the best service experience, we need to collect the following personal information:\n\n• **Identity Information**: Legal name and Preferred name for identity verification and personalized services\n• **Contact Information**: Email address and phone number for account verification, important notifications, and security alerts\n• **Academic Information**: University affiliation for matching relevant activities and services\n• **Basic Profile**: Gender and other basic information for personalized recommendations\n• **Activity Information**: Activity registrations, check-in/check-out records, volunteer service records\n\n## Purpose of Information Use\n\nYour personal information will only be used for the following legitimate purposes:\n\n• Create and manage your user account\n• Provide activity registration and management services\n• Send important service notifications and security alerts\n• Improve our service quality and user experience\n• Ensure platform security and prevent fraudulent activities\n• AI Q&A and study abroad guidance services\n• Wellbeing Plan and volunteer coordination services\n\n## Third-Party Services\n\nTo provide complete services, we may use the following third-party services:\n\n• **Gmail SMTP**: For sending verification emails and activity notifications\n• **Cloudflare R2**: For securely storing activity images and user avatars\n• **Firebase FCM**: For pushing important activity reminders\n• **Google OAuth**: Optional third-party login method\n\nThese service providers all follow strict data protection standards, and we do not provide them with personal information beyond what is necessary for the service.",
         "data_usage_highlight": "Your legal name, phone number, and email are only used for identity verification and necessary notifications. We promise not to use this sensitive information for marketing purposes or share it with third parties.",
         "data_protection": "## Cross-border Data Transfer\n\nTo provide services, your personal information may be transferred to our overseas collaborative partner American Promotion Company, Inc. (USA). Transfer purposes include: service delivery, customer service/technical support, backup and security. We will take appropriate protective measures in accordance with the Personal Information Protection Law and other regulations.\n\n## Data Protection Commitment\n\nWe use industry-standard security measures to protect your personal information:\n\n• All data transmission uses HTTPS encryption\n• Passwords are stored using secure hashing algorithms\n• Regular security audits and vulnerability assessments\n• Strict access controls for internal personnel to personal information\n• Data encryption storage and access control\n\n## Your Rights\n\nUnder relevant laws and regulations, you have the following rights regarding your personal information:\n\n• **Right to Know**: Understand personal information processing\n• **Right to Access**: View the personal information we have collected about you at any time\n• **Right to Rectification**: Correct inaccurate or outdated personal information\n• **Right to Erasure**: Request deletion of your personal information and account\n• **Right to Restrict Processing**: Limit how we process your information\n• **Right to Data Portability**: Obtain a copy of your personal information\n• **Right to Withdraw Consent**: Withdraw consent for personal information processing\n\n## Data Retention\n\n• **Account Information**: Retained during your use of the service\n• **Activity Records**: Retained for 24 months for service improvement\n• **Transaction Records**: Retained according to legal requirements\n• **Deleted Data**: Permanently removed from all systems within 30 days\n\n## Minor Protection\n\n• Users under 14 require explicit guardian consent\n• Appropriate protection for users aged 14-18\n• Stricter security measures implemented\n\n## Contact Us\n\nFor any privacy-related questions, please contact us through:\n\n• **Customer Service/Technical**: info@americanpromotioncompany.com\n• **Legal/Compliance**: dev@americanpromotioncompany.com\n• Service Hours: Monday-Friday 9:00-18:00 (Beijing Time)\n\nContinuing with registration indicates that you understand and agree to the above privacy policy terms.",
         "please_scroll": "Please scroll to read the full agreement",
         "read_complete": "Reading completed",
-        "scroll_to_accept": "Please read the full agreement first"
+        "scroll_to_accept": "Please read the full agreement first",
+        "region_version_label": "Agreement Version:",
+        "region_full_agreement": "🌍 Full Agreement",
+        "region_china_agreement": "🇨🇳 China Agreement", 
+        "region_usa_agreement": "🇺🇸 USA Agreement",
+        "notice_label": "Notice:"
       },
       "verification": {
         "title": "SMS Verification",
@@ -342,7 +348,7 @@
         "legal_name_label": "Legal Name *",
         "legal_name_placeholder": "e.g. Zhang San or John Smith (as on passport/ID)",
         "legal_name_description": "Please use your full name as shown on passport or ID",
-        "english_nickname_label": "English Nickname *",
+        "english_nickname_label": "Preferred Name *",
         "english_nickname_placeholder": "e.g. Alex, Sophia (commonly used English name)",
         "university_label": "University *",
         "university_placeholder": "Select your university",
@@ -355,6 +361,9 @@
         "confirm_password_placeholder": "Re-enter password",
         "phone_china": "🇨🇳 China Mobile",
         "phone_usa": "🇺🇸 US Number",
+        "phone_area_select": "Select Area Code",
+        "login_info_label": "Login Information",
+        "email_as_username_info": "Your school email will be used as login username",
         "us_phone_not_supported_title": "US Phone Numbers Not Currently Supported",
         "us_phone_not_supported_message": "We currently do not accept US phone number registrations.",
         "us_phone_contact_info": "If you don't have a Chinese phone number, please contact dev@americanpromotioncompany.com or get a referral code through a recommended organization.",
@@ -367,9 +376,9 @@
         "register": "Register Account",
         "step1_description": "Please fill in your basic information, we will generate a school email for you",
         "first_name_label": "First Name *",
-        "first_name_placeholder": "Enter your first name",
+        "first_name_placeholder": "",
         "last_name_label": "Last Name *",
-        "last_name_placeholder": "Enter your last name",
+        "last_name_placeholder": "",
         "school_email_preview": "School Email Preview",
         "email_username_placeholder": "e.g. zhang.san, alex123",
         "email_prefix_placeholder": "username",
@@ -457,6 +466,34 @@
           "email_problem": "Email Problem"
         }
       },
+      "parent": {
+        "title": "Parent Registration",
+        "invitation_title": "Invitation Registration - Parent",
+        "form_title": "Parent Information",
+        "invitation_form_title": "Parent Information (Invitation)",
+        "description": "Please fill in your information to register a PomeloX account for your child",
+        "invitation_description": "Use invitation code to register a PomeloX account for your child",
+        "legal_name_label": "Parent Legal Name",
+        "legal_name_placeholder": "Enter your legal name",
+        "email_label": "Email (Login Username) *",
+        "email_placeholder": "Enter email address",
+        "email_help": "This email will be used as your login username",
+        "phone_label": "Phone Number *",
+        "phone_label_optional": "Phone Number (Optional)",
+        "child_school_label": "Child's School *",
+        "child_school_placeholder": "Select your child's school",
+        "select_area_code": "Select Area Code",
+        "area_code_china": "China (+86)",
+        "area_code_usa": "USA (+1)",
+        "register_button": "Register Parent Account",
+        "registering_title": "Registering",
+        "registering_message": "Creating your parent account, please wait...",
+        "success_title": "Registration Successful",
+        "success_message": "Congratulations! Your parent account has been successfully registered. You can now manage activity registrations for your child",
+        "start_using": "Start Using",
+        "failed_title": "Registration Failed",
+        "failed_message": "An error occurred during registration, please try again later"
+      },
       "sms": {
         "code_sent_title": "Verification Code Sent",
         "code_sent_message": "Verification code sent to your phone number +{{countryCode}} {{phoneNumber}}",
@@ -507,14 +544,15 @@
       "password_mismatch": "Passwords do not match",
       "legal_name_required": "Legal name is required",
       "legal_name_length": "Legal name cannot exceed 50 characters",
-      "english_nickname_required": "English nickname is required",
-      "english_nickname_length": "English nickname cannot exceed 50 characters",
+      "english_nickname_required": "Preferred name is required",
+      "english_nickname_length": "Preferred name cannot exceed 50 characters",
       "university_required": "University selection is required",
       "phone_required": "Please enter phone number",
       "phone_china_invalid": "Please enter a valid Chinese phone number",
       "phone_usa_invalid": "Please enter a valid US phone number",
       "first_name_required": "First name is required",
       "last_name_required": "Last name is required",
+      "chinese_name_required": "Please enter Chinese name",
       "email_username_required": "Email username is required",
       "email_username_too_short": "Email username must be at least 3 characters",
       "email_username_invalid": "Email username can only contain letters, numbers, dots, underscores and hyphens",
@@ -562,7 +600,7 @@
       "consulting": "Consulting",
       "community": "Community",
       "profile": "Profile",
-      "wellbeing": "Wellbeing",
+      "wellbeing": "Safety",
       "qr_code": "QR Code"
     },
     "screens": {
@@ -622,6 +660,11 @@
       "full": "Full",
       "ended": "Activity Ended"
     },
+    "details": {
+      "actionButton": {
+        "qr_code": "Scan QR Code"
+      }
+    },
     "share": {
       "title": "Share Activity",
       "message": "{{title}}\nTime: {{date}}\nLocation: {{location}}\n\nJoin this activity!",
@@ -677,7 +720,15 @@
       "error_message": "Failed to cancel registration. Please try again later."
     },
     "bookmark_unavailable": "Bookmark feature temporarily unavailable",
-    "fetch_failed": "Failed to fetch activities"
+    "fetch_failed": "Failed to fetch activities",
+    "invalid_params": "Invalid parameters, please try again",
+    "enrollment_failed": "Activity enrollment failed",
+    "cancellation_failed": "Registration cancellation failed",
+    "unknown_error": "Unknown error",
+    "checkin_success": "Check-in Successful",
+    "checkin_failed": "Check-in Failed",
+    "checkin_failed_message": "Activity check-in failed", 
+    "network_error": "Network error, please try again"
   },
   "profile": {
     "title": "Profile",
@@ -947,7 +998,7 @@
   },
   "wellbeing": {
     "plan": {
-      "title": "Wellbeing Plan",
+      "title": "Safety Plan",
       "subtitle": "Safety and mental health support",
       "features": {
         "location": "Location Safety",
@@ -1098,7 +1149,7 @@
     },
     "subtitle": "Safety support for students",
     "tabs": {
-      "plan": "Wellbeing Plan",
+      "plan": "Safety Plan",
       "volunteer": "Volunteer Features"
     },
     "position": {
@@ -1148,7 +1199,11 @@
       "get_from_organization": "Get from your organization or official platform",
       "confirm": "Confirm",
       "cancel": "Cancel",
-      "manual_input_button": "Manual Input"
+      "manual_input_button": "Manual Input",
+      "error": {
+        "empty_code": "Please enter referral code",
+        "invalid_format": "Invalid referral code format (8-character alphanumeric combination)"
+      }
     },
     "userDetail": {
       "title": "User Detail",
@@ -1527,7 +1582,7 @@
     "searchSchoolsAndActivities": "Search...",
     "searchSchools": "Search schools...",
     "enterFullName": "Enter full name",
-    "enterNickname": "Enter nickname",
+    "enterNickname": "Enter preferred name",
     "enterSchoolName": "Enter school",
     "enterPassword": "8+ chars, letters & numbers",
     "confirmPassword": "Confirm your password"
@@ -1607,8 +1662,8 @@
     "username_format": "Username can only contain letters and numbers",
     "legal_name_required": "Please enter legal name",
     "legal_name_length": "Legal name cannot exceed 50 characters",
-    "english_nickname_required": "Please enter English nickname",
-    "english_nickname_length": "English nickname cannot exceed 50 characters",
+    "english_nickname_required": "Please enter Preferred name",
+    "english_nickname_length": "Preferred name cannot exceed 50 characters",
     "university_required": "Please select university",
     "phone_required": "Please enter phone number",
     "phone_china_invalid": "Invalid Chinese phone number",
@@ -1641,7 +1696,8 @@
       "title": "Privacy Policy",
       "full_content": "PomeloX Terms of Service & Privacy Policy (Combined Version)\n\nVersion: v1.1 | Effective Date: September 3, 2025\n\nContract Parties Information\n\nService Provider (China): Shanghai Grapefruit Smart Technology Co., Ltd.\nOverseas Collaborative Entity (USA): American Promotion Company, Inc. (as overseas collaborative partner)\n\nPart I: Terms of Service\n\n1. Definitions and Scope\n\nThis platform refers to \"PomeloX\" and its operating entities, providing information and collaborative services, not directly providing police, medical, and public safety services. In case of emergency, please contact local emergency numbers (110/120/911).\n\n2. Service Functions\n\n• AI Q&A: Study abroad guides, visa/course/housing information suggestions (for reference only)\n• Wellbeing Plan: Missing person emergency coordination, volunteer clue collection and liaison\n• Airport Pickup & Transportation: Free bus reservations, paid pickup/rideshare\n• Activity Management: Event publishing, registration management, check-in/check-out and QR code verification\n• Volunteer Management: Check-in/out, hour tracking and certification\n• Local Discounts: Merchant offers, points and redemption\n• Marketplace/Job Matching: Information posting and chat matching\n• Alumni Network: Email verification, trusted referrals\n\n3. Registration and Eligibility\n\n• Must be at least 14 years old to register independently; those under 14 must have guardian representation\n• Provide truthful, accurate, and complete registration information\n• Hold valid school email or referral code\n• Properly safeguard account and password\n\n4. User Conduct Standards\n\nProhibited Behaviors:\n• Publishing illegal, harmful, vulgar, defamatory, hateful, discriminatory content\n• Infringing on others' intellectual property, privacy rights, and other legitimate rights\n• Conducting reverse engineering, bulk crawling, malicious scanning\n• Unauthorized commercial promotion, mass advertising\n• Endangering activity venues, transportation safety, violating public security rules\n\nPart II: Privacy Policy\n\n1. Information Collection\n\nCategories of Information Collected:\n• Account and Identity: Name/nickname, avatar, school email/phone number\n• Travel and Activities: Flight information, airport pickup reservations, activity registration records\n• Emergency and Coordination: Emergency contacts, missing person clues, volunteer liaison\n• Device and Logs: Device identifiers, IP, operation logs\n• Transactions and Payments: Orders, amounts, payment transaction numbers\n• User Content: Chats, comments, images/videos\n\n2. Use Purposes\n\n• Create and manage user accounts\n• Provide activity registration and volunteer management services\n• Send important notifications and security alerts\n• AI Q&A and study abroad guidance services\n• Wellbeing Plan and volunteer coordination services\n• Improve service quality and user experience\n\n3. Cross-border Transfer\n\nOverseas Recipient: American Promotion Company, Inc. (as overseas collaborative partner, USA)\nTransfer Purpose: Service delivery, customer service/technical support, backup and security\nCompliance Measures: Take appropriate protective measures in accordance with Personal Information Protection Law and other regulations\n\n4. Your Rights\n\n• Right to Know: Understand personal information processing\n• Access Right: View personal information we have collected about you\n• Rectification Right: Correct inaccurate personal information\n• Deletion Right: Request deletion of personal information and account\n• Restriction Right: Limit information processing methods\n• Data Portability Right: Obtain copy of personal information\n\n5. Minor Protection\n\n• Users under 14 require explicit guardian consent\n• Appropriate protection for users aged 14-18\n• Stricter security measures implemented\n\n6. Data Security\n\n• HTTPS encryption for data transmission\n• Secure hash algorithm password storage\n• Strict access control and permission management\n• Regular security audits and vulnerability detection\n• Data encryption storage and access control\n\nDispute Resolution\n\nUsers in China: Governed by Chinese law, with jurisdiction by competent people's courts\nUsers in the United States: Governed by state of residence or California law, disputes resolved through arbitration\n\nContact Us\n\n• Customer Service/Technical: info@americanpromotioncompany.com\n• Legal/Compliance: dev@americanpromotioncompany.com\n• Service Hours: Monday-Friday 9:00-18:00 (Beijing Time)\n\nThank you for your trust\n\nWe are committed to providing safe and reliable services for Chinese international students and their families. Protecting your privacy is our responsibility and the foundation of building trust with you.",
       "content_china": "PomeloX Privacy Policy (China Version)\n\nEffective Date: September 3, 2025\nVersion: v1.1\n\nService Provider: Shanghai Grapefruit Smart Technology Co., Ltd.\nUnified Social Credit Code: 91310112MAEQURTF0X\nRegistered Address: Room 513, 5th Floor, Building 13, No. 1955 Chunshen Road, Minhang District, Shanghai\n\n1. Policy Overview\n\nWe strictly comply with the Personal Information Protection Law of the People's Republic of China, Cybersecurity Law, Data Security Law and other relevant laws and regulations, and process your personal information in accordance with the principles of legality, legitimacy, necessity and good faith.\n\n2. Personal Information Collection\n\nAccount & Identity Information:\n• Name/nickname, avatar, school email/phone\n• School/grade/major, referral codes\n• Identity verification/email verification results\n\nActivity & Travel Information:\n• Flight/arrival information, pickup reservations\n• Activity registrations, check-in/check-out, verification records\n\nVolunteer Service Information:\n• Check-in/out records, hour tracking\n• Volunteer coordination feedback\n\nDevice & Log Information:\n• Device identifiers, IP addresses\n• Operation/security/crash logs\n• Cookie/local storage data\n\n3. Purpose and Legal Basis for Personal Information Use\n\nBased on your consent:\n• Account creation and management\n• AI Q&A services\n• Activity notifications and reminders\n\nFor contract performance:\n• Activity registration and volunteer management\n• Airport pickup and transportation services\n• Local discount services\n\nFor legal obligations:\n• Network security protection and risk monitoring\n• Cooperation with law enforcement investigations (as required by law)\n\nFor legitimate interests:\n• Service improvement and user experience\n• Fraud prevention and security\n\n4. Personal Information Sharing and Processing Entrustment\n\nThird-party service integration (only within necessary scope):\n• Gmail SMTP: Email delivery\n• Cloudflare R2: File and image storage\n• Firebase FCM: Push notification services\n\nCross-border transfer:\nWhen transferring personal information to overseas collaborative partners (American Promotion Company, Inc.) for technical support, appropriate protective measures will be taken in accordance with PIPL, including signing standard contract clauses and conducting security assessments.\n\n5. Your Personal Information Rights\n\n• Right to Know: Understand personal information processing\n• Right to Decide: Consent to or withdraw consent for personal information processing\n• Right to Access: View personal information we process\n• Right to Rectification: Correct inaccurate personal information\n• Right to Erasure: Request deletion of personal information\n• Right to Restrict Processing: Limit personal information processing methods\n• Right to Portability: Obtain copies of personal information\n\nHow to exercise your rights:\nSend email to info@americanpromotioncompany.com or contact us through the app.\n\n6. Protection of Minors' Personal Information\n\n• Under 14: Must obtain explicit guardian consent\n• 14-18: Appropriate protection, parental guidance recommended\n• Enhanced security technical and management measures\n\n7. Personal Information Security Protection Measures\n\nTechnical measures:\n• AES-256 encryption for sensitive data\n• HTTPS encrypted transmission\n• Access control and authentication\n• 24-hour security monitoring\n\nManagement measures:\n• Minimum permission principle for employees\n• Regular security training and audits\n• Data access logging\n• Security incident emergency response\n\n8. Personal Information Storage\n\n• Storage location: Primarily in mainland China\n• Retention period: Shortest time necessary for processing purposes\n• Overdue processing: Automatic deletion or anonymization\n\n9. Contact Us\n\nFor personal information protection related questions:\n• Customer service: info@americanpromotioncompany.com\n• Data protection officer: dev@americanpromotioncompany.com\n• Service hours: Monday-Friday 9:00-18:00 (Beijing Time)\n• Address: Room 513, 5th Floor, Building 13, No. 1955 Chunshen Road, Minhang District, Shanghai\n\n10. Policy Updates\n\nIf we need to modify this policy, we will notify you through in-app notifications, official website announcements, etc., and seek your consent for major changes.\n\nThis policy is governed by the laws of the People's Republic of China.",
-      "content_usa": "PomeloX Privacy Policy (USA Version)\n\nEffective Date: September 3, 2025\nVersion: v1.1\n\nService Provider: American Promotion Company, Inc.\nAddress: 8988 CAMINITO FRESCO, LA JOLLA, CA 92037\n\n1. Policy Overview\n\nWe comply with applicable US federal and state privacy laws, including the California Consumer Privacy Act (CCPA), California Privacy Rights Act (CPRA), and Children's Online Privacy Protection Act (COPPA).\n\n2. Information We Collect\n\nPersonal Information:\n• Name/nickname, avatar, school email/phone\n• School/grade/major, referral codes\n• Identity verification results\n\nActivity & Travel Information:\n• Flight/arrival information, pickup reservations\n• Activity registrations, check-in/check-out records\n\nVolunteer Service Information:\n• Check-in/out records, hour tracking\n• Volunteer coordination feedback\n\nDevice & Usage Information:\n• Device identifiers, IP addresses\n• Operation/security/crash logs\n• Cookies/local storage data\n\n3. How We Use Your Information\n\nWith Your Consent:\n• Account creation and management\n• AI Q&A services\n• Activity notifications and reminders\n\nFor Contract Performance:\n• Activity registration and volunteer management\n• Airport pickup and transportation services\n• Local discount services\n\nFor Legitimate Interests:\n• Service improvement and user experience\n• Fraud prevention and security\n• Technical support and maintenance\n\n4. Information Sharing\n\nThird-Party Services (limited scope):\n• Gmail SMTP: Email delivery\n• Cloudflare R2: File storage\n• Firebase FCM: Push notifications\n\nWe do not sell your personal information.\n\n5. Your Privacy Rights\n\nUnder California Law (CCPA/CPRA):\n• Right to Know: What personal information we collect\n• Right to Access: Request copies of your personal information\n• Right to Delete: Request deletion of personal information\n• Right to Correct: Correct inaccurate personal information\n• Right to Opt-Out: Opt out of sale/sharing (we don't sell)\n• Right to Non-Discrimination: Equal service regardless of privacy choices\n\nTo exercise your rights:\nEmail us at info@americanpromotioncompany.com or contact us through the app.\n\n6. Children's Privacy (COPPA Compliance)\n\n• Under 13: We do not knowingly collect information from children under 13\n• 13-17: Parental guidance recommended\n• Enhanced protection measures for minors\n\n7. Data Security\n\nTechnical Safeguards:\n• AES-256 encryption for sensitive data\n• HTTPS encrypted transmission\n• Access controls and authentication\n• 24/7 security monitoring\n\nOperational Safeguards:\n• Employee access on need-to-know basis\n• Regular security training and audits\n• Data access logging\n• Incident response procedures\n\n8. Data Retention and Storage\n\n• Location: United States and other regions\n• Retention: Minimum time necessary for purposes\n• Disposal: Secure deletion or anonymization\n\n9. Contact Us\n\nFor privacy-related questions:\n• Email: info@americanpromotioncompany.com\n• Data Protection Officer: dev@americanpromotioncompany.com\n• Address: 8988 CAMINITO FRESCO, LA JOLLA, CA 92037\n• Business Hours: Monday-Friday 9:00-18:00 (Beijing Time)\n\n10. Policy Updates\n\nWe may update this policy and will notify you of material changes through in-app notifications, email, or website notices.\n\nThis policy is governed by applicable US law and the laws of California."
+      "content_usa": "PomeloX Privacy Policy (USA Version)\n\nEffective Date: September 3, 2025\nVersion: v1.1\n\nService Provider: American Promotion Company, Inc.\nAddress: 8988 CAMINITO FRESCO, LA JOLLA, CA 92037\n\n1. Policy Overview\n\nWe comply with applicable US federal and state privacy laws, including the California Consumer Privacy Act (CCPA), California Privacy Rights Act (CPRA), and Children's Online Privacy Protection Act (COPPA).\n\n2. Information We Collect\n\nPersonal Information:\n• Name/nickname, avatar, school email/phone\n• School/grade/major, referral codes\n• Identity verification results\n\nActivity & Travel Information:\n• Flight/arrival information, pickup reservations\n• Activity registrations, check-in/check-out records\n\nVolunteer Service Information:\n• Check-in/out records, hour tracking\n• Volunteer coordination feedback\n\nDevice & Usage Information:\n• Device identifiers, IP addresses\n• Operation/security/crash logs\n• Cookies/local storage data\n\n3. How We Use Your Information\n\nWith Your Consent:\n• Account creation and management\n• AI Q&A services\n• Activity notifications and reminders\n\nFor Contract Performance:\n• Activity registration and volunteer management\n• Airport pickup and transportation services\n• Local discount services\n\nFor Legitimate Interests:\n• Service improvement and user experience\n• Fraud prevention and security\n• Technical support and maintenance\n\n4. Information Sharing\n\nThird-Party Services (limited scope):\n• Gmail SMTP: Email delivery\n• Cloudflare R2: File storage\n• Firebase FCM: Push notifications\n\nWe do not sell your personal information.\n\n5. Your Privacy Rights\n\nUnder California Law (CCPA/CPRA):\n• Right to Know: What personal information we collect\n• Right to Access: Request copies of your personal information\n• Right to Delete: Request deletion of personal information\n• Right to Correct: Correct inaccurate personal information\n• Right to Opt-Out: Opt out of sale/sharing (we don't sell)\n• Right to Non-Discrimination: Equal service regardless of privacy choices\n\nTo exercise your rights:\nEmail us at info@americanpromotioncompany.com or contact us through the app.\n\n6. Children's Privacy (COPPA Compliance)\n\n• Under 13: We do not knowingly collect information from children under 13\n• 13-17: Parental guidance recommended\n• Enhanced protection measures for minors\n\n7. Data Security\n\nTechnical Safeguards:\n• AES-256 encryption for sensitive data\n• HTTPS encrypted transmission\n• Access controls and authentication\n• 24/7 security monitoring\n\nOperational Safeguards:\n• Employee access on need-to-know basis\n• Regular security training and audits\n• Data access logging\n• Incident response procedures\n\n8. Data Retention and Storage\n\n• Location: United States and other regions\n• Retention: Minimum time necessary for purposes\n• Disposal: Secure deletion or anonymization\n\n9. Contact Us\n\nFor privacy-related questions:\n• Email: info@americanpromotioncompany.com\n• Data Protection Officer: dev@americanpromotioncompany.com\n• Address: 8988 CAMINITO FRESCO, LA JOLLA, CA 92037\n• Business Hours: Monday-Friday 9:00-18:00 (Beijing Time)\n\n10. Policy Updates\n\nWe may update this policy and will notify you of material changes through in-app notifications, email, or website notices.\n\nThis policy is governed by applicable US law and the laws of California.",
+      "notice_label": "Notice:"
     }
   },
   "locations": {

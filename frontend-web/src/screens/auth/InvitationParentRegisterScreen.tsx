@@ -30,7 +30,6 @@ import {
 import { 
   fetchSchoolList,
   validatePhoneNumber,
-  sendSMSVerificationCode,
   registerUser
 } from '../../services/registrationAPI';
 import { useUser } from '../../context/UserContext';
@@ -40,22 +39,22 @@ import { LiquidSuccessModal } from '../../components/modals/LiquidSuccessModal';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 interface RouteParams {
+  referralCode: string;
+  hasReferralCode: boolean;
   detectedRegion?: 'zh' | 'en';
   detectionResult?: any;
-  identity?: 2; // 家长
 }
 
-interface ParentFormData {
+interface InvitationParentFormData {
   firstName: string;          // 家长名
   lastName: string;           // 家长姓
   email: string;              // 邮箱（同时作为用户名）
-  phoneNumber: string;        // 手机号
+  phoneNumber: string;        // 手机号（可选）
   password: string;           // 密码
   confirmPassword: string;    // 确认密码
   sex: '0' | '1' | '2';      // 性别
   selectedSchool: SchoolData | null; // 孩子的学校
   areaCode: '86' | '1';      // 国际区号
-  verificationCode: string;   // 验证码
 }
 
 interface ValidationErrors {
@@ -66,10 +65,9 @@ interface ValidationErrors {
   password?: string;
   confirmPassword?: string;
   selectedSchool?: string;
-  verificationCode?: string;
 }
 
-export const ParentRegisterFormScreen: React.FC = () => {
+export const InvitationParentRegisterScreen: React.FC = () => {
   const navigation = useNavigation<any>();
   const route = useRoute<any>();
   const { t } = useTranslation();
@@ -78,9 +76,9 @@ export const ParentRegisterFormScreen: React.FC = () => {
   // 智能输入组件选择器 - Web环境使用ForceNativeInput，保证输入正常工作
   const SmartTextInput = Platform.OS === 'web' ? ForceNativeInput : WebTextInput;
 
-  // Web专用区号选择器组件（与学生注册页面一致）
+  // Web专用区号选择器组件
   const AreaCodeSelector = ({ areaCode, onPress, style, textStyle }: any) => {
-    const displayText = areaCode === '86' ? t('auth.register.form.phone_china') : t('auth.register.form.phone_usa');
+    const displayText = areaCode === '86' ? t('auth.register.parent.area_code_china') : t('auth.register.parent.area_code_usa');
     
     if (Platform.OS === 'web') {
       return (
@@ -88,7 +86,7 @@ export const ParentRegisterFormScreen: React.FC = () => {
           onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();
-            console.log('🖱️ Parent Native button clicked');
+            console.log('🖱️ Invitation Parent Native button clicked');
             onPress();
           }}
           style={{
@@ -135,9 +133,9 @@ export const ParentRegisterFormScreen: React.FC = () => {
     );
   };
 
-  // 普通家长注册，固定为phone类型
-  const registrationType = 'phone';
   const {
+    referralCode,
+    hasReferralCode = false,
     detectedRegion = 'zh',
     detectionResult
   } = route.params as RouteParams || {};
@@ -145,10 +143,8 @@ export const ParentRegisterFormScreen: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [schoolsLoading, setSchoolsLoading] = useState(true);
   const [schools, setSchools] = useState<SchoolData[]>([]);
-  const [countdown, setCountdown] = useState(0);
-  const [bizId, setBizId] = useState<string>('');
 
-  const [formData, setFormData] = useState<ParentFormData>({
+  const [formData, setFormData] = useState<InvitationParentFormData>({
     firstName: '',
     lastName: '',
     email: '',
@@ -158,7 +154,6 @@ export const ParentRegisterFormScreen: React.FC = () => {
     sex: '2', // 默认未知
     selectedSchool: null,
     areaCode: detectedRegion === 'zh' ? '86' : '1', // 根据地区设置默认区号
-    verificationCode: '',
   });
 
   const [errors, setErrors] = useState<ValidationErrors>({});
@@ -221,9 +216,9 @@ export const ParentRegisterFormScreen: React.FC = () => {
     }
   };
 
-  const updateFormData = <K extends keyof ParentFormData>(
+  const updateFormData = <K extends keyof InvitationParentFormData>(
     field: K, 
-    value: ParentFormData[K]
+    value: InvitationParentFormData[K]
   ) => {
     setFormData(prev => ({ ...prev, [field]: value }));
     // 清除相关错误
@@ -273,7 +268,7 @@ export const ParentRegisterFormScreen: React.FC = () => {
       newErrors.confirmPassword = t('validation.password_mismatch');
     }
 
-    // 验证手机号（普通家长注册时必填）
+    // 验证手机号（推荐码家长注册时必填）
     if (!formData.phoneNumber) {
       newErrors.phoneNumber = t('validation.phone_required');
     } else if (!validatePhoneNumber(formData.phoneNumber, formData.areaCode)) {
@@ -287,63 +282,8 @@ export const ParentRegisterFormScreen: React.FC = () => {
       newErrors.selectedSchool = t('validation.child_school_required');
     }
 
-    // 验证验证码（普通家长注册必须验证手机号）
-    if (!formData.verificationCode.trim()) {
-      newErrors.verificationCode = t('validation.verification_code_required');
-    } else if (!/^\d{6}$/.test(formData.verificationCode)) {
-      newErrors.verificationCode = t('validation.verification_code_format');
-    }
-
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
-  };
-
-  const sendVerificationCode = async () => {
-    if (countdown > 0) return;
-    if (!formData.phoneNumber) {
-      Alert.alert(t('common.error'), t('validation.phone_required'));
-      return;
-    }
-
-    setLoading(true);
-    try {
-      const response = await sendSMSVerificationCode(formData.phoneNumber, formData.areaCode);
-      
-      if (response.code === 'OK' && response.bizId) {
-        setBizId(response.bizId);
-        Alert.alert(
-          t('auth.register.sms.code_sent_title'),
-          t('auth.register.sms.code_sent_message', {
-            countryCode: formData.areaCode,
-            phoneNumber: formData.phoneNumber
-          })
-        );
-        
-        // 开始倒计时
-        setCountdown(60);
-        const timer = setInterval(() => {
-          setCountdown(prev => {
-            if (prev <= 1) {
-              clearInterval(timer);
-              return 0;
-            }
-            return prev - 1;
-          });
-        }, 1000);
-      } else {
-        Alert.alert(
-          t('auth.register.sms.send_failed_title'), 
-          `${t('auth.register.sms.send_failed_message')}\n${response.message || ''}`
-        );
-      }
-    } catch (error) {
-      Alert.alert(
-        t('auth.register.sms.send_failed_title'), 
-        t('common.network_error')
-      );
-    } finally {
-      setLoading(false);
-    }
   };
 
   const handleRegister = async () => {
@@ -358,7 +298,7 @@ export const ParentRegisterFormScreen: React.FC = () => {
     );
 
     try {
-      // 构建家长注册请求数据
+      // 构建推荐码家长注册请求数据
       const registrationData = {
         identity: 2, // 家长
         userName: formData.email, // 邮箱作为用户名
@@ -371,18 +311,19 @@ export const ParentRegisterFormScreen: React.FC = () => {
         areaCode: formData.areaCode,
         area: detectedRegion,
         
-        // 普通家长注册必须包含手机号和验证码
-        phonenumber: formData.phoneNumber,
-        verCode: formData.verificationCode,
-        bizId: bizId,
+        // 推荐码注册特有字段
+        invCode: referralCode,
+        
+        // 条件字段：手机号（如果提供）
+        ...(formData.phoneNumber && { phonenumber: formData.phoneNumber }),
       };
 
-      console.log('Web端家长注册数据:', registrationData);
+      console.log('Web端推荐码家长注册数据:', registrationData);
 
       const response = await registerUser(registrationData);
       
       if (response.code === 200) {
-        console.log('✅ Web端家长注册成功！开始自动登录...');
+        console.log('✅ Web端推荐码家长注册成功！开始自动登录...');
         
         Alert.alert(''); // 关闭进度提示
         
@@ -410,7 +351,7 @@ export const ParentRegisterFormScreen: React.FC = () => {
           
           const loginResult = await loginResponse.json();
           
-          console.log('🔐 家长自动登录响应:', {
+          console.log('🔐 推荐码家长自动登录响应:', {
             code: loginResult.code,
             msg: loginResult.msg,
             hasToken: !!loginResult.data?.token,
@@ -422,10 +363,10 @@ export const ParentRegisterFormScreen: React.FC = () => {
             await AsyncStorage.setItem('@pomelox_token', loginResult.data.token);
             await AsyncStorage.setItem('@pomelox_user_id', loginResult.data.userId.toString());
             
-            console.log('✅ 家长Token已保存到本地存储');
+            console.log('✅ 推荐码家长Token已保存到本地存储');
             
             await userLogin(loginResult.data.token);
-            console.log('✅ Web端家长账户自动登录成功！');
+            console.log('✅ Web端推荐码家长账户自动登录成功！');
             
             // 显示成功弹窗而不是Alert
             setLoading(false);
@@ -447,7 +388,7 @@ export const ParentRegisterFormScreen: React.FC = () => {
             );
           }
         } catch (loginError) {
-          console.error('❌ Web端自动登录失败:', loginError);
+          console.error('❌ Web端推荐码家长自动登录失败:', loginError);
           Alert.alert(
             '✅ ' + t('auth.register.success.title'),
             t('auth.register.success.manual_login', { email: formData.email }),
@@ -474,7 +415,7 @@ export const ParentRegisterFormScreen: React.FC = () => {
         );
       }
     } catch (error) {
-      console.error('❌ Web端家长注册网络错误:', error);
+      console.error('❌ Web端推荐码家长注册网络错误:', error);
       Alert.alert(''); // 关闭进度提示
       Alert.alert(
         '🌐 ' + t('common.network_error'),
@@ -551,7 +492,7 @@ export const ParentRegisterFormScreen: React.FC = () => {
           <TouchableOpacity onPress={handleBack} style={styles.backButton}>
             <Ionicons name="arrow-back" size={24} color={theme.colors.text.primary} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>{t('auth.register.parent.title')}</Text>
+          <Text style={styles.headerTitle}>{t('auth.register.parent.invitation_title')}</Text>
           <View style={styles.headerRight} />
         </View>
 
@@ -561,13 +502,22 @@ export const ParentRegisterFormScreen: React.FC = () => {
             showsVerticalScrollIndicator={false}
           >
             <View style={styles.formContainer}>
-              <Text style={styles.stepTitle}>{t('auth.register.parent.form_title')}</Text>
+              <Text style={styles.stepTitle}>{t('auth.register.parent.invitation_form_title')}</Text>
               <Text style={styles.stepSubtitle}>
-                {t('auth.register.parent.description')}
+                {t('auth.register.parent.invitation_description')}
               </Text>
 
+              {/* 推荐码提示 */}
+              {hasReferralCode && (
+                <View style={styles.referralBadge}>
+                  <Ionicons name="gift" size={20} color={theme.colors.primary} />
+                  <Text style={styles.referralText}>
+                    {t('auth.register.form.referral_code', { code: referralCode })}
+                  </Text>
+                </View>
+              )}
 
-              {/* 家长姓名（分离字段，与学生注册一致） */}
+              {/* 家长姓名（分离字段） */}
               <View style={styles.nameRow}>
                 <View style={[styles.inputContainer, styles.nameInput]}>
                   <Text style={styles.label}>{t('auth.register.form.last_name_label')}</Text>
@@ -611,7 +561,7 @@ export const ParentRegisterFormScreen: React.FC = () => {
                 {errors.email && <Text style={styles.errorText}>{errors.email}</Text>}
               </View>
 
-              {/* 手机号输入 */}
+              {/* 手机号输入（可选） */}
               <View style={styles.inputContainer}>
                 <Text style={styles.label}>
                   {t('auth.register.parent.phone_label')}
@@ -620,22 +570,19 @@ export const ParentRegisterFormScreen: React.FC = () => {
                   <AreaCodeSelector
                     areaCode={formData.areaCode}
                     onPress={() => {
-                      console.log('🖱️ Parent area code selector onPress triggered');
+                      console.log('🖱️ Invitation Parent area code selector onPress triggered');
                       
-                      // 检查是否要切换到美国区号
+                      // 推荐码注册允许切换区号
                       if (formData.areaCode === '86') {
-                        // 要切换到美国区号，显示限制提示
-                        Alert.alert(
-                          t('auth.register.form.us_phone_not_supported_title'),
-                          `${t('auth.register.form.us_phone_not_supported_message')}\n\n${t('auth.register.form.us_phone_contact_info')}`,
-                          [
-                            { text: t('common.confirm'), style: 'default' }
-                          ]
-                        );
+                        // 切换到美国区号
+                        updateFormData('areaCode', '1');
+                        updateFormData('phoneNumber', ''); // 清空手机号
+                        console.log('📱 Invitation Parent area code switched to: 1');
                       } else {
                         // 从美国切换回中国
                         updateFormData('areaCode', '86');
-                        console.log('📱 Parent area code switched to: 86');
+                        updateFormData('phoneNumber', ''); // 清空手机号
+                        console.log('📱 Invitation Parent area code switched to: 86');
                       }
                     }}
                     style={styles.areaCodeSelector}
@@ -651,39 +598,6 @@ export const ParentRegisterFormScreen: React.FC = () => {
                   />
                 </View>
                 {errors.phoneNumber && <Text style={styles.errorText}>{errors.phoneNumber}</Text>}
-              </View>
-
-              {/* 验证码（普通家长注册必须验证） */}
-              <View style={styles.inputContainer}>
-                <Text style={styles.label}>{t('auth.register.form.verification_code_label')}</Text>
-                <View style={styles.verificationContainer}>
-                  <SmartTextInput
-                    style={[styles.verificationInput, errors.verificationCode && styles.inputError]}
-                    placeholder={t('auth.register.form.verification_code_placeholder')}
-                    value={formData.verificationCode}
-                    onChangeText={(text) => updateFormData('verificationCode', text)}
-                    keyboardType="number-pad"
-                    maxLength={6}
-                    placeholderTextColor={theme.colors.text.disabled}
-                  />
-                  <TouchableOpacity
-                    style={[styles.sendCodeButton, countdown > 0 && styles.sendCodeButtonDisabled]}
-                    onPress={sendVerificationCode}
-                    disabled={countdown > 0 || loading}
-                  >
-                    {loading ? (
-                      <ActivityIndicator size="small" color={theme.colors.text.inverse} />
-                    ) : (
-                      <Text style={styles.sendCodeText}>
-                        {countdown > 0 
-                          ? `${countdown}s` 
-                          : t('auth.register.form.send_code')
-                        }
-                      </Text>
-                    )}
-                  </TouchableOpacity>
-                </View>
-                {errors.verificationCode && <Text style={styles.errorText}>{errors.verificationCode}</Text>}
               </View>
 
               {/* 密码 */}
@@ -720,7 +634,7 @@ export const ParentRegisterFormScreen: React.FC = () => {
               {/* 孩子学校选择 */}
               {renderSchoolPicker()}
 
-              {/* 注册按钮 - 移动到表单内部 */}
+              {/* 注册按钮 - 在表单内部 */}
               <View style={styles.buttonContainer}>
                 <TouchableOpacity
                   style={[styles.registerButton, loading && styles.registerButtonDisabled]}
@@ -896,27 +810,6 @@ const styles = StyleSheet.create({
     fontSize: theme.typography.fontSize.base,
     color: theme.colors.text.primary,
   },
-  pickerContainer: {
-    backgroundColor: theme.colors.background.secondary,
-    borderRadius: theme.borderRadius.lg,
-    borderWidth: 1,
-    borderColor: 'transparent',
-    overflow: 'hidden',
-  },
-  picker: {
-    color: theme.colors.text.primary,
-  },
-  loadingContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: theme.spacing[4],
-  },
-  loadingText: {
-    marginLeft: theme.spacing[2],
-    fontSize: theme.typography.fontSize.sm,
-    color: theme.colors.text.secondary,
-  },
   genderContainer: {
     flexDirection: 'row',
     gap: theme.spacing[2],
@@ -940,38 +833,6 @@ const styles = StyleSheet.create({
   genderTextActive: {
     color: theme.colors.text.inverse,
     fontWeight: theme.typography.fontWeight.medium,
-  },
-  verificationContainer: {
-    flexDirection: 'row',
-    gap: theme.spacing[3],
-  },
-  verificationInput: {
-    flex: 1,
-    backgroundColor: theme.colors.background.secondary,
-    borderRadius: theme.borderRadius.lg,
-    paddingHorizontal: theme.spacing[4],
-    paddingVertical: theme.spacing[3],
-    fontSize: theme.typography.fontSize.base,
-    color: theme.colors.text.primary,
-    borderWidth: 1,
-    borderColor: 'transparent',
-  },
-  sendCodeButton: {
-    backgroundColor: theme.colors.primary,
-    paddingHorizontal: theme.spacing[4],
-    paddingVertical: theme.spacing[3],
-    borderRadius: theme.borderRadius.lg,
-    justifyContent: 'center',
-    alignItems: 'center',
-    minWidth: 100,
-  },
-  sendCodeButtonDisabled: {
-    opacity: 0.5,
-  },
-  sendCodeText: {
-    fontSize: theme.typography.fontSize.sm,
-    fontWeight: theme.typography.fontWeight.medium,
-    color: theme.colors.text.inverse,
   },
   buttonContainer: {
     marginTop: theme.spacing[8],
