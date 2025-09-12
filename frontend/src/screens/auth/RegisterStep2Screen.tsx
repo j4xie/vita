@@ -281,6 +281,22 @@ export const RegisterStep2Screen: React.FC = () => {
     }
   };
 
+  // 导航到第3步进行手机验证
+  const handleNext = () => {
+    if (!validateForm()) return;
+    
+    // 导航到RegisterStep3Screen进行手机验证
+    navigation.navigate('RegisterStep3', {
+      step1Data,
+      step2Data: formData,
+      referralCode,
+      hasReferralCode,
+      registrationType,
+      detectedRegion,
+      detectionResult
+    });
+  };
+
   const handleRegister = async () => {
     if (!validateForm()) return;
 
@@ -684,9 +700,9 @@ export const RegisterStep2Screen: React.FC = () => {
         {/* Progress Bar */}
         <View style={styles.progressContainer}>
           <View style={styles.progressBar}>
-            <View style={[styles.progressFill, { width: '100%' }]} />
+            <View style={[styles.progressFill, { width: '66.67%' }]} />
           </View>
-          <Text style={styles.progressText}>{t('auth.register.form.progress', { current: 2, total: 2 })}</Text>
+          <Text style={styles.progressText}>{t('auth.register.form.progress', { current: 2, total: 3 })}</Text>
         </View>
 
         <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
@@ -830,14 +846,14 @@ export const RegisterStep2Screen: React.FC = () => {
             <View style={styles.bottomContainer}>
               <TouchableOpacity
                 style={[styles.registerButton, loading && styles.registerButtonDisabled]}
-                onPress={handleRegister}
+                onPress={handleNext}
                 disabled={loading}
               >
                 {loading ? (
                   <ActivityIndicator color={theme.colors.text.inverse} />
                 ) : (
                   <Text style={styles.registerButtonText}>
-                    {t('auth.register.form.register')}
+                    {t('auth.register.form.next_step')}
                   </Text>
                 )}
               </TouchableOpacity>

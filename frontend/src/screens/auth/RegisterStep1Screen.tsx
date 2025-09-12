@@ -46,18 +46,17 @@ export const RegisterStep1Screen: React.FC = () => {
   const referralCode = route.params?.referralCode;
   const hasReferralCode = route.params?.hasReferralCode ?? !!referralCode;
   const registrationType = route.params?.registrationType || 'phone'; // 'phone' 或 'invitation'
+  const detectedRegion = route.params?.detectedRegion || 'zh';
 
   const [loading, setLoading] = useState(false);
   const [schoolsLoading, setSchoolsLoading] = useState(true);
   const [schools, setSchools] = useState<SchoolData[]>([]);
   
-  const [formData, setFormData] = useState<RegistrationStep1Data & { areaCode: '86' | '1' }>({
+  const [formData, setFormData] = useState<RegistrationStep1Data>({
     firstName: '',
     lastName: '',
-    phoneNumber: '',
     selectedSchool: null,
     generatedEmail: '',
-    areaCode: detectedRegion === 'zh' ? '86' : '1', // 根据地理检测设置默认区号
   });
 
   const [errors, setErrors] = useState<ValidationErrors>({});
@@ -123,23 +122,7 @@ export const RegisterStep1Screen: React.FC = () => {
     }
 
     // 验证手机号（邀请码注册时可选）
-    if (registrationType === 'invitation') {
-      // 邀请码注册：手机号可选
-      if (formData.phoneNumber && !validatePhoneNumber(formData.phoneNumber, formData.areaCode)) {
-        newErrors.phoneNumber = formData.areaCode === '86' 
-          ? t('validation.phone_china_invalid')
-          : t('validation.phone_us_invalid');
-      }
-    } else {
-      // 手机验证码注册：手机号必填
-      if (!formData.phoneNumber) {
-        newErrors.phoneNumber = t('validation.phone_required');
-      } else if (!validatePhoneNumber(formData.phoneNumber, formData.areaCode)) {
-        newErrors.phoneNumber = formData.areaCode === '86' 
-          ? t('validation.phone_china_invalid')
-          : t('validation.phone_us_invalid');
-      }
-    }
+    // 手机号验证移到第3步，这里不再验证手机号
 
     // 验证学校
     if (!formData.selectedSchool) {
@@ -165,9 +148,12 @@ export const RegisterStep1Screen: React.FC = () => {
       }
     }
 
-    // 验证生成的邮箱
-    if (formData.generatedEmail && !validateEduEmail(formData.generatedEmail)) {
-      newErrors.email = t('validation.email_school_invalid');
+    // 验证生成的邮箱格式（接受任何后缀）
+    if (formData.generatedEmail) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(formData.generatedEmail)) {
+        newErrors.email = t('validation.email_format_error');
+      }
     }
 
     setErrors(newErrors);
@@ -311,9 +297,9 @@ export const RegisterStep1Screen: React.FC = () => {
         {/* Progress Bar */}
         <View style={styles.progressContainer}>
           <View style={styles.progressBar}>
-            <View style={[styles.progressFill, { width: '50%' }]} />
+            <View style={[styles.progressFill, { width: '33.33%' }]} />
           </View>
-          <Text style={styles.progressText}>{t('auth.register.form.progress', { current: 1, total: 2 })}</Text>
+          <Text style={styles.progressText}>{t('auth.register.form.progress', { current: 1, total: 3 })}</Text>
         </View>
 
         <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
@@ -375,45 +361,7 @@ export const RegisterStep1Screen: React.FC = () => {
             {/* 邮箱预览 */}
             {renderEmailPreview()}
 
-            {/* 手机号输入 */}
-            <View style={styles.inputContainer}>
-              <Text style={styles.label}>
-                {registrationType === 'invitation' 
-                  ? t('auth.register.form.phone_label_optional')
-                  : t('auth.register.form.phone_label')
-                }
-              </Text>
-              <View style={styles.phoneInputWrapper}>
-                <TouchableOpacity 
-                  style={styles.areaCodeSelector}
-                  onPress={() => {
-                    Alert.alert(
-                      t('auth.register.parent.select_area_code'),
-                      '',
-                      [
-                        { text: t('auth.register.parent.area_code_china'), onPress: () => updateFormData('areaCode', '86') },
-                        { text: t('auth.register.parent.area_code_usa'), onPress: () => updateFormData('areaCode', '1') },
-                        { text: t('common.cancel'), style: 'cancel' }
-                      ]
-                    );
-                  }}
-                >
-                  <Text style={styles.areaCodeText}>
-                    {formData.areaCode === '86' ? t('auth.register.parent.area_code_china') : t('auth.register.parent.area_code_usa')}
-                  </Text>
-                  <Ionicons name="chevron-down" size={16} color={theme.colors.text.secondary} />
-                </TouchableOpacity>
-                <TextInput
-                  style={[styles.phoneInput, errors.phoneNumber && styles.inputError]}
-                  placeholder={formData.areaCode === '86' ? '13812345678' : '(555) 123-4567'}
-                  value={formData.phoneNumber}
-                  onChangeText={(text) => updateFormData('phoneNumber', text)}
-                  keyboardType="phone-pad"
-                  placeholderTextColor={theme.colors.text.disabled}
-                />
-              </View>
-              {errors.phoneNumber && <Text style={styles.errorText}>{errors.phoneNumber}</Text>}
-            </View>
+            {/* 手机号输入移到第3步 */}
           </View>
           </ScrollView>
         </TouchableWithoutFeedback>

@@ -59,8 +59,8 @@ export const IdentityChoiceScreen: React.FC = () => {
         identity: 1, // 学生
       });
     } else {
-      // 家长注册：进入家长专用注册页面
-      navigation.navigate('ParentRegisterForm', {
+      // 家长注册：进入家长2步注册流程第1步
+      navigation.navigate('ParentRegisterStep1', {
         registrationType,
         referralCode,
         hasReferralCode,
