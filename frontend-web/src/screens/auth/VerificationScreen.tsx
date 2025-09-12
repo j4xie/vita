@@ -19,6 +19,7 @@ import { pomeloXAPI } from '../../services/PomeloXAPI';
 import { useUser } from '../../context/UserContext';
 import { login } from '../../services/authAPI';
 import { LiquidSuccessModal } from '../../components/modals/LiquidSuccessModal';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export const VerificationScreen: React.FC = () => {
   const navigation = useNavigation<any>();
@@ -129,8 +130,21 @@ export const VerificationScreen: React.FC = () => {
           });
           
           if (loginResult.code === 200 && loginResult.data) {
+            // 🔧 Web端解决方案：手动保存token到AsyncStorage
+            console.log('💾 Web端VerificationScreen开始手动保存token...');
+            await AsyncStorage.setItem('@pomelox_token', loginResult.data.token);
+            await AsyncStorage.setItem('@pomelox_user_id', loginResult.data.userId.toString());
+            
+            // 验证token保存
+            const savedToken = await AsyncStorage.getItem('@pomelox_token');
+            console.log('✅ Web端VerificationScreen Token保存验证:', {
+              tokenSaved: !!savedToken,
+              tokenMatch: savedToken === loginResult.data.token
+            });
+            
             // 登录成功，更新用户状态
             await userLogin(loginResult.data.token);
+            console.log('✅ Web端VerificationScreen自动登录成功！');
             
             // 显示成功弹窗
             setLoading(false);

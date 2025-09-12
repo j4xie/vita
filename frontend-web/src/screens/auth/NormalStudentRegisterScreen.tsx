@@ -239,7 +239,7 @@ export const NormalStudentRegisterScreen: React.FC = () => {
       case 3:
         isValid = validateStep3();
         if (isValid) {
-          handleRegister();
+          sendVerificationCode(); // 🔧 对标App端：发送验证码并跳转到VerificationScreen
           return;
         }
         break;
@@ -248,6 +248,67 @@ export const NormalStudentRegisterScreen: React.FC = () => {
     if (isValid && currentStep < 3) {
       setCurrentStep(currentStep + 1);
       scrollRef.current?.scrollTo({ y: 0, animated: true });
+    }
+  };
+
+  // 🔧 Web端新增：发送验证码并跳转到验证码页面，对标App端流程
+  const sendVerificationCode = async () => {
+    if (countdown > 0) return;
+    
+    setLoading(true);
+    try {
+      const phoneNumber = formData.phoneType === 'CN' 
+        ? `86${formData.phoneNumber}` // SMS API需要86前缀
+        : `1${formData.phoneNumber}`;
+      
+      // 调用发送验证码API
+      const result = await pomeloXAPI.sendSMSVerification(phoneNumber);
+      
+      if (result.code === 'OK' && result.bizId) {
+        // 保存bizId到表单数据
+        updateFormData('bizId', result.bizId);
+        
+        // 开始倒计时
+        setCountdown(60);
+        const timer = setInterval(() => {
+          setCountdown(prev => {
+            if (prev <= 1) {
+              clearInterval(timer);
+              return 0;
+            }
+            return prev - 1;
+          });
+        }, 1000);
+        
+        // 🔧 对标App端：显示成功提示并跳转到独立的VerificationScreen页面
+        Alert.alert(
+          t('auth.register.sms.code_sent_title'),
+          t('auth.register.sms.code_sent_message', {
+            countryCode: formData.phoneType === 'CN' ? '86' : '1',
+            phoneNumber: formData.phoneNumber
+          }),
+          [{
+            text: t('common.confirm'),
+            onPress: () => {
+              navigation.navigate('Verification', { 
+                formData: {
+                  ...formData,
+                  bizId: result.bizId
+                },
+                phoneNumber: formData.phoneNumber,
+                phoneType: formData.phoneType 
+              });
+            }
+          }]
+        );
+      } else {
+        Alert.alert(t('auth.register.sms.send_failed_title'), t('auth.register.sms.send_failed_message'));
+      }
+    } catch (error) {
+      console.error('发送验证码错误:', error);
+      Alert.alert(t('auth.register.sms.send_failed_title'), t('auth.register.sms.send_failed_message'));
+    } finally {
+      setLoading(false);
     }
   };
 
