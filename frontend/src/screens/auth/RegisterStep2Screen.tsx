@@ -41,6 +41,14 @@ import { useUser } from '../../context/UserContext';
 import { login } from '../../services/authAPI';
 import { LiquidSuccessModal } from '../../components/modals/LiquidSuccessModal';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { 
+  validateTextByLanguage,
+  TextType,
+  generateBackendNameData,
+  createRealtimeValidator,
+  getInputPlaceholder
+} from '../../utils/textValidation';
+import { i18n } from '../../utils/i18n';
 
 interface RouteParams {
   step1Data: RegistrationStep1Data & { legalName: string };
@@ -82,6 +90,37 @@ export const RegisterStep2Screen: React.FC = () => {
   
   // 成功弹窗状态
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  
+  // 实时验证状态
+  const [realtimeErrors, setRealtimeErrors] = useState<ValidationErrors>({});
+  
+  // 检查是否有任何验证错误
+  const hasValidationErrors = () => {
+    return Object.keys(realtimeErrors).some(key => 
+      realtimeErrors[key as keyof ValidationErrors]
+    ) || Object.keys(errors).some(key => 
+      errors[key as keyof ValidationErrors]
+    );
+  };
+  
+  // 调试：检查当前系统语言
+  useEffect(() => {
+    console.log('🌍 RegisterStep2Screen - 当前语言检测:', {
+      currentLanguage: i18n.language,
+      detectedRegion: detectedRegion
+    });
+  }, []);
+  
+  // 创建常用名实时验证处理器
+  const handleNickNameChange = createRealtimeValidator(
+    TextType.COMMON_NAME,
+    (isValid, message) => {
+      setRealtimeErrors(prev => ({
+        ...prev,
+        nickName: isValid ? undefined : message
+      }));
+    }
+  );
   
   const [formData, setFormData] = useState<RegistrationStep2Data>({
     email: step1Data.generatedEmail,
@@ -195,11 +234,14 @@ export const RegisterStep2Screen: React.FC = () => {
       newErrors.email = t('validation.email_invalid');
     }
 
-    // 验证昵称
-    if (!formData.nickName.trim()) {
-      newErrors.nickName = t('validation.nickname_required');
-    } else if (formData.nickName.length > 50) {
-      newErrors.nickName = t('validation.nickname_length');
+    // 验证常用名（昵称）- 使用智能验证
+    const nickNameValidation = validateTextByLanguage(
+      formData.nickName,
+      TextType.COMMON_NAME,
+      t
+    );
+    if (!nickNameValidation.isValid) {
+      newErrors.nickName = nickNameValidation.message;
     }
 
     // 验证密码
@@ -281,20 +323,9 @@ export const RegisterStep2Screen: React.FC = () => {
     }
   };
 
-  // 导航到第3步进行手机验证
+  // 🔧 修复：直接在第2步完成注册，无需第3步避免误解
   const handleNext = () => {
-    if (!validateForm()) return;
-    
-    // 导航到RegisterStep3Screen进行手机验证
-    navigation.navigate('RegisterStep3', {
-      step1Data,
-      step2Data: formData,
-      referralCode,
-      hasReferralCode,
-      registrationType,
-      detectedRegion,
-      detectionResult
-    });
+    handleRegister(); // 直接调用注册函数
   };
 
   const handleRegister = async () => {
@@ -310,12 +341,20 @@ export const RegisterStep2Screen: React.FC = () => {
       let registrationData: RegistrationAPIRequest;
 
       if (registrationType === 'invitation') {
+        // 生成符合需求的姓名数据
+        const nameData = generateBackendNameData(
+          step1Data.firstName,
+          step1Data.lastName,
+          formData.nickName, // 常用名
+          true // 学生
+        );
+        
         // ②邀请码注册：手机号和邮箱可填可不填，verCode不填
         registrationData = {
           identity: 1, // 学生身份
           userName: formData.email, // 使用邮箱作为用户名
-          legalName: step1Data.legalName,
-          nickName: formData.nickName,
+          legalName: nameData.legalName, // 使用生成的法定姓名
+          nickName: nameData.nickName, // 使用生成的昵称（常用名+姓氏拼音）
           password: formData.password,
           email: formData.email, // 邮箱必填
           sex: formData.sex,
@@ -329,12 +368,20 @@ export const RegisterStep2Screen: React.FC = () => {
           // 不包含 verCode 和 bizId
         };
       } else {
+        // 生成符合需求的姓名数据
+        const nameData = generateBackendNameData(
+          step1Data.firstName,
+          step1Data.lastName,
+          formData.nickName, // 常用名
+          true // 学生
+        );
+        
         // ①手机验证码注册：invCode不填
         registrationData = {
           identity: 1, // 学生身份
           userName: formData.email, // 使用邮箱作为用户名
-          legalName: step1Data.legalName,
-          nickName: formData.nickName,
+          legalName: nameData.legalName, // 使用生成的法定姓名
+          nickName: nameData.nickName, // 使用生成的昵称（常用名+姓氏拼音）
           password: formData.password,
           phonenumber: step1Data.phoneNumber, // 手机号必填
           email: formData.email, // 邮箱必填
@@ -700,9 +747,9 @@ export const RegisterStep2Screen: React.FC = () => {
         {/* Progress Bar */}
         <View style={styles.progressContainer}>
           <View style={styles.progressBar}>
-            <View style={[styles.progressFill, { width: '66.67%' }]} />
+            <View style={[styles.progressFill, { width: '100%' }]} />
           </View>
-          <Text style={styles.progressText}>{t('auth.register.form.progress', { current: 2, total: 3 })}</Text>
+          <Text style={styles.progressText}>{t('auth.register.form.progress', { current: 2, total: 2 })}</Text>
         </View>
 
         <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
@@ -765,13 +812,23 @@ export const RegisterStep2Screen: React.FC = () => {
             <View style={styles.inputContainer}>
               <Text style={styles.label}>{t('auth.register.form.nickname_label')}</Text>
               <TextInput
-                style={[styles.input, errors.nickName && styles.inputError]}
-                placeholder={t('auth.register.form.nickname_placeholder')}
+                style={[
+                  styles.input, 
+                  (errors.nickName || realtimeErrors.nickName) && styles.inputError
+                ]}
+                placeholder={getInputPlaceholder(TextType.COMMON_NAME, t)}
                 value={formData.nickName}
-                onChangeText={(text) => updateFormData('nickName', text)}
+                onChangeText={(text) => {
+                  handleNickNameChange(text, t);
+                  updateFormData('nickName', text);
+                }}
                 placeholderTextColor={theme.colors.text.disabled}
               />
-              {errors.nickName && <Text style={styles.errorText}>{errors.nickName}</Text>}
+              {(errors.nickName || realtimeErrors.nickName) && (
+                <Text style={styles.errorText}>
+                  {errors.nickName || realtimeErrors.nickName}
+                </Text>
+              )}
             </View>
 
             {/* 密码 */}
@@ -845,15 +902,18 @@ export const RegisterStep2Screen: React.FC = () => {
             {/* Register Button - 跟随内容在表单底部 */}
             <View style={styles.bottomContainer}>
               <TouchableOpacity
-                style={[styles.registerButton, loading && styles.registerButtonDisabled]}
+                style={[
+                  styles.registerButton, 
+                  (loading || hasValidationErrors()) && styles.registerButtonDisabled
+                ]}
                 onPress={handleNext}
-                disabled={loading}
+                disabled={loading || hasValidationErrors()}
               >
                 {loading ? (
                   <ActivityIndicator color={theme.colors.text.inverse} />
                 ) : (
                   <Text style={styles.registerButtonText}>
-                    {t('auth.register.form.next_step')}
+                    {t('auth.register.form.register')}
                   </Text>
                 )}
               </TouchableOpacity>

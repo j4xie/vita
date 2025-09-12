@@ -29,8 +29,6 @@ import { SetNewPasswordScreen } from '../screens/auth/SetNewPasswordScreen';
 import { RegisterChoiceScreen } from '../screens/auth/RegisterChoiceScreen';
 import { IdentityChoiceScreen } from '../screens/auth/IdentityChoiceScreen';
 import { ParentRegisterFormScreen } from '../screens/auth/ParentRegisterFormScreen';
-import { ParentRegisterStep1Screen } from '../screens/auth/ParentRegisterStep1Screen';
-import { ParentRegisterStep2Screen } from '../screens/auth/ParentRegisterStep2Screen';
 import { ParentNormalRegisterScreen } from '../screens/auth/ParentNormalRegisterScreen';
 import { RegisterFormScreen } from '../screens/auth/RegisterFormScreen';
 import { RegisterStep1Screen } from '../screens/auth/RegisterStep1Screen';
@@ -131,20 +129,6 @@ const AuthNavigator = () => {
       <AuthStack.Screen 
         name="ParentRegisterForm" 
         component={ParentRegisterFormScreen}
-        options={{
-          ...pageTransitions.slideFromRight,
-        }}
-      />
-      <AuthStack.Screen 
-        name="ParentRegisterStep1" 
-        component={ParentRegisterStep1Screen}
-        options={{
-          ...pageTransitions.slideFromRight,
-        }}
-      />
-      <AuthStack.Screen 
-        name="ParentRegisterStep2" 
-        component={ParentRegisterStep2Screen}
         options={{
           ...pageTransitions.slideFromRight,
         }}
@@ -715,20 +699,6 @@ export const AppNavigator = () => {
           <RootStack.Screen 
             name="ParentRegisterForm" 
             component={ParentRegisterFormScreen}
-            options={{
-              ...pageTransitions.slideFromRight,
-            }}
-          />
-          <RootStack.Screen 
-            name="ParentRegisterStep1" 
-            component={ParentRegisterStep1Screen}
-            options={{
-              ...pageTransitions.slideFromRight,
-            }}
-          />
-          <RootStack.Screen 
-            name="ParentRegisterStep2" 
-            component={ParentRegisterStep2Screen}
             options={{
               ...pageTransitions.slideFromRight,
             }}

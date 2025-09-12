@@ -59,15 +59,26 @@ export const IdentityChoiceScreen: React.FC = () => {
         identity: 1, // 学生
       });
     } else {
-      // 家长注册：进入家长2步注册流程第1步
-      navigation.navigate('ParentRegisterStep1', {
-        registrationType,
-        referralCode,
-        hasReferralCode,
-        detectedRegion,
-        detectionResult,
-        identity: 2, // 家长
-      });
+      // 家长注册：根据注册类型跳转到不同的独立页面
+      if (registrationType === 'invitation') {
+        // 推荐码家长注册：跳转到ParentRegisterForm
+        navigation.navigate('ParentRegisterForm', {
+          registrationType,
+          referralCode,
+          hasReferralCode,
+          detectedRegion,
+          detectionResult,
+          identity: 2, // 家长
+        });
+      } else {
+        // 普通家长注册：跳转到ParentNormalRegister
+        navigation.navigate('ParentNormalRegister', {
+          registrationType,
+          detectedRegion,
+          detectionResult,
+          identity: 2, // 家长
+        });
+      }
     }
   };
 

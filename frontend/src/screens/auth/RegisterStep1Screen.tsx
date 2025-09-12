@@ -36,6 +36,13 @@ import {
 } from '../../services/registrationAPI';
 import RegionDetectionService from '../../services/RegionDetectionService';
 import UserRegionPreferences from '../../services/UserRegionPreferences';
+import { 
+  validateTextByLanguage,
+  TextType,
+  createRealtimeValidator,
+  getInputPlaceholder
+} from '../../utils/textValidation';
+import { isChinese, i18n } from '../../utils/i18n';
 
 export const RegisterStep1Screen: React.FC = () => {
   const navigation = useNavigation<any>();
@@ -52,15 +59,59 @@ export const RegisterStep1Screen: React.FC = () => {
   const [schoolsLoading, setSchoolsLoading] = useState(true);
   const [schools, setSchools] = useState<SchoolData[]>([]);
   
-  const [formData, setFormData] = useState<RegistrationStep1Data>({
+  const [formData, setFormData] = useState<RegistrationStep1Data & { areaCode: '86' | '1'; phoneNumber: string }>({
     firstName: '',
     lastName: '',
     selectedSchool: null,
     generatedEmail: '',
+    areaCode: detectedRegion === 'zh' ? '86' : '1', // 根据地理检测设置默认区号
+    phoneNumber: '',
   });
 
   const [errors, setErrors] = useState<ValidationErrors>({});
   const [emailUsername, setEmailUsername] = useState('');
+  
+  // 实时验证状态
+  const [realtimeErrors, setRealtimeErrors] = useState<ValidationErrors>({});
+  
+  // 检查是否有任何验证错误
+  const hasValidationErrors = () => {
+    return Object.keys(realtimeErrors).some(key => 
+      realtimeErrors[key as keyof ValidationErrors]
+    ) || Object.keys(errors).some(key => 
+      errors[key as keyof ValidationErrors]
+    );
+  };
+  
+  // 调试：检查当前系统语言
+  useEffect(() => {
+    console.log('🌍 RegisterStep1Screen - 当前语言检测:', {
+      currentLanguage: i18n.language,
+      isChinese: isChinese(),
+      detectedRegion: detectedRegion
+    });
+  }, []);
+  
+  // 创建实时验证处理器
+  const handleFirstNameChange = createRealtimeValidator(
+    TextType.FIRST_NAME,
+    (isValid, message) => {
+      setRealtimeErrors(prev => ({
+        ...prev,
+        firstName: isValid ? undefined : message
+      }));
+    }
+  );
+  
+  const handleLastNameChange = createRealtimeValidator(
+    TextType.LAST_NAME,
+    (isValid, message) => {
+      setRealtimeErrors(prev => ({
+        ...prev,
+        lastName: isValid ? undefined : message
+      }));
+    }
+  );
 
   // 加载学校列表
   useEffect(() => {
@@ -113,16 +164,43 @@ export const RegisterStep1Screen: React.FC = () => {
   const validateForm = (): boolean => {
     const newErrors: ValidationErrors = {};
 
-    // 验证姓名
-    if (!formData.firstName.trim()) {
-      newErrors.firstName = t('validation.first_name_required');
+    // 使用智能姓名验证（基于系统语言）
+    const firstNameValidation = validateTextByLanguage(
+      formData.firstName,
+      TextType.FIRST_NAME,
+      t
+    );
+    if (!firstNameValidation.isValid) {
+      newErrors.firstName = firstNameValidation.message;
     }
-    if (!formData.lastName.trim()) {
-      newErrors.lastName = t('validation.last_name_required');
+
+    const lastNameValidation = validateTextByLanguage(
+      formData.lastName,
+      TextType.LAST_NAME,
+      t
+    );
+    if (!lastNameValidation.isValid) {
+      newErrors.lastName = lastNameValidation.message;
     }
 
     // 验证手机号（邀请码注册时可选）
-    // 手机号验证移到第3步，这里不再验证手机号
+    if (registrationType === 'invitation') {
+      // 邀请码注册：手机号可选
+      if (formData.phoneNumber && !validatePhoneNumber(formData.phoneNumber, formData.areaCode)) {
+        newErrors.phoneNumber = formData.areaCode === '86' 
+          ? t('validation.phone_china_invalid')
+          : t('validation.phone_us_invalid');
+      }
+    } else {
+      // 手机验证码注册：手机号必填
+      if (!formData.phoneNumber) {
+        newErrors.phoneNumber = t('validation.phone_required');
+      } else if (!validatePhoneNumber(formData.phoneNumber, formData.areaCode)) {
+        newErrors.phoneNumber = formData.areaCode === '86' 
+          ? t('validation.phone_china_invalid')
+          : t('validation.phone_us_invalid');
+      }
+    }
 
     // 验证学校
     if (!formData.selectedSchool) {
@@ -297,9 +375,9 @@ export const RegisterStep1Screen: React.FC = () => {
         {/* Progress Bar */}
         <View style={styles.progressContainer}>
           <View style={styles.progressBar}>
-            <View style={[styles.progressFill, { width: '33.33%' }]} />
+            <View style={[styles.progressFill, { width: '50%' }]} />
           </View>
-          <Text style={styles.progressText}>{t('auth.register.form.progress', { current: 1, total: 3 })}</Text>
+          <Text style={styles.progressText}>{t('auth.register.form.progress', { current: 1, total: 2 })}</Text>
         </View>
 
         <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
@@ -333,25 +411,45 @@ export const RegisterStep1Screen: React.FC = () => {
               <View style={[styles.inputContainer, styles.nameInput]}>
                 <Text style={styles.label}>{t('auth.register.form.last_name_label')}</Text>
                 <TextInput
-                  style={[styles.input, errors.lastName && styles.inputError]}
-                  placeholder={t('auth.register.form.last_name_placeholder')}
+                  style={[
+                    styles.input, 
+                    (errors.lastName || realtimeErrors.lastName) && styles.inputError
+                  ]}
+                  placeholder={getInputPlaceholder(TextType.LAST_NAME, t)}
                   value={formData.lastName}
-                  onChangeText={(text) => updateFormData('lastName', text)}
+                  onChangeText={(text) => {
+                    handleLastNameChange(text, t);
+                    updateFormData('lastName', text);
+                  }}
                   placeholderTextColor={theme.colors.text.disabled}
                 />
-                {errors.lastName && <Text style={styles.errorText}>{errors.lastName}</Text>}
+                {(errors.lastName || realtimeErrors.lastName) && (
+                  <Text style={styles.errorText}>
+                    {errors.lastName || realtimeErrors.lastName}
+                  </Text>
+                )}
               </View>
 
               <View style={[styles.inputContainer, styles.nameInput]}>
                 <Text style={styles.label}>{t('auth.register.form.first_name_label')}</Text>
                 <TextInput
-                  style={[styles.input, errors.firstName && styles.inputError]}
-                  placeholder={t('auth.register.form.first_name_placeholder')}
+                  style={[
+                    styles.input, 
+                    (errors.firstName || realtimeErrors.firstName) && styles.inputError
+                  ]}
+                  placeholder={getInputPlaceholder(TextType.FIRST_NAME, t)}
                   value={formData.firstName}
-                  onChangeText={(text) => updateFormData('firstName', text)}
+                  onChangeText={(text) => {
+                    handleFirstNameChange(text, t);
+                    updateFormData('firstName', text);
+                  }}
                   placeholderTextColor={theme.colors.text.disabled}
                 />
-                {errors.firstName && <Text style={styles.errorText}>{errors.firstName}</Text>}
+                {(errors.firstName || realtimeErrors.firstName) && (
+                  <Text style={styles.errorText}>
+                    {errors.firstName || realtimeErrors.firstName}
+                  </Text>
+                )}
               </View>
             </View>
 
@@ -361,7 +459,44 @@ export const RegisterStep1Screen: React.FC = () => {
             {/* 邮箱预览 */}
             {renderEmailPreview()}
 
-            {/* 手机号输入移到第3步 */}
+            {/* 手机号输入 - 从第3步移到第1步避免误解 */}
+            <View style={styles.inputContainer}>
+              <Text style={styles.label}>
+                {registrationType === 'invitation' 
+                  ? t('auth.register.form.phone_label_optional')
+                  : t('auth.register.form.phone_label')} *
+              </Text>
+              <View style={styles.phoneInputWrapper}>
+                <TouchableOpacity 
+                  style={styles.areaCodeSelector}
+                  onPress={() => {
+                    Alert.alert(
+                      t('auth.register.parent.select_area_code'),
+                      '',
+                      [
+                        { text: t('auth.register.parent.area_code_china'), onPress: () => updateFormData('areaCode', '86') },
+                        { text: t('auth.register.parent.area_code_usa'), onPress: () => updateFormData('areaCode', '1') },
+                        { text: t('common.cancel'), style: 'cancel' }
+                      ]
+                    );
+                  }}
+                >
+                  <Text style={styles.areaCodeText}>
+                    {formData.areaCode === '86' ? t('auth.register.parent.area_code_china') : t('auth.register.parent.area_code_usa')}
+                  </Text>
+                  <Ionicons name="chevron-down" size={16} color={theme.colors.text.secondary} />
+                </TouchableOpacity>
+                <TextInput
+                  style={[styles.phoneInput, errors.phoneNumber && styles.inputError]}
+                  placeholder={formData.areaCode === '86' ? '13812345678' : '(555) 123-4567'}
+                  value={formData.phoneNumber}
+                  onChangeText={(text) => updateFormData('phoneNumber', text)}
+                  keyboardType="phone-pad"
+                  placeholderTextColor={theme.colors.text.disabled}
+                />
+              </View>
+              {errors.phoneNumber && <Text style={styles.errorText}>{errors.phoneNumber}</Text>}
+            </View>
           </View>
           </ScrollView>
         </TouchableWithoutFeedback>
@@ -370,9 +505,12 @@ export const RegisterStep1Screen: React.FC = () => {
       {/* Fixed Bottom Button */}
       <View style={styles.fixedBottomContainer}>
         <TouchableOpacity
-          style={[styles.nextButton, loading && styles.nextButtonDisabled]}
+          style={[
+            styles.nextButton, 
+            (loading || hasValidationErrors()) && styles.nextButtonDisabled
+          ]}
           onPress={handleNext}
-          disabled={loading}
+          disabled={loading || hasValidationErrors()}
         >
           {loading ? (
             <ActivityIndicator color={theme.colors.text.inverse} />
