@@ -542,6 +542,10 @@ const styles = StyleSheet.create({
   },
   emailPreviewContainer: {
     marginBottom: theme.spacing[5],
+    width: '100%',
+    ...(Platform.OS === 'web' && {
+      overflow: 'visible',
+    }),
   },
   emailInputWrapper: {
     flexDirection: 'row',
@@ -551,12 +555,24 @@ const styles = StyleSheet.create({
     paddingHorizontal: theme.spacing[4],
     borderWidth: 1,
     borderColor: 'transparent',
+    width: '100%',
+    ...(Platform.OS === 'web' && {
+      overflow: 'visible',
+      minHeight: 48,
+    }),
   },
   emailUsernameInput: {
     flex: 1,
     paddingVertical: theme.spacing[3],
     fontSize: theme.typography.fontSize.base,
     color: theme.colors.text.primary,
+    minWidth: 0, // 确保flex元素可以缩小但不会过度压缩内容
+    ...(Platform.OS === 'web' && {
+      boxSizing: 'border-box',
+      outline: 'none',
+      border: 'none',
+      backgroundColor: 'transparent',
+    }),
   },
   emailDomain: {
     fontSize: theme.typography.fontSize.base,
@@ -568,6 +584,16 @@ const styles = StyleSheet.create({
     color: theme.colors.primary,
     marginTop: theme.spacing[2],
     fontStyle: 'italic',
+    width: '100%',
+    flexShrink: 0,
+    textAlign: 'left',
+    ...(Platform.OS === 'web' && {
+      whiteSpace: 'normal', // 允许换行，避免截断
+      overflow: 'visible',
+      textOverflow: 'unset',
+      wordBreak: 'break-all', // 确保长邮箱地址能正确换行显示
+      lineHeight: '1.4',
+    }),
   },
   phoneInputWrapper: {
     flexDirection: 'row',
