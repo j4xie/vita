@@ -294,12 +294,12 @@ export const mapUserToIdentityData = (user: any): UserIdentityData => {
 };
 
 /**
- * 生成用户身份QR码内容
+ * 生成用户身份QR码内容 (异步版本)
  * @param userData 用户身份数据
  * @param useHashFormat 是否使用哈希格式（默认true，避免Base64兼容性问题）
  * @returns QR码字符串
  */
-export const generateUserQRContent = async (userData: UserIdentityData, useHashFormat: boolean = true): Promise<string> => {
+export const generateUserQRContentAsync = async (userData: UserIdentityData, useHashFormat: boolean = true): Promise<string> => {
   // ✅ 优先使用哈希格式，避免编码兼容性问题
   if (useHashFormat) {
     try {
@@ -409,5 +409,76 @@ export const generateUserQRContent = async (userData: UserIdentityData, useHashF
     });
     // 返回最基本的错误码格式
     return `VG_USER_ERROR_${userData?.userId || 'unknown'}_${Date.now()}`;
+  }
+};
+
+/**
+ * 生成用户身份QR码内容 (同步版本，向后兼容)
+ * @param userData 用户身份数据
+ * @param useHashFormat 是否使用哈希格式（默认false，确保兼容性）
+ * @returns QR码字符串
+ */
+export const generateUserQRContent = (userData: UserIdentityData, useHashFormat: boolean = false): string => {
+  // ✅ 为了兼容性，同步版本默认使用Base64格式
+  if (!useHashFormat) {
+    try {
+      debugLog('🔧 [生成身份码-同步] 使用Base64格式:', userData.userId);
+      
+      // 验证输入数据
+      if (!userData) {
+        throw new Error('用户数据不能为空');
+      }
+      
+      if (!userData.userId || !userData.userName || !userData.legalName) {
+        throw new Error('缺少必要的用户信息');
+      }
+
+      // 使用与解析逻辑匹配的数据结构
+      const qrData: UserIdentityData = {
+        userId: userData.userId.toString().trim(),
+        userName: userData.userName.trim(),
+        legalName: userData.legalName.trim(),
+        nickName: userData.nickName?.trim() || userData.userName.trim(),
+        email: userData.email?.trim() || `${userData.userName}@example.com`,
+        avatarUrl: userData.avatarUrl,
+        studentId: userData.studentId,
+        deptId: userData.deptId,
+        currentOrganization: userData.currentOrganization,
+        memberOrganizations: userData.memberOrganizations || [],
+        school: userData.school,
+        position: userData.position,
+        type: 'user_identity' as const,
+      };
+      
+      // 生成QR码字符串
+      const jsonString = JSON.stringify(qrData);
+      
+      // 如果数据太长，使用简化格式
+      if (jsonString.length > 1000) {
+        const fallbackCode = `VG_USER_SIMPLE_${userData.userId}_${userData.legalName}_${userData.position?.roleKey || 'user'}_${Date.now()}`;
+        debugLog('⚠️ [生成身份码-同步] 数据太长，使用简化格式:', fallbackCode.substring(0, 50) + '...');
+        return fallbackCode;
+      }
+      
+      // 编码为base64格式
+      const encodedString = encodeURIComponent(jsonString);
+      const base64Data = Base64.encode(encodedString);
+      const finalCode = `VG_USER_${base64Data}`;
+      
+      debugLog('✅ [生成身份码-同步] Base64格式生成成功:', {
+        finalCodeLength: finalCode.length,
+        finalCodePreview: finalCode.substring(0, 50) + '...'
+      });
+      
+      return finalCode;
+    } catch (error) {
+      console.error('❌ [生成身份码-同步] 生成失败:', error);
+      // 返回最基本的错误码格式
+      return `VG_USER_ERROR_${userData?.userId || 'unknown'}_${Date.now()}`;
+    }
+  } else {
+    // 哈希格式需要异步调用，返回错误提示
+    console.warn('⚠️ [生成身份码-同步] 哈希格式需要使用generateUserQRContentAsync');
+    return `VG_USER_ASYNC_REQUIRED_${userData.userId}_${Date.now()}`;
   }
 };

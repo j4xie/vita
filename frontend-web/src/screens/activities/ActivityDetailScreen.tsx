@@ -16,6 +16,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { DeviceEventEmitter } from 'react-native';
+import { LiquidSuccessModal } from '../../components/modals/LiquidSuccessModal';
 import { theme } from '../../theme';
 import { LIQUID_GLASS_LAYERS } from '../../theme/core';
 import { useAllDarkModeStyles } from '../../hooks/useDarkModeStyles';
@@ -27,7 +28,6 @@ import { FrontendActivity } from '../../utils/activityAdapter';
 import { useUser } from '../../context/UserContext';
 import { UltraFastImage } from '../../components/common/UltraFastImage';
 import { imageCacheManager } from '../../utils/ImageCacheManager';
-import { SuccessNotificationModal } from '../../components/modals/SuccessNotificationModal';
 
 const { width: screenWidth } = Dimensions.get('window');
 
@@ -62,6 +62,9 @@ export const ActivityDetailScreen: React.FC = () => {
   const [isFavorited, setIsFavorited] = useState(false);
   const [isLoadingActivity, setIsLoadingActivity] = useState(false);
   const [showCheckinSuccessModal, setShowCheckinSuccessModal] = useState(false);
+  const [showCancelSuccessModal, setShowCancelSuccessModal] = useState(false);
+  const [showErrorModal, setShowErrorModal] = useState(false);
+  const [errorModalData, setErrorModalData] = useState({ title: '', message: '' });
 
   // 🛡️ TabBar状态守护：确保活动详情页面TabBar始终隐藏
   useTabBarVerification('ActivityDetail', { debugLogs: false });
@@ -277,6 +280,21 @@ export const ActivityDetailScreen: React.FC = () => {
   }, [navigation, activity.id, user?.id]);
 
 
+  // 检查活动是否已结束的辅助函数
+  const isActivityEnded = () => {
+    try {
+      const now = new Date();
+      const activityEnd = activity.endDate 
+        ? new Date(activity.endDate + ' 23:59:59') 
+        : new Date(activity.date + ' ' + (activity.time || '00:00'));
+      
+      return activityEnd.getTime() < now.getTime();
+    } catch (error) {
+      console.warn('检查活动结束时间失败:', error);
+      return false; // 默认认为未结束，保持功能可用
+    }
+  };
+
   // 处理活动报名
   const handleRegister = async () => {
     if (loading) return;
@@ -416,11 +434,19 @@ export const ActivityDetailScreen: React.FC = () => {
                   }
                 }
                 
-                Alert.alert(t('activityDetail.checkin_failed'), errorMessage);
+                setErrorModalData({ 
+                  title: t('activityDetail.checkin_failed') || '签到失败', 
+                  message: errorMessage 
+                });
+                setShowErrorModal(true);
               }
             } catch (error) {
               console.error('Activity sign in error:', error);
-              Alert.alert(t('activityDetail.checkin_failed'), t('common.network_error'));
+              setErrorModalData({ 
+                title: t('activityDetail.checkin_failed') || '签到失败', 
+                message: t('common.network_error') || '网络错误' 
+              });
+              setShowErrorModal(true);
             } finally {
               setLoading(false);
               // 清理回调函数
@@ -432,10 +458,11 @@ export const ActivityDetailScreen: React.FC = () => {
           onScanError: (error: string) => {
             // 扫码失败的处理
             console.error('扫码失败:', error);
-            Alert.alert(
-              t('activityDetail.scan_failed'),
-              t('activityDetail.scan_failed_message')
-            );
+            setErrorModalData({ 
+              title: t('activityDetail.scan_failed') || '扫码失败', 
+              message: t('activityDetail.scan_failed_message') || '扫码失败，请重试' 
+            });
+            setShowErrorModal(true);
             // 清理回调函数
             if (state && state.qrScannerCallbacks && state.qrScannerCallbacks[callbackId]) {
               delete state.qrScannerCallbacks[callbackId];
@@ -452,10 +479,11 @@ export const ActivityDetailScreen: React.FC = () => {
       });
     } catch (error) {
       console.error('打开扫码页面失败:', error);
-      Alert.alert(
-        t('activityDetail.open_scanner_failed'),
-        t('activityDetail.open_scanner_failed_message')
-      );
+      setErrorModalData({ 
+        title: t('activityDetail.open_scanner_failed') || '打开扫码失败', 
+        message: t('activityDetail.open_scanner_failed_message') || '打开扫码失败，请重试' 
+      });
+      setShowErrorModal(true);
     }
   };
 
@@ -534,22 +562,15 @@ export const ActivityDetailScreen: React.FC = () => {
 
 
   const handleShare = () => {
-    Alert.alert(t('activityDetail.share'), t('activityDetail.shareMessage'));
+    // 移除Alert，使用console.log替代
+    console.log('📤 [分享] 用户点击分享按钮');
   };
 
   const handleFavorite = () => {
     setIsFavorited(!isFavorited);
   };
 
-  const handleCheckinSuccessModalClose = () => {
-    setShowCheckinSuccessModal(false);
-  };
-
-  const handleContinueParticipating = () => {
-    setShowCheckinSuccessModal(false);
-    // 可以导航到其他相关页面，比如志愿服务记录页面
-    console.log('🎯 用户选择继续参与活动');
-  };
+  // 移除重复的弹窗处理函数，直接在组件中处理
 
   // 格式化时间为12小时制
   const formatTime = (timeString: string) => {
@@ -720,7 +741,9 @@ export const ActivityDetailScreen: React.FC = () => {
       }]}>
         <View style={[
           styles.registerButtonShadowContainer,
-          registrationStatus === 'checked_in' && styles.checkedInButton
+          registrationStatus === 'registered' && styles.checkInButton, // 立即签到时使用绿色
+          registrationStatus === 'checked_in' && styles.checkedInButton, // 已签到使用灰色
+          isActivityEnded() && styles.activityEndedButton
         ]}>
           <TouchableOpacity
             style={styles.registerButton}
@@ -729,9 +752,11 @@ export const ActivityDetailScreen: React.FC = () => {
                 registrationStatus,
                 isRegistered,
                 isAuthenticated,
+                isActivityEnded: isActivityEnded(),
                 willCallSignIn: registrationStatus === 'registered',
                 willCallRegister: registrationStatus !== 'registered',
                 currentButtonText: loading ? 'loading' :
+                  isActivityEnded() ? 'activity_ended' :
                   !isAuthenticated ? 'login_required_to_register' :
                   registrationStatus === 'available' ? 'registerNow' :
                   registrationStatus === 'registered' ? 'checkin_now' :
@@ -745,10 +770,11 @@ export const ActivityDetailScreen: React.FC = () => {
                 handleRegister();
               }
             }}
-            disabled={loading || registrationStatus === 'checked_in'}
+            disabled={loading || registrationStatus === 'checked_in' || isActivityEnded()}
           >
             <Text style={styles.registerButtonText}>
               {loading ? t('common.loading') :
+               isActivityEnded() ? (t('activityDetail.activity_ended') || '活动已结束') :
                !isAuthenticated ? t('activityDetail.login_required_to_register') :
                registrationStatus === 'available' ? t('activityDetail.registerNow') :
                registrationStatus === 'registered' ? t('activityDetail.checkin_now') :
@@ -759,15 +785,33 @@ export const ActivityDetailScreen: React.FC = () => {
       </View>
 
       {/* 签到成功提示弹窗 */}
-      <SuccessNotificationModal
+      <LiquidSuccessModal
         visible={showCheckinSuccessModal}
-        onClose={handleCheckinSuccessModalClose}
-        onAction={handleContinueParticipating}
-        title={t('activityDetail.checkin_success_notification_title')}
-        message={t('activityDetail.checkin_success_notification_message')}
-        actionText={t('activityDetail.checkin_success_notification_action')}
+        onClose={() => setShowCheckinSuccessModal(false)}
+        title={t('activityDetail.checkin_success') || '签到成功'}
+        message={t('activityDetail.checkin_success_message') || '恭喜您成功签到，现在您已经参加这个活动'}
+        confirmText={t('common.confirm') || '确认'}
         icon="checkmark-circle"
-        duration={4000} // 4秒后自动关闭
+      />
+
+      {/* 取消活动成功提示弹窗 */}
+      <LiquidSuccessModal
+        visible={showCancelSuccessModal}
+        onClose={() => setShowCancelSuccessModal(false)}
+        title={t('activityDetail.cancel_success') || '取消成功'}
+        message={t('activityDetail.cancel_success_message') || '您已成功取消报名'}
+        confirmText={t('common.confirm') || '确认'}
+        icon="checkmark-circle"
+      />
+
+      {/* 错误提示弹窗 */}
+      <LiquidSuccessModal
+        visible={showErrorModal}
+        onClose={() => setShowErrorModal(false)}
+        title={errorModalData.title}
+        message={errorModalData.message}
+        confirmText={t('common.confirm') || '确认'}
+        icon="alert-circle"
       />
     </SafeAreaView>
   );
@@ -995,13 +1039,19 @@ const styles = StyleSheet.create({
   // Register Button Shadow容器 - 解决阴影冲突
   registerButtonShadowContainer: {
     borderRadius: 16,
-    // 使用鲜明的主题色
-    backgroundColor: theme.colors.primary, // 鲜明的橙色背景
+    // 默认使用主题橙色（报名按钮）
+    backgroundColor: theme.colors.primary, // 橙色背景
     shadowColor: theme.colors.primary,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.3,
     shadowRadius: 4,
     elevation: 4,
+  },
+  
+  // 立即签到状态按钮 - 绿色
+  checkInButton: {
+    backgroundColor: theme.colors.checkedIn, // 立即签到使用绿色
+    shadowColor: theme.colors.checkedIn,
   },
   
   registerButton: {
@@ -1011,7 +1061,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   checkedInButton: {
-    backgroundColor: theme.colors.text.disabled,
+    backgroundColor: '#6B7280', // Activity Ended 使用灰色
+    shadowColor: '#6B7280',
+  },
+  
+  // Activity Ended 按钮禁用状态
+  activityEndedButton: {
+    backgroundColor: '#6B7280', // 灰色背景
+    shadowColor: '#6B7280',
+    opacity: 0.7,
   },
   registerButtonText: {
     fontSize: theme.typography.fontSize.lg,

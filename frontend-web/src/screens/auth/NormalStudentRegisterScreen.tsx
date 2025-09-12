@@ -987,4 +987,12 @@ const styles = StyleSheet.create({
     fontSize: theme.typography.fontSize.base,
     color: theme.colors.text.inverse,
   },
+  nameRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: theme.spacing[3],
+  },
+  nameInput: {
+    flex: 1,
+  },
 });

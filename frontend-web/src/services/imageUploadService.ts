@@ -43,7 +43,7 @@ export const uploadAvatar = async (imageUri: string, userId: number): Promise<Up
     // 需要后端团队实现 /app/upload/avatar 接口，集成Cloudflare R2
     
     // 临时方案：通过后端代理上传
-    const response = await fetch('https://www.vitaglobal.icu/app/upload/avatar', {
+    const response = await fetch(`${process.env.EXPO_PUBLIC_API_URL || "https://www.vitaglobal.icu"}/app/upload/avatar`, {
       method: 'POST',
       body: formData,
       headers: {

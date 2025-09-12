@@ -12,7 +12,7 @@ import { UserIdentityData } from '../types/userIdentity';
  */
 export const simpleHash = async (text: string): Promise<string> => {
   try {
-    // 优先使用Web Crypto API（如果可用）
+    // 使用Crypto API（React Native和现代浏览器都支持）
     if (typeof crypto !== 'undefined' && crypto.subtle) {
       const encoder = new TextEncoder();
       const data = encoder.encode(text);
@@ -30,7 +30,7 @@ export const simpleHash = async (text: string): Promise<string> => {
       return fallbackHash(text);
     }
   } catch (error) {
-    console.warn('🔐 [QR哈希] Web Crypto API失败，使用降级哈希:', error);
+    console.warn('🔐 [QR哈希] Crypto API失败，使用降级哈希:', error);
     return fallbackHash(text);
   }
 };

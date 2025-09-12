@@ -8,6 +8,7 @@ import {
   ActivityIndicator,
   TouchableOpacity,
   RefreshControl,
+  DeviceEventEmitter,
 } from 'react-native';
 import { useWebSafeAreaInsets } from '../../hooks/useWebSafeArea';
 import { pomeloXAPI } from '../../services/PomeloXAPI';
@@ -161,6 +162,87 @@ export const BeautifulActivityListScreen: React.FC = () => {
       setIsScrolling(false);
     }, 500);
   }, [isScrolling]);
+
+  // 监听活动状态变化事件
+  useEffect(() => {
+    const registrationListener = DeviceEventEmitter.addListener('activityRegistered', (data: { activityId: string, newRegisteredCount?: number, source?: string }) => {
+      console.log('📋 [Web-ActivityList] 收到活动报名成功事件:', {
+        activityId: data.activityId,
+        newRegisteredCount: data.newRegisteredCount,
+        source: data.source,
+        currentActivitiesCount: activities.length,
+        timestamp: new Date().toISOString()
+      });
+
+      // 更新对应活动的状态
+      setActivities(prev => 
+        prev.map(activity => {
+          if (activity.id === data.activityId) {
+            const updated = {
+              ...activity,
+              status: 'registered',
+              registeredCount: data.newRegisteredCount || activity.registeredCount
+            };
+            console.log('📋 [Web-ActivityList] 更新活动状态:', {
+              activityId: activity.id,
+              title: activity.title,
+              oldStatus: activity.status,
+              newStatus: 'registered',
+              oldRegisteredCount: activity.registeredCount,
+              newRegisteredCount: updated.registeredCount
+            });
+            return updated;
+          }
+          return activity;
+        })
+      );
+
+      // 延迟重新加载以获取服务器最新数据
+      setTimeout(() => {
+        console.log('📋 [Web-ActivityList] 延迟重新加载活动数据');
+        loadActivities();
+      }, 2000);
+    });
+
+    // 监听活动签到成功事件
+    const signinListener = DeviceEventEmitter.addListener('activitySignedIn', (data: { activityId: string }) => {
+      console.log('📋 [Web-ActivityList] 收到活动签到成功事件:', {
+        activityId: data.activityId,
+        timestamp: new Date().toISOString()
+      });
+
+      // 立即更新活动状态为已签到
+      setActivities(prev => 
+        prev.map(activity => {
+          if (activity.id === data.activityId) {
+            const updated = {
+              ...activity,
+              status: 'checked_in'
+            };
+            console.log('📋 [Web-ActivityList] 更新活动为已签到:', {
+              activityId: activity.id,
+              title: activity.title,
+              oldStatus: activity.status,
+              newStatus: 'checked_in'
+            });
+            return updated;
+          }
+          return activity;
+        })
+      );
+
+      // 延迟重新加载以确保数据同步
+      setTimeout(() => {
+        console.log('📋 [Web-ActivityList] 签到后重新加载活动数据');
+        loadActivities();
+      }, 1500);
+    });
+
+    return () => {
+      registrationListener.remove();
+      signinListener.remove();
+    };
+  }, [activities.length]);
 
   // 清理计时器
   useEffect(() => {

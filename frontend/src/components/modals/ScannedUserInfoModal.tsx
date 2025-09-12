@@ -278,13 +278,22 @@ export const ScannedUserInfoModal: React.FC<ScannedUserInfoModalProps> = ({
 
               const result = await response.json();
               if (result.code === 200) {
-                Alert.alert('签到成功', `${scannedUserData.legalName} 活动签到成功！`);
+                Alert.alert(
+                  t('activities.checkin_success'), 
+                  `${scannedUserData.legalName} ${t('activities.checkin_success')}！`
+                );
               } else {
-                Alert.alert('签到失败', result.msg || '活动签到失败');
+                Alert.alert(
+                  t('activities.checkin_failed'), 
+                  result.msg || t('activities.checkin_failed_message')
+                );
               }
             } catch (error) {
               console.error('活动签到失败:', error);
-              Alert.alert('签到失败', '网络错误，请重试');
+              Alert.alert(
+                t('activities.checkin_failed'), 
+                t('activities.network_error')
+              );
             }
           }
         }

@@ -482,13 +482,11 @@ export const CustomTabBar: React.FC<CustomTabBarProps> = ({
     if (!isFocused && !event.defaultPrevented) {
       console.log('🚀 Navigating to:', route.name);
       
-      // 简化Tab切换 - 只保留触觉反馈
-      if (Platform.OS !== 'web') {
-        try {
-          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-        } catch (error) {
-          console.warn('Haptics not available:', error);
-        }
+      // Tab切换触觉反馈
+      try {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      } catch (error) {
+        console.warn('Haptics not available:', error);
       }
       console.log('🔥 Tab切换:', route.name);
       

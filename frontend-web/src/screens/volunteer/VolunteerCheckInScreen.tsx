@@ -69,6 +69,7 @@ export const VolunteerCheckInScreen: React.FC = () => {
   // Staff历史记录弹窗状态
   const [showStaffHistoryModal, setShowStaffHistoryModal] = useState(false);
   
+  
   // 操作防重复锁
   const operationLockRef = useRef<Set<number>>(new Set());
   
@@ -178,24 +179,11 @@ export const VolunteerCheckInScreen: React.FC = () => {
     }
   };
 
-  // 计算当前本次时长（分钟）
-  const getCurrentDurationMinutes = (vol: DisplayVolunteerRecord) => {
-    const start = vol?.checkInTime || persistedCheckins[vol?.userId!];
-    if (!start) return 0;
-    const startDate = new Date(start);
-    const diffMs = currentTime.getTime() - startDate.getTime();
-    return Math.max(0, Math.floor(diffMs / 60000));
-  };
+  // 已移除本地getCurrentDurationMinutes函数，统一使用VolunteerStateService.getCurrentDurationMinutes
 
-  // 格式化时长显示
+  // 格式化时长显示（使用统一服务）
   const formatDuration = (minutes: number) => {
-    const h = Math.floor(minutes / 60);
-    const m = minutes % 60;
-    if (h > 0) {
-      return `${h} ${t('common.time.hours', '小时')} ${m} ${t('common.time.minutes', '分钟')}`;
-    } else {
-      return `${m} ${t('common.time.minutes', '分钟')}`;
-    }
+    return VolunteerStateService.formatDuration(minutes);
   };
 
   // 加载志愿者记录和工时数据
@@ -415,6 +403,13 @@ export const VolunteerCheckInScreen: React.FC = () => {
                 // 重新加载数据以获取最新状态
                 await loadVolunteerData();
                 
+                // 显示签到成功提示
+                SafeAlert.alert(
+                  t('volunteerCheckIn.success.checkin_title') || '签到成功',
+                  t('volunteerCheckIn.success.checkin_message') || `${currentUser.name} 签到成功`,
+                  [{ text: t('common.confirm'), onPress: () => {} }]
+                );
+                
                 console.log('✅ 签到成功:', currentUser.name);
               } else {
                 console.error('❌ 签到失败:', result.msg);
@@ -452,6 +447,13 @@ export const VolunteerCheckInScreen: React.FC = () => {
     
     const timeDiff = checkOutTime.getTime() - checkInTime.getTime();
     const duration = Math.max(0, Math.floor(timeDiff / (1000 * 60))); // 确保非负数
+    
+    // 验证会话时长（最大24小时）
+    const MAX_SESSION_HOURS = 24;
+    if (duration > MAX_SESSION_HOURS * 60) {
+      SafeAlert.alert(t('common.warning'), `工作时长不能超过${MAX_SESSION_HOURS}小时，请联系管理员确认`);
+      return;
+    }
 
     // 直接执行签退，移除SafeAlert.alert避免Text渲染错误
     console.log('🔄 执行签退:', currentUser.name, `${Math.floor(duration / 60)}h${duration % 60}m`);
@@ -500,14 +502,22 @@ export const VolunteerCheckInScreen: React.FC = () => {
                 // 重新加载数据以获取最新状态
                 await loadVolunteerData();
                 
-                // 使用console.log替代Alert，避免Text渲染错误
+                // 显示签退成功提示
+                const hours = Math.floor(duration / 60);
+                const minutes = duration % 60;
+                const durationText = hours > 0 ? `${hours}小时${minutes}分钟` : `${minutes}分钟`;
+                
+                SafeAlert.alert(
+                  t('volunteerCheckIn.success.checkout_title') || '签退成功',
+                  t('volunteerCheckIn.success.checkout_message') || `${currentUser.name} 签退成功，本次服务时长：${durationText}`,
+                  [{ text: t('common.confirm'), onPress: () => {} }]
+                );
+                
                 console.log('✅ 签退成功:', {
                   name: currentUser.name || '志愿者',
                   hours: Math.floor(duration / 60),
                   minutes: duration % 60
                 });
-                
-                console.log('✅ 签退API调用成功');
               } else {
                 console.error('❌ 签退失败:', result.msg);
               }
@@ -521,6 +531,7 @@ export const VolunteerCheckInScreen: React.FC = () => {
     // 立即执行签退
     executeCheckOut();
   };
+
 
   // 扫码功能
   const handleScanQR = () => {
@@ -734,6 +745,7 @@ export const VolunteerCheckInScreen: React.FC = () => {
             userPermission="staff"
           />
         )}
+
       </SafeAreaView>
     );
   }
@@ -977,6 +989,7 @@ export const VolunteerCheckInScreen: React.FC = () => {
           />
         </View>
       </ScrollView>
+
     </SafeAreaView>
   );
 };

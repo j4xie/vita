@@ -273,9 +273,9 @@ export const UserActivityModal: React.FC<UserActivityModalProps> = ({
             </View>
           ) : activities.length > 0 ? (
             <View style={styles.activitiesContainer}>
-              {activities.map((activity) => (
+              {activities.map((activity, index) => (
                 <ErrorBoundary 
-                  key={activity.id}
+                  key={`${activityType}_${activity.id}_${index}`}
                   title={t('activities.error_title', '活动操作失败')}
                   message={t('activities.error_message', '请重试或刷新页面')}
                 >

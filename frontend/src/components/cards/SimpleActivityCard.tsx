@@ -385,7 +385,7 @@ const SimpleActivityCardComponent: React.FC<SimpleActivityCardProps> = ({
           <Image
             source={{ uri: activity.image }}
             style={styles.image}
-            resizeMode="cover"
+            resizeMode="contain"
             onLoadStart={() => setImageLoading(true)}
             onLoadEnd={() => setImageLoading(false)}
             onError={() => {

@@ -4,6 +4,7 @@ import { getCurrentToken } from './authAPI';
 import { Platform, DeviceEventEmitter } from 'react-native';
 import { notifyRegistrationSuccess, scheduleActivityReminder } from './smartAlertSystem';
 
+// 🔧 强制使用生产环境API - 遵循CLAUDE规范
 const BASE_URL = 'https://www.vitaglobal.icu';
 
 // 检测是否为iOS模拟器
@@ -217,6 +218,7 @@ class PomeloXAPI {
     if (data.invCode) formData.append('invCode', data.invCode);
     if (data.bizId) formData.append('bizId', data.bizId);
     if (data.orgId) formData.append('orgId', data.orgId);
+    if (data.area) formData.append('area', data.area);
     
     console.log('🌐 发送到后端的最终参数:', [...formData.entries()].reduce((acc, [key, value]) => {
       acc[key] = key === 'password' ? '[HIDDEN]' : value;
@@ -681,16 +683,25 @@ class PomeloXAPI {
    */
   async enrollActivity(activityId: number, userId: number, isCancel?: boolean): Promise<ApiResponse<number>> {
     try {
+      // 🔧 参数验证和类型转换
+      const validActivityId = Number(activityId);
+      const validUserId = Number(userId);
+      
+      if (!validActivityId || !validUserId || validActivityId <= 0 || validUserId <= 0) {
+        throw new Error(`参数无效: activityId=${activityId}, userId=${userId}`);
+      }
+      
       const action = isCancel ? '取消报名' : '报名';
       console.log(`🌐 [Web-PomeloXAPI] 发起活动${action}请求:`, {
-        url: `/app/activity/enroll?activityId=${activityId}&userId=${userId}${isCancel ? '&isCancel=1' : ''}`,
+        originalParams: { activityId, userId, isCancel },
+        validatedParams: { activityId: validActivityId, userId: validUserId, isCancel },
+        url: `/app/activity/enroll?activityId=${validActivityId}&userId=${validUserId}${isCancel ? '&isCancel=1' : ''}`,
         method: 'GET',
-        isCancel,
         timestamp: new Date().toISOString()
       });
       
       // 构建请求URL，根据isCancel参数决定是否添加isCancel=1
-      const url = `/app/activity/enroll?activityId=${activityId}&userId=${userId}${isCancel ? '&isCancel=1' : ''}`;
+      const url = `/app/activity/enroll?activityId=${validActivityId}&userId=${validUserId}${isCancel ? '&isCancel=1' : ''}`;
       
       const response = await this.request(url, {
         method: 'GET',
@@ -698,12 +709,28 @@ class PomeloXAPI {
       
       console.log(`📡 [Web-PomeloXAPI] 活动${action}响应:`, {
         response,
-        success: response.code === 200,
+        success: response.code === 200 && response.data > 0,
+        code: response.code,
+        data: response.data,
+        actualSuccess: response.code === 200 && response.data > 0,
         timestamp: new Date().toISOString()
       });
 
+      // 🔧 根据API文档修复：只有当 code=200 且 data>0 时才算真正成功
+      const isActuallySuccessful = response.code === 200 && response.data != null && response.data > 0;
+      
+      if (!isActuallySuccessful) {
+        console.error(`❌ [Web-PomeloXAPI] 活动${action}失败:`, {
+          code: response.code,
+          data: response.data,
+          msg: response.msg,
+          reason: response.code !== 200 ? 'HTTP错误' : 'data值无效（应>0）'
+        });
+        throw new Error(`活动${action}失败: ${response.msg || '未知错误'}`);
+      }
+
       // 操作成功后的处理
-      if (response.code === 200) {
+      if (isActuallySuccessful) {
         if (!isCancel) {
           // 报名成功后发送本地通知
           try {
@@ -949,91 +976,6 @@ class PomeloXAPI {
     return this.request('/app/post/list', { method: 'GET' });
   }
 
-  /**
-   * 通过哈希值获取用户身份信息（Web端）
-   */
-  async getUserIdentityByHash(params: {
-    userId: string;
-    hash: string;
-    timestamp: number;
-  }): Promise<ApiResponse<{
-    userId: string;
-    userName: string;
-    legalName: string;
-    nickName: string;
-    email: string;
-    avatarUrl?: string;
-    currentOrganization?: {
-      id: string;
-      name: string;
-      displayNameZh: string;
-      displayNameEn?: string;
-    };
-    school?: {
-      id: string;
-      name: string;
-      fullName: string;
-      parentId?: number;
-    };
-    position?: {
-      roleKey: string;
-      roleName: string;
-      displayName: string;
-      level: string;
-    };
-  }>> {
-    console.log('🔐 [Web-API] 通过哈希获取用户身份信息:', {
-      userId: params.userId,
-      hash: params.hash,
-      timestamp: params.timestamp
-    });
-    
-    // 注意：此API端点需要后端实现
-    // 临时实现：返回模拟数据用于Web端开发
-    // TODO: 待后端实现真实API后替换
-    try {
-      return this.request('/app/user/identity/hash', {
-        method: 'POST',
-        body: JSON.stringify({
-          userId: params.userId,
-          hash: params.hash,
-          timestamp: params.timestamp
-        })
-      });
-    } catch (error) {
-      console.warn('⚠️ [Web-API] 哈希API暂未实现，使用Web端临时处理');
-      
-      // Web端临时返回模拟响应
-      return {
-        code: 200,
-        msg: '查询成功',
-        data: {
-          userId: params.userId,
-          userName: 'WebTestUser',
-          legalName: '网页测试用户',
-          nickName: 'WebTest',
-          email: 'webtest@example.com',
-          currentOrganization: {
-            id: '1',
-            name: 'Student Union',
-            displayNameZh: '学联组织',
-            displayNameEn: 'Student Union'
-          },
-          school: {
-            id: '213',
-            name: 'USC',
-            fullName: 'University of Southern California'
-          },
-          position: {
-            roleKey: 'common',
-            roleName: '普通用户',
-            displayName: '普通用户',
-            level: 'user'
-          }
-        }
-      };
-    }
-  }
 }
 
 export const pomeloXAPI = new PomeloXAPI();

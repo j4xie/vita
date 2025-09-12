@@ -179,10 +179,6 @@ export const SchoolDetailScreen: React.FC = () => {
     })();
   }, [expandedVolunteer]); // 只依赖expandedVolunteer，避免循环依赖
 
-  // 使用统一的状态服务计算时长
-  const getCurrentDurationMinutes = (vol: VolunteerInfo) => {
-    return VolunteerStateService.getCurrentDurationMinutes(vol as VolunteerInfo, new Date());
-  };
 
   const formatDuration = (minutes: number) => {
     return VolunteerStateService.formatDuration(minutes);
@@ -1509,15 +1505,6 @@ export const SchoolDetailScreen: React.FC = () => {
                     </View>
                   )}
 
-                  {/* 8. 当前工作时长 - 仅在已签到时显示 */}
-                  {item.checkInStatus === 'checked_in' && item.checkInTime && (
-                    <View style={styles.statusRow}>
-                      <Text style={styles.statusLabel}>{t('volunteer_status.current_duration_label') || '当前工作时长:'}</Text>
-                      <Text style={[styles.statusValue, { color: '#059669', fontWeight: '700' }]}>
-                        {formatDuration(getCurrentDurationMinutes(item))}
-                      </Text>
-                    </View>
-                  )}
                 </View>
 
                 {/* 签到签退按钮 - 根据权限显示 */}

@@ -85,8 +85,11 @@ export const LanguageSelectionScreen: React.FC = () => {
     setSelectedLanguage(language);
     
     // 触觉反馈
-    if (typeof window !== 'undefined' && 'navigator' in window && 'vibrate' in window.navigator) {
-      (window.navigator as any).vibrate?.(10);
+    try {
+      const Haptics = require('expo-haptics');
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    } catch (error) {
+      // 如果Haptics不可用，忽略
     }
   };
 

@@ -81,12 +81,12 @@ export const ReferralCodeInputModal: React.FC<ReferralCodeInputModalProps> = ({
     const trimmedCode = code.trim();
     
     if (!trimmedCode) {
-      setError(t('qr.scanning.error.empty_code', '请输入推荐码'));
+      setError(t('qr.scanning.error.empty_code'));
       return;
     }
     
     if (!validateReferralCode(trimmedCode)) {
-      setError(t('qr.scanning.error.invalid_format', '推荐码格式不正确（8位字母数字组合）'));
+      setError(t('qr.scanning.error.invalid_format'));
       return;
     }
     
@@ -145,17 +145,17 @@ export const ReferralCodeInputModal: React.FC<ReferralCodeInputModalProps> = ({
                   <Ionicons name="keypad-outline" size={32} color={theme.colors.primary} />
                 </View>
                 <Text style={styles.title}>
-                  {title || t('qr.scanning.manual_input_title', '手动输入推荐码')}
+                  {title || t('qr.scanning.manual_input_title')}
                 </Text>
                 <Text style={styles.subtitle}>
-                  {t('qr.scanning.manual_input_desc', '请输入您的8位推荐码')}
+                  {t('qr.scanning.manual_input_desc')}
                 </Text>
               </View>
 
               {/* Input Section */}
               <View style={styles.inputSection}>
                 <Text style={styles.label}>
-                  {t('qr.scanning.referral_code_label', '推荐码')}
+                  {t('qr.scanning.referral_code_label')}
                 </Text>
                 <View style={[styles.inputContainer, error ? styles.inputContainerError : null]}>
                   <TextInput
@@ -164,7 +164,7 @@ export const ReferralCodeInputModal: React.FC<ReferralCodeInputModalProps> = ({
                     value={code}
                     onChangeText={handleCodeChange}
                     onKeyPress={handleKeyPress}
-                    placeholder={placeholder || t('qr.scanning.input_placeholder', '请输入推荐码')}
+                    placeholder={placeholder || t('qr.scanning.input_placeholder')}
                     placeholderTextColor={theme.colors.text.disabled}
                     autoCapitalize="characters"
                     autoCorrect={false}
@@ -187,7 +187,7 @@ export const ReferralCodeInputModal: React.FC<ReferralCodeInputModalProps> = ({
                   <Text style={styles.errorText}>{error}</Text>
                 ) : (
                   <Text style={styles.hintText}>
-                    {t('qr.scanning.format_hint', '支持格式：ABCD1234 或 VG_REF_ABCD1234')}
+                    {t('qr.scanning.format_hint')}
                   </Text>
                 )}
               </View>
@@ -199,7 +199,7 @@ export const ReferralCodeInputModal: React.FC<ReferralCodeInputModalProps> = ({
                   onPress={handleCancel}
                 >
                   <Text style={styles.cancelButtonText}>
-                    {t('qr.scanning.cancel', '取消')}
+                    {t('qr.scanning.cancel')}
                   </Text>
                 </TouchableOpacity>
                 
@@ -216,7 +216,7 @@ export const ReferralCodeInputModal: React.FC<ReferralCodeInputModalProps> = ({
                     styles.confirmButtonText,
                     !code.trim() ? styles.confirmButtonTextDisabled : null
                   ]}>
-                    {t('qr.scanning.confirm', '确认')}
+                    {t('qr.scanning.confirm')}
                   </Text>
                 </TouchableOpacity>
               </View>
@@ -353,6 +353,7 @@ const styles = StyleSheet.create({
     color: theme.colors.background.primary,
   },
 });
+
 
 
 

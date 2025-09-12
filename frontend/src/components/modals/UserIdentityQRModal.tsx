@@ -290,6 +290,17 @@ export const UserIdentityQRModal: React.FC<IdentityQRCodeProps> = ({
     disabledButton: {
       opacity: 0.5,
     },
+    qrCodePlaceholder: {
+      backgroundColor: '#F3F4F6',
+      alignItems: 'center',
+      justifyContent: 'center',
+      borderRadius: 8,
+    },
+    placeholderText: {
+      color: '#6B7280',
+      fontSize: 14,
+      textAlign: 'center',
+    },
   });
 
   return (
@@ -378,9 +389,23 @@ export const UserIdentityQRModal: React.FC<IdentityQRCodeProps> = ({
             <View style={styles.qrCodeWrapper}>
               {(() => {
                 try {
+                  const qrContent = generateQRContent();
+                  
+                  // 验证QR内容有效性
+                  if (!qrContent || qrContent.length < 5) {
+                    console.warn('⚠️ [UserIdentityQR] QR内容无效:', qrContent);
+                    return (
+                      <View style={[styles.qrCodePlaceholder, { width: qrSize, height: qrSize }]}>
+                        <Text style={styles.placeholderText}>二维码生成失败</Text>
+                      </View>
+                    );
+                  }
+                  
+                  console.log('✅ [UserIdentityQR] 生成QR码，内容长度:', qrContent.length);
+                  
                   return (
                     <QRCode
-                      value={generateQRContent()}
+                      value={qrContent}
                       size={qrSize}
                       backgroundColor="#FFFFFF"
                       color="#000000"
@@ -446,5 +471,6 @@ export const UserIdentityQRModal: React.FC<IdentityQRCodeProps> = ({
     </Modal>
   );
 };
+
 
 export default UserIdentityQRModal;

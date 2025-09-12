@@ -19,6 +19,7 @@ import { theme } from '../../theme';
 import { useUser } from '../../context/UserContext';
 import { pomeloXAPI } from '../../services/PomeloXAPI';
 import { useTabBarVerification } from '../../hooks/useTabBarStateGuard';
+import { LiquidSuccessModal } from '../../components/modals/LiquidSuccessModal';
 
 interface RegistrationFormData {
   legalName: string;
@@ -44,6 +45,7 @@ export const ActivityRegistrationFormScreen: React.FC = () => {
   });
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Partial<RegistrationFormData>>({});
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
 
   // 🛡️ TabBar状态守护：确保报名表单页面TabBar始终隐藏
   useTabBarVerification('ActivityRegistrationForm', { debugLogs: false });
@@ -139,37 +141,20 @@ export const ActivityRegistrationFormScreen: React.FC = () => {
       
       console.log('✅ [报名] 后端API响应:', {
         result,
-        success: result.code === 200,
+        success: result.code === 200 && result.data > 0,
+        code: result.code,
+        data: result.data,
         hasData: !!result.data,
         message: result.msg,
         timestamp: new Date().toISOString()
       });
 
-      if (result.code === 200) {
-        console.log('🎉 [报名] 报名成功，准备发送事件和返回页面');
+      // 🔧 根据API文档修复：只有当 code=200 且 data>0 时才算成功
+      if (result.code === 200 && result.data != null && result.data > 0) {
+        console.log('🎉 [报名] 报名成功，显示成功提示');
         
-        Alert.alert(
-          t('activities.registration.success_title'),
-          t('activities.registration.success_message'),
-          [
-            {
-              text: t('common.confirm'),
-              onPress: () => {
-                // ✅ 发送报名成功事件，使用统一的事件格式
-                console.log('📡 [报名] 发送activityRegistrationChanged事件:', { activityId: activity.id });
-                DeviceEventEmitter.emit('activityRegistrationChanged', { 
-                  activityId: activity.id,
-                  action: 'register',
-                  timestamp: Date.now()
-                });
-                
-                // ✅ 返回活动详情页面
-                console.log('🔙 [报名] 返回活动详情页面');
-                navigation.goBack();
-              },
-            },
-          ]
-        );
+        // 显示液态玻璃成功提示
+        setShowSuccessModal(true);
       } else {
         console.error('❌ [报名] 报名失败:', {
           code: result.code,
@@ -189,9 +174,12 @@ export const ActivityRegistrationFormScreen: React.FC = () => {
         timestamp: new Date().toISOString()
       });
       
+      // 检查是否是已存在的错误（从错误消息中判断）
+      const isAlreadyEnrolled = error.message && error.message.includes('报名信息已存在');
+      
       Alert.alert(
         t('activities.registration.failed_title'),
-        t('common.network_error')
+        isAlreadyEnrolled ? error.message.replace('活动报名失败: ', '') : t('common.network_error')
       );
     } finally {
       setLoading(false);
@@ -199,6 +187,22 @@ export const ActivityRegistrationFormScreen: React.FC = () => {
   };
 
   const handleBack = () => {
+    navigation.goBack();
+  };
+
+  const handleSuccessModalClose = () => {
+    setShowSuccessModal(false);
+    
+    // ✅ 发送报名成功事件，使用统一的事件格式
+    console.log('📡 [报名] 发送activityRegistrationChanged事件:', { activityId: activity.id });
+    DeviceEventEmitter.emit('activityRegistrationChanged', { 
+      activityId: activity.id,
+      action: 'register',
+      timestamp: Date.now()
+    });
+    
+    // ✅ 返回活动详情页面
+    console.log('🔙 [报名] 返回活动详情页面');
     navigation.goBack();
   };
 
@@ -332,6 +336,16 @@ export const ActivityRegistrationFormScreen: React.FC = () => {
             </Text>
           </TouchableOpacity>
       </View>
+
+      {/* 液态玻璃成功提示模态框 */}
+      <LiquidSuccessModal
+        visible={showSuccessModal}
+        onClose={handleSuccessModalClose}
+        title={t('activities.registration.success_title')}
+        message={t('activities.registration.success_message')}
+        confirmText={t('common.confirm')}
+        icon="checkmark-circle"
+      />
     </SafeAreaView>
   );
 };

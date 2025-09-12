@@ -37,10 +37,6 @@ import {
   checkUserNameAvailability,
   checkEmailAvailability
 } from '../../services/registrationAPI';
-import { useUser } from '../../context/UserContext';
-import { login } from '../../services/authAPI';
-import { LiquidSuccessModal } from '../../components/modals/LiquidSuccessModal';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { 
   validateTextByLanguage,
   TextType,
@@ -63,7 +59,6 @@ export const RegisterStep2Screen: React.FC = () => {
   const navigation = useNavigation<any>();
   const route = useRoute<any>();
   const { t } = useTranslation();
-  const { login: userLogin } = useUser();
   
   const { 
     step1Data, 
@@ -74,12 +69,8 @@ export const RegisterStep2Screen: React.FC = () => {
     detectionResult
   } = route.params as RouteParams;
 
-  const [loading, setLoading] = useState(false);
   const [organizationsLoading, setOrganizationsLoading] = useState(true);
   const [organizations, setOrganizations] = useState<OrganizationData[]>([]);
-  const [countdown, setCountdown] = useState(0);
-  const [smsCodeSent, setSmsCodeSent] = useState(false);
-  const [bizId, setBizId] = useState<string>('');
   const [organizationModalVisible, setOrganizationModalVisible] = useState(false);
   
   // 实时验证状态
@@ -87,9 +78,6 @@ export const RegisterStep2Screen: React.FC = () => {
   const [userNameAvailable, setUserNameAvailable] = useState<boolean | null>(null);
   const [emailChecking, setEmailChecking] = useState(false);
   const [emailAvailable, setEmailAvailable] = useState<boolean | null>(null);
-  
-  // 成功弹窗状态
-  const [showSuccessModal, setShowSuccessModal] = useState(false);
   
   // 实时验证状态
   const [realtimeErrors, setRealtimeErrors] = useState<ValidationErrors>({});
@@ -323,9 +311,20 @@ export const RegisterStep2Screen: React.FC = () => {
     }
   };
 
-  // 🔧 修复：直接在第2步完成注册，无需第3步避免误解
+  // 导航到第三步：手机验证和最终注册
   const handleNext = () => {
-    handleRegister(); // 直接调用注册函数
+    if (!validateForm()) return;
+    
+    // 导航到第三步，传递所需数据
+    navigation.navigate('RegisterStep3', {
+      step1Data,
+      step2Data: formData,
+      referralCode,
+      hasReferralCode,
+      registrationType,
+      detectedRegion,
+      detectionResult
+    });
   };
 
   const handleRegister = async () => {
@@ -913,7 +912,7 @@ export const RegisterStep2Screen: React.FC = () => {
                   <ActivityIndicator color={theme.colors.text.inverse} />
                 ) : (
                   <Text style={styles.registerButtonText}>
-                    {t('auth.register.form.register')}
+                    {t('common.next')}
                   </Text>
                 )}
               </TouchableOpacity>

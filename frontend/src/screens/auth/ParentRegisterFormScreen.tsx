@@ -34,6 +34,14 @@ import { useUser } from '../../context/UserContext';
 import { login } from '../../services/authAPI';
 import { LiquidSuccessModal } from '../../components/modals/LiquidSuccessModal';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { 
+  validateTextByLanguage,
+  TextType,
+  generateBackendNameData,
+  createRealtimeValidator,
+  getInputPlaceholder
+} from '../../utils/textValidation';
+import { i18n } from '../../utils/i18n';
 
 interface RouteParams {
   registrationType?: 'phone' | 'invitation';
@@ -105,6 +113,49 @@ export const ParentRegisterFormScreen: React.FC = () => {
   
   // 🔧 成功弹窗状态 - 与其他注册页面保持一致
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  
+  // 实时验证状态
+  const [realtimeErrors, setRealtimeErrors] = useState<ValidationErrors>({});
+  
+  // 检查是否有任何验证错误
+  const hasValidationErrors = () => {
+    return Object.keys(realtimeErrors).some(key => 
+      realtimeErrors[key as keyof ValidationErrors]
+    ) || Object.keys(errors).some(key => 
+      errors[key as keyof ValidationErrors]
+    );
+  };
+  
+  // 调试：检查当前系统语言
+  useEffect(() => {
+    console.log('🌍 ParentRegisterFormScreen - 当前语言检测:', {
+      currentLanguage: i18n.language,
+      detectedRegion: detectedRegion
+    });
+  }, []);
+  
+  // 创建实时验证处理器
+  const handleFirstNameChange = createRealtimeValidator(
+    TextType.FIRST_NAME,
+    t,
+    (isValid, message) => {
+      setRealtimeErrors(prev => ({
+        ...prev,
+        firstName: isValid ? undefined : message
+      }));
+    }
+  );
+  
+  const handleLastNameChange = createRealtimeValidator(
+    TextType.LAST_NAME,
+    t,
+    (isValid, message) => {
+      setRealtimeErrors(prev => ({
+        ...prev,
+        lastName: isValid ? undefined : message
+      }));
+    }
+  );
 
   // 加载学校列表
   useEffect(() => {
@@ -154,18 +205,24 @@ export const ParentRegisterFormScreen: React.FC = () => {
   const validateForm = (): boolean => {
     const newErrors: ValidationErrors = {};
 
-    // 验证家长名字
-    if (!formData.firstName.trim()) {
-      newErrors.firstName = t('validation.parent_first_name_required');
-    } else if (formData.firstName.length > 25) {
-      newErrors.firstName = t('validation.first_name_too_long');
+    // 使用智能家长名字验证（基于系统语言）
+    const firstNameValidation = validateTextByLanguage(
+      formData.firstName,
+      TextType.FIRST_NAME,
+      t
+    );
+    if (!firstNameValidation.isValid) {
+      newErrors.firstName = firstNameValidation.message;
     }
 
-    // 验证家长姓氏
-    if (!formData.lastName.trim()) {
-      newErrors.lastName = t('validation.parent_last_name_required');
-    } else if (formData.lastName.length > 25) {
-      newErrors.lastName = t('validation.last_name_too_long');
+    // 使用智能家长姓氏验证（基于系统语言）
+    const lastNameValidation = validateTextByLanguage(
+      formData.lastName,
+      TextType.LAST_NAME,
+      t
+    );
+    if (!lastNameValidation.isValid) {
+      newErrors.lastName = lastNameValidation.message;
     }
 
     // 验证邮箱
@@ -268,12 +325,20 @@ export const ParentRegisterFormScreen: React.FC = () => {
     setLoading(true);
 
     try {
+      // 生成符合需求的家长姓名数据
+      const nameData = generateBackendNameData(
+        formData.firstName,
+        formData.lastName,
+        undefined, // 家长无常用名
+        false // 非学生
+      );
+      
       // 构建家长注册请求数据
       const registrationData = {
         identity: 2, // 家长
         userName: formData.email, // 邮箱作为用户名
-        legalName: `${formData.firstName} ${formData.lastName}`, // 合并姓名
-        nickName: formData.email.split('@')[0], // 使用邮箱前缀作为昵称
+        legalName: nameData.legalName, // 使用生成的法定姓名
+        nickName: nameData.nickName, // 使用生成的昵称
         password: formData.password,
         email: formData.email,
         sex: formData.sex,
@@ -548,25 +613,45 @@ export const ParentRegisterFormScreen: React.FC = () => {
                 <View style={[styles.inputContainer, styles.nameFieldContainer]}>
                   <Text style={styles.label}>{t('auth.register.parent.first_name_label')}</Text>
                   <TextInput
-                    style={[styles.input, errors.firstName && styles.inputError]}
-                    placeholder={t('auth.register.parent.first_name_placeholder')}
+                    style={[
+                      styles.input, 
+                      (errors.firstName || realtimeErrors.firstName) && styles.inputError
+                    ]}
+                    placeholder={getInputPlaceholder(TextType.FIRST_NAME, t)}
                     value={formData.firstName}
-                    onChangeText={(text) => updateFormData('firstName', text)}
+                    onChangeText={(text) => {
+                      handleFirstNameChange(text, t);
+                      updateFormData('firstName', text);
+                    }}
                     placeholderTextColor={theme.colors.text.disabled}
                   />
-                  {errors.firstName && <Text style={styles.errorText}>{errors.firstName}</Text>}
+                  {(errors.firstName || realtimeErrors.firstName) && (
+                    <Text style={styles.errorText}>
+                      {errors.firstName || realtimeErrors.firstName}
+                    </Text>
+                  )}
                 </View>
                 
                 <View style={[styles.inputContainer, styles.nameFieldContainer]}>
                   <Text style={styles.label}>{t('auth.register.parent.last_name_label')}</Text>
                   <TextInput
-                    style={[styles.input, errors.lastName && styles.inputError]}
-                    placeholder={t('auth.register.parent.last_name_placeholder')}
+                    style={[
+                      styles.input, 
+                      (errors.lastName || realtimeErrors.lastName) && styles.inputError
+                    ]}
+                    placeholder={getInputPlaceholder(TextType.LAST_NAME, t)}
                     value={formData.lastName}
-                    onChangeText={(text) => updateFormData('lastName', text)}
+                    onChangeText={(text) => {
+                      handleLastNameChange(text, t);
+                      updateFormData('lastName', text);
+                    }}
                     placeholderTextColor={theme.colors.text.disabled}
                   />
-                  {errors.lastName && <Text style={styles.errorText}>{errors.lastName}</Text>}
+                  {(errors.lastName || realtimeErrors.lastName) && (
+                    <Text style={styles.errorText}>
+                      {errors.lastName || realtimeErrors.lastName}
+                    </Text>
+                  )}
                 </View>
               </View>
 
@@ -696,9 +781,12 @@ export const ParentRegisterFormScreen: React.FC = () => {
               {/* 注册按钮 */}
               <View style={styles.bottomContainer}>
                 <TouchableOpacity
-                  style={[styles.registerButton, loading && styles.registerButtonDisabled]}
+                  style={[
+                    styles.registerButton, 
+                    (loading || hasValidationErrors()) && styles.registerButtonDisabled
+                  ]}
                   onPress={handleRegister}
-                  disabled={loading}
+                  disabled={loading || hasValidationErrors()}
                 >
                   {loading ? (
                     <ActivityIndicator color={theme.colors.text.inverse} />

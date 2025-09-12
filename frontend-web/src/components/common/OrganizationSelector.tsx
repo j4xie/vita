@@ -46,7 +46,7 @@ export const OrganizationSelector: React.FC<OrganizationSelectorProps> = ({
   const fetchOrganizations = async () => {
     setLoading(true);
     try {
-      const response = await fetch('https://www.vitaglobal.icu/app/organization/list', {
+      const response = await fetch(`${process.env.EXPO_PUBLIC_API_URL || "https://www.vitaglobal.icu"}/app/organization/list`, {
         method: 'GET',
         headers: {
           'Accept': 'application/json',
@@ -163,15 +163,16 @@ export const OrganizationSelector: React.FC<OrganizationSelectorProps> = ({
 
 const styles = StyleSheet.create({
   selector: {
-    backgroundColor: theme.colors.background.secondary,
-    borderRadius: theme.borderRadius.lg,
+    backgroundColor: LIQUID_GLASS_LAYERS.L1.background.light,
+    borderRadius: LIQUID_GLASS_LAYERS.L1.borderRadius.card,
     paddingHorizontal: theme.spacing[4],
     paddingVertical: theme.spacing[3],
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    borderWidth: 1,
-    borderColor: 'transparent',
+    borderWidth: LIQUID_GLASS_LAYERS.L1.border.width,
+    borderColor: LIQUID_GLASS_LAYERS.L1.border.color.light,
+    ...theme.shadows[LIQUID_GLASS_LAYERS.L1.shadow],
   },
   selectorError: {
     borderColor: theme.colors.danger,
@@ -191,7 +192,7 @@ const styles = StyleSheet.create({
   },
   modalContainer: {
     flex: 1,
-    backgroundColor: theme.colors.background.primary,
+    backgroundColor: LIQUID_GLASS_LAYERS.L2.background.light,
   },
   modalHeader: {
     flexDirection: 'row',
@@ -199,8 +200,9 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: theme.spacing[4],
     paddingVertical: theme.spacing[3],
-    borderBottomWidth: 1,
-    borderBottomColor: theme.colors.border.primary,
+    borderBottomWidth: LIQUID_GLASS_LAYERS.L1.border.width,
+    borderBottomColor: LIQUID_GLASS_LAYERS.L1.border.color.light,
+    backgroundColor: LIQUID_GLASS_LAYERS.L1.background.light,
   },
   modalTitle: {
     fontSize: theme.typography.fontSize.lg,
@@ -230,11 +232,15 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingVertical: theme.spacing[4],
     paddingHorizontal: theme.spacing[3],
-    borderBottomWidth: 1,
-    borderBottomColor: theme.colors.border.secondary,
+    borderBottomWidth: LIQUID_GLASS_LAYERS.L1.border.width,
+    borderBottomColor: LIQUID_GLASS_LAYERS.L1.border.color.light,
+    backgroundColor: 'transparent',
   },
   organizationItemSelected: {
-    backgroundColor: theme.colors.primary + '10',
+    backgroundColor: LIQUID_GLASS_LAYERS.L1.background.light,
+    borderRadius: theme.borderRadius.md,
+    marginHorizontal: theme.spacing[2],
+    ...theme.shadows.sm,
   },
   organizationName: {
     fontSize: theme.typography.fontSize.base,

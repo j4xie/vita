@@ -26,6 +26,15 @@ import { useUser } from '../../context/UserContext';
 import { login } from '../../services/authAPI';
 import SchoolEmailService, { APISchoolData } from '../../services/schoolEmailService';
 import RegionDetectionService, { RegionDetectionResult } from '../../services/RegionDetectionService';
+import { LiquidSuccessModal } from '../../components/modals/LiquidSuccessModal';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { 
+  validateTextByLanguage,
+  TextType,
+  generateBackendNameData,
+  createRealtimeValidator
+} from '../../utils/textValidation';
+import { i18n } from '../../utils/i18n';
 
 interface FormData {
   userName: string;
@@ -95,6 +104,9 @@ export const RegisterFormScreen: React.FC = () => {
   });
 
   const [errors, setErrors] = useState<Partial<FormData>>({});
+  
+  // 🔧 成功弹窗状态 - 与其他注册页面保持一致
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
 
   // 自动地域检测
   useEffect(() => {
@@ -454,22 +466,16 @@ export const RegisterFormScreen: React.FC = () => {
           });
           
           if (loginResult.code === 200 && loginResult.data) {
+            // 手动保存token到AsyncStorage
+            await AsyncStorage.setItem('@pomelox_token', loginResult.data.token);
+            await AsyncStorage.setItem('@pomelox_user_id', loginResult.data.userId.toString());
+            
             // 登录成功，更新用户状态
             await userLogin(loginResult.data.token);
             
-            Alert.alert(
-              t('auth.register.success_title'),
-              t('auth.register.auto_login_success'),
-              [{
-                text: t('common.confirm'),
-                onPress: () => navigation.dispatch(
-                  CommonActions.reset({
-                    index: 0,
-                    routes: [{ name: 'Main' }],
-                  })
-                )
-              }]
-            );
+            // 使用LiquidSuccessModal替代Alert
+            setLoading(false);
+            setShowSuccessModal(true);
           } else {
             // 登录失败，但注册成功
             Alert.alert(

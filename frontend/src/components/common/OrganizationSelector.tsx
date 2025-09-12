@@ -162,15 +162,15 @@ export const OrganizationSelector: React.FC<OrganizationSelectorProps> = ({
 
 const styles = StyleSheet.create({
   selector: {
-    backgroundColor: theme.colors.background.secondary,
-    borderRadius: theme.borderRadius.lg,
+    backgroundColor: LIQUID_GLASS_LAYERS.L1.background.light,
+    borderRadius: LIQUID_GLASS_LAYERS.L1.borderRadius.card,
+    borderWidth: LIQUID_GLASS_LAYERS.L1.border.width,
+    borderColor: LIQUID_GLASS_LAYERS.L1.border.color.light,
     paddingHorizontal: theme.spacing[4],
     paddingVertical: theme.spacing[3],
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    borderWidth: 1,
-    borderColor: 'transparent',
   },
   selectorError: {
     borderColor: theme.colors.danger,
@@ -190,7 +190,7 @@ const styles = StyleSheet.create({
   },
   modalContainer: {
     flex: 1,
-    backgroundColor: theme.colors.background.primary,
+    backgroundColor: LIQUID_GLASS_LAYERS.L0.light,
   },
   modalHeader: {
     flexDirection: 'row',

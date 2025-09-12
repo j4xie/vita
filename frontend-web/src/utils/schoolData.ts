@@ -144,8 +144,10 @@ export const getEmailDomainFromBackendSchool = (school: any): string => {
  * @returns 是否为有效的.edu邮箱
  */
 export const validateEduEmail = (email: string): boolean => {
+  // 支持 .edu 和 chineseunion.org 邮箱
   const eduEmailRegex = /^[^\s@]+@[^\s@]+\.edu$/;
-  return eduEmailRegex.test(email);
+  const chineseUnionRegex = /^[^\s@]+@chineseunion\.org$/;
+  return eduEmailRegex.test(email) || chineseUnionRegex.test(email);
 };
 
 /**

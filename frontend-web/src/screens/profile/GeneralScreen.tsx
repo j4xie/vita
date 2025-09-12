@@ -386,7 +386,7 @@ export const GeneralScreen: React.FC = () => {
       }
 
       // Call delete account API (接口20) - Web版本使用相同的API
-      const response = await fetch(`https://www.vitaglobal.icu/app/user/logoff?userId=${user.id}`, {
+      const response = await fetch(`${process.env.EXPO_PUBLIC_API_URL || "https://www.vitaglobal.icu"}/app/user/logoff?userId=${user.id}`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,

@@ -16,6 +16,8 @@ export const CORE_COLORS = {
   
   // PomeloX 状态色
   success: '#2ED573',
+  checkedIn: '#10B981', // 活动签到完成状态颜色
+  checkedInPressed: '#059669', // 签到按钮按压状态
   warning: '#FFA726',
   danger: '#EF4444',
   

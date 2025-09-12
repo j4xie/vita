@@ -47,42 +47,56 @@ class ActivityStatsService {
         return this.getEmptyStats();
       }
       
-      console.log('📊 🚀 调用getUserActivityList:', { userId: numericUserId, signStatus: -1 });
-      let activitiesResponse = await pomeloXAPI.getUserActivityList(numericUserId, -1);
-      console.log('📊 📨 API响应:', { 
-        code: activitiesResponse?.code, 
-        hasRows: !!activitiesResponse?.rows,
-        rowsLength: activitiesResponse?.rows?.length,
-        activities: activitiesResponse?.rows?.map(a => ({ id: a.id, name: a.name, signStatus: a.signStatus })) || []
+      // 🔧 修复：分别获取不同状态的活动数据以确保完整性
+      console.log('📊 🚀 调用getUserActivityList获取用户活动数据:', { userId: numericUserId });
+      
+      // 分别获取已报名未签到(-1)和已签到(1)的活动
+      const [registeredResponse, checkedInResponse] = await Promise.all([
+        pomeloXAPI.getUserActivityList(numericUserId, -1), // 已报名未签到
+        pomeloXAPI.getUserActivityList(numericUserId, 1)   // 已签到
+      ]);
+      
+      console.log('📊 📨 API响应详情:', { 
+        registered: {
+          code: registeredResponse?.code,
+          count: registeredResponse?.rows?.length || 0,
+          activities: registeredResponse?.rows?.map(a => ({ id: a.id, name: a.name, signStatus: a.signStatus })) || []
+        },
+        checkedIn: {
+          code: checkedInResponse?.code,
+          count: checkedInResponse?.rows?.length || 0,
+          activities: checkedInResponse?.rows?.map(a => ({ id: a.id, name: a.name, signStatus: a.signStatus })) || []
+        }
       });
       
-      // 检查getUserActivityList是否返回了数据 - 注意API返回结构是 { total, rows, code, msg }
-      if (activitiesResponse.code === 200 && activitiesResponse.rows && activitiesResponse.rows.length > 0) {
-        console.log('📊 ✅ getUserActivityList返回了数据，活动数量:', activitiesResponse.rows.length);
-      } else if (activitiesResponse.code === 200 && (!activitiesResponse.rows || activitiesResponse.rows.length === 0)) {
-        console.log('📊 ℹ️ getUserActivityList返回空数据，用户没有已报名的活动');
-        return this.getEmptyStats();
+      // 合并所有活动数据，避免重复ID
+      let activities: any[] = [];
+      const activityIds = new Set<number>();
+      
+      if (registeredResponse.code === 200 && registeredResponse.rows) {
+        for (const activity of registeredResponse.rows) {
+          if (!activityIds.has(activity.id)) {
+            activities.push(activity);
+            activityIds.add(activity.id);
+          }
+        }
+        console.log('📊 ✅ 获取到已报名未签到活动:', registeredResponse.rows.length);
       }
       
-      console.log('📊 getUserActivityList完整响应:', JSON.stringify(activitiesResponse, null, 2));
-      
-      // 直接使用getUserActivityList的返回数据 - 注意API返回结构中rows在顶层
-      let activities: any[] = [];
-      
-      if (activitiesResponse.code === 200) {
-        // userActivitylist API的响应结构：{ total, rows, code, msg }
-        if (activitiesResponse.rows && Array.isArray(activitiesResponse.rows)) {
-          activities = activitiesResponse.rows;
-          console.log('📊 ✅ 获取到用户活动数据，活动数量:', activities.length);
-        } else {
-          console.log('📊 ℹ️ getUserActivityList返回空活动列表');
-          return this.getEmptyStats();
+      if (checkedInResponse.code === 200 && checkedInResponse.rows) {
+        for (const activity of checkedInResponse.rows) {
+          if (!activityIds.has(activity.id)) {
+            activities.push(activity);
+            activityIds.add(activity.id);
+          }
         }
-      } else {
-        console.warn('📊 ❌ API响应错误:', {
-          code: activitiesResponse.code,
-          msg: activitiesResponse.msg
-        });
+        console.log('📊 ✅ 获取到已签到活动:', checkedInResponse.rows.length);
+      }
+      
+      console.log('📊 ✅ 合并后的活动总数(去重):', activities.length);
+      
+      if (activities.length === 0) {
+        console.log('📊 ℹ️ 用户没有相关活动数据');
         return this.getEmptyStats();
       }
       
@@ -116,22 +130,18 @@ class ActivityStatsService {
           case 1: // 已签到
             stats.participated++;
             console.log('📊 ➕ 已签到活动计数 +1');
-            // 如果活动已结束且未评价，计入待评价
-            if (this.isActivityEnded(activity) && !reviewedIds.includes(activity.id.toString())) {
-              stats.pendingReview++;
-              console.log('📊 ➕ 待评价活动计数 +1');
-            }
+            // 已签到的活动不计入待评价
             break;
           default: // 0 = 未报名，不计入统计
             console.log('📊 ➡️ 未报名活动，跳过');
             break;
         }
         
-        // 补充：已结束但未签到的活动也可能需要评价
-        if (registrationStatus === -1 && this.isActivityEnded(activity) && !reviewedIds.includes(activity.id.toString())) {
-          stats.pendingReview++;
-          console.log('📊 ➕ 未签到但需评价活动计数 +1');
-        }
+        // 已结束但未签到的活动也不计入待评价（功能暂时禁用）
+        // if (registrationStatus === -1 && this.isActivityEnded(activity) && !reviewedIds.includes(activity.id.toString())) {
+        //   stats.pendingReview++;
+        //   console.log('📊 ➕ 未签到但需评价活动计数 +1');
+        // }
       });
 
       console.log('📊 最终用户活动统计结果:', stats);

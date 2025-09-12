@@ -21,7 +21,7 @@ import { WebHaptics as Haptics } from '../../utils/WebHaptics';
 import { theme } from '../../theme';
 import { useTheme } from '../../context/ThemeContext';
 import { UserIdentityData, IdentityQRCodeProps } from '../../types/userIdentity';
-import { generateUserQRContent } from '../../utils/userIdentityMapper';
+import { generateUserQRContentWeb } from '../../utils/userIdentityMapper';
 
 const { width: screenWidth } = Dimensions.get('window');
 const qrSize = Math.min(screenWidth * 0.6, 280);
@@ -50,7 +50,7 @@ export const UserIdentityQRModal: React.FC<IdentityQRCodeProps> = ({
         return 'VG_GUEST_NO_QR';
       }
       
-      return generateUserQRContent(userData);
+      return generateUserQRContentWeb(userData);
     } catch (error) {
       console.error('QR码内容生成失败:', error);
       return `VG_USER_${userData?.userId || 'unknown'}_${Date.now()}`;

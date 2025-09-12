@@ -1124,22 +1124,6 @@ export const ActivityListScreen: React.FC = () => {
             
             {/* 右侧按钮组 */}
             <View style={styles.rightButtonsContainer}>
-              {/* Web刷新按钮 */}
-              {Platform.OS === 'web' && (
-                <TouchableOpacity 
-                  onPress={onRefresh} 
-                  style={[styles.webRefreshButton, { opacity: refreshing ? 0.6 : 1 }]}
-                  disabled={refreshing}
-                >
-                  <Reanimated.View style={[refreshAnimatedStyle]}>
-                    <Ionicons 
-                      name={refreshing ? "refresh" : "refresh-outline"} 
-                      size={18} 
-                      color="#F9A889" 
-                    />
-                  </Reanimated.View>
-                </TouchableOpacity>
-              )}
               
               {/* 扫码按钮 */}
               <TouchableOpacity onPress={handleScan} style={styles.scanButton}>
@@ -1223,29 +1207,27 @@ export const ActivityListScreen: React.FC = () => {
           }
         ]}
         ItemSeparatorComponent={() => <View style={{ height: -14 }} />} // 再减少5px，总计-14px，卡片会有更明显的重叠
-        {...(Platform.OS !== 'web' && {
-          refreshControl: (
-            <RefreshControl
-              refreshing={refreshing}
-              onRefresh={onRefresh}
-              colors={[theme.colors.primary, '#F9A889', '#FF8A65', theme.colors.secondary]}
-              tintColor={theme.colors.primary}
-              progressBackgroundColor="rgba(255, 255, 255, 0.95)"
-              progressViewOffset={insets.top + 60}
-              titleColor={theme.colors.text.secondary}
-              title={
-                refreshProgress === 0 ? t('activities.list.refresh') : 
-                refreshProgress === 1 ? t('activities.list.refresh_complete') : 
-                t('activities.list.refreshing')
-              }
-              {...(Platform.OS === 'ios' && {
-                style: { 
-                  backgroundColor: 'rgba(249, 168, 137, 0.05)',
-                },
-              })}
-            />
-          )
-        })}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={[theme.colors.primary, '#F9A889', '#FF8A65', theme.colors.secondary]}
+            tintColor={theme.colors.primary}
+            progressBackgroundColor="rgba(255, 255, 255, 0.95)"
+            progressViewOffset={insets.top + 60}
+            titleColor={theme.colors.text.secondary}
+            title={
+              refreshProgress === 0 ? t('activities.list.refresh') : 
+              refreshProgress === 1 ? t('activities.list.refresh_complete') : 
+              t('activities.list.refreshing')
+            }
+            {...(Platform.OS === 'ios' && {
+              style: { 
+                backgroundColor: 'rgba(249, 168, 137, 0.05)',
+              },
+            })}
+          />
+        }
         onEndReached={loadMore}
         onEndReachedThreshold={0.5}
         // 使用普通滚动处理器避免 Reanimated 冲突
@@ -1574,21 +1556,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-  },
-  webRefreshButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    borderWidth: 1.5,
-    borderColor: '#F9A889',
-    backgroundColor: 'rgba(249, 168, 137, 0.08)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#F9A889',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 3,
-    elevation: 3,
   },
   scanButton: {
     width: 38,

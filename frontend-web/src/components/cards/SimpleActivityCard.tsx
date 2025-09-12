@@ -85,18 +85,38 @@ const SimpleActivityCardComponent: React.FC<SimpleActivityCardProps> = ({
     return null;
   }
 
-  // 获取状态标签的样式和文本
+  // 获取状态标签的样式和文本 - 与App端保持一致的状态映射
   const getStatusConfig = () => {
     switch (activity.status) {
-      case 'upcoming':
+      case 'available':
         return {
-          label: t('activityCard.status.upcoming'),
-          color: '#EF4444', // 红色
+          label: t('activityCard.status.available'),
+          color: '#10B981', // 绿色，表示可报名
         };
-      case 'active':
+      case 'registered':
         return {
-          label: t('activityCard.status.active'),
-          color: '#10B981', // 绿色
+          label: t('activityCard.status.registered'),
+          color: '#3B82F6', // 蓝色，表示已报名
+        };
+      case 'checked_in':
+        return {
+          label: t('activityCard.status.checked_in'),
+          color: '#8B5CF6', // 紫色，表示已签到
+        };
+      case 'almost_full':
+        return {
+          label: t('activityCard.status.full'),
+          color: '#F59E0B', // 橙色，表示即将满员
+        };
+      case 'full':
+        return {
+          label: t('activityCard.status.full'),
+          color: '#6B7280', // 灰色，表示已满
+        };
+      case 'ended':
+        return {
+          label: t('activityCard.status.ended'),
+          color: '#6B7280', // 灰色，表示已结束
         };
       case 'ended':
         return {
@@ -128,6 +148,7 @@ const SimpleActivityCardComponent: React.FC<SimpleActivityCardProps> = ({
             <UltraFastImage
               uri={activity.image}
               style={styles.image}
+              resizeMode="contain"
               onLoadStart={() => setImageLoading(true)}
               onLoad={() => setImageLoading(false)}
               onError={() => setImageError(true)}
@@ -216,13 +237,13 @@ const styles = StyleSheet.create({
   },
   image: {
     width: '100%',
-    height: 120,
+    height: 160, // 增加图片高度以匹配App端比例
     borderTopLeftRadius: 12,
     borderTopRightRadius: 12,
   },
   placeholderImage: {
     width: '100%',
-    height: 120,
+    height: 160, // 与图片高度保持一致
     backgroundColor: '#f5f5f5',
     justifyContent: 'center',
     alignItems: 'center',
@@ -234,7 +255,7 @@ const styles = StyleSheet.create({
     top: 0,
     left: 0,
     right: 0,
-    height: 120,
+    height: 160, // 与图片高度保持一致
     backgroundColor: 'rgba(255,255,255,0.8)',
     justifyContent: 'center',
     alignItems: 'center',

@@ -14,11 +14,7 @@ const isNativeEnvironment = () => {
  */
 export const initializeAllNativeModules = async (): Promise<void> => {
   try {
-    // 检查运行环境
-    if (!isNativeEnvironment()) {
-      console.log('🌐 Web环境检测，跳过原生模块初始化');
-      return;
-    }
+    // 在React Native环境中初始化原生模块
 
     console.log('🚀 开始初始化原生模块...');
 

@@ -8,6 +8,7 @@ import {
 } from '../types/registration';
 
 // API基础URL配置
+// 🔧 强制使用生产环境API - 遵循CLAUDE规范
 const BASE_URL = 'https://www.vitaglobal.icu';
 
 /**
@@ -238,12 +239,12 @@ export const validateInvitationCode = async (invCode: string): Promise<{
   message?: string;
 }> => {
   try {
-    // 邀请码格式验证：8位大写字母+数字组合（如API文档示例：Y7MW5HBV）
-    const isValidFormat = /^[A-Z0-9]{8}$/.test(invCode);
+    // 邀请码格式验证：支持8-15位大写字母+数字组合（根据API文档要求）
+    const isValidFormat = /^[A-Z0-9]{8,15}$/.test(invCode);
     if (!isValidFormat) {
       return {
         valid: false,
-        message: '邀请码格式不正确，应为8位大写字母数字组合（如：Y7MW5HBV）'
+        message: '邀请码格式不正确，应为8-15位大写字母数字组合'
       };
     }
 

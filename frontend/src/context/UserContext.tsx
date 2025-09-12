@@ -93,7 +93,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
         // 缓存用户数据
         await AsyncStorage.setItem('userData', JSON.stringify(adaptedData.user));
       } else {
-        console.error('获取用户信息失败:', adaptedData.message);
+        console.log('📝 用户未登录或会话已过期:', adaptedData.message || '需要登录');
         setUser(null);
         setPermissionLevel('guest');
         setPermissions(createPermissionChecker(null));

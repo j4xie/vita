@@ -172,189 +172,9 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 6729,
+                      "duration": 5064,
                       "errors": [],
                       "stdout": [
-                        {
-                          "text": "🔍 [控制台 info]: %cDownload the React DevTools for a better development experience: https://reactjs.org/link/react-devtools font-weight:bold\n"
-                        },
-                        {
-                          "text": "🔍 [控制台 warning]: \"shadow*\" style props are deprecated. Use \"boxShadow\".\n"
-                        },
-                        {
-                          "text": "🔍 [控制台 log]: ⏰ 全局时间管理器已启动\n"
-                        },
-                        {
-                          "text": "🔍 [控制台 warning]: \"textShadow*\" style props are deprecated. Use \"textShadow\".\n"
-                        },
-                        {
-                          "text": "🔍 [控制台 log]: [STARTUP] 应用启动 - 启用全局错误追踪\n"
-                        },
-                        {
-                          "text": "🔍 [控制台 log]: [PERF] 应用加载开始时间: 2025-09-11T02:02:19.451Z\n"
-                        },
-                        {
-                          "text": "🔍 [控制台 log]: Running application \"main\" with appParams:\n {rootTag: #root, hydrate: undefined} \nDevelopment-level warnings: ON.\nPerformance optimizations: OFF.\n"
-                        },
-                        {
-                          "text": "🔍 [控制台 log]: [READY] 应用注册完成, 总耗时: 4 ms\n"
-                        },
-                        {
-                          "text": "🔍 [控制台 log]: i18next: languageChanged zh-CN\n"
-                        },
-                        {
-                          "text": "🔍 [控制台 log]: i18next: initialized {debug: true, initImmediate: true, ns: Array(1), defaultNS: translation, fallbackLng: Array(1)}\n"
-                        },
-                        {
-                          "text": "🔍 [控制台 log]: 🌐 PomeloX Web版本启动成功\n"
-                        },
-                        {
-                          "text": "🔍 [控制台 warning]: props.pointerEvents is deprecated. Use style.pointerEvents\n"
-                        },
-                        {
-                          "text": "🔍 [控制台 log]: 🔍 [TABS] 渲染Tab导航，用户权限: {hasUser: false, permissionLevel: guest, hasVolunteerAccess: false, isAdmin: false, isStaff: false}\n"
-                        },
-                        {
-                          "text": "🔍 [控制台 log]: ✅ [TAB-CONFIG] 允许的Stack页面，显示TabBar: ActivityList\n"
-                        },
-                        {
-                          "text": "🔍 [控制台 log]: 📱 [TAB-CONTROL] Explore Tab: {routeName: ActivityList, mustHide: false, shouldShow: true, finalDisplay: flex}\n"
-                        },
-                        {
-                          "text": "🔍 [控制台 log]: ✅ [TAB-CONFIG] Tab根页面，显示TabBar: Community\n"
-                        },
-                        {
-                          "text": "🔍 [控制台 log]: 📱 [TAB-CONTROL] Community Tab: {routeName: Community, mustHide: false, shouldShow: true}\n"
-                        },
-                        {
-                          "text": "🔍 [控制台 log]: ✅ [TAB-CONFIG] 允许的Stack页面，显示TabBar: WellbeingHome\n"
-                        },
-                        {
-                          "text": "🔍 [控制台 log]: 📱 [TAB-CONTROL] Wellbeing Tab: {routeName: WellbeingHome, mustHide: false, shouldShow: true, finalDisplay: flex}\n"
-                        },
-                        {
-                          "text": "🔍 [控制台 log]: ✅ [TAB-CONFIG] 允许的Stack页面，显示TabBar: ProfileHome\n"
-                        },
-                        {
-                          "text": "🔍 [控制台 log]: 📱 [TAB-CONTROL] Profile Tab: {routeName: ProfileHome, mustHide: false, shouldShow: true, finalDisplay: flex}\n"
-                        },
-                        {
-                          "text": "🔍 [控制台 log]: 🔍 TabBar页面检测: {tabRouteName: Explore, focusedRouteName: Explore, isExplorePage: true, showSearchButton: true, stateIndex: 0}\n"
-                        },
-                        {
-                          "text": "🔍 [控制台 log]: ✅ [TAB-CONFIG] Tab根页面，显示TabBar: Explore\n"
-                        },
-                        {
-                          "text": "🔍 [控制台 log]: 🔍 [CUSTOM-TABBAR] TabBar渲染检查: {tabRouteName: Explore, focusedRouteName: Explore, shouldHideByStyle: false, shouldShowByConfig: true, finalDecision: show}\n"
-                        },
-                        {
-                          "text": "🔍 [控制台 log]: 🔍 [BEAUTIFUL] 加载活动数据\n"
-                        },
-                        {
-                          "text": "🔍 [控制台 log]: 👤 访客模式活动列表\n"
-                        },
-                        {
-                          "text": "🔍 [控制台 warning]: Animated: `useNativeDriver` is not supported because the native animated module is missing. Falling back to JS-based animation. To resolve this, add `RCTAnimation` module to this app, or remove `useNativeDriver`. Make sure to run `bundle exec pod install` first. Read more about autolinking: https://github.com/react-native-community/cli/blob/master/docs/autolinking.md\n"
-                        },
-                        {
-                          "text": "🔍 [控制台 log]: 🔐 活动列表API调用: {endpoint: https://www.vitaglobal.icu/app/activity/list?pageNum=1&pageSize=20, mode: 访客模式, hasToken: false, hasUserId: false, tokenPreview: null}\n"
-                        },
-                        {
-                          "text": "🔍 [控制台 log]: 🌐 发起网络请求: {url: https://www.vitaglobal.icu/app/activity/list?pageNum=1&pageSize=20, method: GET, mode: 访客模式}\n"
-                        },
-                        {
-                          "text": "🔍 [控制台 log]: 📡 发起网络请求: {url: https://www.vitaglobal.icu/app/activity/list?pageNum=1&pageSize=20}\n"
-                        },
-                        {
-                          "text": "🔍 [控制台 log]: i18next: languageChanged zh-CN\n"
-                        },
-                        {
-                          "text": "🔍 [控制台 log]: 🔍 [TABS] 渲染Tab导航，用户权限: {hasUser: false, permissionLevel: guest, hasVolunteerAccess: false, isAdmin: false, isStaff: false}\n"
-                        },
-                        {
-                          "text": "🔍 [控制台 log]: ✅ [TAB-CONFIG] 允许的Stack页面，显示TabBar: ActivityList\n"
-                        },
-                        {
-                          "text": "🔍 [控制台 log]: 📱 [TAB-CONTROL] Explore Tab: {routeName: ActivityList, mustHide: false, shouldShow: true, finalDisplay: flex}\n"
-                        },
-                        {
-                          "text": "🔍 [控制台 log]: ✅ [TAB-CONFIG] Tab根页面，显示TabBar: Community\n"
-                        },
-                        {
-                          "text": "🔍 [控制台 log]: 📱 [TAB-CONTROL] Community Tab: {routeName: Community, mustHide: false, shouldShow: true}\n"
-                        },
-                        {
-                          "text": "🔍 [控制台 log]: ✅ [TAB-CONFIG] 允许的Stack页面，显示TabBar: WellbeingHome\n"
-                        },
-                        {
-                          "text": "🔍 [控制台 log]: 📱 [TAB-CONTROL] Wellbeing Tab: {routeName: WellbeingHome, mustHide: false, shouldShow: true, finalDisplay: flex}\n"
-                        },
-                        {
-                          "text": "🔍 [控制台 log]: ✅ [TAB-CONFIG] 允许的Stack页面，显示TabBar: ProfileHome\n"
-                        },
-                        {
-                          "text": "🔍 [控制台 log]: 📱 [TAB-CONTROL] Profile Tab: {routeName: ProfileHome, mustHide: false, shouldShow: true, finalDisplay: flex}\n"
-                        },
-                        {
-                          "text": "🔍 [控制台 log]: 🔍 TabBar页面检测: {tabRouteName: Explore, focusedRouteName: Explore, isExplorePage: true, showSearchButton: true, stateIndex: 0}\n"
-                        },
-                        {
-                          "text": "🔍 [控制台 log]: ✅ [TAB-CONFIG] Tab根页面，显示TabBar: Explore\n"
-                        },
-                        {
-                          "text": "🔍 [控制台 log]: 🔍 [CUSTOM-TABBAR] TabBar渲染检查: {tabRouteName: Explore, focusedRouteName: Explore, shouldHideByStyle: false, shouldShowByConfig: true, finalDecision: show}\n"
-                        },
-                        {
-                          "text": "🔍 [控制台 log]: 🔧 [TABBAR-POSITION] 页面聚焦，校准TabBar位置\n"
-                        },
-                        {
-                          "text": "🔍 [控制台 log]: 🔧 [TABBAR-POSITION] 强制修复TabBar位置样式\n"
-                        },
-                        {
-                          "text": "🔍 [控制台 log]: ✅ [TABBAR-POSITION] TabBar位置已修复\n"
-                        },
-                        {
-                          "text": "🔍 [控制台 log]: ✅ API响应成功: 200\n"
-                        },
-                        {
-                          "text": "🔍 [控制台 log]: 📥 活动列表API响应: {code: 200, msg: 查询成功, total: 7, rowsCount: 7, firstActivitySignStatus: 0}\n"
-                        },
-                        {
-                          "text": "🔍 [控制台 log]: 📋 活动完整数据样本: [Object, Object, Object]\n"
-                        },
-                        {
-                          "text": "🔍 [控制台 log]: 📊 [BEAUTIFUL] API响应: {code: 200, total: 7, rowsCount: 7}\n"
-                        },
-                        {
-                          "text": "🔍 [控制台 log]: 🎯 [TIME-DEBUG] USC活动修复后时间计算: {活动名称: USC免费接机活动, 当前时间: 2025-09-11T02:02:20.476Z, 开始时间原始: 2025-08-24 00:00:00, 结束时间原始: 2025-08-28 00:00:00, 开始时间解析: 2025-08-23T16:00:00.000Z}\n"
-                        },
-                        {
-                          "text": "🔍 [控制台 log]: 🔄 活动28[USC免费接机活动]数据详情: {enrollment: 0, registerCount: 1, registerCountType: number, hasRegisterCount: true, timeZone: 太平洋时区(Pacific Time, PT)}\n"
-                        },
-                        {
-                          "text": "🔍 [控制台 log]: 🔄 活动27[UCLA CU免费接机]数据详情: {enrollment: 0, registerCount: 0, registerCountType: number, hasRegisterCount: true, timeZone: null}\n"
-                        },
-                        {
-                          "text": "🔍 [控制台 log]: 🔄 活动26[UW CU免费接机签到]数据详情: {enrollment: 0, registerCount: 0, registerCountType: number, hasRegisterCount: true, timeZone: null}\n"
-                        },
-                        {
-                          "text": "🔍 [控制台 log]: 🔄 活动25[UCD CU免费接机签到]数据详情: {enrollment: 0, registerCount: 0, registerCountType: number, hasRegisterCount: true, timeZone: null}\n"
-                        },
-                        {
-                          "text": "🔍 [控制台 log]: 🔄 活动24[UCSB CU免费接机]数据详情: {enrollment: 0, registerCount: 1, registerCountType: number, hasRegisterCount: true, timeZone: null}\n"
-                        },
-                        {
-                          "text": "🔍 [控制台 log]: 🔄 活动23[UCSD CU免费接机]数据详情: {enrollment: 0, registerCount: 0, registerCountType: number, hasRegisterCount: true, timeZone: null}\n"
-                        },
-                        {
-                          "text": "🔍 [控制台 log]: 🔄 活动21[UCI CU免费接机]数据详情: {enrollment: 100, registerCount: 10, registerCountType: number, hasRegisterCount: true, timeZone: null}\n"
-                        },
-                        {
-                          "text": "🔍 [控制台 log]: ✅ [BEAUTIFUL] Activities设置成功: 7\n"
-                        },
-                        {
-                          "text": "🔍 [控制台 log]: 🎯 USC活动实时状态检查: USC免费接机活动 {originalStatus: ended, calculatedEnded: true, currentFilter: all, endTime: 2025-08-27T16:00:00.000Z, currentTime: 2025-09-11T02:02:20.478Z}\n"
-                        },
                         {
                           "text": "🚀 Web端页面加载完成\n"
                         },
@@ -430,7 +250,7 @@
                       ],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2025-09-11T02:02:16.761Z",
+                      "startTime": "2025-09-11T04:43:06.078Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -459,189 +279,9 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 4525,
+                      "duration": 3163,
                       "errors": [],
                       "stdout": [
-                        {
-                          "text": "🔍 [控制台 info]: %cDownload the React DevTools for a better development experience: https://reactjs.org/link/react-devtools font-weight:bold\n"
-                        },
-                        {
-                          "text": "🔍 [控制台 warning]: \"shadow*\" style props are deprecated. Use \"boxShadow\".\n"
-                        },
-                        {
-                          "text": "🔍 [控制台 log]: ⏰ 全局时间管理器已启动\n"
-                        },
-                        {
-                          "text": "🔍 [控制台 warning]: \"textShadow*\" style props are deprecated. Use \"textShadow\".\n"
-                        },
-                        {
-                          "text": "🔍 [控制台 log]: [STARTUP] 应用启动 - 启用全局错误追踪\n"
-                        },
-                        {
-                          "text": "🔍 [控制台 log]: [PERF] 应用加载开始时间: 2025-09-11T02:02:25.371Z\n"
-                        },
-                        {
-                          "text": "🔍 [控制台 log]: Running application \"main\" with appParams:\n {rootTag: #root, hydrate: undefined} \nDevelopment-level warnings: ON.\nPerformance optimizations: OFF.\n"
-                        },
-                        {
-                          "text": "🔍 [控制台 log]: [READY] 应用注册完成, 总耗时: 2 ms\n"
-                        },
-                        {
-                          "text": "🔍 [控制台 log]: i18next: languageChanged zh-CN\n"
-                        },
-                        {
-                          "text": "🔍 [控制台 log]: i18next: initialized {debug: true, initImmediate: true, ns: Array(1), defaultNS: translation, fallbackLng: Array(1)}\n"
-                        },
-                        {
-                          "text": "🔍 [控制台 log]: 🌐 PomeloX Web版本启动成功\n"
-                        },
-                        {
-                          "text": "🔍 [控制台 warning]: props.pointerEvents is deprecated. Use style.pointerEvents\n"
-                        },
-                        {
-                          "text": "🔍 [控制台 log]: 🔍 [TABS] 渲染Tab导航，用户权限: {hasUser: false, permissionLevel: guest, hasVolunteerAccess: false, isAdmin: false, isStaff: false}\n"
-                        },
-                        {
-                          "text": "🔍 [控制台 log]: ✅ [TAB-CONFIG] 允许的Stack页面，显示TabBar: ActivityList\n"
-                        },
-                        {
-                          "text": "🔍 [控制台 log]: 📱 [TAB-CONTROL] Explore Tab: {routeName: ActivityList, mustHide: false, shouldShow: true, finalDisplay: flex}\n"
-                        },
-                        {
-                          "text": "🔍 [控制台 log]: ✅ [TAB-CONFIG] Tab根页面，显示TabBar: Community\n"
-                        },
-                        {
-                          "text": "🔍 [控制台 log]: 📱 [TAB-CONTROL] Community Tab: {routeName: Community, mustHide: false, shouldShow: true}\n"
-                        },
-                        {
-                          "text": "🔍 [控制台 log]: ✅ [TAB-CONFIG] 允许的Stack页面，显示TabBar: WellbeingHome\n"
-                        },
-                        {
-                          "text": "🔍 [控制台 log]: 📱 [TAB-CONTROL] Wellbeing Tab: {routeName: WellbeingHome, mustHide: false, shouldShow: true, finalDisplay: flex}\n"
-                        },
-                        {
-                          "text": "🔍 [控制台 log]: ✅ [TAB-CONFIG] 允许的Stack页面，显示TabBar: ProfileHome\n"
-                        },
-                        {
-                          "text": "🔍 [控制台 log]: 📱 [TAB-CONTROL] Profile Tab: {routeName: ProfileHome, mustHide: false, shouldShow: true, finalDisplay: flex}\n"
-                        },
-                        {
-                          "text": "🔍 [控制台 log]: 🔍 TabBar页面检测: {tabRouteName: Explore, focusedRouteName: Explore, isExplorePage: true, showSearchButton: true, stateIndex: 0}\n"
-                        },
-                        {
-                          "text": "🔍 [控制台 log]: ✅ [TAB-CONFIG] Tab根页面，显示TabBar: Explore\n"
-                        },
-                        {
-                          "text": "🔍 [控制台 log]: 🔍 [CUSTOM-TABBAR] TabBar渲染检查: {tabRouteName: Explore, focusedRouteName: Explore, shouldHideByStyle: false, shouldShowByConfig: true, finalDecision: show}\n"
-                        },
-                        {
-                          "text": "🔍 [控制台 log]: 🔍 [BEAUTIFUL] 加载活动数据\n"
-                        },
-                        {
-                          "text": "🔍 [控制台 log]: 👤 访客模式活动列表\n"
-                        },
-                        {
-                          "text": "🔍 [控制台 warning]: Animated: `useNativeDriver` is not supported because the native animated module is missing. Falling back to JS-based animation. To resolve this, add `RCTAnimation` module to this app, or remove `useNativeDriver`. Make sure to run `bundle exec pod install` first. Read more about autolinking: https://github.com/react-native-community/cli/blob/master/docs/autolinking.md\n"
-                        },
-                        {
-                          "text": "🔍 [控制台 log]: 🔐 活动列表API调用: {endpoint: https://www.vitaglobal.icu/app/activity/list?pageNum=1&pageSize=20, mode: 访客模式, hasToken: false, hasUserId: false, tokenPreview: null}\n"
-                        },
-                        {
-                          "text": "🔍 [控制台 log]: 🌐 发起网络请求: {url: https://www.vitaglobal.icu/app/activity/list?pageNum=1&pageSize=20, method: GET, mode: 访客模式}\n"
-                        },
-                        {
-                          "text": "🔍 [控制台 log]: 📡 发起网络请求: {url: https://www.vitaglobal.icu/app/activity/list?pageNum=1&pageSize=20}\n"
-                        },
-                        {
-                          "text": "🔍 [控制台 log]: i18next: languageChanged zh-CN\n"
-                        },
-                        {
-                          "text": "🔍 [控制台 log]: 🔍 [TABS] 渲染Tab导航，用户权限: {hasUser: false, permissionLevel: guest, hasVolunteerAccess: false, isAdmin: false, isStaff: false}\n"
-                        },
-                        {
-                          "text": "🔍 [控制台 log]: ✅ [TAB-CONFIG] 允许的Stack页面，显示TabBar: ActivityList\n"
-                        },
-                        {
-                          "text": "🔍 [控制台 log]: 📱 [TAB-CONTROL] Explore Tab: {routeName: ActivityList, mustHide: false, shouldShow: true, finalDisplay: flex}\n"
-                        },
-                        {
-                          "text": "🔍 [控制台 log]: ✅ [TAB-CONFIG] Tab根页面，显示TabBar: Community\n"
-                        },
-                        {
-                          "text": "🔍 [控制台 log]: 📱 [TAB-CONTROL] Community Tab: {routeName: Community, mustHide: false, shouldShow: true}\n"
-                        },
-                        {
-                          "text": "🔍 [控制台 log]: ✅ [TAB-CONFIG] 允许的Stack页面，显示TabBar: WellbeingHome\n"
-                        },
-                        {
-                          "text": "🔍 [控制台 log]: 📱 [TAB-CONTROL] Wellbeing Tab: {routeName: WellbeingHome, mustHide: false, shouldShow: true, finalDisplay: flex}\n"
-                        },
-                        {
-                          "text": "🔍 [控制台 log]: ✅ [TAB-CONFIG] 允许的Stack页面，显示TabBar: ProfileHome\n"
-                        },
-                        {
-                          "text": "🔍 [控制台 log]: 📱 [TAB-CONTROL] Profile Tab: {routeName: ProfileHome, mustHide: false, shouldShow: true, finalDisplay: flex}\n"
-                        },
-                        {
-                          "text": "🔍 [控制台 log]: 🔍 TabBar页面检测: {tabRouteName: Explore, focusedRouteName: Explore, isExplorePage: true, showSearchButton: true, stateIndex: 0}\n"
-                        },
-                        {
-                          "text": "🔍 [控制台 log]: ✅ [TAB-CONFIG] Tab根页面，显示TabBar: Explore\n"
-                        },
-                        {
-                          "text": "🔍 [控制台 log]: 🔍 [CUSTOM-TABBAR] TabBar渲染检查: {tabRouteName: Explore, focusedRouteName: Explore, shouldHideByStyle: false, shouldShowByConfig: true, finalDecision: show}\n"
-                        },
-                        {
-                          "text": "🔍 [控制台 log]: 🔧 [TABBAR-POSITION] 页面聚焦，校准TabBar位置\n"
-                        },
-                        {
-                          "text": "🔍 [控制台 log]: 🔧 [TABBAR-POSITION] 强制修复TabBar位置样式\n"
-                        },
-                        {
-                          "text": "🔍 [控制台 log]: ✅ [TABBAR-POSITION] TabBar位置已修复\n"
-                        },
-                        {
-                          "text": "🔍 [控制台 log]: ✅ API响应成功: 200\n"
-                        },
-                        {
-                          "text": "🔍 [控制台 log]: 📥 活动列表API响应: {code: 200, msg: 查询成功, total: 7, rowsCount: 7, firstActivitySignStatus: 0}\n"
-                        },
-                        {
-                          "text": "🔍 [控制台 log]: 📋 活动完整数据样本: [Object, Object, Object]\n"
-                        },
-                        {
-                          "text": "🔍 [控制台 log]: 📊 [BEAUTIFUL] API响应: {code: 200, total: 7, rowsCount: 7}\n"
-                        },
-                        {
-                          "text": "🔍 [控制台 log]: 🎯 [TIME-DEBUG] USC活动修复后时间计算: {活动名称: USC免费接机活动, 当前时间: 2025-09-11T02:02:26.175Z, 开始时间原始: 2025-08-24 00:00:00, 结束时间原始: 2025-08-28 00:00:00, 开始时间解析: 2025-08-23T16:00:00.000Z}\n"
-                        },
-                        {
-                          "text": "🔍 [控制台 log]: 🔄 活动28[USC免费接机活动]数据详情: {enrollment: 0, registerCount: 1, registerCountType: number, hasRegisterCount: true, timeZone: 太平洋时区(Pacific Time, PT)}\n"
-                        },
-                        {
-                          "text": "🔍 [控制台 log]: 🔄 活动27[UCLA CU免费接机]数据详情: {enrollment: 0, registerCount: 0, registerCountType: number, hasRegisterCount: true, timeZone: null}\n"
-                        },
-                        {
-                          "text": "🔍 [控制台 log]: 🔄 活动26[UW CU免费接机签到]数据详情: {enrollment: 0, registerCount: 0, registerCountType: number, hasRegisterCount: true, timeZone: null}\n"
-                        },
-                        {
-                          "text": "🔍 [控制台 log]: 🔄 活动25[UCD CU免费接机签到]数据详情: {enrollment: 0, registerCount: 0, registerCountType: number, hasRegisterCount: true, timeZone: null}\n"
-                        },
-                        {
-                          "text": "🔍 [控制台 log]: 🔄 活动24[UCSB CU免费接机]数据详情: {enrollment: 0, registerCount: 1, registerCountType: number, hasRegisterCount: true, timeZone: null}\n"
-                        },
-                        {
-                          "text": "🔍 [控制台 log]: 🔄 活动23[UCSD CU免费接机]数据详情: {enrollment: 0, registerCount: 0, registerCountType: number, hasRegisterCount: true, timeZone: null}\n"
-                        },
-                        {
-                          "text": "🔍 [控制台 log]: 🔄 活动21[UCI CU免费接机]数据详情: {enrollment: 100, registerCount: 10, registerCountType: number, hasRegisterCount: true, timeZone: null}\n"
-                        },
-                        {
-                          "text": "🔍 [控制台 log]: ✅ [BEAUTIFUL] Activities设置成功: 7\n"
-                        },
-                        {
-                          "text": "🔍 [控制台 log]: 🎯 USC活动实时状态检查: USC免费接机活动 {originalStatus: ended, calculatedEnded: true, currentFilter: all, endTime: 2025-08-27T16:00:00.000Z, currentTime: 2025-09-11T02:02:26.176Z}\n"
-                        },
                         {
                           "text": "🚀 Web端页面加载完成\n"
                         },
@@ -666,7 +306,7 @@
                       ],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2025-09-11T02:02:24.678Z",
+                      "startTime": "2025-09-11T04:43:12.138Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -686,8 +326,8 @@
   ],
   "errors": [],
   "stats": {
-    "startTime": "2025-09-11T02:02:14.765Z",
-    "duration": 14583.872,
+    "startTime": "2025-09-11T04:43:04.903Z",
+    "duration": 10607.532,
     "expected": 2,
     "skipped": 0,
     "unexpected": 0,

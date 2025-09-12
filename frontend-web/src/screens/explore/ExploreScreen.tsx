@@ -356,22 +356,6 @@ export const ExploreScreen: React.FC = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* 🚨 强制显示的代码更新标识 */}
-      <View style={{
-        backgroundColor: '#ff0000',
-        padding: 20,
-        alignItems: 'center',
-        borderBottomWidth: 5,
-        borderBottomColor: '#ffffff'
-      }}>
-        <Text style={{ 
-          color: '#ffffff', 
-          fontSize: 18, 
-          fontWeight: 'bold' 
-        }}>
-          ✅ FRONTEND-WEB 代码已更新 - 分类:{selectedCategory} - 活动:{activities.length}
-        </Text>
-      </View>
       <ScrollView 
         style={styles.scrollView}
         contentContainerStyle={styles.scrollViewContent}
@@ -486,10 +470,7 @@ export const ExploreScreen: React.FC = () => {
 
         {/* Activity Categories */}
         <View style={styles.section}>
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-            <Text style={styles.sectionTitle}>{t('explore.activity_categories')}</Text>
-          </View>
-          
+          <Text style={styles.sectionTitle}>{t('explore.activity_categories')}</Text>
           <View style={styles.categoriesGrid}>
             {realCategories.map((category) => {
               const isSelected = selectedCategory === category.id;

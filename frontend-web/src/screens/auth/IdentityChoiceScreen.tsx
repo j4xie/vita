@@ -49,15 +49,28 @@ export const IdentityChoiceScreen: React.FC = () => {
     }
 
     if (selectedIdentity === 'student') {
-      // 学生注册：进入原有的学生注册流程
-      navigation.navigate('RegisterStep1', {
-        registrationType,
-        referralCode,
-        hasReferralCode,
-        detectedRegion,
-        detectionResult,
-        identity: 1, // 学生
-      });
+      // 学生注册：根据注册类型进入不同页面
+      if (registrationType === 'invitation') {
+        // 推荐码学生注册：进入专用推荐码页面
+        navigation.navigate('InvitationStudentRegisterStep1', {
+          registrationType,
+          referralCode,
+          hasReferralCode,
+          detectedRegion,
+          detectionResult,
+          identity: 1, // 学生
+        });
+      } else {
+        // 普通学生注册：进入专用普通注册页面
+        navigation.navigate('NormalStudentRegister', {
+          registrationType,
+          referralCode,
+          hasReferralCode,
+          detectedRegion,
+          detectionResult,
+          identity: 1, // 学生
+        });
+      }
     } else {
       // 家长注册：根据注册类型进入不同页面
       if (registrationType === 'invitation') {
@@ -69,8 +82,8 @@ export const IdentityChoiceScreen: React.FC = () => {
           detectionResult,
         });
       } else {
-        // 普通家长注册：进入普通注册页面
-        navigation.navigate('ParentRegisterForm', {
+        // 普通家长注册：进入专用普通注册页面
+        navigation.navigate('NormalParentRegister', {
           registrationType,
           referralCode,
           hasReferralCode,

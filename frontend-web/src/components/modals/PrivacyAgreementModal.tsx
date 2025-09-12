@@ -192,7 +192,7 @@ export const PrivacyAgreementModal: React.FC<PrivacyAgreementModalProps> = ({
                 {/* 地域切换器 */}
                 {allowRegionSwitch && (
                   <View style={styles.regionSwitcher}>
-                    <Text style={styles.regionLabel}>协议版本：</Text>
+                    <Text style={styles.regionLabel}>{t('legal.privacy.region_version_label')}</Text>
                     <View style={styles.regionButtons}>
                       <TouchableOpacity
                         style={[
@@ -205,7 +205,7 @@ export const PrivacyAgreementModal: React.FC<PrivacyAgreementModalProps> = ({
                           styles.regionButtonText,
                           currentRegion === 'combined' && styles.regionButtonTextActive
                         ]}>
-                          🌍 完整版协议
+                          {t('legal.privacy.region_full_agreement')}
                         </Text>
                       </TouchableOpacity>
                       <TouchableOpacity
@@ -219,7 +219,7 @@ export const PrivacyAgreementModal: React.FC<PrivacyAgreementModalProps> = ({
                           styles.regionButtonText,
                           currentRegion === 'zh' && styles.regionButtonTextActive
                         ]}>
-                          🇨🇳 中国版协议
+                          {t('legal.privacy.region_china_agreement')}
                         </Text>
                       </TouchableOpacity>
                       <TouchableOpacity
@@ -233,7 +233,7 @@ export const PrivacyAgreementModal: React.FC<PrivacyAgreementModalProps> = ({
                           styles.regionButtonText,
                           currentRegion === 'en' && styles.regionButtonTextActive
                         ]}>
-                          🇺🇸 美国版协议
+                          {t('legal.privacy.region_usa_agreement')}
                         </Text>
                       </TouchableOpacity>
                     </View>
@@ -305,7 +305,7 @@ export const PrivacyAgreementModal: React.FC<PrivacyAgreementModalProps> = ({
                   </View>
                   <Text style={styles.smsNoticeText}>
                     <Text style={styles.smsNoticeBold}>
-                      {t('auth.register.sms.consent_text') === '我同意接收短信' ? '注意：' : 'Notice: '}
+                      {t('legal.privacy.notice_label')}
                     </Text>
                     {t('auth.register.sms.consent_notice')}
                   </Text>

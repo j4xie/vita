@@ -88,37 +88,8 @@ const GridActivityCardComponent: React.FC<GridActivityCardProps> = ({
     return null;
   }
 
-  // 瀑布流布局：宽度由父容器决定，这里不需要计算
-  
-  // 根据内容计算动态高度 - 适中的瀑布流效果
-  const calculateDynamicHeight = () => {
-    const baseHeight = 180; // 适中的基础高度
-    const titleLength = activity.title.length;
-    const locationLength = activity.location.length;
-    
-    // 标题长度影响高度 - 适中变化
-    const titleHeightAddition = titleLength > 20 ? 20 : 
-                               titleLength > 15 ? 15 : 
-                               titleLength > 10 ? 10 : 0;
-    
-    // 地点长度影响高度 - 适中变化
-    const locationHeightAddition = locationLength > 15 ? 15 : 
-                                  locationLength > 10 ? 10 : 0;
-    
-    // 适中的随机变化（基于活动ID）
-    const seed1 = parseInt(activity.id) % 5; // 0-4
-    const seed2 = (parseInt(activity.id) * 17) % 4; // 0-3
-    const randomAddition = seed1 * 12 + seed2 * 8; // 0-80的适中范围
-    
-    // 图片比例影响 - 三种高度变化
-    const imageRatio = (parseInt(activity.id) % 4) === 0 ? 20 : 
-                      (parseInt(activity.id) % 4) === 1 ? 0 : 
-                      (parseInt(activity.id) % 4) === 2 ? 10 : 15; // 四种变化
-    
-    return Math.min(280, Math.max(160, baseHeight + titleHeightAddition + locationHeightAddition + randomAddition + imageRatio));
-  };
-  
-  const dynamicHeight = calculateDynamicHeight();
+  // 统一固定高度的方块布局 - 与App端保持一致
+  const cardHeight = 161; // 优化高度：101px图片区 + 60px信息区，适配16:9图片比例
   
   // 获取活动状态标签 - 优先显示报名状态，其次是时间紧急程度
   const getActivityLabel = () => {
@@ -261,7 +232,7 @@ const GridActivityCardComponent: React.FC<GridActivityCardProps> = ({
   }));
 
   return (
-    <Animated.View style={[styles.container, { height: dynamicHeight }, animatedContainerStyle, animatedShadowStyle]}>
+    <Animated.View style={[styles.container, { height: cardHeight }, animatedContainerStyle, animatedShadowStyle]}>
       {/* 边缘发光效果 */}
       <Animated.View style={[styles.glowBorder, borderGlowStyle, { pointerEvents: "none" }]} />
       
@@ -288,14 +259,16 @@ const GridActivityCardComponent: React.FC<GridActivityCardProps> = ({
         {/* 图片背景 */}
         {activity.image && !imageError ? (
           <>
-            <UltraFastImage
-              uri={activity.image}
-              style={styles.image}
-              resizeMode="cover"
-              onLoadStart={handleImageLoadStart}
-              onLoad={handleImageLoad}
-              onError={handleImageError}
-            />
+            <View style={styles.imageContainer}>
+              <UltraFastImage
+                uri={activity.image}
+                style={styles.image}
+                resizeMode="contain"
+                onLoadStart={handleImageLoadStart}
+                onLoad={handleImageLoad}
+                onError={handleImageError}
+              />
+            </View>
             {imageLoading && (
               <View style={styles.imageLoadingContainer}>
                 <ActivityIndicator size="small" color={theme.colors.primary} />
@@ -437,8 +410,16 @@ const styles = StyleSheet.create({
   },
   
   // 图片相关
-  image: {
+  imageContainer: {
     position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 60, // 为底部信息区留空间
+    justifyContent: 'flex-start', // 图片向上对齐
+    alignItems: 'center',
+  },
+  image: {
     width: '100%',
     height: '100%',
   },

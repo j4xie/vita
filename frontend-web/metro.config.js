@@ -22,6 +22,14 @@ config.resolver = {
     '@types': './src/types',
     '@assets': './assets'
   },
+  // 🚫 防止交叉污染：严格限制只解析frontend-web目录内的文件
+  platforms: ['web', 'native'],
+  blockList: [
+    // 阻止访问frontend目录（避免文件混淆）
+    /.*\/frontend\/src\/.*/,
+    /.*\/frontend\/.*\.ts$/,
+    /.*\/frontend\/.*\.tsx$/,
+  ],
 };
 
 module.exports = config;

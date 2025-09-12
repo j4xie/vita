@@ -19,6 +19,7 @@ import { theme } from '../../theme';
 import { useUser } from '../../context/UserContext';
 import { SafeText } from '../../components/common/SafeText';
 import { SafeAlert } from '../../utils/SafeAlert';
+import { LiquidSuccessModal } from '../../components/modals/LiquidSuccessModal';
 import { 
   getVolunteerRecords, 
   getVolunteerHours, 
@@ -69,6 +70,11 @@ export const VolunteerCheckInScreen: React.FC = () => {
   
   // Staff历史记录弹窗状态
   const [showStaffHistoryModal, setShowStaffHistoryModal] = useState(false);
+  
+  // 成功提示弹窗状态
+  const [showCheckInSuccessModal, setShowCheckInSuccessModal] = useState(false);
+  const [showCheckOutSuccessModal, setShowCheckOutSuccessModal] = useState(false);
+  const [checkOutDuration, setCheckOutDuration] = useState({ hours: 0, minutes: 0 });
   
   // 操作防重复锁
   const operationLockRef = useRef<Set<number>>(new Set());
@@ -211,15 +217,9 @@ export const VolunteerCheckInScreen: React.FC = () => {
     return Math.max(0, Math.floor(diffMs / 60000));
   };
 
-  // 格式化时长显示
+  // 格式化时长显示（使用统一服务）
   const formatDuration = (minutes: number) => {
-    const h = Math.floor(minutes / 60);
-    const m = minutes % 60;
-    if (h > 0) {
-      return `${h} ${t('common.time.hours', '小时')} ${m} ${t('common.time.minutes', '分钟')}`;
-    } else {
-      return `${m} ${t('common.time.minutes', '分钟')}`;
-    }
+    return VolunteerStateService.formatDuration(minutes);
   };
 
   // 加载志愿者记录和工时数据
@@ -529,6 +529,9 @@ export const VolunteerCheckInScreen: React.FC = () => {
                 // 重新加载数据以获取最新状态
                 await loadVolunteerData();
                 
+                // 显示液态玻璃签到成功提示
+                setShowCheckInSuccessModal(true);
+                
                 console.log('✅ 签到成功:', currentUser.name);
               } else {
                 console.error('❌ 签到失败:', result.msg);
@@ -566,6 +569,13 @@ export const VolunteerCheckInScreen: React.FC = () => {
     
     const timeDiff = checkOutTime.getTime() - checkInTime.getTime();
     const duration = Math.max(0, Math.floor(timeDiff / (1000 * 60))); // 确保非负数
+    
+    // 验证会话时长（最大24小时）
+    const MAX_SESSION_HOURS = 24;
+    if (duration > MAX_SESSION_HOURS * 60) {
+      SafeAlert.alert(t('common.warning'), `工作时长不能超过${MAX_SESSION_HOURS}小时，请联系管理员确认`);
+      return;
+    }
 
     // 直接执行签退，移除SafeAlert.alert避免Text渲染错误
     console.log('🔄 执行签退:', currentUser.name, `${Math.floor(duration / 60)}h${duration % 60}m`);
@@ -614,14 +624,17 @@ export const VolunteerCheckInScreen: React.FC = () => {
                 // 重新加载数据以获取最新状态
                 await loadVolunteerData();
                 
-                // 使用console.log替代Alert，避免Text渲染错误
+                // 显示液态玻璃签退成功提示
+                const hours = Math.floor(duration / 60);
+                const minutes = duration % 60;
+                setCheckOutDuration({ hours, minutes });
+                setShowCheckOutSuccessModal(true);
+                
                 console.log('✅ 签退成功:', {
                   name: currentUser.name || '志愿者',
                   hours: Math.floor(duration / 60),
                   minutes: duration % 60
                 });
-                
-                console.log('✅ 签退API调用成功');
               } else {
                 console.error('❌ 签退失败:', result.msg);
               }
@@ -1091,6 +1104,29 @@ export const VolunteerCheckInScreen: React.FC = () => {
           />
         </View>
       </ScrollView>
+
+      {/* 液态玻璃签到成功提示模态框 */}
+      <LiquidSuccessModal
+        visible={showCheckInSuccessModal}
+        onClose={() => setShowCheckInSuccessModal(false)}
+        title={t('volunteerCheckIn.success.checkin_title') || '签到成功'}
+        message={currentUser ? `${currentUser.name} 签到成功` : '签到成功'}
+        confirmText={t('common.confirm')}
+        icon="checkmark-circle"
+      />
+
+      {/* 液态玻璃签退成功提示模态框 */}
+      <LiquidSuccessModal
+        visible={showCheckOutSuccessModal}
+        onClose={() => setShowCheckOutSuccessModal(false)}
+        title={t('volunteerCheckIn.success.checkout_title') || '签退成功'}
+        message={currentUser ? 
+          `${currentUser.name} 签退成功，本次服务时长：${checkOutDuration.hours > 0 ? `${checkOutDuration.hours}小时${checkOutDuration.minutes}分钟` : `${checkOutDuration.minutes}分钟`}` : 
+          '签退成功'
+        }
+        confirmText={t('common.confirm')}
+        icon="checkmark-circle"
+      />
     </SafeAreaView>
   );
 };

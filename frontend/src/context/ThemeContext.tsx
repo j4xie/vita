@@ -51,22 +51,18 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
   useEffect(() => {
     let actualDarkMode = false;
     
-    // 🌐 Web端强制使用浅色模式，移动端保持原有功能  
-    if (Platform.OS === 'web') {
-      actualDarkMode = false; // Force light mode on web
-    } else {
-      switch (themeMode) {
-        case 'dark':
-          actualDarkMode = true;
-          break;
-        case 'light':
-          actualDarkMode = false;
-          break;
-        case 'auto':
-        default:
-          actualDarkMode = systemColorScheme === 'dark';
-          break;
-      }
+    // 移动端主题模式处理
+    switch (themeMode) {
+      case 'dark':
+        actualDarkMode = true;
+        break;
+      case 'light':
+        actualDarkMode = false;
+        break;
+      case 'auto':
+      default:
+        actualDarkMode = systemColorScheme === 'dark';
+        break;
     }
     
     setIsDarkMode(actualDarkMode);

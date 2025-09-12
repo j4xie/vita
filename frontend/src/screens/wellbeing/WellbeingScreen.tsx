@@ -40,7 +40,7 @@ interface School {
 const { width: screenWidth } = Dimensions.get('window');
 
 // 个人志愿者数据组件
-const PersonalVolunteerData: React.FC = () => {
+export const PersonalVolunteerData: React.FC = () => {
   const { user } = useUser();
   const { t } = useTranslation();
   const [personalData, setPersonalData] = useState<any>(null);
@@ -449,6 +449,7 @@ export const WellbeingScreen: React.FC = () => {
   // 处理从其他页面传入的参数
   useEffect(() => {
     const params = route.params as any;
+    
     if (params?.selectedSchool && params?.fromConsulting) {
       // 来自咨询页面的学校选择
       const schoolData = {
@@ -460,7 +461,6 @@ export const WellbeingScreen: React.FC = () => {
       console.log('Setting selected school from consulting:', schoolData);
       setSelectedSchool(schoolData);
       setShowSchoolSelection(false); // 强制不显示学校选择界面
-      setActiveTab('volunteer'); // 确保在志愿者tab
       
       // 清除导航参数，避免重复处理
       navigation.setParams({ selectedSchool: undefined, fromConsulting: undefined });
@@ -650,49 +650,13 @@ export const WellbeingScreen: React.FC = () => {
     </View>
   );
 
-  // 🚀 Performance: Pre-render components and use visibility control
+  // 安心页面只显示安心计划内容
   const renderContent = () => {
-    // 如果是普通用户，直接显示安心计划内容，不显示切换
-    if (permissions.isRegularUser()) {
-      return <WellbeingPlanContent />;
-    }
-
-    // 🚀 管理员用户：使用visibility控制而非条件渲染，避免组件重新创建
-    return (
-      <>
-        {/* Wellbeing Plan Content - Always mounted */}
-        <Animated.View style={[
-          styles.tabContent,
-          { opacity: wellbeingOpacity }
-        ]} pointerEvents={activeTab === 'wellbeing-plan' ? 'auto' : 'none'}>
-          <WellbeingPlanContent />
-        </Animated.View>
-
-        {/* Volunteer Content - Always mounted */}
-        <Animated.View style={[
-          styles.tabContent,
-          { opacity: volunteerOpacity }
-        ]} pointerEvents={activeTab === 'volunteer' ? 'auto' : 'none'}>
-          {permissions.getDataScope() === 'self' ? (
-            // Staff：只显示自己的志愿者工作记录
-            <View style={styles.volunteerContent}>
-              <Text style={styles.staffTitle}>{t('wellbeing.personal.title')}</Text>
-              <Text style={styles.staffSubtitle}>{t('wellbeing.personal.subtitle')}</Text>
-              <PersonalVolunteerData />
-            </View>
-          ) : (
-            // 总管理员和分管理员：显示学校管理界面
-            <View style={styles.volunteerContent}>
-              <VolunteerListLiquidScreen />
-            </View>
-          )}
-        </Animated.View>
-      </>
-    );
+    return <WellbeingPlanContent />;
   };
 
-  // 只有管理员才显示tab header，普通用户直接显示内容
-  const shouldShowTabHeader = !permissions.isRegularUser() && (showSchoolSelection || !selectedSchool || tabs.length > 1);
+  // 安心页面不显示tab header，只显示安心计划
+  const shouldShowTabHeader = false;
 
   return (
     <SafeAreaView style={[styles.container, dmStyles.page.safeArea]}>
@@ -827,6 +791,19 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
+  },
+
+  // 无权限状态样式
+  noPermissionContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 32,
+  },
+  noPermissionText: {
+    fontSize: 16,
+    color: theme.colors.text.secondary,
+    textAlign: 'center',
   },
 
   // Content Areas

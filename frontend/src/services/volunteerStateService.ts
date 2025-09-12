@@ -92,11 +92,14 @@ export class VolunteerStateService {
       
       // 处理不同时间格式
       if (startTime.includes(' ')) {
-        // "YYYY-MM-DD HH:mm:ss" 格式
+        // "YYYY-MM-DD HH:mm:ss" 格式（本地时间）
         const isoTime = startTime.replace(' ', 'T') + (startTime.includes('+') ? '' : '+08:00');
         startDate = new Date(isoTime);
+      } else if (startTime.includes('T') && (startTime.includes('Z') || startTime.includes('+'))) {
+        // 标准ISO格式（已包含时区信息）- 直接解析，不要额外添加时区
+        startDate = new Date(startTime);
       } else {
-        // 标准ISO格式
+        // 其他格式尝试直接解析
         startDate = new Date(startTime);
       }
       
@@ -106,7 +109,18 @@ export class VolunteerStateService {
       }
       
       const diffMs = currentTime.getTime() - startDate.getTime();
-      return Math.max(0, Math.floor(diffMs / 60000));
+      const minutes = Math.max(0, Math.floor(diffMs / 60000));
+      
+      // 调试信息
+      console.log('🕐 [VolunteerState] 时长计算详情:', {
+        originalTime: startTime,
+        parsedTime: startDate.toISOString(),
+        currentTime: currentTime.toISOString(),
+        diffMs,
+        minutes
+      });
+      
+      return minutes;
     } catch (error) {
       console.warn('🕐 [VolunteerState] 时长计算错误:', error);
       return 0;
@@ -144,9 +158,14 @@ export class VolunteerStateService {
       
       // 处理不同时间格式
       if (timeString.includes(' ')) {
+        // "YYYY-MM-DD HH:mm:ss" 格式（本地时间）
         const isoTime = timeString.replace(' ', 'T') + (timeString.includes('+') ? '' : '+08:00');
         date = new Date(isoTime);
+      } else if (timeString.includes('T') && (timeString.includes('Z') || timeString.includes('+'))) {
+        // 标准ISO格式（已包含时区信息）- 直接解析，不要额外添加时区
+        date = new Date(timeString);
       } else {
+        // 其他格式尝试直接解析
         date = new Date(timeString);
       }
       

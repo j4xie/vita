@@ -529,6 +529,25 @@ export const ProfileHomeScreen: React.FC = () => {
     setShowPersonalHistoryModal(true);
   }, [user, permissions, volunteerStats]);
 
+  // 处理志愿者功能区域点击
+  const handleVolunteerSectionPress = useCallback(() => {
+    console.log('🔍 [VOLUNTEER-SECTION] 用户点击志愿者功能区域:', {
+      用户: user?.userName,
+      权限级别: permissions.getPermissionLevel(),
+      是否Staff: permissions.isStaff(),
+      志愿者小时: volunteerStats?.volunteerHours
+    });
+    
+    if (Platform.OS === 'ios') {
+      Haptics.selectionAsync();
+    }
+    
+    // 所有有志愿者权限的用户都跳转到志愿者管理页面
+    navigation.navigate('Wellbeing', { 
+      screen: 'VolunteerManagement'
+    });
+  }, [user, permissions, volunteerStats, navigation]);
+
   // Logout handling functions
   const handleLogout = () => {
     // Haptic feedback
@@ -1093,6 +1112,53 @@ export const ProfileHomeScreen: React.FC = () => {
       fontWeight: '600',
       color: '#DC2626',
     },
+    
+    // 志愿者功能区域样式
+    volunteerSection: {
+      marginVertical: 8,
+    },
+    volunteerCard: {
+      backgroundColor: '#FFFFFF',
+      borderRadius: 12,
+      paddingHorizontal: 16,
+      paddingVertical: 14,
+      flexDirection: 'row',
+      alignItems: 'center',
+      // 小红书风格阴影
+      shadowColor: '#000000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.05,
+      shadowRadius: 8,
+      elevation: 2,
+    },
+    volunteerIconContainer: {
+      width: 32,
+      height: 32,
+      borderRadius: 8,
+      backgroundColor: 'rgba(249, 168, 137, 0.1)', // 品牌橙色背景
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginRight: 12,
+    },
+    volunteerContent: {
+      flex: 1,
+    },
+    volunteerTitle: {
+      fontSize: 17,
+      fontWeight: '600',
+      color: '#000000',
+      marginBottom: 2,
+    },
+    volunteerSubtitle: {
+      fontSize: 14,
+      color: '#6B7280',
+    },
+    volunteerHours: {
+      fontSize: 13,
+      fontWeight: '500',
+      color: '#F9A889', // 品牌橙色
+      marginTop: 4,
+    },
   });
 
   return (
@@ -1154,6 +1220,35 @@ export const ProfileHomeScreen: React.FC = () => {
               />
             </View>
           </View>
+
+          {/* 志愿者功能区域 - 仅对有权限的用户显示 */}
+          {isAuthenticated && permissions.hasVolunteerManagementAccess() && (
+            <View style={styles.volunteerSection}>
+              <TouchableOpacity 
+                style={styles.volunteerCard}
+                onPress={handleVolunteerSectionPress}
+                activeOpacity={0.7}
+              >
+                <View style={styles.volunteerIconContainer}>
+                  <Ionicons 
+                    name="people-outline" 
+                    size={20} 
+                    color="#F9A889" 
+                  />
+                </View>
+                <View style={styles.volunteerContent}>
+                  <Text style={styles.volunteerTitle}>
+                    {t('profile.volunteer.management', '志愿者管理')}
+                  </Text>
+                </View>
+                <Ionicons 
+                  name="chevron-forward" 
+                  size={16} 
+                  color="#c7c7cc" 
+                />
+              </TouchableOpacity>
+            </View>
+          )}
 
           {/* 我的活动区 - 统一显示活动统计布局 */}
           <View style={styles.activitySection}>

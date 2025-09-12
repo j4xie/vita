@@ -445,7 +445,7 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({
         <Image
           source={{ uri: safeActivity.image }}
           style={styles.image}
-          resizeMode="cover"
+          resizeMode="contain"
         />
         
         {/* PomeloX 对比度增强渐变遮罩 - 🌙 Dark Mode适配 */}
@@ -635,6 +635,8 @@ const styles = StyleSheet.create({
     width: '100%',
     height: 240, // 更大的图片高度，增强视觉冲击力
     position: 'relative',
+    justifyContent: 'flex-start', // 图片向上对齐
+    alignItems: 'center',
   },
   image: {
     width: '100%',

@@ -71,8 +71,8 @@ const GridActivityCardComponent: React.FC<GridActivityCardProps> = ({
     return null;
   }
 
-  // 统一固定高度的方块布局
-  const cardHeight = 180; // 固定高度，统一方块大小
+  // 调整高度以适配16:9图片比例
+  const cardHeight = 161; // 优化高度：101px图片区 + 60px信息区
   
   // 获取活动状态标签 - 优先显示报名状态，其次是时间紧急程度
   const getActivityLabel = () => {
@@ -238,20 +238,22 @@ const GridActivityCardComponent: React.FC<GridActivityCardProps> = ({
         {/* 图片背景 */}
         {activity.image && !imageError ? (
           <>
-            <OptimizedImage
-              source={{ 
-                uri: activity.image,
-                priority: 'normal'
-              }}
-              style={styles.image}
-              resizeMode={'cover'}
-              onLoadStart={() => setImageLoading(true)}
-              onLoadEnd={() => setImageLoading(false)}
-              onError={() => {
-                setImageError(true);
-                setImageLoading(false);
-              }}
-            />
+            <View style={styles.imageContainer}>
+              <OptimizedImage
+                source={{ 
+                  uri: activity.image,
+                  priority: 'normal'
+                }}
+                style={styles.image}
+                resizeMode={'contain'}
+                onLoadStart={() => setImageLoading(true)}
+                onLoadEnd={() => setImageLoading(false)}
+                onError={() => {
+                  setImageError(true);
+                  setImageLoading(false);
+                }}
+              />
+            </View>
             {imageLoading && (
               <View style={styles.imageLoadingContainer}>
                 <ActivityIndicator size="small" color={theme.colors.primary} />
@@ -365,8 +367,16 @@ const styles = StyleSheet.create({
   },
   
   // 图片相关
-  image: {
+  imageContainer: {
     position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 60, // 为底部信息区留空间
+    justifyContent: 'flex-start', // 图片向上对齐
+    alignItems: 'center',
+  },
+  image: {
     width: '100%',
     height: '100%',
   },

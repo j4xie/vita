@@ -1,6 +1,6 @@
 {
   "name": "pomelox-app",
-  "version": "1.0.0",
+  "version": "1.0.29",
   "main": "index.ts",
   "scripts": {
     "validate-translations": "node package-scripts/validate-translations.js",
@@ -13,6 +13,12 @@
     "android": "expo run:android",
     "ios": "expo run:ios",
     "web": "expo start --web",
+    "start:dev": "cp .env.development .env && expo start --port 8082",
+    "start:prod": "cp .env.production .env && expo start --port 8082",
+    "ios:dev": "cp .env.development .env && expo run:ios",
+    "ios:prod": "cp .env.production .env && expo run:ios",
+    "android:dev": "cp .env.development .env && expo run:android",
+    "android:prod": "cp .env.production .env && expo run:android",
     "sync:ios": "expo prebuild -p ios --no-install",
     "sync:android": "expo prebuild -p android --no-install",
     "sync": "expo prebuild --no-install",

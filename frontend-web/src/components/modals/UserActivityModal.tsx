@@ -322,9 +322,9 @@ export const UserActivityModal: React.FC<UserActivityModalProps> = ({
             </View>
           ) : activities.length > 0 ? (
             <View style={styles.activitiesContainer}>
-              {activities.map((activity) => (
+              {activities.map((activity, index) => (
                 <UserActivityCard
-                  key={activity.id}
+                  key={`${activityType}_${activity.id}_${index}`}
                   activity={activity}
                   onScanPress={handleScanPress}
                   onCancelRegistration={handleCancelRegistration}

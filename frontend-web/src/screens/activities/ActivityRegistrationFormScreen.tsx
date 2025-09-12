@@ -21,7 +21,8 @@ import { theme } from '../../theme';
 import { useUser } from '../../context/UserContext';
 import { pomeloXAPI } from '../../services/PomeloXAPI';
 import { useTabBarVerification } from '../../hooks/useTabBarStateGuard';
-import { SuccessNotificationModal } from '../../components/modals/SuccessNotificationModal';
+import { SafeAlert } from '../../utils/SafeAlert';
+import { LiquidSuccessModal } from '../../components/modals/LiquidSuccessModal';
 
 interface RegistrationFormData {
   legalName: string;
@@ -153,21 +154,10 @@ export const ActivityRegistrationFormScreen: React.FC = () => {
         timestamp: new Date().toISOString()
       });
 
-      if (result.code === 200) {
+      if (result.code === 200 && result.data != null && result.data > 0) {
         console.log('🎉 [报名] 报名成功，显示成功提示');
         
-        // 🌐 Web端：先发送事件，确保状态更新
-        console.log('📡 [报名] 发送activityRegistered事件:', { activityId: activity.id });
-        DeviceEventEmitter.emit('activityRegistered', { activityId: activity.id });
-        
-        // 🔧 发送活动报名完成事件，用于TabBar位置修复
-        DeviceEventEmitter.emit('activityRegistrationCompleted', { 
-          activityId: activity.id,
-          userId: user?.id,
-          timestamp: Date.now()
-        });
-        
-        // 🎊 显示成功提示弹窗
+        // 显示美观的成功弹窗
         setShowSuccessModal(true);
       } else {
         console.error('❌ [报名] 报名失败:', {
@@ -176,7 +166,7 @@ export const ActivityRegistrationFormScreen: React.FC = () => {
           data: result.data
         });
         
-        Alert.alert(
+        SafeAlert.alert(
           t('activities.registration.failed_title'),
           result.msg || t('activities.registration.failed_message')
         );
@@ -188,9 +178,12 @@ export const ActivityRegistrationFormScreen: React.FC = () => {
         timestamp: new Date().toISOString()
       });
       
-      Alert.alert(
+      // 检查是否是已存在的错误（从错误消息中判断）
+      const isAlreadyEnrolled = error.message && error.message.includes('报名信息已存在');
+      
+      SafeAlert.alert(
         t('activities.registration.failed_title'),
-        t('common.network_error')
+        isAlreadyEnrolled ? error.message.replace('活动报名失败: ', '') : t('common.network_error')
       );
     } finally {
       setLoading(false);
@@ -204,37 +197,22 @@ export const ActivityRegistrationFormScreen: React.FC = () => {
   const handleSuccessModalClose = () => {
     setShowSuccessModal(false);
     
-    // 🔄 延迟返回页面，确保动画完成
-    setTimeout(() => {
-      console.log('🔙 [报名] 成功提示关闭，返回活动详情页面');
-      
-      // 🔧 发送页面跳转完成事件
-      DeviceEventEmitter.emit('navigationCompleted', { 
-        from: 'ActivityRegistrationForm',
-        to: 'ActivityDetail',
-        timestamp: Date.now()
-      });
-      
-      navigation.goBack();
-    }, 300); // 等待弹窗关闭动画完成
+    // 🌐 Web端：发送事件，确保状态更新
+    console.log('📡 [报名] 发送activityRegistered事件:', { activityId: activity.id });
+    DeviceEventEmitter.emit('activityRegistered', { activityId: activity.id });
+    
+    // 🔧 发送活动报名完成事件，用于TabBar位置修复
+    DeviceEventEmitter.emit('activityRegistrationCompleted', { 
+      activityId: activity.id,
+      userId: user?.id,
+      timestamp: Date.now()
+    });
+    
+    // ✅ 返回活动详情页面
+    console.log('🔙 [报名] 返回活动详情页面');
+    navigation.goBack();
   };
 
-  const handleViewActivity = () => {
-    setShowSuccessModal(false);
-    
-    // 🔄 立即返回页面
-    setTimeout(() => {
-      console.log('🔙 [报名] 用户选择查看活动，返回活动详情页面');
-      
-      DeviceEventEmitter.emit('navigationCompleted', { 
-        from: 'ActivityRegistrationForm',
-        to: 'ActivityDetail',
-        timestamp: Date.now()
-      });
-      
-      navigation.goBack();
-    }, 100);
-  };
 
   const updateFormField = (field: keyof RegistrationFormData, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -448,16 +426,14 @@ export const ActivityRegistrationFormScreen: React.FC = () => {
           </TouchableOpacity>
       </View>
 
-      {/* 成功提示弹窗 */}
-      <SuccessNotificationModal
+      {/* 注册成功弹窗 */}
+      <LiquidSuccessModal
         visible={showSuccessModal}
         onClose={handleSuccessModalClose}
-        onAction={handleViewActivity}
-        title={t('activities.registration.success_notification_title')}
-        message={t('activities.registration.success_notification_message')}
-        actionText={t('activities.registration.success_notification_action')}
+        title={t('activities.registration.success_title')}
+        message={t('activities.registration.success_message')}
+        confirmText={t('common.confirm')}
         icon="checkmark-circle"
-        duration={0} // 不自动关闭，需要用户操作
       />
     </SafeAreaView>
   );

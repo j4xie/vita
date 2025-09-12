@@ -157,7 +157,7 @@ export const ScannedUserInfoModal: React.FC<ScannedUserInfoModalProps> = ({
   // 志愿者签到管理
   const handleVolunteerSignIn = async () => {
     try {
-      const response = await fetch('https://www.vitaglobal.icu/app/hour/signRecord', {
+      const response = await fetch(`${process.env.EXPO_PUBLIC_API_URL || "https://www.vitaglobal.icu"}/app/hour/signRecord`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
@@ -197,7 +197,7 @@ export const ScannedUserInfoModal: React.FC<ScannedUserInfoModalProps> = ({
     try {
       // 先获取最新的签到记录
       const statusResponse = await fetch(
-        `https://www.vitaglobal.icu/app/hour/lastRecordList?userId=${scannedUserData.userId}`,
+        `${process.env.EXPO_PUBLIC_API_URL || "https://www.vitaglobal.icu"}/app/hour/lastRecordList?userId=${scannedUserData.userId}`,
         {
           headers: {
             'Authorization': `Bearer ${currentUser?.token || ''}`,
@@ -218,7 +218,7 @@ export const ScannedUserInfoModal: React.FC<ScannedUserInfoModalProps> = ({
       }
 
       // 执行签退
-      const signOutResponse = await fetch('https://www.vitaglobal.icu/app/hour/signRecord', {
+      const signOutResponse = await fetch(`${process.env.EXPO_PUBLIC_API_URL || "https://www.vitaglobal.icu"}/app/hour/signRecord`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
@@ -268,7 +268,7 @@ export const ScannedUserInfoModal: React.FC<ScannedUserInfoModalProps> = ({
             
             try {
               const response = await fetch(
-                `https://www.vitaglobal.icu/app/activity/signIn?activityId=${activityId}&userId=${scannedUserData.userId}`,
+                `${process.env.EXPO_PUBLIC_API_URL || "https://www.vitaglobal.icu"}/app/activity/signIn?activityId=${activityId}&userId=${scannedUserData.userId}`,
                 {
                   headers: {
                     'Authorization': `Bearer ${currentUser?.token || ''}`,
@@ -278,13 +278,22 @@ export const ScannedUserInfoModal: React.FC<ScannedUserInfoModalProps> = ({
 
               const result = await response.json();
               if (result.code === 200) {
-                Alert.alert('签到成功', `${scannedUserData.legalName} 活动签到成功！`);
+                Alert.alert(
+                  t('activities.checkin_success'), 
+                  `${scannedUserData.legalName} ${t('activities.checkin_success')}！`
+                );
               } else {
-                Alert.alert('签到失败', result.msg || '活动签到失败');
+                Alert.alert(
+                  t('activities.checkin_failed'), 
+                  result.msg || t('activities.checkin_failed_message')
+                );
               }
             } catch (error) {
               console.error('活动签到失败:', error);
-              Alert.alert('签到失败', '网络错误，请重试');
+              Alert.alert(
+                t('activities.checkin_failed'), 
+                t('activities.network_error')
+              );
             }
           }
         }

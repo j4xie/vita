@@ -26,12 +26,7 @@ import RegionDetectionService from './src/services/RegionDetectionService';
 
 // 开发环境导入测试工具
 if (__DEV__) {
-  // 导入志愿者测试套件
-  require('./src/utils/volunteerTestSuite');
-  // 导入时间冲突检测器
-  require('./src/utils/timeConflictDetector');
-  // 导入地理区域功能测试套件
-  require('./src/utils/regionFeatureTest');
+  // 测试工具已移除，仅保留日志
   console.log('🧪 测试工具已加载');
 }
 

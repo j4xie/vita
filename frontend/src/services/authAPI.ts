@@ -180,7 +180,12 @@ export const getUserInfo = async (token?: string, userId?: number): Promise<APIR
     
     return data;
   } catch (error) {
-    console.error('获取用户信息失败:', error);
+    // 如果是因为没有token（用户未登录），则这是正常的，不记录为错误
+    if (error.message === 'No token available') {
+      console.log('📝 用户未登录，无有效token');
+    } else {
+      console.error('获取用户信息失败:', error);
+    }
     throw error;
   }
 };

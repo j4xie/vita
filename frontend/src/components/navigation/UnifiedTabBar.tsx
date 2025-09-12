@@ -506,7 +506,7 @@ const styles = StyleSheet.create({
 
   // 图标容器
   iconContainer: {
-    marginBottom: 6, // 参考Web端增加图标和文字间距
+    marginBottom: 6, // 图标和文字间距
   },
 
   tabTouchable: {

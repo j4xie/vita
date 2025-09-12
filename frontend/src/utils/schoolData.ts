@@ -144,8 +144,9 @@ export const getEmailDomainFromBackendSchool = (school: any): string => {
  * @returns 是否为有效的.edu邮箱
  */
 export const validateEduEmail = (email: string): boolean => {
-  const eduEmailRegex = /^[^\s@]+@[^\s@]+\.edu$/;
-  return eduEmailRegex.test(email);
+  // 接受任何有效邮箱格式，不限制域名后缀
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email);
 };
 
 /**

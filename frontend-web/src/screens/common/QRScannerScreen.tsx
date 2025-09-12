@@ -8,6 +8,7 @@ import {
   Dimensions,
   Platform,
   Modal,
+  DeviceEventEmitter,
 } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { useNavigation, useRoute } from '@react-navigation/native';
@@ -21,10 +22,12 @@ import { NativeQRScanner } from '../../components/web/NativeQRScanner';
 import { ReferralCodeInputSheet } from '../../components/sheets/ReferralCodeInputSheet';
 import { ScanFeedbackOverlay, QRCodeBounds } from '../../components/common/ScanFeedbackOverlay';
 import { ScannedUserInfoModal } from '../../components/modals/ScannedUserInfoModal';
+import { LiquidSuccessModal } from '../../components/modals/LiquidSuccessModal';
 
 import { theme } from '../../theme';
 import { useOrganization } from '../../context/OrganizationContext';
 import { validateInvitationCode } from '../../services/registrationAPI';
+import { SafeAlert } from '../../utils/SafeAlert';
 import { membershipCardService } from '../../services/MembershipCardService';
 import { MerchantQRScanResult, ParsedMerchantQR } from '../../types/cards';
 import { Organization } from '../../types/organization';
@@ -93,6 +96,10 @@ export const QRScannerScreen: React.FC = () => {
   // 用户身份码扫描相关状态
   const [showUserInfoModal, setShowUserInfoModal] = useState(false);
   const [scannedUserData, setScannedUserData] = useState<UserIdentityData | null>(null);
+  
+  // 活动签到成功弹窗状态
+  const [showCheckInSuccessModal, setShowCheckInSuccessModal] = useState(false);
+  const [checkInModalData, setCheckInModalData] = useState({ title: '', message: '' });
 
   // 用于保存扫描数据的ref
   const scannedDataRef = useRef<string>('');
@@ -144,6 +151,20 @@ export const QRScannerScreen: React.FC = () => {
       console.log('⏰ [QRScanner Web] 直接处理定时器触发');
       handleScanFeedbackComplete();
     }, 1000);
+  };
+
+  // 处理签到成功弹窗关闭
+  const handleCheckInSuccessModalClose = () => {
+    setShowCheckInSuccessModal(false);
+    
+    console.log('📍 [QR签到] 用户点击确定，准备导航');
+    if (returnScreen) {
+      console.log('🔄 [QR签到] 导航到指定页面:', returnScreen);
+      navigation.navigate(returnScreen);
+    } else {
+      console.log('🔙 [QR签到] 返回上一页');
+      navigation.goBack();
+    }
   };
 
   // 扫码反馈动画完成后处理扫描结果
@@ -221,7 +242,9 @@ export const QRScannerScreen: React.FC = () => {
     if (referralCode) {
       // 验证邀请码有效性
       try {
+        console.log('🔍 开始验证邀请码:', referralCode);
         const validation = await validateInvitationCode(referralCode);
+        console.log('📋 邀请码验证结果:', validation);
         
         if (validation.valid) {
           // 显示邀请码信息
@@ -232,7 +255,7 @@ export const QRScannerScreen: React.FC = () => {
             ? `\n组织：${validation.data.organizationName}`
             : '';
             
-          Alert.alert(
+          SafeAlert.alert(
             t('qr.results.referral_success_title'),
             t('qr.results.referral_success_message', { referralCode }) + inviterInfo + orgInfo,
             [
@@ -251,7 +274,7 @@ export const QRScannerScreen: React.FC = () => {
             ]
           );
         } else {
-          Alert.alert(
+          SafeAlert.alert(
             t('qr.results.invalid_referral_title'),
             validation.message || t('qr.results.invalid_referral_message'),
             [
@@ -267,9 +290,10 @@ export const QRScannerScreen: React.FC = () => {
           );
         }
       } catch (error) {
-        console.error('验证邀请码失败:', error);
+        console.error('❌ 验证邀请码失败:', error);
+        console.log('📞 API调用异常，使用备用逻辑');
         // 如果验证接口有问题，仍然允许继续注册
-        Alert.alert(
+        SafeAlert.alert(
           t('qr.results.referral_success_title'),
           t('qr.results.referral_success_message', { referralCode }) + '\n（验证服务暂不可用）',
           [
@@ -287,7 +311,7 @@ export const QRScannerScreen: React.FC = () => {
         );
       }
     } else {
-      Alert.alert(
+      console.log(
         t('qr.results.invalid_referral_title'),
         t('qr.results.invalid_referral_message'),
         [
@@ -307,7 +331,7 @@ export const QRScannerScreen: React.FC = () => {
   const handleVerifyCode = (code: string) => {
     // 处理活动核销二维码
     if (code.startsWith('VG_EVENT_')) {
-      Alert.alert(
+      console.log(
         t('qr.results.checkin_success_title'),
         t('qr.results.checkin_success_message'),
         [
@@ -318,7 +342,7 @@ export const QRScannerScreen: React.FC = () => {
         ]
       );
     } else {
-      Alert.alert(
+      console.log(
         t('qr.results.invalid_qr_title'),
         t('qr.results.invalid_qr_message'),
         [
@@ -366,7 +390,7 @@ export const QRScannerScreen: React.FC = () => {
 
     // 原有的独立签到逻辑（保持兼容性）
     if (!user?.id) {
-      Alert.alert(
+      console.log(
         t('qr.results.signin_failed_title'),
         t('auth.errors.not_logged_in'),
         [
@@ -409,7 +433,7 @@ export const QRScannerScreen: React.FC = () => {
         switch (signInfo.data) {
           case 0:
             // 未报名，跳转到活动详情页面
-            Alert.alert(
+            console.log(
               t('qr.results.not_registered_title'),
               t('qr.results.not_registered_message'),
               [
@@ -441,7 +465,7 @@ export const QRScannerScreen: React.FC = () => {
             
           case 1:
             // 已签到
-            Alert.alert(
+            console.log(
               t('qr.results.already_signed_in_title'),
               t('qr.results.already_signed_in_message'),
               [
@@ -487,7 +511,7 @@ export const QRScannerScreen: React.FC = () => {
           const activityData = JSON.parse(atob(data));
           console.log('✅ [活动码解析] JSON解析成功，活动ID:', activityData.activityId);
           return activityData.activityId;
-        } catch {
+        } catch (error) {
           // 如果不是JSON，可能直接是活动ID
           const id = parseInt(data);
           console.log('📊 [活动码解析] 直接数字解析，活动ID:', id);
@@ -528,6 +552,15 @@ export const QRScannerScreen: React.FC = () => {
   };
 
   const performSignIn = async (activityId: number) => {
+    // 🔒 防重复提交保护
+    if (isProcessing) {
+      console.log('⏭️ [QR签到] 正在处理中，跳过重复请求');
+      return;
+    }
+    
+    setIsProcessing(true);
+    console.log('🔄 [QR签到] 开始执行签到操作');
+    
     try {
       const result = await pomeloXAPI.signInActivity(activityId, parseInt(user?.id || '0'));
       
@@ -559,22 +592,21 @@ export const QRScannerScreen: React.FC = () => {
           userId: user?.id
         });
         
-        Alert.alert(
-          t('qr.results.signin_success_title'),
-          t('qr.results.signin_success_message'),
-          [
-            {
-              text: t('common.confirm'),
-              onPress: () => {
-                if (returnScreen) {
-                  navigation.navigate(returnScreen);
-                } else {
-                  navigation.goBack();
-                }
-              },
-            },
-          ]
-        );
+        // 重置处理状态，确保弹窗能正常显示
+        setIsProcessing(false);
+        setShowScanFeedback(false);
+        
+        console.log('🎉 [QR签到] 准备显示签到成功提示');
+        
+        // 统一使用LiquidSuccessModal显示签到成功
+        console.log('💬 [QR签到] 显示签到成功弹窗');
+        
+        setCheckInModalData({
+          title: t('qr.results.signin_success_title') || '签到成功',
+          message: t('qr.results.signin_success_message') || '您已成功签到该活动！'
+        });
+        setShowCheckInSuccessModal(true);
+        
       } else {
         console.warn('⚠️ [QR签到] 签到失败:', {
           activityId,
@@ -593,6 +625,10 @@ export const QRScannerScreen: React.FC = () => {
         t('qr.results.signin_failed_title'),
         t('common.network_error')
       );
+    } finally {
+      // 🔓 确保在所有情况下都重置处理状态
+      setIsProcessing(false);
+      console.log('🔓 [QR签到] 重置isProcessing状态');
     }
   };
 
@@ -690,7 +726,7 @@ export const QRScannerScreen: React.FC = () => {
     // 重置处理状态，确保Alert能正常显示
     setIsProcessing(false);
     
-    Alert.alert(
+    console.log(
       '扫描结果',
       `扫描内容：${data.substring(0, 50)}${data.length > 50 ? '...' : ''}\n\n识别类型：${formatInfo.description}\n格式：${qrType.format}\n\n${formatInfo.suggestion}`,
       [
@@ -824,21 +860,35 @@ export const QRScannerScreen: React.FC = () => {
       });
       
       try {
-        // 调用后端API获取用户详细信息
-        const userResponse = await pomeloXAPI.getUserIdentityByHash({
-          userId: hashResult.userId!,
-          hash: hashResult.hash!,
-          timestamp: hashResult.timestamp!
-        });
+        // ✅ 使用现有的用户信息API (零后端改动) 
+        const userResponse = await pomeloXAPI.getUserInfo(parseInt(hashResult.userId!));
         
         if (userResponse.code === 200 && userResponse.data) {
           console.log('✅ [Web-QR哈希扫描] 用户信息查询成功');
-          showUserInfo(userResponse.data);
+          
+          // ✅ 本地验证哈希确保安全性
+          const { validateIdentityHash } = require('../../utils/qrHashGenerator');
+          const isValidHash = await validateIdentityHash(
+            userResponse.data,
+            hashResult.timestamp!,
+            hashResult.hash!
+          );
+          
+          if (isValidHash) {
+            console.log('🔐 [Web-QR哈希验证] 身份码哈希验证通过');
+            showUserInfo(userResponse.data);
+          } else {
+            console.log('❌ [Web-QR哈希验证] 身份码哈希验证失败');
+            showScanError(
+              '身份码验证失败',
+              '身份码可能已被篡改或数据不匹配，请重新生成身份码。'
+            );
+          }
         } else {
           console.log('❌ [Web-QR哈希扫描] 用户信息查询失败:', userResponse.msg);
           showScanError(
             '用户不存在',
-            `${userResponse.msg || '身份码可能已失效或用户不存在'}\n\n请联系该用户重新生成身份码。`
+            `${userResponse.msg || '用户ID不存在或账户已停用'}\n\n请确认用户ID正确。`
           );
         }
       } catch (apiError) {
@@ -1065,7 +1115,7 @@ export const QRScannerScreen: React.FC = () => {
 
       if (existingCard) {
         // 已有会员卡，直接跳转到详情
-        Alert.alert(
+        console.log(
           '已有会员卡',
           '您已经拥有该商家的会员卡',
           [
@@ -1102,7 +1152,7 @@ export const QRScannerScreen: React.FC = () => {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       }
 
-      Alert.alert(
+      console.log(
         '会员卡创建成功！',
         `恭喜您获得 ${getMerchantName(merchantId)} 的会员卡`,
         [
@@ -1158,7 +1208,7 @@ export const QRScannerScreen: React.FC = () => {
           setScanned(false);
           setScanResult(null);
           // 可以自动重新扫描或提示用户重新扫描
-          Alert.alert(
+          console.log(
             '组织切换成功',
             `已切换到 ${organization.displayNameZh}，请重新扫描二维码`,
             [{ text: '确定', onPress: () => setScanned(false) }]
@@ -1176,32 +1226,54 @@ export const QRScannerScreen: React.FC = () => {
   const showScanError = (title: string, message: string) => {
     // 隐藏扫码反馈覆盖层
     setShowScanFeedback(false);
+    setIsProcessing(false);
+    
+    console.log('🚨 [QR扫描] 显示错误信息:', { title, message });
     
     if (Platform.OS === 'ios') {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
     }
 
-    Alert.alert(
-      title,
-      message,
-      [
-        {
-          text: '重新扫描',
-          onPress: () => {
-            console.log('🔄 [QRScanner] 重新扫描，重置状态');
-            setScanned(false);
-            setIsProcessing(false);
-            setQRCodeBounds(undefined);
-            scannedDataRef.current = '';
+    if (Platform.OS === 'web') {
+      // Web端使用安全的window.confirm
+      const userChoice = window.confirm(
+        `${title}\n\n${message}\n\n点击确定重新扫描，点击取消返回。`
+      );
+      
+      if (userChoice) {
+        console.log('🔄 [QRScanner] 重新扫描，重置状态');
+        setScanned(false);
+        setIsProcessing(false);
+        setQRCodeBounds(undefined);
+        scannedDataRef.current = '';
+      } else {
+        console.log('🔙 [QRScanner] 返回上一页');
+        navigation.goBack();
+      }
+    } else {
+      // App端使用console.log
+      console.log(
+        title,
+        message,
+        [
+          {
+            text: '重新扫描',
+            onPress: () => {
+              console.log('🔄 [QRScanner] 重新扫描，重置状态');
+              setScanned(false);
+              setIsProcessing(false);
+              setQRCodeBounds(undefined);
+              scannedDataRef.current = '';
+            }
+          },
+          {
+            text: '返回',
+            style: 'cancel',
+            onPress: () => navigation.goBack()
           }
-        },
-        {
-          text: '返回',
-          style: 'cancel',
-          onPress: () => navigation.goBack()
-        }
-      ]
-    );
+        ]
+      );
+    }
   };
 
   const getMerchantName = (merchantId: string): string => {
@@ -1275,7 +1347,8 @@ export const QRScannerScreen: React.FC = () => {
       });
       
       console.log('🔍 使用临时数据验证邀请码有效性...');
-      const response = await fetch('https://www.vitaglobal.icu/app/user/add', {
+      const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'https://www.vitaglobal.icu';
+      const response = await fetch(`${apiUrl}/app/user/add`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
@@ -1505,6 +1578,16 @@ export const QRScannerScreen: React.FC = () => {
         currentOrganization={currentOrganization}
         onOrganizationSelect={handleOrganizationSwitch}
         merchantName={scanResult?.error?.message || ''}
+      />
+
+      {/* 活动签到成功弹窗 */}
+      <LiquidSuccessModal
+        visible={showCheckInSuccessModal}
+        onClose={handleCheckInSuccessModalClose}
+        title={checkInModalData.title}
+        message={checkInModalData.message}
+        confirmText={t('common.confirm')}
+        icon="checkmark-circle"
       />
     </View>
   );

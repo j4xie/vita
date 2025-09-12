@@ -141,7 +141,7 @@ export const UserActivityCard: React.FC<UserActivityCardProps> = ({
             <Image 
               uri={activity.icon } 
               style={styles.activityImage}
-              resizeMode="cover"
+              resizeMode="contain"
             />
           ) : (
             <View style={styles.placeholderImage}>

@@ -186,7 +186,7 @@ export const VolunteerListScreen: React.FC<VolunteerListScreenProps> = ({
             // 获取最新签到记录
             let lastRecord = null;
             try {
-              const lastRecordResponse = await fetch(`https://www.vitaglobal.icu/app/hour/lastRecordList?userId=${user.userId}`, {
+              const lastRecordResponse = await fetch(`${process.env.EXPO_PUBLIC_API_URL || "https://www.vitaglobal.icu"}/app/hour/lastRecordList?userId=${user.userId}`, {
                 headers: { 'Authorization': `Bearer ${await getCurrentToken()}` }
               });
               const lastRecordData = await lastRecordResponse.json();

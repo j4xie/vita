@@ -302,33 +302,7 @@ export const useOrganizationSwitcherGestures = (
 // ==================== 辅助Hook：键盘快捷键 ====================
 
 export const useOrganizationSwitcherKeyboard = (switcher: UseOrganizationSwitcherReturn) => {
-  useEffect(() => {
-    // TODO: 如果需要支持键盘快捷键（比如Web端），可以在这里实现
-    // 例如: Cmd+Shift+O 打开组织切换器
-    
-    const handleKeyPress = (event: KeyboardEvent) => {
-      if (Platform.OS !== 'web') return;
-      
-      // Cmd+Shift+O (macOS) 或 Ctrl+Shift+O (Windows/Linux)
-      if ((event.metaKey || event.ctrlKey) && event.shiftKey && event.key === 'O') {
-        event.preventDefault();
-        switcher.toggle();
-      }
-      
-      // ESC键收起
-      if (event.key === 'Escape' && switcher.isExpanded) {
-        event.preventDefault();
-        switcher.collapse();
-      }
-    };
-
-    if (Platform.OS === 'web') {
-      document.addEventListener('keydown', handleKeyPress);
-      return () => {
-        document.removeEventListener('keydown', handleKeyPress);
-      };
-    }
-  }, [switcher]);
+  // 移动端不支持键盘快捷键
 };
 
 export default useOrganizationSwitcher;

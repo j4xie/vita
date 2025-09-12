@@ -95,6 +95,7 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({
   // 🌙 Dark Mode Support - 使用全局样式管理器
   const darkModeStyles = useAllDarkModeStyles();
   const { isDarkMode, styles: dmStyles, gradients: dmGradients, icons: dmIcons } = darkModeStyles;
+  
   // 确保activity对象存在
   if (!activity || typeof activity !== 'object') {
     return null;
@@ -110,24 +111,25 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({
     image: safeString(activity.image),
     attendees: safeNumber(activity.attendees, 0),
     maxAttendees: safeNumber(activity.maxAttendees, 0),
-    status: safeString(activity.status, 'upcoming'),
+    status: safeString(activity.status, 'available'),
     organizer: activity.organizer ? {
       name: safeString(activity.organizer.name, 'Organizer'),
       avatar: safeString(activity.organizer.avatar),
       verified: Boolean(activity.organizer.verified)
     } : null
   };
+  
   // 基础动画值
   const scaleAnim = useRef(new Animated.Value(1)).current;
   const opacityAnim = useRef(new Animated.Value(1)).current;
   const translateYAnim = useRef(new Animated.Value(0)).current;
-  const favoriteScaleAnim = useRef(new Animated.Value(1)).current;
   
   // 滑动手势相关状态
   const [swipeDirection, setSwipeDirection] = useState<'left' | 'right' | null>(null);
   const [isSwipeActive, setIsSwipeActive] = useState(false);
   const translateXAnim = useRef(new Animated.Value(0)).current;
   const actionOpacityAnim = useRef(new Animated.Value(0)).current;
+  
   const formatDate = (dateString: string): string => {
     try {
       if (!dateString || typeof dateString !== 'string') {
@@ -147,3 +149,602 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({
 
   const getStatusConfig = (status: string) => {
     switch (status) {
+      case 'available':
+        return { text: t('activityCard.status.available'), color: BRAND_INTERACTIONS.navigation.active.text };
+      case 'registered':
+        return { text: t('activityCard.status.registered'), color: theme.colors.success };
+      case 'checked_in':
+        return { text: t('activityCard.status.checked_in'), color: theme.colors.success };
+      case 'almost_full':
+        return { text: t('activityCard.status.full'), color: theme.colors.warning };
+      case 'full':
+        return { text: t('activityCard.status.full'), color: theme.colors.text.secondary };
+      case 'ended':
+        return { text: t('activityCard.status.ended'), color: theme.colors.text.disabled };
+      default:
+        return { text: t('activityCard.status.available'), color: BRAND_INTERACTIONS.navigation.active.text };
+    }
+  };
+
+  const statusConfig = getStatusConfig(safeActivity.status);
+  const availableSpots = Math.max(0, safeActivity.maxAttendees - safeActivity.attendees);
+  const isAlmostFull = availableSpots <= 5 && availableSpots > 0;
+
+  // 优质的卡片按压动画 - iOS风格体验
+  const handlePressIn = () => {
+    Animated.parallel([
+      Animated.spring(scaleAnim, {
+        toValue: 0.98,
+        tension: 200,
+        friction: 8,
+        useNativeDriver: true,
+      }),
+      Animated.timing(opacityAnim, {
+        toValue: 0.95,
+        duration: 150,
+        useNativeDriver: true,
+      }),
+      Animated.timing(translateYAnim, {
+        toValue: 2, // 轻微向下移动2px增强按压感
+        duration: 150,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  };
+
+  const handlePressOut = () => {
+    Animated.parallel([
+      Animated.spring(scaleAnim, {
+        toValue: 1,
+        tension: 200,
+        friction: 8,
+        useNativeDriver: true,
+      }),
+      Animated.timing(opacityAnim, {
+        toValue: 1,
+        duration: 200,
+        useNativeDriver: true,
+      }),
+      Animated.spring(translateYAnim, {
+        toValue: 0, // 弹回原位
+        tension: 200,
+        friction: 8,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  };
+
+  // v1.2: 卡片点击事件追踪
+  const handleCardPress = () => {
+    analytics.trackActivityEvent('press', safeActivity.id, {
+      title: safeActivity.title,
+      category: activity.category || 'unknown',
+      status: safeActivity.status,
+      attendees: safeActivity.attendees,
+      maxAttendees: safeActivity.maxAttendees,
+    });
+    onPress?.();
+  };
+
+  const handleRegisterPress = () => {
+    onRegister?.();
+  };
+
+  // 使用简单的卡片点击检测 - 不干扰滚动
+  const cardGesture = useCardPress({
+    onPress: handleCardPress,
+    onPressIn: handlePressIn,
+    onPressOut: handlePressOut,
+  }, {
+    maxMoveThreshold: 15,      // 15px 内的移动仍视为点击
+    maxTimeThreshold: 400,     // 400ms 内视为点击
+    enableHaptics: true,
+    debug: false,
+  });
+
+  // V1.1 规范: 滑动手势处理
+  const resetSwipe = () => {
+    Animated.parallel([
+      Animated.spring(translateXAnim, {
+        toValue: 0,
+        ...SWIPE_CONFIG.SPRING_CONFIG,
+        useNativeDriver: true,
+      }),
+      Animated.timing(actionOpacityAnim, {
+        toValue: 0,
+        duration: SWIPE_CONFIG.ANIMATION_DURATION,
+        useNativeDriver: true,
+      }),
+    ]).start(() => {
+      setIsSwipeActive(false);
+      setSwipeDirection(null);
+    });
+  };
+
+  // v1.2 动态样式计算 - 启用阴影优化
+  const liquidGlassConfig = getLiquidGlassConfig('card', true); // 启用阴影优化
+  const optimizedStyles = getOptimizedStyles();
+
+  // 动画样式
+  const animatedStyle = {
+    transform: [
+      { scale: scaleAnim },
+      { translateY: translateYAnim },
+      { translateX: translateXAnim },
+    ],
+    opacity: opacityAnim,
+  };
+
+  // Static styles (dynamic styles will be applied inline)
+  const staticStyles = StyleSheet.create({
+    shadowContainer: {
+      borderRadius: theme.borderRadius.lg,
+      shadowColor: '#000000',
+      shadowOffset: { width: 0, height: 4 },
+    },
+    
+    touchableContainer: {
+      borderRadius: theme.borderRadius.lg,
+      overflow: 'hidden' as const,
+      borderWidth: 1.5,
+    },
+    
+    actionContainer: {
+      flexDirection: 'row' as const,
+      justifyContent: 'space-between' as const,
+      alignItems: 'center' as const,
+      padding: theme.spacing.md,
+      borderTopWidth: 1.5,
+      borderBottomLeftRadius: theme.borderRadius.md,
+      borderBottomRightRadius: theme.borderRadius.md,
+    },
+    
+    titleText: {
+      fontSize: theme.typography.fontSize['2xl'],
+      fontWeight: theme.typography.fontWeight.bold,
+      lineHeight: 28,
+      textShadowOffset: { width: 0, height: 1 },
+      textShadowRadius: 2,
+    },
+    
+    participantText: {
+      fontSize: theme.typography.fontSize.sm,
+      fontWeight: theme.typography.fontWeight.medium,
+      marginLeft: theme.spacing.xs,
+    },
+    
+    availableText: {
+      fontSize: theme.typography.fontSize.sm,
+      fontWeight: theme.typography.fontWeight.medium,
+    },
+    
+    metaText: {
+      fontSize: theme.typography.fontSize.sm,
+      fontWeight: theme.typography.fontWeight.regular,
+      marginLeft: theme.spacing.xs,
+    },
+  });
+
+  return (
+    <View style={styles.swipeContainer}>
+      {/* 主卡片内容 */}
+      <Animated.View 
+        style={[styles.container, animatedStyle]}
+      >
+        {/* Shadow容器 - solid background用于阴影优化 */}
+        <View style={[
+          dmStyles.card.shadowContainer,
+          isPerformanceDegraded && { ...theme.shadows.none } // 性能降级时移除阴影
+        ]}>
+          <Animated.View
+            style={[
+              dmStyles.card.touchableContainer,
+              {
+                backgroundColor: liquidGlassConfig.background,
+                borderColor: liquidGlassConfig.border,
+              }
+            ]}
+            {...cardGesture.touchHandlers}
+          >
+      {/* Hero Image Section with Modern Gradient Overlay - 匹配App端240px高度 */}
+      <View style={styles.imageContainer}>
+        <UltraFastImage
+          source={{ uri: safeActivity.image }}
+          style={styles.image}
+          resizeMode="contain"
+        />
+        
+        {/* PomeloX 对比度增强渐变遮罩 - 🌙 Dark Mode适配 - 临时注释测试 */}
+        {/* <LinearGradient
+          colors={dmGradients.overlayGradient}
+          style={styles.gradientOverlay}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 0, y: 1 }}
+        > */}
+        <View style={styles.gradientOverlay}>
+          {/* Top Row - Status & Favorite */}
+          <View style={styles.topRow}>
+            <View style={[styles.statusBadge, { backgroundColor: statusConfig.color }]}>
+              <Text style={styles.statusText}>{statusConfig.text}</Text>
+            </View>
+          </View>
+
+          {/* Bottom Content */}
+          <View style={styles.overlayContent}>
+            {/* Organizer Info */}
+            {safeActivity.organizer && (
+              <View style={styles.organizerRow}>
+                {safeActivity.organizer.avatar && (
+                  <UltraFastImage 
+                    source={{ uri: safeActivity.organizer.avatar }} 
+                    style={styles.organizerAvatar} 
+                  />
+                )}
+                <Text style={styles.organizerName}>
+                  {safeActivity.organizer.name}
+                </Text>
+                {safeActivity.organizer.verified && (
+                  <Ionicons name="checkmark-circle" size={16} color={BRAND_INTERACTIONS.navigation.active.text} />
+                )}
+              </View>
+            )}
+            
+            {/* Activity Title - 🌙 Dark Mode适配 */}
+            <Text style={dmStyles.text.title} numberOfLines={2}>
+              {safeActivity.title}
+            </Text>
+
+            {/* Meta Information */}
+            <View style={styles.metaContainer}>
+              <View style={styles.metaRow}>
+                <View style={styles.metaItem}>
+                  <Ionicons name="calendar-outline" size={14} color={dmIcons.secondary} />
+                  <Text style={[
+                    staticStyles.metaText,
+                    { color: isDarkMode ? dmStyles.text.secondary.color : theme.colors.text.secondary }
+                  ]}>{formatDate(safeActivity.date)}</Text>
+                </View>
+                <View style={styles.metaItem}>
+                  <Ionicons name="time-outline" size={14} color={dmIcons.secondary} />
+                  <Text style={[
+                    staticStyles.metaText,
+                    { color: isDarkMode ? dmStyles.text.secondary.color : theme.colors.text.secondary }
+                  ]}>{safeActivity.time}</Text>
+                </View>
+              </View>
+              
+              <View style={styles.metaRow}>
+                <View style={styles.metaItem}>
+                  <Ionicons name="location-outline" size={14} color={dmIcons.secondary} />
+                  <Text style={[
+                    staticStyles.metaText,
+                    { color: isDarkMode ? dmStyles.text.secondary.color : theme.colors.text.secondary }
+                  ]} numberOfLines={1}>{safeActivity.location}</Text>
+                </View>
+              </View>
+            </View>
+          </View>
+        </View>
+        {/* </LinearGradient> */}
+      </View>
+
+      {/* Bottom Action Section - 🌙 Dark Mode适配 */}
+      <View style={[
+        staticStyles.actionContainer,
+        {
+          backgroundColor: isDarkMode ? dmStyles.card.contentSection.backgroundColor : 'rgba(255, 255, 255, 0.95)',
+          borderTopColor: isDarkMode ? 'rgba(84, 84, 88, 0.4)' : 'rgba(255, 255, 255, 0.6)',
+        }
+      ]}>
+        {/* Glass Shimmer Effect */}
+        <View style={styles.glassShimmer} />
+        {/* v1.2 Dynamic Dark Overlay for Better Contrast */}
+        <View style={[
+          styles.darkOverlay,
+          { opacity: isPerformanceDegraded ? 0 : 1 }
+        ]} />
+        <View style={styles.participantInfo}>
+          <View style={styles.participantRow}>
+            <Ionicons name="people-outline" size={18} color={dmIcons.secondary} />
+            <Text style={[
+              staticStyles.participantText,
+              { color: isDarkMode ? dmStyles.text.secondary.color : theme.colors.text.secondary }
+            ]}>
+              {safeString(safeActivity.attendees)}/{safeString(safeActivity.maxAttendees)} people
+            </Text>
+          </View>
+          
+          <Text style={[
+            staticStyles.availableText,
+            { color: isDarkMode ? dmStyles.text.tertiary.color : theme.colors.text.tertiary },
+            isAlmostFull && styles.urgentText
+          ]}>
+            {availableSpots > 0 
+              ? `${safeString(availableSpots)} spots left${isAlmostFull ? ' 🔥' : ''}`
+              : 'Full'
+            }
+          </Text>
+        </View>
+        
+        {onRegister && (
+          <View style={[
+            styles.registerButtonShadowWrapper,
+            availableSpots === 0 && styles.disabledButtonWrapper
+          ]}>
+            <LinearGradient
+              colors={availableSpots > 0 ? BRAND_GRADIENT : [theme.colors.text.disabled, theme.colors.text.tertiary]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.registerButtonGradient}
+            >
+              {/* 玻璃高光效果 */}
+              {availableSpots > 0 && <View style={styles.buttonGlassHighlight} />}
+              <TouchableOpacity 
+                onPress={handleRegisterPress}
+                disabled={availableSpots === 0}
+                style={styles.registerButtonInner}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              >
+                <Text style={[
+                  styles.registerText,
+                  availableSpots === 0 && styles.disabledText
+                ]}>
+                  {availableSpots > 0 ? 'Register' : 'Full'}
+                </Text>
+              </TouchableOpacity>
+            </LinearGradient>
+          </View>
+        )}
+      </View>
+          </Animated.View>
+        </View>
+      </Animated.View>
+    </View>
+  );
+};
+
+const styles = StyleSheet.create({
+  // V1.1 规范: 滑动操作容器
+  swipeContainer: {
+    position: 'relative',
+    width: cardWidth,
+    marginBottom: theme.spacing.lg,
+  },
+  
+  // Main Container
+  container: {
+    width: cardWidth,
+  },
+  
+  // Shadow容器 - Liquid Glass 风格卡片设计
+  shadowContainer: {
+    borderRadius: theme.borderRadius.lg,
+    backgroundColor: 'rgba(255, 255, 255, 0.85)', // 加强背景白色
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 6,
+  },
+  
+  // 基础容器样式 - 加强 Liquid Glass 效果  
+  touchableContainer: {
+    backgroundColor: 'rgba(255, 255, 255, 0.85)', // 加强背景白色
+    borderRadius: theme.borderRadius.lg, // 更大的圆角
+    // overflow: 'hidden', // 临时移除，解决图片裁剪问题
+    borderWidth: 1.5, // 添加清晰边框
+    borderColor: 'rgba(255, 255, 255, 0.8)', // 明显的白色边框
+  },
+  
+  // Image Section - 标准240px高度，contain模式完整显示
+  imageContainer: {
+    width: '100%',
+    height: 240, // 标准240px高度
+    position: 'relative',
+    backgroundColor: '#f8f9fa', // 浅灰色背景，填充未占用空间
+    justifyContent: 'flex-start', // 图片向上对齐
+    alignItems: 'center',
+  },
+  image: {
+    width: '100%',
+    height: '100%',
+  },
+  gradientOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    padding: theme.spacing.md,
+    justifyContent: 'space-between',
+  },
+  
+  // Top Row (Status & Favorite)
+  topRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+  },
+  statusBadge: {
+    paddingHorizontal: theme.spacing.sm,
+    paddingVertical: theme.spacing.xs,
+    borderRadius: 20,
+    alignSelf: 'flex-start',
+  },
+  statusText: {
+    color: theme.colors.text.inverse,
+    fontSize: theme.typography.fontSize.xs,
+    fontWeight: theme.typography.fontWeight.semibold,
+  },
+  
+  // Overlay Content
+  overlayContent: {
+    alignItems: 'flex-start',
+  },
+  organizerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: theme.spacing.xs,
+  },
+  organizerAvatar: {
+    width: 24,
+    height: 24,
+    borderRadius: theme.borderRadius.avatar,
+    marginRight: theme.spacing.xs,
+    borderWidth: 2,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+  },
+  organizerName: {
+    fontSize: theme.typography.fontSize.sm,
+    color: theme.colors.text.primary,
+    fontWeight: theme.typography.fontWeight.medium,
+    marginRight: theme.spacing.xs,
+  },
+  
+  // Title Section
+  title: {
+    fontSize: theme.typography.fontSize['2xl'],
+    fontWeight: theme.typography.fontWeight.bold,
+    color: '#FFFFFF',
+    marginBottom: theme.spacing.xs,
+    lineHeight: theme.typography.fontSize['2xl'] * theme.typography.lineHeight.tight,
+    // 增强文字描边确保可读性
+    textShadowColor: 'rgba(0, 0, 0, 0.8)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
+  },
+  
+  // Meta Information
+  metaContainer: {
+    width: '100%',
+  },
+  metaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: theme.spacing.xs / 2,
+    flexWrap: 'wrap',
+  },
+  metaItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginRight: theme.spacing.md,
+    minWidth: 0,
+    flex: 1,
+  },
+  metaText: {
+    fontSize: theme.typography.fontSize.sm,
+    color: 'rgba(255, 255, 255, 0.95)', // 恢复白色以适配深色背景
+    marginLeft: theme.spacing.xs / 2,
+    fontWeight: theme.typography.fontWeight.medium,
+    // v1.2 文字描边增强对比度
+    textShadowColor: 'rgba(0, 0, 0, 0.8)', // 深色描边
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
+  },
+  
+  // Bottom Action Section - Liquid Glass 风格背景
+  actionContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: theme.spacing.md,
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    borderTopWidth: 1.5,
+    borderTopColor: 'rgba(255, 255, 255, 0.6)',
+    // Liquid Glass 风格的圆角
+    borderBottomLeftRadius: theme.borderRadius.md,
+    borderBottomRightRadius: theme.borderRadius.md,
+  },
+  participantInfo: {
+    flex: 1,
+    marginRight: theme.spacing.sm,
+  },
+  participantRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: theme.spacing.xs / 2,
+  },
+  participantText: {
+    fontSize: theme.typography.fontSize.base,
+    fontWeight: theme.typography.fontWeight.semibold,
+    color: '#1A1A1A', // 小红书风格深灰色
+    marginLeft: theme.spacing.xs,
+    marginRight: theme.spacing.sm,
+  },
+  availableText: {
+    fontSize: theme.typography.fontSize.sm,
+    color: '#666666', // 小红书风格中灰色
+  },
+  urgentText: {
+    color: theme.colors.warning,
+    fontWeight: theme.typography.fontWeight.semibold,
+  },
+  
+  // Register Button Shadow Wrapper - 阴影优化包装器
+  registerButtonShadowWrapper: {
+    borderRadius: theme.borderRadius.button + 4,
+    ...theme.shadows.sm, // v1.2 规范: 按钮使用 sm 级别阴影
+    backgroundColor: theme.colors.background.primary, // solid background优化阴影渲染
+  },
+  disabledButtonWrapper: {
+    ...theme.shadows.none,
+    backgroundColor: theme.colors.background.primary,
+  },
+  // Register Button Gradient - LinearGradient样式
+  registerButtonGradient: {
+    borderRadius: theme.borderRadius.button + 4,
+    minWidth: 100,
+    borderWidth: 1.5,
+    borderColor: theme.liquidGlass.primaryGlass.border,
+    // 添加玻璃光泽效果
+    position: 'relative',
+    overflow: 'hidden',
+  },
+  registerButtonInner: {
+    paddingHorizontal: theme.spacing.lg,
+    paddingVertical: theme.spacing.sm,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  registerText: {
+    fontSize: theme.typography.fontSize.base,
+    fontWeight: theme.typography.fontWeight.semibold,
+    color: theme.colors.text.inverse,
+    textAlign: 'center',
+  },
+  disabledText: {
+    color: theme.colors.text.disabled,
+  },
+  
+  // 液态玻璃特效
+  glassShimmer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 1,
+    backgroundColor: theme.liquidGlass.card.shimmer,
+    opacity: 0.6,
+  },
+  
+  // v1.2 动态暗层样式
+  darkOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.1)', // v1.2 规范: 黑 @10%
+    pointerEvents: 'none',
+  },
+  
+  buttonGlassHighlight: {
+    position: 'absolute',
+    top: 1,
+    left: theme.spacing.sm,
+    right: theme.spacing.sm,
+    height: 1,
+    backgroundColor: 'rgba(255, 255, 255, 0.4)',
+    borderRadius: theme.borderRadius.button,
+  },
+});

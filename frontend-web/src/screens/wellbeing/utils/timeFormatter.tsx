@@ -91,7 +91,21 @@ export const calculateDurationMinutes = (startTime: string, endTime: string): nu
 
 // 格式化当前工作时长（实时更新）
 export const formatCurrentDuration = (checkInTime: string, currentTime: Date): string => {
-  const start = new Date(checkInTime);
+  let start: Date;
+  
+  // 处理不同时间格式，避免时区双重转换
+  if (checkInTime.includes(' ')) {
+    // "YYYY-MM-DD HH:mm:ss" 格式（本地时间）
+    const isoTime = checkInTime.replace(' ', 'T') + (checkInTime.includes('+') ? '' : '+08:00');
+    start = new Date(isoTime);
+  } else if (checkInTime.includes('T') && (checkInTime.includes('Z') || checkInTime.includes('+'))) {
+    // 标准ISO格式（已包含时区信息）- 直接解析，不要额外添加时区
+    start = new Date(checkInTime);
+  } else {
+    // 其他格式尝试直接解析
+    start = new Date(checkInTime);
+  }
+  
   const diffMinutes = Math.floor((currentTime.getTime() - start.getTime()) / (1000 * 60));
   return formatDuration(diffMinutes);
 };

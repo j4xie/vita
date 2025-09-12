@@ -17,7 +17,7 @@ interface OptimizedImageProps {
 
 /**
  * 🚀 优化的图片组件
- * 在移动端使用react-native-fast-image，在Web端使用普通Image
+ * 移动端优化图片组件，使用react-native-fast-image
  */
 export const OptimizedImage: React.FC<OptimizedImageProps> = ({
   source,
@@ -29,26 +29,6 @@ export const OptimizedImage: React.FC<OptimizedImageProps> = ({
   onError,
   ...props
 }) => {
-  // Web端使用普通Image组件
-  if (Platform.OS === 'web') {
-    return (
-      <View style={[
-        styles.container, 
-        style, 
-        { backgroundColor: fallbackColor, borderRadius }
-      ]}>
-        <Image
-          source={{ uri: source.uri }}
-          style={[StyleSheet.absoluteFill, { borderRadius }]}
-          resizeMode={resizeMode}
-          onLoad={onLoad}
-          onError={onError}
-          {...props}
-        />
-      </View>
-    );
-  }
-
   // 移动端使用FastImage
   const fastImageSource = {
     uri: source.uri || '',
