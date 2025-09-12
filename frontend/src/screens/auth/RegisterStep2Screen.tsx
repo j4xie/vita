@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useContext } from 'react';
 import {
   View,
   Text,
@@ -14,6 +14,7 @@ import {
   Keyboard,
   TouchableWithoutFeedback,
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation, useRoute, CommonActions } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
@@ -45,6 +46,9 @@ import {
   getInputPlaceholder
 } from '../../utils/textValidation';
 import { i18n } from '../../utils/i18n';
+import { UserContext } from '../../context/UserContext';
+import { login } from '../../services/authAPI';
+import LiquidSuccessModal from '../../components/modals/LiquidSuccessModal';
 
 interface RouteParams {
   step1Data: RegistrationStep1Data & { legalName: string };
@@ -59,6 +63,7 @@ export const RegisterStep2Screen: React.FC = () => {
   const navigation = useNavigation<any>();
   const route = useRoute<any>();
   const { t } = useTranslation();
+  const { login: userLogin } = useContext(UserContext);
   
   const { 
     step1Data, 
@@ -69,9 +74,18 @@ export const RegisterStep2Screen: React.FC = () => {
     detectionResult
   } = route.params as RouteParams;
 
+  const [loading, setLoading] = useState(false);
   const [organizationsLoading, setOrganizationsLoading] = useState(true);
   const [organizations, setOrganizations] = useState<OrganizationData[]>([]);
   const [organizationModalVisible, setOrganizationModalVisible] = useState(false);
+  
+  // 短信验证相关状态
+  const [countdown, setCountdown] = useState(0);
+  const [bizId, setBizId] = useState<string>('');
+  const [smsCodeSent, setSmsCodeSent] = useState(false);
+  
+  // 成功弹窗状态
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
   
   // 实时验证状态
   const [userNameChecking, setUserNameChecking] = useState(false);

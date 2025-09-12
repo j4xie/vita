@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import {
   View,
   Text,
@@ -30,9 +30,9 @@ import {
   sendSMSVerificationCode,
   registerUser
 } from '../../services/registrationAPI';
-import { useUser } from '../../context/UserContext';
+import { UserContext } from '../../context/UserContext';
 import { login } from '../../services/authAPI';
-import { LiquidSuccessModal } from '../../components/modals/LiquidSuccessModal';
+import LiquidSuccessModal from '../../components/modals/LiquidSuccessModal';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { 
   validateTextByLanguage,
@@ -80,7 +80,7 @@ export const ParentRegisterFormScreen: React.FC = () => {
   const navigation = useNavigation<any>();
   const route = useRoute<any>();
   const { t } = useTranslation();
-  const { login: userLogin } = useUser();
+  const { login: userLogin } = useContext(UserContext);
 
   const {
     registrationType = 'phone',

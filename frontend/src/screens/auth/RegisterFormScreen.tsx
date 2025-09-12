@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useContext } from 'react';
 import {
   View,
   Text,
@@ -22,11 +22,11 @@ import { useAllDarkModeStyles } from '../../hooks/useDarkModeStyles';
 import { SchoolSelector } from '../../components/common/SchoolSelector';
 import { OrganizationSelector } from '../../components/common/OrganizationSelector';
 import { pomeloXAPI } from '../../services/PomeloXAPI';
-import { useUser } from '../../context/UserContext';
+import { UserContext } from '../../context/UserContext';
 import { login } from '../../services/authAPI';
 import SchoolEmailService, { APISchoolData } from '../../services/schoolEmailService';
 import RegionDetectionService, { RegionDetectionResult } from '../../services/RegionDetectionService';
-import { LiquidSuccessModal } from '../../components/modals/LiquidSuccessModal';
+import LiquidSuccessModal from '../../components/modals/LiquidSuccessModal';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { 
   validateTextByLanguage,
@@ -62,7 +62,7 @@ export const RegisterFormScreen: React.FC = () => {
   const route = useRoute<any>();
   const { t, i18n } = useTranslation();
   const scrollRef = useRef<ScrollView>(null);
-  const { login: userLogin } = useUser();
+  const { login: userLogin } = useContext(UserContext);
   const darkModeSystem = useAllDarkModeStyles();
   const { isDarkMode, styles: dmStyles, gradients: dmGradients } = darkModeSystem;
   
