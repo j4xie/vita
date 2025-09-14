@@ -14,7 +14,7 @@ module.exports = function (api) {
           alias: {
             '@': './src',
             '@components': './src/components',
-            '@screens': './src/screens', 
+            '@screens': './src/screens',
             '@services': './src/services',
             '@utils': './src/utils',
             '@types': './src/types',
@@ -23,6 +23,16 @@ module.exports = function (api) {
           extensions: ['.ios.js', '.android.js', '.js', '.jsx', '.ts', '.tsx', '.json']
         }
       ],
+
+      // 🗜️ Bundle优化插件
+      [
+        '@babel/plugin-transform-runtime',
+        {
+          helpers: true,
+          regenerator: false,
+        },
+      ],
+
       // 🚨 保持Reanimated插件在最后 - 确保动画功能正常
       'react-native-reanimated/plugin',
     ],

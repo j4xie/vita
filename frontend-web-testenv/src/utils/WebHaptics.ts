@@ -1,4 +1,4 @@
-// Web-compatible Haptics wrapper
+// Web-compatible Haptics wrapper (无expo-haptics依赖版本)
 import { Platform } from 'react-native';
 
 // Web-compatible haptics interface
@@ -10,106 +10,50 @@ interface WebHaptics {
   success: () => void; // 成功反馈
   error: () => void; // 错误反馈
   ImpactFeedbackStyle: {
-    Light: any;
-    Medium: any;
-    Heavy: any;
+    Light: string;
+    Medium: string;
+    Heavy: string;
   };
   NotificationFeedbackType: {
-    Success: any;
-    Warning: any;
-    Error: any;
+    Success: string;
+    Warning: string;
+    Error: string;
   };
 }
 
-// Create web-compatible haptics
+// Create web-compatible haptics (纯Web端实现，无expo依赖)
 export const WebHaptics: WebHaptics = {
   impactAsync: async (style: any) => {
-    if (Platform.OS === 'web') {
-      // Web platform - no haptic feedback available
-      return Promise.resolve();
-    }
-    
-    try {
-      const Haptics = require('expo-haptics');
-      return await Haptics.impactAsync(style);
-    } catch (error) {
-      console.warn('Haptics not available:', error);
-      return Promise.resolve();
-    }
+    // Web端无触觉反馈，静默处理
+    console.debug('WebHaptics: impact feedback (web silent)');
+    return Promise.resolve();
   },
 
   impact: (style: any) => {
-    if (Platform.OS === 'web') {
-      // Web platform - no haptic feedback available
-      return;
-    }
-    
-    try {
-      const Haptics = require('expo-haptics');
-      Haptics.impactAsync(style).catch(() => {
-        // Ignore errors in fire-and-forget mode
-      });
-    } catch (error) {
-      console.warn('Haptics not available:', error);
-    }
+    // Web端无触觉反馈，静默处理
+    console.debug('WebHaptics: impact feedback (web silent)');
   },
 
   selectionAsync: async () => {
-    if (Platform.OS === 'web') {
-      return Promise.resolve();
-    }
-    
-    try {
-      const Haptics = require('expo-haptics');
-      return await Haptics.selectionAsync();
-    } catch (error) {
-      console.warn('Haptics not available:', error);
-      return Promise.resolve();
-    }
+    // Web端无触觉反馈，静默处理
+    console.debug('WebHaptics: selection feedback (web silent)');
+    return Promise.resolve();
   },
 
   notificationAsync: async (type: any) => {
-    if (Platform.OS === 'web') {
-      return Promise.resolve();
-    }
-    
-    try {
-      const Haptics = require('expo-haptics');
-      return await Haptics.notificationAsync(type);
-    } catch (error) {
-      console.warn('Haptics not available:', error);
-      return Promise.resolve();
-    }
+    // Web端无触觉反馈，静默处理
+    console.debug('WebHaptics: notification feedback (web silent)');
+    return Promise.resolve();
   },
 
   success: () => {
-    if (Platform.OS === 'web') {
-      return;
-    }
-    
-    try {
-      const Haptics = require('expo-haptics');
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {
-        // Ignore errors in fire-and-forget mode
-      });
-    } catch (error) {
-      console.warn('Haptics not available:', error);
-    }
+    // Web端无触觉反馈，静默处理
+    console.debug('WebHaptics: success feedback (web silent)');
   },
 
   error: () => {
-    if (Platform.OS === 'web') {
-      return;
-    }
-    
-    try {
-      const Haptics = require('expo-haptics');
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error).catch(() => {
-        // Ignore errors in fire-and-forget mode
-      });
-    } catch (error) {
-      console.warn('Haptics not available:', error);
-    }
+    // Web端无触觉反馈，静默处理
+    console.debug('WebHaptics: error feedback (web silent)');
   },
 
   // Constants that work across platforms

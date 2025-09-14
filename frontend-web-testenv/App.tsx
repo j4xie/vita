@@ -24,6 +24,9 @@ import { WebInputFix } from './src/utils/WebInputFix';
 // 导入地理检测服务
 import RegionDetectionService from './src/services/RegionDetectionService';
 
+// 导入Safari UI修复工具
+import { safariUIFix } from './src/utils/SafariUIFix';
+
 
 // 开发环境导入测试工具
 if (__DEV__) {
@@ -117,6 +120,11 @@ export default function App() {
         console.log('[WEB-INPUT] 初始化Web输入修复工具...');
         WebInputFix.init();
         console.log('[WEB-INPUT] ✅ Web输入修复工具启用');
+
+        // 6. 初始化Safari UI修复工具
+        console.log('[SAFARI-UI] 初始化Safari UI自动隐藏...');
+        safariUIFix.init();
+        console.log('[SAFARI-UI] ✅ Safari UI自动隐藏启用');
         
         // 5. 启动地理检测预检测（后台运行，不阻塞启动）
         console.log('[REGION] 启动地理检测预检测...');

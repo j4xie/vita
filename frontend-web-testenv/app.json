@@ -83,7 +83,14 @@
       ]
     },
     "web": {
-      "favicon": "./assets/favicon.png"
+      "favicon": "./assets/favicon.png",
+      "meta": {
+        "apple-mobile-web-app-capable": "yes",
+        "apple-mobile-web-app-status-bar-style": "default",
+        "apple-touch-fullscreen": "yes",
+        "mobile-web-app-capable": "yes",
+        "viewport": "width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no"
+      }
     },
     "plugins": [
       [
@@ -104,6 +111,29 @@
     "updates": {
       "enabled": true,
       "url": "https://u.expo.dev/ced41bbb-a08b-440d-b873-0a43814ddbba"
+    },
+    "web": {
+      "bundler": "metro",
+      "build": {
+        "babel": {
+          "include": ["node_modules/react-native"]
+        }
+      },
+      "optimization": {
+        "minify": true,
+        "tree-shake": true,
+        "exclude": [
+          "@expo/vector-icons/MaterialCommunityIcons",
+          "@expo/vector-icons/FontAwesome6",
+          "@expo/vector-icons/FontAwesome5",
+          "@expo/vector-icons/Fontisto",
+          "@expo/vector-icons/MaterialIcons",
+          "@expo/vector-icons/Foundation",
+          "@expo/vector-icons/Octicons",
+          "@expo/vector-icons/EvilIcons",
+          "@expo/vector-icons/Zocial"
+        ]
+      }
     }
   }
 }

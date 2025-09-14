@@ -196,7 +196,7 @@ export const LanguageSelectionScreen: React.FC = () => {
             {/* Logo - Shadow优化 */}
             <View style={styles.logoContainer}>
               <Image 
-                source={require('../../../assets/logos/pomelo-logo.png')}
+                source={require('../../../src/assets/logos/pomelo-logo-compressed.png')}
                 style={styles.logoImage}
                 resizeMode="contain"
               />

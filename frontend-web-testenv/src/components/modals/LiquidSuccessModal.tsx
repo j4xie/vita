@@ -12,7 +12,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { LinearGradient } from '../web/WebLinearGradient';
-import * as Haptics from 'expo-haptics';
+import { WebHaptics as Haptics } from '../../utils/WebHaptics';
 import { theme } from '../../theme';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');

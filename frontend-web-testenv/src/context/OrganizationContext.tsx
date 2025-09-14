@@ -4,15 +4,15 @@
  */
 
 import React, { createContext, useContext, useReducer, useEffect, useCallback } from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { 
-  Organization, 
-  UserOrganization, 
+import {
+  Organization,
+  UserOrganization,
   MembershipCard,
   OrganizationSwitchResult,
   OrganizationError
 } from '../types/organization';
 import { fetchOrganizationList } from '../services/registrationAPI';
+import WebStorageService from '../services/WebStorageService';
 
 // Web端存储适配器
 const AsyncStorage = new WebStorageService('local');

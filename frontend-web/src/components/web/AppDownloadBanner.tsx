@@ -50,6 +50,7 @@ export const AppDownloadBanner: React.FC<AppDownloadBannerProps> = ({ onClose })
   }, []);
 
   const handleClose = async () => {
+    console.log('🖱️ 横幅关闭按钮被点击');
     setIsClosing(true);
 
     // 记录用户关闭行为
@@ -60,6 +61,7 @@ export const AppDownloadBanner: React.FC<AppDownloadBannerProps> = ({ onClose })
     setTimeout(() => {
       setIsVisible(false);
       onClose?.();
+      console.log('✅ 横幅已关闭');
     }, 200);
   };
 
@@ -158,14 +160,19 @@ export const AppDownloadBanner: React.FC<AppDownloadBannerProps> = ({ onClose })
 
   // 正常的横幅界面
   return (
-    <View style={[styles.container, isClosing && styles.closing]}>
+    <View
+      style={[styles.container, isClosing && styles.closing]}
+      {...(Platform.OS === 'web' && {
+        className: `app-download-banner ${isClosing ? 'app-download-banner-closing' : ''}`
+      })}
+    >
       {/* Logo和文本区域 */}
       <View style={styles.content}>
         {/* 西柚Logo */}
         <View style={styles.logoContainer}>
           <View style={styles.logo}>
             <Image
-              source={require('../../assets/logos/pomelo-logo.png')}
+              source={require('../../assets/logos/pomelo-logo-compressed.png')}
               style={styles.logoImage}
               resizeMode="contain"
             />
@@ -202,8 +209,16 @@ export const AppDownloadBanner: React.FC<AppDownloadBannerProps> = ({ onClose })
           style={styles.closeButton}
           onPress={handleClose}
           activeOpacity={0.7}
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }} // 增加触摸区域
+          {...(Platform.OS === 'web' && {
+            className: 'app-download-banner-close-button',
+            onPressIn: () => {
+              // Web端额外的按下反馈
+              console.log('🖱️ 关闭按钮被按下');
+            }
+          })}
         >
-          <Ionicons name="close" size={20} color={theme.colors.text.secondary} />
+          <Ionicons name="close" size={22} color={theme.colors.text.secondary} />
         </TouchableOpacity>
       </View>
     </View>
@@ -215,7 +230,7 @@ const styles = {
     backgroundColor: '#f8f9fa',
     borderBottomWidth: 0, // 移除黑色边框线
     paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingVertical: 8, // 减少垂直padding，让banner更窄
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
@@ -224,10 +239,12 @@ const styles = {
     shadowOpacity: 0.05,
     shadowRadius: 4,
     elevation: 2,
-    zIndex: 1000,
+    zIndex: 100, // 使用较低的z-index
     ...(Platform.OS === 'web' && {
       position: 'sticky' as any,
       top: 0,
+      // 确保不阻挡下方内容的交互
+      pointerEvents: 'auto' as any,
     }),
   },
   closing: {
@@ -300,12 +317,20 @@ const styles = {
     lineHeight: 18,
   },
   closeButton: {
-    width: 32,
-    height: 32,
+    width: 44, // 增加点击区域
+    height: 44, // 增加点击区域
     alignItems: 'center' as const,
     justifyContent: 'center' as const,
-    borderRadius: 16,
+    borderRadius: 22,
     backgroundColor: 'rgba(0,0,0,0.05)',
+    // Web端特殊优化
+    ...(Platform.OS === 'web' && {
+      cursor: 'pointer',
+      userSelect: 'none' as any,
+      WebkitUserSelect: 'none' as any,
+      MozUserSelect: 'none' as any,
+      msUserSelect: 'none' as any,
+    }),
   },
   openButtonDisabled: {
     opacity: 0.6,
@@ -390,6 +415,11 @@ if (Platform.OS === 'web') {
       backdrop-filter: blur(10px);
       -webkit-backdrop-filter: blur(10px);
       background: rgba(248, 249, 250, 0.95) !important;
+      /* 确保横幅不阻挡下方内容的滚动和交互 */
+      pointer-events: auto;
+      z-index: 100 !important;
+      /* 让横幅更轻量，不占用太多空间 */
+      min-height: auto;
     }
 
     .app-download-banner:hover {
@@ -399,11 +429,47 @@ if (Platform.OS === 'web') {
     .app-download-banner-closing {
       opacity: 0 !important;
       transform: translateY(-10px) !important;
+      /* 关闭时立即释放空间 */
+      height: 0 !important;
+      padding: 0 !important;
+      margin: 0 !important;
+      overflow: hidden !important;
+    }
+
+    /* 关闭按钮样式优化 */
+    .app-download-banner-close-button {
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      pointer-events: auto !important;
+    }
+
+    .app-download-banner-close-button:hover {
+      background-color: rgba(0,0,0,0.1) !important;
+      transform: scale(1.05);
+    }
+
+    .app-download-banner-close-button:active {
+      transform: scale(0.95);
+    }
+
+    /* 确保body能够正常滚动 */
+    body {
+      overflow-y: auto !important;
+      scroll-behavior: smooth;
+    }
+
+    /* 防止横幅影响整体布局流 */
+    .app-download-banner + * {
+      /* 下方元素不被横幅遮挡 */
+      position: relative;
+      z-index: 1;
     }
 
     @media (max-width: 480px) {
       .app-download-banner {
-        padding: 8px 12px !important;
+        padding: 6px 12px !important;
       }
     }
   `;

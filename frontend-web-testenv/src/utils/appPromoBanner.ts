@@ -12,7 +12,8 @@ const AsyncStorage = new WebStorageService('local');
 // App Store链接配置
 export const APP_STORE_CONFIG = {
   APP_ID: '6751477195',
-  UNIVERSAL_LINK: 'https://www.vitaglobal.icu/app/open',
+  UNIVERSAL_LINK: 'pomeloX://open', // 使用自定义scheme避免认证问题
+  FALLBACK_UNIVERSAL_LINK: 'https://www.vitaglobal.icu/app/open',
   CUSTOM_SCHEME: 'pomeloX://',
   REGIONS: {
     CN: {
@@ -319,53 +320,41 @@ export const trackUserBehavior = async (
 };
 
 /**
- * 检测App是否已安装（通过深度链接尝试）
+ * 尝试打开App（简化版，避免认证问题）
  */
-export const detectAppInstalled = (): Promise<boolean> => {
+export const tryOpenApp = (): Promise<boolean> => {
   return new Promise((resolve) => {
-    const startTime = Date.now();
     let resolved = false;
 
-    // 设置超时时间 - 如果2.5秒内没有离开页面，说明App未安装
+    // 缩短超时时间到1.5秒
     const timeout = setTimeout(() => {
       if (!resolved) {
         resolved = true;
-        resolve(false);
+        resolve(false); // 假设App未安装，直接跳转App Store
       }
-    }, 2500);
+    }, 1500);
 
-    // 监听页面可见性变化 - 如果页面隐藏，说明App已打开
+    // 监听页面可见性变化
     const handleVisibilityChange = () => {
       if (document.hidden && !resolved) {
         resolved = true;
         clearTimeout(timeout);
-        resolve(true);
+        resolve(true); // App已打开
       }
     };
 
-    // 监听页面失焦 - 降级方案
-    const handleBlur = () => {
-      const elapsed = Date.now() - startTime;
-      if (elapsed < 2000 && !resolved) {
-        resolved = true;
-        clearTimeout(timeout);
-        resolve(true);
-      }
+    const cleanup = () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
 
     document.addEventListener('visibilitychange', handleVisibilityChange);
-    window.addEventListener('blur', handleBlur);
 
-    // 清理函数
-    const cleanup = () => {
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-      window.removeEventListener('blur', handleBlur);
-    };
-
-    // 尝试打开App
+    // 尝试多种方式打开App
     try {
+      // 优先使用自定义scheme
       window.location.href = APP_STORE_CONFIG.UNIVERSAL_LINK;
     } catch (error) {
+      console.log('🔗 自定义scheme失败，可能App未安装');
       cleanup();
       if (!resolved) {
         resolved = true;
@@ -374,8 +363,8 @@ export const detectAppInstalled = (): Promise<boolean> => {
       }
     }
 
-    // 清理监听器
-    setTimeout(cleanup, 3000);
+    // 清理
+    setTimeout(cleanup, 2000);
   });
 };
 
@@ -418,30 +407,19 @@ export const handleAppDownload = async (
       }
     }
 
-    // 2. 尝试打开App（通用链接）
-    const appInstalled = await detectAppInstalled();
+    // 2. 直接跳转到检测的App Store区域（简化方案，避免认证问题）
+    const regionConfig = APP_STORE_CONFIG.REGIONS[detectionResult.region];
+    const targetUrl = regionConfig.APP_STORE_URL;
 
-    if (appInstalled) {
-      // App已安装并已打开
-      await trackUserBehavior('app_opened_successfully', source, {
-        detectionResult,
-        openMethod: 'universal_link'
-      });
-    } else {
-      // 3. App未安装，跳转到检测的App Store区域
-      const regionConfig = APP_STORE_CONFIG.REGIONS[detectionResult.region];
-      const targetUrl = regionConfig.APP_STORE_URL;
+    console.log(`🎯 跳转到${detectionResult.region}区App Store:`, targetUrl);
 
-      console.log(`🎯 跳转到${detectionResult.region}区App Store:`, targetUrl);
+    window.location.href = targetUrl;
 
-      window.location.href = targetUrl;
-
-      await trackUserBehavior('redirected_to_app_store', source, {
-        detectionResult,
-        targetUrl,
-        appName: regionConfig.NAME
-      });
-    }
+    await trackUserBehavior('redirected_to_app_store', source, {
+      detectionResult,
+      targetUrl,
+      appName: regionConfig.NAME
+    });
 
   } catch (error) {
     console.error('❌ App下载处理失败:', error);

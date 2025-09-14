@@ -50,6 +50,7 @@ export const AppDownloadBanner: React.FC<AppDownloadBannerProps> = ({ onClose })
   }, []);
 
   const handleClose = async () => {
+    console.log('🖱️ 横幅关闭按钮被点击');
     setIsClosing(true);
 
     // 记录用户关闭行为
@@ -60,6 +61,7 @@ export const AppDownloadBanner: React.FC<AppDownloadBannerProps> = ({ onClose })
     setTimeout(() => {
       setIsVisible(false);
       onClose?.();
+      console.log('✅ 横幅已关闭');
     }, 200);
   };
 
@@ -158,14 +160,19 @@ export const AppDownloadBanner: React.FC<AppDownloadBannerProps> = ({ onClose })
 
   // 正常的横幅界面
   return (
-    <View style={[styles.container, isClosing && styles.closing]}>
+    <View
+      style={[styles.container, isClosing && styles.closing]}
+      {...(Platform.OS === 'web' && {
+        className: 'app-download-banner'
+      })}
+    >
       {/* Logo和文本区域 */}
       <View style={styles.content}>
         {/* 西柚Logo */}
         <View style={styles.logoContainer}>
           <View style={styles.logo}>
             <Image
-              source={require('../../assets/logos/pomelo-logo.png')}
+              source={require('../../assets/logos/pomelo-logo-compressed.png')}
               style={styles.logoImage}
               resizeMode="contain"
             />
@@ -215,7 +222,7 @@ const styles = {
     backgroundColor: '#f8f9fa',
     borderBottomWidth: 0, // 移除黑色边框线
     paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingVertical: 8, // 减少垂直padding，让banner更窄
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
@@ -224,7 +231,7 @@ const styles = {
     shadowOpacity: 0.05,
     shadowRadius: 4,
     elevation: 2,
-    zIndex: 1000,
+    zIndex: 10, // 进一步降低z-index，避免阻挡滚动
     ...(Platform.OS === 'web' && {
       position: 'sticky' as any,
       top: 0,
@@ -381,29 +388,51 @@ const styles = {
   },
 };
 
-// Web端CSS增强
+// Web端CSS增强 - 专注解决滚动问题
 if (Platform.OS === 'web') {
   const style = document.createElement('style');
   style.textContent = `
+    /* 确保页面在有横幅时能正常滚动 */
+    html, body {
+      overflow: visible !important;
+      overflow-y: auto !important;
+      height: auto !important;
+      scroll-behavior: smooth;
+      /* 关键：允许触摸滚动 */
+      touch-action: manipulation;
+      /* 防止滚动被阻挡 */
+      overscroll-behavior: contain;
+    }
+
+    /* 确保主容器滚动正常 */
+    #root {
+      overflow: visible !important;
+      overflow-y: auto !important;
+      height: 100vh !important;
+      /* 关键：允许触摸滚动 */
+      touch-action: manipulation;
+      position: relative;
+    }
+
+    /* 横幅样式简化 */
     .app-download-banner {
-      transition: opacity 0.2s ease-out, transform 0.2s ease-out;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background: rgba(248, 249, 250, 0.95);
       backdrop-filter: blur(10px);
       -webkit-backdrop-filter: blur(10px);
-      background: rgba(248, 249, 250, 0.95) !important;
+      /* 关键：只对横幅内的元素响应事件 */
+      pointer-events: auto;
     }
 
     .app-download-banner:hover {
-      background: rgba(248, 249, 250, 1) !important;
-    }
-
-    .app-download-banner-closing {
-      opacity: 0 !important;
-      transform: translateY(-10px) !important;
+      background: rgba(248, 249, 250, 1);
     }
 
     @media (max-width: 480px) {
       .app-download-banner {
-        padding: 8px 12px !important;
+        padding: 6px 12px !important;
       }
     }
   `;

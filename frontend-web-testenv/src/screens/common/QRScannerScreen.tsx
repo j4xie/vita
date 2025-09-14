@@ -1349,82 +1349,43 @@ export const QRScannerScreen: React.FC = () => {
     
     try {
       console.log('🔍 开始验证邀请码:', trimmedCode);
-      
+      setIsProcessing(true); // 显示加载状态
+
       // 先进行格式验证
       const formatValidation = await validateInvitationCode(trimmedCode);
       if (!formatValidation.valid) {
         console.log('❌ 邀请码格式错误:', formatValidation.message);
         setError('邀请码错误');
+        setIsProcessing(false);
         return; // 不关闭Sheet，让用户看到错误并重新输入
       }
-      
-      // 格式正确，使用临时注册数据验证邀请码有效性
-      const tempTestData = {
-        userName: 'temptest' + Date.now(),
-        legalName: '临时验证用户',
-        nickName: 'TempTest',
-        password: 'temp123',
-        phonenumber: `199${Date.now().toString().slice(-8)}`, // 更唯一的手机号
-        email: `temp${Date.now()}@test.edu`,
-        sex: '0',
-        deptId: '203',
-        orgId: '1',
-        invCode: trimmedCode,
-        areaCode: 'zh'
-      };
-      
-      // 构建验证请求
-      const formData = new URLSearchParams();
-      Object.entries(tempTestData).forEach(([key, value]) => {
-        formData.append(key, value.toString());
-      });
-      
-      console.log('🔍 使用临时数据验证邀请码有效性...');
-      const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'https://www.vitaglobal.icu';
-      const response = await fetch(`${apiUrl}/app/user/add`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-          'Accept': 'application/json',
-        },
-        body: formData.toString(),
-      });
-      
-      const result = await response.json();
-      console.log('🌐 邀请码验证结果:', { code: result.code, msg: result.msg });
-      
-      // 分析验证结果
-      if (result.code === 200) {
-        console.log('✅ 邀请码验证通过，跳转注册页面');
-        // 验证成功，关闭Sheet并跳转
+
+      // 🔥 改进版：临时验证 + 自动清理
+      console.log('✅ 邀请码格式验证通过，开始真实性验证...');
+
+      // 使用改进版的验证API (创建临时用户验证后自动清理)
+      const validationResult = await pomeloXAPI.validateInvitationCodeWithCleanup(trimmedCode);
+
+      if (validationResult.valid) {
+        console.log('🎉 邀请码验证通过，跳转注册页面');
+        setIsProcessing(false);
         setShowReferralInputSheet(false);
-        navigation.navigate('IdentityChoice', { 
+        navigation.navigate('IdentityChoice', {
           referralCode: trimmedCode,
           hasReferralCode: true,
           registrationType: 'invitation'
         });
-      } else if (result.msg?.includes('手机号码已存在')) {
-        console.log('⚠️ 手机号重复，但邀请码格式正确，允许跳转');
-        // 手机号重复不影响邀请码验证，允许跳转
-        setShowReferralInputSheet(false);
-        navigation.navigate('IdentityChoice', { 
-          referralCode: trimmedCode,
-          hasReferralCode: true,
-          registrationType: 'invitation'
-        });
-      } else if (result.msg?.includes('邀请码失效') || result.msg?.includes('邀请码')) {
-        console.log('❌ 邀请码验证失败:', result.msg);
-        setError('邀请码错误');
-        return; // 保持Sheet打开，显示错误
       } else {
-        console.log('❓ 其他验证错误:', result.msg);
-        setError('邀请码错误');
-        return; // 保持Sheet打开，显示错误
+        console.log('❌ 邀请码真实性验证失败:', validationResult.message);
+        setError(validationResult.message || '邀请码无效');
+        setIsProcessing(false);
+        return; // 保持Sheet打开，让用户重新输入
       }
-      
+
     } catch (error) {
       console.error('🚨 邀请码验证出错:', error);
-      setError('邀请码错误');
+      setError('验证过程出错，请重试');
+      setIsProcessing(false);
       return; // 保持Sheet打开，显示错误
     }
   };

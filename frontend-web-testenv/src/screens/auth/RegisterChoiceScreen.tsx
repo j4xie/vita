@@ -131,7 +131,7 @@ export const RegisterChoiceScreen: React.FC = () => {
         <View style={styles.logoSection}>
           <View style={styles.logoContainer}>
             <Image 
-              source={require('../../../assets/logos/pomelo-logo.png')}
+              source={require('../../../src/assets/logos/pomelo-logo-compressed.png')}
               style={styles.logoImage}
               resizeMode="contain"
             />

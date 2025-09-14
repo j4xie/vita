@@ -362,7 +362,7 @@ export const LoginScreen: React.FC = () => {
                 {/* Shadow容器 - 使用solid background优化阴影渲染 */}
                 <View style={styles.logoContainer}>
                   <Image 
-                    source={require('../../../assets/logos/pomelo-logo.png')}
+                    source={require('../../../src/assets/logos/pomelo-logo-compressed.png')}
                     style={styles.logoImage}
                     resizeMode="contain"
                   />

@@ -349,7 +349,7 @@ const styles = StyleSheet.create({
   categoryBarContainer: {
     paddingHorizontal: 8, // 减少容器边距，让CategoryBar更宽
     paddingTop: 12,
-    paddingBottom: 16,
+    paddingBottom: 2, // 最小化底部间距，让category bar和活动卡片几乎贴合
     backgroundColor: '#F9FAFB',
   },
   loadingContainer: {

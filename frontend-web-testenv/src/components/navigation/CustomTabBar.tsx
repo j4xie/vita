@@ -40,15 +40,16 @@ import { useFilter } from '../../context/FilterContext';
 import { Glass } from '../../ui/glass/GlassTheme';
 import { shouldShowTabBar } from '../../config/tabBarConfig';
 import { useTabBarPositionFix } from '../../hooks/useTabBarPositionFix';
+import { safariUIFix } from '../../utils/SafariUIFix';
 
 interface CustomTabBarProps extends BottomTabBarProps {
   // 可以添加额外的自定义属性
 }
 
-export const CustomTabBar: React.FC<CustomTabBarProps> = ({ 
-  state, 
-  descriptors, 
-  navigation 
+export const CustomTabBar: React.FC<CustomTabBarProps> = ({
+  state,
+  descriptors,
+  navigation
 }) => {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
@@ -126,6 +127,7 @@ export const CustomTabBar: React.FC<CustomTabBarProps> = ({
     AccessibilityInfo.isReduceMotionEnabled().then(setIsReduceMotionEnabled);
   }, []);
 
+
   // 🔧 Web端视窗变化监听和TabBar位置修复
   useEffect(() => {
     if (Platform.OS !== 'web') return;
@@ -145,9 +147,10 @@ export const CustomTabBar: React.FC<CustomTabBarProps> = ({
         
         // 强制重新计算TabBar位置
         // 通过微小的动画触发重新布局
+        const webOffset = 0;
         tabBarTranslateY.value = withSequence(
-          withTiming(1, { duration: 50 }),
-          withTiming(0, { duration: 50 })
+          withTiming(webOffset + 1, { duration: 50 }),
+          withTiming(webOffset, { duration: 50 })
         );
       }, 300);
     };
@@ -505,9 +508,10 @@ export const CustomTabBar: React.FC<CustomTabBarProps> = ({
       }
       
       // 双击特殊动画 - 更强烈的震动
+      const webOffset = Platform.OS === 'web' ? 8 : 0;
       tabBarTranslateY.value = withSequence(
-        withTiming(-3, { duration: 60, easing: Easing.out(Easing.quad) }),
-        withSpring(0, { damping: 10, stiffness: 500 })
+        withTiming(webOffset - 3, { duration: 60, easing: Easing.out(Easing.quad) }),
+        withSpring(webOffset, { damping: 10, stiffness: 500 })
       );
       
       return; // 提前返回，不执行后续逻辑
@@ -528,15 +532,21 @@ export const CustomTabBar: React.FC<CustomTabBarProps> = ({
     
     // 全局TabBar轻微震动效果
     if (!isFocused) {
+      const webOffset = Platform.OS === 'web' ? 8 : 0;
       tabBarTranslateY.value = withSequence(
-        withTiming(-1, { duration: 80, easing: Easing.out(Easing.quad) }),
-        withSpring(0, { damping: 15, stiffness: 300 })
+        withTiming(webOffset - 1, { duration: 80, easing: Easing.out(Easing.quad) }),
+        withSpring(webOffset, { damping: 15, stiffness: 300 })
       );
     }
     
     // iOS Haptic反馈
     if (Platform.OS === 'ios') {
       Haptics.selectionAsync();
+    }
+
+    // Web端Safari UI隐藏（用户手势触发）
+    if (Platform.OS === 'web') {
+      safariUIFix.forceHideSafariUI();
     }
     
     const event = navigation.emit({
@@ -561,7 +571,8 @@ export const CustomTabBar: React.FC<CustomTabBarProps> = ({
 
   // Filter 状态变化时控制导航栏显示/隐藏
   useEffect(() => {
-    const targetTranslateY = isFilterOpen ? 120 : 0;
+    const webOffset = 0; // 移除Web端偏移值
+    const targetTranslateY = isFilterOpen ? 120 : webOffset;
     tabBarTranslateY.value = withTiming(targetTranslateY, {
       duration: isReduceMotionEnabled ? 120 : 200,
     });
@@ -595,7 +606,7 @@ export const CustomTabBar: React.FC<CustomTabBarProps> = ({
       // 🛡️ 只有在应该显示TabBar的页面才恢复TabBar
       if (shouldShowTabBar(currentRouteName)) {
         console.log('⌨️ [KEYBOARD] 恢复TabBar');
-        tabBarTranslateY.value = withTiming(0, { duration: 250 });
+        tabBarTranslateY.value = withTiming(0, { duration: 250 }); // 恢复到默认位置
       } else {
         console.log('⌨️ [KEYBOARD] 页面应隐藏TabBar，保持隐藏状态');
       }
@@ -741,15 +752,22 @@ export const CustomTabBar: React.FC<CustomTabBarProps> = ({
   }
 
   return (
-    <Animated.View 
+    <Animated.View
       testID="custom-tab-bar"
       style={[
-        styles.container, 
+        styles.container,
         // 🔧 Web端使用fixed定位，移动端使用SafeArea
-        Platform.OS === 'web' ? {} : { bottom: insets.bottom - 7 },
+        Platform.OS === 'web' ? {
+          bottom: -35,
+          position: 'fixed',
+          zIndex: 10000,
+        } : { bottom: insets.bottom - 7 },
         animatedTabBarStyle,
         isFilterOpen && styles.hidden
       ]}
+      {...(Platform.OS === 'web' && {
+        className: 'custom-tab-bar-web'
+      })}
     >
       {/* Liquid Glass 容器 */}
       <View style={styles.liquidGlassContainer}>
@@ -964,6 +982,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     left: 16,
     right: 16,
+    bottom: 20, // 默认底部位置，Web端会被覆盖
     height: 66,
     zIndex: 999,
     backgroundColor: 'transparent', // 恢复透明背景保持玻璃效果
@@ -974,8 +993,8 @@ const styles = StyleSheet.create({
     elevation: 4, // Reduced from 8 to 4
     ...(Platform.OS === 'web' && {
       // 🔧 Web端TabBar位置修复
-      position: 'fixed', // 改为fixed确保始终固定在视窗底部
-      bottom: 'max(20px, env(safe-area-inset-bottom))', // 使用CSS calc确保最小间距20px
+      position: 'absolute', // 先尝试absolute定位
+      bottom: -10, // 负值让整个导航栏容器向下移动到视窗外一些
       left: 16,
       right: 16,
       width: 'auto',
@@ -1231,5 +1250,18 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
 });
+
+// 添加强制定位的CSS
+if (Platform.OS === 'web') {
+  const style = document.createElement('style');
+  style.textContent = `
+    [testid="custom-tab-bar"] {
+      position: fixed !important;
+      bottom: -35px !important;
+      z-index: 10000 !important;
+    }
+  `;
+  document.head.appendChild(style);
+}
 
 export default CustomTabBar;

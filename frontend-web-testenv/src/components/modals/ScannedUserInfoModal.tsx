@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
-import * as Haptics from 'expo-haptics';
+import { WebHaptics as Haptics } from '../../utils/WebHaptics';
 
 import { theme } from '../../theme';
 import { useTheme } from '../../context/ThemeContext';
