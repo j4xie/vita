@@ -10,7 +10,7 @@ import {
   Keyboard,
   Alert,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons } from '../../../../utils/LightweightIcons';
 import { useTranslation } from 'react-i18next';
 import { WebHaptics as Haptics } from '../../utils/WebHaptics';
 

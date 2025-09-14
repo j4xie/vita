@@ -4,7 +4,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { getFocusedRouteNameFromRoute } from '@react-navigation/native';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons } from '../../utils/LightweightIcons';
 import { useTranslation } from 'react-i18next';
 import WebStorageService from '../services/WebStorageService';
 import { pomeloXAPI } from '../services/PomeloXAPI';

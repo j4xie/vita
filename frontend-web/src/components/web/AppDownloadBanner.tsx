@@ -172,7 +172,7 @@ export const AppDownloadBanner: React.FC<AppDownloadBannerProps> = ({ onClose })
         <View style={styles.logoContainer}>
           <View style={styles.logo}>
             <Image
-              source={require('../../assets/logos/pomelo-logo-compressed.png')}
+              source={require('../../assets/logos/pomelo-logo.png')}
               style={styles.logoImage}
               resizeMode="contain"
             />

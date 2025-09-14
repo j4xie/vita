@@ -28,10 +28,15 @@ export const NativeQRScanner: React.FC<NativeQRScannerProps> = ({ onScan, style 
       try {
         console.log('🚀 NativeQRScanner: 初始化摄像头');
         setCameraStatus('initializing');
-        
+
+        // 检查HTTPS要求
+        if (window.location.protocol !== 'https:' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+          throw new Error('摄像头功能需要在HTTPS环境下运行。请使用HTTPS访问或在localhost下测试。');
+        }
+
         // 检查浏览器兼容性
         if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-          throw new Error('当前浏览器不支持摄像头功能');
+          throw new Error('当前浏览器不支持摄像头功能。请使用Chrome、Safari或Firefox等现代浏览器。');
         }
 
         // 首先检查摄像头权限状态
@@ -181,22 +186,63 @@ export const NativeQRScanner: React.FC<NativeQRScannerProps> = ({ onScan, style 
       scanIntervalRef.current = setInterval(scan, 100);
     };
 
-    // 加载jsQR库并初始化
+    // 加载jsQR库并初始化 - 增强版本
     const loadLibraryAndInit = async () => {
       if (!(window as any).jsQR) {
         console.log('📚 NativeQRScanner: 加载jsQR库');
-        await new Promise<void>((resolve, reject) => {
-          const script = document.createElement('script');
-          script.src = 'https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js';
-          script.onload = () => {
-            console.log('✅ NativeQRScanner: jsQR库加载成功');
-            resolve();
-          };
-          script.onerror = () => reject(new Error('Failed to load jsQR'));
-          document.head.appendChild(script);
-        });
+
+        // 尝试多个CDN源
+        const cdnUrls = [
+          'https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js',
+          'https://unpkg.com/jsqr@1.4.0/dist/jsQR.js',
+          'https://cdn.skypack.dev/jsqr'
+        ];
+
+        let loaded = false;
+
+        for (const url of cdnUrls) {
+          if (loaded) break;
+
+          try {
+            console.log(`🔗 尝试加载: ${url}`);
+            await new Promise<void>((resolve, reject) => {
+              const script = document.createElement('script');
+              script.src = url;
+              script.timeout = 5000;
+
+              const timeout = setTimeout(() => {
+                reject(new Error('CDN加载超时'));
+              }, 5000);
+
+              script.onload = () => {
+                clearTimeout(timeout);
+                if ((window as any).jsQR) {
+                  console.log(`✅ jsQR库从 ${url} 加载成功`);
+                  loaded = true;
+                  resolve();
+                } else {
+                  reject(new Error('jsQR对象未定义'));
+                }
+              };
+
+              script.onerror = () => {
+                clearTimeout(timeout);
+                reject(new Error(`从 ${url} 加载失败`));
+              };
+
+              document.head.appendChild(script);
+            });
+          } catch (error) {
+            console.warn(`⚠️ 从 ${url} 加载jsQR失败:`, error);
+            continue;
+          }
+        }
+
+        if (!loaded) {
+          throw new Error('无法加载QR码解析库。请检查网络连接或尝试刷新页面。');
+        }
       }
-      
+
       await initCamera();
     };
 
@@ -275,7 +321,7 @@ export const NativeQRScanner: React.FC<NativeQRScannerProps> = ({ onScan, style 
           return {
             icon: 'camera-off' as const,
             title: '摄像头权限被拒绝',
-            message: '请点击地址栏左侧的摄像头图标，选择"允许"来启用权限',
+            message: '请点击地址栏左侧的摄像头图标，选择"允许"，然后刷新页面',
             showRetry: true,
             color: '#EF4444'
           };
@@ -283,7 +329,7 @@ export const NativeQRScanner: React.FC<NativeQRScannerProps> = ({ onScan, style 
           return {
             icon: 'warning' as const,
             title: '摄像头启动失败',
-            message: errorMessage || '请检查摄像头设备和权限设置',
+            message: errorMessage || '请检查摄像头设备和权限设置。如果问题持续，请尝试使用HTTPS访问。',
             showRetry: true,
             color: '#EF4444'
           };
@@ -314,15 +360,33 @@ export const NativeQRScanner: React.FC<NativeQRScannerProps> = ({ onScan, style 
               <Text style={styles.retryButtonText}>重试</Text>
             </TouchableOpacity>
           )}
-          {cameraStatus === 'denied' && (
-            <TouchableOpacity 
+          {(cameraStatus === 'denied' || cameraStatus === 'error') && (
+            <TouchableOpacity
               style={styles.helpButton}
               onPress={() => {
-                window.open('https://support.google.com/chrome/answer/2693767', '_blank');
+                const helpUrl = cameraStatus === 'denied'
+                  ? 'https://support.google.com/chrome/answer/2693767'
+                  : 'https://support.google.com/chrome/answer/2693767';
+                window.open(helpUrl, '_blank');
               }}
             >
               <Ionicons name="help-circle-outline" size={20} color="#6B7280" />
-              <Text style={styles.helpButtonText}>权限设置帮助</Text>
+              <Text style={styles.helpButtonText}>
+                {cameraStatus === 'denied' ? '权限设置帮助' : '故障排除帮助'}
+              </Text>
+            </TouchableOpacity>
+          )}
+
+          {cameraStatus === 'error' && errorMessage.includes('HTTPS') && (
+            <TouchableOpacity
+              style={styles.httpsButton}
+              onPress={() => {
+                const httpsUrl = window.location.href.replace('http://', 'https://');
+                window.location.href = httpsUrl;
+              }}
+            >
+              <Ionicons name="shield-checkmark" size={20} color="#059669" />
+              <Text style={styles.httpsButtonText}>切换到HTTPS</Text>
             </TouchableOpacity>
           )}
         </View>
@@ -420,6 +484,21 @@ const styles = StyleSheet.create({
   helpButtonText: {
     color: '#6B7280',
     fontSize: 14,
+    marginLeft: 6,
+  },
+  httpsButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    backgroundColor: '#D1FAE5',
+    borderRadius: 8,
+    marginTop: 8,
+  },
+  httpsButtonText: {
+    color: '#059669',
+    fontSize: 14,
+    fontWeight: '600',
     marginLeft: 6,
   },
 });

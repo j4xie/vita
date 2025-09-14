@@ -28,4 +28,4 @@ export const OptimizedIcons = {
 
 // 使用说明：
 // 在组件中使用 import { Ionicons } from './utils/iconOptimization'
-// 而不是 import { Ionicons } from '@expo/vector-icons'
+// 而不是 import { Ionicons } from '../../utils/LightweightIcons';

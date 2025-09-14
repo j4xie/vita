@@ -9,7 +9,7 @@ import {
   Modal,
   Dimensions,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons } from '../../../../utils/LightweightIcons';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { WebHaptics as Haptics } from '../../utils/WebHaptics';
