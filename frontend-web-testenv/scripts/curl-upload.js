@@ -12,22 +12,22 @@ async function curlUpload() {
         const config = new BaotaConfig();
         const signature = config.generateSignature();
 
-        const prodJSPath = '/Users/jietaoxie/pomeloX/frontend-web/dist/_expo/static/js/web/index-feb84fe8a97c3bfe8682c1f0de09e0ad.js';
-        const fileName = 'index-feb84fe8a97c3bfe8682c1f0de09e0ad.js';
+        const testJSPath = '/Users/jietaoxie/pomeloX/frontend-web-testenv/dist/_expo/static/js/web/index-9fab7c3436167887a4f6cd7e236d6764.js';
+        const fileName = 'index-9fab7c3436167887a4f6cd7e236d6764.js';
 
         console.log(`文件: ${fileName}`);
-        console.log(`大小: ${(fs.statSync(prodJSPath).size/1024/1024).toFixed(2)}MB`);
+        console.log(`大小: ${(fs.statSync(testJSPath).size/1024/1024).toFixed(2)}MB`);
 
-        // 构建curl命令
+        // 构建curl命令 - 上传到测试环境
         const curlCommand = `curl -k -X POST \\
             "https://106.14.165.234:8888/files?action=upload" \\
             -F "request_time=${signature.request_time}" \\
             -F "request_token=${signature.request_token}" \\
-            -F "f_path=/www/wwwroot/project/h5/_expo/static/js/web" \\
+            -F "f_path=/www/wwwroot/project/test-h5/_expo/static/js/web" \\
             -F "f_name=${fileName}" \\
-            -F "f_size=$(stat -f%z '${prodJSPath}')" \\
+            -F "f_size=$(stat -f%z '${testJSPath}')" \\
             -F "f_start=0" \\
-            -F "blob=@${prodJSPath}"`;
+            -F "blob=@${testJSPath}"`;
 
         console.log('\n🚀 执行curl上传...');
         console.log('命令预览:', curlCommand.substring(0, 100) + '...');
@@ -46,7 +46,7 @@ async function curlUpload() {
             const api = new BaotaAPI(config2);
 
             const verifyResult = await api.request('/files?action=GetDir', {
-                path: '/www/wwwroot/project/h5/_expo/static/js/web'
+                path: '/www/wwwroot/project/test-h5/_expo/static/js/web'
             });
 
             const files = (verifyResult.FILES || []).map(f => f.split(';')[0]);

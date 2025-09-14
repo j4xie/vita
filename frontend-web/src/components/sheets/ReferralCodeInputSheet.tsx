@@ -60,14 +60,14 @@ export const ReferralCodeInputSheet: React.FC<ReferralCodeInputSheetProps> = ({
     const trimmedCode = inputCode.trim();
     
     // 支持两种格式：
-    // 1. VG_REF_XXXXXXXX
-    // 2. 直接的8位码 XXXXXXXX
+    // 1. VG_REF_XXXXXXXX (6-16位)
+    // 2. 直接的6-16位码
     if (trimmedCode.startsWith('VG_REF_')) {
       const extractedCode = trimmedCode.replace('VG_REF_', '');
-      return /^[A-Z0-9]{8}$/.test(extractedCode);
+      return /^[A-Z0-9]{6,16}$/.test(extractedCode);
     }
-    
-    return /^[A-Z0-9]{8}$/.test(trimmedCode);
+
+    return /^[A-Z0-9]{6,16}$/.test(trimmedCode);
   };
 
   // 处理输入变化
@@ -92,7 +92,7 @@ export const ReferralCodeInputSheet: React.FC<ReferralCodeInputSheetProps> = ({
     }
     
     if (!validateReferralCode(trimmedCode)) {
-      setError(t('qr.scanning.error.invalid_format', '推荐码格式不正确（8位字母数字组合）'));
+      setError(t('qr.scanning.error.invalid_format', '推荐码格式不正确（6-16位字母数字组合）'));
       return;
     }
     
@@ -178,7 +178,7 @@ export const ReferralCodeInputSheet: React.FC<ReferralCodeInputSheetProps> = ({
                   placeholderTextColor={theme.colors.text.disabled}
                   autoCapitalize="characters"
                   autoCorrect={false}
-                  maxLength={16}
+                  maxLength={24}
                   returnKeyType="done"
                   onSubmitEditing={handleSubmit}
                   autoFocus={false}
@@ -200,7 +200,7 @@ export const ReferralCodeInputSheet: React.FC<ReferralCodeInputSheetProps> = ({
                 </View>
               ) : (
                 <Text style={styles.hintText}>
-                  {t('qr.scanning.format_hint', '8 characters (letters and numbers)')}
+                  {t('qr.scanning.format_hint', '6-16位字母数字组合')}
                 </Text>
               )}
             </View>

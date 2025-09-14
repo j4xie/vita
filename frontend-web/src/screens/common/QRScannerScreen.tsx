@@ -267,8 +267,8 @@ export const QRScannerScreen: React.FC = () => {
     
     if (code.startsWith('VG_REF_')) {
       referralCode = code.replace('VG_REF_', '');
-    } else if (/^[A-Z0-9]{8}$/.test(code)) {
-      // 直接的8位推荐码，如 2G7KKG49
+    } else if (/^[A-Z0-9]{6,16}$/.test(code)) {
+      // 直接的6-16位推荐码，如 2G7KKG49
       referralCode = code;
     }
     
@@ -717,7 +717,7 @@ export const QRScannerScreen: React.FC = () => {
     }
     
     // 推荐码格式
-    if (data.startsWith('VG_REF_') || /^[A-Z0-9]{8}$/.test(data)) {
+    if (data.startsWith('VG_REF_') || /^[A-Z0-9]{6,16}$/.test(data)) {
       return { type: 'referral', confidence: 'high', format: data.startsWith('VG_REF_') ? 'VG_REF_' : 'direct' };
     }
     

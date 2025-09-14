@@ -91,8 +91,8 @@ export const AppDownloadFloatingButton: React.FC<AppDownloadFloatingButtonProps>
   }
 
   // 计算底部位置 - 适配iOS Safari地址栏变化，并确保在TabBar上方
-  const TAB_BAR_HEIGHT = 90; // TabBar高度
-  const SAFE_MARGIN = 16; // 安全边距
+  const TAB_BAR_HEIGHT = 82; // 减少TabBar高度计算，适应导航栏位置下移
+  const SAFE_MARGIN = 12; // 增加安全边距，让按钮不要太紧凑
   const bottomOffset = Math.max(TAB_BAR_HEIGHT + SAFE_MARGIN, window.innerHeight - viewportHeight + TAB_BAR_HEIGHT + SAFE_MARGIN);
 
   return (
@@ -115,7 +115,7 @@ export const AppDownloadFloatingButton: React.FC<AppDownloadFloatingButtonProps>
             <Text style={styles.logoText}>⏳</Text>
           ) : (
             <Image
-              source={require('../../assets/logos/pomelo-logo.png')}
+              source={require('../../assets/logos/pomelo-logo-compressed.png')}
               style={styles.logoImage}
               resizeMode="contain"
             />
@@ -254,8 +254,8 @@ if (Platform.OS === 'web') {
     /* iOS Safari特殊处理 */
     @supports (-webkit-appearance: none) {
       .app-floating-button {
-        /* 在iOS Safari中确保不被底部工具栏覆盖 */
-        bottom: max(16px, env(safe-area-inset-bottom, 16px)) !important;
+        /* 在iOS Safari中确保不被底部工具栏覆盖，保持适当间距 */
+        bottom: max(12px, env(safe-area-inset-bottom, 12px)) !important;
       }
     }
 
