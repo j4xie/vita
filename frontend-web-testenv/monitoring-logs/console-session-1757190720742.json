@@ -1,0 +1,20 @@
+{
+  "sessionId": "session-1757190720742",
+  "startTime": "2025-09-06T20:32:00.742Z",
+  "messages": [
+    {
+      "timestamp": "2025-09-06T20:32:00.942Z",
+      "type": "warning",
+      "text": "crbug/1173575, non-JS module files deprecated.",
+      "url": "file:///",
+      "lineNumber": 231
+    }
+  ],
+  "stats": {
+    "totalMessages": 1,
+    "errorCount": 0,
+    "warningCount": 0,
+    "infoCount": 0,
+    "logCount": 0
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "sessionId": "session-1757190705749",
+  "startTime": "2025-09-06T20:31:45.749Z",
+  "messages": [
+    {
+      "timestamp": "2025-09-06T20:31:47.305Z",
+      "type": "error",
+      "text": "Request Failed: file:///test-simple.html - net::ERR_FILE_NOT_FOUND",
+      "url": "file:///test-simple.html"
+    }
+  ],
+  "stats": {
+    "totalMessages": 1,
+    "errorCount": 1,
+    "warningCount": 0,
+    "infoCount": 0,
+    "logCount": 0
+  }
+}

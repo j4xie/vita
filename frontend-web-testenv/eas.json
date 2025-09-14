@@ -1,0 +1,55 @@
+{
+  "cli": {
+    "version": ">= 7.8.4",
+    "appVersionSource": "local"
+  },
+  "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal",
+      "channel": "development",
+      "cache": {
+        "disabled": false,
+        "cacheDefaultPaths": true,
+        "customPaths": ["node_modules"]
+      }
+    },
+    "preview": {
+      "distribution": "internal", 
+      "channel": "preview",
+      "cache": {
+        "disabled": false,
+        "cacheDefaultPaths": true,
+        "customPaths": ["node_modules"]
+      },
+      "ios": {
+        "simulator": false,
+        "buildConfiguration": "Release"
+      }
+    },
+    "production": {
+      "distribution": "store",
+      "channel": "production",
+      "cache": {
+        "disabled": false,
+        "cacheDefaultPaths": true,
+        "customPaths": ["node_modules", "ios/Pods"]
+      },
+      "ios": {
+        "simulator": false,
+        "buildConfiguration": "Release",
+        "scheme": "PomeloX",
+        "enterpriseProvisioning": "universal"
+      },
+    }
+  },
+  "submit": {
+    "production": {
+      "ios": {
+        "appleId": "dev@americanpromotioncompany.com",
+        "ascAppId": "6751477195",
+        "appleTeamId": "5RYR7K29A7"
+      }
+    }
+  }
+}

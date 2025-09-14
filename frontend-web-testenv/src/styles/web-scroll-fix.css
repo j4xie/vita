@@ -1,0 +1,93 @@
+/* Web端滚动修复 - 彻底解决方案 */
+
+/* 全局页面滚动修复 */
+html, body {
+  margin: 0 !important;
+  padding: 0 !important;
+  /* 🚨 关键：移除固定高度限制，允许页面自然滚动 */
+  min-height: 100vh !important;
+  height: auto !important;
+  overflow: visible !important;
+  -webkit-overflow-scrolling: touch !important;
+}
+
+/* React Native Web根容器 */
+#root {
+  /* 🚨 关键：不设置固定高度，让内容撑开 */
+  min-height: 100vh !important;
+  height: auto !important;
+  overflow-x: hidden !important; /* 🔧 禁止水平滚动 */
+  overflow-y: visible !important;
+  width: 100% !important; /* 🔧 使用100%而非100vw */
+}
+
+/* 移除所有可能的高度限制 */
+#root > div {
+  height: auto !important;
+  min-height: 100vh !important;
+  overflow-x: hidden !important; /* 🔧 禁止水平滚动 */
+  overflow-y: visible !important;
+  width: 100% !important; /* 🔧 使用100%而非100vw */
+}
+
+/* 强制修复ScrollView滚动 */
+div[data-testid="ScrollView"] {
+  height: 100% !important;
+  overflow-y: auto !important;
+  -webkit-overflow-scrolling: touch !important;
+}
+
+/* 修复FlatList/WebFlatList容器滚动 */
+div[data-testid="WebFlatList"],
+div[data-testid="FlatList"] {
+  height: 100% !important;
+  overflow-y: auto !important;
+  -webkit-overflow-scrolling: touch !important;
+}
+
+/* 通用ScrollView类修复 */
+[class*="scrollView"] {
+  overflow-y: auto !important;
+  max-height: none !important;
+}
+
+/* 修复SafeAreaView在Web端的高度问题 */
+[class*="safeArea"] {
+  min-height: 100vh;
+  height: auto;
+  flex: 1;
+}
+
+/* 活动列表页面特殊修复 */
+[class*="listContainer"] {
+  height: 100% !important;
+  overflow-y: visible !important;
+  flex: 1 !important;
+}
+
+/* Profile页面滚动修复 */
+[class*="contentContainer"] {
+  min-height: 100vh;
+  padding-bottom: 100px;
+}
+
+/* 原生滚动容器样式 */
+[data-web-scroll-container="true"] {
+  height: auto !important;
+  min-height: 100vh !important;
+  overflow: visible !important;
+  overflow-y: auto !important;
+  -webkit-overflow-scrolling: touch !important;
+  position: relative !important;
+}
+
+/* 确保原生滚动容器的父级也是正确的 */
+[data-web-scroll-container="true"] * {
+  max-height: none !important;
+}
+
+/* 强制显示滚动条在调试时 */
+.debug-scroll * {
+  overflow-y: auto !important;
+  border: 1px solid red !important;
+}

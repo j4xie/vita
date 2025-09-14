@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>QR Scanner Test</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body>
+    <h1>QR Scanner 测试</h1>
+    <div id="status">准备中...</div>
+    <video id="preview" style="width: 100%; max-width: 400px; height: 300px; border: 1px solid #ccc;"></video>
+    <div id="result" style="margin-top: 20px; padding: 10px; background: #f0f0f0; border-radius: 5px;">
+        扫描结果将显示在这里
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/qr-scanner@1.4.2/qr-scanner.umd.min.js"></script>
+    <script>
+        const video = document.getElementById('preview');
+        const status = document.getElementById('status');
+        const result = document.getElementById('result');
+
+        console.log('🚀 开始初始化QR扫描器测试');
+
+        async function startScanner() {
+            try {
+                status.textContent = '正在启动摄像头...';
+                
+                // 获取摄像头
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    video: { facingMode: 'environment' }
+                });
+                
+                video.srcObject = stream;
+                await video.play();
+                
+                status.textContent = '摄像头已启动，创建扫描器...';
+                console.log('📹 摄像头启动成功');
+
+                // 创建QR扫描器
+                const scanner = new QrScanner(
+                    video,
+                    (scanResult) => {
+                        console.log('🎯 扫描到QR码:', scanResult.data);
+                        result.innerHTML = `
+                            <strong>扫描成功！</strong><br>
+                            内容: ${scanResult.data}<br>
+                            时间: ${new Date().toLocaleTimeString()}
+                        `;
+                        result.style.background = '#d4edda';
+                        result.style.color = '#155724';
+                        
+                        // 播放一个简单的提示音
+                        try {
+                            const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+P0t2MbBzSt3/C9dSsBLGem8N2QQQoUXrTp66hVFApGn+P0t2MbBziR1/LNeSsFJHfI8N2QQAoUXrTp66hVFApGn+P0t2MbBjiR1/LNeSsFJHfI8N2QQAoUXrTp66hVFApGn+P0t2MbBTiR1/LNeSsFJHfI8N2QQAoUXrTp66hVFApGn+P0t2M');
+                            audio.play().catch(() => {});
+                        } catch (e) {}
+                    },
+                    {
+                        highlightScanRegion: true,
+                        highlightCodeOutline: true,
+                        maxScansPerSecond: 10
+                    }
+                );
+
+                await scanner.start();
+                status.textContent = '扫描器已启动！请扫描二维码';
+                console.log('✅ QR扫描器启动成功');
+
+            } catch (error) {
+                console.error('❌ 初始化失败:', error);
+                status.textContent = '错误: ' + error.message;
+                result.innerHTML = '启动失败: ' + error.message;
+                result.style.background = '#f8d7da';
+                result.style.color = '#721c24';
+            }
+        }
+
+        // 页面加载后启动
+        window.addEventListener('load', startScanner);
+    </script>
+</body>
+</html>
