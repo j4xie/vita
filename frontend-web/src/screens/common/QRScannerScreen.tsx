@@ -20,6 +20,7 @@ import { EnhancedWebCameraView } from '../../components/web/EnhancedWebCameraVie
 import { SimpleQRScanner } from '../../components/web/SimpleQRScanner';
 import { NativeQRScanner } from '../../components/web/NativeQRScanner';
 import { ReferralCodeInputSheet } from '../../components/sheets/ReferralCodeInputSheet';
+import { ActivityCodeInputModal } from '../../components/modals/ActivityCodeInputModal';
 import { ScanFeedbackOverlay, QRCodeBounds } from '../../components/common/ScanFeedbackOverlay';
 import { ScannedUserInfoModal } from '../../components/modals/ScannedUserInfoModal';
 import { LiquidSuccessModal } from '../../components/modals/LiquidSuccessModal';
@@ -71,6 +72,7 @@ export const QRScannerScreen: React.FC = () => {
   const [scanned, setScanned] = useState(false);
   const [torchOn, setTorchOn] = useState(false);
   const [showReferralInputSheet, setShowReferralInputSheet] = useState(false);
+  const [showActivityCodeInputModal, setShowActivityCodeInputModal] = useState(false);
   
   // 扫码反馈状态
   const [showScanFeedback, setShowScanFeedback] = useState(false);
@@ -225,6 +227,37 @@ export const QRScannerScreen: React.FC = () => {
       console.error('❌ [QRScanner] 处理扫描结果异常:', error);
       setScanned(false);
       setIsProcessing(false);
+    }
+  };
+
+  // 处理活动码手动输入
+  const handleActivityCodeInput = async (code: string) => {
+    console.log('🎯 [活动码输入] 处理手动输入的活动码:', code);
+
+    try {
+      // 直接使用parseActivityQRCode解析纯数字格式
+      const activityId = parseActivityQRCode(code);
+
+      if (!activityId) {
+        console.error('❌ [活动码输入] 无法解析活动ID:', code);
+        showScanError(
+          t('qr.results.invalid_qr_title') || '无效代码',
+          t('qr.scanning.activity.invalid_format') || '请输入1-6位数字的活动代码'
+        );
+        return;
+      }
+
+      console.log('✅ [活动码输入] 活动ID解析成功:', activityId);
+
+      // 执行活动签到
+      await performSignIn(activityId);
+
+    } catch (error) {
+      console.error('❌ [活动码输入] 处理异常:', error);
+      showScanError(
+        t('common.error') || '错误',
+        t('common.network_error') || '处理失败，请重试'
+      );
     }
   };
 
@@ -1537,6 +1570,12 @@ export const QRScannerScreen: React.FC = () => {
               <Text style={styles.manualButtonText}>{t('qr.scanning.manual_input_button')}</Text>
             </TouchableOpacity>
           )}
+          {purpose === 'activity_signin' && (
+            <TouchableOpacity style={styles.manualButton} onPress={() => setShowActivityCodeInputModal(true)}>
+              <Ionicons name="keypad" size={24} color={theme.colors.text.inverse} />
+              <Text style={styles.manualButtonText}>{t('qr.scanning.manual_input_button')}</Text>
+            </TouchableOpacity>
+          )}
         </View>
       </View>
 
@@ -1552,6 +1591,13 @@ export const QRScannerScreen: React.FC = () => {
         visible={showReferralInputSheet}
         onClose={() => setShowReferralInputSheet(false)}
         onSubmit={handleReferralCodeSubmit}
+      />
+
+      {/* 活动代码输入模态框 */}
+      <ActivityCodeInputModal
+        visible={showActivityCodeInputModal}
+        onClose={() => setShowActivityCodeInputModal(false)}
+        onSubmit={handleActivityCodeInput}
       />
 
       {/* 用户身份信息模态框 */}

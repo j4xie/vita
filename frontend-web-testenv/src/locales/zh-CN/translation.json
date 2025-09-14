@@ -1771,5 +1771,24 @@
     },
     "default_state": "NY",
     "default_city": "纽约"
+  },
+  "appDownload": {
+    "banner": {
+      "title": "西柚Pomelo",
+      "subtitle": "在App中获得更好体验",
+      "openButton": "打开",
+      "detecting": "检测中..."
+    },
+    "floatingButton": {
+      "text": "APP内打开",
+      "detecting": "检测中..."
+    },
+    "regionSelection": {
+      "title": "选择您的App Store区域",
+      "china": "中国大陆 App Store",
+      "chinaHint": "如果您使用中国 Apple ID",
+      "us": "United States App Store",
+      "usHint": "If you use US Apple ID"
+    }
   }
 }

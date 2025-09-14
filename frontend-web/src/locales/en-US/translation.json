@@ -1248,6 +1248,17 @@
       "confirm": "Confirm",
       "cancel": "Cancel",
       "manual_input_button": "Manual Input",
+      "activity": {
+        "manual_input_title": "Enter Check-in ID",
+        "manual_input_desc": "Enter 1-6 digit check-in ID provided by staff",
+        "code_label": "Check-in ID",
+        "code_placeholder": "Enter 1-6 digit check-in ID provided by staff",
+        "format_hint": "Enter 1-6 digit check-in ID provided by staff",
+        "examples": "Examples: 123, 1234, 123456",
+        "quick_input": "Quick Input",
+        "empty_code": "Please enter check-in ID",
+        "invalid_format": "Please enter 1-6 digit check-in ID provided by staff"
+      },
       "error": {
         "empty_code": "Please enter referral code",
         "invalid_format": "Invalid referral code format (8-character alphanumeric combination)"
@@ -1809,6 +1820,25 @@
       "recommendation": "We recommend updating your region settings for the best experience and appropriate privacy protection",
       "ignore": "Ignore",
       "go_to_settings": "Go to Settings"
+    }
+  },
+  "appDownload": {
+    "banner": {
+      "title": "PomeloX",
+      "subtitle": "Get a better experience in the App",
+      "openButton": "Open",
+      "detecting": "Detecting..."
+    },
+    "floatingButton": {
+      "text": "Open in App",
+      "detecting": "Detecting..."
+    },
+    "regionSelection": {
+      "title": "Choose Your App Store Region",
+      "china": "中国大陆 App Store",
+      "chinaHint": "如果您使用中国 Apple ID",
+      "us": "United States App Store",
+      "usHint": "If you use US Apple ID"
     }
   }
 }

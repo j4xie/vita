@@ -6,6 +6,7 @@ import { theme } from './src/theme';
 import initI18next from './src/utils/i18n';
 import { AppNavigator } from './src/navigation/AppNavigator';
 import { ToastManager } from './src/components/common/ToastManager';
+import { AppDownloadBanner } from './src/components/web/AppDownloadBanner';
 
 // Web端全局CSS样式注入
 if (Platform.OS === 'web') {
@@ -102,6 +103,7 @@ export default function App() {
 
   return (
     <SafeAreaProvider>
+      <AppDownloadBanner />
       <AppNavigator />
       <ToastManager />
     </SafeAreaProvider>

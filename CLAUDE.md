@@ -16,6 +16,14 @@ PomeloX is a **production-ready** mobile platform for Chinese international stud
 - ❌ **NEVER cross-import** - No `../frontend/` imports in web, no `../frontend-web/` in app
 - ✅ **Platform-specific files only** - Use `.native.tsx` and `.web.tsx` suffixes when needed
 
+### **🚫 Environment Isolation Rules (ZERO TOLERANCE)**
+- ❌ **NEVER mix environments in same directory** - No API URL switching in same codebase
+- ❌ **NEVER use .env switching** - No `cp .env.development .env` approach
+- ❌ **NEVER cross-deploy** - Test code cannot deploy to production
+- ✅ **Complete directory separation** - Use `frontend-web-testenv/` for test, `frontend-web/` for production
+- ✅ **Fixed API endpoints** - Each directory has hardcoded API configuration
+- ✅ **Independent deployment** - Each environment has its own deploy scripts
+
 ### **🚫 API Usage Rules (ZERO TOLERANCE)**
 - ❌ **NEVER use Mock APIs** - Only real backend at `https://www.vitaglobal.icu`
 - ❌ **NEVER hardcode fake data** - Show real 0 states instead of fake numbers
@@ -53,8 +61,20 @@ docker-compose up -d postgres redis
 # Frontend development (App)
 cd frontend && npm run ios
 
-# Web development (Fixed Port 8090)
-cd frontend-web && lsof -ti:8090 | xargs kill -9 2>/dev/null; npx expo start --web --port 8090
+# Web测试环境 (Port 8091)
+cd frontend-web-testenv && npm run web:dev
+
+# Web生产环境 (Port 8090)  
+cd frontend-web && npm run web:dev
+```
+
+### Environment Deployment
+```bash
+# 测试环境部署
+cd frontend-web-testenv && npm run deploy
+
+# 生产环境部署
+cd frontend-web && npm run deploy
 ```
 
 ### Version Updates
@@ -70,7 +90,8 @@ eas submit --platform ios --profile production
 pomeloX/
 ├── backend/                 # FastAPI backend
 ├── frontend/               # React Native app (ISOLATED)
-├── frontend-web/           # Web application (ISOLATED)  
+├── frontend-web/           # Web生产环境 (PRODUCTION API ONLY)
+├── frontend-web-testenv/   # Web测试环境 (TEST API ONLY)  
 ├── docs/                   # Detailed documentation
 │   ├── API_GUIDE.md        # Complete API reference
 │   ├── UI_DESIGN_SYSTEM.md # UI/UX specifications
@@ -125,6 +146,36 @@ For comprehensive information, see the specialized guides:
 - **[UI Design System](docs/UI_DESIGN_SYSTEM.md)** - Liquid Glass design specifications  
 - **[Performance Guide](docs/PERFORMANCE_GUIDE.md)** - React optimization and performance rules
 - **[Version Release](docs/VERSION_RELEASE.md)** - TestFlight and App Store release process
+
+## 🔧 **Platform Compatibility (CRITICAL)**
+
+### **❌ App端不兼容的组件**
+- **Web-specific libraries**: `jsQR`, browser MediaDevices API
+- **DOM elements**: `div`, `span`, HTML5 input types
+- **CSS properties**: `backdrop-filter`, `linear-gradient`, browser-specific styles
+- **Browser APIs**: `window.alert()`, `window.confirm()`, `navigator.geolocation`
+
+### **❌ Web端不兼容的组件**
+- **React Native Alert**: `Alert.alert()` - Use `SafeAlert` instead
+- **Native UI components**:
+  - `FlatList` → Use `WebFlatList` 
+  - `BlurView` → Use `WebBlurView`
+  - `LinearGradient` → Use `WebLinearGradient`
+  - Native `TouchableOpacity` animations
+- **Expo libraries**:
+  - `expo-camera` → Use `WebCameraView`
+  - `expo-blur` → CSS backdrop-filter
+  - `expo-linear-gradient` → CSS gradients
+- **Hardware APIs**: Native camera, haptics, device sensors
+
+### **✅ Compatible Components**
+- Basic components: `View`, `Text`, `TextInput`, `Image`
+- Network: `fetch`, API calls, AsyncStorage
+- Context/State: React Context, useState, useEffect
+- Internationalization: i18next works on both platforms
+
+### **🛠️ Web Adapter Location**
+Web-specific components located in: `frontend-web/src/components/web/`
 
 ## 🚨 **Critical Reminders**
 

@@ -1242,7 +1242,18 @@
       "get_from_organization": "通过组织或官方平台获得",
       "confirm": "确认",
       "cancel": "取消",
-      "manual_input_button": "手动输入"
+      "manual_input_button": "手动输入",
+      "activity": {
+        "manual_input_title": "手动输入签到ID",
+        "manual_input_desc": "输入工作人员提供的1-6位签到ID",
+        "code_label": "签到ID",
+        "code_placeholder": "请输入工作人员提供的1-6位签到ID",
+        "format_hint": "请输入工作人员提供的1-6位签到ID",
+        "examples": "示例：123、1234、123456",
+        "quick_input": "快速输入",
+        "empty_code": "请输入签到ID",
+        "invalid_format": "请输入工作人员提供的1-6位签到ID"
+      }
     },
     "userDetail": {
       "title": "用户详情",
@@ -1760,5 +1771,24 @@
     },
     "default_state": "NY",
     "default_city": "纽约"
+  },
+  "appDownload": {
+    "banner": {
+      "title": "西柚Pomelo",
+      "subtitle": "在App中获得更好体验",
+      "openButton": "打开",
+      "detecting": "检测中..."
+    },
+    "floatingButton": {
+      "text": "APP内打开",
+      "detecting": "检测中..."
+    },
+    "regionSelection": {
+      "title": "选择您的App Store区域",
+      "china": "中国大陆 App Store",
+      "chinaHint": "如果您使用中国 Apple ID",
+      "us": "United States App Store",
+      "usHint": "If you use US Apple ID"
+    }
   }
 }

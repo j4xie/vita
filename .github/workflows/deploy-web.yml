@@ -1,0 +1,93 @@
+name: Deploy Web Environments
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'frontend-web/**'
+      - 'frontend-web-testenv/**'
+
+jobs:
+  deploy-test:
+    name: Deploy Test Environment
+    runs-on: ubuntu-latest
+    if: contains(github.event.head_commit.modified, 'frontend-web-testenv/') || contains(github.event.head_commit.added, 'frontend-web-testenv/')
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        cache-dependency-path: frontend-web-testenv/package-lock.json
+
+    - name: Install dependencies
+      working-directory: frontend-web-testenv
+      run: npm ci
+
+    - name: Build test environment
+      working-directory: frontend-web-testenv
+      run: npm run web:build
+
+    - name: Deploy to test server
+      env:
+        DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+        DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+        DEPLOY_KEY: ${{ secrets.DEPLOY_KEY }}
+      run: |
+        echo "Test environment built successfully"
+        echo "Dist files ready for deployment"
+        ls -la frontend-web-testenv/dist/
+
+    - name: Trigger server webhook
+      env:
+        WEBHOOK_URL: ${{ secrets.TEST_WEBHOOK_URL }}
+      run: |
+        curl -X POST "$WEBHOOK_URL" \
+          -H "Content-Type: application/json" \
+          -d '{"environment": "test", "commit": "${{ github.sha }}"}'
+
+  deploy-prod:
+    name: Deploy Production Environment
+    runs-on: ubuntu-latest
+    if: contains(github.event.head_commit.modified, 'frontend-web/') || contains(github.event.head_commit.added, 'frontend-web/')
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        cache-dependency-path: frontend-web/package-lock.json
+
+    - name: Install dependencies
+      working-directory: frontend-web
+      run: npm ci
+
+    - name: Build production environment
+      working-directory: frontend-web
+      run: npm run web:build
+
+    - name: Deploy to production server
+      env:
+        DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+        DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+        DEPLOY_KEY: ${{ secrets.DEPLOY_KEY }}
+      run: |
+        echo "Production environment built successfully"
+        echo "Dist files ready for deployment"
+        ls -la frontend-web/dist/
+
+    - name: Trigger server webhook
+      env:
+        WEBHOOK_URL: ${{ secrets.PROD_WEBHOOK_URL }}
+      run: |
+        curl -X POST "$WEBHOOK_URL" \
+          -H "Content-Type: application/json" \
+          -d '{"environment": "production", "commit": "${{ github.sha }}"}'

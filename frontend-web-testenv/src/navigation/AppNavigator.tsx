@@ -68,6 +68,7 @@ import { VolunteerManagementScreen } from '../screens/volunteer/VolunteerManagem
 import { FloatingAIButton } from '../components/common/FloatingAIButton';
 import { GlobalTouchHandler } from '../components/common/GlobalTouchHandler';
 import { ErrorBoundary } from '../components/common/ErrorBoundary';
+import { AppDownloadFloatingButton } from '../components/web/AppDownloadFloatingButton';
 import { ScrollDebugHelper } from '../components/debug/ScrollDebugHelper';
 import { TermsScreen } from '../screens/legal/TermsScreen';
 
@@ -561,6 +562,11 @@ const TabNavigator = () => {
         {/* 全局悬浮AI助手按钮 - 已修复并重新启用 */}
         <ErrorBoundary>
           <FloatingAIButton />
+        </ErrorBoundary>
+
+        {/* iOS设备App下载浮动按钮 */}
+        <ErrorBoundary>
+          <AppDownloadFloatingButton />
         </ErrorBoundary>
 
         {/* Web端滚动调试工具 - 已关闭 */}

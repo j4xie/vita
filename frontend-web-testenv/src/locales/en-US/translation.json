@@ -1821,5 +1821,24 @@
       "ignore": "Ignore",
       "go_to_settings": "Go to Settings"
     }
+  },
+  "appDownload": {
+    "banner": {
+      "title": "PomeloX",
+      "subtitle": "Get a better experience in the App",
+      "openButton": "Open",
+      "detecting": "Detecting..."
+    },
+    "floatingButton": {
+      "text": "Open in App",
+      "detecting": "Detecting..."
+    },
+    "regionSelection": {
+      "title": "Choose Your App Store Region",
+      "china": "中国大陆 App Store",
+      "chinaHint": "如果您使用中国 Apple ID",
+      "us": "United States App Store",
+      "usHint": "If you use US Apple ID"
+    }
   }
 }
