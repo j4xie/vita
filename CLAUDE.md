@@ -152,28 +152,24 @@ pomeloX/
 4. **Add i18n from start** - No hardcoded Chinese text
 5. **Optimize performance** - Use memo/callback/FastImage
 6. **Test both platforms** - Verify app and web work independently
-7. **Use Git同步部署** - Always use Git sync for deployment, never manual file upload
+7. **Use curl API部署** - Always use curl API upload for deployment, Git sync as backup
 
 ## 🚀 **Web部署规范 (MANDATORY)**
 
-### **官方部署方法: Git同步**
+### **官方部署方法: curl API上传**
 ```bash
-# 标准部署流程 (替代手动上传)
-# 1. 本地开发测试
+# 标准部署流程 (推荐)
+# 1. 开发测试
 cd frontend-web-testenv && npm run web:dev
 
 # 2. 构建项目
 npm run web:build
 
-# 3. 提交到GitHub
-cd /Users/jietaoxie/pomeloX
-git add . && git commit -m "更新功能" && git push origin main
+# 3. 一键上传 (5-10秒完成)
+node scripts/upload-latest-builds.js
 
-# 4. 触发服务器同步
-cd frontend-web-testenv && node scripts/trigger-sync.js
-
-# 5. 检查部署结果
-node scripts/check-sync-result.js
+# 对于生产环境
+cd frontend-web && npm run web:build && node scripts/upload-latest-builds.js
 ```
 
 ### **部署方案优先级**
