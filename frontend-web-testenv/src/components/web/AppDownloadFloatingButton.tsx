@@ -4,7 +4,7 @@
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, TouchableOpacity, Platform } from 'react-native';
+import { View, Text, TouchableOpacity, Platform, Image } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useNavigation } from '@react-navigation/native';
 import { theme } from '../../theme';
@@ -90,8 +90,10 @@ export const AppDownloadFloatingButton: React.FC<AppDownloadFloatingButtonProps>
     return null;
   }
 
-  // 计算底部位置 - 适配iOS Safari地址栏变化
-  const bottomOffset = Math.max(16, window.innerHeight - viewportHeight + 16);
+  // 计算底部位置 - 适配iOS Safari地址栏变化，并确保在TabBar上方
+  const TAB_BAR_HEIGHT = 90; // TabBar高度
+  const SAFE_MARGIN = 16; // 安全边距
+  const bottomOffset = Math.max(TAB_BAR_HEIGHT + SAFE_MARGIN, window.innerHeight - viewportHeight + TAB_BAR_HEIGHT + SAFE_MARGIN);
 
   return (
     <View
@@ -109,9 +111,15 @@ export const AppDownloadFloatingButton: React.FC<AppDownloadFloatingButtonProps>
       >
         {/* Logo */}
         <View style={styles.logoContainer}>
-          <Text style={styles.logoText}>
-            {isDetecting ? '⏳' : '🍊'}
-          </Text>
+          {isDetecting ? (
+            <Text style={styles.logoText}>⏳</Text>
+          ) : (
+            <Image
+              source={require('../../assets/logos/pomelo-logo.png')}
+              style={styles.logoImage}
+              resizeMode="contain"
+            />
+          )}
         </View>
 
         {/* 文本 */}
@@ -129,7 +137,8 @@ export const AppDownloadFloatingButton: React.FC<AppDownloadFloatingButtonProps>
 const styles = {
   container: {
     position: 'fixed' as any,
-    right: 16,
+    left: '50%', // 水平居中
+    marginLeft: -75, // 向左偏移按钮宽度的一半 (大约150px的一半)
     zIndex: 9999,
     maxWidth: 200,
     // 确保不会被其他元素覆盖
@@ -162,10 +171,14 @@ const styles = {
     width: 24,
     height: 24,
     borderRadius: 6,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    backgroundColor: 'transparent', // 透明背景，去掉白边
     alignItems: 'center' as const,
     justifyContent: 'center' as const,
     marginRight: 8,
+  },
+  logoImage: {
+    width: 18,
+    height: 18,
   },
   logoText: {
     fontSize: 16,
@@ -204,11 +217,19 @@ if (Platform.OS === 'web') {
       transform: translateY(0px) scale(0.98);
     }
 
+    /* 底部居中定位 */
+    .app-floating-button {
+      left: 50% !important;
+      transform: translateX(-50%) !important;
+      right: auto !important;
+    }
+
     /* 适配不同屏幕尺寸 */
     @media (max-width: 480px) {
       .app-floating-button {
-        right: 12px !important;
-        bottom: 12px !important;
+        left: 50% !important;
+        transform: translateX(-50%) !important;
+        right: auto !important;
       }
     }
 

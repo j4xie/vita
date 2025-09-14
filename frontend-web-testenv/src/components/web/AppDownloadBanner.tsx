@@ -4,7 +4,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, Platform } from 'react-native';
+import { View, Text, TouchableOpacity, Platform, Image } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { Ionicons } from '@expo/vector-icons';
 import { theme } from '../../theme';
@@ -164,7 +164,11 @@ export const AppDownloadBanner: React.FC<AppDownloadBannerProps> = ({ onClose })
         {/* 西柚Logo */}
         <View style={styles.logoContainer}>
           <View style={styles.logo}>
-            <Text style={styles.logoText}>🍊</Text>
+            <Image
+              source={require('../../assets/logos/pomelo-logo.png')}
+              style={styles.logoImage}
+              resizeMode="contain"
+            />
           </View>
         </View>
 
@@ -209,8 +213,7 @@ export const AppDownloadBanner: React.FC<AppDownloadBannerProps> = ({ onClose })
 const styles = {
   container: {
     backgroundColor: '#f8f9fa',
-    borderBottomWidth: 1,
-    borderBottomColor: theme.colors.border,
+    borderBottomWidth: 0, // 移除黑色边框线
     paddingHorizontal: 16,
     paddingVertical: 12,
     shadowColor: '#000',
@@ -243,21 +246,21 @@ const styles = {
     width: 40,
     height: 40,
     borderRadius: 8,
-    backgroundColor: theme.colors.primary,
+    backgroundColor: 'transparent', // 透明背景，去掉白边
     alignItems: 'center' as const,
     justifyContent: 'center' as const,
-    shadowColor: theme.colors.primary,
+    shadowColor: '#000',
     shadowOffset: {
       width: 0,
       height: 2,
     },
-    shadowOpacity: 0.2,
+    shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
   },
-  logoText: {
-    fontSize: 20,
-    lineHeight: 24,
+  logoImage: {
+    width: 32,
+    height: 32,
   },
   textContainer: {
     flex: 1,
