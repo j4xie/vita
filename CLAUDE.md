@@ -68,13 +68,29 @@ cd frontend-web-testenv && npm run web:dev
 cd frontend-web && npm run web:dev
 ```
 
-### Environment Deployment
+### Environment Deployment (Git同步方案 - 官方推荐)
 ```bash
-# 测试环境部署
-cd frontend-web-testenv && npm run deploy
+# 方案A: Git同步部署 (推荐 - 无文件大小限制)
+# 1. 本地构建并提交
+cd frontend-web-testenv && npm run web:build
+cd /Users/jietaoxie/pomeloX
+git add . && git commit -m "更新" && git push origin main
 
-# 生产环境部署
+# 2. 触发服务器同步
+cd frontend-web-testenv && node scripts/trigger-sync.js
+
+# 方案B: 直接API上传 (备用 - 仅小文件)
+cd frontend-web-testenv && npm run deploy
 cd frontend-web && npm run deploy
+```
+
+### Git同步部署系统
+```bash
+# 服务器端自动构建同步 (解决大文件问题)
+cd frontend-web-testenv && node scripts/server-build-sync.js
+
+# 检查同步结果
+cd frontend-web-testenv && node scripts/check-sync-result.js
 ```
 
 ### Version Updates
@@ -136,7 +152,56 @@ pomeloX/
 4. **Add i18n from start** - No hardcoded Chinese text
 5. **Optimize performance** - Use memo/callback/FastImage
 6. **Test both platforms** - Verify app and web work independently
-7. **Fixed Web Port** - Always use port 8090 for web development, kill existing processes
+7. **Use Git同步部署** - Always use Git sync for deployment, never manual file upload
+
+## 🚀 **Web部署规范 (MANDATORY)**
+
+### **官方部署方法: Git同步**
+```bash
+# 标准部署流程 (替代手动上传)
+# 1. 本地开发测试
+cd frontend-web-testenv && npm run web:dev
+
+# 2. 构建项目
+npm run web:build
+
+# 3. 提交到GitHub
+cd /Users/jietaoxie/pomeloX
+git add . && git commit -m "更新功能" && git push origin main
+
+# 4. 触发服务器同步
+cd frontend-web-testenv && node scripts/trigger-sync.js
+
+# 5. 检查部署结果
+node scripts/check-sync-result.js
+```
+
+### **部署方案优先级**
+1. **Git同步** ⭐⭐⭐⭐⭐ - 主要方案，处理所有文件包括大文件
+2. **API上传** ⭐⭐⭐ - 备用方案，仅用于小文件快速更新
+3. **手动上传** ❌ - 已废弃，容易出错且效率低
+
+### **Git同步优势**
+- ✅ **无文件大小限制** - 可处理3MB+的JS bundle
+- ✅ **版本控制** - 每次部署都有Git记录
+- ✅ **环境隔离** - 测试/生产环境完全分离
+- ✅ **自动化程度高** - 一次设置，长期使用
+- ✅ **可靠性强** - Git协议比HTTP上传更稳定
+
+### **技术实现细节**
+- **服务器脚本**: `/www/wwwroot/project/build-sync.sh`
+- **Git仓库**: `/www/wwwroot/project/git-repo/`
+- **宝塔API**: `/files?action=ExecShell` - 执行服务器命令
+- **部署目录**:
+  - 测试环境: `test-h5/`
+  - 生产环境: `h5/`
+
+### **部署工作流程**
+1. **本地开发** → 使用 `npm run web:dev`
+2. **本地构建** → 使用 `npm run web:build`
+3. **推送代码** → `git push origin main`
+4. **服务器同步** → `node scripts/trigger-sync.js`
+5. **验证部署** → `node scripts/check-sync-result.js`
 
 ## 📚 **Detailed Documentation**
 
