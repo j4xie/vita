@@ -121,19 +121,25 @@ export const generateEmailAddress = (username: string, schoolAbbreviation: strin
  */
 export const getEmailDomainFromBackendSchool = (school: any): string => {
   if (!school) return '';
-  
+
+  // 优先使用后端返回的mailDomain字段（已包含@符号）
+  if (school.mailDomain) {
+    return school.mailDomain;
+  }
+
+  // 如果后端没有mailDomain，则使用前端静态映射表（需要添加@）
   // 尝试使用中文名称匹配
   if (school.deptName) {
     const domain = getEmailDomainByName(school.deptName);
-    if (domain) return domain;
+    if (domain) return `@${domain}`;
   }
-  
-  // 尝试使用英文名称匹配  
+
+  // 尝试使用英文名称匹配
   if (school.engName) {
     const domain = getEmailDomainByName(school.engName);
-    if (domain) return domain;
+    if (domain) return `@${domain}`;
   }
-  
+
   // 如果都没有找到，返回空字符串
   return '';
 };

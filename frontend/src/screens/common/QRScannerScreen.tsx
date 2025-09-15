@@ -248,32 +248,25 @@ export const QRScannerScreen: React.FC = () => {
     }
     
     if (referralCode) {
-      // 验证邀请码有效性
+      // 🔥 最新版：使用专门的邀请码验证API (无临时用户创建)
       try {
-        const validation = await validateInvitationCode(referralCode);
-        
+        console.log('🔍 App端使用专门API验证邀请码:', referralCode);
+        const validation = await pomeloXAPI.checkInvitationCode(referralCode);
+
         if (validation.valid) {
-          // 显示邀请码信息
-          const inviterInfo = validation.data?.inviterName 
-            ? `\n推荐人：${validation.data.inviterName}`
-            : '';
-          const orgInfo = validation.data?.organizationName 
-            ? `\n组织：${validation.data.organizationName}`
-            : '';
-            
+          // 显示邀请码验证成功信息
           Alert.alert(
             t('qr.results.referral_success_title'),
-            t('qr.results.referral_success_message', { referralCode }) + inviterInfo + orgInfo,
+            t('qr.results.referral_success_message', { referralCode }) + `\n${validation.message}`,
             [
               {
                 text: t('qr.results.continue_register'),
                 onPress: () => {
                   // 跳转到身份选择，然后再到注册流程
-                  navigation.navigate('IdentityChoice', { 
+                  navigation.navigate('IdentityChoice', {
                     referralCode,
                     hasReferralCode: true,
-                    registrationType: 'invitation', // 标记为邀请码注册
-                    invitationData: validation.data // 传递邀请码详细信息
+                    registrationType: 'invitation' // 标记为邀请码注册
                   });
                 },
               },

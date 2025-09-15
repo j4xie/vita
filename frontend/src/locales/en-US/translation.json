@@ -271,9 +271,9 @@
       },
       "parent": {
         "title": "Parent Registration",
-        "form_title": "Parent Information",
-        "description": "Please fill in your basic information and your child's school information",
-        "invitation_description": "Registration with referral code, please fill in the required information",
+        "form_title": "Parent Account Registration",
+        "description": "Register a parent account to monitor your child's activities",
+        "invitation_description": "Use invitation code to create parent account for monitoring child's activities",
         "first_name_label": "First Name *",
         "first_name_placeholder": "Enter your first name",
         "last_name_label": "Last Name *",
@@ -416,6 +416,7 @@
         "school_email_preview": "School Email Preview",
         "email_username_placeholder": "e.g. zhang.san, alex123",
         "complete_email": "Complete Email",
+        "school_email_label": "School Email",
         "loading_schools": "Loading schools...",
         "step2_description": "Set up your login account and password",
         "invitation_step1_description": "Invitation registration: Please fill in your basic information",
@@ -423,6 +424,9 @@
         "phone_label_optional": "Phone Number *",
         "nickname_label": "Preferred Name *",
         "nickname_placeholder": "Enter your preferred name",
+        "last_name_placeholder_chinese": "Enter Chinese surname",
+        "first_name_placeholder_chinese": "Enter Chinese first name",
+        "common_name_placeholder": "Enter English common name (e.g. xiaoming)",
         "verification_code_label": "SMS Verification Code *",
         "verification_code_placeholder": "Enter 6-digit code",
         "organization_label": "Referral Organization *",
@@ -1652,7 +1656,8 @@
     "last_name_required": "Please enter last name",
     "email_username_required": "Please enter email username",
     "email_username_too_short": "Email username too short",
-    "email_username_invalid": "Invalid email username format"
+    "email_username_invalid": "Invalid email username format",
+    "email_generation_failed": "Email generation failed"
   },
   "legal": {
     "terms": {

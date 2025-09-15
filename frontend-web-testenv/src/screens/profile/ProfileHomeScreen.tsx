@@ -1640,7 +1640,7 @@ export const ProfileHomeScreen: React.FC = () => {
           visible={showPersonalHistoryModal}
           onClose={() => setShowPersonalHistoryModal(false)}
           userId={parseInt(user.userId)}
-          userName="我"
+          userName={t('profile.me')}
           userPermission="staff"
           currentUser={user}
           isPersonalView={true}

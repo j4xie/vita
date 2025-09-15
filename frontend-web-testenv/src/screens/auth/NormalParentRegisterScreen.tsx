@@ -418,12 +418,12 @@ export const NormalParentRegisterScreen: React.FC = () => {
         );
         
         try {
-          // 使用真实的登录API，直接调用https://www.vitaglobal.icu/app/login
+          // 使用真实的登录API，直接调用${process.env.EXPO_PUBLIC_API_URL}/app/login
           const formData_login = new URLSearchParams();
           formData_login.append('username', formData.email);
           formData_login.append('password', formData.password);
           
-          const loginResponse = await fetch('https://www.vitaglobal.icu/app/login', {
+          const loginResponse = await fetch(`${process.env.EXPO_PUBLIC_API_URL}/app/login`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/x-www-form-urlencoded',

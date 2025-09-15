@@ -28,12 +28,11 @@ import { ForgotPasswordScreen } from '../screens/auth/ForgotPasswordScreen';
 import { SetNewPasswordScreen } from '../screens/auth/SetNewPasswordScreen';
 import { RegisterChoiceScreen } from '../screens/auth/RegisterChoiceScreen';
 import { IdentityChoiceScreen } from '../screens/auth/IdentityChoiceScreen';
-import { ParentRegisterFormScreen } from '../screens/auth/ParentRegisterFormScreen';
+import { ParentInvitationRegisterScreen } from '../screens/auth/ParentInvitationRegisterScreen';
 import { ParentNormalRegisterScreen } from '../screens/auth/ParentNormalRegisterScreen';
-import { RegisterFormScreen } from '../screens/auth/RegisterFormScreen';
-import { RegisterStep1Screen } from '../screens/auth/RegisterStep1Screen';
-import { RegisterStep2Screen } from '../screens/auth/RegisterStep2Screen';
-import { RegisterStep3Screen } from '../screens/auth/RegisterStep3Screen';
+import { StudentInvitationRegisterScreen } from '../screens/auth/StudentInvitationRegisterScreen';
+import { StudentNormalRegisterStep1Screen } from '../screens/auth/StudentNormalRegisterStep1Screen';
+import { StudentNormalRegisterStep2Screen } from '../screens/auth/StudentNormalRegisterStep2Screen';
 import { VerificationScreen } from '../screens/auth/VerificationScreen';
 import { QRScannerScreen } from '../screens/common/QRScannerScreen';
 import { QRScanResultScreen } from '../screens/common/QRScanResultScreen';
@@ -126,44 +125,37 @@ const AuthNavigator = () => {
           ...pageTransitions.slideFromRight,
         }}
       />
-      <AuthStack.Screen 
-        name="ParentRegisterForm" 
-        component={ParentRegisterFormScreen}
+      <AuthStack.Screen
+        name="ParentInvitationRegister"
+        component={ParentInvitationRegisterScreen}
         options={{
           ...pageTransitions.slideFromRight,
         }}
       />
-      <AuthStack.Screen 
-        name="ParentNormalRegister" 
+      <AuthStack.Screen
+        name="ParentNormalRegister"
         component={ParentNormalRegisterScreen}
         options={{
           ...pageTransitions.slideFromRight,
         }}
       />
-      <AuthStack.Screen 
-        name="RegisterForm" 
-        component={RegisterFormScreen}
-        options={{
-          ...pageTransitions.fade,
-        }}
-      />
-      <AuthStack.Screen 
-        name="RegisterStep1" 
-        component={RegisterStep1Screen}
+      <AuthStack.Screen
+        name="StudentInvitationRegister"
+        component={StudentInvitationRegisterScreen}
         options={{
           ...pageTransitions.slideFromRight,
         }}
       />
-      <AuthStack.Screen 
-        name="RegisterStep2" 
-        component={RegisterStep2Screen}
+      <AuthStack.Screen
+        name="StudentNormalRegisterStep1"
+        component={StudentNormalRegisterStep1Screen}
         options={{
           ...pageTransitions.slideFromRight,
         }}
       />
-      <AuthStack.Screen 
-        name="RegisterStep3" 
-        component={RegisterStep3Screen}
+      <AuthStack.Screen
+        name="StudentNormalRegisterStep2"
+        component={StudentNormalRegisterStep2Screen}
         options={{
           ...pageTransitions.slideFromRight,
         }}
@@ -696,44 +688,37 @@ export const AppNavigator = () => {
               ...pageTransitions.slideFromRight,
             }}
           />
-          <RootStack.Screen 
-            name="ParentRegisterForm" 
-            component={ParentRegisterFormScreen}
+          <RootStack.Screen
+            name="ParentInvitationRegister"
+            component={ParentInvitationRegisterScreen}
             options={{
               ...pageTransitions.slideFromRight,
             }}
           />
-          <RootStack.Screen 
-            name="ParentNormalRegister" 
+          <RootStack.Screen
+            name="ParentNormalRegister"
             component={ParentNormalRegisterScreen}
             options={{
               ...pageTransitions.slideFromRight,
             }}
           />
-          <RootStack.Screen 
-            name="RegisterForm" 
-            component={RegisterFormScreen}
-            options={{
-              ...pageTransitions.fade,
-            }}
-          />
-          <RootStack.Screen 
-            name="RegisterStep1" 
-            component={RegisterStep1Screen}
+          <RootStack.Screen
+            name="StudentInvitationRegister"
+            component={StudentInvitationRegisterScreen}
             options={{
               ...pageTransitions.slideFromRight,
             }}
           />
-          <RootStack.Screen 
-            name="RegisterStep2" 
-            component={RegisterStep2Screen}
+          <RootStack.Screen
+            name="StudentNormalRegisterStep1"
+            component={StudentNormalRegisterStep1Screen}
             options={{
               ...pageTransitions.slideFromRight,
             }}
           />
-          <RootStack.Screen 
-            name="RegisterStep3" 
-            component={RegisterStep3Screen}
+          <RootStack.Screen
+            name="StudentNormalRegisterStep2"
+            component={StudentNormalRegisterStep2Screen}
             options={{
               ...pageTransitions.slideFromRight,
             }}

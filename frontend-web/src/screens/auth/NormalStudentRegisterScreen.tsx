@@ -18,7 +18,7 @@ import { useTranslation } from 'react-i18next';
 import { LinearGradient } from '../../components/web/WebLinearGradient';
 import { theme } from '../../theme';
 import { LIQUID_GLASS_LAYERS, DAWN_GRADIENTS } from '../../theme/core';
-import { WebSchoolSelector } from '../../components/web/WebSchoolSelector';
+import { SimpleSchoolSelector } from '../../components/web/SimpleSchoolSelector';
 import { WebOrganizationSelector } from '../../components/web/WebOrganizationSelector';
 import { pomeloXAPI } from '../../services/PomeloXAPI';
 import { useUser } from '../../context/UserContext';
@@ -490,7 +490,7 @@ export const NormalStudentRegisterScreen: React.FC = () => {
 
       <View style={styles.inputContainer}>
         <Text style={styles.label}>{t('auth.register.form.university_label')}</Text>
-        <WebSchoolSelector
+        <SimpleSchoolSelector
           schools={[]} // 需要加载学校数据
           selectedSchool={formData.university ? {id: formData.universityId, name: formData.university, domain: ''} : null}
           onSchoolSelect={(school) => {

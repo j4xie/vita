@@ -284,13 +284,13 @@ export const VolunteerCard: React.FC<VolunteerCardProps> = ({
         {/* 基础信息行 - 始终显示 */}
         <View style={styles.baseRow}>
           <View style={styles.leftColumn}>
-            <SafeText style={[styles.name, { color: isDarkMode ? theme.colors.text.primary : theme.colors.text.primary }]} fallback="志愿者">
+            <SafeText style={[styles.name, { color: isDarkMode ? theme.colors.text.primary : theme.colors.text.primary }]} fallback={t('volunteer.default_name')}>
               {volunteer.name}
             </SafeText>
-            <SafeText style={[styles.phone, { color: theme.colors.text.secondary }]} fallback="无手机号">
+            <SafeText style={[styles.phone, { color: theme.colors.text.secondary }]} fallback={t('volunteer.no_phone')}>
               {volunteer.phone}
             </SafeText>
-            <SafeText style={[styles.school, { color: theme.colors.text.secondary }]} fallback="学校信息">
+            <SafeText style={[styles.school, { color: theme.colors.text.secondary }]} fallback={t('volunteer.school_info')}>
               {getLocalizedSchoolName(volunteer.school)}
             </SafeText>
           </View>
@@ -313,14 +313,14 @@ export const VolunteerCard: React.FC<VolunteerCardProps> = ({
                   签到: {formatTime(volunteer.checkInTime)}
                 </SafeText>
                 {volunteer.status === 'checked_in' && (
-                  <SafeText style={[styles.workingDuration, { color: theme.colors.warning }]} fallback="计时中">
-                    {currentWorkDuration || '计时中...'}
+                  <SafeText style={[styles.workingDuration, { color: theme.colors.warning }]} fallback={t('volunteer.timing')}>
+                    {currentWorkDuration || t('volunteer.timing_progress')}
                   </SafeText>
                 )}
               </View>
             ) : (
               <Text style={[styles.timePreview, { color: theme.colors.text.tertiary }]}>
-                暂未签到
+                {t('volunteer.not_checked_in')}
               </Text>
             )}
             

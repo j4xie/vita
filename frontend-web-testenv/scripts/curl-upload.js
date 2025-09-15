@@ -12,8 +12,8 @@ async function curlUpload() {
         const config = new BaotaConfig();
         const signature = config.generateSignature();
 
-        const testJSPath = '/Users/jietaoxie/pomeloX/frontend-web-testenv/dist/_expo/static/js/web/index-9fab7c3436167887a4f6cd7e236d6764.js';
-        const fileName = 'index-9fab7c3436167887a4f6cd7e236d6764.js';
+        const testJSPath = '/Users/jietaoxie/pomeloX/frontend-web-testenv/dist/_expo/static/js/web/index-f57af0ade29cda0cab8f14d5805451bf.js';
+        const fileName = 'index-f57af0ade29cda0cab8f14d5805451bf.js';
 
         console.log(`文件: ${fileName}`);
         console.log(`大小: ${(fs.statSync(testJSPath).size/1024/1024).toFixed(2)}MB`);

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -30,7 +30,7 @@ import {
   sendSMSVerificationCode,
   registerUser
 } from '../../services/registrationAPI';
-import { UserContext } from '../../context/UserContext';
+import { useUser } from '../../context/UserContext';
 import { login } from '../../services/authAPI';
 import LiquidSuccessModal from '../../components/modals/LiquidSuccessModal';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -76,11 +76,11 @@ interface ValidationErrors {
   verificationCode?: string;
 }
 
-export const ParentRegisterFormScreen: React.FC = () => {
+export const ParentInvitationRegisterScreen: React.FC = () => {
   const navigation = useNavigation<any>();
   const route = useRoute<any>();
   const { t } = useTranslation();
-  const { login: userLogin } = useContext(UserContext);
+  const { login: userLogin } = useUser();
 
   const {
     registrationType = 'phone',
@@ -754,6 +754,9 @@ export const ParentRegisterFormScreen: React.FC = () => {
                   onChangeText={(text) => updateFormData('password', text)}
                   secureTextEntry
                   placeholderTextColor={theme.colors.text.disabled}
+                  autoComplete="off"
+                  textContentType="none"
+                  passwordRules=""
                 />
                 {errors.password && <Text style={styles.errorText}>{errors.password}</Text>}
               </View>
@@ -768,6 +771,9 @@ export const ParentRegisterFormScreen: React.FC = () => {
                   onChangeText={(text) => updateFormData('confirmPassword', text)}
                   secureTextEntry
                   placeholderTextColor={theme.colors.text.disabled}
+                  autoComplete="off"
+                  textContentType="none"
+                  passwordRules=""
                 />
                 {errors.confirmPassword && <Text style={styles.errorText}>{errors.confirmPassword}</Text>}
               </View>

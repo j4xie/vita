@@ -70,9 +70,8 @@ class EnvironmentManager {
    * 获取API基础URL
    */
   getApiUrl(): string {
-    return this.currentEnv === 'development' 
-      ? 'https://test.vitaglobal.icu'
-      : 'https://www.vitaglobal.icu';
+    // 🚨 生产环境强制使用生产API - 修复Mixed Content错误
+    return 'https://www.vitaglobal.icu';
   }
 
   /**

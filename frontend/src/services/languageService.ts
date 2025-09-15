@@ -148,7 +148,7 @@ class LanguageService {
    * 获取语言的本地化显示名称（用当前语言显示）
    */
   getLocalizedLanguageName(language: SupportedLanguage): string {
-    const isCurrentChinese = this.currentLanguage.startsWith('zh');
+    const isCurrentChinese = typeof this.currentLanguage === 'string' && this.currentLanguage.startsWith('zh');
     
     if (isCurrentChinese) {
       return language === 'zh-CN' ? '中文' : '英语';
@@ -213,7 +213,7 @@ class LanguageService {
    * 检查当前语言是否为中文
    */
   isCurrentLanguageChinese(): boolean {
-    return this.currentLanguage.startsWith('zh');
+    return typeof this.currentLanguage === 'string' && this.currentLanguage.startsWith('zh');
   }
 
   /**

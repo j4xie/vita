@@ -4,8 +4,14 @@ import { getCurrentToken } from './authAPI';
 import { Platform, DeviceEventEmitter } from 'react-native';
 import { notifyRegistrationSuccess, scheduleActivityReminder } from './smartAlertSystem';
 
-// 🔧 强制使用生产环境API - 遵循CLAUDE规范
+// 🔧 恢复稳定的生产环境API配置 - 修复网络连接问题
 const BASE_URL = 'https://www.vitaglobal.icu';
+
+// 🐛 调试日志 - 检查API配置
+console.log('🔍 PomeloXAPI 配置检查:');
+console.log('BASE_URL:', BASE_URL);
+console.log('环境变量 EXPO_PUBLIC_API_URL:', process.env.EXPO_PUBLIC_API_URL);
+console.log('当前时间:', new Date().toISOString());
 
 // 检测是否为iOS模拟器
 const isIOSSimulator = Platform.OS === 'ios' && __DEV__;
@@ -586,8 +592,13 @@ class PomeloXAPI {
         // 移除AbortController，让系统处理超时
       };
       
-      console.log('📡 发起网络请求:', { url: `${BASE_URL}${endpoint}` });
-      
+      console.log('📡 发起网络请求:', {
+        url: `${BASE_URL}${endpoint}`,
+        method: 'GET',
+        baseURL: BASE_URL,
+        fullURL: `${BASE_URL}${endpoint}`
+      });
+
       response = await fetchWithRetry(`${BASE_URL}${endpoint}`, fetchOptions, 3);
       
       console.log(`✅ API响应成功: ${response.status}`);
@@ -974,6 +985,52 @@ class PomeloXAPI {
   }>>> {
     console.log('🔍 获取职位列表 API调用');
     return this.request('/app/post/list', { method: 'GET' });
+  }
+
+
+  /**
+   * 专门的邀请码验证接口 - 使用后端新增的校验API
+   * @param inviteCode 邀请码
+   * @returns 验证结果
+   */
+  async checkInvitationCode(inviteCode: string): Promise<{
+    valid: boolean;
+    message: string;
+  }> {
+    console.log('🔍 使用专门API验证邀请码:', inviteCode);
+
+    try {
+      const response = await fetchWithRetry(`${BASE_URL}/app/invitation/checkInviteCode?inviteCode=${inviteCode}`, {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+        },
+      });
+
+      const result = await response.json();
+      console.log('🌐 邀请码验证结果:', { code: result.code, msg: result.msg });
+
+      if (result.code === 200) {
+        console.log('✅ 邀请码验证通过');
+        return {
+          valid: true,
+          message: result.msg || '邀请码有效'
+        };
+      } else {
+        console.log('❌ 邀请码验证失败:', result.msg);
+        return {
+          valid: false,
+          message: result.msg || '邀请码无效'
+        };
+      }
+
+    } catch (error: any) {
+      console.error('❌ 邀请码验证API调用失败:', error);
+      return {
+        valid: false,
+        message: '验证过程出错，请检查网络连接'
+      };
+    }
   }
 
 }

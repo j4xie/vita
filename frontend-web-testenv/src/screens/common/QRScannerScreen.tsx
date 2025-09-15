@@ -242,7 +242,7 @@ export const QRScannerScreen: React.FC = () => {
         console.error('❌ [活动码输入] 无法解析活动ID:', code);
         showScanError(
           t('qr.results.invalid_qr_title') || '无效代码',
-          t('qr.scanning.activity.invalid_format') || '请输入工作人员提供的1-6位签到ID'
+          t('qr.scanning.activity.invalid_format') || '请输入1-6位数字的活动代码'
         );
         return;
       }
@@ -1360,11 +1360,11 @@ export const QRScannerScreen: React.FC = () => {
         return; // 不关闭Sheet，让用户看到错误并重新输入
       }
 
-      // 🔥 改进版：临时验证 + 自动清理
-      console.log('✅ 邀请码格式验证通过，开始真实性验证...');
+      // 🔥 最新版：使用专门的邀请码验证API (无临时用户创建)
+      console.log('✅ 邀请码格式验证通过，使用专门API验证...');
 
-      // 使用改进版的验证API (创建临时用户验证后自动清理)
-      const validationResult = await pomeloXAPI.validateInvitationCodeWithCleanup(trimmedCode);
+      // 使用新的专门验证API (纯验证，无用户创建)
+      const validationResult = await pomeloXAPI.checkInvitationCode(trimmedCode);
 
       if (validationResult.valid) {
         console.log('🎉 邀请码验证通过，跳转注册页面');
@@ -1381,7 +1381,7 @@ export const QRScannerScreen: React.FC = () => {
         setIsProcessing(false);
         return; // 保持Sheet打开，让用户重新输入
       }
-
+      
     } catch (error) {
       console.error('🚨 邀请码验证出错:', error);
       setError('验证过程出错，请重试');
@@ -1438,48 +1438,9 @@ export const QRScannerScreen: React.FC = () => {
   // 渲染摄像头组件
   const renderCamera = () => {
     console.log('📹 [QRScannerScreen] 渲染摄像头组件, Platform.OS:', Platform.OS);
-
+    
     if (Platform.OS === 'web') {
-      // HTTP环境下不显示摄像头，直接提示使用手动输入
-      const isHttpEnv = window.location.protocol === 'http:' &&
-                       window.location.hostname !== 'localhost' &&
-                       window.location.hostname !== '127.0.0.1';
-
-      if (isHttpEnv) {
-        console.log('🚫 [QRScannerScreen] HTTP环境，不渲染摄像头');
-        return (
-          <View style={[StyleSheet.absoluteFillObject, { backgroundColor: '#000', justifyContent: 'center', alignItems: 'center' }]}>
-            <View style={{ alignItems: 'center', padding: 40 }}>
-              <Ionicons name="globe" size={64} color="#F59E0B" />
-              <Text style={{ color: '#F59E0B', fontSize: 20, fontWeight: '600', marginTop: 16, textAlign: 'center' }}>
-                HTTP环境限制
-              </Text>
-              <Text style={{ color: '#FFF', fontSize: 14, marginTop: 8, textAlign: 'center', lineHeight: 20 }}>
-                摄像头功能需要HTTPS环境{'\n'}请使用下方"手动输入"功能
-              </Text>
-              <TouchableOpacity
-                style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  backgroundColor: '#059669',
-                  paddingHorizontal: 20,
-                  paddingVertical: 12,
-                  borderRadius: 8,
-                  marginTop: 20
-                }}
-                onPress={() => window.location.href = 'https://web.vitaglobal.icu'}
-              >
-                <Ionicons name="open-outline" size={20} color="white" />
-                <Text style={{ color: 'white', fontSize: 16, fontWeight: '600', marginLeft: 8 }}>
-                  前往生产环境使用摄像头
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        );
-      }
-
-      console.log('🌐 [QRScannerScreen] HTTPS环境，使用NativeQRScanner组件');
+      console.log('🌐 [QRScannerScreen] 使用NativeQRScanner组件');
       return (
         <NativeQRScanner
           style={StyleSheet.absoluteFillObject}

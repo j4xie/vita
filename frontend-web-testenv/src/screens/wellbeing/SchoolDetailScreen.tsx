@@ -876,7 +876,7 @@ export const SchoolDetailScreen: React.FC = () => {
     const validation = VolunteerStateService.validateCheckInConditions(volunteer as VolunteerInfo);
     if (!validation.isValid) {
       console.error('❌ [CHECKIN-VALIDATION] 验证失败:', validation.error);
-      Alert.alert('签到失败', validation.error || '签到条件不满足');
+      Alert.alert(t('volunteer.checkin_failed'), validation.error || t('volunteer.checkin_conditions_not_met'));
       return;
     }
     
@@ -1067,7 +1067,7 @@ export const SchoolDetailScreen: React.FC = () => {
     const validation = VolunteerStateService.validateCheckOutConditions(volunteer as VolunteerInfo);
     if (!validation.isValid) {
       console.error('❌ [CHECKOUT-VALIDATION] 验证失败:', validation.error);
-      Alert.alert('签退失败', validation.error || '签退条件不满足');
+      Alert.alert(t('volunteer.checkout_failed'), validation.error || t('volunteer.checkout_conditions_not_met'));
       return;
     }
     

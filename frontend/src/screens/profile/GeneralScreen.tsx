@@ -264,7 +264,7 @@ export const GeneralScreen: React.FC = () => {
       setCurrentRegion(newRegion);
       
       // Show success message
-      const languageCode = currentLanguage.startsWith('zh') ? 'zh' : 'en';
+      const languageCode = (typeof currentLanguage === 'string' && currentLanguage.startsWith('zh')) ? 'zh' : 'en';
       const regionName = UserRegionPreferences.getRegionDisplayName(newRegion, languageCode);
       Alert.alert(
         t('common.success'),
@@ -443,7 +443,7 @@ export const GeneralScreen: React.FC = () => {
       id: 'region',
       title: t('profile.general.regionAndTimezone'),
       icon: 'location-outline' as keyof typeof Ionicons.glyphMap,
-      value: `${UserRegionPreferences.getRegionIcon(currentRegion)} ${UserRegionPreferences.getRegionDisplayName(currentRegion, currentLanguage.startsWith('zh') ? 'zh' : 'en')}`,
+      value: `${UserRegionPreferences.getRegionIcon(currentRegion)} ${UserRegionPreferences.getRegionDisplayName(currentRegion, (typeof currentLanguage === 'string' && currentLanguage.startsWith('zh')) ? 'zh' : 'en')}`,
       onPress: handleRegionPress,
     },
     // 外观设置已隐藏以通过App Store审核

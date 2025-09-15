@@ -172,7 +172,7 @@ export const ProfileScreen: React.FC = () => {
       );
     } catch (error) {
       console.error('Web端处理region点击失败:', error);
-      Alert.alert('错误', `处理失败: ${error.message}`);
+      Alert.alert(t('common.error'), t('common.processing_failed', {message: error.message}));
     }
   };
 

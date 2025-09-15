@@ -309,6 +309,8 @@
         "organization_placeholder": "Select your organization",
         "email_label": "Email *",
         "email_placeholder": "Enter your email",
+        "school_label": "School *",
+        "school_placeholder": "Select your school",
         "password_label": "Password *",
         "password_placeholder": "Enter password (6-20 characters)",
         "confirm_password_label": "Confirm Password *", 

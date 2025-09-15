@@ -1,0 +1,33 @@
+/* Web端浏览器扩展错误禁用 - 清理控制台噪音 */
+
+/* 禁用Chrome扩展相关的错误日志 */
+.chrome-extension-error {
+  display: none !important;
+}
+
+/* 禁用扩展注入的脚本错误 */
+script[src*="chrome-extension://"] {
+  display: none !important;
+}
+
+/* 添加控制台过滤CSS - 减少扩展噪音 */
+/* 这些样式可以帮助过滤扩展相关的错误显示 */
+
+/* TabBar位置修复样式 */
+.tabbar-fixed-position {
+  position: fixed !important;
+  bottom: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  z-index: 999 !important;
+  background: rgba(255, 255, 255, 0.95) !important;
+  backdrop-filter: blur(10px) !important;
+  border-top: 1px solid #e5e5e7 !important;
+}
+
+/* 学校选择器样式优化 */
+.school-selector-scrollable {
+  overflow-y: auto !important;
+  max-height: 400px !important;
+  -webkit-overflow-scrolling: touch !important;
+}

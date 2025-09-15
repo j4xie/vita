@@ -6,9 +6,9 @@ import {
   StyleSheet,
   Platform,
   Modal,
-  FlatList,
   SafeAreaView,
   ActivityIndicator,
+  ScrollView,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { theme } from '../../theme';
@@ -91,8 +91,8 @@ export const WebSchoolSelector: React.FC<WebSchoolSelectorProps> = ({
         transparent={true}
         onRequestClose={() => setIsModalVisible(false)}
       >
-        <View style={styles.modalOverlay}>
-          <SafeAreaView style={styles.modalContainer}>
+        <View style={styles.modalOverlay} {...(Platform.OS === 'web' && { className: 'school-selector-modal' })}>
+          <SafeAreaView style={styles.modalContainer} {...(Platform.OS === 'web' && { className: 'modal-container' })}>
             {/* Header */}
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Select University</Text>
@@ -104,12 +104,15 @@ export const WebSchoolSelector: React.FC<WebSchoolSelectorProps> = ({
               </TouchableOpacity>
             </View>
 
-            {/* Schools List */}
-            <FlatList
-              data={schools}
-              keyExtractor={(item) => item.id}
-              renderItem={({ item }) => (
+            {/* Schools List - 使用简单的ScrollView替代WebFlatList */}
+            <ScrollView
+              style={styles.schoolsList}
+              showsVerticalScrollIndicator={false}
+              nestedScrollEnabled={true}
+            >
+              {schools.map((item) => (
                 <TouchableOpacity
+                  key={item.id}
                   style={[
                     styles.schoolOption,
                     selectedSchool?.id === item.id && styles.schoolOptionSelected,
@@ -127,10 +130,8 @@ export const WebSchoolSelector: React.FC<WebSchoolSelectorProps> = ({
                     <Ionicons name="checkmark" size={20} color={theme.colors.primary} />
                   )}
                 </TouchableOpacity>
-              )}
-              showsVerticalScrollIndicator={false}
-              style={styles.schoolsList}
-            />
+              ))}
+            </ScrollView>
 
             {/* Clear Selection Option */}
             {selectedSchool && (
@@ -208,10 +209,18 @@ const styles = StyleSheet.create({
     backgroundColor: LIQUID_GLASS_LAYERS.L1.background.light,
     borderRadius: LIQUID_GLASS_LAYERS.L1.borderRadius.card,
     padding: 0,
-    maxHeight: '80%',
+    maxHeight: '85%', // 增加Modal高度
+    minHeight: 400, // 确保最小高度
     width: '90%',
     maxWidth: 400,
+    display: 'flex',
+    flexDirection: 'column',
     ...theme.shadows[LIQUID_GLASS_LAYERS.L1.shadow],
+    ...(Platform.OS === 'web' && {
+      // Web端Modal优化
+      overflow: 'hidden',
+      position: 'relative' as any,
+    }),
   },
   modalHeader: {
     flexDirection: 'row',
@@ -235,7 +244,14 @@ const styles = StyleSheet.create({
     }),
   },
   schoolsList: {
-    maxHeight: 300,
+    flex: 1,
+    maxHeight: 400, // 增加最大高度
+    ...(Platform.OS === 'web' && {
+      // Web端确保滚动正常
+      overflowY: 'auto' as any,
+      WebkitOverflowScrolling: 'touch' as any,
+      scrollBehavior: 'smooth' as any,
+    }),
   },
   schoolOption: {
     flexDirection: 'row',
@@ -283,3 +299,50 @@ const styles = StyleSheet.create({
     marginLeft: theme.spacing[2],
   },
 });
+
+// Web端CSS优化 - 修复Modal内滚动问题
+if (Platform.OS === 'web') {
+  const style = document.createElement('style');
+  style.textContent = `
+    /* 修复学校选择器Modal滚动问题 */
+    .school-selector-modal {
+      pointer-events: auto !important;
+    }
+
+    .school-selector-modal .modal-container {
+      display: flex !important;
+      flex-direction: column !important;
+      overflow: hidden !important;
+      max-height: 85vh !important;
+    }
+
+    .school-selector-modal .schools-list {
+      flex: 1 !important;
+      overflow-y: auto !important;
+      -webkit-overflow-scrolling: touch !important;
+      scroll-behavior: smooth !important;
+      max-height: 400px !important;
+      /* 确保能够滚动 */
+      touch-action: pan-y !important;
+    }
+
+    .school-selector-modal .school-option {
+      border-bottom: 1px solid #e5e5e7 !important;
+      transition: background-color 0.2s ease !important;
+    }
+
+    .school-selector-modal .school-option:hover {
+      background-color: rgba(0, 0, 0, 0.05) !important;
+    }
+
+    /* 确保Modal内容不被截断 */
+    .school-selector-modal .modal-header {
+      flex-shrink: 0 !important;
+    }
+
+    .school-selector-modal .clear-button {
+      flex-shrink: 0 !important;
+    }
+  `;
+  document.head.appendChild(style);
+}

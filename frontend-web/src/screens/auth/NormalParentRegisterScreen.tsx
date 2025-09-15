@@ -19,7 +19,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { i18n } from '../../utils/i18n';
 import { LinearGradient } from '../../components/web/WebLinearGradient';
-import { WebSchoolSelector } from '../../components/web/WebSchoolSelector';
+import { SimpleSchoolSelector } from '../../components/web/SimpleSchoolSelector';
 
 import { theme } from '../../theme';
 import { LIQUID_GLASS_LAYERS, DAWN_GRADIENTS } from '../../theme/core';
@@ -213,11 +213,15 @@ export const NormalParentRegisterScreen: React.FC = () => {
       
       if (response.code === 200 && response.data) {
         const schoolData = createSchoolDataFromBackend(response.data);
-        // 过滤学校：排除非学校机构（CU总部等）
+        // 过滤掉非学校的组织机构（如CU总部等） - 与App端保持一致
         const filteredSchools = schoolData.filter(school => {
-          const name = school.name.toLowerCase();
-          // 包含"university"或"校"的才是学校
-          return name.includes('university') || name.includes('校');
+          // 排除CU总部和其他非学校组织
+          const excludedOrganizations = ['CU', '总部', 'Headquarters', 'Chinese Union'];
+          const schoolInfo = `${school.abbreviation} ${school.name}`.toLowerCase();
+
+          return !excludedOrganizations.some(org =>
+            schoolInfo.includes(org.toLowerCase())
+          );
         });
         setSchools(filteredSchools);
         console.log(`📚 已过滤学校列表: ${filteredSchools.length}/${schoolData.length} 所学校`);
@@ -824,7 +828,7 @@ export const NormalParentRegisterScreen: React.FC = () => {
   const renderSchoolPicker = () => (
     <View style={styles.inputContainer}>
       <Text style={styles.label}>{t('auth.register.parent.child_school_label')}</Text>
-      <WebSchoolSelector
+      <SimpleSchoolSelector
         schools={schools}
         selectedSchool={formData.selectedSchool}
         onSchoolSelect={(school) => updateFormData('selectedSchool', school)}

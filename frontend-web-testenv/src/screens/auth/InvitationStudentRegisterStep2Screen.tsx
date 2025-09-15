@@ -193,11 +193,19 @@ export const InvitationStudentRegisterStep2Screen: React.FC = () => {
   const validateForm = (): boolean => {
     const newErrors: ValidationErrors = {};
 
+    console.log('🔍 开始表单验证...');
+    console.log('📧 验证邮箱:', formData.email);
+
     // 验证邮箱（作为用户名）
     if (!formData.email.trim()) {
+      console.log('❌ 邮箱为空');
       newErrors.email = t('validation.email_required');
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      console.log('❌ 邮箱格式无效:', formData.email);
+      console.log('❌ 邮箱包含多少个@:', (formData.email.match(/@/g) || []).length);
       newErrors.email = t('validation.email_invalid');
+    } else {
+      console.log('✅ 邮箱验证通过');
     }
 
     // 验证昵称
@@ -229,6 +237,10 @@ export const InvitationStudentRegisterStep2Screen: React.FC = () => {
     if (!formData.selectedOrganization) {
       newErrors.selectedOrganization = t('validation.organization_required');
     }
+
+    console.log('🔍 验证完成，错误列表:', newErrors);
+    console.log('🔍 错误数量:', Object.keys(newErrors).length);
+    console.log('🔍 表单验证结果:', Object.keys(newErrors).length === 0 ? '✅ 通过' : '❌ 失败');
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -293,7 +305,34 @@ export const InvitationStudentRegisterStep2Screen: React.FC = () => {
   };
 
   const handleRegister = async () => {
-    if (!validateForm()) return;
+    console.log('🔥 注册按钮被点击！');
+    console.log('🔍 当前表单数据:', formData);
+    console.log('🔍 当前错误状态:', errors);
+
+    const isValid = validateForm();
+    console.log('🔍 表单验证结果:', isValid);
+    console.log('🔍 验证后错误状态:', errors);
+
+    if (!isValid) {
+      console.log('❌ 表单验证失败，停止注册');
+
+      // 显示验证错误给用户
+      setTimeout(() => {
+        const errorMessages = Object.entries(errors)
+          .filter(([key, value]) => value)
+          .map(([key, value]) => `${key}: ${value}`)
+          .join('\n');
+
+        if (errorMessages) {
+          Alert.alert(
+            '表单验证失败',
+            `请检查以下字段:\n\n${errorMessages}`,
+            [{ text: '确定' }]
+          );
+        }
+      }, 100);
+      return;
+    }
 
     setLoading(true);
     console.log('🚀 开始注册流程...');
@@ -374,12 +413,16 @@ export const InvitationStudentRegisterStep2Screen: React.FC = () => {
           console.log('开始自动登录，邮箱用户名:', formData.email);
           console.log('API Base URL:', process.env.EXPO_PUBLIC_API_URL);
           
-          // 使用真实的登录API，直接调用https://www.vitaglobal.icu/app/login
+          // 使用与注册相同的API环境进行自动登录
           const formData_login = new URLSearchParams();
           formData_login.append('username', formData.email);
           formData_login.append('password', formData.password);
-          
-          const loginResponse = await fetch('https://www.vitaglobal.icu/app/login', {
+
+          // 使用环境变量确保与注册API一致
+          const loginApiUrl = `${process.env.EXPO_PUBLIC_API_URL}/app/login`;
+          console.log('自动登录API URL:', loginApiUrl);
+
+          const loginResponse = await fetch(loginApiUrl, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/x-www-form-urlencoded',
@@ -793,19 +836,62 @@ export const InvitationStudentRegisterStep2Screen: React.FC = () => {
             )}
             {/* Register Button - 跟随内容在表单底部 */}
             <View style={styles.bottomContainer}>
-              <TouchableOpacity
-                style={[styles.registerButton, loading && styles.registerButtonDisabled]}
-                onPress={handleRegister}
-                disabled={loading}
-              >
-                {loading ? (
-                  <ActivityIndicator color={theme.colors.text.inverse} />
-                ) : (
-                  <Text style={styles.registerButtonText}>
-                    {t('auth.register.form.register')}
-                  </Text>
-                )}
-              </TouchableOpacity>
+              {Platform.OS === 'web' ? (
+                <button
+                  style={{
+                    backgroundColor: loading ? '#FF6B35AA' : '#FF6B35',
+                    paddingTop: 16,
+                    paddingBottom: 16,
+                    borderRadius: 12,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    border: 'none',
+                    cursor: loading ? 'not-allowed' : 'pointer',
+                    width: '100%',
+                    display: 'flex',
+                    outline: 'none',
+                    opacity: loading ? 0.5 : 1,
+                    position: 'relative',
+                    zIndex: 9999,
+                    pointerEvents: 'auto',
+                    minHeight: 50,
+                  }}
+                  onClick={(e) => {
+                    console.log('🔥 原生按钮点击事件触发！');
+                    e.preventDefault();
+                    e.stopPropagation();
+                    alert('按钮被点击了！');
+                    handleRegister();
+                  }}
+                  disabled={loading}
+                >
+                  {loading ? (
+                    <ActivityIndicator color={theme.colors.text.inverse} />
+                  ) : (
+                    <span style={{
+                      fontSize: 18,
+                      fontWeight: '600',
+                      color: 'white',
+                    }}>
+                      {t('auth.register.form.register')}
+                    </span>
+                  )}
+                </button>
+              ) : (
+                <TouchableOpacity
+                  style={[styles.registerButton, loading && styles.registerButtonDisabled]}
+                  onPress={handleRegister}
+                  disabled={loading}
+                >
+                  {loading ? (
+                    <ActivityIndicator color={theme.colors.text.inverse} />
+                  ) : (
+                    <Text style={styles.registerButtonText}>
+                      {t('auth.register.form.register')}
+                    </Text>
+                  )}
+                </TouchableOpacity>
+              )}
             </View>
           </View>
           </ScrollView>

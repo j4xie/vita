@@ -6,7 +6,7 @@ export interface SchoolData {
   emailDomain: string; // 邮箱域名
 }
 
-// 静态学校映射表（前端维护）- 与RegisterFormScreen和后端API同步更新
+// 静态学校映射表（前端维护）- 与注册表单和后端API同步更新
 export const SCHOOL_EMAIL_MAPPING: Record<string, string> = {
   'UCD': 'ucdavis.edu',
   'UCB': 'berkeley.edu', 
@@ -115,7 +115,7 @@ export const generateEmailAddress = (username: string, schoolAbbreviation: strin
 };
 
 /**
- * 从后端学校数据中获取邮箱域名（兼容RegisterFormScreen的映射）
+ * 从后端学校数据中获取邮箱域名（兼容注册表单的映射）
  * @param school 后端返回的学校对象，包含deptName(中文)和engName(英文)字段
  * @returns 邮箱域名
  */
@@ -156,22 +156,38 @@ export const validateEduEmail = (email: string): boolean => {
  */
 export const createSchoolDataFromBackend = (backendSchools: any[]): SchoolData[] => {
   return backendSchools.map(school => {
-    // 使用统一的邮箱域名获取函数，支持中英文匹配
-    const emailDomain = getEmailDomainFromBackendSchool(school);
-    
+    // 优先使用后端返回的 mailDomain 字段（格式：@berkeley.edu）
+    let emailDomain = '';
+    if (school.mailDomain) {
+      // 直接使用后端返回的 mailDomain 格式：@berkeley.edu
+      emailDomain = school.mailDomain;
+    } else {
+      // 备用：使用本地映射表，并添加@前缀
+      const localDomain = getEmailDomainFromBackendSchool(school);
+      emailDomain = localDomain ? `@${localDomain}` : '';
+    }
+
     // 获取学校显示名称（优先中文）
     const displayName = school.deptName || school.engName || '';
-    
+
     // 使用后端返回的缩写，如果没有则使用显示名称
     const abbreviation = school.aprName || displayName;
-    
+
+    console.log('🏫 School data processing:', {
+      deptId: school.deptId,
+      deptName: school.deptName,
+      rawMailDomain: school.mailDomain,
+      finalEmailDomain: emailDomain,
+      abbreviation: abbreviation
+    });
+
     return {
       id: school.deptId.toString(),
       name: displayName,
       abbreviation: abbreviation,
       emailDomain: emailDomain
     };
-  }).filter(school => school.emailDomain); // 只保留有邮箱域名映射的学校
+  }); // 移除邮箱域名过滤，显示所有学校
 };
 
 // 类型定义已在上方定义，无需重复导出

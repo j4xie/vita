@@ -347,7 +347,7 @@ export const NormalStudentRegisterScreen: React.FC = () => {
           formData_login.append('username', formData.userName);
           formData_login.append('password', formData.password);
           
-          const loginResponse = await fetch('https://www.vitaglobal.icu/app/login', {
+          const loginResponse = await fetch(`${process.env.EXPO_PUBLIC_API_URL}/app/login`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/x-www-form-urlencoded',

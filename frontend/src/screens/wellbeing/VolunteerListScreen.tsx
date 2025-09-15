@@ -437,13 +437,13 @@ export const VolunteerListScreen: React.FC<VolunteerListScreenProps> = ({
       const targetUserId = volunteer.userId;
       
       if (!operateUserId || !operateLegalName || !targetUserId) {
-        Alert.alert('签到失败', '用户信息不完整，请重新登录');
+        Alert.alert(t('common.signin_failed'), t('common.user_info_incomplete'));
         return;
       }
 
       // 🚨 权限边界检查：防止分管理员操作总管理员
       if (volunteer.fullUserInfo && !canOperateTargetUser(userInfo, volunteer.fullUserInfo)) {
-        Alert.alert('权限不足', '您没有权限操作该用户');
+        Alert.alert(t('common.permission_denied'), t('common.no_permission_for_user'));
         return;
       }
       
@@ -474,12 +474,12 @@ export const VolunteerListScreen: React.FC<VolunteerListScreenProps> = ({
         }
       } else {
         setOperationState('error');
-        Alert.alert('签到失败', result.msg || '请稍后重试');
+        Alert.alert(t('common.signin_failed'), result.msg || t('common.try_again_later'));
       }
     } catch (error) {
       setOperationState('error');
       console.error('签到失败:', error);
-      Alert.alert('签到失败', '网络错误，请检查连接后重试');
+      Alert.alert(t('common.signin_failed'), t('common.network_error_retry'));
     }
   }, [userInfo]);
 
@@ -500,7 +500,7 @@ export const VolunteerListScreen: React.FC<VolunteerListScreenProps> = ({
       const targetUserId = pendingSignOutVolunteer.userId;
       
       if (!operateUserId || !operateLegalName || !targetUserId) {
-        Alert.alert('签退失败', '用户信息不完整，请重新登录');
+        Alert.alert(t('common.signout_failed'), t('common.user_info_incomplete'));
         setShowSignOutSheet(false);
         setPendingSignOutVolunteer(null);
         return;
@@ -508,7 +508,7 @@ export const VolunteerListScreen: React.FC<VolunteerListScreenProps> = ({
 
       // 🚨 权限边界检查：防止分管理员操作总管理员
       if (pendingSignOutVolunteer.fullUserInfo && !canOperateTargetUser(userInfo, pendingSignOutVolunteer.fullUserInfo)) {
-        Alert.alert('权限不足', '您没有权限操作该用户');
+        Alert.alert(t('common.permission_denied'), t('common.no_permission_for_user'));
         setShowSignOutSheet(false);
         setPendingSignOutVolunteer(null);
         return;
@@ -549,12 +549,12 @@ export const VolunteerListScreen: React.FC<VolunteerListScreenProps> = ({
         }
       } else {
         setOperationState('error');
-        Alert.alert('签退失败', result.msg || '请稍后重试');
+        Alert.alert(t('common.signout_failed'), result.msg || t('common.try_again_later'));
       }
     } catch (error) {
       setOperationState('error');
       console.error('签退失败:', error);
-      Alert.alert('签退失败', '网络错误，请检查连接后重试');
+      Alert.alert(t('common.signout_failed'), t('common.network_error_retry'));
     }
   }, [pendingSignOutVolunteer, userInfo]);
 
@@ -650,7 +650,7 @@ export const VolunteerListScreen: React.FC<VolunteerListScreenProps> = ({
           </TouchableOpacity>
           <View style={styles.schoolInfo}>
             <Text style={[styles.schoolName, { color: isDarkMode ? '#ffffff' : '#000000' }]}>
-              {i18n.language.startsWith('zh') ? selectedSchool.deptName : (selectedSchool.engName || selectedSchool.deptName)}
+              {(typeof i18n.language === 'string' && i18n.language.startsWith('zh')) ? selectedSchool.deptName : (selectedSchool.engName || selectedSchool.deptName)}
             </Text>
             <Text style={[styles.schoolSubtitle, { color: isDarkMode ? '#a1a1aa' : '#6b7280' }]}>
               University of California, Berkeley

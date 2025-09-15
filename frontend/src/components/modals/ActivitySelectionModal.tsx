@@ -327,7 +327,7 @@ const ActivitySelectionModalComponent: React.FC<ActivitySelectionModalProps> = (
               activeOpacity={0.7}
               accessibilityRole="button"
               accessibilityLabel={t('common.close')}
-              accessibilityHint="关闭活动选择对话框"
+              accessibilityHint={t('accessibility.close_activity_selection')}
             >
               <Ionicons
                 name="close"
@@ -371,8 +371,8 @@ const ActivitySelectionModalComponent: React.FC<ActivitySelectionModalProps> = (
                     onPress={() => handleActivitySelect(activity)}
                     activeOpacity={0.7}
                     accessibilityRole="button"
-                    accessibilityLabel={`选择活动 ${activity.name}`}
-                    accessibilityHint="点击选择此活动进行签到"
+                    accessibilityLabel={t('accessibility.select_activity', {name: activity.name})}
+                    accessibilityHint={t('accessibility.tap_to_select_activity')}
                     accessibilityState={{ selected: selectedActivity?.id === activity.id }}
                   >
                     <View style={styles.activityHeader}>
@@ -426,8 +426,8 @@ const ActivitySelectionModalComponent: React.FC<ActivitySelectionModalProps> = (
                 onPress={handleClose}
                 activeOpacity={0.7}
                 accessibilityRole="button"
-                accessibilityLabel="取消"
-                accessibilityHint="关闭活动选择并返回"
+                accessibilityLabel={t('accessibility.cancel')}
+                accessibilityHint={t('accessibility.close_and_return')}
               >
                 <Text style={[styles.buttonText, styles.cancelButtonText]}>
                   取消
@@ -444,7 +444,7 @@ const ActivitySelectionModalComponent: React.FC<ActivitySelectionModalProps> = (
                 disabled={!selectedActivity || processing}
                 activeOpacity={0.7}
                 accessibilityRole="button"
-                accessibilityLabel="确认签到"
+                accessibilityLabel={t('accessibility.confirm_signin')}
                 accessibilityHint={selectedActivity ? `确认为${selectedActivity.name}活动签到` : "请先选择一个活动"}
                 accessibilityState={{ disabled: !selectedActivity || processing }}
               >

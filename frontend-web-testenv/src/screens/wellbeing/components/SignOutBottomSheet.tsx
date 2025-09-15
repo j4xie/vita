@@ -195,10 +195,10 @@ export const SignOutBottomSheet: React.FC<SignOutBottomSheetProps> = ({
               <Ionicons name="person" size={32} color={theme.colors.primary} />
             </View>
             <View style={styles.userDetails}>
-              <SafeText style={[styles.userName, { color: isDarkMode ? '#ffffff' : '#000000' }]} fallback="志愿者">
+              <SafeText style={[styles.userName, { color: isDarkMode ? '#ffffff' : '#000000' }]} fallback={t('volunteer.default_name')}>
                 {volunteer.name}
               </SafeText>
-              <SafeText style={[styles.userPhone, { color: isDarkMode ? '#8e8e93' : '#8e8e93' }]} fallback="无手机号">
+              <SafeText style={[styles.userPhone, { color: isDarkMode ? '#8e8e93' : '#8e8e93' }]} fallback={t('volunteer.no_phone')}>
                 {volunteer.phone}
               </SafeText>
             </View>
@@ -228,7 +228,7 @@ export const SignOutBottomSheet: React.FC<SignOutBottomSheetProps> = ({
                   <Text style={[styles.timeLabel, { color: isDarkMode ? '#8e8e93' : '#8e8e93' }]}>
                     {t('wellbeing.volunteer.serviceDuration')}
                   </Text>
-                  <SafeText style={[styles.durationValue, { color: theme.colors.primary }]} fallback="0小时0分钟">
+                  <SafeText style={[styles.durationValue, { color: theme.colors.primary }]} fallback={t('volunteer.duration_placeholder')}>
                     {signOutInfo.duration}
                   </SafeText>
                 </View>

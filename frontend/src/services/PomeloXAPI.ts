@@ -972,6 +972,52 @@ class PomeloXAPI {
     return this.request('/app/post/list', { method: 'GET' });
   }
 
+
+  /**
+   * 专门的邀请码验证接口 - 使用后端新增的校验API
+   * @param inviteCode 邀请码
+   * @returns 验证结果
+   */
+  async checkInvitationCode(inviteCode: string): Promise<{
+    valid: boolean;
+    message: string;
+  }> {
+    console.log('🔍 使用专门API验证邀请码:', inviteCode);
+
+    try {
+      const response = await fetchWithRetry(`${BASE_URL}/app/invitation/checkInviteCode?inviteCode=${inviteCode}`, {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+        },
+      });
+
+      const result = await response.json();
+      console.log('🌐 邀请码验证结果:', { code: result.code, msg: result.msg });
+
+      if (result.code === 200) {
+        console.log('✅ 邀请码验证通过');
+        return {
+          valid: true,
+          message: result.msg || '邀请码有效'
+        };
+      } else {
+        console.log('❌ 邀请码验证失败:', result.msg);
+        return {
+          valid: false,
+          message: result.msg || '邀请码无效'
+        };
+      }
+
+    } catch (error: any) {
+      console.error('❌ 邀请码验证API调用失败:', error);
+      return {
+        valid: false,
+        message: '验证过程出错，请检查网络连接'
+      };
+    }
+  }
+
 }
 
 export const pomeloXAPI = new PomeloXAPI();

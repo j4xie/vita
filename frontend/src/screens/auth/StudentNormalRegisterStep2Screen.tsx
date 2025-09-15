@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useContext } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -22,15 +22,15 @@ import { LinearGradient } from 'expo-linear-gradient';
 
 import { theme } from '../../theme';
 import { LIQUID_GLASS_LAYERS, DAWN_GRADIENTS } from '../../theme/core';
-import { 
+import {
   RegistrationStep1Data,
-  RegistrationStep2Data, 
+  RegistrationStep2Data,
   RegistrationFormData,
   RegistrationAPIRequest,
   ValidationErrors,
   OrganizationData
 } from '../../types/registration';
-import { 
+import {
   sendSMSVerificationCode,
   fetchOrganizationList,
   registerUser,
@@ -38,7 +38,7 @@ import {
   checkUserNameAvailability,
   checkEmailAvailability
 } from '../../services/registrationAPI';
-import { 
+import {
   validateTextByLanguage,
   TextType,
   generateBackendNameData,
@@ -46,7 +46,7 @@ import {
   getInputPlaceholder
 } from '../../utils/textValidation';
 import { i18n } from '../../utils/i18n';
-import { UserContext } from '../../context/UserContext';
+import { useUser } from '../../context/UserContext';
 import { login } from '../../services/authAPI';
 import LiquidSuccessModal from '../../components/modals/LiquidSuccessModal';
 
@@ -59,11 +59,11 @@ interface RouteParams {
   detectionResult?: any;
 }
 
-export const RegisterStep2Screen: React.FC = () => {
+export const StudentNormalRegisterStep2Screen: React.FC = () => {
   const navigation = useNavigation<any>();
   const route = useRoute<any>();
   const { t } = useTranslation();
-  const { login: userLogin } = useContext(UserContext);
+  const { login: userLogin } = useUser();
   
   const { 
     step1Data, 
@@ -107,7 +107,7 @@ export const RegisterStep2Screen: React.FC = () => {
   
   // 调试：检查当前系统语言
   useEffect(() => {
-    console.log('🌍 RegisterStep2Screen - 当前语言检测:', {
+    console.log('🌍 [RegisterStep2] Language detection:', {
       currentLanguage: i18n.language,
       detectedRegion: detectedRegion
     });
@@ -257,12 +257,14 @@ export const RegisterStep2Screen: React.FC = () => {
       newErrors.confirmPassword = t('validation.password_mismatch');
     }
 
-    // 验证验证码（暂时跳过，因为短信服务未配置）
-    // if (!formData.verificationCode.trim()) {
-    //   newErrors.verificationCode = t('validation.verification_code_required');
-    // } else if (!/^\d{6}$/.test(formData.verificationCode)) {
-    //   newErrors.verificationCode = t('validation.verification_code_format');
-    // }
+    // 验证验证码（只在普通注册时需要）
+    if (registrationType === 'phone') {
+      if (!formData.verificationCode.trim()) {
+        newErrors.verificationCode = t('validation.verification_code_required');
+      } else if (!/^\d{6}$/.test(formData.verificationCode)) {
+        newErrors.verificationCode = t('validation.verification_code_format');
+      }
+    }
 
     // 验证组织选择
     if (!formData.selectedOrganization) {
@@ -278,13 +280,13 @@ export const RegisterStep2Screen: React.FC = () => {
 
     setLoading(true);
     try {
-      console.log('🔥 开始发送验证码，手机号:', step1Data.phoneNumber);
+      console.log('🔥 [RegisterStep2] Starting to send verification code, phone:', step1Data.phoneNumber);
       const response = await sendSMSVerificationCode(step1Data.phoneNumber);
       
-      console.log('📱 短信接口响应:', response);
+      console.log('📱 [RegisterStep2] SMS API response:', response);
       
       if (response.code === 'OK' && response.bizId) {
-        console.log('✅ 验证码发送成功, bizId:', response.bizId);
+        console.log('✅ [RegisterStep2] Verification code sent successfully, bizId:', response.bizId);
         setBizId(response.bizId);
         setSmsCodeSent(true);
         
@@ -325,27 +327,27 @@ export const RegisterStep2Screen: React.FC = () => {
     }
   };
 
-  // 导航到第三步：手机验证和最终注册
-  const handleNext = () => {
-    if (!validateForm()) return;
-    
-    // 导航到第三步，传递所需数据
-    navigation.navigate('RegisterStep3', {
-      step1Data,
-      step2Data: formData,
-      referralCode,
-      hasReferralCode,
-      registrationType,
-      detectedRegion,
-      detectionResult
-    });
-  };
+  // 注释掉：推荐码注册流程不需要第三步，直接在第二步完成注册
+  // const handleNext = () => {
+  //   if (!validateForm()) return;
+  //
+  //   // 导航到第三步，传递所需数据
+  //   navigation.navigate('RegisterStep3', {
+  //     step1Data,
+  //     step2Data: formData,
+  //     referralCode,
+  //     hasReferralCode,
+  //     registrationType,
+  //     detectedRegion,
+  //     detectionResult
+  //   });
+  // };
 
   const handleRegister = async () => {
     if (!validateForm()) return;
 
     setLoading(true);
-    console.log('🚀 开始注册流程...');
+    console.log('🚀 [RegisterStep2] Starting registration process...');
     
     // 注册处理中（不显示弹窗，避免多个弹窗）
     
@@ -403,33 +405,35 @@ export const RegisterStep2Screen: React.FC = () => {
           orgId: formData.selectedOrganization!.id,
           area: detectedRegion, // 地理检测结果（只读）
           areaCode: (step1Data as any).areaCode || (detectedRegion === 'zh' ? '86' : '1'), // 使用Step1选择的区号
-          // 注意：由于短信服务未配置，暂时不包含验证码
-          // verCode: formData.verificationCode,
-          // bizId: bizId,
+          // 只在普通注册时包含验证码验证
+          ...(registrationType === 'phone' && {
+            verCode: formData.verificationCode,
+            bizId: bizId,
+          }),
           // 不包含 invCode
         };
       }
 
-      console.log('发送注册数据:', registrationData); // 调试信息
+      console.log('[RegisterStep2] Sending registration data:', registrationData); // Debug info
 
       // 调用真实的注册API
       const response = await registerUser(registrationData);
       
-      console.log('注册响应:', response); // 调试信息
+      console.log('[RegisterStep2] Registration response:', response); // Debug info
       
       if (response.code === 200) {
-        console.log('✅ 注册成功！开始自动登录流程...');
+        console.log('✅ [RegisterStep2] Registration successful! Starting auto login process...');
         
         try {
           // 🔧 关键修复：使用与注册API完全相同的userName值
           const registrationUserName = registrationData.userName; // 使用实际发送给后端的userName
-          console.log('🔑 尝试登录参数:', {
+          console.log('🔑 [RegisterStep2] Login attempt parameters:', {
             username: registrationUserName,
             password: '[HIDDEN]',
-            注册时发送的userName: registrationData.userName,
-            注册时发送的email: registrationData.email,
-            formData中的email: formData.email,
-            step1Data中的generatedEmail: step1Data.generatedEmail
+            registrationUserName: registrationData.userName,
+            registrationEmail: registrationData.email,
+            formDataEmail: formData.email,
+            step1GeneratedEmail: step1Data.generatedEmail
           });
           
           const loginResult = await login({
@@ -437,7 +441,7 @@ export const RegisterStep2Screen: React.FC = () => {
             password: formData.password,
           });
           
-          console.log('📡 登录API响应:', {
+          console.log('📡 [RegisterStep2] Login API response:', {
             code: loginResult.code,
             msg: loginResult.msg,
             hasData: !!loginResult.data,
@@ -446,14 +450,14 @@ export const RegisterStep2Screen: React.FC = () => {
           
           if (loginResult.code === 200 && loginResult.data) {
             // 🔧 Web端解决方案：手动保存token到AsyncStorage
-            console.log('💾 开始手动保存token到AsyncStorage...');
+            console.log('💾 [RegisterStep2] Starting manual token save to AsyncStorage...');
             await AsyncStorage.setItem('@pomelox_token', loginResult.data.token);
             await AsyncStorage.setItem('@pomelox_user_id', loginResult.data.userId.toString());
             
             // 验证token是否正确保存
             const savedToken = await AsyncStorage.getItem('@pomelox_token');
             const savedUserId = await AsyncStorage.getItem('@pomelox_user_id');
-            console.log('✅ Token保存验证:', {
+            console.log('✅ [RegisterStep2] Token save verification:', {
               tokenSaved: !!savedToken,
               userIdSaved: !!savedUserId,
               tokenMatch: savedToken === loginResult.data.token,
@@ -461,16 +465,16 @@ export const RegisterStep2Screen: React.FC = () => {
             });
             
             // 然后调用UserContext的login方法
-            console.log('🔄 调用UserContext.login...');
+            console.log('🔄 [RegisterStep2] Calling UserContext.login...');
             await userLogin(loginResult.data.token);
-            console.log('✅ 自动登录成功！UserContext已更新');
+            console.log('✅ [RegisterStep2] Auto login successful! UserContext updated');
             
             // 🔧 使用LiquidSuccessModal替代Alert
             setLoading(false);
             setShowSuccessModal(true);
           } else {
             // 登录失败，但注册成功
-            console.log('❌ 自动登录失败，但注册成功:', loginResult);
+            console.log('❌ [RegisterStep2] Auto login failed, but registration successful:', loginResult);
             setLoading(false);
             Alert.alert(
               t('auth.register.success.title'),
@@ -854,6 +858,9 @@ export const RegisterStep2Screen: React.FC = () => {
                 onChangeText={(text) => updateFormData('password', text)}
                 secureTextEntry
                 placeholderTextColor={theme.colors.text.disabled}
+                autoComplete="off"
+                textContentType="none"
+                passwordRules=""
               />
               {errors.password && <Text style={styles.errorText}>{errors.password}</Text>}
             </View>
@@ -868,6 +875,9 @@ export const RegisterStep2Screen: React.FC = () => {
                 onChangeText={(text) => updateFormData('confirmPassword', text)}
                 secureTextEntry
                 placeholderTextColor={theme.colors.text.disabled}
+                autoComplete="off"
+                textContentType="none"
+                passwordRules=""
               />
               {errors.confirmPassword && <Text style={styles.errorText}>{errors.confirmPassword}</Text>}
             </View>
@@ -878,8 +888,8 @@ export const RegisterStep2Screen: React.FC = () => {
             {/* 组织选择 */}
             {renderOrganizationSelector()}
 
-            {/* 手机验证码 - 暂时隐藏，因为短信服务未配置 */}
-            {false && (
+            {/* 手机验证码 - 只在普通注册(非推荐码)时显示 */}
+            {registrationType === 'phone' && (
             <View style={styles.inputContainer}>
               <Text style={styles.label}>{t('auth.register.form.verification_code_label')}</Text>
               <View style={styles.verificationContainer}>
@@ -919,14 +929,14 @@ export const RegisterStep2Screen: React.FC = () => {
                   styles.registerButton, 
                   (loading || hasValidationErrors()) && styles.registerButtonDisabled
                 ]}
-                onPress={handleNext}
+                onPress={handleRegister}
                 disabled={loading || hasValidationErrors()}
               >
                 {loading ? (
                   <ActivityIndicator color={theme.colors.text.inverse} />
                 ) : (
                   <Text style={styles.registerButtonText}>
-                    {t('common.next')}
+                    {t('auth.register.form.complete_registration')}
                   </Text>
                 )}
               </TouchableOpacity>

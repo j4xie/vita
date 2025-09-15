@@ -437,13 +437,13 @@ export const VolunteerListScreen: React.FC<VolunteerListScreenProps> = ({
       const targetUserId = volunteer.userId;
       
       if (!operateUserId || !operateLegalName || !targetUserId) {
-        Alert.alert('签到失败', '用户信息不完整，请重新登录');
+        Alert.alert(t('volunteer.checkin_failed'), t('volunteer.user_info_incomplete'));
         return;
       }
 
       // 🚨 权限边界检查：防止分管理员操作总管理员
       if (volunteer.fullUserInfo && !canOperateTargetUser(userInfo, volunteer.fullUserInfo)) {
-        Alert.alert('权限不足', '您没有权限操作该用户');
+        Alert.alert(t('volunteer.permission_denied'), t('volunteer.no_permission_message'));
         return;
       }
       
@@ -474,12 +474,12 @@ export const VolunteerListScreen: React.FC<VolunteerListScreenProps> = ({
         }
       } else {
         setOperationState('error');
-        Alert.alert('签到失败', result.msg || '请稍后重试');
+        Alert.alert(t('volunteer.checkin_failed'), result.msg || t('volunteer.please_try_later'));
       }
     } catch (error) {
       setOperationState('error');
       console.error('签到失败:', error);
-      Alert.alert('签到失败', '网络错误，请检查连接后重试');
+      Alert.alert(t('volunteer.checkin_failed'), t('volunteer.network_error_message'));
     }
   }, [userInfo]);
 
@@ -500,7 +500,7 @@ export const VolunteerListScreen: React.FC<VolunteerListScreenProps> = ({
       const targetUserId = pendingSignOutVolunteer.userId;
       
       if (!operateUserId || !operateLegalName || !targetUserId) {
-        Alert.alert('签退失败', '用户信息不完整，请重新登录');
+        Alert.alert(t('volunteer.checkout_failed'), t('volunteer.user_info_incomplete'));
         setShowSignOutSheet(false);
         setPendingSignOutVolunteer(null);
         return;
@@ -508,7 +508,7 @@ export const VolunteerListScreen: React.FC<VolunteerListScreenProps> = ({
 
       // 🚨 权限边界检查：防止分管理员操作总管理员
       if (pendingSignOutVolunteer.fullUserInfo && !canOperateTargetUser(userInfo, pendingSignOutVolunteer.fullUserInfo)) {
-        Alert.alert('权限不足', '您没有权限操作该用户');
+        Alert.alert(t('volunteer.permission_denied'), t('volunteer.no_permission_message'));
         setShowSignOutSheet(false);
         setPendingSignOutVolunteer(null);
         return;
@@ -549,12 +549,12 @@ export const VolunteerListScreen: React.FC<VolunteerListScreenProps> = ({
         }
       } else {
         setOperationState('error');
-        Alert.alert('签退失败', result.msg || '请稍后重试');
+        Alert.alert(t('volunteer.checkout_failed'), result.msg || t('volunteer.please_try_later'));
       }
     } catch (error) {
       setOperationState('error');
       console.error('签退失败:', error);
-      Alert.alert('签退失败', '网络错误，请检查连接后重试');
+      Alert.alert(t('volunteer.checkout_failed'), t('volunteer.network_error_message'));
     }
   }, [pendingSignOutVolunteer, userInfo]);
 

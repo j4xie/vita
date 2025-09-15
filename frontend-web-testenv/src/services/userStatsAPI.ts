@@ -4,7 +4,7 @@
 
 import { getCurrentToken } from './authAPI';
 
-const BASE_URL = 'https://www.vitaglobal.icu';
+const BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'https://www.vitaglobal.icu';
 
 /**
  * 获取用户列表（需要管理员权限）

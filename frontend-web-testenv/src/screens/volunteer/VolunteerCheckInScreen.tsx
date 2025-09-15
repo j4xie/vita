@@ -835,7 +835,7 @@ export const VolunteerCheckInScreen: React.FC = () => {
             <View style={styles.userCard}>
               <View style={styles.userInfo}>
                 <View style={styles.userHeader}>
-                  <SafeText style={styles.userName} fallback="志愿者">{currentUser.name}</SafeText>
+                  <SafeText style={styles.userName} fallback={t('volunteer.default_name')}>{currentUser.name}</SafeText>
                   <View style={[
                     styles.userStatus,
                     { backgroundColor: currentUser.status === 'checked_in' ? theme.colors.success : theme.colors.background.secondary }
@@ -850,8 +850,8 @@ export const VolunteerCheckInScreen: React.FC = () => {
                   </View>
                 </View>
                 
-                <SafeText style={styles.userPhone} fallback="无手机号">{currentUser.phone}</SafeText>
-                <SafeText style={styles.userSchool} fallback="学校信息">{currentUser.school}</SafeText>
+                <SafeText style={styles.userPhone} fallback={t('volunteer.no_phone')}>{currentUser.phone}</SafeText>
+                <SafeText style={styles.userSchool} fallback={t('volunteer.school_info')}>{currentUser.school}</SafeText>
                 
                 {/* 时间信息 */}
                 <View style={styles.timeInfo}>
@@ -886,7 +886,7 @@ export const VolunteerCheckInScreen: React.FC = () => {
                     <View style={styles.timeItem}>
                       <Ionicons name="timer-outline" size={16} color={theme.colors.warning} />
                       <Text style={styles.timeLabel}>{t('volunteerCheckIn.time.worked')}</Text>
-                      <SafeText style={styles.timeValue} fallback="0小时0分钟">
+                      <SafeText style={styles.timeValue} fallback={t('volunteer.duration_placeholder')}>
                         {getCheckInDuration(currentUser)}
                       </SafeText>
                     </View>

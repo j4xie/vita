@@ -40,7 +40,7 @@ import { useFilter } from '../../context/FilterContext';
 import { Glass } from '../../ui/glass/GlassTheme';
 import { shouldShowTabBar } from '../../config/tabBarConfig';
 import { useTabBarPositionFix } from '../../hooks/useTabBarPositionFix';
-import { safariUIFix } from '../../utils/SafariUIFix';
+import { modernSafariUIFix } from '../../utils/ModernSafariUIFix';
 
 interface CustomTabBarProps extends BottomTabBarProps {
   // 可以添加额外的自定义属性
@@ -544,9 +544,9 @@ export const CustomTabBar: React.FC<CustomTabBarProps> = ({
       Haptics.selectionAsync();
     }
 
-    // Web端Safari UI隐藏（用户手势触发）
+    // Web端Safari UI状态变化（用户手势触发）
     if (Platform.OS === 'web') {
-      safariUIFix.forceHideSafariUI();
+      modernSafariUIFix.triggerUIStateChange();
     }
     
     const event = navigation.emit({

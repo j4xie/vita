@@ -6,10 +6,23 @@ import { theme } from './src/theme';
 import initI18next from './src/utils/i18n';
 import { AppNavigator } from './src/navigation/AppNavigator';
 import { ToastManager } from './src/components/common/ToastManager';
-import { AppDownloadBanner } from './src/components/web/AppDownloadBanner';
 
-// Web端全局CSS样式注入
+// Web端全局CSS样式注入 + 禁用浏览器扩展错误
 if (Platform.OS === 'web') {
+  // 禁用Chrome扩展错误日志
+  const originalConsoleError = console.error;
+  console.error = (...args) => {
+    const message = args.join(' ');
+    // 过滤扩展相关错误
+    if (message.includes('chrome-extension://') ||
+        message.includes('ERR_FILE_NOT_FOUND') ||
+        message.includes('completion_list.html') ||
+        message.includes('heuristicsRedefinitions.js')) {
+      return; // 不显示扩展错误
+    }
+    originalConsoleError.apply(console, args);
+  };
+
   const style = document.createElement('style');
   style.textContent = `
     * {
@@ -103,7 +116,6 @@ export default function App() {
 
   return (
     <SafeAreaProvider>
-      <AppDownloadBanner />
       <AppNavigator />
       <ToastManager />
     </SafeAreaProvider>

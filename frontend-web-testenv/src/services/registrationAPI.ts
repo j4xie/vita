@@ -8,8 +8,8 @@ import {
 } from '../types/registration';
 
 // API基础URL配置
-// 🔧 强制使用生产环境API - 遵循CLAUDE规范
-const BASE_URL = 'https://www.vitaglobal.icu';
+// 🔧 测试环境API - 使用专用测试服务器
+const BASE_URL = 'http://106.14.165.234:8085';
 
 /**
  * 发送短信验证码

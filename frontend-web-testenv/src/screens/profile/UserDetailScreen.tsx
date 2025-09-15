@@ -156,7 +156,7 @@ export const UserDetailScreen: React.FC = () => {
             {fromQRScan && (
               <View style={styles.qrBadge}>
                 <Ionicons name="qr-code" size={16} color="#FFFFFF" />
-                <Text style={styles.qrBadgeText}>扫码获取</Text>
+                <Text style={styles.qrBadgeText}>{t('profile.qr_obtained')}</Text>
               </View>
             )}
           </View>

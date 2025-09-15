@@ -134,7 +134,8 @@ export const InvitationStudentRegisterStep1Screen: React.FC = () => {
     if (emailUsername && formData.selectedSchool) {
       // 使用统一的邮箱域名服务生成邮箱地址
       const emailDomain = formData.selectedSchool.emailDomain;
-      const generatedEmail = emailDomain ? `${emailUsername}@${emailDomain}` : '';
+      // emailDomain现在已经包含@符号（来自后端mailDomain字段），直接拼接
+      const generatedEmail = emailDomain ? `${emailUsername}${emailDomain}` : '';
       setFormData(prev => ({ ...prev, generatedEmail }));
     } else {
       setFormData(prev => ({ ...prev, generatedEmail: '' }));
@@ -280,7 +281,7 @@ export const InvitationStudentRegisterStep1Screen: React.FC = () => {
             autoCorrect={false}
             placeholderTextColor={theme.colors.text.disabled}
           />
-          <Text style={styles.emailDomain}>@{formData.selectedSchool.emailDomain}</Text>
+          <Text style={styles.emailDomain}>{formData.selectedSchool.emailDomain}</Text>
         </View>
         {formData.generatedEmail && (
           <Text style={styles.emailPreview}>

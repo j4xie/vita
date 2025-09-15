@@ -4,8 +4,8 @@ import { getCurrentToken } from './authAPI';
 import { Platform, DeviceEventEmitter } from 'react-native';
 import { notifyRegistrationSuccess, scheduleActivityReminder } from './smartAlertSystem';
 
-// 🔧 强制使用生产环境API - 遵循CLAUDE规范
-const BASE_URL = 'https://www.vitaglobal.icu';
+// 🔧 使用环境变量配置API - 遵循CLAUDE规范环境隔离
+const BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'https://www.vitaglobal.icu';
 
 // 检测是否为iOS模拟器
 const isIOSSimulator = Platform.OS === 'ios' && __DEV__;
@@ -976,15 +976,20 @@ class PomeloXAPI {
     return this.request('/app/post/list', { method: 'GET' });
   }
 
+
   /**
-   * 用户注销接口 - 用于清理临时用户
-   * @param userId 用户ID
+   * 专门的邀请码验证接口 - 使用后端新增的校验API
+   * @param inviteCode 邀请码
+   * @returns 验证结果
    */
-  async logoffUser(userId: number): Promise<ApiResponse<any>> {
-    console.log('🗑️ 注销用户 API调用:', userId);
+  async checkInvitationCode(inviteCode: string): Promise<{
+    valid: boolean;
+    message: string;
+  }> {
+    console.log('🔍 使用专门API验证邀请码:', inviteCode);
 
     try {
-      const response = await fetchWithRetry(`${BASE_URL}/app/user/logoff?userId=${userId}`, {
+      const response = await fetchWithRetry(`${BASE_URL}/app/invitation/checkInviteCode?inviteCode=${inviteCode}`, {
         method: 'GET',
         headers: {
           'Accept': 'application/json',
@@ -992,106 +997,27 @@ class PomeloXAPI {
       });
 
       const result = await response.json();
+      console.log('🌐 邀请码验证结果:', { code: result.code, msg: result.msg });
 
       if (result.code === 200) {
-        console.log('✅ 用户注销成功:', userId);
-      } else {
-        console.warn('⚠️ 用户注销失败:', result.msg);
-      }
-
-      return result;
-    } catch (error) {
-      console.error('❌ 用户注销API调用失败:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * 临时用户验证邀请码并自动清理
-   * @param invCode 邀请码
-   * @returns 验证结果，不包含用户数据
-   */
-  async validateInvitationCodeWithCleanup(invCode: string): Promise<{
-    valid: boolean;
-    message?: string;
-    inviterInfo?: any;
-  }> {
-    console.log('🔍 开始临时用户邀请码验证:', invCode);
-
-    let tempUserId: number | null = null;
-
-    try {
-      // 1. 创建临时用户验证邀请码
-      const tempUserData = {
-        userName: 'temptest' + Date.now(),
-        legalName: '临时验证用户',
-        nickName: 'TempTest',
-        password: 'temp123456',
-        phonenumber: `199${Date.now().toString().slice(-8)}`,
-        email: `temp${Date.now()}@test.edu`,
-        sex: '0',
-        deptId: '203',
-        orgId: '1',
-        invCode: invCode,
-        areaCode: 'zh'
-      };
-
-      console.log('📝 创建临时用户验证邀请码...');
-      const registerResult = await this.register(tempUserData);
-
-      if (registerResult.code === 200) {
-        // 邀请码有效，记录临时用户ID用于清理
-        tempUserId = registerResult.data?.userId || null;
-
-        console.log('✅ 邀请码验证通过，临时用户ID:', tempUserId);
-
-        // 2. 立即清理临时用户
-        if (tempUserId) {
-          try {
-            await this.logoffUser(tempUserId);
-            console.log('🗑️ 临时用户已清理');
-          } catch (cleanupError) {
-            console.warn('⚠️ 临时用户清理失败，但邀请码验证有效:', cleanupError);
-          }
-        }
-
+        console.log('✅ 邀请码验证通过');
         return {
           valid: true,
-          message: '邀请码验证通过',
-          inviterInfo: registerResult.data
+          message: result.msg || '邀请码有效'
         };
-
-      } else if (registerResult.msg?.includes('手机号码已存在')) {
-        console.log('⚠️ 手机号重复，但邀请码格式正确');
-        return {
-          valid: true,
-          message: '邀请码验证通过'
-        };
-
       } else {
-        console.log('❌ 邀请码验证失败:', registerResult.msg);
+        console.log('❌ 邀请码验证失败:', result.msg);
         return {
           valid: false,
-          message: registerResult.msg || '邀请码无效'
+          message: result.msg || '邀请码无效'
         };
       }
 
     } catch (error: any) {
-      console.error('❌ 邀请码验证过程出错:', error);
-
-      // 如果创建了临时用户但验证失败，仍需清理
-      if (tempUserId) {
-        try {
-          await this.logoffUser(tempUserId);
-          console.log('🗑️ 错误情况下的临时用户已清理');
-        } catch (cleanupError) {
-          console.warn('⚠️ 错误清理失败:', cleanupError);
-        }
-      }
-
+      console.error('❌ 邀请码验证API调用失败:', error);
       return {
         valid: false,
-        message: error.message || '验证过程出错'
+        message: '验证过程出错，请检查网络连接'
       };
     }
   }

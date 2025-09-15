@@ -182,13 +182,13 @@ export const ScannedUserInfoModal: React.FC<ScannedUserInfoModalProps> = ({
 
       const result = await response.json();
       if (result.code === 200) {
-        Alert.alert('签到成功', `${scannedUserData.legalName} 志愿者签到成功！`);
+        Alert.alert(t('volunteer.checkin_success'), t('volunteer.checkin_success_message', {name: scannedUserData.legalName}));
       } else {
-        Alert.alert('签到失败', result.msg || '签到操作失败');
+        Alert.alert(t('volunteer.checkin_failed'), result.msg || t('volunteer.checkin_operation_failed'));
       }
     } catch (error) {
       console.error('志愿者签到失败:', error);
-      Alert.alert('签到失败', '网络错误，请重试');
+      Alert.alert(t('volunteer.checkin_failed'), t('volunteer.network_error_retry'));
     }
   };
 
@@ -207,13 +207,13 @@ export const ScannedUserInfoModal: React.FC<ScannedUserInfoModalProps> = ({
 
       const statusResult = await statusResponse.json();
       if (statusResult.code !== 200 || !statusResult.data || statusResult.data.length === 0) {
-        Alert.alert('签退失败', '未找到有效的签到记录');
+        Alert.alert(t('volunteer.checkout_failed'), t('volunteer.no_checkin_record'));
         return;
       }
 
       const lastRecord = statusResult.data[0];
       if (lastRecord.endTime) {
-        Alert.alert('提示', '该用户已经签退过了');
+        Alert.alert(t('common.notice'), t('volunteer.already_checked_out'));
         return;
       }
 
@@ -244,13 +244,13 @@ export const ScannedUserInfoModal: React.FC<ScannedUserInfoModalProps> = ({
 
       const result = await signOutResponse.json();
       if (result.code === 200) {
-        Alert.alert('签退成功', `${scannedUserData.legalName} 志愿者签退成功！`);
+        Alert.alert(t('volunteer.checkout_success'), t('volunteer.checkout_success_message', {name: scannedUserData.legalName}));
       } else {
-        Alert.alert('签退失败', result.msg || '签退操作失败');
+        Alert.alert(t('volunteer.checkout_failed'), result.msg || t('volunteer.checkout_operation_failed'));
       }
     } catch (error) {
       console.error('志愿者签退失败:', error);
-      Alert.alert('签退失败', '网络错误，请重试');
+      Alert.alert(t('volunteer.checkout_failed'), t('volunteer.network_error_retry'));
     }
   };
 
@@ -307,7 +307,7 @@ export const ScannedUserInfoModal: React.FC<ScannedUserInfoModalProps> = ({
     const scannerLevel = getCurrentUserPermissionLevel();
     
     if (scannerLevel < PermissionLevel.STAFF) {
-      Alert.alert('权限不足', '您没有管理操作权限');
+      Alert.alert(t('volunteer.permission_denied'), t('volunteer.no_management_permission'));
       return;
     }
 

@@ -320,7 +320,7 @@ export const SchoolSelectionScreen: React.FC<SchoolSelectionScreenProps> = ({ on
             {/* 长按提示图标 */}
             <View style={styles.longPressHint}>
               <Ionicons name="hand-left-outline" size={16} color="#9CA3AF" />
-              <Text style={styles.longPressText}>长按</Text>
+              <Text style={styles.longPressText}>{t('common.long_press')}</Text>
             </View>
           </View>
         </View>
@@ -583,7 +583,7 @@ export const SchoolSelectionScreen: React.FC<SchoolSelectionScreenProps> = ({ on
                 {/* 长按提示 */}
                 <View style={styles.longPressHint}>
                   <Ionicons name="hand-left-outline" size={14} color="#9CA3AF" />
-                  <Text style={[styles.longPressText, { fontSize: 10 }]}>长按</Text>
+                  <Text style={[styles.longPressText, { fontSize: 10 }]}>{t('common.long_press')}</Text>
                 </View>
               </View>
             </View>
@@ -631,7 +631,7 @@ export const SchoolSelectionScreen: React.FC<SchoolSelectionScreenProps> = ({ on
         {/* 使用说明 */}
         <View style={styles.instructionContainer}>
           <Ionicons name="information-circle-outline" size={16} color="#9CA3AF" />
-          <Text style={styles.instructionText}>长按学校卡片进入志愿者详情</Text>
+          <Text style={styles.instructionText}>{t('wellbeing.long_press_instruction')}</Text>
         </View>
       </View>
 

@@ -45,14 +45,14 @@ export const formatTime = (dateString: string): string => {
   
   if (isToday) {
     // 今天显示：今日 14:30
-    return i18n.language.startsWith('zh') ? `今日 ${time}` : `Today ${time}`;
+    return (typeof i18n.language === 'string' && i18n.language.startsWith('zh')) ? `今日 ${time}` : `Today ${time}`;
   } else {
     // 其他日期显示：2025/8/24 14:30 （简洁的斜杠格式）
     const year = date.getFullYear();
     const month = date.getMonth() + 1;
     const day = date.getDate();
     
-    if (i18n.language.startsWith('zh')) {
+    if (typeof i18n.language === 'string' && i18n.language.startsWith('zh')) {
       return `${year}/${month}/${day} ${time}`;
     } else {
       // 英文：8/24/2025 2:30 PM

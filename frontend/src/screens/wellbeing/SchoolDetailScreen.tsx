@@ -876,7 +876,7 @@ export const SchoolDetailScreen: React.FC = () => {
     const validation = VolunteerStateService.validateCheckInConditions(volunteer as VolunteerInfo);
     if (!validation.isValid) {
       console.error('❌ [CHECKIN-VALIDATION] 验证失败:', validation.error);
-      Alert.alert('签到失败', validation.error || '签到条件不满足');
+      Alert.alert(t('common.signin_failed'), validation.error || t('volunteer.signin_conditions_not_met'));
       return;
     }
     
@@ -895,7 +895,7 @@ export const SchoolDetailScreen: React.FC = () => {
       // 检查userId
       const userId = volunteer?.userId;
       if (!userId || typeof userId !== 'number' || userId <= 0) {
-        Alert.alert('错误', '无法识别用户身份，请重试或联系管理员');
+        Alert.alert(t('common.error'), t('common.cannot_identify_user'));
         return;
       }
       
@@ -912,7 +912,7 @@ export const SchoolDetailScreen: React.FC = () => {
           operateLegalName,
           userInfoLoaded: !!userInfo
         });
-        Alert.alert('签到失败', '无法获取操作用户信息，请重新登录或刷新页面');
+        Alert.alert(t('common.signin_failed'), t('common.cannot_get_operator_info'));
         return;
       }
       
@@ -938,7 +938,7 @@ export const SchoolDetailScreen: React.FC = () => {
         );
       } catch (apiError) {
         console.error('🚨 [API-ERROR] JavaScript签到失败:', apiError);
-        Alert.alert('签到失败', '网络错误，请稍后重试');
+        Alert.alert(t('common.signin_failed'), t('common.network_error_try_later'));
         return;
       }
 
@@ -984,12 +984,12 @@ export const SchoolDetailScreen: React.FC = () => {
               // 移除持久化逻辑
               console.log('[AUTO-SYNC] 已自动同步为签到状态，用户现在可以点击签退');
               
-              Alert.alert('状态已同步', '检测到您已处于签到状态，现在可以进行签退操作');
+              Alert.alert(t('volunteer.status_synced'), t('volunteer.status_sync_msg'));
             } else {
-              Alert.alert('状态异常', '后端数据异常，请联系管理员');
+              Alert.alert(t('volunteer.status_abnormal'), t('volunteer.backend_data_error'));
             }
           } catch (e) {
-            Alert.alert('状态同步失败', '无法同步后端状态，请重新加载页面');
+            Alert.alert(t('volunteer.status_sync_failed'), t('volunteer.status_sync_failed_msg'));
           }
         } else {
           // 其他错误的正常处理 - 改进用户体验
@@ -1026,13 +1026,13 @@ export const SchoolDetailScreen: React.FC = () => {
               );
             }
           } catch (e) {
-            Alert.alert('签到失败', '操作异常，请刷新页面后重试');
+            Alert.alert(t('common.signin_failed'), t('volunteer.operation_abnormal'));
           }
         }
       }
     } catch (error) {
       console.error('[ERROR] 志愿者签到失败:', error);
-      Alert.alert('签到失败', '网络错误，请重试');
+      Alert.alert(t('common.signin_failed'), t('common.network_error_retry'));
     } finally {
       setOperationInProgress(prev => {
         const newState = { ...prev };
@@ -1067,7 +1067,7 @@ export const SchoolDetailScreen: React.FC = () => {
     const validation = VolunteerStateService.validateCheckOutConditions(volunteer as VolunteerInfo);
     if (!validation.isValid) {
       console.error('❌ [CHECKOUT-VALIDATION] 验证失败:', validation.error);
-      Alert.alert('签退失败', validation.error || '签退条件不满足');
+      Alert.alert(t('common.signout_failed'), validation.error || t('volunteer.signout_conditions_not_met'));
       return;
     }
     
@@ -1086,7 +1086,7 @@ export const SchoolDetailScreen: React.FC = () => {
       // 检查userId
       const userId = volunteer?.userId;
       if (!userId || typeof userId !== 'number' || userId <= 0) {
-        Alert.alert('错误', '无法识别用户身份，请重试或联系管理员');
+        Alert.alert(t('common.error'), t('common.cannot_identify_user'));
         return;
       }
       

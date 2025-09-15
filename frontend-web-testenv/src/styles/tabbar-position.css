@@ -1,0 +1,33 @@
+/* 导航栏位置强制控制 */
+
+/* 选择所有可能的TabBar元素 */
+[data-testid="custom-tab-bar"],
+.custom-tab-bar-web,
+[class*="tab-bar"],
+[class*="tabbar"],
+[class*="TabBar"] {
+  position: fixed !important;
+  bottom: -35px !important;
+  left: 16px !important;
+  right: 16px !important;
+  z-index: 10000 !important;
+}
+
+/* 通过ID选择器增加优先级 */
+#root [data-testid="custom-tab-bar"] {
+  position: fixed !important;
+  bottom: -35px !important;
+  z-index: 10000 !important;
+}
+
+/* 最高优先级选择器 */
+html body #root [data-testid="custom-tab-bar"] {
+  position: fixed !important;
+  bottom: -35px !important;
+  z-index: 10000 !important;
+}
+
+/* 确保动画不会影响位置 */
+[data-testid="custom-tab-bar"] * {
+  transform: none !important;
+}

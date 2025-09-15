@@ -1,6 +1,7 @@
 // 网络请求助手 - 专门处理PomeloX API调用
 
-const BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'https://www.vitaglobal.icu';
+// 🚨 紧急修复：生产环境强制使用生产API
+const BASE_URL = 'https://www.vitaglobal.icu';
 
 /**
  * 简化的网络请求方法，专门针对React Native优化

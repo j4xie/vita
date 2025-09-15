@@ -8,8 +8,8 @@ class ApiService {
   private baseURL: string;
 
   constructor() {
-    // Use production API URL
-    this.baseURL = 'https://www.vitaglobal.icu';
+    // Use environment variable for API URL
+    this.baseURL = process.env.EXPO_PUBLIC_API_URL || 'https://www.vitaglobal.icu';
     
     this.client = axios.create({
       baseURL: this.baseURL,

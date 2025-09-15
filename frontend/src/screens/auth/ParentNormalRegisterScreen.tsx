@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -29,7 +29,7 @@ import {
   sendSMSVerificationCode,
   registerUser
 } from '../../services/registrationAPI';
-import { UserContext } from '../../context/UserContext';
+import { useUser } from '../../context/UserContext';
 import { login } from '../../services/authAPI';
 import LiquidSuccessModal from '../../components/modals/LiquidSuccessModal';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -69,7 +69,7 @@ export const ParentNormalRegisterScreen: React.FC = () => {
   const navigation = useNavigation<any>();
   const route = useRoute<any>();
   const { t } = useTranslation();
-  const { login: userLogin } = useContext(UserContext);
+  const { login: userLogin } = useUser();
 
   const [loading, setLoading] = useState(false);
   const [schoolsLoading, setSchoolsLoading] = useState(true);
@@ -104,9 +104,9 @@ export const ParentNormalRegisterScreen: React.FC = () => {
     );
   };
   
-  // 调试：检查当前系统语言
+  // Debug: Check current system language
   useEffect(() => {
-    console.log('🌍 ParentNormalRegisterScreen - 当前语言检测:', {
+    console.log('🌍 [ParentNormalRegister] Language detection:', {
       currentLanguage: i18n.language,
     });
   }, []);
@@ -149,10 +149,10 @@ export const ParentNormalRegisterScreen: React.FC = () => {
         const schoolData = createSchoolDataFromBackend(response.data);
         setSchools(schoolData);
       } else {
-        console.error('加载学校列表失败:', response);
+        console.error('[ParentNormalRegister] Failed to load school list:', response);
       }
     } catch (error) {
-      console.error('加载学校列表失败:', error);
+      console.error('[ParentNormalRegister] Failed to load school list error:', error);
     } finally {
       setSchoolsLoading(false);
     }
@@ -240,13 +240,13 @@ export const ParentNormalRegisterScreen: React.FC = () => {
 
     setLoading(true);
     try {
-      console.log('🔥 家长普通注册发送验证码，手机号:', formData.phoneNumber);
+      console.log('🔥 [ParentNormalRegister] Sending verification code, phone:', formData.phoneNumber);
       const response = await sendSMSVerificationCode(formData.phoneNumber);
       
-      console.log('📱 家长注册短信接口响应:', response);
+      console.log('📱 [ParentNormalRegister] SMS API response:', response);
       
       if (response.code === 'OK' && response.bizId) {
-        console.log('✅ 家长注册验证码发送成功, bizId:', response.bizId);
+        console.log('✅ [ParentNormalRegister] Verification code sent successfully, bizId:', response.bizId);
         setBizId(response.bizId);
         
         // 开始倒计时
@@ -261,10 +261,10 @@ export const ParentNormalRegisterScreen: React.FC = () => {
           });
         }, 1000);
       } else {
-        console.error('❌ 家长注册验证码发送失败:', response);
+        console.error('❌ [ParentNormalRegister] Failed to send verification code:', response);
       }
     } catch (error) {
-      console.error('❌ 家长注册发送验证码网络错误:', error);
+      console.error('❌ [ParentNormalRegister] Network error sending verification code:', error);
     } finally {
       setLoading(false);
     }
@@ -274,7 +274,7 @@ export const ParentNormalRegisterScreen: React.FC = () => {
     if (!validateForm()) return;
 
     setLoading(true);
-    console.log('🚀 开始家长普通注册流程...');
+    console.log('🚀 [ParentNormalRegister] Starting normal parent registration process...');
 
     try {
       // 生成符合需求的家长姓名数据
@@ -302,7 +302,7 @@ export const ParentNormalRegisterScreen: React.FC = () => {
         bizId: bizId,
       };
 
-      console.log('家长普通注册数据:', {
+      console.log('[ParentNormalRegister] Registration data:', {
         ...registrationData,
         password: '[HIDDEN]'
       });
@@ -310,17 +310,17 @@ export const ParentNormalRegisterScreen: React.FC = () => {
       const response = await registerUser(registrationData);
       
       if (response.code === 200) {
-        console.log('✅ 家长普通注册成功！开始自动登录...');
+        console.log('✅ [ParentNormalRegister] Registration successful! Starting auto login...');
 
         try {
           // 🔧 关键修复：使用与注册API完全相同的userName值
           const registrationUserName = registrationData.userName;
-          console.log('🔑 家长普通注册尝试登录参数:', {
+          console.log('🔑 [ParentNormalRegister] Login attempt parameters:', {
             username: registrationUserName,
             password: '[HIDDEN]',
-            注册时发送的userName: registrationData.userName,
-            注册时发送的email: registrationData.email,
-            formData中的email: formData.email
+            registrationUserName: registrationData.userName,
+            registrationEmail: registrationData.email,
+            formDataEmail: formData.email
           });
           
           const loginResult = await login({
@@ -328,7 +328,7 @@ export const ParentNormalRegisterScreen: React.FC = () => {
             password: formData.password,
           });
           
-          console.log('📡 家长普通登录API响应:', {
+          console.log('📡 [ParentNormalRegister] Login API response:', {
             code: loginResult.code,
             msg: loginResult.msg,
             hasData: !!loginResult.data,
@@ -337,37 +337,37 @@ export const ParentNormalRegisterScreen: React.FC = () => {
           
           if (loginResult.code === 200 && loginResult.data) {
             // 🔧 Web端解决方案：手动保存token到AsyncStorage
-            console.log('💾 家长普通注册开始手动保存token...');
+            console.log('💾 [ParentNormalRegister] Starting manual token save...');
             await AsyncStorage.setItem('@pomelox_token', loginResult.data.token);
             await AsyncStorage.setItem('@pomelox_user_id', loginResult.data.userId.toString());
             
             // 验证token保存
             const savedToken = await AsyncStorage.getItem('@pomelox_token');
-            console.log('✅ 家长普通注册Token保存验证:', {
+            console.log('✅ [ParentNormalRegister] Token save verification:', {
               tokenSaved: !!savedToken,
               tokenMatch: savedToken === loginResult.data.token
             });
             
             await userLogin(loginResult.data.token);
-            console.log('✅ 家长普通注册自动登录成功！');
+            console.log('✅ [ParentNormalRegister] Auto login successful!');
             
             // 🔧 使用LiquidSuccessModal替代Alert
             setLoading(false);
             setShowSuccessModal(true);
           } else {
             // 登录失败，但注册成功
-            console.log('❌ 家长普通注册自动登录失败，但注册成功:', loginResult);
+            console.log('❌ [ParentNormalRegister] Auto login failed, but registration successful:', loginResult);
             setLoading(false);
           }
         } catch (loginError) {
-          console.error('❌ 家长普通注册自动登录失败:', loginError);
+          console.error('❌ [ParentNormalRegister] Auto login failed:', loginError);
           setLoading(false);
         }
       } else {
-        console.error('❌ 家长普通注册失败:', response);
+        console.error('❌ [ParentNormalRegister] Registration failed:', response);
       }
     } catch (error) {
-      console.error('❌ 家长普通注册网络错误:', error);
+      console.error('❌ [ParentNormalRegister] Network error:', error);
     } finally {
       setLoading(false);
     }
@@ -584,6 +584,9 @@ export const ParentNormalRegisterScreen: React.FC = () => {
                 onChangeText={(text) => updateFormData('password', text)}
                 secureTextEntry
                 placeholderTextColor={theme.colors.text.disabled}
+                autoComplete="off"
+                textContentType="none"
+                passwordRules=""
               />
               {errors.password && <Text style={styles.errorText}>{errors.password}</Text>}
             </View>
@@ -598,6 +601,9 @@ export const ParentNormalRegisterScreen: React.FC = () => {
                 onChangeText={(text) => updateFormData('confirmPassword', text)}
                 secureTextEntry
                 placeholderTextColor={theme.colors.text.disabled}
+                autoComplete="off"
+                textContentType="none"
+                passwordRules=""
               />
               {errors.confirmPassword && <Text style={styles.errorText}>{errors.confirmPassword}</Text>}
             </View>

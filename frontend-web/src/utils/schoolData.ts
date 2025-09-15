@@ -157,22 +157,34 @@ export const validateEduEmail = (email: string): boolean => {
  */
 export const createSchoolDataFromBackend = (backendSchools: any[]): SchoolData[] => {
   return backendSchools.map(school => {
-    // 使用统一的邮箱域名获取函数，支持中英文匹配
-    const emailDomain = getEmailDomainFromBackendSchool(school);
-    
+    // 优先使用后端返回的 mailDomain 字段（格式：@berkeley.edu 或 .berkeley.edu）
+    let emailDomain = '';
+    if (school.mailDomain) {
+      // 直接使用后端返回的 mailDomain，确保有@前缀
+      emailDomain = school.mailDomain.startsWith('@')
+        ? school.mailDomain
+        : school.mailDomain.startsWith('.')
+          ? '@' + school.mailDomain.slice(1)
+          : '@' + school.mailDomain;
+    } else {
+      // 备用：使用本地映射表，并添加@前缀
+      const localDomain = getEmailDomainFromBackendSchool(school);
+      emailDomain = localDomain ? `@${localDomain}` : '';
+    }
+
     // 获取学校显示名称（优先中文）
     const displayName = school.deptName || school.engName || '';
-    
+
     // 使用后端返回的缩写，如果没有则使用显示名称
     const abbreviation = school.aprName || displayName;
-    
+
     return {
       id: school.deptId.toString(),
       name: displayName,
       abbreviation: abbreviation,
       emailDomain: emailDomain
     };
-  }).filter(school => school.emailDomain); // 只保留有邮箱域名映射的学校
+  }); // 移除邮箱域名过滤，显示所有学校
 };
 
 // 类型定义已在上方定义，无需重复导出

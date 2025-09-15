@@ -294,6 +294,8 @@
         "organization_placeholder": "请选择您的组织",
         "email_label": "邮箱 *",
         "email_placeholder": "请输入您的邮箱",
+        "school_label": "学校 *",
+        "school_placeholder": "请选择您的学校",
         "password_label": "密码 *",
         "password_placeholder": "请输入密码（6-20位字符）",
         "confirm_password_label": "确认密码 *",

@@ -5,7 +5,7 @@
 import { getCurrentToken } from './authAPI';
 import { notifyVolunteerCheckIn, notifyVolunteerCheckOut } from './smartAlertSystem';
 
-const BASE_URL = 'https://www.vitaglobal.icu';
+const BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'https://www.vitaglobal.icu';
 
 // 根据API文档第10-13条定义的志愿者打卡记录类型
 export interface VolunteerRecord {

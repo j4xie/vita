@@ -49,20 +49,31 @@ export const IdentityChoiceScreen: React.FC = () => {
     }
 
     if (selectedIdentity === 'student') {
-      // 学生注册：进入原有的学生注册流程
-      navigation.navigate('RegisterStep1', {
-        registrationType,
-        referralCode,
-        hasReferralCode,
-        detectedRegion,
-        detectionResult,
-        identity: 1, // 学生
-      });
+      // 学生注册：根据注册类型跳转到不同的独立页面
+      if (registrationType === 'invitation') {
+        // 推荐码学生注册：跳转到StudentInvitationRegister
+        navigation.navigate('StudentInvitationRegister', {
+          registrationType,
+          referralCode,
+          hasReferralCode,
+          detectedRegion,
+          detectionResult,
+          identity: 1, // 学生
+        });
+      } else {
+        // 普通学生注册：跳转到StudentNormalRegisterStep1
+        navigation.navigate('StudentNormalRegisterStep1', {
+          registrationType,
+          detectedRegion,
+          detectionResult,
+          identity: 1, // 学生
+        });
+      }
     } else {
       // 家长注册：根据注册类型跳转到不同的独立页面
       if (registrationType === 'invitation') {
-        // 推荐码家长注册：跳转到ParentRegisterForm
-        navigation.navigate('ParentRegisterForm', {
+        // 推荐码家长注册：跳转到ParentInvitationRegister
+        navigation.navigate('ParentInvitationRegister', {
           registrationType,
           referralCode,
           hasReferralCode,

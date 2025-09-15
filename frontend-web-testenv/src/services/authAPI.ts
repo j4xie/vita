@@ -6,8 +6,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { APIResponse } from '../types/registration';
 
 // API基础URL配置
-// 🔧 强制使用生产环境API - 遵循CLAUDE规范
-const BASE_URL = 'https://www.vitaglobal.icu';
+// 🔧 使用环境变量，测试环境使用测试API
+const BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'https://www.vitaglobal.icu';
 
 // 存储键名
 const STORAGE_KEYS = {

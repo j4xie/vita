@@ -44,7 +44,7 @@ import {
 } from '../../utils/textValidation';
 import { isChinese, i18n } from '../../utils/i18n';
 
-export const RegisterStep1Screen: React.FC = () => {
+export const StudentNormalRegisterStep1Screen: React.FC = () => {
   const navigation = useNavigation<any>();
   const route = useRoute<any>();
   const { t } = useTranslation();
@@ -122,8 +122,9 @@ export const RegisterStep1Screen: React.FC = () => {
   useEffect(() => {
     if (emailUsername && formData.selectedSchool) {
       // 使用统一的邮箱域名服务生成邮箱地址
+      // emailDomain 格式是 @berkeley.edu，直接拼接用户名
       const emailDomain = formData.selectedSchool.emailDomain;
-      const generatedEmail = emailDomain ? `${emailUsername}@${emailDomain}` : '';
+      const generatedEmail = emailDomain ? `${emailUsername}${emailDomain}` : '';
       setFormData(prev => ({ ...prev, generatedEmail }));
     } else {
       setFormData(prev => ({ ...prev, generatedEmail: '' }));
@@ -253,7 +254,7 @@ export const RegisterStep1Screen: React.FC = () => {
         console.log('注册流程：用户区域偏好初始化完成');
         
         // 导航到第二步，传递第一步的数据、邀请码信息和地理检测结果
-        navigation.navigate('RegisterStep2', { 
+        navigation.navigate('StudentNormalRegisterStep2', { 
           step1Data: {
             ...formData,
             legalName: `${formData.lastName} ${formData.firstName}`.trim(),
@@ -266,7 +267,7 @@ export const RegisterStep1Screen: React.FC = () => {
       } catch (error) {
         console.error('注册流程地理位置检测失败:', error);
         // 即使地理检测失败也继续注册流程，使用默认设置
-        navigation.navigate('RegisterStep2', { 
+        navigation.navigate('StudentNormalRegisterStep2', { 
           step1Data: {
             ...formData,
             legalName: `${formData.lastName} ${formData.firstName}`.trim(),
@@ -346,7 +347,7 @@ export const RegisterStep1Screen: React.FC = () => {
             autoCorrect={false}
             placeholderTextColor={theme.colors.text.disabled}
           />
-          <Text style={styles.emailDomain}>@{formData.selectedSchool.emailDomain}</Text>
+          <Text style={styles.emailDomain}>{formData.selectedSchool.emailDomain}</Text>
         </View>
         {formData.generatedEmail && (
           <Text style={styles.emailPreview}>

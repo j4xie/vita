@@ -33,10 +33,10 @@ export const detectDeviceLanguage = (): SupportedLanguage => {
     const languageTag = locale.languageTag;
     
     // 检查是否是支持的语言
-    if (languageTag.startsWith('zh')) {
+    if (typeof languageTag === 'string' && languageTag.startsWith('zh')) {
       return 'zh-CN';
     }
-    if (languageTag.startsWith('en')) {
+    if (typeof languageTag === 'string' && languageTag.startsWith('en')) {
       return 'en-US';
     }
   }
@@ -278,7 +278,7 @@ export default initI18next;
 // 判断是否为中文
 export const isChinese = (locale?: string) => {
   const currentLang = locale || i18n.language;
-  return currentLang.startsWith('zh');
+  return typeof currentLang === 'string' && currentLang.startsWith('zh');
 };
 
 // 判断是否为RTL语言

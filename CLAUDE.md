@@ -25,10 +25,24 @@ PomeloX is a **production-ready** mobile platform for Chinese international stud
 - ✅ **Independent deployment** - Each environment has its own deploy scripts
 
 ### **🚫 API Usage Rules (ZERO TOLERANCE)**
-- ❌ **NEVER use Mock APIs** - Only real backend at `https://www.vitaglobal.icu`
+- ❌ **NEVER use Mock APIs** - Only real backend endpoints
 - ❌ **NEVER hardcode fake data** - Show real 0 states instead of fake numbers
 - ❌ **NEVER create missing APIs** - Report missing endpoints immediately
 - ✅ **Real data only** - All user stats, activity data must come from actual APIs
+
+### **🌐 Environment Configuration (CRITICAL)**
+
+#### **测试环境** (frontend-web-testenv)
+- **接口URL**: `http://106.14.165.234:8085`
+- **H5访问地址**: `http://106.14.165.234:8086`
+- **环境标识**: `EXPO_PUBLIC_ENVIRONMENT=development`
+- **调试模式**: `EXPO_PUBLIC_DEBUG_MODE=true`
+
+#### **生产环境** (frontend-web)
+- **接口URL**: `https://www.vitaglobal.icu`
+- **H5访问地址**: `https://web.vitaglobal.icu`
+- **环境标识**: `EXPO_PUBLIC_ENVIRONMENT=production`
+- **调试模式**: `EXPO_PUBLIC_DEBUG_MODE=false`
 
 ### **🌍 Internationalization Rules (MANDATORY)**
 - ❌ **NEVER hardcode Chinese text** - All user-visible text must use `t()` function
@@ -39,10 +53,13 @@ PomeloX is a **production-ready** mobile platform for Chinese international stud
 ## 🏗️ **Tech Stack**
 
 ### Backend
-- **Framework:** FastAPI (Python)  
+- **Framework:** FastAPI (Python)
 - **Database:** PostgreSQL 15 + Redis 7
-- **API Base:** `https://www.vitaglobal.icu` ✅ **Production Only**
 - **Auth:** JWT Bearer Token (`Authorization: Bearer {token}`)
+
+#### **环境配置 (更新: Sep 2025)**
+- **测试环境API**: `http://106.14.165.234:8085`
+- **生产环境API**: `https://www.vitaglobal.icu`
 
 ### Frontend  
 - **Framework:** React Native + Expo
@@ -101,13 +118,17 @@ eas build --platform ios --profile production
 eas submit --platform ios --profile production
 ```
 
-## 📂 **Project Structure**
+## 📂 **Project Structure & Environment Mapping**
 ```
 pomeloX/
 ├── backend/                 # FastAPI backend
 ├── frontend/               # React Native app (ISOLATED)
-├── frontend-web/           # Web生产环境 (PRODUCTION API ONLY)
-├── frontend-web-testenv/   # Web测试环境 (TEST API ONLY)  
+├── frontend-web/           # Web生产环境
+│   ├── API: https://www.vitaglobal.icu
+│   └── H5: https://web.vitaglobal.icu
+├── frontend-web-testenv/   # Web测试环境
+│   ├── API: http://106.14.165.234:8085
+│   └── H5: http://106.14.165.234:8086
 ├── docs/                   # Detailed documentation
 │   ├── API_GUIDE.md        # Complete API reference
 │   ├── UI_DESIGN_SYSTEM.md # UI/UX specifications

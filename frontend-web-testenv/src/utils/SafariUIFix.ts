@@ -40,13 +40,14 @@ class SafariUIFix {
       document.head.appendChild(viewportMeta);
     }
 
-    // 设置viewport以支持Safari的全屏模式
-    viewportMeta.content = 'width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no';
+    // 设置viewport以支持Safari的全屏模式和UI自动隐藏
+    viewportMeta.content = 'width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no, minimal-ui';
 
     // 添加Safari专用的全屏元标签
     this.addMetaTag('apple-mobile-web-app-capable', 'yes');
-    this.addMetaTag('apple-mobile-web-app-status-bar-style', 'default');
+    this.addMetaTag('apple-mobile-web-app-status-bar-style', 'black-translucent');
     this.addMetaTag('apple-touch-fullscreen', 'yes');
+    this.addMetaTag('mobile-web-app-capable', 'yes');
 
     // 设置主题色匹配应用
     this.addMetaTag('theme-color', '#ffffff');
@@ -82,21 +83,23 @@ class SafariUIFix {
   }
 
   /**
-   * 滚动事件处理
+   * 滚动事件处理 - 增强版
    */
   private handleScroll() {
     const currentScrollY = window.pageYOffset || document.documentElement.scrollTop;
+    const scrollDelta = currentScrollY - this.lastScrollY;
 
-    // 检测滚动方向
-    const scrollDirection = currentScrollY > this.lastScrollY ? 'down' : 'up';
+    // 检测滚动方向和强度
+    const scrollDirection = scrollDelta > 0 ? 'down' : 'up';
+    const scrollSpeed = Math.abs(scrollDelta);
 
-    // 向下滚动时隐藏Safari UI
-    if (scrollDirection === 'down' && currentScrollY > 50) {
-      this.hideSafariUI();
-    }
-    // 向上滚动时显示Safari UI
-    else if (scrollDirection === 'up') {
-      this.showSafariUI();
+    // 更敏感的滚动检测
+    if (scrollDirection === 'down' && scrollSpeed > 3 && currentScrollY > 30) {
+      // 向下滚动超过30px且有一定速度时隐藏
+      this.triggerSafariUIHide();
+    } else if (scrollDirection === 'up' && scrollSpeed > 3) {
+      // 向上滚动有一定速度时显示
+      this.triggerSafariUIShow();
     }
 
     this.lastScrollY = currentScrollY;
@@ -109,11 +112,34 @@ class SafariUIFix {
 
     this.scrollTimeout = setTimeout(() => {
       this.isScrolling = false;
-      // 滚动结束后，如果滚动位置较高，隐藏Safari UI
-      if (currentScrollY > 100) {
-        this.hideSafariUI();
-      }
-    }, 150);
+    }, 100);
+  }
+
+  /**
+   * 触发Safari UI隐藏
+   */
+  private triggerSafariUIHide() {
+    // 多重方法确保隐藏
+    this.hideSafariUI();
+
+    // 设置视口以触发全屏模式
+    const viewport = document.querySelector('meta[name="viewport"]') as HTMLMetaElement;
+    if (viewport) {
+      viewport.content = 'width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no, minimal-ui';
+    }
+  }
+
+  /**
+   * 触发Safari UI显示
+   */
+  private triggerSafariUIShow() {
+    this.showSafariUI();
+
+    // 恢复标准视口设置
+    const viewport = document.querySelector('meta[name="viewport"]') as HTMLMetaElement;
+    if (viewport) {
+      viewport.content = 'width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no';
+    }
   }
 
   /**
@@ -154,20 +180,28 @@ class SafariUIFix {
     if (!this.isSafari()) return;
 
     try {
-      // 方法1: 滚动到当前位置+1，触发Safari UI隐藏
-      window.scrollTo(0, window.pageYOffset + 1);
+      // 方法1: 快速小幅滚动触发Safari UI隐藏
+      const currentScroll = window.pageYOffset;
+
+      // 向下滚动少量像素来触发隐藏
+      window.scrollTo({
+        top: currentScroll + 50,
+        behavior: 'smooth'
+      });
+
+      // 100ms后回到原位置
       setTimeout(() => {
-        window.scrollTo(0, window.pageYOffset - 1);
-      }, 10);
+        window.scrollTo({
+          top: currentScroll,
+          behavior: 'smooth'
+        });
+      }, 100);
 
-      // 方法2: 使用requestFullscreen API（如果支持）
-      if (document.documentElement.requestFullscreen) {
-        // 注意：由于浏览器安全限制，fullscreen需要用户手势触发
-        // 这里主要是设置相关样式
-      }
-
-      // 方法3: 调整视口高度以适应无UI状态
-      this.adjustViewportHeight();
+      // 方法2: 触发页面重新布局
+      document.body.style.height = '100.1vh';
+      setTimeout(() => {
+        document.body.style.height = '';
+      }, 50);
 
     } catch (error) {
       console.warn('🍎 [SafariUIFix] 隐藏Safari UI时出错:', error);

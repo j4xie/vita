@@ -18,7 +18,7 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { LinearGradient } from '../../components/web/WebLinearGradient';
-import { WebSchoolSelector } from '../../components/web/WebSchoolSelector';
+import { SimpleSchoolSelector } from '../../components/web/SimpleSchoolSelector';
 
 import { theme } from '../../theme';
 import { LIQUID_GLASS_LAYERS, DAWN_GRADIENTS } from '../../theme/core';
@@ -134,7 +134,8 @@ export const InvitationStudentRegisterStep1Screen: React.FC = () => {
     if (emailUsername && formData.selectedSchool) {
       // 使用统一的邮箱域名服务生成邮箱地址
       const emailDomain = formData.selectedSchool.emailDomain;
-      const generatedEmail = emailDomain ? `${emailUsername}@${emailDomain}` : '';
+      // 修复双@问题：后端emailDomain已包含@，不需要前端再加
+      const generatedEmail = emailDomain ? `${emailUsername}${emailDomain}` : '';
       setFormData(prev => ({ ...prev, generatedEmail }));
     } else {
       setFormData(prev => ({ ...prev, generatedEmail: '' }));
@@ -251,7 +252,7 @@ export const InvitationStudentRegisterStep1Screen: React.FC = () => {
   const renderSchoolPicker = () => (
     <View style={styles.inputContainer}>
       <Text style={styles.label}>{t('auth.register.form.university_label')}</Text>
-      <WebSchoolSelector
+      <SimpleSchoolSelector
         schools={schools}
         selectedSchool={formData.selectedSchool}
         onSchoolSelect={(school) => updateFormData('selectedSchool', school)}
@@ -280,7 +281,7 @@ export const InvitationStudentRegisterStep1Screen: React.FC = () => {
             autoCorrect={false}
             placeholderTextColor={theme.colors.text.disabled}
           />
-          <Text style={styles.emailDomain}>@{formData.selectedSchool.emailDomain}</Text>
+          <Text style={styles.emailDomain}>{formData.selectedSchool.emailDomain}</Text>
         </View>
         {formData.generatedEmail && (
           <Text style={styles.emailPreview}>
