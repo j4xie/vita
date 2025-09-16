@@ -444,7 +444,7 @@ class PomeloXAPI {
       childrenDept?: any | null; // 🆕 子部门
       children: any[];
     };
-    roles: Array<{
+    roles: {
       createBy: string | null;
       createTime: string | null;
       updateBy: string | null;
@@ -464,7 +464,7 @@ class PomeloXAPI {
       deptIds: string | null;
       permissions: string | null;
       admin: boolean;
-    }>;
+    }[];
     role?: { // 🆕 单个角色对象
       roleId: number;
       roleName: string;
@@ -504,7 +504,7 @@ class PomeloXAPI {
     endTime?: string;
   }): Promise<ApiResponse<{
     total: number;
-    rows: Array<{
+    rows: {
       id: number;
       name: string;
       icon: string;
@@ -523,7 +523,7 @@ class PomeloXAPI {
       type?: number; // -1-即将开始，1-已开始，2-已结束
       timeZone?: string; // 🆕 时区信息
       registerCount?: number; // 🆕 活动已报名人数
-    }>;
+    }[];
   }>> {
     // 构建查询参数
     const queryParams = new URLSearchParams();
@@ -791,11 +791,11 @@ class PomeloXAPI {
    */
   async getOrganizationList(): Promise<ApiResponse<{
     total: number;
-    rows: Array<{
+    rows: {
       id: number;
       name: string;
       createTime: string;
-    }>;
+    }[];
   }>> {
     return this.request('/app/organization/list', { method: 'GET' });
   }
@@ -832,7 +832,7 @@ class PomeloXAPI {
    */
   async getVolunteerRecords(): Promise<ApiResponse<{
     total: number;
-    rows: Array<{
+    rows: {
       id: number;
       userId: number;
       startTime: string;
@@ -841,7 +841,7 @@ class PomeloXAPI {
       operateUserId: number | null;
       operateLegalName: string | null;
       legalName: string;
-    }>;
+    }[];
   }>> {
     return this.request('/app/hour/recordList', { method: 'GET' });
   }
@@ -851,11 +851,11 @@ class PomeloXAPI {
    */
   async getVolunteerHours(): Promise<ApiResponse<{
     total: number;
-    rows: Array<{
+    rows: {
       userId: number;
       totalMinutes: number;
       legalName: string;
-    }>;
+    }[];
   }>> {
     return this.request('/app/hour/hourList', { method: 'GET' });
   }
@@ -896,7 +896,7 @@ class PomeloXAPI {
    */
   async getUserActivityList(userId?: number, signStatus?: number): Promise<ApiResponse<{
     total: number;
-    rows: Array<{
+    rows: {
       id: number;
       name: string;
       icon: string;
@@ -913,7 +913,7 @@ class PomeloXAPI {
       createNickName: string;
       signStatus: number; // -1-已报名未签到，1-已报名已签到
       type?: number; // -1-即将开始，1-已开始，2-已结束
-    }>;
+    }[];
   }>> {
     // 构建查询参数
     const queryParams = new URLSearchParams();
@@ -956,7 +956,7 @@ class PomeloXAPI {
   /**
    * 获取职位/岗位列表
    */
-  async getPostList(): Promise<ApiResponse<Array<{
+  async getPostList(): Promise<ApiResponse<{
     postId: number;
     postCode: string;
     postName: string;
@@ -967,7 +967,7 @@ class PomeloXAPI {
     updateBy?: string;
     updateTime?: string;
     remark?: string;
-  }>>> {
+  }[]>> {
     console.log('🔍 获取职位列表 API调用');
     return this.request('/app/post/list', { method: 'GET' });
   }

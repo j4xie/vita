@@ -6,6 +6,9 @@
 import React, { createContext, useContext, useState, useEffect, useRef, useCallback } from 'react';
 import { AppState, AppStateStatus, DeviceEventEmitter } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+
+// 需要在渲染中导入的组件
+import { View, Text } from 'react-native';
 // 使用稳健的懒加载获取主题配置，避免循环依赖
 let _themeCache: any = null;
 const getTheme = () => {
@@ -369,9 +372,6 @@ export const PerformanceDebugOverlay: React.FC = () => {
     </View>
   );
 };
-
-// 需要在渲染中导入的组件
-import { View, Text } from 'react-native';
 
 export default {
   PerformanceMonitorProvider,

@@ -326,14 +326,14 @@ const SimpleActivityCardComponent: React.FC<SimpleActivityCardProps> = ({
     }
   }, [isAlmostFull]);
 
-  // 动画样式定义
+  // 动画样式定义 - Fixed for React Native Reanimated 3 compatibility
   const animatedContainerStyle = useAnimatedStyle(() => ({
     transform: [
       { scale: scale.value },
       { perspective: 1000 },
       { rotateX: `${tiltY.value}deg` },
       { rotateY: `${tiltX.value}deg` },
-    ],
+    ] as any,
   }));
 
   const animatedShadowStyle = useAnimatedStyle(() => ({

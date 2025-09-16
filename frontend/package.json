@@ -1,6 +1,6 @@
 {
   "name": "pomelox-app",
-  "version": "1.0.29",
+  "version": "1.0.30",
   "main": "index.ts",
   "scripts": {
     "validate-translations": "node package-scripts/validate-translations.js",

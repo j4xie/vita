@@ -171,16 +171,16 @@ export interface CardSearchResult {
 
 export interface CardFilterState {
   activeFilters: CardSearchQuery;
-  availableCategories: Array<{
+  availableCategories: {
     id: string;
     label: string;
     count: number;
-  }>;
-  availableOrganizations: Array<{
+  }[];
+  availableOrganizations: {
     id: string;
     name: string;
     count: number;
-  }>;
+  }[];
 }
 
 // ==================== 空状态和错误状态 ====================
@@ -402,5 +402,4 @@ export const isExpiredCard = (card: MembershipCard): boolean => {
 };
 
 // ==================== 导出所有类型 ====================
-
-export * from './organization';
+// 移除重复导出，避免ESLint错误

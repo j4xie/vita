@@ -14,15 +14,15 @@ console.log('[STARTUP] 应用启动 - 启用全局错误追踪');
 
 // 捕获未处理的 Promise rejections
 const originalPromiseRejectionHandler = global.onunhandledrejection;
-global.onunhandledrejection = function(event) {
+global.onunhandledrejection = function(event: any) {
   console.error('🚨 未处理的 Promise 错误:', {
     reason: event.reason,
     promise: event.promise,
     timestamp: new Date().toISOString(),
   });
-  
+
   if (originalPromiseRejectionHandler) {
-    originalPromiseRejectionHandler(event);
+    originalPromiseRejectionHandler.call(globalThis, event);
   }
 };
 

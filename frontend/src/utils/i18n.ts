@@ -4,14 +4,14 @@ import { initReactI18next } from 'react-i18next';
 import * as RNLocalize from 'react-native-localize';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+// 静态导入语言资源
+import zhCNTranslation from '../locales/zh-CN/translation.json';
+import enUSTranslation from '../locales/en-US/translation.json';
+
 // Polyfill for Intl.PluralRules in Hermes
 if (!global.Intl?.PluralRules) {
   require('intl-pluralrules');
 }
-
-// 静态导入语言资源
-import zhCNTranslation from '../locales/zh-CN/translation.json';
-import enUSTranslation from '../locales/en-US/translation.json';
 
 // 语言存储键
 const LANGUAGE_STORAGE_KEY = 'user_language_preference';

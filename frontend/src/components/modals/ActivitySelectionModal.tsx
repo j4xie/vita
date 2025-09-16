@@ -66,10 +66,13 @@ const ActivitySelectionModalComponent: React.FC<ActivitySelectionModalProps> = (
       // 获取用户相关的活动 - 只获取已报名但未签到的活动
       const response = await pomeloXAPI.getUserActivityList(parseInt(userId), -1); // -1 表示已报名未签到
       
-      if (response.code === 200 && response.rows) {
-        const filteredActivities = response.rows.filter((activity: any) => 
-          activity.signStatus === -1 // 只显示已报名未签到的活动
-        );
+      if (response.code === 200 && response.data?.rows) {
+        const filteredActivities = response.data.rows
+          .filter((activity: any) => activity.signStatus === -1)
+          .map((activity: any) => ({
+            ...activity,
+            type: activity.type ?? 1, // 确保type字段存在，默认为1
+          }));
         setActivities(filteredActivities);
         
         // 如果只有一个活动，预选中它

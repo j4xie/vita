@@ -45,18 +45,25 @@ export const sendSMSVerificationCode = async (phoneNumber: string, areaCode: '86
 export const fetchSchoolList = async (): Promise<APIResponse<any[]>> => {
   try {
     // 学校列表接口无需认证，可以直接调用
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 30000); // 30秒超时
+
     const response = await fetch(`${BASE_URL}/app/dept/list`, {
       method: 'GET',
       headers: {
         'Accept': 'application/json',
       },
+      signal: controller.signal,
     });
+
+    clearTimeout(timeoutId);
 
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
 
     const data = await response.json();
+    console.log('✅ 学校列表获取成功:', { count: data.data?.length || 0 });
     return data;
   } catch (error) {
     console.error('获取学校列表失败:', error);

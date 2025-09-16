@@ -429,7 +429,7 @@ export const FloatingAIButton: React.FC<FloatingAIButtonProps> = ({
       { rotate: `${iconRotation.value}deg` },
       { scale: 1.1 },
       { translateY: pressIconBounce.value },
-    ],
+    ] as any,
   }));
 
   const particleAnimatedStyle = (index: number) => useAnimatedStyle(() => ({
@@ -442,7 +442,7 @@ export const FloatingAIButton: React.FC<FloatingAIButtonProps> = ({
       { translateY: interpolate(particleProgress.value, [0, 1], [0, -30]) },
       { translateX: interpolate(particleProgress.value, [0, 1], [0, index === 0 ? -20 : index === 1 ? 20 : 0]) },
       { scale: 0.5 + index * 0.2 },
-    ],
+    ] as any,
   }));
 
   return (

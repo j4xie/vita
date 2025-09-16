@@ -1,27 +1,23 @@
-// TextEncoder polyfill for react-native-qrcode-svg
-import { TextEncoder, TextDecoder } from 'text-encoding';
-global.TextEncoder = TextEncoder;
-global.TextDecoder = TextDecoder;
-
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
+
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { TextEncoder, TextDecoder } from 'text-encoding';
+
+import { AppNavigator } from './src/navigation/AppNavigator';
+import { LocationMismatchAlert } from './src/components/modals/LocationMismatchAlert';
+import { ToastManager } from './src/components/common/ToastManager';
+import { useLocationMismatchDetection } from './src/hooks/useLocationMismatchDetection';
+import RegionDetectionService from './src/services/RegionDetectionService';
+import { initializeSmartAlerts } from './src/services/smartAlertSystem';
+import { timeManager, validateDeviceTime } from './src/services/timeManager';
 import { theme } from './src/theme';
 import initI18next, { i18n } from './src/utils/i18n';
-import { AppNavigator } from './src/navigation/AppNavigator';
-import { ToastManager } from './src/components/common/ToastManager';
-import { LocationMismatchAlert } from './src/components/modals/LocationMismatchAlert';
-import { useLocationMismatchDetection } from './src/hooks/useLocationMismatchDetection';
 
-// 导入时间管理服务
-import { timeManager, validateDeviceTime } from './src/services/timeManager';
-
-// 导入智能提醒系统
-import { initializeSmartAlerts } from './src/services/smartAlertSystem';
-
-// 导入地理检测服务
-import RegionDetectionService from './src/services/RegionDetectionService';
+// TextEncoder polyfill for react-native-qrcode-svg
+global.TextEncoder = TextEncoder;
+global.TextDecoder = TextDecoder;
 
 
 // 开发环境导入测试工具

@@ -18,7 +18,7 @@ import { usePerformanceDegradation } from '../../hooks/usePerformanceDegradation
 import { useMemoizedDarkMode } from '../../hooks/useDarkMode';
 import { useAllDarkModeStyles } from '../../hooks/useDarkModeStyles';
 import { useTheme } from '../../context/ThemeContext';
-import { analytics, Events } from '../../analytics/EventTracker';
+import EventTracker, { analytics, Events } from '../../analytics/EventTracker';
 import { useSmartGesture } from '../../hooks/useSmartGesture';
 import { useCardPress } from '../../hooks/useCardPress';
 
@@ -321,8 +321,8 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({
   const liquidGlassConfig = getLiquidGlassConfig('card', true); // 启用阴影优化
   const optimizedStyles = getOptimizedStyles();
 
-  // 动画样式
-  const animatedStyle = {
+  // 动画样式 - Fixed for React Native Reanimated 3 compatibility
+  const animatedStyle: any = {
     transform: [
       { scale: scaleAnim },
       { translateY: translateYAnim },

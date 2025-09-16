@@ -17,6 +17,7 @@ import * as Haptics from 'expo-haptics';
 import { theme } from '../../theme';
 import { useTheme } from '../../context/ThemeContext';
 import { useUser } from '../../context/UserContext';
+import { getCurrentToken } from '../../services/authAPI';
 import { UserIdentityData, ScannedUserInfo } from '../../types/userIdentity';
 import { 
   calculateUserPermissions, 
@@ -161,7 +162,7 @@ export const ScannedUserInfoModal: React.FC<ScannedUserInfoModalProps> = ({
         method: 'POST',
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
-          'Authorization': `Bearer ${currentUser?.token || ''}`,
+          'Authorization': `Bearer ${await getCurrentToken() || ''}`,
         },
         body: new URLSearchParams({
           userId: scannedUserData.userId,
@@ -200,7 +201,7 @@ export const ScannedUserInfoModal: React.FC<ScannedUserInfoModalProps> = ({
         `https://www.vitaglobal.icu/app/hour/lastRecordList?userId=${scannedUserData.userId}`,
         {
           headers: {
-            'Authorization': `Bearer ${currentUser?.token || ''}`,
+            'Authorization': `Bearer ${await getCurrentToken() || ''}`,
           },
         }
       );
@@ -222,7 +223,7 @@ export const ScannedUserInfoModal: React.FC<ScannedUserInfoModalProps> = ({
         method: 'POST',
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
-          'Authorization': `Bearer ${currentUser?.token || ''}`,
+          'Authorization': `Bearer ${await getCurrentToken() || ''}`,
         },
         body: new URLSearchParams({
           id: lastRecord.id.toString(),
@@ -271,7 +272,7 @@ export const ScannedUserInfoModal: React.FC<ScannedUserInfoModalProps> = ({
                 `https://www.vitaglobal.icu/app/activity/signIn?activityId=${activityId}&userId=${scannedUserData.userId}`,
                 {
                   headers: {
-                    'Authorization': `Bearer ${currentUser?.token || ''}`,
+                    'Authorization': `Bearer ${await getCurrentToken() || ''}`,
                   },
                 }
               );

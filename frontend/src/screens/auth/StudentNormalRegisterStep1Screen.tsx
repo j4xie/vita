@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   View,
   Text,
@@ -11,6 +11,8 @@ import {
   ActivityIndicator,
   Keyboard,
   TouchableWithoutFeedback,
+  Modal,
+  FlatList,
 } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
@@ -20,9 +22,10 @@ import { Picker } from '@react-native-picker/picker';
 
 import { theme } from '../../theme';
 import { LIQUID_GLASS_LAYERS, DAWN_GRADIENTS } from '../../theme/core';
-import { 
-  RegistrationStep1Data, 
-  ValidationErrors 
+import {
+  RegistrationStep1Data,
+  ValidationErrors,
+  OrganizationData
 } from '../../types/registration';
 import { 
   SchoolData, 
@@ -30,9 +33,11 @@ import {
   validateEduEmail 
 } from '../../utils/schoolData';
 import SchoolEmailService from '../../services/schoolEmailService';
-import { 
+import {
   fetchSchoolList,
-  validatePhoneNumber 
+  validatePhoneNumber,
+  fetchOrganizationList,
+  validatePassword
 } from '../../services/registrationAPI';
 import RegionDetectionService from '../../services/RegionDetectionService';
 import UserRegionPreferences from '../../services/UserRegionPreferences';
@@ -49,23 +54,35 @@ export const StudentNormalRegisterStep1Screen: React.FC = () => {
   const route = useRoute<any>();
   const { t } = useTranslation();
 
-  // 获取邀请码相关参数
-  const referralCode = route.params?.referralCode;
-  const hasReferralCode = route.params?.hasReferralCode ?? !!referralCode;
-  const registrationType = route.params?.registrationType || 'phone'; // 'phone' 或 'invitation'
+  // 获取地理检测参数
   const detectedRegion = route.params?.detectedRegion || 'zh';
 
   const [loading, setLoading] = useState(false);
   const [schoolsLoading, setSchoolsLoading] = useState(true);
   const [schools, setSchools] = useState<SchoolData[]>([]);
+  const [organizationsLoading, setOrganizationsLoading] = useState(false);
+  const [organizations, setOrganizations] = useState<OrganizationData[]>([]);
+  const [organizationModalVisible, setOrganizationModalVisible] = useState(false);
   
-  const [formData, setFormData] = useState<RegistrationStep1Data & { areaCode: '86' | '1'; phoneNumber: string }>({
+  // 扩展 formData 以包含新字段
+  interface ExtendedFormData extends RegistrationStep1Data {
+    nickName: string;
+    password: string;
+    confirmPassword: string;
+    sex: '0' | '1' | '2';
+    selectedOrganization: OrganizationData | null;
+  }
+
+  const [formData, setFormData] = useState<ExtendedFormData>({
     firstName: '',
     lastName: '',
     selectedSchool: null,
     generatedEmail: '',
-    areaCode: detectedRegion === 'zh' ? '86' : '1', // 根据地理检测设置默认区号
-    phoneNumber: '',
+    nickName: '',
+    password: '',
+    confirmPassword: '',
+    sex: '2', // 默认未知
+    selectedOrganization: null,
   });
 
   const [errors, setErrors] = useState<ValidationErrors>({});
@@ -74,14 +91,14 @@ export const StudentNormalRegisterStep1Screen: React.FC = () => {
   // 实时验证状态
   const [realtimeErrors, setRealtimeErrors] = useState<ValidationErrors>({});
   
-  // 检查是否有任何验证错误
-  const hasValidationErrors = () => {
-    return Object.keys(realtimeErrors).some(key => 
+  // 检查是否有任何验证错误 - 使用 useMemo 优化性能
+  const hasValidationErrors = useMemo(() => {
+    return Object.keys(realtimeErrors).some(key =>
       realtimeErrors[key as keyof ValidationErrors]
-    ) || Object.keys(errors).some(key => 
+    ) || Object.keys(errors).some(key =>
       errors[key as keyof ValidationErrors]
     );
-  };
+  }, [realtimeErrors, errors]);
   
   // 调试：检查当前系统语言
   useEffect(() => {
@@ -102,7 +119,7 @@ export const StudentNormalRegisterStep1Screen: React.FC = () => {
       }));
     }
   );
-  
+
   const handleLastNameChange = createRealtimeValidator(
     TextType.LAST_NAME,
     (isValid, message) => {
@@ -113,9 +130,20 @@ export const StudentNormalRegisterStep1Screen: React.FC = () => {
     }
   );
 
+  const handleNickNameChange = createRealtimeValidator(
+    TextType.COMMON_NAME,
+    (isValid, message) => {
+      setRealtimeErrors(prev => ({
+        ...prev,
+        nickName: isValid ? undefined : message
+      }));
+    }
+  );
+
   // 加载学校列表
   useEffect(() => {
     loadSchools();
+    loadOrganizations();
   }, []);
 
   // 生成邮箱地址
@@ -135,7 +163,7 @@ export const StudentNormalRegisterStep1Screen: React.FC = () => {
     try {
       setSchoolsLoading(true);
       const response = await fetchSchoolList();
-      
+
       if (response.code === 200 && response.data) {
         const schoolData = createSchoolDataFromBackend(response.data);
         setSchools(schoolData);
@@ -151,9 +179,28 @@ export const StudentNormalRegisterStep1Screen: React.FC = () => {
     }
   };
 
-  const updateFormData = <K extends keyof RegistrationStep1Data>(
-    field: K, 
-    value: RegistrationStep1Data[K]
+  const loadOrganizations = async () => {
+    try {
+      setOrganizationsLoading(true);
+      const response = await fetchOrganizationList();
+
+      if (response.code === 200 && response.data) {
+        setOrganizations(response.data);
+      } else {
+        console.error('加载组织列表失败:', response);
+        Alert.alert(t('common.error'), t('auth.register.errors.organization_load_failed'));
+      }
+    } catch (error) {
+      console.error('加载组织列表失败:', error);
+      Alert.alert(t('common.error'), t('auth.register.errors.organization_load_failed'));
+    } finally {
+      setOrganizationsLoading(false);
+    }
+  };
+
+  const updateFormData = <K extends keyof ExtendedFormData>(
+    field: K,
+    value: ExtendedFormData[K]
   ) => {
     setFormData(prev => ({ ...prev, [field]: value }));
     // 清除相关错误
@@ -184,23 +231,30 @@ export const StudentNormalRegisterStep1Screen: React.FC = () => {
       newErrors.lastName = lastNameValidation.message;
     }
 
-    // 验证手机号（邀请码注册时可选）
-    if (registrationType === 'invitation') {
-      // 邀请码注册：手机号可选
-      if (formData.phoneNumber && !validatePhoneNumber(formData.phoneNumber, formData.areaCode)) {
-        newErrors.phoneNumber = formData.areaCode === '86' 
-          ? t('validation.phone_china_invalid')
-          : t('validation.phone_us_invalid');
-      }
-    } else {
-      // 手机验证码注册：手机号必填
-      if (!formData.phoneNumber) {
-        newErrors.phoneNumber = t('validation.phone_required');
-      } else if (!validatePhoneNumber(formData.phoneNumber, formData.areaCode)) {
-        newErrors.phoneNumber = formData.areaCode === '86' 
-          ? t('validation.phone_china_invalid')
-          : t('validation.phone_us_invalid');
-      }
+    // 验证常用名
+    const nickNameValidation = validateTextByLanguage(
+      formData.nickName,
+      TextType.COMMON_NAME,
+      t
+    );
+    if (!nickNameValidation.isValid) {
+      newErrors.nickName = nickNameValidation.message;
+    }
+
+    // 验证密码
+    const passwordValidation = validatePassword(formData.password);
+    if (!passwordValidation.isValid) {
+      newErrors.password = passwordValidation.message;
+    }
+
+    // 验证确认密码
+    if (formData.password !== formData.confirmPassword) {
+      newErrors.confirmPassword = t('validation.password_mismatch');
+    }
+
+    // 验证组织选择
+    if (!formData.selectedOrganization) {
+      newErrors.selectedOrganization = t('validation.organization_required');
     }
 
     // 验证学校
@@ -208,23 +262,13 @@ export const StudentNormalRegisterStep1Screen: React.FC = () => {
       newErrors.selectedSchool = t('validation.university_required');
     }
 
-    // 验证邮箱用户名（邀请码注册时可选）
-    if (registrationType === 'invitation') {
-      // 邀请码注册：邮箱可选
-      if (emailUsername && emailUsername.length < 3) {
-        newErrors.email = t('validation.email_username_too_short');
-      } else if (emailUsername && !/^[a-zA-Z0-9._-]+$/.test(emailUsername)) {
-        newErrors.email = t('validation.email_username_invalid');
-      }
-    } else {
-      // 手机验证码注册：邮箱必填
-      if (!emailUsername.trim()) {
-        newErrors.email = t('validation.email_username_required');
-      } else if (emailUsername.length < 3) {
-        newErrors.email = t('validation.email_username_too_short');
-      } else if (!/^[a-zA-Z0-9._-]+$/.test(emailUsername)) {
-        newErrors.email = t('validation.email_username_invalid');
-      }
+    // 验证邮箱用户名（普通注册必填）
+    if (!emailUsername.trim()) {
+      newErrors.email = t('validation.email_username_required');
+    } else if (emailUsername.length < 3) {
+      newErrors.email = t('validation.email_username_too_short');
+    } else if (!/^[a-zA-Z0-9._-]+$/.test(emailUsername)) {
+      newErrors.email = t('validation.email_username_invalid');
     }
 
     // 验证生成的邮箱格式（接受任何后缀）
@@ -253,28 +297,22 @@ export const StudentNormalRegisterStep1Screen: React.FC = () => {
         await UserRegionPreferences.initializePreferences(detectionResult.region);
         console.log('注册流程：用户区域偏好初始化完成');
         
-        // 导航到第二步，传递第一步的数据、邀请码信息和地理检测结果
-        navigation.navigate('StudentNormalRegisterStep2', { 
+        // 导航到第二步，传递第一步的数据和地理检测结果
+        navigation.navigate('StudentNormalRegisterStep2', {
           step1Data: {
             ...formData,
             legalName: `${formData.lastName} ${formData.firstName}`.trim(),
           },
-          referralCode,
-          hasReferralCode,
-          registrationType,
           regionDetection: detectionResult, // 传递地理检测结果
         });
       } catch (error) {
         console.error('注册流程地理位置检测失败:', error);
         // 即使地理检测失败也继续注册流程，使用默认设置
-        navigation.navigate('StudentNormalRegisterStep2', { 
+        navigation.navigate('StudentNormalRegisterStep2', {
           step1Data: {
             ...formData,
             legalName: `${formData.lastName} ${formData.firstName}`.trim(),
           },
-          referralCode,
-          hasReferralCode,
-          registrationType,
           regionDetection: null, // 检测失败
         });
       } finally {
@@ -391,21 +429,8 @@ export const StudentNormalRegisterStep1Screen: React.FC = () => {
           <View style={styles.formContainer}>
             <Text style={styles.stepTitle}>{t('auth.register.form.basic_info')}</Text>
             <Text style={styles.stepSubtitle}>
-              {registrationType === 'invitation' 
-                ? t('auth.register.form.invitation_step1_description')
-                : t('auth.register.form.step1_description')
-              }
+              {t('auth.register.form.step1_description')}
             </Text>
-
-            {/* 邀请码提示 */}
-            {hasReferralCode && (
-              <View style={styles.referralBadge}>
-                <Ionicons name="gift" size={20} color={theme.colors.primary} />
-                <Text style={styles.referralText}>
-                  {t('auth.register.form.referral_code', { code: referralCode })}
-                </Text>
-              </View>
-            )}
 
             {/* 姓名输入 */}
             <View style={styles.nameRow}>
@@ -460,43 +485,101 @@ export const StudentNormalRegisterStep1Screen: React.FC = () => {
             {/* 邮箱预览 */}
             {renderEmailPreview()}
 
-            {/* 手机号输入 - 从第3步移到第1步避免误解 */}
+            {/* 常用名输入 */}
             <View style={styles.inputContainer}>
-              <Text style={styles.label}>
-                {registrationType === 'invitation' 
-                  ? t('auth.register.form.phone_label_optional')
-                  : t('auth.register.form.phone_label')} *
-              </Text>
-              <View style={styles.phoneInputWrapper}>
-                <TouchableOpacity 
-                  style={styles.areaCodeSelector}
-                  onPress={() => {
-                    Alert.alert(
-                      t('auth.register.parent.select_area_code'),
-                      '',
-                      [
-                        { text: t('auth.register.parent.area_code_china'), onPress: () => updateFormData('areaCode', '86') },
-                        { text: t('auth.register.parent.area_code_usa'), onPress: () => updateFormData('areaCode', '1') },
-                        { text: t('common.cancel'), style: 'cancel' }
-                      ]
-                    );
-                  }}
+              <Text style={styles.label}>{t('auth.register.form.nickname_label')}</Text>
+              <TextInput
+                style={[
+                  styles.input,
+                  (errors.nickName || realtimeErrors.nickName) && styles.inputError
+                ]}
+                placeholder={getInputPlaceholder(TextType.COMMON_NAME, t)}
+                value={formData.nickName}
+                onChangeText={(text) => {
+                  handleNickNameChange(text, t);
+                  updateFormData('nickName', text);
+                }}
+                placeholderTextColor={theme.colors.text.disabled}
+              />
+              {(errors.nickName || realtimeErrors.nickName) && (
+                <Text style={styles.errorText}>
+                  {errors.nickName || realtimeErrors.nickName}
+                </Text>
+              )}
+            </View>
+
+            {/* 密码输入 */}
+            <View style={styles.inputContainer}>
+              <Text style={styles.label}>{t('auth.register.form.password_label')} *</Text>
+              <TextInput
+                style={[styles.input, errors.password && styles.inputError]}
+                placeholder={t('auth.register.form.password_placeholder')}
+                value={formData.password}
+                onChangeText={(text) => updateFormData('password', text)}
+                secureTextEntry
+                placeholderTextColor={theme.colors.text.disabled}
+              />
+              {errors.password && <Text style={styles.errorText}>{errors.password}</Text>}
+            </View>
+
+            {/* 确认密码 */}
+            <View style={styles.inputContainer}>
+              <Text style={styles.label}>{t('auth.register.form.confirm_password_label')} *</Text>
+              <TextInput
+                style={[styles.input, errors.confirmPassword && styles.inputError]}
+                placeholder={t('auth.register.form.confirm_password_placeholder')}
+                value={formData.confirmPassword}
+                onChangeText={(text) => updateFormData('confirmPassword', text)}
+                secureTextEntry
+                placeholderTextColor={theme.colors.text.disabled}
+              />
+              {errors.confirmPassword && <Text style={styles.errorText}>{errors.confirmPassword}</Text>}
+            </View>
+
+            {/* 性别选择 */}
+            <View style={styles.inputContainer}>
+              <Text style={styles.label}>{t('auth.register.form.gender_label')}</Text>
+              <View style={styles.genderContainer}>
+                <TouchableOpacity
+                  style={[styles.genderButton, formData.sex === '1' && styles.genderButtonActive]}
+                  onPress={() => updateFormData('sex', '1')}
                 >
-                  <Text style={styles.areaCodeText}>
-                    {formData.areaCode === '86' ? t('auth.register.parent.area_code_china') : t('auth.register.parent.area_code_usa')}
+                  <Text style={[styles.genderButtonText, formData.sex === '1' && styles.genderButtonTextActive]}>
+                    {t('auth.register.form.gender_male')}
                   </Text>
-                  <Ionicons name="chevron-down" size={16} color={theme.colors.text.secondary} />
                 </TouchableOpacity>
-                <TextInput
-                  style={[styles.phoneInput, errors.phoneNumber && styles.inputError]}
-                  placeholder={formData.areaCode === '86' ? '13812345678' : '(555) 123-4567'}
-                  value={formData.phoneNumber}
-                  onChangeText={(text) => updateFormData('phoneNumber', text)}
-                  keyboardType="phone-pad"
-                  placeholderTextColor={theme.colors.text.disabled}
-                />
+                <TouchableOpacity
+                  style={[styles.genderButton, formData.sex === '0' && styles.genderButtonActive]}
+                  onPress={() => updateFormData('sex', '0')}
+                >
+                  <Text style={[styles.genderButtonText, formData.sex === '0' && styles.genderButtonTextActive]}>
+                    {t('auth.register.form.gender_female')}
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.genderButton, formData.sex === '2' && styles.genderButtonActive]}
+                  onPress={() => updateFormData('sex', '2')}
+                >
+                  <Text style={[styles.genderButtonText, formData.sex === '2' && styles.genderButtonTextActive]}>
+                    {t('auth.register.form.gender_other')}
+                  </Text>
+                </TouchableOpacity>
               </View>
-              {errors.phoneNumber && <Text style={styles.errorText}>{errors.phoneNumber}</Text>}
+            </View>
+
+            {/* 组织选择 */}
+            <View style={styles.inputContainer}>
+              <Text style={styles.label}>{t('auth.register.form.organization_label')} *</Text>
+              <TouchableOpacity
+                style={[styles.input, styles.selectorInput, errors.selectedOrganization && styles.inputError]}
+                onPress={() => setOrganizationModalVisible(true)}
+              >
+                <Text style={formData.selectedOrganization ? styles.selectorText : styles.selectorPlaceholder}>
+                  {formData.selectedOrganization?.name || t('auth.register.form.organization_placeholder')}
+                </Text>
+                <Ionicons name="chevron-down" size={20} color={theme.colors.text.secondary} />
+              </TouchableOpacity>
+              {errors.selectedOrganization && <Text style={styles.errorText}>{errors.selectedOrganization}</Text>}
             </View>
           </View>
           </ScrollView>
@@ -507,11 +590,11 @@ export const StudentNormalRegisterStep1Screen: React.FC = () => {
       <View style={styles.fixedBottomContainer}>
         <TouchableOpacity
           style={[
-            styles.nextButton, 
-            (loading || hasValidationErrors()) && styles.nextButtonDisabled
+            styles.nextButton,
+            (loading || hasValidationErrors) && styles.nextButtonDisabled
           ]}
           onPress={handleNext}
-          disabled={loading || hasValidationErrors()}
+          disabled={loading || hasValidationErrors}
         >
           {loading ? (
             <ActivityIndicator color={theme.colors.text.inverse} />
@@ -522,6 +605,47 @@ export const StudentNormalRegisterStep1Screen: React.FC = () => {
           )}
         </TouchableOpacity>
       </View>
+
+      {/* 组织选择模态框 */}
+      <Modal
+        visible={organizationModalVisible}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setOrganizationModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>{t('auth.register.form.select_organization')}</Text>
+              <TouchableOpacity onPress={() => setOrganizationModalVisible(false)}>
+                <Ionicons name="close" size={24} color={theme.colors.text.primary} />
+              </TouchableOpacity>
+            </View>
+            {organizationsLoading ? (
+              <ActivityIndicator size="large" color={theme.colors.primary} style={styles.modalLoading} />
+            ) : (
+              <FlatList
+                data={organizations}
+                keyExtractor={(item) => item.id.toString()}
+                renderItem={({ item }) => (
+                  <TouchableOpacity
+                    style={styles.organizationItem}
+                    onPress={() => {
+                      updateFormData('selectedOrganization', item);
+                      setOrganizationModalVisible(false);
+                    }}
+                  >
+                    <Text style={styles.organizationName}>{item.name}</Text>
+                    {formData.selectedOrganization?.id === item.id && (
+                      <Ionicons name="checkmark" size={20} color={theme.colors.primary} />
+                    )}
+                  </TouchableOpacity>
+                )}
+              />
+            )}
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 };
@@ -687,27 +811,6 @@ const styles = StyleSheet.create({
     marginTop: theme.spacing[2],
     fontStyle: 'italic',
   },
-  phoneInputWrapper: {
-    flexDirection: 'row',
-    backgroundColor: theme.colors.background.secondary,
-    borderRadius: theme.borderRadius.lg,
-    borderWidth: 1,
-    borderColor: 'transparent',
-    overflow: 'hidden',
-  },
-  phonePrefix: {
-    fontSize: theme.typography.fontSize.base,
-    color: theme.colors.text.secondary,
-    marginRight: theme.spacing[2],
-    fontWeight: theme.typography.fontWeight.medium,
-  },
-  phoneInput: {
-    flex: 1,
-    paddingHorizontal: theme.spacing[3],
-    paddingVertical: theme.spacing[4],
-    fontSize: theme.typography.fontSize.base,
-    color: theme.colors.text.primary,
-  },
   fixedBottomContainer: {
     position: 'absolute',
     bottom: 0,
@@ -734,34 +837,83 @@ const styles = StyleSheet.create({
     fontWeight: theme.typography.fontWeight.semibold,
     color: theme.colors.text.inverse,
   },
-  referralBadge: {
+  genderContainer: {
     flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: theme.colors.primary + '15',
-    paddingHorizontal: theme.spacing[3],
-    paddingVertical: theme.spacing[2],
-    borderRadius: theme.borderRadius.lg,
-    marginBottom: theme.spacing[4],
+    gap: theme.spacing[2],
   },
-  referralText: {
+  genderButton: {
+    flex: 1,
+    paddingVertical: theme.spacing[3],
+    paddingHorizontal: theme.spacing[4],
+    backgroundColor: theme.colors.background.secondary,
+    borderRadius: theme.borderRadius.lg,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'transparent',
+  },
+  genderButtonActive: {
+    backgroundColor: theme.colors.primary + '15',
+    borderColor: theme.colors.primary,
+  },
+  genderButtonText: {
     fontSize: theme.typography.fontSize.sm,
+    color: theme.colors.text.secondary,
+  },
+  genderButtonTextActive: {
     color: theme.colors.primary,
     fontWeight: theme.typography.fontWeight.medium,
-    marginLeft: theme.spacing[2],
   },
-  areaCodeSelector: {
+  selectorInput: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: theme.spacing[3],
-    paddingVertical: theme.spacing[4],
-    backgroundColor: theme.colors.background.tertiary,
-    borderRightWidth: 1,
-    borderRightColor: theme.colors.border,
   },
-  areaCodeText: {
-    fontSize: theme.typography.fontSize.sm,
+  selectorText: {
+    fontSize: theme.typography.fontSize.base,
     color: theme.colors.text.primary,
-    fontWeight: theme.typography.fontWeight.medium,
-    marginRight: theme.spacing[1],
+  },
+  selectorPlaceholder: {
+    fontSize: theme.typography.fontSize.base,
+    color: theme.colors.text.disabled,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
+    backgroundColor: theme.colors.background.primary,
+    borderTopLeftRadius: theme.borderRadius['2xl'],
+    borderTopRightRadius: theme.borderRadius['2xl'],
+    maxHeight: '70%',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: theme.spacing[4],
+    borderBottomWidth: 1,
+    borderBottomColor: theme.colors.border,
+  },
+  modalTitle: {
+    fontSize: theme.typography.fontSize.lg,
+    fontWeight: theme.typography.fontWeight.semibold,
+    color: theme.colors.text.primary,
+  },
+  modalLoading: {
+    padding: theme.spacing[8],
+  },
+  organizationItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: theme.spacing[4],
+    paddingVertical: theme.spacing[3],
+    borderBottomWidth: 1,
+    borderBottomColor: theme.colors.border + '20',
+  },
+  organizationName: {
+    fontSize: theme.typography.fontSize.base,
+    color: theme.colors.text.primary,
   },
 });

@@ -41,7 +41,7 @@ export interface BackendUserInfo {
     parentName: string | null;
     children: any[];
   };
-  roles: Array<{
+  roles: {
     createBy: string | null;
     createTime: string | null;
     updateBy: string | null;
@@ -61,7 +61,7 @@ export interface BackendUserInfo {
     deptIds: string | null;
     permissions: string | null;
     admin: boolean;
-  }>;
+  }[];
   roleIds: number[] | null;
   postIds: number[] | null;
   roleId: number | null;
@@ -109,12 +109,12 @@ export interface FrontendUser {
   deptId?: number; // 兼容字段
   
   // 角色权限
-  roles: Array<{
+  roles: {
     id: number;
     name: string;
     key: string;
     isAdmin: boolean;
-  }>;
+  }[];
   
   // 权限标识
   permissions: {
@@ -198,7 +198,7 @@ export const adaptUserInfo = (backendUser: BackendUserInfo): FrontendUser => {
     
     // 🆕 保留原始权限字段供权限检查系统使用
     admin: backendUser.admin,
-    roles: backendUser.roles,
+    rawRoles: backendUser.roles, // 重命名避免重复键
     role: backendUser.role,
     post: backendUser.post,
     

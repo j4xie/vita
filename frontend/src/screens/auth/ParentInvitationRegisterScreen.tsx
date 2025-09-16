@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   View,
   Text,
@@ -117,14 +117,14 @@ export const ParentInvitationRegisterScreen: React.FC = () => {
   // 实时验证状态
   const [realtimeErrors, setRealtimeErrors] = useState<ValidationErrors>({});
   
-  // 检查是否有任何验证错误
-  const hasValidationErrors = () => {
-    return Object.keys(realtimeErrors).some(key => 
+  // 检查是否有任何验证错误 - 使用 useMemo 优化性能
+  const hasValidationErrors = useMemo(() => {
+    return Object.keys(realtimeErrors).some(key =>
       realtimeErrors[key as keyof ValidationErrors]
-    ) || Object.keys(errors).some(key => 
+    ) || Object.keys(errors).some(key =>
       errors[key as keyof ValidationErrors]
     );
-  };
+  }, [realtimeErrors, errors]);
   
   // 调试：检查当前系统语言
   useEffect(() => {
@@ -789,10 +789,10 @@ export const ParentInvitationRegisterScreen: React.FC = () => {
                 <TouchableOpacity
                   style={[
                     styles.registerButton, 
-                    (loading || hasValidationErrors()) && styles.registerButtonDisabled
+                    (loading || hasValidationErrors) && styles.registerButtonDisabled
                   ]}
                   onPress={handleRegister}
-                  disabled={loading || hasValidationErrors()}
+                  disabled={loading || hasValidationErrors}
                 >
                   {loading ? (
                     <ActivityIndicator color={theme.colors.text.inverse} />

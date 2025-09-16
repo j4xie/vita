@@ -109,7 +109,7 @@ export const GrapefruitIcon: React.FC<GrapefruitIconProps> = ({
     transform: [
       { scale: breathingScale.value },
       { rotate: `${rotationValue.value}deg` }
-    ],
+    ] as any,
   }));
 
   const animatedPulseProps = useAnimatedProps(() => ({

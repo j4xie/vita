@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   View,
   Text,
@@ -14,6 +14,7 @@ import {
   FlatList,
   Alert,
 } from 'react-native';
+import { Picker } from '@react-native-picker/picker';
 import { useNavigation, useRoute, CommonActions } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
@@ -86,7 +87,7 @@ interface RouteParams {
   identity: number;
 }
 
-export const StudentInvitationRegisterScreen: React.FC = () => {
+export const StudentInvitationRegisterScreen: React.FC = React.memo(() => {
   const navigation = useNavigation<any>();
   const route = useRoute<any>();
   const { t } = useTranslation();
@@ -132,7 +133,6 @@ export const StudentInvitationRegisterScreen: React.FC = () => {
   const [schools, setSchools] = useState<SchoolData[]>([]);
   const [organizations, setOrganizations] = useState<OrganizationData[]>([]);
   const [organizationModalVisible, setOrganizationModalVisible] = useState(false);
-  const [schoolModalVisible, setSchoolModalVisible] = useState(false);
 
   const [formData, setFormData] = useState<StudentInvitationFormData>({
     firstName: '',
@@ -156,14 +156,14 @@ export const StudentInvitationRegisterScreen: React.FC = () => {
   const [realtimeErrors, setRealtimeErrors] = useState<ValidationErrors>({});
   const [showSuccessModal, setShowSuccessModal] = useState(false);
 
-  // 检查是否有任何验证错误
-  const hasValidationErrors = () => {
+  // 检查是否有任何验证错误 - 使用 useMemo 优化性能
+  const hasValidationErrors = useMemo(() => {
     return Object.keys(realtimeErrors).some(key =>
       realtimeErrors[key as keyof ValidationErrors]
     ) || Object.keys(errors).some(key =>
       errors[key as keyof ValidationErrors]
     );
-  };
+  }, [realtimeErrors, errors]);
 
   // 实时验证处理器
   const handleFirstNameChange = createRealtimeValidator(
@@ -240,98 +240,32 @@ export const StudentInvitationRegisterScreen: React.FC = () => {
     }
   }, [emailUsername, formData.selectedSchool]);
 
-  const loadSchools = async (retryCount = 0) => {
-    const maxRetries = 3;
-    const cacheKey = '@pomelox_schools_cache';
-    const cacheTimeKey = '@pomelox_schools_cache_time';
-    const cacheValidTime = 24 * 60 * 60 * 1000; // 24小时缓存
-
+  const loadSchools = async () => {
     try {
       setSchoolsLoading(true);
+      const response = await fetchSchoolList();
 
-      // 尝试从缓存加载
-      try {
-        const cachedData = await AsyncStorage.getItem(cacheKey);
-        const cacheTime = await AsyncStorage.getItem(cacheTimeKey);
+      if (response.code === 200 && response.data) {
+        const schoolData = createSchoolDataFromBackend(response.data);
+        // 过滤掉非学校的组织机构（如CU总部等）
+        const filteredSchools = schoolData.filter(school => {
+          // 排除CU总部和其他非学校组织
+          const excludedOrganizations = ['CU', '总部', 'Headquarters', 'Chinese Union'];
+          const schoolInfo = `${school.abbreviation} ${school.name}`.toLowerCase();
 
-        if (cachedData && cacheTime) {
-          const timeDiff = Date.now() - parseInt(cacheTime);
-          if (timeDiff < cacheValidTime) {
-            const schoolData = JSON.parse(cachedData);
-            setSchools(schoolData);
-            console.log(`📦 [StudentInvitationRegister] Loaded ${schoolData.length} schools from cache`);
-            setSchoolsLoading(false);
-
-            // 后台更新缓存（不影响UI）
-            fetchAndCacheSchools();
-            return;
-          }
-        }
-      } catch (cacheError) {
-        console.log('🔍 [StudentInvitationRegister] Cache read failed, fetching from network');
-      }
-
-      // 缓存失效或不存在，从网络获取
-      await fetchAndCacheSchools(retryCount);
-
-    } catch (error) {
-      console.error(`❌ [StudentInvitationRegister] Failed to load schools (attempt ${retryCount + 1}):`, error);
-
-      if (retryCount < maxRetries) {
-        console.log(`🔄 [StudentInvitationRegister] Retrying in 2 seconds... (${retryCount + 1}/${maxRetries})`);
-        setTimeout(() => {
-          loadSchools(retryCount + 1);
-        }, 2000);
-        return;
+          return !excludedOrganizations.some(org =>
+            schoolInfo.includes(org.toLowerCase())
+          );
+        });
+        setSchools(filteredSchools);
       } else {
-        Alert.alert(
-          t('common.error'),
-          t('auth.register.errors.school_load_failed') + '\n' + t('common.retry') + '?',
-          [
-            {
-              text: t('common.cancel'),
-              style: 'cancel',
-            },
-            {
-              text: t('common.retry'),
-              onPress: () => loadSchools(0),
-            },
-          ]
-        );
+        Alert.alert(t('common.error'), t('auth.register.errors.school_load_failed'));
       }
+    } catch (error) {
+      console.error('加载学校列表失败:', error);
+      Alert.alert(t('common.error'), t('auth.register.errors.school_load_failed'));
     } finally {
-      if (retryCount >= maxRetries || schools.length > 0) {
-        setSchoolsLoading(false);
-      }
-    }
-  };
-
-  const fetchAndCacheSchools = async (retryCount = 0) => {
-    const timeoutPromise = new Promise((_, reject) => {
-      setTimeout(() => reject(new Error('Request timeout')), 15000);
-    });
-
-    const response = await Promise.race([
-      fetchSchoolList(),
-      timeoutPromise
-    ]);
-
-    if (response.code === 200 && response.data) {
-      const schoolData = createSchoolDataFromBackend(response.data);
-      setSchools(schoolData);
-
-      // 保存到缓存
-      try {
-        await AsyncStorage.setItem('@pomelox_schools_cache', JSON.stringify(schoolData));
-        await AsyncStorage.setItem('@pomelox_schools_cache_time', Date.now().toString());
-        console.log(`💾 [StudentInvitationRegister] Cached ${schoolData.length} schools`);
-      } catch (cacheError) {
-        console.warn('Failed to cache schools:', cacheError);
-      }
-
-      console.log(`✅ [StudentInvitationRegister] Successfully loaded ${schoolData.length} schools`);
-    } else {
-      throw new Error(`API returned code: ${response.code}`);
+      setSchoolsLoading(false);
     }
   };
 
@@ -350,17 +284,20 @@ export const StudentInvitationRegisterScreen: React.FC = () => {
     }
   };
 
-  const updateFormData = <K extends keyof StudentInvitationFormData>(
+  const updateFormData = useCallback(<K extends keyof StudentInvitationFormData>(
     field: K,
     value: StudentInvitationFormData[K]
   ) => {
     setFormData(prev => ({ ...prev, [field]: value }));
-    if (errors[field as keyof ValidationErrors]) {
-      setErrors(prev => ({ ...prev, [field as keyof ValidationErrors]: undefined }));
-    }
-  };
+    setErrors(prev => {
+      if (prev[field as keyof ValidationErrors]) {
+        return { ...prev, [field as keyof ValidationErrors]: undefined };
+      }
+      return prev;
+    });
+  }, []);
 
-  const validateForm = (): boolean => {
+  const validateForm = useCallback((): boolean => {
     const newErrors: ValidationErrors = {};
 
     // 验证名字
@@ -392,10 +329,7 @@ export const StudentInvitationRegisterScreen: React.FC = () => {
       newErrors.nickName = nickNameValidation.message;
     }
 
-    // 额外检查昵称生成后的长度（预估）
-    if (formData.nickName.length > 15) {
-      newErrors.nickName = '昵称过长，请控制在15个字符以内';
-    }
+    // 推荐码注册对昵称长度更宽松，只检查基本要求
 
     // 验证邮箱（适配学校邮箱自动生成）
     if (formData.selectedSchool) {
@@ -451,9 +385,9 @@ export const StudentInvitationRegisterScreen: React.FC = () => {
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
-  };
+  }, [formData, emailUsername, t]);
 
-  const handleRegister = async () => {
+  const handleRegister = useCallback(async () => {
     if (!validateForm()) return;
 
     setLoading(true);
@@ -470,8 +404,8 @@ export const StudentInvitationRegisterScreen: React.FC = () => {
       );
 
       // 验证和截断数据库字段长度限制
-      const MAX_NICKNAME_LENGTH = 50; // 数据库 nick_name 字段限制
-      const MAX_LEGAL_NAME_LENGTH = 100; // 数据库 legal_name 字段限制
+      const MAX_NICKNAME_LENGTH = 15; // 保守的限制，确保数据库兼容性
+      const MAX_LEGAL_NAME_LENGTH = 50; // 数据库 legal_name 字段限制
       const MAX_EMAIL_LENGTH = 50; // 数据库 email 字段限制
 
       // 截断过长的字段
@@ -503,7 +437,7 @@ export const StudentInvitationRegisterScreen: React.FC = () => {
         sex: formData.sex,
         deptId: parseInt(formData.selectedSchool!.id),
         orgId: formData.selectedOrganization!.id,
-        invCode: referralCode, // 推荐码必须有
+        invCode: referralCode?.trim(), // 推荐码必须有，清理空格
         area: detectedRegion,
         areaCode: formData.areaCode, // 使用用户选择的区号
         phonenumber: formData.phoneNumber, // 添加手机号
@@ -589,13 +523,13 @@ export const StudentInvitationRegisterScreen: React.FC = () => {
       setLoading(false);
       setIsRegistering(false);
     }
-  };
+  }, [validateForm, formData, referralCode, detectedRegion, userLogin, navigation, t]);
 
-  const handleBack = () => {
+  const handleBack = useCallback(() => {
     navigation.goBack();
-  };
+  }, [navigation]);
 
-  const handleSuccessModalClose = () => {
+  const handleSuccessModalClose = useCallback(() => {
     setShowSuccessModal(false);
     navigation.dispatch(
       CommonActions.reset({
@@ -614,49 +548,53 @@ export const StudentInvitationRegisterScreen: React.FC = () => {
         }],
       })
     );
-  };
+  }, [navigation]);
 
-  const renderSchoolPicker = () => (
+  const renderSchoolPicker = useCallback(() => (
     <View style={styles.inputContainer}>
       <Text style={styles.label}>{t('auth.register.form.university_label')}</Text>
       <View style={[styles.pickerContainer, errors.selectedSchool && styles.inputError]}>
         {schoolsLoading ? (
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="small" color={theme.colors.primary} />
-            <Text style={styles.loadingText}>
-              {schools.length > 0
-                ? t('auth.register.form.updating_schools')
-                : t('auth.register.form.loading_schools')
-              }
-            </Text>
+            <Text style={styles.loadingText}>{t('auth.register.form.loading_schools')}</Text>
           </View>
-        ) : schools.length === 0 ? (
-          <TouchableOpacity
-            style={styles.retryContainer}
-            onPress={() => loadSchools(0)}
-          >
-            <Ionicons name="refresh" size={20} color={theme.colors.primary} />
-            <Text style={styles.retryText}>{t('common.retry')}</Text>
-          </TouchableOpacity>
         ) : (
-          <TouchableOpacity
-            style={styles.selector}
-            onPress={() => {
-              if (!schoolsLoading && schools.length > 0) {
-                setSchoolModalVisible(true);
+          <Picker
+            selectedValue={formData.selectedSchool?.id || ''}
+            onValueChange={(itemValue) => {
+              if (itemValue) {
+                const school = schools.find(s => s.id === itemValue);
+                if (school) {
+                  updateFormData('selectedSchool', school);
+                  setEmailUsername(''); // 清空邮箱用户名，让用户重新输入
+                }
+              } else {
+                updateFormData('selectedSchool', null);
+                setEmailUsername('');
               }
             }}
+            style={styles.picker}
           >
-            <Text style={[styles.selectorText, !formData.selectedSchool && styles.placeholderText]}>
-              {formData.selectedSchool?.name || t('auth.register.form.university_placeholder')}
-            </Text>
-            <Ionicons name="chevron-down" size={20} color={theme.colors.text.secondary} />
-          </TouchableOpacity>
+            <Picker.Item
+              label={t('auth.register.form.university_placeholder')}
+              value=""
+              color={theme.colors.text.disabled}
+            />
+            {schools.map((school) => (
+              <Picker.Item
+                key={school.id}
+                label={school.name}
+                value={school.id}
+                color={theme.colors.text.primary}
+              />
+            ))}
+          </Picker>
         )}
       </View>
       {errors.selectedSchool && <Text style={styles.errorText}>{errors.selectedSchool}</Text>}
     </View>
-  );
+  ), [schoolsLoading, schools, formData.selectedSchool, errors.selectedSchool, t, updateFormData]);
 
   const renderOrganizationSelector = () => (
     <View style={styles.inputContainer}>
@@ -879,23 +817,20 @@ export const StudentInvitationRegisterScreen: React.FC = () => {
                 <TouchableOpacity
                   style={styles.areaCodeSelector}
                   onPress={() => {
-                    const areaCodeTitle = t('auth.register.form.select_area_code');
-                    console.log('🌍 Area code title:', areaCodeTitle);
-
                     Alert.alert(
-                      areaCodeTitle || '选择区号', // 添加默认值
+                      '选择国际区号',
                       '',
                       [
                         {
-                          text: t('auth.register.form.area_code_china') || '+86 中国',
+                          text: '🇨🇳 +86 中国',
                           onPress: () => updateFormData('areaCode', '86')
                         },
                         {
-                          text: t('auth.register.form.area_code_usa') || '+1 美国',
+                          text: '🇺🇸 +1 美国',
                           onPress: () => updateFormData('areaCode', '1')
                         },
                         {
-                          text: t('common.cancel') || '取消',
+                          text: '取消',
                           style: 'cancel'
                         }
                       ]
@@ -992,10 +927,10 @@ export const StudentInvitationRegisterScreen: React.FC = () => {
               <TouchableOpacity
                 style={[
                   styles.registerButton,
-                  (loading || hasValidationErrors()) && styles.registerButtonDisabled
+                  (loading || hasValidationErrors) && styles.registerButtonDisabled
                 ]}
                 onPress={handleRegister}
-                disabled={loading || hasValidationErrors()}
+                disabled={loading || hasValidationErrors}
               >
                 {loading ? (
                   <ActivityIndicator color={theme.colors.text.inverse} />
@@ -1011,56 +946,6 @@ export const StudentInvitationRegisterScreen: React.FC = () => {
         </TouchableWithoutFeedback>
       </View>
 
-      {/* 学校选择Modal */}
-      <Modal
-        visible={schoolModalVisible}
-        animationType="slide"
-        transparent={true}
-        onRequestClose={() => setSchoolModalVisible(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContainer}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>{t('auth.register.form.university_label')}</Text>
-              <TouchableOpacity
-                onPress={() => setSchoolModalVisible(false)}
-                style={styles.modalCloseButton}
-              >
-                <Ionicons name="close" size={24} color={theme.colors.text.primary} />
-              </TouchableOpacity>
-            </View>
-
-            <FlatList
-              data={schools}
-              keyExtractor={(item) => item.id.toString()}
-              renderItem={({ item }) => (
-                <TouchableOpacity
-                  style={[
-                    styles.organizationItem,
-                    formData.selectedSchool?.id === item.id && styles.organizationItemSelected
-                  ]}
-                  onPress={() => {
-                    updateFormData('selectedSchool', item);
-                    setEmailUsername(''); // 清空邮箱用户名，让用户重新输入
-                    setSchoolModalVisible(false);
-                  }}
-                >
-                  <Text style={[
-                    styles.organizationItemText,
-                    formData.selectedSchool?.id === item.id && styles.organizationItemTextSelected
-                  ]}>
-                    {item.name}
-                  </Text>
-                  {formData.selectedSchool?.id === item.id && (
-                    <Ionicons name="checkmark" size={20} color={theme.colors.primary} />
-                  )}
-                </TouchableOpacity>
-              )}
-              showsVerticalScrollIndicator={false}
-            />
-          </View>
-        </View>
-      </Modal>
 
       {/* 组织选择Modal */}
       {renderOrganizationModal()}
@@ -1076,7 +961,7 @@ export const StudentInvitationRegisterScreen: React.FC = () => {
       />
     </SafeAreaView>
   );
-};
+});
 
 const styles = StyleSheet.create({
   container: {
@@ -1389,6 +1274,11 @@ const styles = StyleSheet.create({
     fontSize: theme.typography.fontSize.base,
     color: theme.colors.text.primary,
     paddingVertical: 0,
+  },
+  // Picker样式
+  picker: {
+    color: theme.colors.text.primary,
+    backgroundColor: 'transparent',
   },
   // 重试按钮样式
   retryContainer: {

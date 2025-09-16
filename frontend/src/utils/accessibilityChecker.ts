@@ -227,12 +227,12 @@ export class AccessibilityAuditor {
   static auditColorScheme(): {
     passed: number;
     failed: number;
-    details: Array<{
+    details: {
       combination: string;
       ratio: number;
       meetsAA: boolean;
       meetsAAA: boolean;
-    }>;
+    }[];
   } {
     const combinations = [
       // 主要文本组合

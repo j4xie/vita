@@ -60,14 +60,14 @@ export interface UserInfo {
       parentId: number;
     };
   };
-  roles: Array<{
+  roles: {
     roleId: number;
     roleName: string;
     roleKey: string; // 🚨 关键字段：manage/part_manage/staff/common
     admin: boolean;
     roleSort?: number;
     dataScope?: string;
-  }>;
+  }[];
   role?: { // 🆕 单个角色对象
     roleId: number;
     roleName: string;

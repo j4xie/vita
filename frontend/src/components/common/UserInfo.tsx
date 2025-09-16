@@ -107,7 +107,7 @@ export const UserInfo: React.FC<UserInfoProps> = ({
         
         {showStatus && (
           <Text style={styles.statusText}>
-            {user.schoolId ? `${user.schoolId.toUpperCase()} ${t('userInfo.student')}` : t('userInfo.user')}
+            {user.school ? `${user.school.name || user.school.id || ''} ${t('userInfo.student')}` : t('userInfo.user')}
           </Text>
         )}
         
@@ -154,7 +154,7 @@ const styles = StyleSheet.create({
     padding: theme.spacing[4],
     borderWidth: 1,
     borderColor: theme.liquidGlass.card.border,
-    ...theme.shadows.card,
+    ...theme.shadows.sm,
   },
   compactContainer: {
     paddingVertical: theme.spacing[1],

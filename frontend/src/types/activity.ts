@@ -35,7 +35,7 @@ export interface Activity {
   description?: string;
   organizer?: string;
   signStatus?: number; // 0-未报名，-1-已报名未签到，1-已签到
-  type?: number; // -1-即将开始，1-已开始，2-已结束
+  type: number; // -1-即将开始，1-已开始，2-已结束
 }
 
 export interface ActivityAPIResponse {

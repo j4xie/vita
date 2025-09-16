@@ -38,7 +38,27 @@ yarn-error.log*
 
 # Generated files
 package-scripts/
-scripts/
 
 # Documentation
 *.md
+
+# 测试文件和调试工具
+**/*test*.js
+**/*test*.ts
+**/*Test*.js
+**/*Test*.ts
+**/test-*.js
+**/test-*.ts
+app-端-complete-test.js
+comprehensive-qr-test.js
+final-missing-tests.js
+identity-qr-test.js
+permission-test-suite.js
+remaining-qr-tests.js
+**/debug-*.js
+**/debug-*.ts
+
+# 实验性和原型文件
+**/experimental/
+**/prototype/
+plugins/withVolunteerManager.js

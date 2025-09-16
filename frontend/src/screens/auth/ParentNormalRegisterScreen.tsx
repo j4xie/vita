@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   View,
   Text,
@@ -95,14 +95,14 @@ export const ParentNormalRegisterScreen: React.FC = () => {
   // 实时验证状态
   const [realtimeErrors, setRealtimeErrors] = useState<ValidationErrors>({});
   
-  // 检查是否有任何验证错误
-  const hasValidationErrors = () => {
-    return Object.keys(realtimeErrors).some(key => 
+  // 检查是否有任何验证错误 - 使用 useMemo 优化性能
+  const hasValidationErrors = useMemo(() => {
+    return Object.keys(realtimeErrors).some(key =>
       realtimeErrors[key as keyof ValidationErrors]
-    ) || Object.keys(errors).some(key => 
+    ) || Object.keys(errors).some(key =>
       errors[key as keyof ValidationErrors]
     );
-  };
+  }, [realtimeErrors, errors]);
   
   // Debug: Check current system language
   useEffect(() => {

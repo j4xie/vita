@@ -1,1 +1,0 @@
-export { LiquidGlassTab } from './LiquidGlassTab';

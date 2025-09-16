@@ -43,6 +43,12 @@ export interface UserRoleInfo {
   remark?: string;
 }
 
+// 简化版角色信息（用于测试和调试）
+export interface SimpleRoleInfo {
+  key: string;
+  roleName?: string;
+}
+
 // 用户权限级别 - 直接使用后端roleKey，避免不必要的映射
 export type PermissionLevel = 'manage' | 'part_manage' | 'staff' | 'common' | 'guest';
 

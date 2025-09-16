@@ -12,6 +12,8 @@ interface OptimizedImageProps {
   borderRadius?: number;
   resizeMode?: ImageResizeMode;
   onLoad?: () => void;
+  onLoadStart?: () => void;
+  onLoadEnd?: () => void;
   onError?: () => void;
 }
 
@@ -26,6 +28,8 @@ export const OptimizedImage: React.FC<OptimizedImageProps> = ({
   borderRadius = 0,
   resizeMode = 'cover',
   onLoad,
+  onLoadStart,
+  onLoadEnd,
   onError,
   ...props
 }) => {
@@ -49,6 +53,8 @@ export const OptimizedImage: React.FC<OptimizedImageProps> = ({
         style={[StyleSheet.absoluteFill, { borderRadius }]}
         resizeMode={FastImage.resizeMode[resizeMode] || FastImage.resizeMode.cover}
         onLoad={onLoad}
+        onLoadStart={onLoadStart}
+        onLoadEnd={onLoadEnd}
         onError={onError}
       />
     </View>

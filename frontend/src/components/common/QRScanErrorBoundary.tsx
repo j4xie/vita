@@ -55,7 +55,7 @@ export class QRScanErrorBoundary extends Component<Props, State> {
             <Ionicons 
               name="warning-outline" 
               size={48} 
-              color={theme.colors.error} 
+              color={theme.colors.danger} 
               style={styles.errorIcon}
             />
             <Text style={styles.errorTitle}>

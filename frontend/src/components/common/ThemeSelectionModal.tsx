@@ -111,11 +111,11 @@ export const ThemeSelectionModal: React.FC<ThemeSelectionModalProps> = ({
   const isDarkMode = themeContext.isDarkMode;
   const { themeMode, changeThemeMode } = useTheme();
 
-  const themeOptions: Array<{
+  const themeOptions: {
     mode: ThemeMode;
     title: string;
     description: string;
-  }> = [
+  }[] = [
     {
       mode: 'auto',
       title: t('profile.general.auto_mode'),

@@ -23,7 +23,7 @@ const PINYIN_MAP: { [key: string]: string } = {
   '师': 'shi', '好': 'hao', '你': 'ni', '我': 'wo', '他': 'ta', '她': 'ta', '它': 'ta', '们': 'men',
   '的': 'de', '了': 'le', '在': 'zai', '是': 'shi', '不': 'bu', '有': 'you', '这': 'zhe', '个': 'ge',
   '上': 'shang', '下': 'xia', '来': 'lai', '去': 'qu', '出': 'chu', '看': 'kan', '时': 'shi', '年': 'nian',
-  '月': 'yue', '日': 'ri', '今': 'jin', '明': 'ming', '昨': 'zuo', '早': 'zao', '晚': 'wan', '现': 'xian'
+  '月': 'yue', '日': 'ri', '今': 'jin', '昨': 'zuo', '早': 'zao', '晚': 'wan', '现': 'xian'
 };
 
 // 验证结果接口
@@ -195,11 +195,11 @@ export const convertToPinyin = (chineseText: string): string => {
     if (pinyinChar) {
       pinyin += pinyinChar;
     } else {
-      // 如果找不到对应拼音，尝试使用字符的Unicode值生成
+      // 如果找不到对应拼音，使用简化处理避免过长
       const code = char.charCodeAt(0);
       if (code >= 0x4e00 && code <= 0x9fff) {
-        // 对于未映射的中文字符，使用简化处理
-        pinyin += `char${code}`;
+        // 对于未映射的中文字符，使用更短的标识
+        pinyin += 'x'; // 简化为单个字符，避免过长
       } else {
         pinyin += char.toLowerCase();
       }
@@ -319,9 +319,10 @@ export const generateBackendNameData = (
   
   // 为学生生成显示名称和昵称
   if (isStudent && trimmedCommonName) {
-    // 学生有常用名：常用名 + 姓氏拼音
-    const lastNamePinyin = convertToPinyin(trimmedLastName);
-    const nickName = `${trimmedCommonName} ${lastNamePinyin}`.trim();
+    // 学生有常用名：简化处理，避免过长
+    const nickName = trimmedCommonName.length > 15
+      ? trimmedCommonName.substring(0, 15)
+      : trimmedCommonName;
     const displayName = trimmedCommonName; // 显示名称使用常用名
     
     return {
