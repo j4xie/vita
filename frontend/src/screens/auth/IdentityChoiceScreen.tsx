@@ -82,8 +82,8 @@ export const IdentityChoiceScreen: React.FC = () => {
           identity: 2, // 家长
         });
       } else {
-        // 普通家长注册：跳转到ParentNormalRegister
-        navigation.navigate('ParentNormalRegister', {
+        // 普通家长注册：跳转到ParentNormalRegisterStep1
+        navigation.navigate('ParentNormalRegisterStep1', {
           registrationType,
           detectedRegion,
           detectionResult,

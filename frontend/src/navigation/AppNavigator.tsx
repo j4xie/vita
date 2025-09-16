@@ -30,6 +30,8 @@ import { RegisterChoiceScreen } from '../screens/auth/RegisterChoiceScreen';
 import { IdentityChoiceScreen } from '../screens/auth/IdentityChoiceScreen';
 import { ParentInvitationRegisterScreen } from '../screens/auth/ParentInvitationRegisterScreen';
 import { ParentNormalRegisterScreen } from '../screens/auth/ParentNormalRegisterScreen';
+import { ParentNormalRegisterStep1Screen } from '../screens/auth/ParentNormalRegisterStep1Screen';
+import { ParentNormalRegisterStep2Screen } from '../screens/auth/ParentNormalRegisterStep2Screen';
 import { StudentInvitationRegisterScreen } from '../screens/auth/StudentInvitationRegisterScreen';
 import { StudentNormalRegisterStep1Screen } from '../screens/auth/StudentNormalRegisterStep1Screen';
 import { StudentNormalRegisterStep2Screen } from '../screens/auth/StudentNormalRegisterStep2Screen';
@@ -133,8 +135,15 @@ const AuthNavigator = () => {
         }}
       />
       <AuthStack.Screen
-        name="ParentNormalRegister"
-        component={ParentNormalRegisterScreen}
+        name="ParentNormalRegisterStep1"
+        component={ParentNormalRegisterStep1Screen}
+        options={{
+          ...pageTransitions.slideFromRight,
+        }}
+      />
+      <AuthStack.Screen
+        name="ParentNormalRegisterStep2"
+        component={ParentNormalRegisterStep2Screen}
         options={{
           ...pageTransitions.slideFromRight,
         }}
@@ -696,8 +705,15 @@ export const AppNavigator = () => {
             }}
           />
           <RootStack.Screen
-            name="ParentNormalRegister"
-            component={ParentNormalRegisterScreen}
+            name="ParentNormalRegisterStep1"
+            component={ParentNormalRegisterStep1Screen}
+            options={{
+              ...pageTransitions.slideFromRight,
+            }}
+          />
+          <RootStack.Screen
+            name="ParentNormalRegisterStep2"
+            component={ParentNormalRegisterStep2Screen}
             options={{
               ...pageTransitions.slideFromRight,
             }}

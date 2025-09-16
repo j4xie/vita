@@ -23,13 +23,11 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { theme } from '../../theme';
 import { LIQUID_GLASS_LAYERS, DAWN_GRADIENTS } from '../../theme/core';
 import {
-  RegistrationStep1Data,
-  RegistrationStep2Data,
-  RegistrationFormData,
-  RegistrationAPIRequest,
-  ValidationErrors,
-  OrganizationData
+  ValidationErrors
 } from '../../types/registration';
+import {
+  SchoolData
+} from '../../utils/schoolData';
 import {
   sendSMSVerificationCode,
   fetchOrganizationList,
@@ -52,31 +50,29 @@ import { login } from '../../services/authAPI';
 import LiquidSuccessModal from '../../components/modals/LiquidSuccessModal';
 
 interface RouteParams {
-  step1Data: RegistrationStep1Data & {
-    legalName: string;
-    nickName: string;
+  step1Data: {
+    firstName: string;
+    lastName: string;
+    email: string;
     password: string;
     confirmPassword: string;
     sex: '0' | '1' | '2';
-    selectedOrganization: OrganizationData | null;
+    selectedSchool: SchoolData | null;
   };
-  detectedRegion?: 'zh' | 'en';
-  detectionResult?: any;
 }
 
-export const StudentNormalRegisterStep2Screen: React.FC = () => {
+export const ParentNormalRegisterStep2Screen: React.FC = () => {
   const navigation = useNavigation<any>();
   const route = useRoute<any>();
   const { t } = useTranslation();
   const { login: userLogin } = useUser();
   
-  const {
-    step1Data,
-    detectedRegion = 'zh',
-    detectionResult
-  } = route.params as RouteParams;
+  const { step1Data } = route.params as RouteParams;
 
   const [loading, setLoading] = useState(false);
+
+  // 区域检测
+  const [detectedRegion, setDetectedRegion] = useState<'zh' | 'en'>('zh');
 
   // 短信验证相关状态
   const [countdown, setCountdown] = useState(0);
@@ -245,7 +241,7 @@ export const StudentNormalRegisterStep2Screen: React.FC = () => {
           t('auth.register.sms.code_sent_title'),
           t('auth.register.sms.code_sent_message', {
             countryCode: '86',
-            phoneNumber: step1Data.phoneNumber
+            phoneNumber: phoneNumber
           })
         );
         
@@ -291,22 +287,21 @@ export const StudentNormalRegisterStep2Screen: React.FC = () => {
       const nameData = generateBackendNameData(
         step1Data.firstName,
         step1Data.lastName,
-        step1Data.nickName, // 常用名从Step1传递
-        true // 学生
+        '', // 家长没有nickName
+        false // 家长
       );
 
       // 构建普通注册请求数据
-      const registrationData: RegistrationAPIRequest = {
-        identity: 1, // 学生身份
-        userName: step1Data.generatedEmail, // 使用邮箱作为用户名
+      const registrationData = {
+        identity: 2, // 家长身份
+        userName: step1Data.email, // 使用邮箱作为用户名
         legalName: nameData.legalName, // 使用生成的法定姓名
-        nickName: nameData.nickName, // 使用生成的昵称（常用名+姓氏拼音）
+        nickName: nameData.nickName, // 使用生成的昵称（姓名拼音）
         password: step1Data.password, // 密码从Step1传递
         phonenumber: phoneNumber, // 手机号从本页面
-        email: step1Data.generatedEmail, // 邮箱从Step1传递
+        email: step1Data.email, // 邮箱从Step1传递
         sex: step1Data.sex, // 性别从Step1传递
         deptId: parseInt(step1Data.selectedSchool!.id),
-        orgId: step1Data.selectedOrganization!.id, // 组织从Step1传递
         area: detectedRegion, // 地理检测结果（只读）
         areaCode: areaCode, // 使用本页面选择的区号
         verCode: verificationCode, // 验证码从本页面
@@ -331,8 +326,7 @@ export const StudentNormalRegisterStep2Screen: React.FC = () => {
             password: '[HIDDEN]',
             registrationUserName: registrationData.userName,
             registrationEmail: registrationData.email,
-            formDataEmail: step1Data.email,
-            step1GeneratedEmail: step1Data.generatedEmail
+            formDataEmail: step1Data.email
           });
           
           const loginResult = await login({
@@ -615,14 +609,18 @@ export const StudentNormalRegisterStep2Screen: React.FC = () => {
                     {agreedToTerms && <Ionicons name="checkmark" size={16} color="#fff" />}
                   </View>
                 </TouchableOpacity>
-                <View style={styles.termsTextWrapper}>
-                  <Text style={styles.termsText}>{t('auth.register.form.terms_checkbox')}</Text>
+                <View style={styles.checkboxTextContainer}>
+                  <Text style={styles.checkboxTextNormal}>
+                    {t('auth.register.form.terms_checkbox')}
+                  </Text>
                   <TouchableOpacity onPress={() => navigation.navigate('Terms')}>
-                    <Text style={styles.linkText}>{t('auth.register.terms_of_service')}</Text>
+                    <Text style={styles.linkText}> {t('auth.register.terms_of_service')} </Text>
                   </TouchableOpacity>
-                  <Text style={styles.termsText}>{t('auth.register.form.and')}</Text>
+                  <Text style={styles.checkboxTextNormal}>
+                    {t('auth.register.form.and')}
+                  </Text>
                   <TouchableOpacity onPress={() => navigation.navigate('Privacy')}>
-                    <Text style={styles.linkText}>{t('auth.register.privacy_policy')}</Text>
+                    <Text style={styles.linkText}> {t('auth.register.privacy_policy')} </Text>
                   </TouchableOpacity>
                 </View>
               </View>
@@ -636,7 +634,7 @@ export const StudentNormalRegisterStep2Screen: React.FC = () => {
                     {agreedToSMS && <Ionicons name="checkmark" size={16} color="#fff" />}
                   </View>
                 </TouchableOpacity>
-                <Text style={styles.smsText}>
+                <Text style={[styles.checkboxTextNormal, { marginLeft: theme.spacing[2] }]}>
                   {t('auth.register.form.agree_sms')}
                 </Text>
               </View>
@@ -1151,18 +1149,6 @@ const styles = StyleSheet.create({
     marginLeft: theme.spacing[2],
     alignItems: 'center',
   },
-  termsTextWrapper: {
-    flexDirection: 'row',
-    flex: 1,
-    marginLeft: theme.spacing[2],
-    flexWrap: 'wrap',
-    alignItems: 'center',
-  },
-  termsLinksContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    alignItems: 'center',
-  },
   checkboxChecked: {
     backgroundColor: theme.colors.primary,
     borderColor: theme.colors.primary,
@@ -1173,15 +1159,10 @@ const styles = StyleSheet.create({
     flex: 1,
     lineHeight: 20,
   },
-  termsText: {
-    fontSize: theme.typography.fontSize.sm,
-    color: theme.colors.text.primary,
-  },
-  smsText: {
+  checkboxTextNormal: {
     fontSize: theme.typography.fontSize.sm,
     color: theme.colors.text.primary,
     lineHeight: 20,
-    marginLeft: theme.spacing[2],
   },
   linkText: {
     color: theme.colors.primary,
