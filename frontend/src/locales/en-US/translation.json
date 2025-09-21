@@ -386,6 +386,9 @@
         "phone_verification_desc": "Please enter your phone number and verify",
         "brand_name": "PomeloX",
         "sms_terms_notice": "Message and data rates may apply. Enter your phone number to receive a one-time passcode message to your phone from PomeloX. Msg may vary. Reply \"HELP\" for help. Reply \"STOP\" to cancel.",
+        "us_phone_not_supported_title": "US Phone Numbers Not Currently Supported",
+        "us_phone_not_supported_message": "We currently do not support SMS verification for US phone numbers",
+        "use_china_phone_or_referral": "Please use a Chinese phone number or referral code registration",
         "terms_agreement_title": "Read and agree: Service Terms and Privacy Policy",
         "read_and_agree": "Read and agree",
         "and": "and",
@@ -478,7 +481,10 @@
         "verification_code_error_message": "Verification code is incorrect or expired",
         "server_error_title": "Server Error",
         "network_error_title": "Network Error",
-        "retry_solutions": ["Get new verification code", "Check SMS"]
+        "retry_solutions": [
+          "Get new verification code",
+          "Check SMS"
+        ]
       },
       "sms": {
         "code_sent_title": "Verification Code Sent",
@@ -682,7 +688,9 @@
     "checked_in": "Checked In",
     "loading": "Loading...",
     "confirm": "Confirm",
-    "confirm_cancel": "Confirm Cancel"
+    "confirm_cancel": "Confirm Cancel",
+    "signin": "Activity Sign In",
+    "enter_activity_id": "Please enter Activity ID for sign-in:"
   },
   "profile": {
     "title": "Profile",
@@ -1281,7 +1289,9 @@
     "backend_data_error": "Backend data error, please contact administrator",
     "status_sync_failed": "Status sync failed",
     "status_sync_failed_msg": "Unable to sync backend status, please reload the page",
-    "operation_abnormal": "Operation abnormal, please refresh page and retry"
+    "operation_abnormal": "Operation abnormal, please refresh page and retry",
+    "signin": "Volunteer Sign In",
+    "signout": "Volunteer Sign Out"
   },
   "school": {
     "not_found_message": "School information not found",
@@ -1956,5 +1966,31 @@
       "refused": "Volunteer Hours Not Approved",
       "refusedBody": "Your volunteer service on {{date}} was not approved, please contact admin for details"
     }
+  },
+  "user": {
+    "identity": {
+      "info_title": "User Identity Information",
+      "verifying_permissions": "Verifying permissions..."
+    },
+    "basic_info": "Basic Information",
+    "user_id": "User ID",
+    "email": "Email",
+    "student_id": "Student ID",
+    "activity_stats": "Activity Statistics",
+    "participated_activities": "Participated Activities",
+    "volunteer_hours": "Volunteer Hours",
+    "points": "Points",
+    "recent_activities": "Recent Activities",
+    "view_profile": "View Profile",
+    "management_actions": "Management Actions",
+    "manage_user": "Manage {{name}}",
+    "select_action": "Select an action to perform:",
+    "chinese_name": "Chinese Name",
+    "english_name": "English Name",
+    "school": "School",
+    "position": "Position",
+    "volunteer_hours_title": "Volunteer Hours",
+    "hours_unit": "hours",
+    "no_permission_for_activity_signin": "You do not have permission to sign in this user for activities"
   }
 }

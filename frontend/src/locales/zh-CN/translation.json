@@ -360,6 +360,9 @@
         "phone_verification_desc": "请填写您的手机号码并验证",
         "brand_name": "西柚Pomelo",
         "sms_terms_notice": "短信费用和数据费用可能适用。输入您的手机号码即可从西柚Pomelo接收一次性密码短信到您的手机。短信内容可能有所不同。回复\"HELP\"获取帮助。回复\"STOP\"取消。",
+        "us_phone_not_supported_title": "暂不支持美国手机号",
+        "us_phone_not_supported_message": "当前暂不支持美国手机号码验证码注册",
+        "use_china_phone_or_referral": "请使用中国手机号码或推荐码注册",
         "terms_agreement_title": "阅读并同意：服务条款和隐私政策",
         "read_and_agree": "阅读并同意",
         "and": "和",
@@ -452,7 +455,10 @@
         "verification_code_error_message": "验证码错误或已过期",
         "server_error_title": "服务器错误",
         "network_error_title": "网络错误",
-        "retry_solutions": ["重新获取验证码", "检查短信"]
+        "retry_solutions": [
+          "重新获取验证码",
+          "检查短信"
+        ]
       },
       "sms": {
         "code_sent_title": "验证码已发送",
@@ -679,7 +685,9 @@
     "checked_in": "已签到",
     "loading": "加载中...",
     "confirm": "确定",
-    "confirm_cancel": "确定取消"
+    "confirm_cancel": "确定取消",
+    "signin": "活动签到",
+    "enter_activity_id": "请输入活动ID进行签到:"
   },
   "profile": {
     "title": "个人中心",
@@ -1954,5 +1962,31 @@
       "refused": "志愿工时审核未通过",
       "refusedBody": "您{{date}}的志愿服务审核未通过，请联系管理员了解详情"
     }
+  },
+  "user": {
+    "identity": {
+      "info_title": "用户身份信息",
+      "verifying_permissions": "正在验证权限..."
+    },
+    "basic_info": "基本信息",
+    "user_id": "用户ID",
+    "email": "邮箱",
+    "student_id": "学号",
+    "activity_stats": "活动统计",
+    "participated_activities": "参与活动",
+    "volunteer_hours": "志愿时长",
+    "points": "积分",
+    "recent_activities": "最近活动",
+    "view_profile": "查看档案",
+    "management_actions": "管理操作",
+    "manage_user": "管理 {{name}}",
+    "select_action": "选择要执行的操作:",
+    "chinese_name": "中文名字",
+    "english_name": "英文名字",
+    "school": "学校",
+    "position": "职位",
+    "volunteer_hours_title": "志愿工时",
+    "hours_unit": "小时",
+    "no_permission_for_activity_signin": "您没有权限为该用户进行活动签到"
   }
 }

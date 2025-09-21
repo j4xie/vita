@@ -89,7 +89,7 @@ export const ParentNormalRegisterStep2Screen: React.FC = () => {
 
   // 手机号相关
   const [phoneNumber, setPhoneNumber] = useState('');
-  const [areaCode, setAreaCode] = useState<'86' | '1'>(detectedRegion === 'zh' ? '86' : '1');
+  const [areaCode, setAreaCode] = useState<'86' | '1'>('86');
   const [verificationCode, setVerificationCode] = useState('');
   
   // 实时验证状态
@@ -605,8 +605,19 @@ export const ParentNormalRegisterStep2Screen: React.FC = () => {
                 <TouchableOpacity
                   style={styles.areaCodeSelector}
                   onPress={() => {
-                    // 切换区号
-                    setAreaCode(areaCode === '86' ? '1' : '86');
+                    if (areaCode === '86') {
+                      // 尝试切换到+1时显示提示
+                      Alert.alert(
+                        t('auth.register.form.us_phone_not_supported_title'),
+                        t('auth.register.form.us_phone_not_supported_message') + '\n\n' +
+                        t('auth.register.form.use_china_phone_or_referral'),
+                        [
+                          { text: t('common.cancel'), style: 'cancel' },
+                          { text: t('common.got_it'), style: 'default' }
+                        ]
+                      );
+                    }
+                    // 不执行切换，保持+86
                   }}
                 >
                   <Text style={styles.areaCodeText}>
