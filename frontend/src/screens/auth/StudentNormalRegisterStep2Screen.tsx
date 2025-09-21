@@ -426,7 +426,7 @@ export const StudentNormalRegisterStep2Screen: React.FC = () => {
         console.error('❌ 注册失败，错误码:', response.code, '错误信息:', response.msg);
         
         // 详细的错误处理
-        let errorTitle = '❌ 注册失败';
+        let errorTitle = t('auth.register.errors.register_failed');
         let errorMessage = response.msg || t('auth.register.errors.register_failed_message');
         let suggestions = [];
         
@@ -463,9 +463,9 @@ export const StudentNormalRegisterStep2Screen: React.FC = () => {
             errorMessage = '用户名已存在或格式不正确';
             suggestions = ['✓ 尝试其他用户名', '✓ 6-20位字母数字组合'];
           } else if (errorMessage.includes('验证码')) {
-            errorTitle = '📱 验证码错误';
-            errorMessage = '验证码错误或已过期';
-            suggestions = ['✓ 重新获取验证码', '✓ 检查短信'];
+            errorTitle = t('auth.register.errors.verification_code_error_title');
+            errorMessage = t('auth.register.errors.verification_code_error_message');
+            suggestions = t('auth.register.errors.retry_solutions').map((solution: string) => `✓ ${solution}`);
           } else if (errorMessage.includes('邮箱')) {
             errorTitle = '📧 邮箱问题';
             errorMessage = '邮箱格式不正确或已被使用';
