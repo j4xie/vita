@@ -256,7 +256,7 @@ export const ParentNormalRegisterStep2Screen: React.FC = () => {
         Alert.alert(
           t('auth.register.sms.code_sent_title'),
           t('auth.register.sms.code_sent_message', {
-            countryCode: '86',
+            countryCode: areaCode,
             phoneNumber: phoneNumber
           })
         );
