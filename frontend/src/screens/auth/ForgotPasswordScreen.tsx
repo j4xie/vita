@@ -23,12 +23,34 @@ import { useAllDarkModeStyles } from '../../hooks/useDarkModeStyles';
 import { pomeloXAPI } from '../../services/PomeloXAPI';
 import * as Haptics from 'expo-haptics';
 
+// 安全的Haptics封装
+const safeHaptics = {
+  impact: async (style: Haptics.ImpactFeedbackStyle) => {
+    try {
+      if (Platform.OS === 'ios') {
+        await Haptics.impactAsync(style);
+      }
+    } catch (error) {
+      console.log('Haptics not available:', error);
+    }
+  },
+  notification: async (type: Haptics.NotificationFeedbackType) => {
+    try {
+      if (Platform.OS === 'ios') {
+        await Haptics.notificationAsync(type);
+      }
+    } catch (error) {
+      console.log('Haptics not available:', error);
+    }
+  }
+};
+
 export const ForgotPasswordScreen: React.FC = () => {
   const { t } = useTranslation();
   const navigation = useNavigation<any>();
   const darkModeSystem = useAllDarkModeStyles();
   const { isDarkMode } = darkModeSystem;
-  
+
   const [phone, setPhone] = useState('');
   const [areaCode, setAreaCode] = useState('+86'); // 默认中国区号
   const [verificationCode, setVerificationCode] = useState('');
@@ -45,25 +67,20 @@ export const ForgotPasswordScreen: React.FC = () => {
   
   // 动画状态
   const buttonScaleAnim = useRef(new Animated.Value(1)).current;
-  const buttonColorAnim = useRef(new Animated.Value(0)).current;
-  
+
   // 倒计时timer
   const countdownTimer = useRef<NodeJS.Timeout | null>(null);
+
+  // 组件挂载状态
+  const isMounted = useRef(true);
   
   // 表单验证
   React.useEffect(() => {
     const isPhoneValid = validatePhone(phone);
     const isFormValid = isPhoneValid && countdown === 0;
-    
+
     if (isFormValid !== formValid) {
       setFormValid(isFormValid);
-      
-      // 移除动画冲突，简化为状态更新
-      // Animated.timing(buttonColorAnim, {
-      //   toValue: isFormValid ? 1 : 0,
-      //   duration: 300,
-      //   useNativeDriver: false,
-      // }).start();
     }
   }, [phone, countdown, formValid]);
 
@@ -128,33 +145,23 @@ export const ForgotPasswordScreen: React.FC = () => {
       console.log('📊 [App-ForgotPassword] API返回结果分析:', {
         code: result.code,
         codeType: typeof result.code,
-        isOK: result.code === 'OK',
+        isOK: (result.code as string) === "OK",
         is200: result.code === 200,
         bizId: result.bizId,
         message: result.message
       });
       
-      if (result.code === 'OK' && result.bizId) {
-        console.log('✅ [App-ForgotPassword] 验证码发送成功，准备跳转');
-        setCodeSent(true);
-        startCountdown();
-        
-        Alert.alert(
-          t('auth.forgot_password.code_sent_title'),
-          t('auth.forgot_password.code_sent_message', { phone }),
-          [
-            {
-              text: t('common.confirm'),
-              onPress: () => {
-                console.log('🔄 [App-ForgotPassword] 用户确认，跳转到验证码输入页面');
-                // 这里应该跳转到验证码输入页面
-              }
-            }
-          ]
-        );
-        
+      if ((result.code as string) === "OK" && result.bizId) {
+        console.log('✅ [App-ForgotPassword] 验证码发送成功');
+
+        if (isMounted.current) {
+          setCodeSent(true);
+          startCountdown();
+        }
+
+        // 不使用Alert，直接显示验证码输入框
         // 触觉反馈
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        await safeHaptics.notification(Haptics.NotificationFeedbackType.Success);
       } else {
         console.log('❌ [App-ForgotPassword] API返回失败:', result);
         Alert.alert(
@@ -164,12 +171,16 @@ export const ForgotPasswordScreen: React.FC = () => {
       }
     } catch (error) {
       console.error('发送验证码失败:', error);
-      Alert.alert(
-        t('common.error'),
-        t('auth.forgot_password.send_code_error')
-      );
+      if (isMounted.current) {
+        Alert.alert(
+          t('common.error'),
+          t('auth.forgot_password.send_code_error')
+        );
+      }
     } finally {
-      setLoading(false);
+      if (isMounted.current) {
+        setLoading(false);
+      }
     }
   };
 
@@ -189,23 +200,28 @@ export const ForgotPasswordScreen: React.FC = () => {
       await new Promise(resolve => setTimeout(resolve, 1000)); // 模拟网络延迟
       
       // 验证成功，跳转到设置新密码页面
+      // 确保参数都有值
       navigation.navigate('SetNewPassword', {
-        phone,
-        areaCode: apiAreaCode,
-        verificationCode
+        phone: phone || '',
+        areaCode: apiAreaCode || '',
+        verificationCode: verificationCode || ''
       });
-      
+
       // 触觉反馈
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      await safeHaptics.notification(Haptics.NotificationFeedbackType.Success);
       
     } catch (error) {
       console.error('验证码验证失败:', error);
-      Alert.alert(
-        t('common.error'),
-        t('auth.forgot_password.verify_code_error')
-      );
+      if (isMounted.current) {
+        Alert.alert(
+          t('common.error'),
+          t('auth.forgot_password.verify_code_error')
+        );
+      }
     } finally {
-      setVerifyLoading(false);
+      if (isMounted.current) {
+        setVerifyLoading(false);
+      }
     }
   };
 
@@ -239,8 +255,8 @@ export const ForgotPasswordScreen: React.FC = () => {
 
   const handleButtonPressIn = () => {
     if (!formValid || loading) return;
-    
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+
+    safeHaptics.impact(Haptics.ImpactFeedbackStyle.Light);
     
     Animated.spring(buttonScaleAnim, {
       toValue: 0.95,
@@ -260,7 +276,6 @@ export const ForgotPasswordScreen: React.FC = () => {
   };
 
   const getButtonStyles = () => {
-    // 修复动画冲突：移除颜色动画，保留缩放动画
     return {
       backgroundColor: formValid ? theme.colors.primary : theme.colors.text.disabled,
       transform: [{ scale: buttonScaleAnim }],
@@ -271,11 +286,13 @@ export const ForgotPasswordScreen: React.FC = () => {
     navigation.goBack();
   };
 
-  // 清理计时器
+  // 清理计时器和设置组件卸载状态
   React.useEffect(() => {
     return () => {
+      isMounted.current = false;
       if (countdownTimer.current) {
         clearInterval(countdownTimer.current);
+        countdownTimer.current = null;
       }
     };
   }, []);
@@ -324,9 +341,20 @@ export const ForgotPasswordScreen: React.FC = () => {
                       🇨🇳 +86
                     </Text>
                   </TouchableOpacity>
-                  <TouchableOpacity 
+                  <TouchableOpacity
                     style={[styles.areaCodeButton, areaCode === '+1' && styles.areaCodeButtonActive]}
-                    onPress={() => setAreaCode('+1')}
+                    onPress={() => {
+                      Alert.alert(
+                        t('auth.forgot_password.us_phone_not_supported_title'),
+                        t('auth.forgot_password.us_phone_not_supported_message') + '\n\n' +
+                        t('auth.forgot_password.contact_admin'),
+                        [
+                          { text: t('common.cancel'), style: 'cancel' },
+                          { text: t('common.got_it'), style: 'default' }
+                        ]
+                      );
+                      // 不切换区号，保持+86
+                    }}
                   >
                     <Text style={[styles.areaCodeText, areaCode === '+1' && styles.areaCodeTextActive]}>
                       🇺🇸 +1

@@ -211,7 +211,10 @@
       "verification_code_label": "Verification Code",
       "verification_code_placeholder": "Enter 6-digit verification code",
       "verify_code_button": "Verify and Continue",
-      "verify_code_error": "Verification code validation failed, please try again later"
+      "verify_code_error": "Verification code validation failed, please try again later",
+      "us_phone_not_supported_title": "US Phone Reset Not Supported",
+      "us_phone_not_supported_message": "We currently do not support password reset for US phone numbers",
+      "contact_admin": "Please contact administrator for assistance"
     },
     "reset_password": {
       "title": "Reset Password",

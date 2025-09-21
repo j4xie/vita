@@ -208,7 +208,10 @@
       "verification_code_label": "验证码",
       "verification_code_placeholder": "请输入6位验证码",
       "verify_code_button": "验证并继续",
-      "verify_code_error": "验证码验证失败，请稍后重试"
+      "verify_code_error": "验证码验证失败，请稍后重试",
+      "us_phone_not_supported_title": "暂不支持美国手机号重置",
+      "us_phone_not_supported_message": "当前不支持美国手机号码重置密码",
+      "contact_admin": "请联系管理员获取帮助"
     },
     "reset_password": {
       "title": "重置密码",
