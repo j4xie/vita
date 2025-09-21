@@ -13,6 +13,7 @@ import {
   FlatList,
   Keyboard,
   TouchableWithoutFeedback,
+  Image,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation, useRoute, CommonActions } from '@react-navigation/native';
@@ -207,8 +208,16 @@ export const StudentNormalRegisterStep2Screen: React.FC = () => {
   const sendVerificationCode = async () => {
     if (countdown > 0) return;
 
+    console.log('🔥 [sendVerificationCode] 开始发送验证码流程:', {
+      phoneNumber: phoneNumber,
+      areaCode: areaCode,
+      agreedToTerms: agreedToTerms,
+      agreedToSMS: agreedToSMS
+    });
+
     // 检查条款同意
     if (!agreedToTerms || !agreedToSMS) {
+      console.log('❌ [sendVerificationCode] 条款未同意');
       Alert.alert(
         t('common.error'),
         t('auth.register.must_agree_before_send_code')
@@ -218,10 +227,17 @@ export const StudentNormalRegisterStep2Screen: React.FC = () => {
 
     // 验证手机号
     if (!phoneNumber) {
+      console.log('❌ [sendVerificationCode] 手机号为空');
       Alert.alert(t('common.error'), t('validation.phone_required'));
       return;
     }
-    if (!validatePhoneNumber(phoneNumber, areaCode)) {
+
+    console.log('🔍 [sendVerificationCode] 开始前端验证手机号');
+    const isValid = validatePhoneNumber(phoneNumber, areaCode);
+    console.log('🔍 [sendVerificationCode] 前端验证结果:', isValid);
+
+    if (!isValid) {
+      console.log('❌ [sendVerificationCode] 前端验证失败');
       Alert.alert(
         t('common.error'),
         areaCode === '86' ? t('validation.phone_china_invalid') : t('validation.phone_us_invalid')
@@ -231,10 +247,10 @@ export const StudentNormalRegisterStep2Screen: React.FC = () => {
 
     setLoading(true);
     try {
-      console.log('🔥 [RegisterStep2] Starting to send verification code, phone:', phoneNumber);
-      const response = await sendSMSVerificationCode(phoneNumber);
-      
-      console.log('📱 [RegisterStep2] SMS API response:', response);
+      console.log('🔥 [sendVerificationCode] 前端验证通过，开始调用后端API');
+      const response = await sendSMSVerificationCode(phoneNumber, areaCode);
+
+      console.log('📱 [sendVerificationCode] 后端SMS API响应:', response);
       
       if (response.code === 'OK' && response.bizId) {
         console.log('✅ [RegisterStep2] Verification code sent successfully, bizId:', response.bizId);
@@ -571,6 +587,18 @@ export const StudentNormalRegisterStep2Screen: React.FC = () => {
             scrollEventThrottle={100}
           >
           <View style={styles.formContainer}>
+            {/* 品牌Logo和名称 */}
+            <View style={styles.brandContainer}>
+              <Image
+                source={require('../../../assets/logos/pomelo-logo.png')}
+                style={styles.brandLogo}
+                resizeMode="contain"
+              />
+              <Text style={styles.brandName}>
+                {t('auth.register.form.brand_name')}
+              </Text>
+            </View>
+
             <Text style={styles.stepTitle}>{t('auth.register.form.phone_verification')}</Text>
             <Text style={styles.stepSubtitle}>
               {t('auth.register.form.phone_verification_desc')}
@@ -650,6 +678,13 @@ export const StudentNormalRegisterStep2Screen: React.FC = () => {
                   </Text>
                 </View>
               )}
+            </View>
+
+            {/* 短信服务条款 */}
+            <View style={styles.smsTermsContainer}>
+              <Text style={styles.smsTermsText}>
+                {t('auth.register.form.sms_terms_notice')}
+              </Text>
             </View>
 
             {/* 验证码输入 */}
@@ -1203,5 +1238,31 @@ const styles = StyleSheet.create({
     marginLeft: theme.spacing[2],
     flex: 1,
     lineHeight: 16,
+  },
+  brandContainer: {
+    alignItems: 'center',
+    marginBottom: theme.spacing[6],
+    paddingTop: theme.spacing[4],
+  },
+  brandLogo: {
+    width: 60,
+    height: 60,
+    marginBottom: theme.spacing[3],
+  },
+  brandName: {
+    fontSize: theme.typography.fontSize.lg,
+    fontWeight: theme.typography.fontWeight.semibold,
+    color: theme.colors.primary,
+    textAlign: 'center',
+  },
+  smsTermsContainer: {
+    marginBottom: theme.spacing[4],
+    paddingHorizontal: theme.spacing[2],
+  },
+  smsTermsText: {
+    fontSize: theme.typography.fontSize.xs,
+    color: theme.colors.text.secondary,
+    lineHeight: 16,
+    textAlign: 'left',
   },
 });

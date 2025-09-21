@@ -241,7 +241,7 @@ export const ParentNormalRegisterScreen: React.FC = () => {
     setLoading(true);
     try {
       console.log('🔥 [ParentNormalRegister] Sending verification code, phone:', formData.phoneNumber);
-      const response = await sendSMSVerificationCode(formData.phoneNumber);
+      const response = await sendSMSVerificationCode(formData.phoneNumber, formData.areaCode);
       
       console.log('📱 [ParentNormalRegister] SMS API response:', response);
       

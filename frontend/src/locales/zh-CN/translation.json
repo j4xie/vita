@@ -358,6 +358,8 @@
         "contact_info_desc": "请选择并填写您的电话号码",
         "phone_verification": "手机验证",
         "phone_verification_desc": "请填写您的手机号码并验证",
+        "brand_name": "西柚Pomelo",
+        "sms_terms_notice": "短信费用和数据费用可能适用。输入您的手机号码即可从西柚Pomelo接收一次性密码短信到您的手机。短信内容可能有所不同。回复\"HELP\"获取帮助。回复\"STOP\"取消。",
         "terms_agreement_title": "阅读并同意：服务条款和隐私政策",
         "read_and_agree": "阅读并同意",
         "and": "和",
@@ -1007,6 +1009,11 @@
         "noRecords": "暂无打卡记录",
         "completed": "已完成",
         "inProgress": "进行中",
+        "pending": "审核中",
+        "approved": "通过",
+        "refused": "拒绝",
+        "pendingTip": "您的工时记录正在审核中",
+        "refusedTip": "您的工时记录被拒绝，请联系管理员",
         "checkInTime": "签到时间",
         "checkOutTime": "签退时间",
         "workDuration": "工作时长",
@@ -1021,6 +1028,23 @@
           "warning": "可能有问题",
           "abnormal": "异常记录",
           "overHours": "超过12小时"
+        },
+        "workDescription": "工作描述",
+        "noDescription": "暂无描述"
+      },
+      "signOut": {
+        "title": "确认签退",
+        "workDescription": "工作内容描述",
+        "placeholder": "请描述本次工作内容...",
+        "quickSelect": "快速选择",
+        "confirmButton": "确认签退",
+        "cancel": "取消",
+        "required": "请填写工作描述",
+        "quickOptions": {
+          "departmentActivity": "分部活动",
+          "airportPickup": "接机活动",
+          "departmentBooth": "分部摆摊",
+          "meetAndGreet": "见面会"
         }
       },
       "searchPlaceholder": "请输入手机号码",
@@ -1067,6 +1091,7 @@
       "staffViewHint": "内部员工仅可查看个人数据，无法执行签到签退操作",
       "viewOnly": "仅查看",
       "noPermission": "无权限操作",
+      "viewOnlyNotice": "仅供查看 • 签到签退需用户本人操作",
       "historyRecords": "历史记录",
       "viewHistory": "查询"
     },
@@ -1590,6 +1615,44 @@
     "status_sync_failed_msg": "无法同步后端状态，请重新加载页面",
     "operation_abnormal": "操作异常，请刷新页面后重试"
   },
+  "volunteerCheckIn": {
+    "viewVolunteer": "查看志愿者记录",
+    "viewSchoolVolunteer": "查看本校志愿者记录",
+    "searchVolunteer": "搜索志愿者",
+    "searchSchoolVolunteer": "搜索本校志愿者",
+    "viewOnlyHint": "管理员可查看记录但不能代他人操作",
+    "viewOnlyNote": "仅可查看",
+    "selfCheckInOnly": "志愿者需自行签到签退",
+    "searchPlaceholder": "输入手机号搜索",
+    "search": "搜索",
+    "userInfo": "用户信息",
+    "todayRecords": "今日记录",
+    "checkIn": "签到",
+    "checkOut": "签退",
+    "time": {
+      "checkInTime": "签到时间",
+      "checkOutTime": "签退时间",
+      "worked": "已工作",
+      "lastCheckIn": "上次签到",
+      "lastCheckOut": "上次签退",
+      "totalHours": "总工时",
+      "hours": "小时"
+    },
+    "status": {
+      "working": "工作中",
+      "completed": "已完成",
+      "waiting": "待签到"
+    },
+    "alerts": {
+      "hint": "提示",
+      "phoneRequired": "请输入手机号"
+    },
+    "success": {
+      "checkin_title": "签到成功",
+      "checkout_title": "签退成功"
+    },
+    "noPermission": "您没有志愿者管理权限"
+  },
   "modal": {
     "close_activity_selection": "关闭活动选择对话框",
     "close_and_return": "关闭活动选择并返回",
@@ -1691,5 +1754,21 @@
   },
   "time": {
     "zero_hours": "0小时"
+  },
+  "notification": {
+    "permission": {
+      "title": "开启通知提醒",
+      "description": "及时接收志愿工时审核结果，不错过重要状态更新",
+      "benefit1": "审核通过立即知晓",
+      "benefit2": "拒绝原因及时查看",
+      "allow": "允许通知",
+      "later": "稍后再说"
+    },
+    "volunteer": {
+      "approved": "志愿工时已通过审核",
+      "approvedBody": "您{{date}}的{{duration}}志愿服务已通过审核",
+      "refused": "志愿工时审核未通过",
+      "refusedBody": "您{{date}}的志愿服务审核未通过，请联系管理员了解详情"
+    }
   }
 }

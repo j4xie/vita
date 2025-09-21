@@ -18,22 +18,39 @@ const BASE_URL = 'https://www.vitaglobal.icu';
  * @returns 短信验证码响应
  */
 export const sendSMSVerificationCode = async (phoneNumber: string, areaCode: '86' | '1' = '86'): Promise<SMSVerificationResponse> => {
+  const url = `${BASE_URL}/sms/vercodeSms?phoneNum=${phoneNumber}&areaCode=${areaCode}`;
+  console.log('📱 [sendSMSVerificationCode] 发送短信验证码请求:', {
+    phoneNumber: phoneNumber,
+    areaCode: areaCode,
+    fullUrl: url,
+    baseUrl: BASE_URL
+  });
+
   try {
-    const response = await fetch(`${BASE_URL}/sms/vercodeSms?phoneNum=${phoneNumber}&areaCode=${areaCode}`, {
+    const response = await fetch(url, {
       method: 'GET',
       headers: {
         'Accept': 'application/json',
       },
     });
 
+    console.log('📱 [sendSMSVerificationCode] 后端响应状态:', {
+      status: response.status,
+      statusText: response.statusText,
+      ok: response.ok
+    });
+
     if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+      const errorText = await response.text();
+      console.error('📱 [sendSMSVerificationCode] HTTP错误响应内容:', errorText);
+      throw new Error(`HTTP error! status: ${response.status}, response: ${errorText}`);
     }
 
     const data = await response.json();
+    console.log('📱 [sendSMSVerificationCode] 后端返回数据:', data);
     return data;
   } catch (error) {
-    console.error('发送短信验证码失败:', error);
+    console.error('📱 [sendSMSVerificationCode] 发送短信验证码失败:', error);
     throw error;
   }
 };
@@ -287,16 +304,35 @@ export const validateEmailFormat = (email: string): boolean => {
  * @returns 是否为有效手机号
  */
 export const validatePhoneNumber = (phoneNumber: string, areaCode: '86' | '1' = '86'): boolean => {
+  console.log('🔍 [validatePhoneNumber] 开始验证电话号码:', {
+    originalPhone: phoneNumber,
+    areaCode: areaCode,
+    phoneLength: phoneNumber.length
+  });
+
   if (areaCode === '86') {
     // 中国手机号验证：1开头，第二位3-9，总共11位
     const chinaPhoneRegex = /^1[3-9]\d{9}$/;
-    return chinaPhoneRegex.test(phoneNumber);
+    const result = chinaPhoneRegex.test(phoneNumber);
+    console.log('🇨🇳 [validatePhoneNumber] 中国手机号验证结果:', result);
+    return result;
   } else {
     // 美国手机号验证：支持多种格式
     // 1234567890, (123) 456-7890, 123-456-7890, 123.456.7890
     const cleanPhone = phoneNumber.replace(/\D/g, ''); // 移除所有非数字字符
     const usPhoneRegex = /^[2-9]\d{2}[2-9]\d{2}\d{4}$/; // 美国手机号格式
-    return cleanPhone.length === 10 && usPhoneRegex.test(cleanPhone);
+
+    console.log('🇺🇸 [validatePhoneNumber] 美国手机号验证详情:', {
+      originalPhone: phoneNumber,
+      cleanPhone: cleanPhone,
+      cleanLength: cleanPhone.length,
+      regexPattern: usPhoneRegex.toString(),
+      regexTest: usPhoneRegex.test(cleanPhone)
+    });
+
+    const result = cleanPhone.length === 10 && usPhoneRegex.test(cleanPhone);
+    console.log('🇺🇸 [validatePhoneNumber] 美国手机号最终验证结果:', result);
+    return result;
   }
 };
 

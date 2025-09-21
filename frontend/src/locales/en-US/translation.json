@@ -370,6 +370,8 @@
         "contact_info_desc": "Please select and fill in your phone number",
         "phone_verification": "Phone Verification",
         "phone_verification_desc": "Please enter your phone number and verify",
+        "brand_name": "PomeloX",
+        "sms_terms_notice": "Message and data rates may apply. Enter your phone number to receive a one-time passcode message to your phone from PomeloX. Msg may vary. Reply \"HELP\" for help. Reply \"STOP\" to cancel.",
         "terms_agreement_title": "Read and agree: Service Terms and Privacy Policy",
         "read_and_agree": "Read and agree",
         "and": "and",
@@ -1017,6 +1019,11 @@
         "noRecords": "No records",
         "completed": "Completed",
         "inProgress": "Active",
+        "pending": "Pending",
+        "approved": "Approved",
+        "refused": "Refused",
+        "pendingTip": "Your hours are pending approval",
+        "refusedTip": "Your hours were refused, please contact admin",
         "checkInTime": "Check In",
         "checkOutTime": "Check Out",
         "workDuration": "Duration",
@@ -1031,6 +1038,23 @@
           "warning": "Alert",
           "abnormal": "Abnormal",
           "overHours": "Overtime"
+        },
+        "workDescription": "Work Description",
+        "noDescription": "No description"
+      },
+      "signOut": {
+        "title": "Confirm Sign Out",
+        "workDescription": "Work Description",
+        "placeholder": "Please describe your work...",
+        "quickSelect": "Quick Select",
+        "confirmButton": "Confirm Sign Out",
+        "cancel": "Cancel",
+        "required": "Please provide work description",
+        "quickOptions": {
+          "departmentActivity": "Dept Activity",
+          "airportPickup": "Airport Pickup",
+          "departmentBooth": "Dept Booth",
+          "meetAndGreet": "Meet & Greet"
         }
       },
       "searchPlaceholder": "Search by phone",
@@ -1074,9 +1098,10 @@
       "signOutNote": "Thank you for your volunteer service",
       "signingOut": "Signing out...",
       "rating": "Rating",
-      "staffViewHint": "Staff members can only view personal data, unable to perform check-in/out operations", 
+      "staffViewHint": "Staff members can only view personal data, unable to perform check-in/out operations",
       "viewOnly": "View Only",
       "noPermission": "No Permission",
+      "viewOnlyNotice": "View Only • Check-in/out requires user's own operation",
       "historyRecords": "History Records",
       "viewHistory": "Query"
     },
@@ -1427,8 +1452,10 @@
   },
   "volunteerCheckIn": {
     "searchVolunteer": "Search Volunteer",
+    "viewVolunteer": "View Volunteer Records",
     "searchPlaceholder": "Enter phone number",
     "search": "Search",
+    "viewOnly": "View",
     "userInfo": "User Info",
     "checkIn": "Check In",
     "checkOut": "Check Out",
@@ -1441,6 +1468,10 @@
     "totalHours": "Total Hours",
     "staffReadOnlyNotice": "Staff members can only view personal hours, cannot manage others' check-ins",
     "searchSchoolVolunteer": "Search School Volunteers",
+    "viewSchoolVolunteer": "View School Volunteer Records",
+    "viewOnlyNote": "Administrators can view records only, volunteers must check-in/out themselves",
+    "viewOnlyHint": "View-only mode: Check-in/out operations require users to do it themselves",
+    "selfCheckInRequired": "Users must check-in/out themselves, administrators cannot operate on their behalf",
     "scan": "Scan",
     "todayRecords": "Today's Records",
     "noPermission": "You don't have permission to access volunteer management features",
@@ -1840,6 +1871,22 @@
       "card_creation_error": "Membership card creation failed",
       "switch_failed": "Switch failed",
       "organization_switch_error": "Organization switch failed"
+    }
+  },
+  "notification": {
+    "permission": {
+      "title": "Enable Notifications",
+      "description": "Get instant updates on your volunteer hours approval status",
+      "benefit1": "Know when approved instantly",
+      "benefit2": "See rejection reasons quickly",
+      "allow": "Allow Notifications",
+      "later": "Later"
+    },
+    "volunteer": {
+      "approved": "Volunteer Hours Approved",
+      "approvedBody": "Your {{duration}} volunteer service on {{date}} has been approved",
+      "refused": "Volunteer Hours Not Approved",
+      "refusedBody": "Your volunteer service on {{date}} was not approved, please contact admin for details"
     }
   }
 }
