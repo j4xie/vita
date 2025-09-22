@@ -379,6 +379,9 @@
         "english_nickname_placeholder": "如：Alex、Sophia（日常使用的英文名）",
         "university_label": "所属学校 *",
         "university_placeholder": "请选择您的学校",
+        "student_type_label": "学生类型",
+        "undergraduate": "本科生",
+        "graduate": "研究生",
         "gender_label": "性别",
         "male": "男",
         "female": "女",
@@ -411,6 +414,7 @@
         "last_name_label": "姓 *",
         "last_name_placeholder": "请输入您的姓",
         "school_email_preview": "学校邮箱预览",
+        "email_help_text": "请输入您的学校邮箱用户名（@符号前的部分）",
         "email_username_placeholder": "如：zhang.san、alex123",
         "complete_email": "完整邮箱",
         "school_email_label": "学校邮箱",
@@ -764,6 +768,16 @@
       "general": "通用",
       "aboutSupport": "关于与支持"
     },
+    "volunteer": {
+      "management": "志愿者管理"
+    },
+    "organization": {
+      "cu": "CU",
+      "student_union": "学联组织"
+    },
+    "school": {
+      "cu_headquarters": "CU总部"
+    },
     "general": {
       "cacheCalculating": "计算中...",
       "language": "语言",
@@ -979,8 +993,8 @@
       },
       "developing": "正在开发中",
       "developing_subtitle": "更多安心功能正在开发中，敬请期待",
-      "welcome_title": "欢迎来到安心计划",
-      "welcome_subtitle": "我们致力于为海外学子提供全方位的安全保障和心理健康支持",
+      "welcome_title": "欢迎来到国际学生安心计划",
+      "welcome_subtitle": "本服务提供快速、实用、可及的安全支持与信息协助。本服务不替代公共紧急服务；如遇危及生命或财产安全的紧急情况，请立即拨打9-1-1(美国)",
       "emergency_contacts": "紧急联系",
       "emergency_911": "紧急报警 911",
       "emergency_911_desc": "遇到紧急情况时立即拨打",
@@ -1237,7 +1251,20 @@
     "backend_data_error": "后端数据异常，请联系管理员",
     "status_sync_failed": "状态同步失败",
     "status_sync_failed_msg": "无法同步后端状态，请重新加载页面",
-    "operation_abnormal": "操作异常，请刷新页面后重试"
+    "operation_abnormal": "操作异常，请刷新页面后重试",
+    "empty_state": {
+      "title": "该学校暂无活跃志愿者",
+      "subtitle": "只有进行过志愿活动的用户才会显示在这里"
+    },
+    "loading": {
+      "default": "正在加载...",
+      "volunteer_data": "正在加载志愿者数据...",
+      "basic_data": "正在获取基础数据...",
+      "processing_volunteers": "正在处理志愿者信息...",
+      "parallel_processing": "正在并行处理 {{count}} 个志愿者信息...",
+      "building_list": "正在构建志愿者列表...",
+      "complete": "加载完成"
+    }
   },
   "school": {
     "not_found_message": "学校信息不存在",

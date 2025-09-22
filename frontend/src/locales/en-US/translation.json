@@ -405,6 +405,9 @@
         "english_nickname_placeholder": "e.g. Alex, Sophia (commonly used preferred name)",
         "university_label": "University *",
         "university_placeholder": "Select your university",
+        "student_type_label": "Student Type",
+        "undergraduate": "Undergraduate",
+        "graduate": "Graduate",
         "gender_label": "Gender",
         "male": "Male",
         "female": "Female",
@@ -437,7 +440,8 @@
         "last_name_label": "Last Name *",
         "last_name_placeholder": "Enter your last name",
         "school_email_preview": "School Email Preview",
-        "email_username_placeholder": "e.g. zhang.san, alex123",
+        "email_help_text": "Enter your school email username (the part before @)",
+        "email_username_placeholder": "Enter username for school email",
         "complete_email": "Complete Email",
         "school_email_label": "School Email",
         "loading_schools": "Loading schools...",
@@ -775,6 +779,16 @@
       "general": "General",
       "aboutSupport": "About & Support"
     },
+    "volunteer": {
+      "management": "Volunteer Management"
+    },
+    "organization": {
+      "cu": "CU",
+      "student_union": "Student Union"
+    },
+    "school": {
+      "cu_headquarters": "CU HQ"
+    },
     "general": {
       "cacheCalculating": "Calculating...",
       "language": "Language",
@@ -978,8 +992,8 @@
       },
       "developing": "Under Development",
       "developing_subtitle": "More features coming soon",
-      "welcome_title": "Wellbeing",
-      "welcome_subtitle": "Safety & mental health support for students",
+      "welcome_title": "Welcome to International Student Safety Plan",
+      "welcome_subtitle": "This service provides rapid, practical, and accessible safety support and information assistance. This service does not replace public emergency services; in case of life-threatening or property-threatening emergencies, please call 9-1-1 immediately (USA)",
       "emergency_contacts": "Emergency Contacts",
       "emergency_911": "Emergency 911",
       "emergency_911_desc": "Call in emergency",
@@ -1172,6 +1186,22 @@
     }
   },
   "location": {
+    "permission_title": "Enable Location Services",
+    "permission_description": "PomeloX would like to use your location information to recommend nearby activities and provide precise sorting",
+    "feature_nearby": "Discover nearby exciting activities",
+    "feature_school": "Prioritize activities at your school",
+    "feature_smart": "Smart activity sorting",
+    "allow": "Allow Location",
+    "later": "Choose Later",
+    "privacy_note": "Your location information is only used to improve service experience, we strictly protect your privacy",
+    "selector_title": "Select Location",
+    "current_location": "Current Location",
+    "not_set": "Not Set",
+    "use_gps": "Use GPS Location",
+    "need_permission": "Location Permission Required",
+    "manual_select": "Manual Location Selection",
+    "choose_state_city": "Select State, City or School",
+    "my_school": "My School",
     "mismatch": {
       "title": "Location Change Alert",
       "subtitle": "We detected that your location has changed",
@@ -1294,7 +1324,20 @@
     "status_sync_failed_msg": "Unable to sync backend status, please reload the page",
     "operation_abnormal": "Operation abnormal, please refresh page and retry",
     "signin": "Volunteer Sign In",
-    "signout": "Volunteer Sign Out"
+    "signout": "Volunteer Sign Out",
+    "empty_state": {
+      "title": "No active volunteers at this school",
+      "subtitle": "Only users who have participated in volunteer activities will be displayed here"
+    },
+    "loading": {
+      "default": "Loading...",
+      "volunteer_data": "Loading volunteer data...",
+      "basic_data": "Fetching basic data...",
+      "processing_volunteers": "Processing volunteer information...",
+      "parallel_processing": "Processing {{count}} volunteers in parallel...",
+      "building_list": "Building volunteer list...",
+      "complete": "Loading complete"
+    }
   },
   "school": {
     "not_found_message": "School information not found",
