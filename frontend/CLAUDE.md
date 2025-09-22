@@ -76,6 +76,24 @@ eas build --platform ios --profile preview
 ```
 
 ### Version Management
+
+#### **版本号更新文件清单 (CRITICAL - 必须同步更新)**
+更新版本号时，必须同时更新以下3个文件以保持版本一致性：
+
+1. **app.json**
+   - `version`: "1.0.X" (应用版本号)
+   - `ios.buildNumber`: "X" (构建号)
+
+2. **package.json**
+   - `version`: "1.0.X" (必须与app.json保持一致)
+
+3. **ios/PomeloXApp/Info.plist**
+   - `CFBundleShortVersionString`: "1.0.X" (显示版本)
+   - `CFBundleVersion`: "X" (构建版本)
+
+**重要提醒**: 所有4个版本字段必须同步更新，否则会导致TestFlight/App Store上传失败或版本不一致问题。
+
+#### **版本更新命令**
 ```bash
 # Update version (updates app.json)
 npm run update-version

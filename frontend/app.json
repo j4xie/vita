@@ -6,7 +6,7 @@
     },
     "name": "PomeloX App",
     "slug": "vitaglobal",
-    "version": "1.0.30",
+    "version": "1.0.31",
     "owner": "pomelox",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -25,7 +25,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.pomelotech.pomelo",
-      "buildNumber": "20",
+      "buildNumber": "1",
       "deploymentTarget": "13.0",
       "infoPlist": {
         "NSAppTransportSecurity": {

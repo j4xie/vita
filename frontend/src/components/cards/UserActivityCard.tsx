@@ -75,15 +75,15 @@ export const UserActivityCard: React.FC<UserActivityCardProps> = ({
     }
     
     Alert.alert(
-      t('activities.cancel.title', '取消报名'),
-      t('activities.cancel.message', '确定要取消报名这个活动吗？取消后如需重新报名，需要重新提交申请。'),
+      t('activities.cancel_registration', '取消报名'),
+      t('activities.cancel_registration_confirm', '确定要取消报名这个活动吗？取消后如需重新报名，需要重新提交申请。'),
       [
         {
           text: t('common.cancel', '取消'),
           style: 'cancel',
         },
         {
-          text: t('activities.cancel.confirm', '确定取消'),
+          text: t('activities.confirm_cancel', '确定取消'),
           style: 'destructive',
           onPress: performCancelRegistration,
         },
@@ -127,9 +127,9 @@ export const UserActivityCard: React.FC<UserActivityCardProps> = ({
         }
         
         Alert.alert(
-          t('activities.cancel.success_title', '取消成功'),
-          t('activities.cancel.success_message', '已成功取消报名'),
-          [{ text: t('common.ok', '确定') }]
+          t('common.success', '成功'),
+          t('activities.cancel_registration_success', '已成功取消报名'),
+          [{ text: t('common.confirm', '确定') }]
         );
         
         // 调用回调通知父组件刷新数据
@@ -234,7 +234,7 @@ export const UserActivityCard: React.FC<UserActivityCardProps> = ({
             >
               <Ionicons name="close-circle-outline" size={14} color="#EF4444" />
               <Text style={styles.cancelButtonText}>
-                {isLoading ? t('common.loading', '加载中...') : t('activities.cancel.button', '取消')}
+                {isLoading ? t('common.loading', '加载中...') : t('activities.cancel', '取消')}
               </Text>
             </TouchableOpacity>
           </View>

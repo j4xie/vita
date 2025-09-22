@@ -455,7 +455,7 @@ export const LocationSelectorModal: React.FC<LocationSelectorModalProps> = ({
             {cityToSchools[city] && (
               <View style={styles.schoolBadge}>
                 <Text style={styles.schoolBadgeText}>
-                  {cityToSchools[city].length} 所学校
+                  {cityToSchools[city].length} {t('location.schools_unit', '所学校')}
                 </Text>
               </View>
             )}
