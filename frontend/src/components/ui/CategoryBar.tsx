@@ -18,8 +18,12 @@ interface CategoryBarProps {
   onSegmentChange: (index: number) => void;
   onFilterPress?: () => void; // 设为可选
   onScanPress: () => void; // 新增扫码按钮回调
+  onLocationPress?: () => void; // 新增定位按钮回调
   hasActiveFilters?: boolean;
   activeFiltersCount?: number;
+  hasLocation?: boolean; // 是否有定位信息
+  showNearbyOnly?: boolean; // 是否显示附近筛选
+  selectedSchool?: string | null; // 选中的学校
 }
 
 const CategoryBar: React.FC<CategoryBarProps> = ({
@@ -27,8 +31,12 @@ const CategoryBar: React.FC<CategoryBarProps> = ({
   onSegmentChange,
   onFilterPress,
   onScanPress,
+  onLocationPress,
   hasActiveFilters = false,
   activeFiltersCount = 0,
+  hasLocation = false,
+  showNearbyOnly = false,
+  selectedSchool = null,
 }) => {
   const { t } = useTranslation();
   const theme = useTheme();
@@ -39,6 +47,7 @@ const CategoryBar: React.FC<CategoryBarProps> = ({
   
   const filterButtonScale = useRef(new Animated.Value(1)).current;
   const scanButtonScale = useRef(new Animated.Value(1)).current;
+  const locationButtonScale = useRef(new Animated.Value(1)).current;
   
   // 容器缩放动画
   const containerScale = useRef(new Animated.Value(1)).current;
@@ -102,7 +111,7 @@ const CategoryBar: React.FC<CategoryBarProps> = ({
 
   const handleScanPress = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    
+
     // Add press animation
     Animated.sequence([
       Animated.timing(scanButtonScale, {
@@ -116,8 +125,30 @@ const CategoryBar: React.FC<CategoryBarProps> = ({
         useNativeDriver: true,
       }),
     ]).start();
-    
+
     onScanPress();
+  };
+
+  const handleLocationPress = () => {
+    if (!onLocationPress) return;
+
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+
+    // Add press animation
+    Animated.sequence([
+      Animated.timing(locationButtonScale, {
+        toValue: 0.95,
+        duration: 90,
+        useNativeDriver: true,
+      }),
+      Animated.timing(locationButtonScale, {
+        toValue: 1,
+        duration: 90,
+        useNativeDriver: true,
+      }),
+    ]).start();
+
+    onLocationPress();
   };
 
 
@@ -141,14 +172,20 @@ const CategoryBar: React.FC<CategoryBarProps> = ({
     contentContainer: {
       flexDirection: 'row',
       alignItems: 'center',
-      justifyContent: 'space-between',
       height: '100%',
       paddingHorizontal: 8,
+    },
+    leftButtonContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginRight: 4,
+      minWidth: 40,
     },
     rightButtonContainer: {
       flexDirection: 'row',
       alignItems: 'center',
-      marginLeft: 8,
+      marginLeft: 4,
+      minWidth: 40,
     },
     scanButton: {
       width: 32,
@@ -164,12 +201,44 @@ const CategoryBar: React.FC<CategoryBarProps> = ({
       shadowOpacity: 0.1,
       shadowRadius: 2,
       elevation: 2,
+      marginLeft: 8,
+    },
+    locationButton: {
+      width: 32,
+      height: 32,
+      borderRadius: 16,
+      borderWidth: 1.5,
+      borderColor: '#34C759',
+      backgroundColor: 'transparent',
+      alignItems: 'center',
+      justifyContent: 'center',
+      shadowColor: '#000000',
+      shadowOffset: { width: 0, height: 1 },
+      shadowOpacity: 0.1,
+      shadowRadius: 2,
+      elevation: 2,
+    },
+    locationButtonActive: {
+      backgroundColor: '#34C759',
+      borderColor: '#34C759',
+    },
+    locationDot: {
+      position: 'absolute',
+      top: -2,
+      right: -2,
+      width: 8,
+      height: 8,
+      borderRadius: 4,
+      backgroundColor: '#52C41A',
+      borderWidth: 1,
+      borderColor: '#FFFFFF',
     },
     segmentedControlWrapper: {
       flex: 1,
-      marginHorizontal: 8,
+      marginHorizontal: 4,
       justifyContent: 'center',
       height: 32,
+      minWidth: 200, // 确保有最小宽度
     }
   });
 
@@ -184,7 +253,33 @@ const CategoryBar: React.FC<CategoryBarProps> = ({
       ]}
     >
       <View style={styles.contentContainer}>
-        
+
+        {/* 左侧定位按钮 */}
+        <View style={styles.leftButtonContainer}>
+          {onLocationPress && (
+            <Animated.View style={{ transform: [{ scale: locationButtonScale }] }}>
+              <TouchableOpacity
+                style={[
+                  styles.locationButton,
+                  (hasLocation || showNearbyOnly || selectedSchool) && styles.locationButtonActive
+                ]}
+                onPress={handleLocationPress}
+                activeOpacity={0.8}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              >
+                <Ionicons
+                  name={hasLocation ? "location" : "location-outline"}
+                  size={18}
+                  color={(hasLocation || showNearbyOnly || selectedSchool) ? "#FFFFFF" : "#34C759"}
+                />
+                {(showNearbyOnly || selectedSchool) && (
+                  <View style={styles.locationDot} />
+                )}
+              </TouchableOpacity>
+            </Animated.View>
+          )}
+        </View>
+
         {/* 分段控件 */}
         <View style={styles.segmentedControlWrapper}>
           <SegmentedControl
@@ -193,7 +288,7 @@ const CategoryBar: React.FC<CategoryBarProps> = ({
             onIndexChange={onSegmentChange}
           />
         </View>
-        
+
         {/* 右侧扫码按钮 */}
         <View style={styles.rightButtonContainer}>
           <Animated.View style={{ transform: [{ scale: scanButtonScale }] }}>

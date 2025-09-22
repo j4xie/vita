@@ -19,13 +19,14 @@ import { useTheme } from '../../context/ThemeContext';
 import { useUser } from '../../context/UserContext';
 import { getCurrentToken } from '../../services/authAPI';
 import { UserIdentityData, ScannedUserInfo } from '../../types/userIdentity';
-import { 
-  calculateUserPermissions, 
-  getPermissionLevel, 
+import {
+  calculateUserPermissions,
+  getPermissionLevel,
   getPermissionLevelFromRoleKey,
   getPermissionDescription,
-  PermissionLevel 
+  PermissionLevel
 } from '../../utils/userPermissions';
+import { getScanPermissions } from '../../types/userPermissions';
 
 const { width: screenWidth } = Dimensions.get('window');
 
@@ -68,44 +69,54 @@ export const ScannedUserInfoModal: React.FC<ScannedUserInfoModalProps> = ({
   useEffect(() => {
     if (visible && scannedUserData) {
       setIsLoading(true);
-      
-      // 权限验证和数据获取
+
+      // 🆕 使用新的权限验证系统
       setTimeout(() => {
-        const scannerLevel = getCurrentUserPermissionLevel();
-        const targetLevel = getPermissionLevel(scannedUserData.position);
-        const permissions = calculateUserPermissions(scannerLevel, targetLevel);
-        
-        console.log('🔐 [权限验证] 权限计算结果:', {
-          scannerLevel,
-          targetLevel, 
-          permissions: {
-            canViewContactInfo: permissions.canViewContactInfo,
-            canViewStudentId: permissions.canViewStudentId,
-            canViewActivityStats: permissions.canViewActivityStats,
-            canViewRecentActivities: permissions.canViewRecentActivities,
-            isHigherAuthority: permissions.isHigherAuthority
-          }
+        const permissions = getScanPermissions(currentUser, scannedUserData);
+
+        console.log('🔐 [权限验证] 新权限系统计算结果:', {
+          canViewPersonalInfo: permissions.canViewPersonalInfo,
+          canViewVolunteerHours: permissions.canViewVolunteerHours,
+          canHelpActivityCheckIn: permissions.canHelpActivityCheckIn,
+          canManageVolunteerHours: permissions.canManageVolunteerHours,
+          scannerLevel: permissions.scannerLevel,
+          scannedLevel: permissions.scannedLevel,
+          isSameSchool: permissions.isSameSchool
         });
-        
-        // 构建显示的用户信息
+
+        // 🆕 构建显示的用户信息 - 基于新权限逻辑
         const info: ScannedUserInfo = {
           isValid: true,
           user: {
             userId: scannedUserData.userId,
             legalName: scannedUserData.legalName,
             nickName: scannedUserData.nickName,
-            email: permissions.canViewContactInfo ? scannedUserData.email : '***@***.com',
+            // 🆕 个人信息所有人可见
+            email: scannedUserData.email,
             avatarUrl: scannedUserData.avatarUrl,
-            studentId: permissions.canViewStudentId ? scannedUserData.studentId : undefined,
+            studentId: scannedUserData.studentId,
             currentOrganization: scannedUserData.currentOrganization,
-            activityStats: permissions.canViewActivityStats ? {
+            // 🆕 志愿者时间统计 - 根据新权限显示
+            activityStats: permissions.canViewVolunteerHours ? {
               totalParticipated: Math.floor(Math.random() * 50) + 10,
               volunteeredHours: Math.floor(Math.random() * 200) + 20,
               points: Math.floor(Math.random() * 1000) + 100,
             } : undefined,
           },
-          permissions,
-          recentActivities: permissions.canViewRecentActivities ? [
+          // 🆕 映射到旧权限接口以保持兼容性
+          permissions: {
+            canViewBasicInfo: permissions.canViewPersonalInfo,
+            canViewContactInfo: permissions.canViewPersonalInfo,
+            canViewStudentId: permissions.canViewPersonalInfo,
+            canViewActivityStats: permissions.canViewVolunteerHours,
+            canViewRecentActivities: permissions.canViewVolunteerHours,
+            canViewFullProfile: permissions.canViewPersonalInfo,
+            canManageUser: permissions.canHelpActivityCheckIn,
+            canManageActivities: permissions.canHelpActivityCheckIn,
+            canAccessPlatform: true
+          },
+          // 🆕 最近活动 - 根据志愿者时间查看权限
+          recentActivities: permissions.canViewVolunteerHours ? [
             {
               id: '1',
               title: '新生迎新活动',
@@ -114,7 +125,7 @@ export const ScannedUserInfoModal: React.FC<ScannedUserInfoModalProps> = ({
               organizationId: scannedUserData.currentOrganization?.id || '1'
             },
             {
-              id: '2', 
+              id: '2',
               title: '社区志愿服务',
               participatedAt: '2024-08-25T14:00:00Z',
               role: 'volunteer',
@@ -122,7 +133,7 @@ export const ScannedUserInfoModal: React.FC<ScannedUserInfoModalProps> = ({
             }
           ] : undefined,
         };
-        
+
         setUserInfo(info);
         setIsLoading(false);
       }, 500);
@@ -155,158 +166,64 @@ export const ScannedUserInfoModal: React.FC<ScannedUserInfoModalProps> = ({
     );
   };
 
-  // 志愿者签到管理
-  const handleVolunteerSignIn = async () => {
+
+  // 活动签到功能已移除 - 活动签到应通过扫描活动二维码实现
+  // 用户扫描活动二维码时，系统会自动为当前登录用户签到
+  // 而不是通过扫描身份码来为他人签到
+
+  // 🆕 活动签到帮助功能
+  const handleActivityCheckIn = async () => {
     try {
-      const response = await fetch('https://www.vitaglobal.icu/app/hour/signRecord', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-          'Authorization': `Bearer ${await getCurrentToken() || ''}`,
-        },
-        body: new URLSearchParams({
-          userId: scannedUserData.userId,
-          type: '1', // 1-签到
-          startTime: new Date().toLocaleString('zh-CN', { 
-            year: 'numeric', 
-            month: '2-digit', 
-            day: '2-digit', 
-            hour: '2-digit', 
-            minute: '2-digit', 
-            second: '2-digit',
-            hour12: false 
-          }).replace(/\//g, '-'),
-          operateUserId: currentUser?.id || '',
-          operateLegalName: currentUser?.legalName || '',
-        }),
-      });
-
-      const result = await response.json();
-      if (result.code === 200) {
-        Alert.alert(t('volunteer.signin_success'), t('volunteer.signin_success_msg', {name: scannedUserData.legalName}));
-      } else {
-        Alert.alert(t('common.signin_failed'), result.msg || t('volunteer.signin_operation_failed'));
-      }
-    } catch (error) {
-      console.error('志愿者签到失败:', error);
-      Alert.alert(t('common.signin_failed'), t('common.network_error_retry'));
-    }
-  };
-
-  // 志愿者签退管理
-  const handleVolunteerSignOut = async () => {
-    try {
-      // 先获取最新的签到记录
-      const statusResponse = await fetch(
-        `https://www.vitaglobal.icu/app/hour/lastRecordList?userId=${scannedUserData.userId}`,
-        {
-          headers: {
-            'Authorization': `Bearer ${await getCurrentToken() || ''}`,
-          },
-        }
-      );
-
-      const statusResult = await statusResponse.json();
-      if (statusResult.code !== 200 || !statusResult.data || statusResult.data.length === 0) {
-        Alert.alert(t('common.signout_failed'), t('volunteer.no_valid_signin_record'));
-        return;
+      // 触觉反馈
+      if (Platform.OS === 'ios') {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       }
 
-      const lastRecord = statusResult.data[0];
-      if (lastRecord.endTime) {
-        Alert.alert(t('common.info'), t('volunteer.user_already_signed_out'));
-        return;
-      }
-
-      // 执行签退
-      const signOutResponse = await fetch('https://www.vitaglobal.icu/app/hour/signRecord', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-          'Authorization': `Bearer ${await getCurrentToken() || ''}`,
-        },
-        body: new URLSearchParams({
-          id: lastRecord.id.toString(),
-          userId: scannedUserData.userId,
-          type: '2', // 2-签退
-          endTime: new Date().toLocaleString('zh-CN', { 
-            year: 'numeric', 
-            month: '2-digit', 
-            day: '2-digit', 
-            hour: '2-digit', 
-            minute: '2-digit', 
-            second: '2-digit',
-            hour12: false 
-          }).replace(/\//g, '-'),
-          operateUserId: currentUser?.id || '',
-          operateLegalName: currentUser?.legalName || '',
-        }),
-      });
-
-      const result = await signOutResponse.json();
-      if (result.code === 200) {
-        Alert.alert(t('volunteer.signout_success'), t('volunteer.signout_success_msg', {name: scannedUserData.legalName}));
-      } else {
-        Alert.alert(t('common.signout_failed'), result.msg || t('volunteer.signin_operation_failed'));
-      }
-    } catch (error) {
-      console.error('志愿者签退失败:', error);
-      Alert.alert(t('common.signout_failed'), t('common.network_error_retry'));
-    }
-  };
-
-  // 活动签到管理
-  const handleActivitySignIn = () => {
-    Alert.prompt(
-      '活动签到',
-      '请输入活动ID进行签到:',
-      [
-        { text: '取消', style: 'cancel' },
-        {
-          text: '签到',
-          onPress: async (activityId) => {
-            if (!activityId) return;
-            
-            try {
-              const response = await fetch(
-                `https://www.vitaglobal.icu/app/activity/signIn?activityId=${activityId}&userId=${scannedUserData.userId}`,
-                {
-                  headers: {
-                    'Authorization': `Bearer ${await getCurrentToken() || ''}`,
-                  },
-                }
-              );
-
-              const result = await response.json();
-              if (result.code === 200) {
-                Alert.alert(
-                  t('activities.checkin_success'), 
-                  `${scannedUserData.legalName} ${t('activities.checkin_success')}！`
-                );
-              } else {
-                Alert.alert(
-                  t('activities.checkin_failed'), 
-                  result.msg || t('activities.checkin_failed_message')
-                );
-              }
-            } catch (error) {
-              console.error('活动签到失败:', error);
+      // 显示活动签到选择器
+      Alert.alert(
+        '活动签到帮助',
+        `帮助 ${scannedUserData.legalName} 签到活动`,
+        [
+          {
+            text: '扫描活动码',
+            onPress: () => {
               Alert.alert(
-                t('activities.checkin_failed'), 
-                t('activities.network_error')
+                '功能说明',
+                '活动签到需要扫描活动二维码。请引导用户扫描活动现场的二维码完成签到。',
+                [{ text: '明白了' }]
               );
             }
+          },
+          {
+            text: '手动选择活动',
+            onPress: () => {
+              Alert.alert(
+                '开发中',
+                '手动选择活动功能正在开发中，敬请期待。',
+                [{ text: '确定' }]
+              );
+            }
+          },
+          {
+            text: '取消',
+            style: 'cancel'
           }
-        }
-      ],
-      'plain-text'
-    );
+        ]
+      );
+    } catch (error) {
+      console.error('活动签到帮助失败:', error);
+      Alert.alert(
+        '操作失败',
+        '无法执行活动签到帮助，请稍后重试。',
+        [{ text: '确定' }]
+      );
+    }
   };
 
   // 管理操作菜单
   const showManagementActions = () => {
     const scannerLevel = getCurrentUserPermissionLevel();
-    
+
     if (scannerLevel < PermissionLevel.STAFF) {
       Alert.alert(t('common.permission_denied'), t('volunteer.no_management_permission'));
       return;
@@ -314,19 +231,22 @@ export const ScannedUserInfoModal: React.FC<ScannedUserInfoModalProps> = ({
 
     const actions = [];
 
-    // 志愿者管理操作（员工及以上）
-    if (scannerLevel >= PermissionLevel.STAFF) {
+    // 🆕 活动签到帮助 - 根据新权限逻辑
+    const permissions = getScanPermissions(currentUser, scannedUserData);
+    if (permissions.canHelpActivityCheckIn) {
       actions.push(
-        { text: '志愿者签到', onPress: handleVolunteerSignIn },
-        { text: '志愿者签退', onPress: handleVolunteerSignOut }
+        { text: '帮助签到活动', onPress: handleActivityCheckIn }
       );
     }
 
-    // 活动管理操作（分管理员及以上）
-    if (scannerLevel >= PermissionLevel.PART_ADMIN) {
-      actions.push(
-        { text: '活动签到', onPress: handleActivitySignIn }
+    // 移除志愿者工时签到/签退功能 - 无人有此权限
+
+    if (actions.length === 0) {
+      Alert.alert(
+        '权限不足',
+        `您没有权限管理${scannedUserData.legalName}。`
       );
+      return;
     }
 
     actions.push({ text: '取消', style: 'cancel' });

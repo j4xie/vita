@@ -386,17 +386,29 @@ export const GeneralScreen: React.FC = () => {
         throw new Error('No authentication token');
       }
 
-      // Call delete account API (接口20)  
-      const response = await fetch(`${pomeloXAPI.baseURL}/user/logoff?userId=${user?.id}`, {
+      console.log('📝 开始删除账户，userId:', user?.id);
+
+      // Call delete account API (接口20)
+      // 使用正确的生产环境API地址和路径
+      const BASE_URL = 'https://www.vitaglobal.icu';
+      const response = await fetch(`${BASE_URL}/app/user/logoff?userId=${user?.id}`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
+          'Accept': 'application/json',
         },
       });
 
+      console.log('📥 删除账户响应状态:', response.status);
+
       if (!response.ok) {
+        const errorText = await response.text();
+        console.error('❌ 删除账户失败:', errorText);
         throw new Error(`Delete account failed: ${response.status}`);
       }
+
+      const result = await response.json();
+      console.log('✅ 删除账户成功:', result);
 
       // Clear all local data and logout
       await logout();
@@ -417,11 +429,23 @@ export const GeneralScreen: React.FC = () => {
           }
         ]
       );
-    } catch (error) {
+    } catch (error: any) {
       console.error('Delete account error:', error);
+
+      // 提供更详细的错误信息
+      let errorMessage = t('profile.account.deleteAccountError', 'Failed to delete account. Please try again later.');
+
+      if (error.message?.includes('Network request failed')) {
+        errorMessage = t('common.networkError', 'Network connection failed. Please check your internet connection.');
+      } else if (error.message?.includes('401') || error.message?.includes('403')) {
+        errorMessage = t('common.authError', 'Authentication failed. Please login again.');
+      } else if (error.message?.includes('500')) {
+        errorMessage = t('common.serverError', 'Server error. Please try again later.');
+      }
+
       Alert.alert(
         t('common.error'),
-        'Failed to delete account. Please try again later.',
+        errorMessage,
         [{ text: t('common.confirm') }]
       );
     }

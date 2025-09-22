@@ -15,16 +15,14 @@ import { useNavigation, useRoute, CommonActions } from '@react-navigation/native
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Picker } from '@react-native-picker/picker';
-
 import { theme } from '../../theme';
 import { LIQUID_GLASS_LAYERS, DAWN_GRADIENTS } from '../../theme/core';
-import { 
-  SchoolData, 
-  createSchoolDataFromBackend 
+import {
+  SchoolData,
+  createSchoolDataFromBackend
 } from '../../utils/schoolData';
-import { 
-  fetchSchoolList,
+import { SchoolSelector } from '../../components/common/SchoolSelector';
+import {
   validatePhoneNumber,
   sendSMSVerificationCode,
   registerUser
@@ -52,6 +50,9 @@ interface ParentNormalFormData {
   selectedSchool: SchoolData | null; // 孩子的学校
   areaCode: '86' | '1';       // 区号
   verificationCode: string;   // 验证码
+  // SchoolSelector需要的字段
+  selectedSchoolId: string;
+  selectedSchoolName: string;
 }
 
 interface ValidationErrors {
@@ -72,8 +73,6 @@ export const ParentNormalRegisterScreen: React.FC = () => {
   const { login: userLogin } = useUser();
 
   const [loading, setLoading] = useState(false);
-  const [schoolsLoading, setSchoolsLoading] = useState(true);
-  const [schools, setSchools] = useState<SchoolData[]>([]);
   const [countdown, setCountdown] = useState(0);
   const [bizId, setBizId] = useState<string>('');
 
@@ -88,6 +87,9 @@ export const ParentNormalRegisterScreen: React.FC = () => {
     selectedSchool: null,
     areaCode: '86', // 默认中国
     verificationCode: '',
+    // SchoolSelector需要的字段
+    selectedSchoolId: '',
+    selectedSchoolName: '',
   });
 
   const [errors, setErrors] = useState<ValidationErrors>({});
@@ -135,31 +137,10 @@ export const ParentNormalRegisterScreen: React.FC = () => {
   // 🔧 成功弹窗状态 - 与其他注册页面保持一致
   const [showSuccessModal, setShowSuccessModal] = useState(false);
 
-  // 加载学校列表
-  useEffect(() => {
-    loadSchools();
-  }, []);
 
-  const loadSchools = async () => {
-    try {
-      setSchoolsLoading(true);
-      const response = await fetchSchoolList();
-      
-      if (response.code === 200 && response.data) {
-        const schoolData = createSchoolDataFromBackend(response.data);
-        setSchools(schoolData);
-      } else {
-        console.error('[ParentNormalRegister] Failed to load school list:', response);
-      }
-    } catch (error) {
-      console.error('[ParentNormalRegister] Failed to load school list error:', error);
-    } finally {
-      setSchoolsLoading(false);
-    }
-  };
 
   const updateFormData = <K extends keyof ParentNormalFormData>(
-    field: K, 
+    field: K,
     value: ParentNormalFormData[K]
   ) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -167,6 +148,28 @@ export const ParentNormalRegisterScreen: React.FC = () => {
     if (errors[field as keyof ValidationErrors]) {
       setErrors(prev => ({ ...prev, [field as keyof ValidationErrors]: undefined }));
     }
+  };
+
+  // 处理学校选择
+  const handleSchoolSelect = (school: any) => {
+    // 构建SchoolData对象以保持兼容性
+    const schoolData: SchoolData = {
+      id: school.deptId.toString(),
+      name: school.deptName,
+      abbreviation: school.aprName || school.deptName,
+      emailDomain: school.mailDomain || ''
+    };
+
+    // 更新相关状态
+    setFormData(prev => ({
+      ...prev,
+      selectedSchool: schoolData,
+      selectedSchoolId: school.deptId.toString(),
+      selectedSchoolName: school.deptName
+    }));
+
+    // 清除学校选择相关错误
+    setErrors(prev => ({ ...prev, selectedSchool: undefined }));
   };
 
   const validateForm = (): boolean => {
@@ -400,47 +403,16 @@ export const ParentNormalRegisterScreen: React.FC = () => {
     );
   };
 
-  const renderSchoolPicker = () => (
+  const renderSchoolSelector = () => (
     <View style={styles.inputContainer}>
-      <Text style={styles.label}>{t('auth.register.parent.child_school_label')}</Text>
-      <View style={[styles.pickerContainer, errors.selectedSchool && styles.inputError]}>
-        {schoolsLoading ? (
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator size="small" color={theme.colors.primary} />
-            <Text style={styles.loadingText}>{t('auth.register.form.loading_schools')}</Text>
-          </View>
-        ) : (
-          <Picker
-            selectedValue={formData.selectedSchool?.id || ''}
-            onValueChange={(itemValue) => {
-              if (itemValue) {
-                const school = schools.find(s => s.id === itemValue);
-                if (school) {
-                  updateFormData('selectedSchool', school);
-                }
-              } else {
-                updateFormData('selectedSchool', null);
-              }
-            }}
-            style={styles.picker}
-          >
-            <Picker.Item 
-              label={t('auth.register.parent.child_school_placeholder')} 
-              value="" 
-              color={theme.colors.text.disabled}
-            />
-            {schools.map((school) => (
-              <Picker.Item
-                key={school.id}
-                label={school.name}
-                value={school.id}
-                color={theme.colors.text.primary}
-              />
-            ))}
-          </Picker>
-        )}
-      </View>
-      {errors.selectedSchool && <Text style={styles.errorText}>{errors.selectedSchool}</Text>}
+      <Text style={styles.label}>{t('auth.register.parent.child_school_label')} *</Text>
+      <SchoolSelector
+        value={formData.selectedSchoolName}
+        selectedId={formData.selectedSchoolId}
+        onSelect={handleSchoolSelect}
+        placeholder={t('auth.register.parent.child_school_placeholder')}
+        error={errors.selectedSchool}
+      />
     </View>
   );
 
@@ -640,7 +612,7 @@ export const ParentNormalRegisterScreen: React.FC = () => {
             </View>
 
             {/* 孩子学校选择 */}
-            {renderSchoolPicker()}
+            {renderSchoolSelector()}
 
             {/* 注册按钮 */}
             <View style={styles.bottomContainer}>

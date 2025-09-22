@@ -7,8 +7,6 @@ import {
   SafeAreaView,
   ScrollView,
   Platform,
-  Alert,
-  ActionSheetIOS,
   DeviceEventEmitter,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -26,6 +24,7 @@ import { PersonalInfoCard } from '../../components/profile/PersonalInfoCard';
 import { UserIdentityQRModal } from '../../components/modals/UserIdentityQRModal';
 import { UserActivityModal } from '../../components/modals/UserActivityModal';
 import { LoginRequiredModal } from '../../components/modals/LoginRequiredModal';
+import { LogoutConfirmationModal } from '../../components/modals/LogoutConfirmationModal';
 import { UserIdentityData } from '../../types/userIdentity';
 import { useUser } from '../../context/UserContext';
 import { useTheme } from '../../context/ThemeContext';
@@ -208,6 +207,9 @@ export const ProfileHomeScreen: React.FC = () => {
   
   // 登录提示模态框状态
   const [showLoginModal, setShowLoginModal] = useState(false);
+
+  // 退出登录确认模态框状态
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
   
   // V2.0 获取分层配置
   const { getLayerConfig } = usePerformanceDegradation();
@@ -227,57 +229,75 @@ export const ProfileHomeScreen: React.FC = () => {
       return mapUserToIdentityData(null);
     }
 
+    // 🌍 检测当前语言环境并传递给mapper
+    const isEnglish = t('profile.organization.cu_headquarters', 'CU HQ') === 'CU HQ';
     // 使用真实的用户数据
-    return mapUserToIdentityData(user);
+    return mapUserToIdentityData(user, isEnglish);
+  };
+
+  // 生成显示名称：只显示nickname
+  const getDisplayName = (): string => {
+    if (!user || !isAuthenticated) {
+      return t('userInfo.guest');
+    }
+
+    // 优先显示nickname，如果没有则回退到legalName或userName
+    return user.nickName?.trim() || user.legalName?.trim() || user.userName || '用户';
   };
 
   // 获取用户组织信息 - 🆕 支持最新API的role和post字段
   const getUserOrganizationInfo = () => {
     if (!user || !isAuthenticated) return { school: '', organization: '', position: '' };
-    
-    // 🆕 学校信息 - 支持完整的dept结构
-    const school = user.school?.name || user.dept?.deptName || '';
-    const department = user.dept?.childrenDept?.deptName; // 🆕 子部门信息
-    
-    // 🆕 组织信息 - 基于学校信息设置
-    let organization = '';
-    if (school) {
-      if (school.includes('CU总部') || school === 'CU总部') {
-        organization = 'CU总部';
-      } else {
-        organization = '学联组织';
+
+    // 🆕 学校信息 - 支持完整的dept结构，并处理英文简称
+    const rawSchool = user.school?.name || user.dept?.deptName || '';
+    let school = rawSchool;
+
+    // 英文环境下使用学校简称
+    if (rawSchool.includes('CU总部') || rawSchool === 'CU总部') {
+      school = t('profile.organization.cu_headquarters', 'CU HQ');
+    }
+
+    // 🆕 组织信息 - 统一显示为CU
+    const organization = school ? 'CU' : '';
+
+    // 🆕 岗位信息显示逻辑 - 仅显示具体职位，过滤掉权限角色名
+    let position = '';
+    const permissionLevel = permissions.getPermissionLevel();
+
+    // 只有管理员、分管理员、内部员工才显示职位
+    if (['manage', 'part_manage', 'staff'].includes(permissionLevel)) {
+      // 权限角色名黑名单 - 这些不是真正的职位
+      const roleBlacklist = ['总管理员', '分管理员', '内部员工', '普通用户', 'admin', 'manager', 'staff', 'common'];
+
+      // 优先显示具体岗位(post)
+      if (user.post?.postName && !roleBlacklist.includes(user.post.postName)) {
+        position = user.post.postName;
+      } else if (user.role?.roleName && !roleBlacklist.includes(user.role.roleName)) {
+        // 如果没有具体岗位且角色名不在黑名单中，显示角色名称
+        position = user.role.roleName;
+      } else if (user.roles && user.roles.length > 0) {
+        // 兼容旧格式：从roles数组获取，跳过黑名单
+        for (const role of user.roles) {
+          if (role.roleName && !roleBlacklist.includes(role.roleName)) {
+            position = role.roleName;
+            break;
+          }
+        }
       }
     }
-    
-    // 🆕 完整的岗位信息显示 - 结合role和post
-    let position = '';
-    
-    // 优先显示具体岗位(post)
-    if (user.post?.postName) {
-      position = user.post.postName;
-    } else if (user.role?.roleName) {
-      // 如果没有具体岗位，显示角色名称
-      position = user.role.roleName;
-    } else if (user.roles && user.roles.length > 0) {
-      // 兼容旧格式：从roles数组获取
-      position = user.roles[0].roleName;
-    }
-    
-    // 🆕 如果有部门信息，添加到位置描述中
-    if (department && position) {
-      position = `${department} · ${position}`;
-    }
-    
+
     console.log('👤 [PROFILE] 用户组织信息:', {
+      rawSchool,
       school,
-      department, 
       organization,
       position,
+      permissionLevel,
       rawRole: user.role,
       rawPost: user.post,
       rawDept: user.dept
     });
-    
+
     return { school, organization, position };
   };
 
@@ -335,6 +355,25 @@ export const ProfileHomeScreen: React.FC = () => {
     loadActivityStats();
   };
 
+  // 处理编辑资料按钮点击
+  const handleEditProfile = () => {
+    if (!user || !isAuthenticated) {
+      // 如果用户未登录，引导用户登录
+      Alert.alert(
+        t('alerts.login_required_title', '需要登录'),
+        t('alerts.login_required_message', '请先登录以编辑您的资料'),
+        [{ text: t('common.got_it') }]
+      );
+      return;
+    }
+
+    if (Platform.OS === 'ios') {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
+
+    navigation.navigate('EditProfile');
+  };
+
 
   // 加载活动统计数据
   const loadActivityStats = async () => {
@@ -373,9 +412,6 @@ export const ProfileHomeScreen: React.FC = () => {
     
     // 🆕 权限检查：只有staff及以上权限才能访问志愿者功能
     if (!permissions.hasVolunteerManagementAccess()) {
-      if (__DEV__) {
-        console.log('ℹ️ [VOLUNTEER-STATS] 当前用户无志愿者权限，跳过志愿者数据加载');
-      }
       // 普通用户不显示志愿者统计，设置为默认值
       setVolunteerStats({
         volunteerHours: 0,
@@ -386,11 +422,6 @@ export const ProfileHomeScreen: React.FC = () => {
     
     try {
       setIsLoadingVolunteerStats(true);
-      console.log('🔍 正在加载志愿者统计，用户信息:', {
-        userId: userIdToUse,
-        userName: user?.userName || 'unknown',
-        isAuthenticated
-      });
       
       // 🆕 使用接口19：个人工时统计API - 仅限staff及以上权限
       try {
@@ -543,43 +574,17 @@ export const ProfileHomeScreen: React.FC = () => {
     }
     
     // 所有有志愿者权限的用户都跳转到志愿者管理页面
-    navigation.navigate('Wellbeing', { 
-      screen: 'VolunteerManagement'
-    });
+    navigation.navigate('VolunteerHome');
   }, [user, permissions, volunteerStats, navigation]);
 
   // Logout handling functions
   const handleLogout = () => {
     // Haptic feedback
     if (Platform.OS === 'ios') {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     }
 
-    if (Platform.OS === 'ios') {
-      ActionSheetIOS.showActionSheetWithOptions(
-        {
-          title: t('profile.account.logoutConfirm'),
-          message: t('profile.account.logoutMessage'),
-          options: [t('profile.account.cancel'), t('profile.account.logout')],
-          destructiveButtonIndex: 1,
-          cancelButtonIndex: 0,
-        },
-        (buttonIndex) => {
-          if (buttonIndex === 1) {
-            performLogout();
-          }
-        }
-      );
-    } else {
-      Alert.alert(
-        t('profile.account.logoutConfirm'),
-        t('profile.account.logoutMessage'),
-        [
-          { text: t('profile.account.cancel'), style: 'cancel' },
-          { text: t('profile.account.logout'), style: 'destructive', onPress: performLogout },
-        ]
-      );
-    }
+    setShowLogoutModal(true);
   };
 
   const performLogout = async () => {
@@ -971,7 +976,7 @@ export const ProfileHomeScreen: React.FC = () => {
     // 设置区域
     settingsSection: {
       marginTop: 12, // 🔧 增加上边距，与"我的活动"→"我的会员"间距保持一致
-      marginBottom: 100, // 为TabBar预留空间
+      marginBottom: 20, // 减少下边距，让退出按钮更靠近
     },
     settingsHeader: {
       flexDirection: 'row',
@@ -1083,8 +1088,8 @@ export const ProfileHomeScreen: React.FC = () => {
     
     // Logout section styles
     logoutSection: {
-      marginTop: 4, // 减少上边距20px，让按钮向上移动
-      marginBottom: 20,
+      marginTop: 8, // 适当的上边距
+      marginBottom: 100, // 为TabBar预留足够空间
       paddingHorizontal: 4,
     },
     logoutButton: {
@@ -1202,7 +1207,7 @@ export const ProfileHomeScreen: React.FC = () => {
             {/* V2.0 双层结构：外层solid背景用于阴影，内层L2品牌玻璃 */}
             <View style={styles.personalInfoShadowContainer}>
               <PersonalInfoCard
-                name={user ? (user.userName || user.nickName || '用户') : t('userInfo.guest')}
+                name={getDisplayName()}
                 {...getUserOrganizationInfo()}
                 email={user?.email}
                 avatarUrl={undefined}
@@ -1214,6 +1219,7 @@ export const ProfileHomeScreen: React.FC = () => {
                 }}
                 membershipStatus={membershipStatus}
                 onQRCodePress={user && isAuthenticated ? handleShowIdentityQR : undefined}
+                onEditPress={user && isAuthenticated ? handleEditProfile : undefined}
                 stats={user && permissions.hasVolunteerManagementAccess() ? volunteerStats : undefined}
                 onVolunteerHoursPress={user && isAuthenticated && permissions.hasVolunteerManagementAccess() ? handleVolunteerHoursPress : undefined}
                 isGuest={!isAuthenticated}
@@ -1501,6 +1507,13 @@ export const ProfileHomeScreen: React.FC = () => {
         visible={showLoginModal}
         onClose={() => setShowLoginModal(false)}
         onLogin={handleLoginFromModal}
+      />
+
+      {/* 退出登录确认模态框 */}
+      <LogoutConfirmationModal
+        visible={showLogoutModal}
+        onClose={() => setShowLogoutModal(false)}
+        onConfirm={performLogout}
       />
 
       {/* 个人志愿者历史记录弹窗 */}

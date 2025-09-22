@@ -33,11 +33,11 @@ import {
   getEmailDomainFromBackendSchool
 } from '../../utils/schoolData';
 import { SchoolSelector } from '../../components/common/SchoolSelector';
+import { OrganizationSelector } from '../../components/common/OrganizationSelector';
 import SchoolEmailService from '../../services/schoolEmailService';
 import {
   fetchSchoolList,
   validatePhoneNumber,
-  fetchOrganizationList,
   validatePassword
 } from '../../services/registrationAPI';
 import RegionDetectionService from '../../services/RegionDetectionService';
@@ -59,9 +59,6 @@ export const StudentNormalRegisterStep1Screen: React.FC = () => {
   const detectedRegion = route.params?.detectedRegion || 'zh';
 
   const [loading, setLoading] = useState(false);
-  const [organizationsLoading, setOrganizationsLoading] = useState(false);
-  const [organizations, setOrganizations] = useState<OrganizationData[]>([]);
-  const [organizationModalVisible, setOrganizationModalVisible] = useState(false);
 
   // UCLA学生类型选择
   const [studentType, setStudentType] = useState<'undergraduate' | 'graduate'>('undergraduate');
@@ -76,6 +73,9 @@ export const StudentNormalRegisterStep1Screen: React.FC = () => {
     // SchoolSelector需要的字段
     selectedSchoolId: string;
     selectedSchoolName: string;
+    // OrganizationSelector需要的字段
+    selectedOrganizationId: string;
+    selectedOrganizationName: string;
   }
 
   const [formData, setFormData] = useState<ExtendedFormData>({
@@ -91,6 +91,9 @@ export const StudentNormalRegisterStep1Screen: React.FC = () => {
     // SchoolSelector需要的字段
     selectedSchoolId: '',
     selectedSchoolName: '',
+    // OrganizationSelector需要的字段
+    selectedOrganizationId: '',
+    selectedOrganizationName: '',
   });
 
   const [errors, setErrors] = useState<ValidationErrors>({});
@@ -148,10 +151,6 @@ export const StudentNormalRegisterStep1Screen: React.FC = () => {
     }
   );
 
-  // 加载组织列表
-  useEffect(() => {
-    loadOrganizations();
-  }, []);
 
   // 生成邮箱地址
   useEffect(() => {
@@ -166,24 +165,6 @@ export const StudentNormalRegisterStep1Screen: React.FC = () => {
     }
   }, [emailUsername, formData.selectedSchool]);
 
-  const loadOrganizations = async () => {
-    try {
-      setOrganizationsLoading(true);
-      const response = await fetchOrganizationList();
-
-      if (response.code === 200 && response.data) {
-        setOrganizations(response.data);
-      } else {
-        console.error('加载组织列表失败:', response);
-        Alert.alert(t('common.error'), t('auth.register.errors.organization_load_failed'));
-      }
-    } catch (error) {
-      console.error('加载组织列表失败:', error);
-      Alert.alert(t('common.error'), t('auth.register.errors.organization_load_failed'));
-    } finally {
-      setOrganizationsLoading(false);
-    }
-  };
 
   const updateFormData = <K extends keyof ExtendedFormData>(
     field: K,
@@ -244,6 +225,22 @@ export const StudentNormalRegisterStep1Screen: React.FC = () => {
     // 清除学校选择相关错误
     if (errors.selectedSchool) {
       setErrors(prev => ({ ...prev, selectedSchool: undefined }));
+    }
+  };
+
+  // 处理组织选择
+  const handleOrganizationSelect = (organization: any) => {
+    // 更新相关状态
+    setFormData(prev => ({
+      ...prev,
+      selectedOrganization: organization,
+      selectedOrganizationId: organization.id.toString(),
+      selectedOrganizationName: organization.name
+    }));
+
+    // 清除组织选择相关错误
+    if (errors.selectedOrganization) {
+      setErrors(prev => ({ ...prev, selectedOrganization: undefined }));
     }
   };
 
@@ -645,16 +642,13 @@ export const StudentNormalRegisterStep1Screen: React.FC = () => {
             {/* 组织选择 */}
             <View style={styles.inputContainer}>
               <Text style={styles.label}>{t('auth.register.form.organization_label')} *</Text>
-              <TouchableOpacity
-                style={[styles.input, styles.selectorInput, errors.selectedOrganization && styles.inputError]}
-                onPress={() => setOrganizationModalVisible(true)}
-              >
-                <Text style={formData.selectedOrganization ? styles.selectorText : styles.selectorPlaceholder}>
-                  {formData.selectedOrganization?.name || t('auth.register.form.organization_placeholder')}
-                </Text>
-                <Ionicons name="chevron-down" size={20} color={theme.colors.text.secondary} />
-              </TouchableOpacity>
-              {errors.selectedOrganization && <Text style={styles.errorText}>{errors.selectedOrganization}</Text>}
+              <OrganizationSelector
+                value={formData.selectedOrganizationName}
+                selectedId={formData.selectedOrganizationId}
+                onSelect={handleOrganizationSelect}
+                placeholder={t('auth.register.form.organization_placeholder')}
+                error={errors.selectedOrganization}
+              />
             </View>
           </View>
           </ScrollView>
@@ -681,46 +675,6 @@ export const StudentNormalRegisterStep1Screen: React.FC = () => {
         </TouchableOpacity>
       </View>
 
-      {/* 组织选择模态框 */}
-      <Modal
-        visible={organizationModalVisible}
-        animationType="slide"
-        transparent={true}
-        onRequestClose={() => setOrganizationModalVisible(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>{t('auth.register.form.select_organization')}</Text>
-              <TouchableOpacity onPress={() => setOrganizationModalVisible(false)}>
-                <Ionicons name="close" size={24} color={theme.colors.text.primary} />
-              </TouchableOpacity>
-            </View>
-            {organizationsLoading ? (
-              <ActivityIndicator size="large" color={theme.colors.primary} style={styles.modalLoading} />
-            ) : (
-              <FlatList
-                data={organizations}
-                keyExtractor={(item) => item.id.toString()}
-                renderItem={({ item }) => (
-                  <TouchableOpacity
-                    style={styles.organizationItem}
-                    onPress={() => {
-                      updateFormData('selectedOrganization', item);
-                      setOrganizationModalVisible(false);
-                    }}
-                  >
-                    <Text style={styles.organizationName}>{item.name}</Text>
-                    {formData.selectedOrganization?.id === item.id && (
-                      <Ionicons name="checkmark" size={20} color={theme.colors.primary} />
-                    )}
-                  </TouchableOpacity>
-                )}
-              />
-            )}
-          </View>
-        </View>
-      </Modal>
     </SafeAreaView>
   );
 };

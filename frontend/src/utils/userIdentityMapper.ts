@@ -85,32 +85,33 @@ export const getSchoolInfo = (deptId: number): { name: string; fullName: string 
  * 根据后端部门信息创建学校信息对象
  * @param dept 后端部门信息
  * @param deptId 部门ID
+ * @param isEnglish 是否英文环境（用于CU总部的国际化显示）
  * @returns 学校信息对象
  */
-export const createSchoolInfo = (dept: any, deptId?: number): SchoolInfo | undefined => {
+export const createSchoolInfo = (dept: any, deptId?: number, isEnglish?: boolean): SchoolInfo | undefined => {
   if (!dept && !deptId) return undefined;
-  
+
   const schoolMapping = deptId ? getSchoolInfo(deptId) : null;
-  
-  // 优先使用部门名称，特别是对于CU总部这样的特殊情况
-  const deptName = dept?.deptName || '';
-  let schoolName = deptName;
-  let fullName = deptName;
-  
-  // 如果有学校映射，使用映射的名称
-  if (schoolMapping) {
+
+  // 🆕 学校信息 - 与ProfileHomeScreen保持一致
+  const rawSchool = dept?.deptName || '';
+  let schoolName = rawSchool;
+  let fullName = rawSchool;
+
+  // 🆕 英文环境下使用学校简称 - 与ProfileHomeScreen逻辑一致
+  if (rawSchool.includes('CU总部') || rawSchool === 'CU总部') {
+    schoolName = isEnglish ? 'CU HQ' : 'CU总部';
+    fullName = 'CU Headquarters';
+  } else if (schoolMapping) {
+    // 其他学校使用映射的名称
     schoolName = schoolMapping.name;
     fullName = schoolMapping.fullName;
-  } else if (deptName.includes('CU总部') || deptName === 'CU总部') {
-    // 特殊处理CU总部
-    schoolName = 'CU总部';
-    fullName = 'CU Headquarters';
-  } else if (!deptName) {
+  } else if (!rawSchool) {
     // 只有在完全没有信息时才显示未知
     schoolName = '未知学校';
     fullName = '未知学校';
   }
-  
+
   // ✅ 安全处理parentId字段，避免编码问题
   let safeParentId: number | undefined = undefined;
   if (dept?.parentId !== undefined && dept?.parentId !== null) {
@@ -122,7 +123,7 @@ export const createSchoolInfo = (dept: any, deptId?: number): SchoolInfo | undef
       safeParentId = isNaN(numParentId) ? undefined : numParentId;
     }
   }
-  
+
   return {
     id: (deptId || dept?.deptId || 0).toString(),
     name: schoolName,
@@ -134,48 +135,74 @@ export const createSchoolInfo = (dept: any, deptId?: number): SchoolInfo | undef
 
 /**
  * 根据用户角色信息创建职位信息对象
- * @param roles 用户角色数组
- * @param posts 用户岗位数组
+ * @param user 完整用户对象，包含role、roles、post、posts等字段
  * @returns 职位信息对象
  */
-export const createPositionInfo = (roles: any[], posts?: any[]): PositionInfo | undefined => {
-  if (!roles || roles.length === 0) return undefined;
-  
-  // 获取最高级别的角色
-  const roleHierarchy = ['manage', 'part_manage', 'staff', 'common'];
-  let highestRole = null;
-  
-  for (const roleKey of roleHierarchy) {
-    const role = roles.find(r => (r.key || r.roleKey) === roleKey);
-    if (role) {
-      highestRole = role;
-      break;
+export const createPositionInfo = (user: any): PositionInfo | undefined => {
+  if (!user) return undefined;
+
+  // 获取权限级别 - 从单个role或roles数组
+  let permissionLevel = 'common';
+
+  // 优先检查单个role对象
+  if (user.role?.roleKey) {
+    permissionLevel = user.role.roleKey;
+  } else if (user.roles && Array.isArray(user.roles) && user.roles.length > 0) {
+    // 检查roles数组
+    const roleHierarchy = ['manage', 'part_manage', 'staff', 'common'];
+    for (const roleKey of roleHierarchy) {
+      const role = user.roles.find((r: any) => (r.key || r.roleKey) === roleKey);
+      if (role) {
+        permissionLevel = roleKey;
+        break;
+      }
     }
   }
-  
-  if (!highestRole) {
-    // 如果没有找到标准角色，使用第一个角色
-    highestRole = roles[0];
+
+  // 🚫 权限角色名黑名单 - 与ProfileHomeScreen保持一致
+  const roleBlacklist = ['总管理员', '分管理员', '内部员工', '普通用户', 'admin', 'manager', 'staff', 'common'];
+
+  // 🆕 岗位信息显示逻辑 - 与ProfileHomeScreen保持一致
+  let actualPosition = '';
+
+  // 只有管理员、分管理员、内部员工才显示职位
+  if (['manage', 'part_manage', 'staff'].includes(permissionLevel)) {
+    // 优先显示具体岗位(post)
+    if (user.post?.postName && !roleBlacklist.includes(user.post.postName)) {
+      actualPosition = user.post.postName;
+    } else if (user.role?.roleName && !roleBlacklist.includes(user.role.roleName)) {
+      // 如果没有具体岗位且角色名不在黑名单中，显示角色名称
+      actualPosition = user.role.roleName;
+    } else if (user.roles && user.roles.length > 0) {
+      // 兼容旧格式：从roles数组获取，跳过黑名单
+      for (const role of user.roles) {
+        if (role.roleName && !roleBlacklist.includes(role.roleName)) {
+          actualPosition = role.roleName;
+          break;
+        }
+      }
+    }
   }
-  
-  const roleKey = highestRole.key || highestRole.roleKey || 'common';
-  
-  // 角色中文名映射
-  const roleDisplayNames: Record<string, { zh: string; en: string; level: PositionInfo['level'] }> = {
-    'manage': { zh: '总管理员', en: 'Super Admin', level: 'admin' },
-    'part_manage': { zh: '分管理员', en: 'Partial Admin', level: 'part_admin' },
-    'staff': { zh: '内部员工', en: 'Staff', level: 'staff' },
-    'common': { zh: '普通用户', en: 'User', level: 'user' },
+
+  // 如果没有实际职位，返回undefined（普通用户不显示职位）
+  if (!actualPosition) {
+    return undefined;
+  }
+
+  // 角色级别映射
+  const levelMapping: Record<string, PositionInfo['level']> = {
+    'manage': 'admin',
+    'part_manage': 'part_admin',
+    'staff': 'staff',
+    'common': 'user',
   };
-  
-  const displayInfo = roleDisplayNames[roleKey] || roleDisplayNames['common'];
-  
+
   return {
-    roleKey,
-    roleName: highestRole.roleName || displayInfo.zh,
-    displayName: displayInfo.zh,
-    displayNameEn: displayInfo.en,
-    level: displayInfo.level,
+    roleKey: permissionLevel,
+    roleName: actualPosition, // 使用实际职位名
+    displayName: actualPosition,
+    displayNameEn: actualPosition, // 暂时使用中文，后续可加翻译
+    level: levelMapping[permissionLevel] || 'user',
   };
 };
 
@@ -207,9 +234,22 @@ const getDefaultOrganizationBySchool = (deptId?: number): OrganizationInfo | nul
 /**
  * 将后端用户数据转换为身份码数据
  * @param user 后端用户数据
+ * @param isEnglish 是否为英文环境（可选，默认自动检测）
  * @returns 身份码数据
  */
-export const mapUserToIdentityData = (user: any): UserIdentityData => {
+export const mapUserToIdentityData = (user: any, isEnglish?: boolean): UserIdentityData => {
+  // 🌍 检测当前语言环境
+  let currentIsEnglish = isEnglish;
+  if (currentIsEnglish === undefined) {
+    try {
+      // 尝试导入i18next来检测当前语言
+      const i18n = require('i18next').default;
+      currentIsEnglish = i18n?.language === 'en-US' || i18n?.language === 'en';
+    } catch {
+      // 如果无法访问i18n，默认为中文
+      currentIsEnglish = false;
+    }
+  }
   if (!user) {
     // 如果没有用户数据，返回访客默认数据
     // 注意：访客用户不应该有身份码功能，此数据仅用于错误处理
@@ -230,40 +270,25 @@ export const mapUserToIdentityData = (user: any): UserIdentityData => {
     };
   }
 
-  // 获取组织信息 - 支持字符串和数字类型的orgId
+  // 🆕 组织信息 - 与ProfileHomeScreen保持一致，统一显示为CU
   let orgInfo: OrganizationInfo | null = null;
-  
-  if (user.orgId) {
-    const orgIdNum = typeof user.orgId === 'string' ? parseInt(user.orgId, 10) : user.orgId;
-    if (!isNaN(orgIdNum)) {
-      orgInfo = getOrganizationInfo(orgIdNum);
-    }
+  const schoolName = user.dept?.deptName || user.school?.name || '';
+
+  // 只要有学校信息，组织就统一显示为CU
+  if (schoolName) {
+    orgInfo = {
+      id: 'cu',
+      name: 'CU',
+      displayNameZh: 'CU',
+      displayNameEn: 'CU',
+    };
   }
-  
-  // 如果没有组织信息，根据学校信息创建组织
-  if (!orgInfo) {
-    const schoolName = user.dept?.deptName || user.school?.name || '';
-    if (schoolName) {
-      if (schoolName.includes('CU总部') || schoolName === 'CU总部') {
-        // CU总部的组织就是CU总部本身
-        orgInfo = {
-          id: 'cu_headquarters',
-          name: 'CU总部',
-          displayNameZh: 'CU总部',
-          displayNameEn: 'CU Headquarters',
-        };
-      } else if (user.deptId) {
-        // 其他学校使用默认组织映射
-        orgInfo = getDefaultOrganizationBySchool(user.deptId);
-      }
-    }
-  }
-  
-  // 获取学校信息
-  const school = createSchoolInfo(user.dept, user.deptId);
-  
-  // 获取职位信息
-  const position = createPositionInfo(user.roles, user.posts);
+
+  // 获取学校信息 - 传入语言环境
+  const school = createSchoolInfo(user.dept, user.deptId, currentIsEnglish);
+
+  // 获取职位信息 - 传入完整用户对象
+  const position = createPositionInfo(user);
 
   return {
     userId: user.userId?.toString() || 'unknown',
@@ -275,10 +300,10 @@ export const mapUserToIdentityData = (user: any): UserIdentityData => {
     studentId: user.userId?.toString(), // 使用userId作为学生ID
     deptId: user.deptId?.toString(),
     currentOrganization: orgInfo || {
-      id: '0',
-      name: 'No Organization',
-      displayNameZh: '无组织',
-      displayNameEn: 'No Organization',
+      id: 'cu',
+      name: 'CU',
+      displayNameZh: 'CU',
+      displayNameEn: 'CU',
     },
     memberOrganizations: orgInfo ? [{
       id: orgInfo.id,

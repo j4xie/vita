@@ -30,6 +30,15 @@ PomeloX is a **production-ready** mobile platform for Chinese international stud
 - ❌ **NEVER create missing APIs** - Report missing endpoints immediately
 - ✅ **Real data only** - All user stats, activity data must come from actual APIs
 
+### **🚫 临时禁用功能 (CRITICAL - 2025年9月)**
+- ❌ **用户资料编辑功能已临时封禁** - `/app/user/edit` 接口存在后端Bug
+  - **问题**：编辑用户信息时会意外清空用户角色，导致权限丢失
+  - **影响**：志愿者管理按钮消失，用户权限被重置
+  - **解决方案**：编辑按钮已隐藏 (`PersonalInfoCard.tsx:457`)
+  - **代码位置**：`EditProfileScreen.tsx` 完整保留，仅入口被禁用
+  - **恢复条件**：等待后端修复角色字段处理逻辑
+  - **联系人**：需与后端开发确认 `/app/user/edit` 接口的角色保持机制
+
 ### **🌐 Environment Configuration (CRITICAL)**
 
 #### **测试环境** (frontend-web-testenv)

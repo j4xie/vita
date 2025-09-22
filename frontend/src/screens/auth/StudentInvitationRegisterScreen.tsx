@@ -10,11 +10,8 @@ import {
   ActivityIndicator,
   Keyboard,
   TouchableWithoutFeedback,
-  Modal,
-  FlatList,
   Alert,
 } from 'react-native';
-import { Picker } from '@react-native-picker/picker';
 import { useNavigation, useRoute, CommonActions } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
@@ -25,11 +22,13 @@ import { theme } from '../../theme';
 import { LIQUID_GLASS_LAYERS, DAWN_GRADIENTS } from '../../theme/core';
 import {
   SchoolData,
-  createSchoolDataFromBackend
+  createSchoolDataFromBackend,
+  SCHOOL_EMAIL_MAPPING,
+  getEmailDomainFromBackendSchool
 } from '../../utils/schoolData';
+import { SchoolSelector } from '../../components/common/SchoolSelector';
+import { OrganizationSelector } from '../../components/common/OrganizationSelector';
 import {
-  fetchSchoolList,
-  fetchOrganizationList,
   registerUser,
   validatePhoneNumber
 } from '../../services/registrationAPI';
@@ -64,6 +63,12 @@ interface StudentInvitationFormData {
   selectedOrganization: OrganizationData | null;
   phoneNumber: string; // 手机号
   areaCode: '86' | '1'; // 区号
+  // SchoolSelector需要的字段
+  selectedSchoolId: string;
+  selectedSchoolName: string;
+  // OrganizationSelector需要的字段
+  selectedOrganizationId: string;
+  selectedOrganizationName: string;
 }
 
 interface ValidationErrors {
@@ -128,11 +133,9 @@ export const StudentInvitationRegisterScreen: React.FC = React.memo(() => {
   }, [navigation, isRegistering, registrationSuccess]);
 
   const [loading, setLoading] = useState(false);
-  const [schoolsLoading, setSchoolsLoading] = useState(true);
-  const [organizationsLoading, setOrganizationsLoading] = useState(true);
-  const [schools, setSchools] = useState<SchoolData[]>([]);
-  const [organizations, setOrganizations] = useState<OrganizationData[]>([]);
-  const [organizationModalVisible, setOrganizationModalVisible] = useState(false);
+
+  // UCLA学生类型选择
+  const [studentType, setStudentType] = useState<'undergraduate' | 'graduate'>('undergraduate');
 
   const [formData, setFormData] = useState<StudentInvitationFormData>({
     firstName: '',
@@ -148,6 +151,12 @@ export const StudentInvitationRegisterScreen: React.FC = React.memo(() => {
     selectedOrganization: null,
     phoneNumber: '',
     areaCode: detectedRegion === 'zh' ? '86' : '1', // 根据地区设置默认区号
+    // SchoolSelector需要的字段
+    selectedSchoolId: '',
+    selectedSchoolName: '',
+    // OrganizationSelector需要的字段
+    selectedOrganizationId: '',
+    selectedOrganizationName: '',
   });
 
   const [emailUsername, setEmailUsername] = useState('');
@@ -205,11 +214,6 @@ export const StudentInvitationRegisterScreen: React.FC = React.memo(() => {
     });
   }, [useUser, detectedRegion]);
 
-  // 加载数据
-  useEffect(() => {
-    loadSchools();
-    loadOrganizations();
-  }, []);
 
   // 邮箱自动生成逻辑
   useEffect(() => {
@@ -240,49 +244,7 @@ export const StudentInvitationRegisterScreen: React.FC = React.memo(() => {
     }
   }, [emailUsername, formData.selectedSchool]);
 
-  const loadSchools = async () => {
-    try {
-      setSchoolsLoading(true);
-      const response = await fetchSchoolList();
 
-      if (response.code === 200 && response.data) {
-        const schoolData = createSchoolDataFromBackend(response.data);
-        // 过滤掉非学校的组织机构（如CU总部等）
-        const filteredSchools = schoolData.filter(school => {
-          // 排除CU总部和其他非学校组织
-          const excludedOrganizations = ['CU', '总部', 'Headquarters', 'Chinese Union'];
-          const schoolInfo = `${school.abbreviation} ${school.name}`.toLowerCase();
-
-          return !excludedOrganizations.some(org =>
-            schoolInfo.includes(org.toLowerCase())
-          );
-        });
-        setSchools(filteredSchools);
-      } else {
-        Alert.alert(t('common.error'), t('auth.register.errors.school_load_failed'));
-      }
-    } catch (error) {
-      console.error('加载学校列表失败:', error);
-      Alert.alert(t('common.error'), t('auth.register.errors.school_load_failed'));
-    } finally {
-      setSchoolsLoading(false);
-    }
-  };
-
-  const loadOrganizations = async () => {
-    try {
-      setOrganizationsLoading(true);
-      const response = await fetchOrganizationList();
-
-      if (response.code === 200 && response.data) {
-        setOrganizations(response.data);
-      }
-    } catch (error) {
-      console.error('[StudentInvitationRegister] Failed to load organizations:', error);
-    } finally {
-      setOrganizationsLoading(false);
-    }
-  };
 
   const updateFormData = useCallback(<K extends keyof StudentInvitationFormData>(
     field: K,
@@ -295,6 +257,92 @@ export const StudentInvitationRegisterScreen: React.FC = React.memo(() => {
       }
       return prev;
     });
+  }, []);
+
+  // 处理学校选择
+  const handleSchoolSelect = useCallback((school: any) => {
+    // 为UCLA生成动态邮箱域名
+    const getUCLAEmailDomain = (studentType: 'undergraduate' | 'graduate') => {
+      return studentType === 'graduate' ? '@g.ucla.edu' : '@ucla.edu';
+    };
+
+    // 获取邮箱域名的完整逻辑
+    const getEmailDomain = () => {
+      // 1. 优先处理UCLA特殊情况
+      if (school.aprName === 'UCLA' || school.deptName?.includes('UCLA') || school.deptName?.includes('洛杉矶')) {
+        return getUCLAEmailDomain(studentType);
+      }
+
+      // 2. 使用后端返回的mailDomain
+      if (school.mailDomain && school.mailDomain.trim()) {
+        return school.mailDomain;
+      }
+
+      // 3. 备用：使用前端映射表
+      const abbreviation = school.aprName || '';
+      if (abbreviation && SCHOOL_EMAIL_MAPPING[abbreviation]) {
+        return `@${SCHOOL_EMAIL_MAPPING[abbreviation]}`;
+      }
+
+      // 4. 最后备用：根据学校名称匹配
+      return getEmailDomainFromBackendSchool(school);
+    };
+
+    // 构建SchoolData对象以保持兼容性
+    const schoolData: SchoolData = {
+      id: school.deptId.toString(),
+      name: school.deptName,
+      abbreviation: school.aprName || school.deptName,
+      emailDomain: getEmailDomain()
+    };
+
+    // 更新相关状态
+    setFormData(prev => ({
+      ...prev,
+      selectedSchool: schoolData,
+      selectedSchoolId: school.deptId.toString(),
+      selectedSchoolName: school.deptName
+    }));
+
+    // 清空邮箱用户名，让用户重新输入
+    setEmailUsername('');
+
+    // 清除学校选择相关错误
+    setErrors(prev => ({ ...prev, selectedSchool: undefined }));
+  }, [studentType]);
+
+  // 处理学生类型变化（仅影响UCLA）
+  const handleStudentTypeChange = useCallback((newType: 'undergraduate' | 'graduate') => {
+    setStudentType(newType);
+
+    // 如果当前选择的是UCLA，重新生成邮箱域名
+    if (formData.selectedSchool &&
+        (formData.selectedSchool.abbreviation === 'UCLA' ||
+         formData.selectedSchool.name?.includes('UCLA') ||
+         formData.selectedSchool.name?.includes('洛杉矶'))) {
+
+      const newEmailDomain = newType === 'graduate' ? '@g.ucla.edu' : '@ucla.edu';
+      setFormData(prev => ({
+        ...prev,
+        selectedSchool: prev.selectedSchool ? {
+          ...prev.selectedSchool,
+          emailDomain: newEmailDomain
+        } : null
+      }));
+    }
+  }, [formData.selectedSchool]);
+
+  // 处理组织选择
+  const handleOrganizationSelect = useCallback((organization: any) => {
+    setFormData(prev => ({
+      ...prev,
+      selectedOrganization: organization,
+      selectedOrganizationId: organization.id.toString(),
+      selectedOrganizationName: organization.name
+    }));
+
+    // 清除组织选择相关错误
+    setErrors(prev => ({ ...prev, selectedOrganization: undefined }));
   }, []);
 
   const validateForm = useCallback((): boolean => {
@@ -550,132 +598,66 @@ export const StudentInvitationRegisterScreen: React.FC = React.memo(() => {
     );
   }, [navigation]);
 
-  const renderSchoolPicker = useCallback(() => (
+  const renderSchoolSelector = useCallback(() => (
     <View style={styles.inputContainer}>
-      <Text style={styles.label}>{t('auth.register.form.university_label')}</Text>
-      <View style={[styles.pickerContainer, errors.selectedSchool && styles.inputError]}>
-        {schoolsLoading ? (
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator size="small" color={theme.colors.primary} />
-            <Text style={styles.loadingText}>{t('auth.register.form.loading_schools')}</Text>
-          </View>
-        ) : (
-          <Picker
-            selectedValue={formData.selectedSchool?.id || ''}
-            onValueChange={(itemValue) => {
-              if (itemValue) {
-                const school = schools.find(s => s.id === itemValue);
-                if (school) {
-                  updateFormData('selectedSchool', school);
-                  setEmailUsername(''); // 清空邮箱用户名，让用户重新输入
-                }
-              } else {
-                updateFormData('selectedSchool', null);
-                setEmailUsername('');
-              }
-            }}
-            style={styles.picker}
+      <Text style={styles.label}>{t('auth.register.form.university_label')} *</Text>
+      <SchoolSelector
+        value={formData.selectedSchoolName}
+        selectedId={formData.selectedSchoolId}
+        onSelect={handleSchoolSelect}
+        placeholder={t('auth.register.form.university_placeholder')}
+        error={errors.selectedSchool}
+      />
+    </View>
+  ), [formData.selectedSchoolName, formData.selectedSchoolId, handleSchoolSelect, errors.selectedSchool, t]);
+
+  // UCLA学生类型选择器（仅UCLA时显示）
+  const renderStudentTypeSelector = useCallback(() => {
+    const isUCLA = formData.selectedSchool &&
+      (formData.selectedSchool.abbreviation === 'UCLA' ||
+       formData.selectedSchool.name?.includes('UCLA') ||
+       formData.selectedSchool.name?.includes('洛杉矶'));
+
+    if (!isUCLA) return null;
+
+    return (
+      <View style={styles.inputContainer}>
+        <Text style={styles.label}>{t('auth.register.form.student_type_label')} *</Text>
+        <View style={styles.studentTypeContainer}>
+          <TouchableOpacity
+            style={[styles.studentTypeButton, studentType === 'undergraduate' && styles.studentTypeButtonActive]}
+            onPress={() => handleStudentTypeChange('undergraduate')}
           >
-            <Picker.Item
-              label={t('auth.register.form.university_placeholder')}
-              value=""
-              color={theme.colors.text.disabled}
-            />
-            {schools.map((school) => (
-              <Picker.Item
-                key={school.id}
-                label={school.name}
-                value={school.id}
-                color={theme.colors.text.primary}
-              />
-            ))}
-          </Picker>
-        )}
-      </View>
-      {errors.selectedSchool && <Text style={styles.errorText}>{errors.selectedSchool}</Text>}
-    </View>
-  ), [schoolsLoading, schools, formData.selectedSchool, errors.selectedSchool, t, updateFormData]);
-
-  const renderOrganizationSelector = () => (
-    <View style={styles.inputContainer}>
-      <Text style={styles.label}>{t('auth.register.form.organization_label')}</Text>
-      <TouchableOpacity
-        style={[styles.organizationSelector, errors.selectedOrganization && styles.inputError]}
-        onPress={() => {
-          if (!organizationsLoading && organizations.length > 0) {
-            setOrganizationModalVisible(true);
-          }
-        }}
-        disabled={organizationsLoading}
-      >
-        {organizationsLoading ? (
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator size="small" color={theme.colors.primary} />
-            <Text style={styles.loadingText}>{t('auth.register.form.loading_organizations')}</Text>
-          </View>
-        ) : (
-          <View style={styles.selectorContent}>
-            <Text style={[styles.selectorText, !formData.selectedOrganization && styles.placeholderText]}>
-              {formData.selectedOrganization?.name || t('auth.register.form.organization_placeholder')}
+            <Text style={[styles.studentTypeButtonText, studentType === 'undergraduate' && styles.studentTypeButtonTextActive]}>
+              {t('auth.register.form.undergraduate')}
             </Text>
-            <Ionicons name="chevron-down" size={20} color={theme.colors.text.secondary} />
-          </View>
-        )}
-      </TouchableOpacity>
-      {errors.selectedOrganization && <Text style={styles.errorText}>{errors.selectedOrganization}</Text>}
-    </View>
-  );
-
-  const renderOrganizationModal = () => (
-    <Modal
-      visible={organizationModalVisible}
-      animationType="slide"
-      transparent={true}
-      onRequestClose={() => setOrganizationModalVisible(false)}
-    >
-      <View style={styles.modalOverlay}>
-        <View style={styles.modalContainer}>
-          <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>{t('auth.register.form.organization_label')}</Text>
-            <TouchableOpacity
-              onPress={() => setOrganizationModalVisible(false)}
-              style={styles.modalCloseButton}
-            >
-              <Ionicons name="close" size={24} color={theme.colors.text.primary} />
-            </TouchableOpacity>
-          </View>
-
-          <FlatList
-            data={organizations}
-            keyExtractor={(item) => item.id.toString()}
-            renderItem={({ item }) => (
-              <TouchableOpacity
-                style={[
-                  styles.organizationItem,
-                  formData.selectedOrganization?.id === item.id && styles.organizationItemSelected
-                ]}
-                onPress={() => {
-                  updateFormData('selectedOrganization', item);
-                  setOrganizationModalVisible(false);
-                }}
-              >
-                <Text style={[
-                  styles.organizationItemText,
-                  formData.selectedOrganization?.id === item.id && styles.organizationItemTextSelected
-                ]}>
-                  {item.name}
-                </Text>
-                {formData.selectedOrganization?.id === item.id && (
-                  <Ionicons name="checkmark" size={20} color={theme.colors.primary} />
-                )}
-              </TouchableOpacity>
-            )}
-            showsVerticalScrollIndicator={false}
-          />
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.studentTypeButton, studentType === 'graduate' && styles.studentTypeButtonActive]}
+            onPress={() => handleStudentTypeChange('graduate')}
+          >
+            <Text style={[styles.studentTypeButtonText, studentType === 'graduate' && styles.studentTypeButtonTextActive]}>
+              {t('auth.register.form.graduate')}
+            </Text>
+          </TouchableOpacity>
         </View>
       </View>
-    </Modal>
-  );
+    );
+  }, [formData.selectedSchool, studentType, handleStudentTypeChange, t]);
+
+  const renderOrganizationSelector = useCallback(() => (
+    <View style={styles.inputContainer}>
+      <Text style={styles.label}>{t('auth.register.form.organization_label')} *</Text>
+      <OrganizationSelector
+        value={formData.selectedOrganizationName}
+        selectedId={formData.selectedOrganizationId}
+        onSelect={handleOrganizationSelect}
+        placeholder={t('auth.register.form.organization_placeholder')}
+        error={errors.selectedOrganization}
+      />
+    </View>
+  ), [formData.selectedOrganizationName, formData.selectedOrganizationId, handleOrganizationSelect, errors.selectedOrganization, t]);
+
 
   return (
     <SafeAreaView style={styles.container}>
@@ -781,32 +763,52 @@ export const StudentInvitationRegisterScreen: React.FC = React.memo(() => {
             </View>
 
             {/* 学校选择 */}
-            {renderSchoolPicker()}
+            {renderSchoolSelector()}
 
-            {/* 学校邮箱 - 只有选择学校后才显示 */}
-            {formData.selectedSchool && formData.selectedSchool.emailDomain && (
-              <View style={styles.inputContainer}>
-                <Text style={styles.label}>{t('auth.register.form.school_email_label')}</Text>
-                <View style={styles.emailInputWrapper}>
+            {/* UCLA学生类型选择（仅UCLA时显示） */}
+            {renderStudentTypeSelector()}
+
+            {/* 邮箱输入 - 学校邮箱或普通邮箱 */}
+            {formData.selectedSchool ? (
+              formData.selectedSchool.emailDomain ? (
+                <View style={styles.inputContainer}>
+                  <Text style={styles.label}>{t('auth.register.form.school_email_label')}</Text>
+                  <View style={styles.emailInputWrapper}>
+                    <TextInput
+                      style={[styles.emailUsernameInput, errors.email && styles.inputError]}
+                      placeholder={t('auth.register.form.email_username_placeholder')}
+                      value={emailUsername}
+                      onChangeText={setEmailUsername}
+                      autoCapitalize="none"
+                      autoCorrect={false}
+                      placeholderTextColor={theme.colors.text.disabled}
+                    />
+                    <Text style={styles.emailDomain}>{formData.selectedSchool.emailDomain}</Text>
+                  </View>
+                  {formData.generatedEmail && (
+                    <Text style={styles.emailPreview}>
+                      {t('auth.register.form.complete_email')}: {formData.generatedEmail}
+                    </Text>
+                  )}
+                  {errors.email && <Text style={styles.errorText}>{errors.email}</Text>}
+                </View>
+              ) : (
+                <View style={styles.inputContainer}>
+                  <Text style={styles.label}>{t('auth.register.form.email_label')} *</Text>
                   <TextInput
-                    style={[styles.emailUsernameInput, errors.email && styles.inputError]}
-                    placeholder={t('auth.register.form.email_username_placeholder')}
-                    value={emailUsername}
-                    onChangeText={setEmailUsername}
+                    style={[styles.input, errors.email && styles.inputError]}
+                    placeholder={t('auth.register.form.email_placeholder')}
+                    value={formData.email}
+                    onChangeText={(text) => updateFormData('email', text)}
+                    keyboardType="email-address"
                     autoCapitalize="none"
                     autoCorrect={false}
                     placeholderTextColor={theme.colors.text.disabled}
                   />
-                  <Text style={styles.emailDomain}>{formData.selectedSchool.emailDomain}</Text>
+                  {errors.email && <Text style={styles.errorText}>{errors.email}</Text>}
                 </View>
-                {formData.generatedEmail && (
-                  <Text style={styles.emailPreview}>
-                    {t('auth.register.form.complete_email')}: {formData.generatedEmail}
-                  </Text>
-                )}
-                {errors.email && <Text style={styles.errorText}>{errors.email}</Text>}
-              </View>
-            )}
+              )
+            ) : null}
 
             {/* 手机号输入 */}
             <View style={styles.inputContainer}>
@@ -947,8 +949,6 @@ export const StudentInvitationRegisterScreen: React.FC = React.memo(() => {
       </View>
 
 
-      {/* 组织选择Modal */}
-      {renderOrganizationModal()}
 
       {/* 成功Modal */}
       <LiquidSuccessModal
@@ -1274,6 +1274,33 @@ const styles = StyleSheet.create({
     fontSize: theme.typography.fontSize.base,
     color: theme.colors.text.primary,
     paddingVertical: 0,
+  },
+  // UCLA学生类型选择器样式
+  studentTypeContainer: {
+    flexDirection: 'row',
+    gap: theme.spacing[2],
+  },
+  studentTypeButton: {
+    flex: 1,
+    paddingVertical: theme.spacing[3],
+    paddingHorizontal: theme.spacing[4],
+    backgroundColor: theme.colors.background.secondary,
+    borderRadius: theme.borderRadius.lg,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'transparent',
+  },
+  studentTypeButtonActive: {
+    backgroundColor: theme.colors.primary + '15',
+    borderColor: theme.colors.primary,
+  },
+  studentTypeButtonText: {
+    fontSize: theme.typography.fontSize.sm,
+    color: theme.colors.text.secondary,
+  },
+  studentTypeButtonTextActive: {
+    color: theme.colors.primary,
+    fontWeight: theme.typography.fontWeight.medium,
   },
   // Picker样式
   picker: {

@@ -6,6 +6,7 @@ import {
   StyleSheet,
   Modal,
   FlatList,
+  TextInput,
   ActivityIndicator,
   Alert,
 } from 'react-native';
@@ -13,7 +14,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { theme } from '../../theme';
 import { LIQUID_GLASS_LAYERS } from '../../theme/core';
-import { pomeloXAPI } from '../../services/PomeloXAPI';
+import { fetchOrganizationList } from '../../services/registrationAPI';
 
 interface Organization {
   id: number;
@@ -37,25 +38,22 @@ export const OrganizationSelector: React.FC<OrganizationSelectorProps> = ({
   error,
 }) => {
   const { t } = useTranslation();
-  const defaultPlaceholder = placeholder || t('common.select_organization');
+  const defaultPlaceholder = placeholder || t('auth.register.form.organization_placeholder');
+
   const [modalVisible, setModalVisible] = useState(false);
   const [organizations, setOrganizations] = useState<Organization[]>([]);
+  const [filteredOrganizations, setFilteredOrganizations] = useState<Organization[]>([]);
   const [loading, setLoading] = useState(false);
+  const [searchText, setSearchText] = useState('');
 
   const fetchOrganizations = async () => {
     setLoading(true);
     try {
-      const response = await fetch('https://www.vitaglobal.icu/app/organization/list', {
-        method: 'GET',
-        headers: {
-          'Accept': 'application/json',
-        },
-      });
-      
-      const result = await response.json();
-      
-      if (result.code === 200 && result.rows) {
-        setOrganizations(result.rows);
+      const result = await fetchOrganizationList();
+
+      if (result.code === 200 && result.data) {
+        setOrganizations(result.data);
+        setFilteredOrganizations(result.data);
       } else {
         Alert.alert(t('common.error'), t('auth.register.errors.organization_load_failed'));
       }
@@ -73,9 +71,22 @@ export const OrganizationSelector: React.FC<OrganizationSelectorProps> = ({
     }
   }, [modalVisible]);
 
+  useEffect(() => {
+    if (searchText.trim() === '') {
+      setFilteredOrganizations(organizations);
+    } else {
+      const searchLower = searchText.toLowerCase();
+      const filtered = organizations.filter(org =>
+        org.name.toLowerCase().includes(searchLower)
+      );
+      setFilteredOrganizations(filtered);
+    }
+  }, [searchText, organizations]);
+
   const handleSelectOrganization = (organization: Organization) => {
     onSelect(organization);
     setModalVisible(false);
+    setSearchText('');
   };
 
   const renderOrganizationItem = ({ item }: { item: Organization }) => (
@@ -126,18 +137,34 @@ export const OrganizationSelector: React.FC<OrganizationSelectorProps> = ({
       <Modal
         visible={modalVisible}
         animationType="slide"
-        presentationStyle="pageSheet"
+        presentationStyle="formSheet"
         onRequestClose={() => setModalVisible(false)}
       >
         <View style={styles.modalContainer}>
           <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>{t('common.select_organization')}</Text>
+            <Text style={styles.modalTitle}>{t('auth.register.form.select_organization')}</Text>
             <TouchableOpacity
               onPress={() => setModalVisible(false)}
               style={styles.closeButton}
             >
               <Ionicons name="close" size={24} color={theme.colors.text.primary} />
             </TouchableOpacity>
+          </View>
+
+          <View style={styles.searchContainer}>
+            <Ionicons
+              name="search"
+              size={20}
+              color={theme.colors.text.secondary}
+              style={styles.searchIcon}
+            />
+            <TextInput
+              style={styles.searchInput}
+              placeholder={t('auth.register.form.search_organizations')}
+              value={searchText}
+              onChangeText={setSearchText}
+              placeholderTextColor={theme.colors.text.disabled}
+            />
           </View>
 
           {loading ? (
@@ -147,7 +174,7 @@ export const OrganizationSelector: React.FC<OrganizationSelectorProps> = ({
             </View>
           ) : (
             <FlatList
-              data={organizations}
+              data={filteredOrganizations}
               renderItem={renderOrganizationItem}
               keyExtractor={(item) => item.id.toString()}
               style={styles.organizationList}
@@ -208,6 +235,24 @@ const styles = StyleSheet.create({
   },
   closeButton: {
     padding: theme.spacing[2],
+  },
+  searchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: theme.colors.background.secondary,
+    marginHorizontal: theme.spacing[4],
+    marginVertical: theme.spacing[3],
+    borderRadius: theme.borderRadius.lg,
+    paddingHorizontal: theme.spacing[3],
+  },
+  searchIcon: {
+    marginRight: theme.spacing[2],
+  },
+  searchInput: {
+    flex: 1,
+    paddingVertical: theme.spacing[3],
+    fontSize: theme.typography.fontSize.base,
+    color: theme.colors.text.primary,
   },
   loadingContainer: {
     flex: 1,

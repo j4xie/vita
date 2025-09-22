@@ -1587,7 +1587,7 @@ PODS:
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
     - Yoga
-  - react-native-render-html (6.2.0):
+  - react-native-render-html (6.3.4):
     - React-Core
   - react-native-safe-area-context (4.12.0):
     - React-Core
@@ -2375,7 +2375,7 @@ SPEC CHECKSUMS:
   React-Mapbuffer: 33546a3ebefbccb8770c33a1f8a5554fa96a54de
   React-microtasksnativemodule: 9ae4714c1a76935a53fed603a4b44ac6f650a3f1
   react-native-blur: c6212b0b7fdfeb0a5023b75ab0697ad3892f906e
-  react-native-render-html: 96c542212aa46dc3d4078a1afe3caa35ab5a035b
+  react-native-render-html: 5afc4751f1a98621b3009432ef84c47019dcb2bd
   react-native-safe-area-context: 8b8404e70b0cbf2a56428a17017c14c1dcc16448
   React-nativeconfig: 8efdb1ef1e9158c77098a93085438f7e7b463678
   React-NativeModulesApple: 2f4fd95d013b5f3f485b5e2ff267b45e4c7ffc25
@@ -2417,6 +2417,6 @@ SPEC CHECKSUMS:
   Yoga: feb4910aba9742cfedc059e2b2902e22ffe9954a
   ZXingObjC: 8898711ab495761b2dbbdec76d90164a6d7e14c5
 
-PODFILE CHECKSUM: 6fa0198dec28bdcefd2ddd30250e5b5fa295e5bf
+PODFILE CHECKSUM: 4088045735b48dbdb9f51617e862c3b357cb4364
 
 COCOAPODS: 1.16.2

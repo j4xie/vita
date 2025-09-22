@@ -36,13 +36,14 @@ interface PersonalInfoCardProps {
   testID?: string;
   // 精简统计数据 - 仅2项
   stats?: {
-    volunteerHours: number; 
+    volunteerHours: number;
     points: number;
   };
   membershipStatus?: 'free' | 'vip' | 'premium';
   // 新增主CTA
   onQRCodePress?: () => void;
   onVolunteerHoursPress?: () => void; // 新增：点击志愿者小时回调
+  onEditPress?: () => void; // 新增：点击编辑资料回调
   isGuest?: boolean; // 新增：是否为访客状态
 }
 
@@ -59,6 +60,7 @@ export const PersonalInfoCard: React.FC<PersonalInfoCardProps> = ({
   membershipStatus = 'free',
   onQRCodePress,
   onVolunteerHoursPress,
+  onEditPress,
   isGuest = false,
 }) => {
   const { t } = useTranslation();
@@ -257,26 +259,39 @@ export const PersonalInfoCard: React.FC<PersonalInfoCardProps> = ({
     },
     
     // V2.0 克制设计 - 中性玻璃按钮
-    qrCodeButton: {
+    rightButtonsContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 8, // 按钮之间的间距
+    },
+    actionButton: {
       backgroundColor: 'rgba(255, 255, 255, 0.9)', // 中性白玻璃
       borderWidth: 1,
       borderColor: 'rgba(0, 0, 0, 0.1)', // 中性淡灰边框
       borderTopColor: 'rgba(255, 255, 255, 0.8)', // 白色rim高光
-      paddingHorizontal: 12,
+      paddingHorizontal: 10,
       paddingVertical: 6,
       height: 32, // 更小尺寸，不抢眼
       borderRadius: 16,
       flexDirection: 'row',
       alignItems: 'center',
+      justifyContent: 'center',
       // 极轻阴影
       shadowColor: 'rgba(0, 0, 0, 0.05)',
       shadowOffset: { width: 0, height: 1 },
       shadowOpacity: 0.05,
       shadowRadius: 2,
       elevation: 1,
+      minWidth: 32, // 确保圆形按钮的最小宽度
     },
-    qrCodeText: {
-      fontSize: 14, // 提升至辅助信息最小14pt
+    editButton: {
+      // 编辑按钮特定样式
+    },
+    qrCodeButton: {
+      // QR码按钮特定样式
+    },
+    buttonText: {
+      fontSize: 12, // 稍微小一点以适应更紧凑的布局
       fontWeight: '600',
       color: '#374151', // 深灰色文字，适配白色背景
       marginLeft: 4,
@@ -435,15 +450,43 @@ export const PersonalInfoCard: React.FC<PersonalInfoCardProps> = ({
           )}
         </View>
         
-        {/* QR码按钮 - 已登录用户显示 */}
-        {onQRCodePress && !isGuest && (
-          <TouchableOpacity 
-            style={styles.qrCodeButton}
-            onPress={onQRCodePress}
-            activeOpacity={0.8}
-          >
-            <Ionicons name="qr-code" size={20} color={dmIcons?.primary || (isDarkMode ? '#FFFFFF' : '#000000')} />
-          </TouchableOpacity>
+        {/* 右侧操作按钮 - 编辑和QR码 */}
+        {!isGuest && (onEditPress || onQRCodePress) && (
+          <View style={styles.rightButtonsContainer}>
+            {/* 编辑按钮 - 🚫 临时封禁：由于后端角色字段问题暂时禁用 */}
+            {false && onEditPress && (
+              <TouchableOpacity
+                style={[styles.actionButton, styles.editButton]}
+                onPress={onEditPress}
+                activeOpacity={0.8}
+                accessibilityRole="button"
+                accessibilityLabel={t('profile.edit.title', '编辑资料')}
+              >
+                <Ionicons
+                  name="pencil"
+                  size={16}
+                  color={dmIcons?.primary || (isDarkMode ? '#FFFFFF' : '#374151')}
+                />
+              </TouchableOpacity>
+            )}
+
+            {/* QR码按钮 */}
+            {onQRCodePress && (
+              <TouchableOpacity
+                style={[styles.actionButton, styles.qrCodeButton]}
+                onPress={onQRCodePress}
+                activeOpacity={0.8}
+                accessibilityRole="button"
+                accessibilityLabel={t('profile.qr_code', 'QR 码')}
+              >
+                <Ionicons
+                  name="qr-code"
+                  size={16}
+                  color={dmIcons?.primary || (isDarkMode ? '#FFFFFF' : '#374151')}
+                />
+              </TouchableOpacity>
+            )}
+          </View>
         )}
       </Animated.View>
     </Pressable>

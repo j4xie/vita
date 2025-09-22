@@ -16,11 +16,12 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { i18n } from '../../utils/i18n';
 import { useTheme } from '../../context/ThemeContext';
+import { useVolunteerContext } from '../../context/VolunteerContext';
 import { theme } from '../../theme';
 import { LIQUID_GLASS_LAYERS } from '../../theme/core';
 import { usePerformanceDegradation } from '../../hooks/usePerformanceDegradation';
 import { getVolunteerHistoryRecords, VolunteerRecord } from '../../services/volunteerAPI';
-import { formatTime, formatDuration } from '../../screens/wellbeing/utils/timeFormatter';
+import { formatVolunteerTime, calculateVolunteerDuration } from '../../utils/volunteerTimeFormatter';
 import { getUserPermissionLevel } from '../../types/userPermissions';
 import { SafeText } from '../common/SafeText';
 
@@ -39,29 +40,76 @@ const HistoryRecordItem = React.memo<{
   isDarkMode: boolean;
 }>(({ record, isDarkMode }) => {
   const { t } = useTranslation();
+  const [isExpanded, setIsExpanded] = useState(false);
 
-  // 计算工作时长和超时检测
+  // 计算工作时长和超时检测 - 使用统一的计算函数
   const durationInfo = useMemo(() => {
     if (!record.startTime || !record.endTime) return null;
-    try {
-      const start = new Date(record.startTime);
-      const end = new Date(record.endTime);
-      const diffMs = end.getTime() - start.getTime();
-      const minutes = Math.floor(diffMs / (1000 * 60));
-      const hours = minutes / 60;
-      
-      return {
-        duration: formatDuration(minutes),
-        isOvertime: hours > 12, // 超过12小时标记为异常
-        hours: hours
-      };
-    } catch {
-      return null;
-    }
+
+    const result = calculateVolunteerDuration(record.startTime, record.endTime);
+    return {
+      duration: result.duration,
+      isOvertime: result.isOvertime,
+      isInvalid: result.isInvalid,
+      hours: result.hours
+    };
   }, [record.startTime, record.endTime]);
 
-  const isCompleted = record.endTime !== null;
-  const statusColor = isCompleted ? theme.colors.success : theme.colors.warning;
+  // 根据状态确定显示信息
+  const statusInfo = useMemo(() => {
+    // 如果有status字段，优先使用status
+    if (record.status !== undefined) {
+      switch (record.status) {
+        case -1:
+          return {
+            label: t('wellbeing.volunteer.history.status.pending'),
+            color: '#FF9500', // 橙色 - 待审核
+            backgroundColor: '#FF950020',
+            icon: 'time-outline'
+          };
+        case 1:
+          return {
+            label: t('wellbeing.volunteer.history.status.approved'),
+            color: theme.colors.success,
+            backgroundColor: theme.colors.success + '20',
+            icon: 'checkmark-circle-outline'
+          };
+        case 2:
+          return {
+            label: t('wellbeing.volunteer.history.status.rejected'),
+            color: '#FF3B30', // 红色 - 已拒绝
+            backgroundColor: '#FF3B3020',
+            icon: 'close-circle-outline'
+          };
+        default:
+          return {
+            label: t('wellbeing.volunteer.history.status.unknown'),
+            color: '#8E8E93',
+            backgroundColor: '#8E8E9320',
+            icon: 'help-circle-outline'
+          };
+      }
+    }
+
+    // 兼容旧数据：根据是否有endTime判断
+    const isCompleted = record.endTime !== null;
+    if (isCompleted) {
+      // 有endTime但没有status，默认为待审核状态
+      return {
+        label: t('wellbeing.volunteer.history.status.pending'),
+        color: '#FF9500',
+        backgroundColor: '#FF950020',
+        icon: 'time-outline'
+      };
+    } else {
+      return {
+        label: t('wellbeing.volunteer.history.inProgress'),
+        color: theme.colors.warning,
+        backgroundColor: theme.colors.warning + '20',
+        icon: 'play-circle-outline'
+      };
+    }
+  }, [record.status, record.endTime, theme.colors, t]);
 
   return (
     <View style={[
@@ -87,9 +135,9 @@ const HistoryRecordItem = React.memo<{
         </View>
         
         <View style={styles.statusContainer}>
-          <View style={[styles.statusBadge, { backgroundColor: statusColor + '20' }]}>
-            <Text style={[styles.statusText, { color: statusColor }]}>
-              {isCompleted ? t('wellbeing.volunteer.history.completed') : t('wellbeing.volunteer.history.inProgress')}
+          <View style={[styles.statusBadge, { backgroundColor: statusInfo.backgroundColor }]}>
+            <Text style={[styles.statusText, { color: statusInfo.color }]}>
+              {statusInfo.label}
             </Text>
           </View>
           
@@ -113,7 +161,7 @@ const HistoryRecordItem = React.memo<{
             {t('wellbeing.volunteer.history.checkInTime')}
           </Text>
           <SafeText style={[styles.timeValue, { color: theme.colors.text.primary }]} fallback="--:--">
-            {formatTime(record.startTime)}
+            {formatVolunteerTime(record.startTime)}
           </SafeText>
         </View>
 
@@ -124,27 +172,27 @@ const HistoryRecordItem = React.memo<{
               {t('wellbeing.volunteer.history.checkOutTime')}
             </Text>
             <SafeText style={[styles.timeValue, { color: theme.colors.text.primary }]} fallback="--:--">
-              {formatTime(record.endTime)}
+              {formatVolunteerTime(record.endTime)}
             </SafeText>
           </View>
         )}
 
-        {durationInfo?.duration && (
+        {record.endTime && durationInfo && !durationInfo?.isInvalid && (
           <View style={styles.durationRow}>
-            <Ionicons 
-              name="time-outline" 
-              size={14} 
-              color={durationInfo.isOvertime ? '#DC2626' : theme.colors.warning} 
+            <Ionicons
+              name="time-outline"
+              size={14}
+              color={durationInfo.isInvalid ? '#DC2626' : (durationInfo.isOvertime ? '#DC2626' : theme.colors.warning)}
             />
             <Text style={[styles.durationLabel, { color: theme.colors.text.secondary }]}>
               {t('wellbeing.volunteer.history.workDuration')}
             </Text>
             <View style={styles.durationValueContainer}>
               <Text style={[
-                styles.durationValue, 
-                { 
-                  color: durationInfo.isOvertime ? '#DC2626' : theme.colors.primary, 
-                  fontWeight: '600' 
+                styles.durationValue,
+                {
+                  color: durationInfo.isInvalid ? '#DC2626' : (durationInfo.isOvertime ? '#DC2626' : theme.colors.primary),
+                  fontWeight: '600'
                 }
               ]}>
                 {durationInfo.duration}
@@ -162,15 +210,38 @@ const HistoryRecordItem = React.memo<{
         )}
       </View>
 
-      {/* 操作人信息 */}
-      {record.operateLegalName && (
-        <View style={styles.operatorInfo}>
-          <Ionicons name="person-outline" size={12} color={theme.colors.text.tertiary} />
-          <Text style={[styles.operatorText, { color: theme.colors.text.tertiary }]}>
-            {t('wellbeing.volunteer.history.operator')}: {record.operateLegalName}
-          </Text>
+      {/* 详情展开按钮 - 只有当有remark内容时才显示 */}
+      {record.remark && (
+        <View style={styles.detailSection}>
+          <TouchableOpacity
+            style={styles.detailButton}
+            onPress={() => setIsExpanded(!isExpanded)}
+            activeOpacity={0.7}
+          >
+            <Ionicons
+              name={isExpanded ? "chevron-down" : "chevron-forward"}
+              size={16}
+              color={theme.colors.text.secondary}
+            />
+            <Text style={[styles.detailButtonText, { color: theme.colors.text.secondary }]}>
+              {t('wellbeing.volunteer.history.detail', '详情')}
+            </Text>
+          </TouchableOpacity>
+
+          {/* 工作描述展开内容 */}
+          {isExpanded && (
+            <View style={styles.descriptionContainer}>
+              <Text style={[styles.descriptionLabel, { color: theme.colors.text.secondary }]}>
+                {t('wellbeing.volunteer.history.workDescription', '工作描述')}:
+              </Text>
+              <Text style={[styles.descriptionText, { color: theme.colors.text.primary }]}>
+                {record.remark || t('wellbeing.volunteer.history.noDescription', '暂无描述')}
+              </Text>
+            </View>
+          )}
         </View>
       )}
+
     </View>
   );
 }, (prevProps, nextProps) => {
@@ -201,6 +272,7 @@ export const VolunteerHistoryBottomSheet: React.FC<VolunteerHistoryBottomSheetPr
   const { t } = useTranslation();
   const themeContext = useTheme();
   const isDarkMode = themeContext.isDarkMode;
+  const volunteerContext = useVolunteerContext();
   
   // 性能优化 - 使用分层配置
   const { getLayerConfig } = usePerformanceDegradation();
@@ -214,6 +286,19 @@ export const VolunteerHistoryBottomSheet: React.FC<VolunteerHistoryBottomSheetPr
 
   // Refs - 内存管理
   const loadingRef = useRef(false);
+
+  // 监听VolunteerContext状态变化，自动刷新历史记录
+  useEffect(() => {
+    if (visible && volunteerContext.currentStatus === 'signed_out') {
+      console.log('🔄 [HISTORY-CONTEXT] 检测到签退状态，刷新历史记录');
+      // 延迟刷新确保后端数据已更新
+      setTimeout(() => {
+        if (visible && !loadingRef.current) {
+          loadHistoryRecords(selectedDays);
+        }
+      }, 1000);
+    }
+  }, [volunteerContext.currentStatus, visible, selectedDays, loadHistoryRecords]);
 
   // 根据权限确定可用的时间范围选项 - 使用useMemo缓存
   const timeRangeOptions = useMemo((): TimeRangeOption[] => {
@@ -720,18 +805,38 @@ const styles = StyleSheet.create({
     marginLeft: 2,
   },
   
-  // 操作人信息
-  operatorInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  // 详情展开区域
+  detailSection: {
     marginTop: 6,
     paddingTop: 6,
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: 'rgba(0, 0, 0, 0.06)',
   },
-  operatorText: {
-    fontSize: 16, // 提升至交互文字16pt（操作人是重要信息）
+  detailButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 4,
+  },
+  detailButtonText: {
+    fontSize: 16, // 交互文字16pt
     marginLeft: 4,
+    fontWeight: '500',
+  },
+  descriptionContainer: {
+    marginTop: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 6,
+    backgroundColor: 'rgba(0, 0, 0, 0.02)',
+    borderRadius: 8,
+  },
+  descriptionLabel: {
+    fontSize: 14, // 辅助信息14pt
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+  descriptionText: {
+    fontSize: 14, // 辅助信息14pt
+    lineHeight: 20,
   },
   
   // 状态样式

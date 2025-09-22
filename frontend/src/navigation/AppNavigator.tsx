@@ -17,6 +17,7 @@ import { pageTransitions } from '../utils/animations';
 import { LanguageProvider } from '../context/LanguageContext';
 import { ThemeProvider } from '../context/ThemeContext';
 import { FilterProvider } from '../context/FilterContext';
+import { VolunteerProvider } from '../context/VolunteerContext';
 import { shouldShowTabBar, mustHideTabBar } from '../config/tabBarConfig';
 
 // Screens
@@ -57,9 +58,11 @@ import { ConsultingScreen } from '../screens/consulting/ConsultingScreen';
 import { CommunityScreen } from '../screens/community/CommunityScreen';
 import { WellbeingScreen } from '../screens/wellbeing/WellbeingScreen';
 import { SearchScreen } from '../screens/search/SearchScreen';
-import SchoolDetailScreen from '../screens/wellbeing/SchoolDetailScreen';
 import { VolunteerCheckInScreen } from '../screens/volunteer/VolunteerCheckInScreen';
-import { VolunteerManagementScreen } from '../screens/volunteer/VolunteerManagementScreen';
+import { VolunteerHomeScreen } from '../screens/volunteer/VolunteerHomeScreen';
+import { VolunteerCheckOutScreen } from '../screens/volunteer/VolunteerCheckOutScreen';
+import { VolunteerSchoolListScreen } from '../screens/volunteer/VolunteerSchoolListScreen';
+import { VolunteerSchoolDetailScreen } from '../screens/volunteer/VolunteerSchoolDetailScreen';
 import { FloatingAIButton } from '../components/common/FloatingAIButton';
 import { GlobalTouchHandler } from '../components/common/GlobalTouchHandler';
 import { ErrorBoundary } from '../components/common/ErrorBoundary';
@@ -225,27 +228,6 @@ const WellbeingNavigator = () => {
       <WellbeingStack.Screen 
         name="WellbeingHome" 
         component={WellbeingScreen}
-      />
-      <WellbeingStack.Screen 
-        name="SchoolDetail" 
-        component={SchoolDetailScreen}
-        options={{
-          ...pageTransitions.slideFromRight,
-        }}
-      />
-      <WellbeingStack.Screen 
-        name="VolunteerCheckIn" 
-        component={VolunteerCheckInScreen}
-        options={{
-          ...pageTransitions.slideFromRight,
-        }}
-      />
-      <WellbeingStack.Screen 
-        name="VolunteerManagement" 
-        component={VolunteerManagementScreen}
-        options={{
-          ...pageTransitions.slideFromRight,
-        }}
       />
     </WellbeingStack.Navigator>
   );
@@ -421,13 +403,54 @@ const ProfileNavigator = () => {
           headerShown: false, // MyCardsScreen有自己的header
         }}
       /> */}
-      <ProfileStack.Screen 
-        name="Terms" 
+      <ProfileStack.Screen
+        name="Terms"
         component={TermsScreen}
         options={({ route }) => ({
           title: (route.params as any)?.type === 'privacy' ? t('navigation.headers.privacy_policy') : t('navigation.headers.terms_of_service'),
           ...pageTransitions.slideFromRight,
         })}
+      />
+      {/* Volunteer Management Screens */}
+      <ProfileStack.Screen
+        name="VolunteerHome"
+        component={VolunteerHomeScreen}
+        options={{
+          title: t('navigation.headers.volunteer_management'),
+          headerShown: false,
+        }}
+      />
+      <ProfileStack.Screen
+        name="VolunteerSchoolList"
+        component={VolunteerSchoolListScreen}
+        options={{
+          title: t('navigation.headers.school_list'),
+          ...pageTransitions.slideFromRight,
+        }}
+      />
+      <ProfileStack.Screen
+        name="VolunteerSchoolDetail"
+        component={VolunteerSchoolDetailScreen}
+        options={{
+          headerShown: false,
+          ...pageTransitions.slideFromRight,
+        }}
+      />
+      <ProfileStack.Screen
+        name="VolunteerCheckIn"
+        component={VolunteerCheckInScreen}
+        options={{
+          title: t('navigation.headers.volunteer_checkin'),
+          ...pageTransitions.slideFromRight,
+        }}
+      />
+      <ProfileStack.Screen
+        name="VolunteerCheckOut"
+        component={VolunteerCheckOutScreen}
+        options={{
+          headerShown: false,
+          ...pageTransitions.slideFromRight,
+        }}
       />
     </ProfileStack.Navigator>
   );
@@ -615,7 +638,8 @@ export const AppNavigator = () => {
     <UserProvider>
       <LanguageProvider>
         <ThemeProvider>
-          <NavigationContainer>
+          <VolunteerProvider>
+            <NavigationContainer>
         <RootStack.Navigator
           screenOptions={{
             headerShown: false,
@@ -757,7 +781,8 @@ export const AppNavigator = () => {
           />
           
         </RootStack.Navigator>
-        </NavigationContainer>
+            </NavigationContainer>
+          </VolunteerProvider>
         </ThemeProvider>
       </LanguageProvider>
     </UserProvider>

@@ -280,6 +280,8 @@
       },
       "student": {
         "title": "Student Registration",
+        "invitation_title": "Student Invitation Registration",
+        "register_button": "Complete Registration",
         "success_title": "Student Account Created Successfully",
         "success_message": "Welcome to PomeloX! You can now participate in various activities and services.",
         "start_using": "Start Using",
@@ -784,7 +786,8 @@
     },
     "organization": {
       "cu": "CU",
-      "student_union": "Student Union"
+      "student_union": "Student Union",
+      "cu_headquarters": "CU HQ"
     },
     "school": {
       "cu_headquarters": "CU HQ"
@@ -829,25 +832,47 @@
       "accentColorSelection": "Accent Color Selection"
     },
     "edit": {
+      "title": "Edit Profile",
       "changeAvatar": "Change Avatar",
       "changeAvatarMessage": "Coming soon",
       "name": "Name",
       "namePlaceholder": "Enter your name",
-      "email": "Email",
+      "nickName": "Nickname",
+      "nickNamePlaceholder": "Enter your nickname",
+      "userName": "Username",
+      "userNamePlaceholder": "Enter your username",
+      "email": "Primary Email",
       "emailPlaceholder": "Enter email address",
+      "alternateEmail": "Work Email",
+      "alternateEmailPlaceholder": "Enter work email",
       "phone": "Phone",
       "phonePlaceholder": "Enter phone number",
+      "areaCode": "Area Code",
+      "personalInfo": "Personal Information",
+      "gender": "Gender",
+      "male": "Male",
+      "female": "Female",
+      "other": "Other",
       "university": "University",
       "universityPlaceholder": "Enter your university",
+      "additionalInfo": "Additional Information",
       "location": "Location",
       "locationPlaceholder": "Enter your city",
       "bio": "Bio",
       "bioPlaceholder": "Tell us about yourself...",
+      "noChanges": "No Changes",
+      "noChangesMessage": "You haven't made any changes",
       "saving": "Saving...",
       "save": "Save",
+      "save_changes": "Save Changes",
       "saveSuccess": "Save Successful",
       "saveSuccessMessage": "Profile updated",
-      "confirm": "OK"
+      "confirm": "OK",
+      "fieldRestricted": "This field cannot be modified",
+      "nameRestrictedMessage": "Legal name cannot be changed after registration",
+      "usernameRestrictedMessage": "Username is linked to email and cannot be modified separately",
+      "emailRestrictedMessage": "Email is your login account and cannot be modified",
+      "phoneRestrictedMessage": "Phone number modification requires verification, feature coming soon"
     },
     "about": {
       "sectionAppInfo": "App Information",
@@ -993,11 +1018,14 @@
       "developing": "Under Development",
       "developing_subtitle": "More features coming soon",
       "welcome_title": "Welcome to International Student Safety Plan",
-      "welcome_subtitle": "This service provides rapid, practical, and accessible safety support and information assistance. This service does not replace public emergency services; in case of life-threatening or property-threatening emergencies, please call 9-1-1 immediately (USA)",
+      "welcome_subtitle": "Quick safety support and guidance for international students",
+      "emergency_warning": "Emergency Alert",
+      "emergency_warning_text": "For life-threatening emergencies, call 9-1-1 immediately",
+      "service_description": "This service provides safety support and information assistance, but does not replace public emergency services.",
       "emergency_contacts": "Emergency Contacts",
-      "emergency_911": "Emergency 911",
+      "emergency_911": "Emergency 9-1-1",
       "emergency_911_desc": "Call in emergency",
-      "crisis_hotline": "Crisis Hotline 988",
+      "crisis_hotline": "Crisis Hotline 9-8-8",
       "crisis_hotline_desc": "24/7 mental health support",
       "mental_health": "Mental Health Resources",
       "counseling_services": "Counseling Services",
@@ -1027,6 +1055,12 @@
         "noRecords": "No records",
         "completed": "Completed",
         "inProgress": "Active",
+        "status": {
+          "pending": "Pending",
+          "approved": "Approved",
+          "rejected": "Rejected",
+          "unknown": "Unknown Status"
+        },
         "pending": "Pending",
         "approved": "Approved",
         "refused": "Refused",
@@ -1037,10 +1071,10 @@
         "workDuration": "Duration",
         "operator": "Operator",
         "timeRange": {
-          "1day": "1 Day",
-          "3days": "3 Days",
-          "7days": "7 Days",
-          "30days": "30 Days"
+          "1day": "1D",
+          "3days": "3D",
+          "7days": "7D",
+          "30days": "30D"
         },
         "overtime": {
           "warning": "Alert",
@@ -1048,7 +1082,8 @@
           "overHours": "Overtime"
         },
         "workDescription": "Work Description",
-        "noDescription": "No description"
+        "noDescription": "No description",
+        "detail": "Detail"
       },
       "signOut": {
         "title": "Confirm Sign Out",

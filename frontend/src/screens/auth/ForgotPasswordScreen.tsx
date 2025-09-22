@@ -131,9 +131,18 @@ export const ForgotPasswordScreen: React.FC = () => {
 
   const handleSendCode = async () => {
     if (!validateForm()) return;
-    
+
+    // 额外检查：只允许中国区号
+    if (areaCode !== '+86') {
+      Alert.alert(
+        t('auth.forgot_password.us_phone_not_supported_title'),
+        t('auth.forgot_password.us_phone_not_supported_message')
+      );
+      return;
+    }
+
     setLoading(true);
-    
+
     try {
       // 根据区号确定areaCode参数
       const apiAreaCode = areaCode === '+86' ? 'CN' : 'US';
@@ -353,7 +362,7 @@ export const ForgotPasswordScreen: React.FC = () => {
                           { text: t('common.got_it'), style: 'default' }
                         ]
                       );
-                      // 不切换区号，保持+86
+                      // 确保区号始终保持+86，不允许切换到+1
                     }}
                   >
                     <Text style={[styles.areaCodeText, areaCode === '+1' && styles.areaCodeTextActive]}>

@@ -20,7 +20,7 @@ import { theme } from '../../theme';
 import { LIQUID_GLASS_LAYERS } from '../../theme/core';
 import { useAllDarkModeStyles } from '../../hooks/useDarkModeStyles';
 import { useTabBarVerification } from '../../hooks/useTabBarStateGuard';
-// import RenderHtml from 'react-native-render-html'; // 暂时注释掉，避免兼容性问题
+import { RichTextRenderer } from '../../components/common/RichTextRenderer';
 import { pomeloXAPI } from '../../services/PomeloXAPI';
 import { FrontendActivity } from '../../utils/activityAdapter';
 import { useUser } from '../../context/UserContext';
@@ -713,13 +713,16 @@ export const ActivityDetailScreen: React.FC = () => {
           {/* Description Section */}
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>{t('activityDetail.activityDetails')}</Text>
-            <Text style={styles.description}>
-              {activity.detail ? 
-                // 暂时显示HTML内容的文本版本，后续可以添加HTML解析
-                activity.detail.replace(/<[^>]*>/g, '').replace(/&amp;/g, '&') :
-                t('activityDetail.no_details')
-              }
-            </Text>
+            {activity.detail ? (
+              <RichTextRenderer
+                html={activity.detail}
+                contentWidth={screenWidth - theme.spacing[4] * 2}
+              />
+            ) : (
+              <Text style={styles.description}>
+                {t('activityDetail.no_details')}
+              </Text>
+            )}
           </View>
 
 

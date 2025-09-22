@@ -228,6 +228,7 @@ export const getScanPermissions = (scannerUser: any, scannedUserData: {
   userId: string;
   deptId?: string;
   school?: { id: string };
+  position?: { roleKey?: string; level?: string };
 }) => {
   // 🚨 Enhanced Debug: 详细记录输入参数
   console.log('🔍 [SCAN-PERMISSION-INPUT] 权限检查输入参数:', {
@@ -240,51 +241,76 @@ export const getScanPermissions = (scannerUser: any, scannedUserData: {
   });
 
   const scannerLevel = getUserPermissionLevel(scannerUser);
+  const scannedLevel = getUserPermissionLevel(scannedUserData as any);
   const scannerDeptId = scannerUser?.deptId;
   const scannedDeptId = scannedUserData?.deptId || scannedUserData?.school?.id;
-  
+
   // 权限计算
-  const isSameSchool = scannerDeptId && scannedDeptId && 
+  const isSameSchool = scannerDeptId && scannedDeptId &&
                       (scannerDeptId === parseInt(scannedDeptId) || scannerDeptId.toString() === scannedDeptId);
-  
-  // 总管理员可以管理任何人，分管理员只能管理同校用户
-  const canManageVolunteer = scannerLevel === 'manage' || (isSameSchool && scannerLevel === 'part_manage');
-  
-  // 活动签到权限：总管理员可以操作任何人，分管理员只能操作本校学生，普通用户和Staff无权限扫码他人
-  const canManageActivity = scannerLevel === 'manage' || (isSameSchool && scannerLevel === 'part_manage');
-  
+
+  // 🆕 个人信息查看权限 - 所有人都可以查看
+  const canViewPersonalInfo = true;
+
+  // 🆕 志愿者时间查看权限
+  const canViewVolunteerHours =
+    scannerLevel === 'manage' || // 总管理员：查看所有人
+    (scannerLevel === 'part_manage' && isSameSchool) || // 分管理员：查看同校所有人
+    (scannerLevel === 'staff' && scannedLevel === 'staff' && isSameSchool); // 内部员工：只查看同级别
+
+  // 🆕 活动签到帮助权限
+  const canHelpActivityCheckIn =
+    scannerLevel === 'manage' || // 总管理员：帮所有人签到
+    (scannerLevel === 'part_manage' && isSameSchool) || // 分管理员：帮同校所有人签到
+    (scannerLevel === 'staff' && isSameSchool); // 内部员工：帮同校所有人签到
+
+  // 🚫 志愿者工时签到权限 - 无人有此权限
+  const canManageVolunteerHours = false;
+
   // 🚨 Enhanced Debug: 详细权限计算过程
   console.log('🔍 [SCAN-PERMISSION] 权限检查详细:', {
     // 输入信息
     scannerUser: scannerUser?.userName,
     scannerLevel,
+    scannedLevel,
     scannerDeptId,
     scannedUserId: scannedUserData?.userId,
     scannedDeptId,
-    
+
     // 计算过程
     isSameSchool,
-    
-    // 权限判断逻辑
-    isManage: scannerLevel === 'manage',
-    isPartManage: scannerLevel === 'part_manage',
-    isCommon: scannerLevel === 'common',
-    
-    // 最终权限结果
-    canManageVolunteer,
-    canManageVolunteerReason: scannerLevel === 'manage' ? 'total_admin' : (isSameSchool && scannerLevel === 'part_manage') ? 'same_school_part_admin' : 'no_permission',
-    canManageActivity,
-    canManageActivityReason: scannerLevel === 'manage' ? 'total_admin' : (isSameSchool && scannerLevel === 'part_manage') ? 'same_school_part_admin' : 'no_permission'
+
+    // 🆕 详细权限结果
+    canViewPersonalInfo,
+    canViewVolunteerHours,
+    canViewVolunteerHoursReason: scannerLevel === 'manage' ? 'total_admin_all' :
+                                 (scannerLevel === 'part_manage' && isSameSchool) ? 'part_admin_same_school' :
+                                 (scannerLevel === 'staff' && scannedLevel === 'staff' && isSameSchool) ? 'staff_same_level_same_school' : 'no_permission',
+    canHelpActivityCheckIn,
+    canHelpActivityCheckInReason: scannerLevel === 'manage' ? 'total_admin_all' :
+                                  (scannerLevel === 'part_manage' && isSameSchool) ? 'part_admin_same_school' :
+                                  (scannerLevel === 'staff' && isSameSchool) ? 'staff_same_school' : 'no_permission',
+    canManageVolunteerHours
   });
-  
+
   return {
-    canManageVolunteer,
-    canManageActivity,
+    // 🆕 新的权限字段
+    canViewPersonalInfo,
+    canViewVolunteerHours,
+    canHelpActivityCheckIn,
+    canManageVolunteerHours,
+
+    // 🔧 保留原有字段以保持兼容性
+    canManageVolunteer: canManageVolunteerHours, // 已废弃，映射到新字段
+    canManageActivity: canHelpActivityCheckIn, // 重新定义为活动签到帮助
     isSameSchool,
     scannerLevel,
+    scannedLevel,
     availableOptions: {
-      volunteerCheckin: canManageVolunteer,
-      activityCheckin: canManageActivity
+      personalInfo: canViewPersonalInfo,
+      volunteerHours: canViewVolunteerHours,
+      activityCheckIn: canHelpActivityCheckIn,
+      volunteerCheckIn: canManageVolunteerHours // 已废弃
     }
   };
 };

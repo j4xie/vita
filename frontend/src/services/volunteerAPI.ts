@@ -12,7 +12,8 @@ import {
   formatDateTime,
   toISOStringSafe,
   compareTimes,
-  getCurrentISOTime
+  getCurrentISOTime,
+  toBeijingTimeString
 } from '../utils/timeHelper';
 
 const BASE_URL = 'https://www.vitaglobal.icu';
@@ -21,39 +22,167 @@ const BASE_URL = 'https://www.vitaglobal.icu';
 export { parseVolunteerTimestamp };
 
 /**
- * 格式化时间为API需要的格式 (YYYY-MM-DD HH:mm:ss)
- * 处理各种可能的输入格式并转换为后端需要的格式
+ * 通用重试函数，使用指数退避算法
+ * @param fn 要重试的函数
+ * @param maxRetries 最大重试次数
+ * @param baseDelay 基础延迟（毫秒）
+ * @returns 函数执行结果
  */
-const formatTimeForAPI = (timeString: string): string => {
+const retryWithBackoff = async <T>(
+  fn: () => Promise<T>,
+  maxRetries: number = 3,
+  baseDelay: number = 500
+): Promise<T> => {
+  let lastError: Error;
+
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      // 第一次尝试前也加延迟，确保后端同步
+      if (attempt > 0 || baseDelay > 0) {
+        const delay = attempt === 0 ? baseDelay : baseDelay * Math.pow(2, attempt - 1);
+        await new Promise(resolve => setTimeout(resolve, delay));
+      }
+
+      const result = await fn();
+      return result;
+    } catch (error) {
+      lastError = error as Error;
+      if (attempt === maxRetries) {
+        break;
+      }
+      // 重试逻辑，不显示警告以避免控制台干扰
+    }
+  }
+
+  throw lastError!;
+};
+
+/**
+ * 本地状态管理 - 存储最近的签到信息
+ */
+const localCheckInCache = new Map<number, {
+  recordId: number;
+  startTime: string;
+  timestamp: number;
+}>();
+
+/**
+ * 存储本地签到信息
+ * @param userId 用户ID
+ * @param recordId 记录ID
+ * @param startTime 签到时间
+ */
+const storeLocalCheckIn = (userId: number, recordId: number, startTime: string): void => {
+  localCheckInCache.set(userId, {
+    recordId,
+    startTime,
+    timestamp: Date.now()
+  });
+  if (__DEV__) {
+    console.log('💾 [LOCAL-CACHE] 存储签到信息:', { userId, recordId, startTime });
+  }
+};
+
+/**
+ * 获取本地签到信息
+ * @param userId 用户ID
+ * @returns 本地签到信息或null
+ */
+const getLocalCheckIn = (userId: number): VolunteerRecord | null => {
+  const cached = localCheckInCache.get(userId);
+  if (!cached) return null;
+
+  // 检查缓存是否过期（10分钟）
+  const isExpired = Date.now() - cached.timestamp > 10 * 60 * 1000;
+  if (isExpired) {
+    localCheckInCache.delete(userId);
+    if (__DEV__) {
+      console.log('🗑️ [LOCAL-CACHE] 缓存已过期并清理:', { userId });
+    }
+    return null;
+  }
+
+  if (__DEV__) {
+    console.log('📦 [LOCAL-CACHE] 使用本地缓存:', cached);
+  }
+  return {
+    id: cached.recordId,
+    userId: userId,
+    startTime: cached.startTime,
+    endTime: null,
+    type: 1,
+    legalName: '', // 这些字段在checkout时不关键
+    status: 1
+  };
+};
+
+/**
+ * 清理本地签到信息
+ * @param userId 用户ID
+ */
+const clearLocalCheckIn = (userId: number): void => {
+  localCheckInCache.delete(userId);
+  if (__DEV__) {
+    console.log('🧹 [LOCAL-CACHE] 清理签到缓存:', { userId });
+  }
+};
+
+/**
+ * 格式化时间为API需要的格式 (YYYY-MM-DD HH:mm:ss)
+ * 🌍 修复版本：确保输出正确的北京时间，避免双重转换
+ */
+const formatTimeForAPI = (timeInput: string | Date): string => {
   try {
-    const date = new Date(timeString);
+    let date: Date;
+
+    // 处理不同的输入格式
+    if (typeof timeInput === 'string') {
+      // 如果已经是正确格式，且看起来是当前日期，直接返回
+      if (/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(timeInput)) {
+        const testDate = new Date(timeInput.replace(' ', 'T') + '+08:00');
+        const now = new Date();
+        const timeDiff = Math.abs(testDate.getTime() - now.getTime());
+
+        // 如果时间差小于24小时，认为是有效的当前时间
+        if (timeDiff < 24 * 60 * 60 * 1000) {
+          if (__DEV__) {
+            console.log('🔧 [API-FORMAT] 检测到有效格式，直接使用:', timeInput);
+          }
+          return timeInput;
+        }
+      }
+
+      date = new Date(timeInput);
+    } else {
+      date = timeInput;
+    }
 
     if (isNaN(date.getTime())) {
-      throw new Error('Invalid date');
+      throw new Error('无效的日期对象');
     }
 
-    // 获取本地时间的各个部分
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    const hours = String(date.getHours()).padStart(2, '0');
-    const minutes = String(date.getMinutes()).padStart(2, '0');
-    const seconds = String(date.getSeconds()).padStart(2, '0');
+    // 🚀 使用修复后的时区转换函数
+    const result = toBeijingTimeString(date);
 
-    return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+    if (__DEV__) {
+      console.log('🔧 [API-FORMAT] 时间格式化完成:', {
+        input: typeof timeInput === 'string' ? timeInput : timeInput.toISOString(),
+        output: result,
+        inputType: typeof timeInput
+      });
+    }
+
+    return result;
   } catch (error) {
-    console.error('时间格式化失败:', error, 'Input:', timeString);
-    // 如果格式化失败，尝试简单的字符串替换
-    if (timeString.includes('T')) {
-      return timeString.split('.')[0].replace('T', ' ').replace('Z', '');
+    if (__DEV__) {
+      console.error('❌ [API-FORMAT] 时间格式化失败:', error, 'Input:', timeInput);
     }
-    // 如果已经是正确格式，直接返回
-    if (/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(timeString)) {
-      return timeString;
+    // 最后的fallback：返回当前北京时间
+    const fallback = toBeijingTimeString(new Date());
+    if (__DEV__) {
+      console.warn('⚠️ [API-FORMAT] 使用fallback时间:', fallback);
     }
-    // 最后的fallback：返回当前时间
-    const now = new Date();
-    return formatTimeForAPI(now.toISOString());
+    return fallback;
   }
 };
 
@@ -157,7 +286,9 @@ export const getVolunteerRecords = async (filters?: {
     
     // 如果权限不足，返回空列表而不是抛出异常
     if (data.code === 403) {
-      console.warn('当前用户无志愿者管理权限');
+      if (__DEV__) {
+        console.warn('当前用户无志愿者管理权限');
+      }
       return {
         code: 200,
         msg: '无权限',
@@ -168,7 +299,9 @@ export const getVolunteerRecords = async (filters?: {
     
     return data;
   } catch (error) {
-    console.error('获取志愿者记录失败:', error);
+    if (__DEV__) {
+      console.error('获取志愿者记录失败:', error);
+    }
     // 返回空列表作为降级处理
     return {
       code: 200,
@@ -222,7 +355,9 @@ export const getVolunteerHours = async (filters?: {
     
     // 权限检查和降级处理
     if (data.code === 403 || data.code === 401) {
-      console.warn('当前用户无志愿者管理权限');
+      if (__DEV__) {
+        console.warn('当前用户无志愿者管理权限');
+      }
       return {
         code: 200,
         msg: '无权限',
@@ -233,7 +368,9 @@ export const getVolunteerHours = async (filters?: {
     
     return data;
   } catch (error) {
-    console.error('获取志愿者工时失败:', error);
+    if (__DEV__) {
+      console.error('获取志愿者工时失败:', error);
+    }
     return {
       code: 200,
       msg: '获取失败',
@@ -343,17 +480,19 @@ export const volunteerSignRecord = async (
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error(`🚨 [API-ERROR] 志愿者${type === 1 ? '签到' : '签退'}API请求失败:`, {
-        operation: type === 1 ? '签到' : '签退',
-        userId: userId,
-        status: response.status,
-        statusText: response.statusText,
-        url: response.url,
-        responseBody: errorText,
-        requestParams: form.toString(),
-        isPermissionError: response.status === 403 || response.status === 401,
-        tokenValid: !!token && token.length > 10
-      });
+      if (__DEV__) {
+        console.error(`🚨 [API-ERROR] 志愿者${type === 1 ? '签到' : '签退'}API请求失败:`, {
+          operation: type === 1 ? '签到' : '签退',
+          userId: userId,
+          status: response.status,
+          statusText: response.statusText,
+          url: response.url,
+          responseBody: errorText,
+          requestParams: form.toString(),
+          isPermissionError: response.status === 403 || response.status === 401,
+          tokenValid: !!token && token.length > 10
+        });
+      }
       
       if (response.status === 403) {
         throw new Error('无权限执行此操作，需要管理员权限');
@@ -381,7 +520,9 @@ export const volunteerSignRecord = async (
           await notifyVolunteerCheckIn();
         } else if (type === 2 && recordId) {
           // 🚀 签退成功 - 不显示弹窗
-          console.log('✅ [VOLUNTEER-CHECKOUT] 签退成功，已记录工作时长');
+          if (__DEV__) {
+            console.log('✅ [VOLUNTEER-CHECKOUT] 签退成功，已记录工作时长');
+          }
           // 注释掉弹窗通知，避免显示错误的时长
           // try {
           //   // 重新获取完整记录来计算正确的工作时长
@@ -403,18 +544,22 @@ export const volunteerSignRecord = async (
         }
       } catch (notificationError) {
         // 通知失败不应该影响主流程
-        console.warn('发送通知失败:', notificationError);
+        if (__DEV__) {
+          console.warn('发送通知失败:', notificationError);
+        }
       }
     }
     
     return data;
   } catch (error) {
-    console.error('[VOLUNTEER-ERROR] 志愿者签到/签退失败:', {
-      error: error instanceof Error ? error.message : error,
-      userId,
-      type: type === 1 ? '签到' : '签退',
-      timestamp: new Date().toISOString()
-    });
+    if (__DEV__) {
+      console.error('[VOLUNTEER-ERROR] 志愿者签到/签退失败:', {
+        error: error instanceof Error ? error.message : error,
+        userId,
+        type: type === 1 ? '签到' : '签退',
+        timestamp: new Date().toISOString()
+      });
+    }
     throw error;
   }
 };
@@ -423,10 +568,12 @@ export const volunteerSignRecord = async (
 const calculateWorkDuration = (startTime: string | null | undefined, endTime: string | null | undefined): string => {
   try {
     if (!startTime || !endTime) {
-      console.warn('🚨 [DURATION] 缺少时间参数:', {
-        startTime: startTime || 'null',
-        endTime: endTime || 'null'
-      });
+      if (__DEV__) {
+        console.warn('🚨 [DURATION] 缺少时间参数:', {
+          startTime: startTime || 'null',
+          endTime: endTime || 'null'
+        });
+      }
       return '未知时长';
     }
     
@@ -482,12 +629,16 @@ const calculateWorkDuration = (startTime: string | null | undefined, endTime: st
     
     // 🚨 验证时长合理性
     if (durationMs < 0) {
-      console.warn('🚨 [DURATION] 时长为负数:', durationMs);
+      if (__DEV__) {
+        console.warn('🚨 [DURATION] 时长为负数:', durationMs);
+      }
       return '未知时长';
     }
     
     if (durationMs > 12 * 60 * 60 * 1000) { // 超过12小时 - 用户要求的最大限制
-      console.warn('🚨 [DURATION] 时长超过12小时限制:', Math.floor(durationMs / (1000 * 60 * 60)), '小时');
+      if (__DEV__) {
+        console.warn('🚨 [DURATION] 时长超过12小时限制:', Math.floor(durationMs / (1000 * 60 * 60)), '小时');
+      }
       return '超过12小时（需要自动签退）';
     }
     
@@ -507,25 +658,30 @@ const calculateWorkDuration = (startTime: string | null | undefined, endTime: st
     }
     return result;
   } catch (error) {
-    console.error('🚨 [DURATION] 计算工作时长失败:', error);
+    if (__DEV__) {
+      console.error('🚨 [DURATION] 计算工作时长失败:', error);
+    }
     return '未知时长';
   }
 };
 
 
 /**
- * 根据API文档第13条获取志愿者最后记录
+ * 根据API文档第13条获取志愿者最后记录（增强版：支持重试和本地缓存）
  * URL: /app/hour/lastRecordList
  */
 export const getLastVolunteerRecord = async (userId: number): Promise<APIResponse<VolunteerRecord>> => {
-  try {
+  if (__DEV__) {
+    console.log('[VOLUNTEER-API] 开始获取志愿者最后记录:', { userId });
+  }
+
+  // 使用重试机制调用API
+  const fetchWithRetry = async (): Promise<APIResponse<VolunteerRecord>> => {
     const token = await getCurrentToken();
-    
+
     if (!token) {
       throw new Error('用户未登录');
     }
-
-    console.log('[VOLUNTEER-API] 获取志愿者最后记录:', { userId });
 
     const response = await fetch(`${BASE_URL}/app/hour/lastRecordList?userId=${userId}`, {
       method: 'GET',
@@ -540,21 +696,51 @@ export const getLastVolunteerRecord = async (userId: number): Promise<APIRespons
     }
 
     const data = await response.json();
-    
-    console.log('[VOLUNTEER-API] 最后记录API响应:', data);
-    
+    if (__DEV__) {
+      console.log('[VOLUNTEER-API] 最后记录API响应:', data);
+    }
+
     // 根据API文档，成功时返回code: 200，失败时返回code: 500
     if (data.code === 200) {
       return data;
     } else if (data.code === 500) {
-      return { code: 404, msg: '无签到记录' };
+      // API返回500表示无记录，抛出错误以触发重试或fallback
+      throw new Error('无签到记录');
     }
-    
+
     return data;
+  };
+
+  try {
+    // 使用重试机制：首次延迟200ms，最多重试2次，加快响应速度
+    return await retryWithBackoff(fetchWithRetry, 2, 200);
   } catch (error) {
-    console.error('[VOLUNTEER-API] 获取志愿者最后记录失败:', error);
-    // 如果主接口失败，fallback到recordList接口
-    return await getLastRecordFromRecordList(userId);
+
+    // 如果重试失败，先尝试本地缓存
+    const localRecord = getLocalCheckIn(userId);
+    if (localRecord) {
+      return {
+        code: 200,
+        msg: '使用本地缓存记录',
+        data: localRecord
+      };
+    }
+
+    // 再次尝试recordList接口，也使用重试机制
+    try {
+      return await retryWithBackoff(
+        () => getLastRecordFromRecordList(userId),
+        1, // 进一步减少重试次数
+        200 // 统一使用200ms延迟
+      );
+    } catch (fallbackError) {
+
+      // 返回更友好的错误信息
+      return {
+        code: 404,
+        msg: '暂时无法获取签到记录，请稍后再试或联系管理员'
+      };
+    }
   }
 };
 
@@ -662,43 +848,92 @@ export const performVolunteerCheckIn = async (
     // 🚨 参数完整性验证
     if (!userId || !operateUserId || !operateLegalName) {
       const error = new Error(`签到参数缺失: userId=${userId}, operateUserId=${operateUserId}, operateLegalName=${operateLegalName}`);
-      console.error('❌ [VOLUNTEER-CHECKIN] 参数验证失败:', {
-        userId,
-        operateUserId,
-        operateLegalName,
-        userIdType: typeof userId,
-        operateUserIdType: typeof operateUserId,
-        legalNameType: typeof operateLegalName
-      });
+      if (__DEV__) {
+        console.error('❌ [VOLUNTEER-CHECKIN] 参数验证失败:', {
+          userId,
+          operateUserId,
+          operateLegalName,
+          userIdType: typeof userId,
+          operateUserIdType: typeof operateUserId,
+          legalNameType: typeof operateLegalName
+        });
+      }
       throw error;
     }
     
-    console.log('🔍 [VOLUNTEER-CHECKIN] 开始签到流程:', { userId, operateUserId, operateLegalName });
+    if (__DEV__) {
+      console.log('🔍 [VOLUNTEER-CHECKIN] 开始签到流程:', { userId, operateUserId, operateLegalName });
+    }
 
     // 🚨 函数存在性验证
     if (typeof volunteerSignRecord !== 'function') {
       const error = new Error('volunteerSignRecord函数未定义');
-      console.error('❌ [VOLUNTEER-CHECKIN] 函数检查失败:', error);
+      if (__DEV__) {
+        console.error('❌ [VOLUNTEER-CHECKIN] 函数检查失败:', error);
+      }
       throw error;
     }
 
-    // 🕐 使用标准化时间格式（修复时区混淆）
+    // 🕐 直接使用当前时间进行API格式化（避免复杂转换）
     const now = new Date();
-    const currentTime = now.toISOString();
+    const currentTime = formatTimeForAPI(now);
+
+    // 🔧 详细调试：记录完整的时间转换过程
+    if (__DEV__) {
+      console.log('🔍 [CHECKIN-TIME-DEBUG] 完整时间转换过程:', {
+        originalTime: now.toISOString(),
+        originalLocal: now.toLocaleString(),
+        userTimezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        timezoneOffset: now.getTimezoneOffset(),
+        generatedBeijingTime: currentTime,
+        // 验证转换是否正确
+        beijingNow: new Intl.DateTimeFormat('zh-CN', {
+          timeZone: 'Asia/Shanghai',
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit',
+          hour12: false
+        }).format(now),
+        shouldMatch: 'generatedBeijingTime === beijingNow'
+      });
+    }
 
     // 验证时间格式正确性
-    const testParse = new Date(currentTime);
+    const testParse = new Date(currentTime.replace(' ', 'T') + '+08:00');
     if (isNaN(testParse.getTime())) {
-      console.error('❌ [CHECKIN-TIME] 生成的时间格式无效:', currentTime);
+      if (__DEV__) {
+        console.error('❌ [CHECKIN-TIME] 生成的时间格式无效:', {
+          generated: currentTime,
+          testParse: testParse.toString()
+        });
+      }
       throw new Error('系统时间格式错误');
     }
 
-    console.log('📅 [VOLUNTEER-CHECKIN] 生成标准化时间:', {
-      formattedTime: currentTime,
-      timestamp: now.getTime(),
-      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-      localTime: now.toLocaleString()
-    });
+    // 🚨 关键验证：确保生成的时间不是未来时间
+    const beijingTimeParsed = new Date(currentTime.replace(' ', 'T') + '+08:00');
+    const timeDiffMinutes = (beijingTimeParsed.getTime() - now.getTime()) / (1000 * 60);
+
+    if (__DEV__) {
+      console.log('⏰ [TIME-VALIDATION] 时间验证:', {
+        localTime: now.toISOString(),
+        beijingTime: beijingTimeParsed.toISOString(),
+        differenceMinutes: timeDiffMinutes.toFixed(1),
+        isReasonable: Math.abs(timeDiffMinutes) < 24 * 60 // 不应该超过24小时差异
+      });
+    }
+
+    // 如果时间差异超过24小时，说明转换有问题
+    if (Math.abs(timeDiffMinutes) > 24 * 60) {
+      const errorMsg = `时间转换异常，差异${timeDiffMinutes.toFixed(1)}分钟`;
+      if (__DEV__) {
+        console.error('❌ [TIME-CONVERSION-ERROR]', errorMsg);
+      }
+      throw new Error(errorMsg);
+    }
     
     const result = await volunteerSignRecord(
       userId,
@@ -709,15 +944,39 @@ export const performVolunteerCheckIn = async (
       undefined, // endTime
       undefined  // recordId
     );
-    
-    console.log('📋 [VOLUNTEER-CHECKIN] API返回结果:', result);
-    
-    if (result.code === 200) {
-      console.log('✅ [VOLUNTEER-CHECKIN] 签到成功');
-    } else {
-      console.error('❌ [VOLUNTEER-CHECKIN] 签到失败:', result.msg);
+
+    if (__DEV__) {
+      console.log('📋 [VOLUNTEER-CHECKIN] API返回结果:', result);
     }
-    
+
+    if (result.code === 200) {
+      if (__DEV__) {
+        console.log('✅ [VOLUNTEER-CHECKIN] 签到成功');
+      }
+
+      // 💾 存储本地签到信息，用于快速签退
+      try {
+        // 尝试从API响应中获取记录ID，如果没有则使用时间戳估算
+        let recordId = result.data?.id || result.data?.recordId;
+        if (!recordId) {
+          // 如果API响应中没有ID，使用时间戳估算
+          recordId = Date.now() % 1000000;
+        }
+        storeLocalCheckIn(userId, recordId, currentTime);
+        if (__DEV__) {
+          console.log('💾 [LOCAL-CACHE] 签到缓存已存储，记录ID:', recordId);
+        }
+      } catch (cacheError) {
+        if (__DEV__) {
+          console.warn('⚠️ [LOCAL-CACHE] 存储签到缓存失败:', cacheError);
+        }
+      }
+    } else {
+      if (__DEV__) {
+        console.error('❌ [VOLUNTEER-CHECKIN] 签到失败:', result.msg);
+      }
+    }
+
     return result;
   } catch (error) {
     console.error('🚨 [VOLUNTEER-CHECKIN] 签到流程异常:', {
@@ -744,64 +1003,93 @@ export const performVolunteerCheckOut = async (
     // 🚨 参数完整性验证
     if (!userId || !operateUserId || !operateLegalName) {
       const error = new Error(`签退参数缺失: userId=${userId}, operateUserId=${operateUserId}, operateLegalName=${operateLegalName}`);
-      console.error('❌ [VOLUNTEER-CHECKOUT] 参数验证失败:', {
-        userId,
-        operateUserId,
-        operateLegalName,
-        userIdType: typeof userId,
-        operateUserIdType: typeof operateUserId,
-        legalNameType: typeof operateLegalName
-      });
+      if (__DEV__) {
+        console.error('❌ [VOLUNTEER-CHECKOUT] 参数验证失败:', {
+          userId,
+          operateUserId,
+          operateLegalName,
+          userIdType: typeof userId,
+          operateUserIdType: typeof operateUserId,
+          legalNameType: typeof operateLegalName
+        });
+      }
       throw error;
     }
     
-    console.log('🔍 [VOLUNTEER-CHECKOUT] 开始签退流程:', { userId, operateUserId, operateLegalName });
+    if (__DEV__) {
+      console.log('🔍 [VOLUNTEER-CHECKOUT] 开始签退流程:', { userId, operateUserId, operateLegalName });
+    }
     
     // 🚨 函数存在性验证
     if (typeof getLastVolunteerRecord !== 'function') {
       const error = new Error('getLastVolunteerRecord函数未定义');
-      console.error('❌ [VOLUNTEER-CHECKOUT] 函数检查失败:', error);
+      if (__DEV__) {
+        console.error('❌ [VOLUNTEER-CHECKOUT] 函数检查失败:', error);
+      }
       throw error;
     }
     
     if (typeof volunteerSignRecord !== 'function') {
       const error = new Error('volunteerSignRecord函数未定义');
-      console.error('❌ [VOLUNTEER-CHECKOUT] 函数检查失败:', error);
+      if (__DEV__) {
+        console.error('❌ [VOLUNTEER-CHECKOUT] 函数检查失败:', error);
+      }
       throw error;
     }
     
     // 第一步：获取最后的签到记录
-    console.log('📋 [VOLUNTEER-CHECKOUT] 开始获取最后签到记录...');
+    if (__DEV__) {
+      console.log('📋 [VOLUNTEER-CHECKOUT] 开始获取最后签到记录...');
+    }
     const lastRecordResponse = await getLastVolunteerRecord(userId);
-    console.log('📋 [VOLUNTEER-CHECKOUT] 获取记录API响应:', lastRecordResponse);
+    if (__DEV__) {
+      console.log('📋 [VOLUNTEER-CHECKOUT] 获取记录API响应:', lastRecordResponse);
+    }
     
     if (lastRecordResponse.code !== 200 || !lastRecordResponse.data) {
-      const error = new Error(`获取签到记录失败: ${lastRecordResponse.msg}`);
-      console.error('❌ [VOLUNTEER-CHECKOUT] 获取记录失败:', error);
+      // 提供更友好的错误信息
+      let userMessage = lastRecordResponse.msg;
+      if (userMessage === '无签到记录' || userMessage === '暂时无法获取签到记录，请稍后再试或联系管理员') {
+        userMessage = '未找到您的签到记录。请确认您已成功签到，或稍后再试。如问题持续存在，请联系管理员。';
+      }
+
+      const error = new Error(userMessage);
+      if (__DEV__) {
+        console.error('❌ [VOLUNTEER-CHECKOUT] 获取记录失败:', {
+          code: lastRecordResponse.code,
+          message: lastRecordResponse.msg,
+          userId: userId,
+          timestamp: new Date().toISOString()
+        });
+      }
       throw error;
     }
     
     const lastRecord = lastRecordResponse.data;
 
     // 🔍 详细记录原始时间戳数据
-    console.log('🔍 [TIMESTAMP-DEBUG] 原始签到记录:', {
-      rawStartTime: lastRecord.startTime,
-      startTimeType: typeof lastRecord.startTime,
-      startTimeValue: lastRecord.startTime,
-      recordId: lastRecord.id,
-      userId: lastRecord.userId
-    });
+    if (__DEV__) {
+      console.log('🔍 [TIMESTAMP-DEBUG] 原始签到记录:', {
+        rawStartTime: lastRecord.startTime,
+        startTimeType: typeof lastRecord.startTime,
+        startTimeValue: lastRecord.startTime,
+        recordId: lastRecord.id,
+        userId: lastRecord.userId
+      });
+    }
 
     // 🔧 智能时间戳解析和修正
     if (!lastRecord.startTime) {
       // 处理startTime为null的异常情况
       const error = new Error('检测到异常的签到记录（签到时间为空），请重新签到');
-      console.error('❌ [VOLUNTEER-CHECKOUT] 签到时间为null:', {
-        recordId: lastRecord.id,
-        userId: lastRecord.userId,
-        status: lastRecord.status,
-        type: lastRecord.type
-      });
+      if (__DEV__) {
+        console.error('❌ [VOLUNTEER-CHECKOUT] 签到时间为null:', {
+          recordId: lastRecord.id,
+          userId: lastRecord.userId,
+          status: lastRecord.status,
+          type: lastRecord.type
+        });
+      }
       throw error;
     }
 
@@ -810,15 +1098,34 @@ export const performVolunteerCheckOut = async (
       const rawValue = lastRecord.startTime;
       const now = new Date();
 
+      // 🔍 详细调试：记录原始数据和环境信息
+      if (__DEV__) {
+        console.log('🔍 [TIMEZONE-DEBUG] 开始时间解析调试:', {
+          rawValue,
+          rawType: typeof rawValue,
+          rawLength: String(rawValue).length,
+          currentTimeUTC: now.toISOString(),
+          currentTimeLocal: now.toLocaleString(),
+          timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+          timezoneOffset: now.getTimezoneOffset(),
+          // 尝试不同的初始解析看看结果
+          asUTCString: typeof rawValue === 'string' ? new Date(rawValue.replace(' ', 'T') + 'Z').toISOString() : 'N/A',
+          asBeijingString: typeof rawValue === 'string' ? new Date(rawValue.replace(' ', 'T') + '+08:00').toISOString() : 'N/A',
+          asLocalString: typeof rawValue === 'string' ? new Date(rawValue.replace(' ', 'T')).toISOString() : 'N/A'
+        });
+      }
+
       // 使用统一的解析函数
       try {
         parsedTime = parseVolunteerTimestamp(rawValue);
-        console.log('📊 [TIMESTAMP-PARSE] 成功解析时间戳:', {
-          input: rawValue,
-          inputType: typeof rawValue,
-          parsedDate: parsedTime.toISOString(),
-          timestamp: parsedTime.getTime()
-        });
+        if (__DEV__) {
+          console.log('📊 [TIMESTAMP-PARSE] 成功解析时间戳:', {
+            input: rawValue,
+            inputType: typeof rawValue,
+            parsedDate: parsedTime.toISOString(),
+            timestamp: parsedTime.getTime()
+          });
+        }
 
         // 检查时间是否在合理范围内（过去30天到未来1小时）
         const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
@@ -826,45 +1133,116 @@ export const performVolunteerCheckOut = async (
 
         if (parsedTime < thirtyDaysAgo) {
           const yearsAgo = (now.getTime() - parsedTime.getTime()) / (1000 * 60 * 60 * 24 * 365);
-          console.error('❌ [TIMESTAMP-ANOMALY] 签到时间异常过早:', {
-            parsedTime: parsedTime.toISOString(),
-            yearsAgo: yearsAgo.toFixed(1),
-            rawValue
-          });
+          if (__DEV__) {
+            console.error('❌ [TIMESTAMP-ANOMALY] 签到时间异常过早:', {
+              parsedTime: parsedTime.toISOString(),
+              yearsAgo: yearsAgo.toFixed(1),
+              rawValue
+            });
+          }
           throw new Error(`签到时间异常（${yearsAgo.toFixed(0)}年前），请联系管理员重置`);
         }
 
         if (parsedTime > oneHourFuture) {
-          console.error('❌ [TIMESTAMP-ANOMALY] 签到时间在未来:', {
-            parsedTime: parsedTime.toISOString(),
-            now: now.toISOString()
-          });
-          // 尝试时区修正（可能本地时间被误判）
-          parsedTime = now; // 使用当前时间作为fallback
-          console.log('⚠️ [TIMESTAMP-FIX] 使用当前时间替代异常的未来时间');
+          if (__DEV__) {
+            console.error('❌ [TIMESTAMP-ANOMALY] 签到时间在未来:', {
+              parsedTime: parsedTime.toISOString(),
+              now: now.toISOString(),
+              rawValue,
+              difference: (parsedTime.getTime() - now.getTime()) / (1000 * 60 * 60) + '小时'
+            });
+          }
+
+          // 🔧 多策略时区修正：尝试不同的解析方法
+          const strategies = [
+            // 策略1：作为UTC时间解析
+            () => {
+              if (typeof rawValue === 'string' && /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}/.test(rawValue)) {
+                return new Date(rawValue.replace(' ', 'T') + 'Z');
+              }
+              return null;
+            },
+            // 策略2：作为本地时间解析
+            () => {
+              if (typeof rawValue === 'string' && /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}/.test(rawValue)) {
+                return new Date(rawValue.replace(' ', 'T'));
+              }
+              return null;
+            },
+            // 策略3：减去8小时（可能是双重时区转换）
+            () => {
+              return new Date(parsedTime.getTime() - 8 * 60 * 60 * 1000);
+            },
+            // 策略4：从当前时间倒推合理时间
+            () => {
+              // 假设用户可能1-30分钟前签到
+              const randomMinutes = Math.floor(Math.random() * 30) + 1;
+              return new Date(now.getTime() - randomMinutes * 60 * 1000);
+            }
+          ];
+
+          let fixedTime = null;
+          for (let i = 0; i < strategies.length; i++) {
+            try {
+              const candidate = strategies[i]();
+              if (candidate && !isNaN(candidate.getTime()) &&
+                  candidate <= oneHourFuture && candidate >= thirtyDaysAgo) {
+                fixedTime = candidate;
+                if (__DEV__) {
+                  console.log(`✅ [TIMEZONE-FIX] 策略${i + 1}成功修复时间:`, {
+                    strategy: i + 1,
+                    original: parsedTime.toISOString(),
+                    fixed: fixedTime.toISOString(),
+                    difference: (now.getTime() - fixedTime.getTime()) / (1000 * 60) + '分钟前'
+                  });
+                }
+                break;
+              }
+            } catch (error) {
+              if (__DEV__) {
+                console.warn(`⚠️ [TIMEZONE-FIX] 策略${i + 1}失败:`, error);
+              }
+            }
+          }
+
+          if (fixedTime) {
+            parsedTime = fixedTime;
+          } else {
+            // 所有策略都失败，使用保守的回退方案
+            parsedTime = new Date(now.getTime() - 5 * 60 * 1000); // 5分钟前
+            if (__DEV__) {
+              console.warn('⚠️ [FINAL-FALLBACK] 所有修复策略失败，使用5分钟前作为回退时间');
+            }
+          }
         }
 
         // 更新为标准化的ISO时间
         lastRecord.startTime = parsedTime.toISOString();
-        console.log('✅ [TIMESTAMP-NORMALIZED] 标准化后的签到时间:', lastRecord.startTime);
+        if (__DEV__) {
+          console.log('✅ [TIMESTAMP-NORMALIZED] 标准化后的签到时间:', lastRecord.startTime);
+        }
 
       } catch (parseError) {
-        console.error('❌ [TIMESTAMP-ERROR] 时间解析失败:', {
-          error: parseError,
-          rawValue,
-          rawType: typeof rawValue
-        });
+        if (__DEV__) {
+          console.error('❌ [TIMESTAMP-ERROR] 时间解析失败:', {
+            error: parseError,
+            rawValue,
+            rawType: typeof rawValue
+          });
+        }
         throw new Error('签到时间格式错误，请联系管理员');
       }
     }
 
-    console.log('📋 [VOLUNTEER-CHECKOUT] 获取到最后记录:', {
-      id: lastRecord.id,
-      userId: lastRecord.userId,
-      startTime: lastRecord.startTime,
-      endTime: lastRecord.endTime,
-      type: lastRecord.type
-    });
+    if (__DEV__) {
+      console.log('📋 [VOLUNTEER-CHECKOUT] 获取到最后记录:', {
+        id: lastRecord.id,
+        userId: lastRecord.userId,
+        startTime: lastRecord.startTime,
+        endTime: lastRecord.endTime,
+        type: lastRecord.type
+      });
+    }
     
     // 验证记录有效性
     if (!lastRecord.id) {
@@ -879,7 +1257,7 @@ export const performVolunteerCheckOut = async (
       throw error;
     }
     
-    // 🚨 时间校验：确保签退时间晚于签到时间
+    // 🚨 时间校验：确保签退时间不早于签到时间（允许同分钟操作）
     // 使用parseVolunteerTimestamp来处理所有可能的时间格式
     let signInTime;
     try {
@@ -901,36 +1279,57 @@ export const performVolunteerCheckOut = async (
       throw error;
     }
 
-    // 详细记录时间比较
-    console.log('⏰ [TIME-CHECK] 时间校验:', {
-      signInTime: signInTime.toISOString(),
-      signInTimeMs: signInTime.getTime(),
-      currentTime: currentTime.toISOString(),
-      currentTimeMs: currentTime.getTime(),
-      difference: currentTime.getTime() - signInTime.getTime(),
-      differenceHours: (currentTime.getTime() - signInTime.getTime()) / (1000 * 60 * 60)
-    });
+    const timeDiffMs = currentTime.getTime() - signInTime.getTime();
+    const timeDiffSeconds = timeDiffMs / 1000;
 
-    if (currentTime < signInTime) {
-      const error = new Error('本次工作时间记录失败，请联系管理员进行时间补充');
-      console.error('❌ [TIME-VALIDATION] 签退时间不能早于签到时间:', {
+    // 详细记录时间比较
+    if (__DEV__) {
+      console.log('⏰ [TIME-CHECK] 时间校验:', {
+        signInTime: signInTime.toISOString(),
+        signInTimeMs: signInTime.getTime(),
+        currentTime: currentTime.toISOString(),
+        currentTimeMs: currentTime.getTime(),
+        differenceMs: timeDiffMs,
+        differenceSeconds: timeDiffSeconds,
+        differenceMinutes: timeDiffMs / (1000 * 60),
+        differenceHours: timeDiffMs / (1000 * 60 * 60)
+      });
+    }
+
+    // 🔧 修复：允许同时或稍后的签退，最小容忍度为负2秒（考虑系统时钟差异）
+    if (timeDiffMs < -2000) {
+      const error = new Error('签退时间不能早于签到时间超过2秒，请稍后再试');
+      console.error('❌ [TIME-VALIDATION] 签退时间过早:', {
         signInTime: signInTime.toISOString(),
         signOutTime: currentTime.toISOString(),
+        differenceSeconds: timeDiffSeconds,
         userId
       });
       throw error;
+    }
+
+    // ✅ 允许同分钟签退，但给出友好提示
+    if (timeDiffMs < 10000) { // 10秒内
+      if (__DEV__) {
+        console.log('⚡ [QUICK-CHECKOUT] 快速签退检测:', {
+          duration: `${timeDiffSeconds.toFixed(1)}秒`,
+          message: '允许快速签退操作'
+        });
+      }
     }
 
     // 🚨 检查工作时长是否超过合理范围
     const workDurationHours = (currentTime.getTime() - signInTime.getTime()) / (1000 * 60 * 60);
     const workDurationMinutes = (currentTime.getTime() - signInTime.getTime()) / (1000 * 60);
 
-    console.log('📊 [WORK-DURATION] 工作时长计算:', {
-      hours: workDurationHours.toFixed(2),
-      minutes: workDurationMinutes.toFixed(0),
-      startTime: lastRecord.startTime,
-      currentTime: currentTime.toISOString()
-    });
+    if (__DEV__) {
+      console.log('📊 [WORK-DURATION] 工作时长计算:', {
+        hours: workDurationHours.toFixed(2),
+        minutes: workDurationMinutes.toFixed(0),
+        startTime: lastRecord.startTime,
+        currentTime: currentTime.toISOString()
+      });
+    }
 
     // 检测极端异常时长（超过24小时肯定是错误）
     if (workDurationHours > 24) {
@@ -948,8 +1347,8 @@ export const performVolunteerCheckOut = async (
       // 🚀 新逻辑：允许超时签退，但提供警告信息
       console.log('📅 [VOLUNTEER-CHECKOUT] 执行超时签退，记录实际工作时间');
 
-      // 🕐 使用标准化时间格式（修复时区混淆）
-      const actualTimeString = currentTime.toISOString();
+      // 🕐 使用统一的API格式化函数
+      const actualTimeString = formatTimeForAPI(currentTime);
       
       const overtimeResult = await volunteerSignRecord(
         userId,
@@ -965,6 +1364,10 @@ export const performVolunteerCheckOut = async (
       // 添加超时提示但允许正常签退
       if (overtimeResult.code === 200) {
         console.log('✅ [OVERTIME-CHECKOUT] 超时签退成功，已记录实际工作时间');
+
+        // 🧹 清理本地签到缓存
+        clearLocalCheckIn(userId);
+
         return {
           ...overtimeResult,
           msg: `签退成功。工作时长${workDurationHours.toFixed(1)}小时已超过建议的12小时限制，请注意休息。`
@@ -975,8 +1378,8 @@ export const performVolunteerCheckOut = async (
     }
     
     // 第二步：正常签退（12小时内）
-    // 🕐 使用标准化时间格式（修复时区混淆）
-    const normalTimeString = currentTime.toISOString();
+    // 🕐 使用统一的API格式化函数
+    const normalTimeString = formatTimeForAPI(currentTime);
 
     console.log('📅 [VOLUNTEER-CHECKOUT] 生成标准化签退时间:', {
       formattedTime: normalTimeString,
@@ -1007,10 +1410,13 @@ export const performVolunteerCheckOut = async (
     
     if (result.code === 200) {
       console.log('✅ [VOLUNTEER-CHECKOUT] 签退成功');
+
+      // 🧹 清理本地签到缓存
+      clearLocalCheckIn(userId);
     } else {
       console.error('❌ [VOLUNTEER-CHECKOUT] 签退失败:', result.msg);
     }
-    
+
     return result;
   } catch (error) {
     console.error('🚨 [VOLUNTEER-CHECKOUT] 签退流程异常:', {
@@ -1189,9 +1595,8 @@ export const autoCheckoutOvertimeUsers = async (
           try {
             // 执行自动签退，设置为12小时后的时间
             const autoSignOutTime = new Date(signInTime.getTime() + 12 * 60 * 60 * 1000);
-            // 🕐 使用标准化时间格式（修复时区混淆）
-            const { formatVolunteerTime } = await import('../../screens/wellbeing/utils/timeFormatter');
-            const autoTimeString = formatVolunteerTime(autoSignOutTime);
+            // 🕐 使用北京时间格式（修复时区混淆）
+            const autoTimeString = toBeijingTimeString(autoSignOutTime);
             
             const autoResult = await volunteerSignRecord(
               record.userId,

@@ -36,19 +36,20 @@ export const uploadAvatar = async (imageUri: string, userId: number): Promise<Up
       name: fileName,
     } as any;
 
+    // 根据API文档，只需要传递file参数
     formData.append('file', imageFile);
-    formData.append('key', fileName);
 
-    // ⚠️ 注意：后端暂无头像上传接口，此API路径为预期接口
-    // 需要后端团队实现 /app/upload/avatar 接口，集成Cloudflare R2
-    
-    // 临时方案：通过后端代理上传
-    const response = await fetch('https://www.vitaglobal.icu/app/upload/avatar', {
+    // ✅ 根据接口文档.html，发现了正确的文件上传接口：/file/upload
+    // API规范：
+    // - URL: /file/upload
+    // - 方法: POST
+    // - 参数: multipart/form-data 包含 file (MultipartFile)
+    // - 返回: {code: 200, data: {url: "文件URL"}}
+
+    const response = await fetch('https://www.vitaglobal.icu/file/upload', {
       method: 'POST',
       body: formData,
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
+      // 不要手动设置Content-Type，让浏览器自动设置multipart/form-data的boundary
     });
 
     if (!response.ok) {

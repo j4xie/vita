@@ -60,24 +60,22 @@ class APICacheService {
    * 包装API调用，自动处理缓存
    */
   async cachedCall<T>(
-    cacheKey: string, 
-    apiCall: () => Promise<T>, 
+    cacheKey: string,
+    apiCall: () => Promise<T>,
     ttl?: number
   ): Promise<T> {
     // 检查缓存
     const cached = this.get<T>(cacheKey);
     if (cached) {
-      console.log(`📋 [CACHE-HIT] 使用缓存数据:`, cacheKey);
       return cached;
     }
 
     // 执行API调用
-    console.log(`🌐 [CACHE-MISS] 执行API调用:`, cacheKey);
     const result = await apiCall();
-    
+
     // 缓存结果
     this.set(cacheKey, result, ttl);
-    
+
     return result;
   }
 

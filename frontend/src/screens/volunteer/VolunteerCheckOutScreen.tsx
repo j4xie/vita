@@ -1,0 +1,759 @@
+import React, { useState, useCallback, useRef, useEffect } from 'react';
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  SafeAreaView,
+  ScrollView,
+  Alert,
+  Keyboard,
+  KeyboardAvoidingView,
+  Platform,
+  ActivityIndicator,
+  Dimensions,
+} from 'react-native';
+import { useNavigation, useRoute } from '@react-navigation/native';
+import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
+import { BlurView } from 'expo-blur';
+import { useTranslation } from 'react-i18next';
+import * as Haptics from 'expo-haptics';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withSpring,
+  withTiming,
+  FadeIn,
+  FadeOut,
+} from 'react-native-reanimated';
+
+import { theme } from '../../theme';
+import { LIQUID_GLASS_LAYERS } from '../../theme/core';
+import { Glass } from '../../ui/glass/GlassTheme';
+import { useUser } from '../../context/UserContext';
+import { useVolunteerContext } from '../../context/VolunteerContext';
+import { performVolunteerCheckOut } from '../../services/volunteerAPI';
+import { VolunteerRecord } from './components/VolunteerCard';
+import { useAllDarkModeStyles } from '../../hooks/useDarkModeStyles';
+import { safeParseTime, calculateDuration, formatDateTime, formatBeijingTime, formatLocalTime } from '../../utils/timeHelper';
+
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
+
+interface QuickOption {
+  id: number;
+  label: string;
+  text: string;
+}
+
+interface RouteParams {
+  volunteer: VolunteerRecord;
+}
+
+export const VolunteerCheckOutScreen: React.FC = () => {
+  const { t, i18n } = useTranslation();
+  const navigation = useNavigation<any>();
+  const route = useRoute<any>();
+  const { user: currentUser } = useUser();
+  const volunteerContext = useVolunteerContext();
+  const darkModeSystem = useAllDarkModeStyles();
+  const { isDarkMode, styles: dmStyles } = darkModeSystem;
+
+  const { volunteer } = route.params as RouteParams;
+
+  // 状态管理
+  const [description, setDescription] = useState('');
+
+  // 调试: 监控description变化
+  useEffect(() => {
+    console.log('📝 [DEBUG] description状态变化:', description);
+  }, [description]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const textInputRef = useRef<TextInput>(null);
+
+  // 动画值
+  const buttonScale = useSharedValue(1);
+  const cardScale = useSharedValue(0.95);
+
+  // 快捷选项配置 - 使用中文
+  const quickOptions: QuickOption[] = [
+    {
+      id: 1,
+      label: '分部活动',
+      text: '分部活动组织与协调'
+    },
+    {
+      id: 2,
+      label: '接机活动',
+      text: '机场接机志愿服务'
+    },
+    {
+      id: 3,
+      label: '分部摆摊',
+      text: '分部宣传摆摊活动'
+    },
+    {
+      id: 4,
+      label: '见面会',
+      text: '新生见面会活动支持'
+    }
+  ];
+
+  // 动画样式
+  const animatedCardStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: withSpring(cardScale.value, { damping: 20 }) }]
+  }));
+
+  useEffect(() => {
+    // 页面加载动画
+    cardScale.value = withSpring(1, { damping: 15 });
+  }, []);
+
+  // 计算工作时长
+  const calculateWorkDuration = useCallback(() => {
+    if (!volunteer.checkInTime) return { hours: 0, minutes: 0, display: '0小时0分钟', hasError: false };
+
+    // 使用统一的时间计算函数
+    const duration = calculateDuration(volunteer.checkInTime, new Date());
+
+    // 返回计算结果，保持原有的接口结构
+    return {
+      hours: duration.hours,
+      minutes: duration.minutes,
+      display: duration.display,
+      hasError: duration.hasError,
+      errorMessage: duration.errorMessage
+    };
+  }, [volunteer.checkInTime]);
+
+  const workDuration = calculateWorkDuration();
+
+  // 格式化时间显示 - 将后端时间转换为本地时间显示
+  const formatTime = (dateString?: string) => {
+    if (!dateString) return '--:--';
+
+    try {
+      // 解析后端时间（北京时间格式）
+      const parsedDate = safeParseTime(dateString);
+      if (!parsedDate) return '--:--';
+
+      // 使用本地时间格式化显示
+      return formatLocalTime(parsedDate);
+    } catch (error) {
+      if (__DEV__) {
+        console.error('❌ [FORMAT-TIME] 时间格式化失败:', error, 'Input:', dateString);
+      }
+      return '--:--';
+    }
+  };
+
+  // 处理快捷选择
+  const handleQuickSelect = useCallback((text: string) => {
+    if (description.trim() === '') {
+      setDescription(text);
+    } else {
+      // 如果已有内容，在后面追加
+      if (description.endsWith('，') || description.endsWith(',')) {
+        setDescription(description + text);
+      } else {
+        setDescription(description + '，' + text);
+      }
+    }
+
+    // 聚焦输入框
+    textInputRef.current?.focus();
+
+    // iOS触觉反馈
+    if (Platform.OS === 'ios') {
+      Haptics.selectionAsync();
+    }
+  }, [description]);
+
+  // 处理取消
+  const handleCancel = useCallback(() => {
+    if (description.trim()) {
+      Alert.alert(
+        t('common.confirm'),
+        '确定要放弃当前输入的内容吗？',
+        [
+          { text: t('common.cancel'), style: 'cancel' },
+          {
+            text: t('common.confirm'),
+            onPress: () => navigation.goBack(),
+            style: 'destructive'
+          }
+        ]
+      );
+    } else {
+      navigation.goBack();
+    }
+  }, [description, navigation, t]);
+
+  // 处理提交
+  const handleSubmit = useCallback(async () => {
+    // 先检查描述是否为空
+    console.log('🔍 [DEBUG] 描述值检查:', {
+      description,
+      trimmed: description.trim(),
+      length: description.length,
+      isEmpty: !description.trim()
+    });
+
+    if (!description.trim()) {
+      console.log('❌ [DEBUG] 描述为空，显示提示');
+      Alert.alert('提示', '请输入工作内容描述');
+      return; // 直接返回，不设置isSubmitting，因为还没开始提交
+    }
+
+    // 检查时间异常
+    if (workDuration.hasError) {
+      Alert.alert(
+        '时间异常',
+        workDuration.errorMessage || '签到时间记录异常，无法完成签退',
+        [
+          {
+            text: '返回',
+            onPress: () => navigation.goBack(),
+            style: 'cancel'
+          },
+          {
+            text: '联系管理员',
+            onPress: () => {
+              Alert.alert('提示', '请联系管理员处理时间异常问题');
+            }
+          }
+        ]
+      );
+      return;
+    }
+
+    if (Platform.OS === 'ios') {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    }
+
+    setIsSubmitting(true);
+    Keyboard.dismiss();
+
+    try {
+      const operateUserId = currentUser?.userId;
+      const operateLegalName = currentUser?.legalName;
+
+      if (!operateUserId || !operateLegalName) {
+        Alert.alert(t('common.error'), '无法获取操作用户信息');
+        setIsSubmitting(false);
+        return;
+      }
+
+      console.log('📤 [DEBUG] 提交签退参数:', {
+        userId: volunteer.userId,
+        operateUserId,
+        operateLegalName,
+        remark: description.trim(),
+        remarkLength: description.trim().length
+      });
+
+      const result = await performVolunteerCheckOut(
+        volunteer.userId,
+        operateUserId,
+        operateLegalName,
+        description.trim() // 传递工作描述
+      );
+
+      if (result && (result.code === 200 || result.success)) {
+        // 成功反馈
+        if (Platform.OS === 'ios') {
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        }
+
+        // 🚀 立即更新VolunteerContext状态，并触发数据刷新
+        volunteerContext.updateStatus('signed_out', null);
+        // 强制刷新状态，确保历史记录也会更新
+        volunteerContext.refreshStatus();
+        console.log('✅ [SIGN-OUT] 签退成功，已更新全局状态并触发数据刷新');
+
+        // 显示成功提示并返回
+        Alert.alert(
+          '签退成功',
+          `工作时长：${workDuration.display}`,
+          [
+            {
+              text: '确定',
+              onPress: () => {
+                console.log('✅ [SIGN-OUT] 返回上一页，Context将自动刷新UI');
+                // 简化导航逻辑，依赖VolunteerContext自动刷新UI
+                navigation.goBack();
+              }
+            }
+          ]
+        );
+      } else {
+        const errorMsg = result?.msg || '签退失败，请重试';
+        Alert.alert('签退失败', errorMsg);
+      }
+    } catch (error) {
+      console.error('签退失败:', error);
+      Alert.alert('签退失败', '网络错误，请稍后重试');
+    } finally {
+      setIsSubmitting(false);
+    }
+  }, [description, volunteer, currentUser, workDuration, navigation, t]);
+
+  return (
+    <SafeAreaView style={styles.container}>
+      {/* Liquid Glass 背景 */}
+      <LinearGradient
+        colors={['#F8F9FA', '#FFFFFF', '#F5F5F7']}  // 浅色渐变背景
+        style={StyleSheet.absoluteFill}
+      />
+
+      <KeyboardAvoidingView
+        style={styles.flex}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      >
+        {/* Liquid Glass 头部 */}
+        <BlurView
+          intensity={85}  // 增强毛玻璃效果
+          tint="light"
+          style={styles.header}
+        >
+          <View style={styles.headerContent}>
+            <TouchableOpacity
+              style={styles.backButton}
+              onPress={handleCancel}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            >
+              <Ionicons name="chevron-back" size={24} color={theme.colors.text.primary} />
+              <Text style={styles.backText}>{t('common.cancel')}</Text>
+            </TouchableOpacity>
+            <Text style={styles.title}>
+              志愿者签退
+            </Text>
+            <View style={styles.placeholder} />
+          </View>
+        </BlurView>
+
+        <ScrollView
+          style={styles.scrollContent}
+          contentContainerStyle={styles.scrollContentContainer}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
+          {/* 用户信息 */}
+          <Animated.View entering={FadeIn.delay(100)} style={styles.userInfoSection}>
+            <Text style={styles.userName}>
+              <Ionicons name="person" size={20} color={theme.colors.text.secondary} />
+              {'  '}{volunteer.name}
+            </Text>
+            <Text style={styles.userSchool}>
+              <Ionicons name="school" size={18} color={theme.colors.text.secondary} />
+              {'  '}{volunteer.school}
+            </Text>
+          </Animated.View>
+
+          {/* Liquid Glass 时间统计卡片 */}
+          <Animated.View
+            style={[styles.glassCard, animatedCardStyle]}
+            entering={FadeIn.delay(200)}
+          >
+            <BlurView
+              intensity={92}  // 增强毛玻璃效果
+              tint="light"
+              style={styles.blurContainer}
+            >
+              <View style={styles.timeCardContent}>
+                <View style={styles.timeCardHeader}>
+                  <Ionicons name="time-outline" size={20} color={theme.colors.primary} />
+                  <Text style={[styles.timeCardTitle, isDarkMode && styles.textDark]}>
+                    工作时间统计
+                  </Text>
+                </View>
+
+                <View style={styles.timeCardDivider} />
+
+                <View style={styles.timeRow}>
+                  <Text style={[styles.timeLabel, isDarkMode && styles.textSecondaryDark]}>
+                    签到时间
+                  </Text>
+                  <Text style={[styles.timeValue, isDarkMode && styles.textDark]}>
+                    {formatTime(volunteer.checkInTime)}
+                  </Text>
+                </View>
+
+                <View style={styles.timeRow}>
+                  <Text style={[styles.timeLabel, isDarkMode && styles.textSecondaryDark]}>
+                    签退时间
+                  </Text>
+                  <Text style={[styles.timeValue, isDarkMode && styles.textDark]}>
+                    {formatLocalTime(new Date())}
+                  </Text>
+                </View>
+
+                <View style={[styles.timeRow, styles.durationRow]}>
+                  <Text style={[styles.timeLabel, isDarkMode && styles.textSecondaryDark]}>
+                    工作时长
+                  </Text>
+                  <Text style={[
+                    styles.timeValue,
+                    styles.durationValue,
+                    workDuration.hasError && styles.errorText
+                  ]}>
+                    {workDuration.display}
+                  </Text>
+                </View>
+
+                {workDuration.hasError && workDuration.errorMessage && (
+                  <View style={styles.errorContainer}>
+                    <Ionicons name="alert-circle" size={16} color="#FF3B30" />
+                    <Text style={styles.errorMessage}>
+                      {workDuration.errorMessage}
+                    </Text>
+                  </View>
+                )}
+              </View>
+            </BlurView>
+          </Animated.View>
+
+          {/* 工作描述输入区 */}
+          <Animated.View
+            style={styles.descriptionSection}
+            entering={FadeIn.delay(300)}
+          >
+            <View style={styles.descriptionHeader}>
+              <Text style={styles.descriptionLabel}>
+                工作内容描述
+              </Text>
+              <Text style={styles.requiredMark}>*</Text>
+            </View>
+
+            <View style={styles.inputContainer}>
+              <TextInput
+                ref={textInputRef}
+                style={styles.textInput}
+                multiline
+                placeholder="请描述您今天的志愿工作内容..."
+                placeholderTextColor={theme.colors.text.tertiary}
+                value={description}
+                onChangeText={setDescription}
+                maxLength={100}
+                editable={!isSubmitting}
+                textAlignVertical="top"
+              />
+            </View>
+
+            {/* 字符计数器 - 放在输入框下方 */}
+            <Text style={styles.charCount}>
+              {description.length}/100
+            </Text>
+
+            {/* 快速选择按钮 - 单行显示 */}
+            <View style={styles.quickButtonsContainer}>
+              <View style={styles.quickButtonsRow}>
+                  {quickOptions.map((option) => (
+                    <TouchableOpacity
+                      key={option.id}
+                      onPress={() => handleQuickSelect(option.text)}
+                      disabled={isSubmitting}
+                      activeOpacity={0.85}
+                    >
+                      <LinearGradient
+                        colors={['#F8F9FA', '#F2F2F7']}  // 浅灰渐变背景增强对比
+                        style={styles.quickButton}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 0, y: 1 }}
+                      >
+                        <Text style={styles.quickButtonText}>
+                          {option.label}
+                        </Text>
+                      </LinearGradient>
+                    </TouchableOpacity>
+                  ))}
+              </View>
+            </View>
+          </Animated.View>
+        </ScrollView>
+
+        {/* Liquid Glass 提交按钮 */}
+        <Animated.View
+          style={styles.submitSection}
+          entering={FadeIn.delay(400)}
+        >
+          <TouchableOpacity
+            onPress={handleSubmit}
+            disabled={!description.trim() || isSubmitting}
+            activeOpacity={0.8}
+          >
+            <LinearGradient
+              colors={!description.trim() ?
+                ['#C7C7CC', '#B0B0B5'] :
+                [theme.colors.primary, theme.colors.primaryDark || theme.colors.primary]
+              }
+              style={styles.submitButton}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+            >
+              {isSubmitting ? (
+                <ActivityIndicator size="small" color="white" />
+              ) : (
+                <Text style={styles.submitButtonText}>
+                  确认签退
+                </Text>
+              )}
+            </LinearGradient>
+          </TouchableOpacity>
+        </Animated.View>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#f2f2f7',
+  },
+  flex: {
+    flex: 1,
+  },
+  header: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 100,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: 'rgba(0, 0, 0, 0.1)',
+  },
+  headerContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,  // 统一左右边距
+    paddingTop: 12,
+    paddingBottom: 12,
+  },
+  backButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 4,
+  },
+  backText: {
+    fontSize: 17,
+    color: theme.colors.text.primary,
+    marginLeft: 4,
+  },
+  title: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: theme.colors.text.primary,
+  },
+  placeholder: {
+    width: 60,
+  },
+  scrollContent: {
+    flex: 1,
+    marginTop: 65,  // 优化顶部间距
+  },
+  scrollContentContainer: {
+    paddingHorizontal: 20,  // 统一水平内边距
+    paddingTop: 8,  // 稍微增加顶部padding
+    paddingBottom: 120,  // 增加底部padding给按钮更多空间
+  },
+  userInfoSection: {
+    marginBottom: 16,  // 略微减少间距，让整体更紧凑
+  },
+  userName: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: theme.colors.text.primary,
+    marginBottom: 8,
+  },
+  userSchool: {
+    fontSize: 16,
+    color: theme.colors.text.secondary,
+  },
+  glassCard: {
+    borderRadius: LIQUID_GLASS_LAYERS.L1.borderRadius.card,
+    marginBottom: 24,      // 增加底部间距
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.12,   // 增强阴影
+    shadowRadius: 16,
+    elevation: 7,
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',  // 添加背景色
+  },
+  blurContainer: {
+    borderRadius: LIQUID_GLASS_LAYERS.L1.borderRadius.card,
+  },
+  timeCardContent: {
+    padding: 16,
+  },
+  timeCardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  timeCardTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: theme.colors.text.primary,
+    marginLeft: 8,
+  },
+  timeCardDivider: {
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: 'rgba(0, 0, 0, 0.06)',
+    marginBottom: 12,
+  },
+  timeRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  timeLabel: {
+    fontSize: 14,
+    color: theme.colors.text.secondary,
+  },
+  timeValue: {
+    fontSize: 15,
+    fontWeight: '500',
+    color: theme.colors.text.primary,
+  },
+  durationRow: {
+    marginTop: 8,
+    paddingTop: 8,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: 'rgba(0, 0, 0, 0.06)',
+  },
+  durationValue: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: theme.colors.primary,
+  },
+  descriptionSection: {
+    marginBottom: 20,
+  },
+  descriptionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  descriptionLabel: {
+    fontSize: 17,          // 增大标签字体
+    fontWeight: '700',     // 加粗
+    color: theme.colors.text.primary,
+    letterSpacing: 0.3,    // 增加字间距
+  },
+  requiredMark: {
+    fontSize: 16,
+    color: '#FF3B30',
+    marginLeft: 4,
+  },
+  inputContainer: {
+    backgroundColor: '#ffffff',
+    borderRadius: LIQUID_GLASS_LAYERS.L1.borderRadius.card,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,    // 增强阴影
+    shadowRadius: 16,       // 增大阴影范围
+    elevation: 6,
+    padding: 14,            // 增加内边距
+    borderWidth: 1,
+    borderColor: 'rgba(0, 0, 0, 0.04)',  // 添加细边框
+  },
+  textInput: {
+    fontSize: 15,
+    color: theme.colors.text.primary,
+    minHeight: 100,
+    maxHeight: 150,
+  },
+  charCount: {
+    fontSize: 11,
+    color: theme.colors.text.tertiary,
+    textAlign: 'right',
+    marginTop: 8,
+    marginBottom: 12,
+    fontWeight: '500',
+  },
+  quickButtonsContainer: {
+    marginTop: 8,
+  },
+  quickButtonsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  quickButton: {
+    flex: 1,  // 让按钮平分宽度
+    paddingHorizontal: 10,  // 适中的水平padding
+    paddingVertical: 10,    // 增加垂直padding
+    borderRadius: 12,       // 稍大的圆角
+    marginHorizontal: 3,    // 减少按钮间距
+    alignItems: 'center',   // 内容居中
+    borderWidth: 1,         // 添加边框
+    borderColor: 'rgba(0, 0, 0, 0.08)',  // 加强边框颜色
+    shadowColor: '#000',    // 添加阴影
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 4,
+    elevation: 3,           // Android阴影
+  },
+  quickButtonText: {
+    fontSize: 13,           // 稍微增大字体提高可读性
+    color: theme.colors.text.primary,  // 使用黑色文字
+    fontWeight: '600',      // 加粗字体
+  },
+  submitSection: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    padding: 16,
+    paddingBottom: 50,  // 增加底部间距，让按钮更靠下
+    backgroundColor: 'transparent',
+  },
+  submitButton: {
+    height: 52,
+    borderRadius: 12, // button radius from theme
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.12,
+    shadowRadius: 10,
+    elevation: 5,
+  },
+  submitButtonText: {
+    fontSize: 17,
+    fontWeight: '600',
+    color: '#FFFFFF',
+  },
+  errorContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 12,
+    padding: 12,
+    backgroundColor: '#FFF5F5',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#FFE5E5',
+  },
+  errorMessage: {
+    fontSize: 13,
+    color: '#FF3B30',
+    marginLeft: 8,
+    flex: 1,
+    lineHeight: 18,
+  },
+  errorText: {
+    color: '#FF3B30',
+  },
+  textDark: {
+    color: '#FFFFFF',
+  },
+  textSecondaryDark: {
+    color: 'rgba(255, 255, 255, 0.7)',
+  },
+});
+
+export default VolunteerCheckOutScreen;

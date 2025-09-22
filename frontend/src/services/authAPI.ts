@@ -38,7 +38,9 @@ export interface UserInfo {
   nickName: string;
   email: string;
   phonenumber: string;
-  sex: string;
+  areaCode?: string; // 🆕 国际电话区号
+  alternateEmail?: string; // 🆕 第二邮箱/工作邮箱
+  sex: string; // 🔧 后端返回的是sex字段 (0-男 1-女 2-未知)
   avatar: string;
   status: string;
   loginDate: string;
@@ -194,15 +196,33 @@ export const getUserInfo = async (token?: string, userId?: number): Promise<APIR
  * 更新用户资料
  * @param profileData 用户资料数据
  * @returns API响应
+ *
+ * 📋 根据接口文档.html，找到了正确的用户修改接口：
+ * - /app/user/edit?userId=xxx (POST)
+ *
+ * 支持参数：
+ * - userId (必需)、avatar、userName、legalName、nickName、password
+ * - areaCode、phonenumber、email、gender、alternateEmail、deptId、orgId、identity、area
  */
 export const updateUserProfile = async (profileData: {
   legalName?: string;
   nickName?: string;
   phonenumber?: string;
   email?: string;
-  bio?: string;
-  location?: string;
   avatar?: string;
+  sex?: string; // 🔧 正确的字段名（后端期望）
+  userName?: string;
+  areaCode?: string;
+  alternateEmail?: string; // 🆕 第二邮箱/工作邮箱
+  deptId?: string;
+  orgId?: string;
+  identity?: string;
+  area?: string;
+  // 🔧 临时解决方案：添加角色相关参数，避免角色被清空
+  roleIds?: string; // 角色ID列表，逗号分隔
+  roles?: string; // 角色信息JSON字符串
+  roleId?: number; // 主要角色ID
+  roleKey?: string; // 主要角色Key
 }): Promise<APIResponse<any>> => {
   try {
     const authToken = await AsyncStorage.getItem(STORAGE_KEYS.TOKEN);
@@ -215,18 +235,27 @@ export const updateUserProfile = async (profileData: {
       throw new Error('No user ID found');
     }
 
-    // ⚠️ 注意：后端暂无用户资料更新接口，此API路径为预期接口
-    // 需要后端团队实现 /app/user/update 接口
-    const response = await fetch(`${BASE_URL}/app/user/update`, {
+    // 准备POST请求的form参数
+    const formData = new URLSearchParams();
+    formData.append('userId', userId);
+
+    // 添加有值的字段
+    Object.entries(profileData).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== '') {
+        formData.append(key, value);
+      }
+    });
+
+    console.log('正在调用用户修改接口:', `/app/user/edit?userId=${userId}`);
+    console.log('请求参数:', Object.fromEntries(formData.entries()));
+
+    const response = await fetch(`${BASE_URL}/app/user/edit?userId=${userId}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
         'Authorization': `Bearer ${authToken}`,
       },
-      body: new URLSearchParams({
-        userId: userId,
-        ...profileData,
-      }).toString(),
+      body: formData.toString(),
     });
 
     if (!response.ok) {
@@ -234,12 +263,13 @@ export const updateUserProfile = async (profileData: {
     }
 
     const data = await response.json();
-    
+    console.log('用户修改接口响应:', data);
+
     // 如果更新成功，刷新本地用户信息
     if (data.code === 200) {
       await getUserInfo(authToken);
     }
-    
+
     return data;
   } catch (error) {
     console.error('更新用户资料失败:', error);

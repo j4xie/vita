@@ -43,6 +43,7 @@ import { GridActivityCard } from '../../components/cards/GridActivityCard';
 import { LiquidGlassTab } from '../../components/ui/LiquidGlassTab';
 import { FilterBottomSheet } from '../../components/ui/FilterBottomSheet';
 import { ListSkeleton } from '../../components/ui/SkeletonScreen';
+import CategoryBar from '../../components/ui/CategoryBar';
 import { pomeloXAPI } from '../../services/PomeloXAPI';
 import { adaptActivityList, FrontendActivity } from '../../utils/activityAdapter';
 import { ACTIVITY_CATEGORIES, getCategoryName } from '../../data/activityCategories';
@@ -55,10 +56,12 @@ import { useTabBarVerification } from '../../hooks/useTabBarStateGuard';
 import { activityStatsService } from '../../services/activityStatsService';
 import { useUser } from '../../context/UserContext';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-// 定位相关import暂时移除，等后端就绪后启用
-// import { LocationPermissionBanner } from '../../components/location/LocationPermissionBanner';
-// import { NearbyFilterChip } from '../../components/location/NearbyFilterChip';
-// import { useLocationService } from '../../hooks/useLocationService';
+// 定位相关import
+import { LocationPermissionBanner } from '../../components/location/LocationPermissionBanner';
+import { NearbyFilterChip } from '../../components/location/NearbyFilterChip';
+import { useLocationService } from '../../hooks/useLocationService';
+import { sortActivitiesByLocation, LocationInfo } from '../../utils/locationUtils';
+import { LocationSelectorModal } from '../../components/modals/LocationSelectorModal';
 
 // Using LiquidGlassTab component for V1.1 compliance
 
@@ -147,20 +150,23 @@ export const ActivityListScreen: React.FC = () => {
   };
   
   // 定位服务暂时禁用，等后端就绪后启用
-  // const {
-  //   permissionStatus,
-  //   currentLocation,
-  //   showPermissionBanner,
-  //   requestForegroundPermission,
-  //   dismissPermissionBanner,
-  //   getCurrentLocation,
-  //   formatDistance,
-  //   hasLocation,
-  //   hasPermission,
-  // } = useLocationService({ lowPowerMode: isPerformanceDegraded });
-  
-  // 附近筛选状态（暂时禁用）
-  // const [showNearbyOnly, setShowNearbyOnly] = useState(false);
+  const {
+    permissionStatus,
+    currentLocation,
+    showPermissionBanner,
+    requestForegroundPermission,
+    dismissPermissionBanner,
+    getCurrentLocation,
+    formatDistance,
+    hasLocation,
+    hasPermission,
+  } = useLocationService({ lowPowerMode: isPerformanceDegraded });
+
+  // 定位和筛选状态
+  const [showNearbyOnly, setShowNearbyOnly] = useState(false);
+  const [selectedSchool, setSelectedSchool] = useState<string | null>(null);
+  const [showLocationModal, setShowLocationModal] = useState(false);
+  const [userLocation, setUserLocation] = useState<LocationInfo | null>(null);
   
   
   
@@ -602,19 +608,40 @@ export const ActivityListScreen: React.FC = () => {
           return { ...activity, status: finalStatus };
         });
         
+        // 🎯 应用位置排序（如果启用）
+        const currentLocationInfo = selectedSchool ? {
+          school: selectedSchool,
+          source: 'manual' as const
+        } : userLocation || (hasLocation && showNearbyOnly ? {
+          lat: currentLocation?.latitude,
+          lng: currentLocation?.longitude,
+          source: 'gps' as const
+        } : null);
+
+        const finalActivities = currentLocationInfo ?
+          sortActivitiesByLocation(
+            activitiesWithCachedStatus,
+            user?.school, // 传递用户学校，不是选中的学校
+            currentLocationInfo // 传递包含选中学校信息的位置对象
+          ) : activitiesWithCachedStatus;
+
         if (page === 1 || isRefresh) {
           console.log('🔄 [FETCH-ACTIVITIES] 设置活动列表:', {
-            totalActivities: activitiesWithCachedStatus.length,
-            registeredActivities: activitiesWithCachedStatus.filter(a => a.status === 'registered').length,
-            checkedInActivities: activitiesWithCachedStatus.filter(a => a.status === 'checked_in').length,
-            upcomingActivities: activitiesWithCachedStatus.filter(a => a.status === 'upcoming').length
+            totalActivities: finalActivities.length,
+            registeredActivities: finalActivities.filter(a => a.status === 'registered').length,
+            checkedInActivities: finalActivities.filter(a => a.status === 'checked_in').length,
+            upcomingActivities: finalActivities.filter(a => a.status === 'upcoming').length,
+            hasLocationSorting: !!currentLocationInfo,
+            selectedSchool,
+            userSchool: user?.school,
+            currentLocationInfo
           });
-          setActivities(activitiesWithCachedStatus);
+          setActivities(finalActivities);
         } else {
           // 防止重复数据，使用Set去重
           setActivities(prev => {
             const existingIds = new Set(prev.map(activity => activity.id));
-            const newActivities = activitiesWithCachedStatus.filter(activity => !existingIds.has(activity.id));
+            const newActivities = finalActivities.filter(activity => !existingIds.has(activity.id));
             return [...prev, ...newActivities];
           });
         }
@@ -651,7 +678,7 @@ export const ActivityListScreen: React.FC = () => {
       setRefreshing(false);
       setInitialLoading(false);
     }
-  }, [activeFilter, searchText, currentLanguage, user?.id, user?.userId, activityStatusCache]); // 🔧 添加用户ID和状态缓存到依赖项
+  }, [activeFilter, searchText, currentLanguage, user?.id, user?.userId, activityStatusCache, selectedSchool]); // 🔧 添加用户ID、状态缓存和选中学校到依赖项
 
   // 调试：打印API响应
   useEffect(() => {
@@ -709,8 +736,8 @@ export const ActivityListScreen: React.FC = () => {
         } catch (e) {}
       }
       
-      // 延迟展示完成状态
-      await new Promise(resolve => setTimeout(resolve, 300));
+      // 延迟展示完成状态，增强停顿感
+      await new Promise(resolve => setTimeout(resolve, 600));
       
       // 结束动画
       refreshAnimation.value = withTiming(0, {
@@ -759,6 +786,38 @@ export const ActivityListScreen: React.FC = () => {
       fetchActivities(1);
     }
   }, [activeFilter, searchText]);
+
+  // 监听用户学校变化，自动设置默认排序
+  useEffect(() => {
+    if (!initialLoading && user?.school && !selectedSchool) {
+      const userSchool = user.school;
+      console.log('🏫 [USER-SCHOOL] 检测到用户学校，自动设置默认排序:', {
+        userSchool,
+        timestamp: new Date().toISOString()
+      });
+
+      // 只设置选中学校用于排序，不设置为当前位置
+      if (typeof userSchool === 'string') {
+        setSelectedSchool(userSchool);
+      } else if (typeof userSchool === 'object' && userSchool.name) {
+        const schoolName = userSchool.name;
+        setSelectedSchool(schoolName);
+      }
+      // 注意：不设置 userLocation，让它保持为实际的地理位置
+    }
+  }, [user?.school, initialLoading, selectedSchool]);
+
+  // 监听选中学校变化，自动刷新活动列表
+  useEffect(() => {
+    if (!initialLoading && selectedSchool !== null) {
+      console.log('🎯 [SCHOOL-SELECTION] 选中学校变化，自动刷新活动列表:', {
+        selectedSchool,
+        timestamp: new Date().toISOString()
+      });
+      setCurrentPage(1);
+      fetchActivities(1, true);
+    }
+  }, [selectedSchool, initialLoading]);
 
   // 计算滤后的活动数量 - 用于传递给FilterBottomSheet
   const calculateFilteredCount = useCallback((filters: string[], search: string) => {
@@ -922,6 +981,37 @@ export const ActivityListScreen: React.FC = () => {
   // 扫码功能
   const handleScan = () => {
     navigation.navigate('QRScanner');
+  };
+
+  // 定位按钮处理
+  const handleLocationPress = () => {
+    if (!hasPermission) {
+      // 请求定位权限
+      requestForegroundPermission();
+    } else {
+      // 显示位置选择模态框
+      setShowLocationModal(true);
+    }
+  };
+
+  // 位置选择处理
+  const handleLocationSelected = (location: LocationInfo) => {
+    setUserLocation(location);
+    setSelectedSchool(location.school || null);
+    setShowLocationModal(false);
+
+    // 使用setTimeout确保状态更新后再刷新
+    setTimeout(() => {
+      fetchActivities(1, true);
+    }, 0);
+  };
+
+  // 附近筛选切换
+  const handleNearbyToggle = () => {
+    setShowNearbyOnly(!showNearbyOnly);
+
+    // 刷新活动列表以应用筛选
+    fetchActivities(1, true);
   };
 
   // 活动详情
@@ -1096,9 +1186,26 @@ export const ActivityListScreen: React.FC = () => {
       {/* Absolute Header */}
       <Reanimated.View style={[styles.absoluteHeader, { top: insets.top }]}>
         {/* V2.0 页头朝霞氛围背景层 - 已移除背景色 */}
-        
+
         <View style={[styles.header, styles.headerGlass]}>
           <View style={styles.headerContent}>
+            {/* 左侧定位按钮容器 */}
+            <View style={styles.leftButtonContainer}>
+              <TouchableOpacity
+                onPress={handleLocationPress}
+                style={[
+                  styles.locationButton,
+                  (hasLocation || showNearbyOnly || selectedSchool) && styles.locationButtonActive
+                ]}
+              >
+                <Ionicons
+                  name={hasLocation ? "location" : "location-outline"}
+                  size={20}
+                  color="#34C759"
+                />
+              </TouchableOpacity>
+            </View>
+
             {/* 状态筛选按钮组 */}
             <View style={styles.filterButtonsContainer}>
               {segmentLabels.map((label, index) => (
@@ -1121,11 +1228,9 @@ export const ActivityListScreen: React.FC = () => {
                 </TouchableOpacity>
               ))}
             </View>
-            
-            {/* 右侧按钮组 */}
-            <View style={styles.rightButtonsContainer}>
-              
-              {/* 扫码按钮 */}
+
+            {/* 右侧扫码按钮容器 */}
+            <View style={styles.rightButtonContainer}>
               <TouchableOpacity onPress={handleScan} style={styles.scanButton}>
                 <Ionicons name="scan-outline" size={20} color="#F9A889" />
               </TouchableOpacity>
@@ -1134,7 +1239,27 @@ export const ActivityListScreen: React.FC = () => {
         </View>
       </Reanimated.View>
 
-      {/* 定位权限由系统提示处理，移除自定义提示条 */}
+      {/* 定位权限横幅 */}
+      {showPermissionBanner && (
+        <LocationPermissionBanner
+          onEnableLocation={requestForegroundPermission}
+          onDismiss={dismissPermissionBanner}
+          visible={showPermissionBanner}
+        />
+      )}
+
+      {/* 附近筛选芯片 - 临时注释掉，这个是多余的 */}
+      {/*
+      {hasPermission && (
+        <View style={styles.nearbyChipContainer}>
+          <NearbyFilterChip
+            isSelected={showNearbyOnly}
+            onPress={handleNearbyToggle}
+            distance={hasLocation && currentLocation ? '附近' : undefined}
+          />
+        </View>
+      )}
+      */}
 
       {/* Container for list */}
       <View style={styles.listContainer}>
@@ -1201,8 +1326,8 @@ export const ActivityListScreen: React.FC = () => {
         ListHeaderComponent={renderListHeader}
         contentContainerStyle={[
           styles.listContent,
-          { 
-            paddingTop: 60 + insets.top, // 调整为适配新的header设计
+          {
+            paddingTop: 5, // 极小间距，让内容紧贴Header
             paddingBottom: 120 + insets.bottom,
           }
         ]}
@@ -1211,21 +1336,9 @@ export const ActivityListScreen: React.FC = () => {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
-            colors={[theme.colors.primary, '#F9A889', '#FF8A65', theme.colors.secondary]}
             tintColor={theme.colors.primary}
-            progressBackgroundColor="rgba(255, 255, 255, 0.95)"
-            progressViewOffset={insets.top + 60}
-            titleColor={theme.colors.text.secondary}
-            title={
-              refreshProgress === 0 ? t('activities.list.refresh') : 
-              refreshProgress === 1 ? t('activities.list.refresh_complete') : 
-              t('activities.list.refreshing')
-            }
-            {...(Platform.OS === 'ios' && {
-              style: { 
-                backgroundColor: 'rgba(249, 168, 137, 0.05)',
-              },
-            })}
+            colors={[theme.colors.primary]}
+            progressViewOffset={20}
           />
         }
         onEndReached={loadMore}
@@ -1303,6 +1416,22 @@ export const ActivityListScreen: React.FC = () => {
         searchText={searchText}
         onSearchChange={handleSearchChange}
         getFilteredCount={calculateFilteredCount}
+      />
+
+      {/* 位置选择模态框 */}
+      <LocationSelectorModal
+        visible={showLocationModal}
+        onClose={() => setShowLocationModal(false)}
+        onLocationSelected={handleLocationSelected}
+        userSchool={
+          typeof user?.school === 'string'
+            ? user.school
+            : typeof user?.school === 'object' && user?.school
+              ? (user.school as any).name
+              : undefined
+        }
+        currentLocation={userLocation || null}
+        hasLocationPermission={hasPermission || false}
       />
       
       {/* 地理位置选择底部弹层 - 两层结构 */}
@@ -1511,15 +1640,24 @@ const styles = StyleSheet.create({
   headerContent: {
     flex: 1,
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
+  },
+  leftButtonContainer: {
+    width: 45,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  rightButtonContainer: {
+    width: 45,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   filterButtonsContainer: {
     flexDirection: 'row',
     flex: 1,
     justifyContent: 'space-evenly', // 更均匀的分布
     alignItems: 'center',
-    marginRight: 12, // 增加与扫码按钮的间距
+    marginHorizontal: 8, // 减少左右边距，给按钮容器让空间
   },
   filterButton: {
     paddingHorizontal: 4,
@@ -1572,6 +1710,16 @@ const styles = StyleSheet.create({
     shadowRadius: 3,
     elevation: 3,
   },
+  locationButton: {
+    width: 38,
+    height: 38,
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative',
+  },
+  locationButtonActive: {
+    // 激活状态也不需要背景，只通过图标颜色区分
+  },
   // 地理位置选择器 - 精确触发区域
   locationSelector: {
     flexDirection: 'row',
@@ -1598,6 +1746,7 @@ const styles = StyleSheet.create({
   listContainer: {
     flex: 1,
     position: 'relative',
+    marginTop: 60, // Header高度，让列表从Header下方开始
   },
   
   

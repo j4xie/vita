@@ -56,28 +56,22 @@ class LocationService {
    */
   async checkPermissionStatus(): Promise<LocationPermissionStatus> {
     try {
-      // 临时禁用位置权限检查，避免触发权限对话框
-      // 直接返回DENIED状态，让应用使用IP检测替代GPS定位
-      console.log('位置权限检查已禁用，使用IP检测替代GPS定位');
-      return LocationPermissionStatus.DENIED;
-      
-      // 原有权限检查代码（暂时注释）
-      // const { status: foregroundStatus } = await Location.getForegroundPermissionsAsync();
-      // 
-      // if (foregroundStatus === 'denied') {
-      //   return LocationPermissionStatus.DENIED;
-      // }
-      // 
-      // if (foregroundStatus === 'granted') {
-      //   // 检查是否有后台定位权限
-      //   const { status: backgroundStatus } = await Location.getBackgroundPermissionsAsync();
-      //   if (backgroundStatus === 'granted') {
-      //     return LocationPermissionStatus.GRANTED_ALWAYS;
-      //   }
-      //   return LocationPermissionStatus.GRANTED_FOREGROUND;
-      // }
-      // 
-      // return LocationPermissionStatus.NOT_DETERMINED;
+      const { status: foregroundStatus } = await Location.getForegroundPermissionsAsync();
+
+      if (foregroundStatus === 'denied') {
+        return LocationPermissionStatus.DENIED;
+      }
+
+      if (foregroundStatus === 'granted') {
+        // 检查是否有后台定位权限
+        const { status: backgroundStatus } = await Location.getBackgroundPermissionsAsync();
+        if (backgroundStatus === 'granted') {
+          return LocationPermissionStatus.GRANTED_ALWAYS;
+        }
+        return LocationPermissionStatus.GRANTED_FOREGROUND;
+      }
+
+      return LocationPermissionStatus.NOT_DETERMINED;
     } catch (error) {
       console.error('检查定位权限失败:', error);
       return LocationPermissionStatus.DENIED;
@@ -131,10 +125,15 @@ class LocationService {
     } = options || {};
 
     try {
-      // 检查权限 - 如果没有权限，直接返回null，不抛出错误
+      // 检查权限
       const permissionStatus = await this.checkPermissionStatus();
       if (permissionStatus === LocationPermissionStatus.DENIED) {
-        console.log('位置权限被拒绝，跳过GPS定位');
+        console.log('位置权限被拒绝，无法获取GPS定位');
+        return null;
+      }
+
+      if (permissionStatus === LocationPermissionStatus.NOT_DETERMINED) {
+        console.log('位置权限未确定，需要用户授权');
         return null;
       }
 

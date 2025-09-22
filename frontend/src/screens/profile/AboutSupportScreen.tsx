@@ -170,35 +170,14 @@ export const AboutSupportScreen: React.FC = () => {
     navigation.navigate('Terms', { type: 'terms' });
   };
 
-  const handleGitHub = () => {
-    // Example external link
-    const url = 'https://github.com/pomelox';
-    Linking.canOpenURL(url).then(supported => {
-      if (supported) {
-        Linking.openURL(url);
-      } else {
-        Alert.alert(t('profile.about.error'), t('profile.about.cannotOpenLink'));
-      }
-    });
-  };
 
   const appInfoItems = [
     {
       id: 'app-info',
       title: t('profile.about.aboutApp'),
       icon: 'information-circle-outline' as keyof typeof Ionicons.glyphMap,
-      value: 'v1.0.24',
+      value: 'v1.0.4',
       onPress: handleAppInfo,
-    },
-  ];
-
-  const supportItems = [
-    {
-      id: 'github',
-      title: t('profile.about.githubRepo'),
-      icon: 'logo-github' as keyof typeof Ionicons.glyphMap,
-      onPress: handleGitHub,
-      isExternal: true,
     },
   ];
 
@@ -306,22 +285,6 @@ export const AboutSupportScreen: React.FC = () => {
             </View>
           </View>
 
-          {/* 支持与反馈 */}
-          <View style={styles.groupContainer}>
-            <Text style={styles.groupTitle}>{t('profile.about.sectionSupportFeedback')}</Text>
-            <View style={styles.listContainer}>
-              {supportItems.map((item, index) => (
-                <SettingRow
-                  key={item.id}
-                  title={item.title}
-                  icon={item.icon}
-                  onPress={item.onPress}
-                  isExternal={item.isExternal}
-                  isLast={index === supportItems.length - 1}
-                />
-              ))}
-            </View>
-          </View>
 
           {/* 法律条款 */}
           <View style={styles.groupContainer}>
@@ -344,10 +307,10 @@ export const AboutSupportScreen: React.FC = () => {
           {/* Version Footer */}
           <View style={styles.versionFooter}>
             <Text style={styles.versionText}>
-              PomeloX v1.0.24 Build 25
+              PomeloX v1.0.4
             </Text>
             <Text style={styles.copyrightText}>
-              © 2025 PomeloX. All rights reserved.
+              © 2025 西柚Pomelo. All rights reserved.
             </Text>
           </View>
         </ScrollView>
