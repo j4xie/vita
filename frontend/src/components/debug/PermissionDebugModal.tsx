@@ -63,10 +63,10 @@ export const PermissionDebugModal: React.FC<Props> = ({ visible, onClose }) => {
     
     // 测试不同roleKey的权限级别
     roleKeyTests: [
-      { roleKey: 'manage', level: getUserPermissionLevel({ roles: [{ key: 'manage' }] }) },
-      { roleKey: 'part_manage', level: getUserPermissionLevel({ roles: [{ key: 'part_manage' }] }) },
-      { roleKey: 'staff', level: getUserPermissionLevel({ roles: [{ key: 'staff' }] }) },
-      { roleKey: 'common', level: getUserPermissionLevel({ roles: [{ key: 'common' }] }) },
+      { roleKey: 'manage', level: getUserPermissionLevel({ roles: [{ roleId: 1, roleName: 'manage', roleKey: 'manage', roleSort: 1, admin: true, status: 'active', flag: true }] }) },
+      { roleKey: 'part_manage', level: getUserPermissionLevel({ roles: [{ roleId: 2, roleName: 'part_manage', roleKey: 'part_manage', roleSort: 2, admin: false, status: 'active', flag: true }] }) },
+      { roleKey: 'staff', level: getUserPermissionLevel({ roles: [{ roleId: 3, roleName: 'staff', roleKey: 'staff', roleSort: 3, admin: false, status: 'active', flag: true }] }) },
+      { roleKey: 'common', level: getUserPermissionLevel({ roles: [{ roleId: 4, roleName: 'common', roleKey: 'common', roleSort: 4, admin: false, status: 'active', flag: true }] }) },
     ]
   };
 
@@ -101,7 +101,7 @@ export const PermissionDebugModal: React.FC<Props> = ({ visible, onClose }) => {
             <Text style={styles.item}>用户名: {debugData.userName}</Text>
             <Text style={styles.item}>法定姓名: {debugData.legalName}</Text>
             <Text style={styles.item}>部门ID: {debugData.deptId}</Text>
-            <Text style={styles.item}>学校: {debugData.school}</Text>
+            <Text style={styles.item}>学校: {JSON.stringify(debugData.school)}</Text>
           </View>
 
           <View style={styles.section}>

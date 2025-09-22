@@ -35,7 +35,7 @@
       "ios": {
         "simulator": false,
         "buildConfiguration": "Release",
-        "scheme": "PomeloX",
+        "scheme": "PomeloXApp",
         "enterpriseProvisioning": "universal"
       },
     }
