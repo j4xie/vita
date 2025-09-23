@@ -76,7 +76,17 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       // 使用新的authAPI获取用户信息
       const response = await getAuthUserInfo();
-      const adaptedData = adaptUserInfoResponse(response);
+      // 适配响应数据格式
+      const adaptedResponse = {
+        msg: response.msg || '',
+        code: response.code,
+        roleIds: response.roleIds || [],
+        data: response.data,
+        postIds: response.postIds || [],
+        roles: response.roles || [],
+        posts: response.posts || []
+      };
+      const adaptedData = adaptUserInfoResponse(adaptedResponse);
       
       if (adaptedData.success && adaptedData.user) {
         console.log('✅ 用户信息获取成功:', {
@@ -114,7 +124,16 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       // 如果已经有用户信息，直接使用
       if (userInfo) {
-        const adaptedData = adaptUserInfoResponse({ code: 200, data: userInfo });
+        const adaptedResponse = {
+          msg: 'Success',
+          code: 200,
+          roleIds: userInfo.roleIds || [],
+          data: userInfo,
+          postIds: userInfo.postIds || [],
+          roles: userInfo.roles || [],
+          posts: userInfo.posts || []
+        };
+        const adaptedData = adaptUserInfoResponse(adaptedResponse);
         if (adaptedData.success && adaptedData.user) {
           setUser(adaptedData.user);
           await AsyncStorage.setItem('userData', JSON.stringify(adaptedData.user));

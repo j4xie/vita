@@ -93,7 +93,25 @@ export default function App() {
         const alertSystemInitialized = await initializeSmartAlerts();
         console.log('[ALERT]', alertSystemInitialized ? '✅ 智能提醒系统启用' : '❌ 智能提醒系统失败');
         
-        // 5. 启动地理检测预检测（后台运行，不阻塞启动）
+        // 5. 请求定位权限（首次启动时）
+        console.log('[LOCATION] 检查定位权限...');
+        try {
+          const { default: LocationService } = await import('./src/services/LocationService');
+          const locationService = LocationService.getInstance();
+          const permissionStatus = await locationService.checkPermissionStatus();
+          console.log('[LOCATION] 当前权限状态:', permissionStatus);
+
+          // 如果权限未确定，请求权限
+          if (permissionStatus === 'NOT_DETERMINED') {
+            console.log('[LOCATION] 首次启动，请求定位权限...');
+            const granted = await locationService.requestForegroundPermission();
+            console.log('[LOCATION] 权限请求结果:', granted ? '已授权' : '已拒绝');
+          }
+        } catch (error) {
+          console.error('[LOCATION] 权限检查失败:', error);
+        }
+
+        // 6. 启动地理检测预检测（后台运行，不阻塞启动）
         console.log('[REGION] 启动地理检测预检测...');
         RegionDetectionService.preDetect().then(() => {
           console.log('[REGION] ✅ 地理检测预检测完成，结果已缓存');

@@ -104,30 +104,34 @@ const VolunteerQuickActionModalComponent: React.FC<VolunteerQuickActionModalProp
       );
 
       if (response.code === 200) {
+        console.log('✅ [QuickAction] 签到成功，开始更新状态');
+
         // 签到成功
         if (Platform.OS === 'ios') {
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         }
-        
+
+        // 先重新加载状态，确保UI更新
+        await loadVolunteerStatus();
+        console.log('✅ [QuickAction] 状态已重新加载');
+
         Alert.alert(
           t('qr.results.volunteer_checkin_success'),
-          t('qr.results.volunteer_checkin_success_msg', { 
-            name: userData.legalName, 
-            time: formatTime(startTime) 
+          t('qr.results.volunteer_checkin_success_msg', {
+            name: userData.legalName,
+            time: formatTime(startTime)
           }),
           [
             {
               text: t('common.confirm'),
               onPress: () => {
+                console.log('✅ [QuickAction] 用户确认签到成功');
                 onActionComplete?.('checkin', true);
                 onClose();
               }
             }
           ]
         );
-        
-        // 重新加载状态
-        await loadVolunteerStatus();
       } else {
         throw new Error(response.msg || t('qr.results.volunteer_checkin_failed'));
       }
@@ -174,13 +178,19 @@ const VolunteerQuickActionModalComponent: React.FC<VolunteerQuickActionModalProp
       );
 
       if (response.code === 200) {
+        console.log('✅ [QuickAction] 签退成功，开始更新状态');
+
         // 签退成功
         if (Platform.OS === 'ios') {
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         }
-        
+
         const workDuration = calculateWorkDuration(currentRecord.startTime, endTime);
-        
+
+        // 先重新加载状态，确保UI更新
+        await loadVolunteerStatus();
+        console.log('✅ [QuickAction] 状态已重新加载');
+
         Alert.alert(
           t('qr.results.volunteer_checkout_success'),
           t('qr.results.volunteer_checkout_success_msg', {
@@ -192,15 +202,13 @@ const VolunteerQuickActionModalComponent: React.FC<VolunteerQuickActionModalProp
             {
               text: t('common.confirm'),
               onPress: () => {
+                console.log('✅ [QuickAction] 用户确认签退成功');
                 onActionComplete?.('checkout', true);
                 onClose();
               }
             }
           ]
         );
-        
-        // 重新加载状态
-        await loadVolunteerStatus();
       } else {
         throw new Error(response.msg || t('qr.results.volunteer_checkout_failed'));
       }
@@ -223,29 +231,9 @@ const VolunteerQuickActionModalComponent: React.FC<VolunteerQuickActionModalProp
     }
   }, [userData.userId, userData.legalName, user, hasActiveSession, currentRecord, onActionComplete, onClose, loadVolunteerStatus, t, formatTime, calculateWorkDuration]);
 
-  const formatTime = (timeString: string) => {
-    const date = new Date(timeString);
-    return date.toLocaleString('zh-CN', {
-      month: 'numeric',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-  };
+  
 
-  const calculateWorkDuration = (startTime: string, endTime: string) => {
-    const start = new Date(startTime);
-    const end = new Date(endTime);
-    const durationMs = end.getTime() - start.getTime();
-    const hours = Math.floor(durationMs / (1000 * 60 * 60));
-    const minutes = Math.floor((durationMs % (1000 * 60 * 60)) / (1000 * 60));
-    
-    if (hours > 0) {
-      return `${hours} ${t('common.time.hours', '小时')} ${minutes} ${t('common.time.minutes', '分钟')}`;
-    } else {
-      return `${minutes} ${t('common.time.minutes', '分钟')}`;
-    }
-  };
+  
 
   const handleClose = () => {
     if (Platform.OS === 'ios') {
@@ -542,6 +530,20 @@ const VolunteerQuickActionModalComponent: React.FC<VolunteerQuickActionModalProp
 
 // 使用React.memo优化重新渲染
 export const VolunteerQuickActionModal = memo(VolunteerQuickActionModalComponent, (prevProps, nextProps) => {
+  const formatTime = (date: Date): string => {
+    return date.toLocaleTimeString('zh-CN', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false
+    });
+  };
+  const calculateWorkDuration = (start: Date, end: Date): string => {
+    const diffMs = end.getTime() - start.getTime();
+    const hours = Math.floor(diffMs / (1000 * 60 * 60));
+    const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+    return `${hours}小时${minutes}分钟`;
+  };
+
   return (
     prevProps.visible === nextProps.visible &&
     prevProps.userData?.userId === nextProps.userData?.userId

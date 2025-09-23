@@ -1,6 +1,6 @@
 /**
  * Auto-generated Type Augmentations
- * Generated at: 2025-09-17T04:46:55.302Z
+ * Generated at: 2025-09-23T13:56:11.813Z
  *
  * This file contains automatic type fixes for common errors.
  * DO NOT EDIT MANUALLY - regenerate using scripts/quick-fix-all.ts

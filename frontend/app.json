@@ -24,8 +24,8 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.pomelotech.pomelo",
-      "buildNumber": "1",
+      "bundleIdentifier": "com.jietaoxie.pomeloapp",
+      "buildNumber": "3",
       "deploymentTarget": "13.0",
       "infoPlist": {
         "NSAppTransportSecurity": {

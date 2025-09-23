@@ -1,6 +1,6 @@
 import React, { useRef, useEffect } from 'react';
 import { View, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
-import Icon from 'react-native-vector-icons/MaterialIcons';
+import { MaterialIcons as Icon } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import Reanimated, {
   useAnimatedStyle,

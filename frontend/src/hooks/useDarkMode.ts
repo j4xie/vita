@@ -146,9 +146,9 @@ export const useDarkMode = (): {
   
   // 渐变配置
   const gradients = {
-    brand: isDarkMode ? colors.darkGradients.vitaflow : colors.gradients.vitaflow,
-    background: isDarkMode ? colors.darkGradients.backgroundPrimary : colors.gradients.background,
-    card: isDarkMode ? colors.darkGradients.card : colors.gradients.card,
+    brand: isDarkMode ? [...colors.darkGradients.vitaflow] : [...colors.gradients.vitaflow],
+    background: isDarkMode ? [...colors.darkGradients.backgroundPrimary] : [...colors.gradients.background],
+    card: isDarkMode ? [...colors.darkGradients.card] : [...colors.gradients.card],
   };
   
   // 阴影配置

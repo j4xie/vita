@@ -43,12 +43,9 @@ export const useLocationService = (options: UseLocationServiceOptions = {}) => {
     try {
       const status = await LocationService.checkPermissionStatus();
       setPermissionStatus(status);
-      
-      // 如果没有权限，显示权限提示条
-      if (status === LocationPermissionStatus.DENIED || 
-          status === LocationPermissionStatus.NOT_DETERMINED) {
-        setShowPermissionBanner(true);
-      }
+
+      // 不再显示Banner，由App.tsx统一处理首次权限请求
+      setShowPermissionBanner(false);
     } catch (err) {
       setError('检查定位权限失败');
     }
@@ -64,12 +61,14 @@ export const useLocationService = (options: UseLocationServiceOptions = {}) => {
         setPermissionStatus(LocationPermissionStatus.GRANTED_FOREGROUND);
         setShowPermissionBanner(false);
         setError(null);
-        
+
         // 自动获取一次位置
         await getCurrentLocation();
+        return true;
       } else {
         setPermissionStatus(LocationPermissionStatus.DENIED);
-        LocationService.showSettingsAlert();
+        // 不在这里弹Alert，由调用方决定是否显示
+        return false;
       }
     } catch (err) {
       setError('请求定位权限失败');

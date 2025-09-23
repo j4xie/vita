@@ -28,6 +28,7 @@
     },
     
     // ⚡ 模块解析优化
+    "module": "esnext",                      // 支持动态导入
     "moduleResolution": "node",
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,

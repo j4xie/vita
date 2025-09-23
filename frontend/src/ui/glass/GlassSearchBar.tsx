@@ -9,6 +9,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import { Glass } from './GlassTheme';
+import { TouchableOpacity } from 'react-native';
 
 interface GlassSearchBarProps {
   placeholder?: string;

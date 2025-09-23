@@ -7,11 +7,13 @@ import {
   SafeAreaView,
   Dimensions,
   Animated,
+  RefreshControl,
+  ScrollView,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTranslation } from 'react-i18next';
-import { useRoute, useNavigation } from '@react-navigation/native';
+import { useRoute, useNavigation, useFocusEffect } from '@react-navigation/native';
 import { theme } from '../../theme';
 import { LIQUID_GLASS_LAYERS } from '../../theme/core';
 import { usePerformanceDegradation } from '../../hooks/usePerformanceDegradation';
@@ -29,6 +31,7 @@ const PersonalVolunteerDataFixed: React.FC = () => {
   const { t } = useTranslation();
   const [personalData, setPersonalData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
   const [historyRecords, setHistoryRecords] = useState<any[]>([]);
   const [currentTime, setCurrentTime] = useState(new Date());
@@ -43,6 +46,24 @@ const PersonalVolunteerDataFixed: React.FC = () => {
 
   React.useEffect(() => {
     loadPersonalData();
+  }, [user]);
+
+  // 页面获得焦点时强制刷新数据
+  useFocusEffect(
+    React.useCallback(() => {
+      console.log('📱 [VolunteerHome] 页面获得焦点，刷新数据');
+      loadPersonalData();
+    }, [user])
+  );
+
+  // 定时刷新数据，确保签退后状态更新（缩短到3秒）
+  useEffect(() => {
+    const refreshInterval = setInterval(() => {
+      console.log('⏰ [VolunteerHome] 定时刷新数据');
+      loadPersonalData();
+    }, 3000); // 每3秒刷新一次数据
+
+    return () => clearInterval(refreshInterval);
   }, [user]);
 
   // 计算工作时长（分钟）- 修复时区问题
@@ -102,9 +123,14 @@ const PersonalVolunteerDataFixed: React.FC = () => {
     }
   };
 
-  const loadPersonalData = async () => {
+  const loadPersonalData = async (isRefreshing = false) => {
     try {
-      setLoading(true);
+      if (isRefreshing) {
+        setRefreshing(true);
+      } else {
+        setLoading(true);
+      }
+
       if (!user?.userId) {
         setPersonalData(null);
         return;
@@ -139,27 +165,47 @@ const PersonalVolunteerDataFixed: React.FC = () => {
         const lastRecordResult = await getLastVolunteerRecord(parseInt(user.userId));
         if (lastRecordResult.code === 200 && lastRecordResult.data) {
           lastRecord = lastRecordResult.data;
-          console.log('✅ 最新记录获取成功:', { 
+          console.log('✅ 最新记录获取成功:', {
+            记录ID: lastRecord.id,
+            签到时间: lastRecord.startTime,
+            签退时间: lastRecord.endTime,
             有签到时间: !!lastRecord.startTime,
             有签退时间: !!lastRecord.endTime,
             当前状态: lastRecord.startTime && !lastRecord.endTime ? '工作中' : '已签退'
           });
+        } else {
+          console.log('⚠️ 未获取到最新记录，用户可能还未签到过');
         }
 
-        // 4. 设置个人数据
+        // 4. 判断当前状态（更严格的逻辑）
+        let currentStatus: 'signed_in' | 'signed_out' | 'no_records';
+        if (!lastRecord) {
+          currentStatus = 'no_records';
+          console.log('📊 状态判断: 无记录 -> no_records');
+        } else if (lastRecord.startTime && !lastRecord.endTime) {
+          currentStatus = 'signed_in';
+          console.log('📊 状态判断: 已签到未签退 -> signed_in');
+        } else {
+          currentStatus = 'signed_out';
+          console.log('📊 状态判断: 已签退或无活动会话 -> signed_out');
+        }
+
+        // 5. 设置个人数据
         setPersonalData({
           totalMinutes: totalWorkMinutes,
           totalHours: Math.floor(totalWorkMinutes / 60),
           totalRecords: recordsCount,
           recentRecord: lastRecord,
           allRecords: personalRecords,
-          currentStatus: lastRecord && lastRecord.startTime && !lastRecord.endTime ? 'signed_in' : 'signed_out',
+          currentStatus: currentStatus,
           user: {
             name: user.legalName || user.userName,
             department: user.dept?.deptName || '未知部门',
             level: 'Staff',
           }
         });
+
+        console.log('📱 [VolunteerHome] 数据更新完成，当前状态:', currentStatus);
         
         setHistoryRecords(personalRecords);
         
@@ -186,7 +232,13 @@ const PersonalVolunteerDataFixed: React.FC = () => {
       setPersonalData(null);
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
+  };
+
+  // 处理下拉刷新
+  const onRefresh = () => {
+    loadPersonalData(true);
   };
 
   if (loading) {
@@ -223,7 +275,19 @@ const PersonalVolunteerDataFixed: React.FC = () => {
   };
 
   return (
-    <View style={styles.personalDataContainer}>
+    <ScrollView
+      style={styles.personalDataScrollContainer}
+      contentContainerStyle={styles.personalDataContainer}
+      refreshControl={
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={onRefresh}
+          colors={[theme.colors.primary]}
+          tintColor={theme.colors.primary}
+        />
+      }
+      showsVerticalScrollIndicator={false}
+    >
       {/* 个人基本信息 */}
       <View style={styles.personalInfoCard}>
         <Text style={styles.personalName}>{personalData.user.name}</Text>
@@ -246,7 +310,7 @@ const PersonalVolunteerDataFixed: React.FC = () => {
       <View style={styles.statsCard}>
         <View style={styles.statItem}>
           <Text style={styles.statValue}>
-            {personalData.totalHours}h {personalData.totalMinutes % 60}m
+            {(personalData.totalMinutes / 60).toFixed(1)}小时
           </Text>
           <Text style={styles.statLabel}>{t('wellbeing.personal.stats.total_work_hours')}</Text>
         </View>
@@ -395,7 +459,7 @@ const PersonalVolunteerDataFixed: React.FC = () => {
           )}
         </View>
       )}
-    </View>
+    </ScrollView>
   );
 };
 
@@ -544,8 +608,10 @@ const styles = StyleSheet.create({
   },
 
   // 个人志愿者数据样式
-  personalDataContainer: {
+  personalDataScrollContainer: {
     flex: 1,
+  },
+  personalDataContainer: {
     padding: 16,
   },
   personalInfoCard: {

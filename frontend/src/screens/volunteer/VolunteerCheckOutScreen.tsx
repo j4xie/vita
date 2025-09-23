@@ -13,6 +13,8 @@ import {
   Platform,
   ActivityIndicator,
   Dimensions,
+  TouchableWithoutFeedback,
+  InputAccessoryView,
 } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
@@ -64,6 +66,7 @@ export const VolunteerCheckOutScreen: React.FC = () => {
 
   // 状态管理
   const [description, setDescription] = useState('');
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
 
   // 调试: 监控description变化
   useEffect(() => {
@@ -71,6 +74,9 @@ export const VolunteerCheckOutScreen: React.FC = () => {
   }, [description]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const textInputRef = useRef<TextInput>(null);
+
+  // 键盘工具栏ID (iOS)
+  const inputAccessoryViewID = 'volunteer-checkout-input';
 
   // 动画值
   const buttonScale = useSharedValue(1);
@@ -108,6 +114,32 @@ export const VolunteerCheckOutScreen: React.FC = () => {
   useEffect(() => {
     // 页面加载动画
     cardScale.value = withSpring(1, { damping: 15 });
+
+    // 键盘监听
+    const keyboardWillShowSub = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
+      (event) => {
+        setKeyboardHeight(event.endCoordinates.height);
+      }
+    );
+
+    const keyboardWillHideSub = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide',
+      () => {
+        setKeyboardHeight(0);
+      }
+    );
+
+    return () => {
+      keyboardWillShowSub.remove();
+      keyboardWillHideSub.remove();
+    };
+  }, []);
+
+  // 处理键盘收起
+  const dismissKeyboard = useCallback(() => {
+    Keyboard.dismiss();
+    textInputRef.current?.blur();
   }, []);
 
   // 计算工作时长
@@ -307,10 +339,12 @@ export const VolunteerCheckOutScreen: React.FC = () => {
         style={StyleSheet.absoluteFill}
       />
 
-      <KeyboardAvoidingView
-        style={styles.flex}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      >
+      <TouchableWithoutFeedback onPress={dismissKeyboard}>
+        <KeyboardAvoidingView
+          style={styles.flex}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+        >
         {/* Liquid Glass 头部 */}
         <BlurView
           intensity={85}  // 增强毛玻璃效果
@@ -420,10 +454,21 @@ export const VolunteerCheckOutScreen: React.FC = () => {
             entering={FadeIn.delay(300)}
           >
             <View style={styles.descriptionHeader}>
-              <Text style={styles.descriptionLabel}>
-                工作内容描述
-              </Text>
-              <Text style={styles.requiredMark}>*</Text>
+              <View style={styles.descriptionLabelContainer}>
+                <Text style={styles.descriptionLabel}>
+                  工作内容描述
+                </Text>
+                <Text style={styles.requiredMark}>*</Text>
+              </View>
+              {/* 键盘收起按钮 */}
+              {keyboardHeight > 0 && (
+                <TouchableOpacity
+                  onPress={dismissKeyboard}
+                  style={styles.keyboardDismissButton}
+                >
+                  <Text style={styles.keyboardDismissText}>完成</Text>
+                </TouchableOpacity>
+              )}
             </View>
 
             <View style={styles.inputContainer}>
@@ -438,6 +483,9 @@ export const VolunteerCheckOutScreen: React.FC = () => {
                 maxLength={100}
                 editable={!isSubmitting}
                 textAlignVertical="top"
+                inputAccessoryViewID={Platform.OS === 'ios' ? inputAccessoryViewID : undefined}
+                returnKeyType="done"
+                blurOnSubmit={true}
               />
             </View>
 
@@ -502,7 +550,22 @@ export const VolunteerCheckOutScreen: React.FC = () => {
             </LinearGradient>
           </TouchableOpacity>
         </Animated.View>
-      </KeyboardAvoidingView>
+        </KeyboardAvoidingView>
+      </TouchableWithoutFeedback>
+
+      {/* iOS 键盘工具栏 */}
+      {Platform.OS === 'ios' && (
+        <InputAccessoryView nativeID={inputAccessoryViewID}>
+          <View style={styles.inputAccessoryContainer}>
+            <TouchableOpacity
+              onPress={dismissKeyboard}
+              style={styles.inputAccessoryButton}
+            >
+              <Text style={styles.inputAccessoryButtonText}>完成</Text>
+            </TouchableOpacity>
+          </View>
+        </InputAccessoryView>
+      )}
     </SafeAreaView>
   );
 };
@@ -557,7 +620,7 @@ const styles = StyleSheet.create({
   scrollContentContainer: {
     paddingHorizontal: 20,  // 统一水平内边距
     paddingTop: 8,  // 稍微增加顶部padding
-    paddingBottom: 120,  // 增加底部padding给按钮更多空间
+    paddingBottom: 150,  // 增加底部padding给按钮和键盘更多空间
   },
   userInfoSection: {
     marginBottom: 16,  // 略微减少间距，让整体更紧凑
@@ -637,7 +700,12 @@ const styles = StyleSheet.create({
   descriptionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
     marginBottom: 12,
+  },
+  descriptionLabelContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   descriptionLabel: {
     fontSize: 17,          // 增大标签字体
@@ -709,7 +777,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     padding: 16,
-    paddingBottom: 50,  // 增加底部间距，让按钮更靠下
+    paddingBottom: Platform.OS === 'ios' ? 34 : 20,  // 适配安全区域
     backgroundColor: 'transparent',
   },
   submitButton: {
@@ -753,6 +821,35 @@ const styles = StyleSheet.create({
   },
   textSecondaryDark: {
     color: 'rgba(255, 255, 255, 0.7)',
+  },
+  keyboardDismissButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    backgroundColor: theme.colors.primary,
+    borderRadius: 8,
+  },
+  keyboardDismissText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  inputAccessoryContainer: {
+    backgroundColor: '#F2F2F7',
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: 'rgba(0, 0, 0, 0.2)',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+  },
+  inputAccessoryButton: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+  },
+  inputAccessoryButtonText: {
+    color: theme.colors.primary,
+    fontSize: 16,
+    fontWeight: '600',
   },
 });
 

@@ -59,13 +59,13 @@ class ActivityStatsService {
       console.log('📊 📨 API响应详情:', { 
         registered: {
           code: registeredResponse?.code,
-          count: registeredResponse?.rows?.length || 0,
-          activities: registeredResponse?.rows?.map(a => ({ id: a.id, name: a.name, signStatus: a.signStatus })) || []
+          count: registeredResponse?.data?.rows?.length || 0,
+          activities: registeredResponse?.data?.rows?.map(a => ({ id: a.id, name: a.name, signStatus: a.signStatus })) || []
         },
         checkedIn: {
           code: checkedInResponse?.code,
-          count: checkedInResponse?.rows?.length || 0,
-          activities: checkedInResponse?.rows?.map(a => ({ id: a.id, name: a.name, signStatus: a.signStatus })) || []
+          count: checkedInResponse?.data?.rows?.length || 0,
+          activities: checkedInResponse?.data?.rows?.map(a => ({ id: a.id, name: a.name, signStatus: a.signStatus })) || []
         }
       });
       
@@ -73,24 +73,24 @@ class ActivityStatsService {
       let activities: any[] = [];
       const activityIds = new Set<number>();
       
-      if (registeredResponse.code === 200 && registeredResponse.rows) {
-        for (const activity of registeredResponse.rows) {
+      if (registeredResponse.code === 200 && registeredResponse.data?.rows) {
+        for (const activity of registeredResponse.data.rows) {
           if (!activityIds.has(activity.id)) {
             activities.push(activity);
             activityIds.add(activity.id);
           }
         }
-        console.log('📊 ✅ 获取到已报名未签到活动:', registeredResponse.rows.length);
+        console.log('📊 ✅ 获取到已报名未签到活动:', registeredResponse.data.rows.length);
       }
       
-      if (checkedInResponse.code === 200 && checkedInResponse.rows) {
-        for (const activity of checkedInResponse.rows) {
+      if (checkedInResponse.code === 200 && checkedInResponse.data?.rows) {
+        for (const activity of checkedInResponse.data.rows) {
           if (!activityIds.has(activity.id)) {
             activities.push(activity);
             activityIds.add(activity.id);
           }
         }
-        console.log('📊 ✅ 获取到已签到活动:', checkedInResponse.rows.length);
+        console.log('📊 ✅ 获取到已签到活动:', checkedInResponse.data.rows.length);
       }
       
       console.log('📊 ✅ 合并后的活动总数(去重):', activities.length);

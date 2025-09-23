@@ -4,7 +4,7 @@
  */
 
 import * as Location from 'expo-location';
-import { Alert, Platform } from 'react-native';
+import { Alert, Platform, Linking } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export interface LocationData {
@@ -334,19 +334,15 @@ class LocationService {
    */
   showSettingsAlert(): void {
     Alert.alert(
-      'Location Permission Required',
-      'Allow location access for nearby activities.',
+      '需要定位权限',
+      '请在设置中允许访问位置信息，以获取附近的活动',
       [
-        { text: 'Cancel', style: 'cancel' },
-        { 
-          text: 'Settings', 
+        { text: '取消', style: 'cancel' },
+        {
+          text: '去设置',
           onPress: () => {
-            if (Platform.OS === 'ios') {
-              // Location.openSettingsAsync(); // Not available in current expo-location
-            } else {
-              // Android 需要手动引导
-              Alert.alert('Enable in Settings > App Permissions > Location');
-            }
+            // 直接打开系统设置
+            Linking.openSettings();
           }
         }
       ]

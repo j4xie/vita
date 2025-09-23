@@ -19,7 +19,6 @@ import {
 } from 'react-native';
 // Added Animated for sticky filter bar
 import Reanimated, {
-  FlatList as ReanimatedFlatList,
   useAnimatedStyle,
   useSharedValue,
   withTiming,
@@ -57,11 +56,11 @@ import { activityStatsService } from '../../services/activityStatsService';
 import { useUser } from '../../context/UserContext';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 // 定位相关import
-import { LocationPermissionBanner } from '../../components/location/LocationPermissionBanner';
 import { NearbyFilterChip } from '../../components/location/NearbyFilterChip';
 import { useLocationService } from '../../hooks/useLocationService';
 import { sortActivitiesByLocation, LocationInfo } from '../../utils/locationUtils';
 import { LocationSelectorModal } from '../../components/modals/LocationSelectorModal';
+import LocationService from '../../services/LocationService';
 
 // Using LiquidGlassTab component for V1.1 compliance
 
@@ -562,14 +561,14 @@ export const ActivityListScreen: React.FC = () => {
             title: activity.title?.substring(0, 10) + '...',
             originalStatus: activity.status,
             cachedStatus: cachedStatus,
-            willApplyCache: !!(cachedStatus && cachedStatus !== 'upcoming')
+            willApplyCache: !!(cachedStatus && (cachedStatus as string) !== "upcoming")
           });
           
           // ✅ 关键修复：优先级判断 - 缓存状态 > API状态
           let finalStatus = activity.status;
           
           // 如果有缓存状态且不是upcoming，优先使用缓存
-          if (cachedStatus && cachedStatus !== 'upcoming') {
+          if (cachedStatus && (cachedStatus as string) !== "upcoming") {
             finalStatus = cachedStatus;
             console.log('✅ [FETCH-ACTIVITIES] 应用缓存状态:', {
               activityId: activity.id,
@@ -601,7 +600,7 @@ export const ActivityListScreen: React.FC = () => {
               originalStatus: activity.status,
               cachedStatus: cachedStatus,
               finalStatus: finalStatus,
-              reason: !cachedStatus ? '无缓存状态' : cachedStatus === 'upcoming' ? '缓存状态为upcoming' : '未知原因'
+              reason: !cachedStatus ? '无缓存状态' : (cachedStatus as string) === "upcoming" ? '缓存状态为upcoming' : '未知原因'
             });
           }
           
@@ -984,10 +983,14 @@ export const ActivityListScreen: React.FC = () => {
   };
 
   // 定位按钮处理
-  const handleLocationPress = () => {
+  const handleLocationPress = async () => {
     if (!hasPermission) {
       // 请求定位权限
-      requestForegroundPermission();
+      const granted = await requestForegroundPermission();
+      if (!granted) {
+        // 如果被拒绝，显示设置提示
+        LocationService.getInstance().showSettingsAlert();
+      }
     } else {
       // 显示位置选择模态框
       setShowLocationModal(true);
@@ -1238,15 +1241,6 @@ export const ActivityListScreen: React.FC = () => {
           </View>
         </View>
       </Reanimated.View>
-
-      {/* 定位权限横幅 */}
-      {showPermissionBanner && (
-        <LocationPermissionBanner
-          onEnableLocation={requestForegroundPermission}
-          onDismiss={dismissPermissionBanner}
-          visible={showPermissionBanner}
-        />
-      )}
 
       {/* 附近筛选芯片 - 临时注释掉，这个是多余的 */}
       {/*

@@ -18,90 +18,7 @@ import { useTheme } from '../../context/ThemeContext';
 import { useAllDarkModeStyles } from '../../hooks/useDarkModeStyles';
 import { ScannedUserModalProps, ScannedUserInfo } from '../../types/userIdentity';
 
-const { width: screenWidth } = Dimensions.get('window');
-
-export const ScannedUserModal: React.FC<ScannedUserModalProps> = ({
-  visible,
-  onClose,
-  userInfo,
-  scannerOrganization,
-}) => {
-  const { t } = useTranslation();
-  const themeContext = useTheme();
-  const darkModeSystem = useAllDarkModeStyles();
-  const { isDarkMode, styles: dmStyles, gradients: dmGradients, blur: dmBlur, icons: dmIcons } = darkModeSystem;
-
-  const handleClose = () => {
-    if (Platform.OS === 'ios') {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    }
-    onClose();
-  };
-
-  const handleViewContact = () => {
-    if (Platform.OS === 'ios') {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    }
-    // TODO: 显示联系方式或添加联系人
-  };
-
-  const handleViewActivities = () => {
-    if (Platform.OS === 'ios') {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    }
-    // TODO: 显示用户活动详情
-  };
-
-  if (!userInfo.isValid || !userInfo.user) {
-    return (
-      <Modal
-        visible={visible}
-        transparent
-        animationType="fade"
-        onRequestClose={handleClose}
-      >
-        <View style={[styles.overlay, dmStyles.modal.overlay]}>
-          <View style={[styles.container, dmStyles.modal.container]}>
-            <View style={styles.header}>
-              <Text style={[styles.title, dmStyles.text.title]}>
-                {t('qr.user.error_title', '扫描失败')}
-              </Text>
-              <TouchableOpacity
-                style={styles.closeButton}
-                onPress={handleClose}
-                activeOpacity={0.7}
-              >
-                <Ionicons
-                  name="close"
-                  size={20}
-                  color={dmIcons.secondary}
-                />
-              </TouchableOpacity>
-            </View>
-            <Text style={[styles.errorText, dmStyles.text.secondary]}>
-              {userInfo.error || t('qr.user.unknown_error', '无法读取用户信息')}
-            </Text>
-            <TouchableOpacity
-              style={[styles.actionButton, dmStyles.button.primary]}
-              onPress={handleClose}
-              activeOpacity={0.7}
-            >
-              <Text style={styles.primaryButtonText}>
-                {t('common.confirm', '确定')}
-              </Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
-    );
-  }
-
-  const { user, permissions, recentActivities } = userInfo;
-  const canViewDetails = permissions?.canViewDetails ?? false;
-  const canViewContact = permissions?.canViewContact ?? false;
-  const canViewActivities = permissions?.canViewActivities ?? false;
-
-  const styles = StyleSheet.create({
+const styles = StyleSheet.create({
     overlay: {
       flex: 1,
       justifyContent: 'center',
@@ -315,6 +232,91 @@ export const ScannedUserModal: React.FC<ScannedUserModalProps> = ({
       marginBottom: 20,
     },
   });
+
+const { width: screenWidth } = Dimensions.get('window');
+
+export const ScannedUserModal: React.FC<ScannedUserModalProps> = ({
+  visible,
+  onClose,
+  userInfo,
+  scannerOrganization,
+}) => {
+  const { t } = useTranslation();
+  const themeContext = useTheme();
+  const darkModeSystem = useAllDarkModeStyles();
+  const { isDarkMode, styles: dmStyles, gradients: dmGradients, blur: dmBlur, icons: dmIcons } = darkModeSystem;
+
+  const handleClose = () => {
+    if (Platform.OS === 'ios') {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
+    onClose();
+  };
+
+  const handleViewContact = () => {
+    if (Platform.OS === 'ios') {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
+    // TODO: 显示联系方式或添加联系人
+  };
+
+  const handleViewActivities = () => {
+    if (Platform.OS === 'ios') {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
+    // TODO: 显示用户活动详情
+  };
+
+  if (!userInfo.isValid || !userInfo.user) {
+    return (
+      <Modal
+        visible={visible}
+        transparent
+        animationType="fade"
+        onRequestClose={handleClose}
+      >
+        <View style={[styles.overlay, dmStyles.modal.overlay]}>
+          <View style={[styles.container, dmStyles.modal.container]}>
+            <View style={styles.header}>
+              <Text style={[styles.title, dmStyles.text.title]}>
+                {t('qr.user.error_title', '扫描失败')}
+              </Text>
+              <TouchableOpacity
+                style={styles.closeButton}
+                onPress={handleClose}
+                activeOpacity={0.7}
+              >
+                <Ionicons
+                  name="close"
+                  size={20}
+                  color={dmIcons.secondary}
+                />
+              </TouchableOpacity>
+            </View>
+            <Text style={[styles.errorText, dmStyles.text.secondary]}>
+              {userInfo.error || t('qr.user.unknown_error', '无法读取用户信息')}
+            </Text>
+            <TouchableOpacity
+              style={[styles.actionButton, dmStyles.button.primary]}
+              onPress={handleClose}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.primaryButtonText}>
+                {t('common.confirm', '确定')}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+    );
+  }
+
+  const { user, permissions, recentActivities } = userInfo;
+  const canViewDetails = permissions?.canViewDetails ?? false;
+  const canViewContact = permissions?.canViewContact ?? false;
+  const canViewActivities = permissions?.canViewActivities ?? false;
+
+  
 
   return (
     <Modal

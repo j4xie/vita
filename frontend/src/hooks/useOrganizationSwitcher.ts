@@ -4,8 +4,8 @@
  */
 
 import { useCallback, useRef, useEffect } from 'react';
-import { Platform } from 'react-native';
-import { useSharedValue, withSpring, withTiming, runOnJS } from 'react-native-reanimated';
+import { Platform, Animated } from 'react-native';
+import { useSharedValue, withSpring, withTiming, runOnJS, SharedValue } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 
 import { Organization, OrganizationSwitcherState } from '../types/organization';
@@ -39,10 +39,10 @@ interface UseOrganizationSwitcherReturn {
   canSwitch: boolean;
   
   // 动画值
-  arcOpacity: Animated.SharedValue<number>;
-  semicircleScale: Animated.SharedValue<number>;
-  overlayOpacity: Animated.SharedValue<number>;
-  blurIntensity: Animated.SharedValue<number>;
+  arcOpacity: SharedValue<number>;
+  semicircleScale: SharedValue<number>;
+  overlayOpacity: SharedValue<number>;
+  blurIntensity: SharedValue<number>;
   
   // 操作方法
   expand: () => void;
@@ -88,7 +88,7 @@ export const useOrganizationSwitcher = (
   // ==================== 状态计算 ====================
 
   const hasMultipleOrganizations = organizations.length > 1;
-  const canSwitch = !disabled && !isSwitching && hasMultipleOrganizations && currentOrganization;
+  const canSwitch = !disabled && !isSwitching && hasMultipleOrganizations && !!currentOrganization;
 
   // 获取可用的组织列表（排除当前组织，只显示有权限的）
   const availableOrganizations = organizations.filter(org => 

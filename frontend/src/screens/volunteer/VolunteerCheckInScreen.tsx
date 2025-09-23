@@ -603,26 +603,45 @@ export const VolunteerCheckInScreen: React.FC = () => {
               ); 
               
               if (result.code === 200) {
+                console.log('✅ [签退] API调用成功，开始更新状态');
+
+                // 1. 先清除持久化的签到时间
+                await VolunteerStateService.persistCheckinTime(currentUser.userId!, null);
+                console.log('✅ [签退] 已清除持久化签到时间');
+
+                // 2. 创建更新后的用户对象
                 const updatedUser = {
                   ...currentUser,
                   status: 'checked_out' as const,
+                  checkInTime: undefined, // 清除当前签到时间
                   checkOutTime: checkOutTime.toISOString(),
                   duration,
                   totalHours: (currentUser.totalHours || 0) + (duration / 60),
+                  lastCheckInTime: currentUser.checkInTime, // 保存为上次签到时间
                   lastCheckOutTime: checkOutTime.toISOString(),
+                  currentRecordId: undefined, // 清除当前记录ID
                 };
+
+                // 3. 立即更新本地状态
                 setCurrentUser(updatedUser);
-                
-                // 清除持久化的签到时间
-                await VolunteerStateService.persistCheckinTime(currentUser.userId!, null);
-                
-                // 更新记录列表
-                setTodayRecords(prev => 
+                console.log('✅ [签退] 已更新本地用户状态:', updatedUser.status);
+
+                // 4. 更新记录列表
+                setTodayRecords(prev =>
                   prev.map(v => v.id === currentUser.id ? updatedUser : v)
                 );
-                
-                // 重新加载数据以获取最新状态
+                console.log('✅ [签退] 已更新今日记录列表');
+
+                // 5. 等待数据加载完成（按顺序执行，避免竞态条件）
+                console.log('🔄 [签退] 开始重新加载数据...');
                 await loadVolunteerData();
+                console.log('✅ [签退] loadVolunteerData 完成');
+
+                // 6. 重新获取用户最新状态，确保UI更新
+                if (currentUser.userId) {
+                  await loadUserLastRecord(currentUser.userId);
+                  console.log('✅ [签退] loadUserLastRecord 完成');
+                }
                 
                 // 显示液态玻璃签退成功提示
                 const hours = Math.floor(duration / 60);
