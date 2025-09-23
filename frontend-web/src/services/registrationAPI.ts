@@ -239,12 +239,12 @@ export const validateInvitationCode = async (invCode: string): Promise<{
   message?: string;
 }> => {
   try {
-    // 邀请码格式验证：支持8-15位大写字母+数字组合（根据API文档要求）
-    const isValidFormat = /^[A-Z0-9]{8,15}$/.test(invCode);
+    // 邀请码格式验证：支持7-15位大写字母+数字组合（支持POMELOX等7位邀请码）
+    const isValidFormat = /^[A-Z0-9]{7,15}$/.test(invCode);
     if (!isValidFormat) {
       return {
         valid: false,
-        message: '邀请码格式不正确，应为8-15位大写字母数字组合'
+        message: '邀请码格式不正确，应为7-15位大写字母数字组合'
       };
     }
 

@@ -52,16 +52,16 @@ export const ReferralCodeInputModal: React.FC<ReferralCodeInputModalProps> = ({
   // 验证推荐码格式
   const validateReferralCode = (inputCode: string): boolean => {
     const trimmedCode = inputCode.trim();
-    
+
     // 支持两种格式：
-    // 1. VG_REF_XXXXXXXX
-    // 2. 直接的8位码 XXXXXXXX
+    // 1. VG_REF_XXXXXXX (7-8位)
+    // 2. 直接的7-8位码 XXXXXXX
     if (trimmedCode.startsWith('VG_REF_')) {
       const extractedCode = trimmedCode.replace('VG_REF_', '');
-      return /^[A-Z0-9]{8}$/.test(extractedCode);
+      return /^[A-Z0-9]{7,8}$/.test(extractedCode);
     }
-    
-    return /^[A-Z0-9]{8}$/.test(trimmedCode);
+
+    return /^[A-Z0-9]{7,8}$/.test(trimmedCode);
   };
 
   // 处理输入变化
