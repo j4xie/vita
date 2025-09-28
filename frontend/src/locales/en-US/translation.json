@@ -7,6 +7,9 @@
     "error": "Error",
     "success": "Success",
     "network_error": "Network connection failed, please try again later",
+    "volunteer_status_error": "Unable to retrieve volunteer status temporarily",
+    "volunteer_status_retry": "Getting volunteer status, please wait...",
+    "system_maintenance": "System under maintenance, some features may be limited",
     "confirm": "Confirm",
     "cancel": "Cancel",
     "save": "Save",
@@ -16,6 +19,8 @@
     "done": "Done",
     "retry": "Retry",
     "close": "Close",
+    "today": "Today",
+    "yesterday": "Yesterday",
     "privacy_policy": "Privacy Policy",
     "brand_name": "Pomelo",
     "filter": "Filter, {{count}} selected",
@@ -79,8 +84,15 @@
     "organization": "Organization",
     "school": "School",
     "time": {
-      "hours": "hours",
-      "minutes": "minutes"
+      "hours": "{{hours}} hour(s)",
+      "minutes": "{{minutes}} minute(s)",
+      "hoursAndMinutes": "{{hours}} hour(s) {{minutes}} minute(s)",
+      "lessThanOneMinute": "Less than 1 minute",
+      "overtime": " (Overtime)",
+      "invalidDuration": "Invalid duration",
+      "endTimeBeforeStart": "End time is before start time",
+      "zeroHoursMinutes": "0 hours 0 minutes",
+      "parseError": "Time parsing error"
     }
   },
   "language": {
@@ -705,6 +717,14 @@
     "title": "Profile",
     "username": "Username",
     "region": "Region",
+    "edit": {
+      "schoolEmail": "School Email",
+      "schoolEmailPlaceholder": "Please enter school email",
+      "workEmail": "Work Email",
+      "workEmailPlaceholder": "Please enter work email",
+      "alternateEmail": "Work Email",
+      "alternateEmailPlaceholder": "Please enter work email"
+    },
     "region_updated_successfully": "Region updated to {{region}}",
     "region_update_failed": "Failed to update region, please try again",
     "region_switch": {
@@ -872,7 +892,11 @@
       "nameRestrictedMessage": "Legal name cannot be changed after registration",
       "usernameRestrictedMessage": "Username is linked to email and cannot be modified separately",
       "emailRestrictedMessage": "Email is your login account and cannot be modified",
-      "phoneRestrictedMessage": "Phone number modification requires verification, feature coming soon"
+      "phoneRestrictedMessage": "Phone number modification requires verification, feature coming soon",
+      "mandatoryFieldTitle": "Required Information Incomplete",
+      "mandatoryFieldMessage": "As an internal member, you need to fill in your {{emailType}} to continue.",
+      "continueEditing": "Continue Editing",
+      "discardAndExit": "Discard and Exit"
     },
     "about": {
       "sectionAppInfo": "App Information",
@@ -1094,11 +1118,15 @@
         "cancel": "Cancel",
         "required": "Please provide work description",
         "quickOptions": {
-          "departmentActivity": "Dept Activity",
+          "departmentActivity": "Dept Event",
           "airportPickup": "Airport Pickup",
-          "departmentBooth": "Dept Booth",
-          "meetAndGreet": "Meet & Greet"
+          "departmentBooth": "Booth",
+          "meetAndGreet": "Meeting"
         }
+      },
+      "checkout": {
+        "checkOutSuccess": "Check-out Successful",
+        "workDurationResult": "Work Duration: {{duration}}"
       },
       "searchPlaceholder": "Search by phone",
       "phoneRequired": "Please enter phone number",
@@ -1349,6 +1377,49 @@
     },
     "save_feature_developing": "QR code save feature is under development"
   },
+  "volunteerTimeEntry": {
+    "title": "Time Entry",
+    "dateLabel": "Select Date",
+    "startTime": "Start Time",
+    "endTime": "End Time",
+    "duration": "Duration",
+    "description": "Work Description",
+    "descriptionPrefix": "[Time Entry]",
+    "descriptionPlaceholder": "Please describe work content in detail (required)",
+    "submit": "Submit Entry",
+    "success": "Entry Successful",
+    "successMessage": "Successfully recorded {{duration}} hours",
+    "confirmClose": "Discard current input?",
+    "dateRangeHint": "You can select dates within the last 7 days",
+    "selectDateTitle": "Select Entry Date",
+    "workDuration": "Work Duration",
+    "manualInput": "Manual Input",
+    "backToSelector": "Back to Selector",
+    "dateFormat": "Format: YYYY-MM-DD",
+    "timeFormat": "Format: HH:MM",
+    "dateInputPlaceholder": "e.g. 2025-09-27",
+    "timeInputPlaceholder": "e.g. 14:30",
+    "selectEndTimeTitle": "Select End Time",
+    "pickerActions": {
+      "cancel": "Cancel",
+      "confirm": "Confirm"
+    },
+    "errors": {
+      "futureDate": "Cannot select future date",
+      "futureTime": "Cannot select future time",
+      "dateRange": "Can only enter time within the last 7 days",
+      "selectStartFirst": "Please select start time first",
+      "endBeforeStart": "End time must be after start time",
+      "duration": "Single entry cannot exceed 12 hours",
+      "overlap": "Time overlaps with existing records, please adjust",
+      "requiredFields": "Please fill in start time, end time and work description",
+      "userInfoMissing": "Unable to get user information",
+      "submitFailed": "Entry submission failed, please try again",
+      "invalidDateFormat": "Invalid date format, please use YYYY-MM-DD",
+      "invalidTimeFormat": "Invalid time format, please use HH:MM",
+      "descriptionRequired": "Please fill in work description"
+    }
+  },
   "volunteer": {
     "signin_conditions_not_met": "Sign-in conditions not met",
     "signin_success": "Sign-in successful",
@@ -1469,6 +1540,9 @@
     "open_scanner_failed": "Cannot Open Scanner",
     "open_scanner_failed_message": "Unable to start scan function, please check camera permission"
   },
+  "volunteerHome": {
+    "quickActions": "Quick Actions"
+  },
   "volunteerCheckIn": {
     "searchVolunteer": "Search Volunteer",
     "viewVolunteer": "View Volunteer Records",
@@ -1478,6 +1552,7 @@
     "userInfo": "User Info",
     "checkIn": "Check In",
     "checkOut": "Check Out",
+    "timeEntry": "Time Entry",
     "personalDashboard": "Personal Hours",
     "personalDashboardDesc": "View your volunteer hour records",
     "personalHours": "My Hours Statistics",
@@ -1521,8 +1596,19 @@
       "minutes": "min"
     },
     "checkout": {
-      "success_title": "✅ Volunteer Check-out Successful",
-      "success_message": "Volunteer service duration: {{duration}}, thank you for your contribution!"
+      "title": "Volunteer Check Out",
+      "timeStatistics": "Work Time Statistics",
+      "duration": "Duration",
+      "workDescription": "Work Description",
+      "workDescriptionRequired": "Please enter work description",
+      "workDescriptionPlaceholder": "Please describe your volunteer work today...",
+      "confirmCheckOut": "Confirm Check Out",
+      "quickOptions": {
+        "departmentActivity": "Dept Activity",
+        "airportPickup": "Airport Pickup",
+        "departmentBooth": "Dept Booth",
+        "meetAndGreet": "Meet & Greet"
+      }
     },
     "unknown_duration": "Unknown duration",
     "total_hours": "Total Hours",
@@ -1544,7 +1630,18 @@
       "checkOutSuccess": "Check-out Successful",
       "checkOutSuccessMessage": "{{name}} checked out\nWorked: {{hours}}h {{minutes}}m",
       "scanFunction": "Scan Function",
-      "scanComingSoon": "Scan function coming soon"
+      "scanComingSoon": "Scan function coming soon",
+      "checkoutTitle": "Volunteer Check Out",
+      "timeStatistics": "Work Time Statistics",
+      "workDescription": "Work Description",
+      "workDescriptionPlaceholder": "Please describe your volunteer work today...",
+      "confirmCheckOut": "Confirm Check Out",
+      "quickOptions": {
+        "departmentActivity": "Dept Activity",
+        "airportPickup": "Airport Pickup",
+        "departmentBooth": "Dept Booth",
+        "meetAndGreet": "Meet & Greet"
+      }
     }
   },
   "filters": {

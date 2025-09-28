@@ -1,15 +1,16 @@
 // 注册相关API服务
 
-import { 
-  RegistrationAPIRequest, 
-  APIResponse, 
-  OrganizationData, 
-  SMSVerificationResponse 
+import {
+  RegistrationAPIRequest,
+  APIResponse,
+  OrganizationData,
+  SMSVerificationResponse
 } from '../types/registration';
+import { getApiUrl } from '../utils/environment';
 
 // API基础URL配置
-// 🔧 强制使用生产环境API - 遵循CLAUDE规范
-const BASE_URL = 'https://www.vitaglobal.icu';
+// 🔧 使用环境管理器统一管理API地址 - 动态获取
+const getBaseUrl = () => getApiUrl();
 
 /**
  * 发送短信验证码
@@ -18,12 +19,12 @@ const BASE_URL = 'https://www.vitaglobal.icu';
  * @returns 短信验证码响应
  */
 export const sendSMSVerificationCode = async (phoneNumber: string, areaCode: '86' | '1' = '86'): Promise<SMSVerificationResponse> => {
-  const url = `${BASE_URL}/sms/vercodeSms?phoneNum=${phoneNumber}&areaCode=${areaCode}`;
+  const url = `${getBaseUrl()}/sms/vercodeSms?phoneNum=${phoneNumber}&areaCode=${areaCode}`;
   console.log('📱 [sendSMSVerificationCode] 发送短信验证码请求:', {
     phoneNumber: phoneNumber,
     areaCode: areaCode,
     fullUrl: url,
-    baseUrl: BASE_URL
+    baseUrl: getBaseUrl()
   });
 
   try {
@@ -65,7 +66,7 @@ export const fetchSchoolList = async (): Promise<APIResponse<any[]>> => {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 30000); // 30秒超时
 
-    const response = await fetch(`${BASE_URL}/app/dept/list`, {
+    const response = await fetch(`${getBaseUrl()}/app/dept/list`, {
       method: 'GET',
       headers: {
         'Accept': 'application/json',
@@ -94,7 +95,7 @@ export const fetchSchoolList = async (): Promise<APIResponse<any[]>> => {
  */
 export const fetchOrganizationList = async (): Promise<APIResponse<OrganizationData[]>> => {
   try {
-    const response = await fetch(`${BASE_URL}/app/organization/list`, {
+    const response = await fetch(`${getBaseUrl()}/app/organization/list`, {
       method: 'GET',
       headers: {
         'Accept': 'application/json',
@@ -144,7 +145,7 @@ export const registerUser = async (registrationData: RegistrationAPIRequest): Pr
       }
     });
 
-    const response = await fetch(`${BASE_URL}/app/user/add`, {
+    const response = await fetch(`${getBaseUrl()}/app/user/add`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
@@ -178,7 +179,7 @@ export const checkUserNameAvailability = async (userName: string): Promise<{ ava
     }
 
     // 调用后端接口检查用户名是否已存在
-    const response = await fetch(`${BASE_URL}/app/user/checkUserName?userName=${userName}`, {
+    const response = await fetch(`${getBaseUrl()}/app/user/checkUserName?userName=${userName}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -216,7 +217,7 @@ export const checkEmailAvailability = async (email: string): Promise<{ available
     }
 
     // 调用后端接口检查邮箱是否已被注册
-    const response = await fetch(`${BASE_URL}/app/user/checkEmail?email=${encodeURIComponent(email)}`, {
+    const response = await fetch(`${getBaseUrl()}/app/user/checkEmail?email=${encodeURIComponent(email)}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',

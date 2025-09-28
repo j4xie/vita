@@ -116,14 +116,16 @@ class RollbackSwitch {
   }
 
   /**
-   * 🔄 切换到新架构 (JSC)
+   * 🔄 切换到新架构 (保持当前JS引擎)
    */
-  enableNewArchitecture() {
-    console.log('🚀 切换到新架构 (JSC引擎)...');
+  enableNewArchitecture(platform = 'ios') {
+    console.log(`🚀 切换到新架构 (${platform})...`);
+    console.log('📝 策略: 先启用新架构，引擎切换独立控制');
 
     this.targetConfig = {
       newArchEnabled: true,
-      jsEngine: 'jsc' // 保持JSC，不切换到Hermes
+      jsEngine: this.currentConfig.appJson?.jsEngine || 'jsc', // 保持当前引擎
+      platform // 支持平台独立控制
     };
 
     return this.applyConfig(this.targetConfig);
@@ -144,16 +146,26 @@ class RollbackSwitch {
   }
 
   /**
-   * 🔄 启用Hermes (独立开关)
+   * 🔄 启用Hermes (独立开关 - 灰度控制)
    */
-  enableHermes() {
-    console.log('🔥 启用 Hermes 引擎...');
+  enableHermes(grayPercentage = 100) {
+    console.log(`🔥 启用 Hermes 引擎 (灰度: ${grayPercentage}%)...`);
 
-    // 注意：应在新架构稳定后才启用Hermes
+    // 检查前提条件
+    if (!this.currentConfig.appJson?.newArchEnabled) {
+      console.warn('⚠️ 警告: 建议先启用新架构，稳定后再启用 Hermes');
+    }
+
+    // 灰度控制提示
+    if (grayPercentage < 100) {
+      console.log(`📊 灰度策略: ${grayPercentage}% 用户使用 Hermes`);
+      console.log('⚠️ 注意: 跨引擎必须禁用 OTA，需要完整重签包');
+    }
+
     this.targetConfig = {
       jsEngine: 'hermes',
-      // 保持当前的新架构状态
-      newArchEnabled: this.currentConfig.appJson?.newArchEnabled || false
+      newArchEnabled: this.currentConfig.appJson?.newArchEnabled || false,
+      grayPercentage
     };
 
     return this.applyConfig(this.targetConfig);
@@ -346,14 +358,30 @@ class RollbackSwitch {
 ## 配置一致性
 ${this.validateConfig() ? '✅ 所有配置一致' : '⚠️ 存在配置不一致，请检查'}
 
+## 迁移策略提醒
+
+### 推荐顺序
+1. **阶段2**: 启用新架构 (保持 JSC)
+2. **阶段3**: 性能优化 (FlashList 等)
+3. **阶段4**: Hermes 灰度 (5% → 15% → 30% → 100%)
+
+### 关键注意事项
+- ⚠️ **跨引擎禁用 OTA**: Hermes ↔ JSC 切换需要完整重签包
+- 🎯 **崩溃率监控**: 基线 +5% 警戒，+10% 回滚
+- 📱 **平台策略**: iOS 先行，Android 后续对齐
+
 ## 可用操作
 
 ### 架构切换
-- \`npm run arch:enable\` - 启用新架构 (JSC)
+- \`npm run arch:enable\` - 启用新架构 (保持当前引擎)
+- \`npm run arch:enable:ios\` - 仅 iOS 启用新架构
 - \`npm run arch:disable\` - 禁用新架构
 
-### 引擎切换 (独立控制)
-- \`npm run hermes:enable\` - 启用 Hermes
+### 引擎切换 (独立控制 - 新架构稳定后)
+- \`npm run hermes:enable\` - 启用 Hermes (100%)
+- \`npm run hermes:gray:5\` - Hermes 5% 灰度
+- \`npm run hermes:gray:15\` - Hermes 15% 灰度
+- \`npm run hermes:gray:30\` - Hermes 30% 灰度
 - \`npm run hermes:disable\` - 回到 JSC
 
 ### 工具命令

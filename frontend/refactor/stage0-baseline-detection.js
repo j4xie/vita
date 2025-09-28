@@ -274,15 +274,24 @@ class BaselineDetector {
 
     const { architecture, dependencies } = this.report;
 
-    // 基于当前配置生成建议
+    // 基于新的迁移策略生成建议
     if (!architecture.appJson?.newArchEnabled) {
       this.report.recommendations.push({
         priority: 'high',
         category: 'architecture',
-        title: '启用 Hermes 引擎',
-        description: '低风险，高收益的性能提升',
-        effort: 'low',
+        title: '启用新架构 (Fabric + TurboModules)',
+        description: '先启用新架构，保持 JSC 引擎',
+        effort: 'medium',
         impact: 'high'
+      });
+
+      this.report.recommendations.push({
+        priority: 'medium',
+        category: 'engine',
+        title: 'Hermes 引擎灰度',
+        description: '新架构稳定后再考虑，避免同时承担两种风险',
+        effort: 'low',
+        impact: 'medium'
       });
     }
 

@@ -4,8 +4,9 @@
  */
 
 import { getCurrentToken } from '../services/authAPI';
+import { getApiUrl } from './environment';
 
-const BASE_URL = 'https://www.vitaglobal.icu';
+const BASE_URL = getApiUrl();
 
 export interface DebugResult {
   success: boolean;

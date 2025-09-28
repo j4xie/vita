@@ -21,7 +21,7 @@ import { theme } from '../../theme';
 import { LIQUID_GLASS_LAYERS } from '../../theme/core';
 import { usePerformanceDegradation } from '../../hooks/usePerformanceDegradation';
 import { getVolunteerHistoryRecords, VolunteerRecord } from '../../services/volunteerAPI';
-import { formatVolunteerTime, calculateVolunteerDuration } from '../../utils/volunteerTimeFormatter';
+import { timeService } from '../../utils/UnifiedTimeService';
 import { getUserPermissionLevel } from '../../types/userPermissions';
 import { SafeText } from '../common/SafeText';
 
@@ -46,7 +46,22 @@ const HistoryRecordItem = React.memo<{
   const durationInfo = useMemo(() => {
     if (!record.startTime || !record.endTime) return null;
 
-    const result = calculateVolunteerDuration(record.startTime, record.endTime);
+    // 使用统一时间服务计算时长（startTime和endTime是本地时间）
+    const startDate = timeService.parseServerTime(record.startTime, true);
+    const endDate = timeService.parseServerTime(record.endTime, true);
+    const durationResult = startDate && endDate ? timeService.calculateDuration(startDate, endDate) : null;
+
+    const result = durationResult ? {
+      duration: durationResult.display,
+      isInvalid: !durationResult.isValid,
+      isOvertime: durationResult.isOvertime,
+      hours: Math.floor(durationResult.minutes / 60)
+    } : {
+      duration: '--:--',
+      isInvalid: true,
+      isOvertime: false,
+      hours: 0
+    };
     return {
       duration: result.duration,
       isOvertime: result.isOvertime,
@@ -161,7 +176,7 @@ const HistoryRecordItem = React.memo<{
             {t('wellbeing.volunteer.history.checkInTime')}
           </Text>
           <SafeText style={[styles.timeValue, { color: theme.colors.text.primary }]} fallback="--:--">
-            {formatVolunteerTime(record.startTime)}
+            {timeService.formatForDisplay(timeService.parseServerTime(record.startTime, true), { showDate: true, showTime: true }) || '--:--'}
           </SafeText>
         </View>
 
@@ -172,7 +187,7 @@ const HistoryRecordItem = React.memo<{
               {t('wellbeing.volunteer.history.checkOutTime')}
             </Text>
             <SafeText style={[styles.timeValue, { color: theme.colors.text.primary }]} fallback="--:--">
-              {formatVolunteerTime(record.endTime)}
+              {timeService.formatForDisplay(timeService.parseServerTime(record.endTime, true), { showDate: true, showTime: true }) || '--:--'}
             </SafeText>
           </View>
         )}

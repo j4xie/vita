@@ -3,8 +3,9 @@
  */
 
 import { getCurrentToken } from './authAPI';
+import { getApiUrl } from '../utils/environment';
 
-const BASE_URL = 'https://www.vitaglobal.icu';
+const getBaseUrl = () => getApiUrl();
 
 /**
  * 获取用户列表（需要管理员权限）
@@ -25,7 +26,7 @@ export const getUserList = async (): Promise<{
     // 🚨 后端权限过滤逻辑：总管理员需要动态pageSize，分管理员已完全过滤
     
     // 先获取用户总数和默认返回数量
-    const initialResponse = await fetch(`${BASE_URL}/system/user/list`, {
+    const initialResponse = await fetch(`${getBaseUrl()}/system/user/list`, {
       headers: { 'Authorization': `Bearer ${token}` }
     });
     const initialData = await initialResponse.json();
@@ -43,7 +44,7 @@ export const getUserList = async (): Promise<{
     if (returnedCount < totalCount) {
       // 总管理员：需要动态pageSize获取完整数据
       console.log(`🔍 [ADMIN-ACCESS] 检测到总管理员权限，使用pageSize=${totalCount}获取完整数据`);
-      response = await fetch(`${BASE_URL}/system/user/list?pageSize=${totalCount}`, {
+      response = await fetch(`${getBaseUrl()}/system/user/list?pageSize=${totalCount}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -76,7 +77,7 @@ export const getUserList = async (): Promise<{
       const userPromises = data.rows.map(async (user: any) => {
         try {
           // 调用/app/user/info获取完整用户信息包括deptId和roleKey
-          const userInfoResponse = await fetch(`${BASE_URL}/app/user/info?userId=${user.userId}`, {
+          const userInfoResponse = await fetch(`${getBaseUrl()}/app/user/info?userId=${user.userId}`, {
             method: 'GET',
             headers: {
               'Content-Type': 'application/json',
@@ -205,7 +206,7 @@ export const getSchoolVolunteerCount = async (deptId?: number): Promise<number> 
     }
 
     // 使用PDF文档第11项：志愿者工时列表接口
-    const response = await fetch(`${BASE_URL}/app/hour/hourList`, {
+    const response = await fetch(`${getBaseUrl()}/app/hour/hourList`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',

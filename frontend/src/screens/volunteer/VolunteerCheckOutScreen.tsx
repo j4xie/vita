@@ -39,7 +39,8 @@ import { useVolunteerContext } from '../../context/VolunteerContext';
 import { performVolunteerCheckOut } from '../../services/volunteerAPI';
 import { VolunteerRecord } from './components/VolunteerCard';
 import { useAllDarkModeStyles } from '../../hooks/useDarkModeStyles';
-import { safeParseTime, calculateDuration, formatDateTime, formatBeijingTime, formatLocalTime } from '../../utils/timeHelper';
+import { timeService } from '../../utils/UnifiedTimeService';
+import { apiCache } from '../../services/apiCache';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -60,6 +61,28 @@ export const VolunteerCheckOutScreen: React.FC = () => {
   const { user: currentUser } = useUser();
   const volunteerContext = useVolunteerContext();
   const darkModeSystem = useAllDarkModeStyles();
+
+  // 🔍 调试翻译系统
+  useEffect(() => {
+    console.log('🔍 [TRANSLATION-DEBUG] 翻译系统详细状态:', {
+      currentLanguage: i18n.language,
+      titleTranslation: t('volunteerCheckIn.checkoutTitle', 'TITLE_FALLBACK'),
+      timeStatisticsTranslation: t('volunteerCheckIn.timeStatistics', 'STATS_FALLBACK'),
+      checkInTimeTranslation: t('volunteerCheckIn.time.checkInTime', 'CHECKIN_FALLBACK'),
+
+      // 测试其他已知有效的翻译键
+      commonCancel: t('common.cancel', 'CANCEL_FALLBACK'),
+      commonConfirm: t('common.confirm', 'CONFIRM_FALLBACK'),
+
+      // 检查翻译数据结构
+      hasVolunteerSection: !!i18n.store?.data?.[i18n.language]?.volunteer,
+      hasCheckoutKeys: !!i18n.store?.data?.[i18n.language]?.volunteerCheckIn?.checkoutTitle,
+
+      // 直接检查原始数据
+      rawVolunteerData: i18n.store?.data?.[i18n.language]?.volunteerCheckIn ?
+        Object.keys(i18n.store.data[i18n.language].volunteerCheckIn) : 'NO_VOLUNTEERID_SECTION'
+    });
+  }, [t, i18n.language]);
   const { isDarkMode, styles: dmStyles } = darkModeSystem;
 
   const { volunteer } = route.params as RouteParams;
@@ -82,27 +105,27 @@ export const VolunteerCheckOutScreen: React.FC = () => {
   const buttonScale = useSharedValue(1);
   const cardScale = useSharedValue(0.95);
 
-  // 快捷选项配置 - 使用中文
+  // 快捷选项配置 - 支持国际化
   const quickOptions: QuickOption[] = [
     {
       id: 1,
-      label: '分部活动',
-      text: '分部活动组织与协调'
+      label: t('wellbeing.volunteer.signOut.quickOptions.departmentActivity', '分部活动'),
+      text: t('wellbeing.volunteer.signOut.quickOptions.departmentActivity', '分部活动组织与协调')
     },
     {
       id: 2,
-      label: '接机活动',
-      text: '机场接机志愿服务'
+      label: t('wellbeing.volunteer.signOut.quickOptions.airportPickup', '接机活动'),
+      text: t('wellbeing.volunteer.signOut.quickOptions.airportPickup', '机场接机志愿服务')
     },
     {
       id: 3,
-      label: '分部摆摊',
-      text: '分部宣传摆摊活动'
+      label: t('wellbeing.volunteer.signOut.quickOptions.departmentBooth', '分部摆摊'),
+      text: t('wellbeing.volunteer.signOut.quickOptions.departmentBooth', '分部宣传摆摊活动')
     },
     {
       id: 4,
-      label: '见面会',
-      text: '新生见面会活动支持'
+      label: t('wellbeing.volunteer.signOut.quickOptions.meetAndGreet', '见面会'),
+      text: t('wellbeing.volunteer.signOut.quickOptions.meetAndGreet', '新生见面会活动支持')
     }
   ];
 
@@ -144,40 +167,83 @@ export const VolunteerCheckOutScreen: React.FC = () => {
 
   // 计算工作时长
   const calculateWorkDuration = useCallback(() => {
-    if (!volunteer.checkInTime) return { hours: 0, minutes: 0, display: '0小时0分钟', hasError: false };
+    // 🔍 调试：检查接收到的签到时间
+    console.log('🔍 [CHECKOUT-DEBUG] ========== 签退页面数据调试 ==========');
+    console.log('🔍 [CHECKOUT-DEBUG] 完整volunteer对象:', volunteer);
+    console.log('🔍 [CHECKOUT-DEBUG] volunteer.checkInTime:', volunteer.checkInTime);
+    console.log('🔍 [CHECKOUT-DEBUG] checkInTime类型:', typeof volunteer.checkInTime);
+    console.log('🔍 [CHECKOUT-DEBUG] volunteer.userId:', volunteer.userId);
+    console.log('🔍 [CHECKOUT-DEBUG] volunteer.name:', volunteer.name);
+    console.log('🔍 [CHECKOUT-DEBUG] 当前时间:', new Date().toString());
+    console.log('🔍 [CHECKOUT-DEBUG] ================================================');
 
-    // 使用统一的时间计算函数
-    const duration = calculateDuration(volunteer.checkInTime, new Date());
+    if (!volunteer.checkInTime) return { hours: 0, minutes: 0, display: t('common.time.zeroHoursMinutes', '0小时0分钟'), hasError: false };
 
-    // 返回计算结果，保持原有的接口结构
-    return {
-      hours: duration.hours,
-      minutes: duration.minutes,
-      display: duration.display,
-      hasError: duration.hasError,
-      errorMessage: duration.errorMessage
-    };
+    // 简单直接的时间解析，避免时区转换
+    try {
+      const startTime = new Date(volunteer.checkInTime.replace(' ', 'T'));
+      const endTime = new Date();
+
+      console.log('🕐 [签退页面] 开始时间(简单解析):', startTime.toISOString());
+      console.log('🕐 [签退页面] 结束时间(当前):', endTime.toISOString());
+
+      if (isNaN(startTime.getTime())) {
+        return { hours: 0, minutes: 0, display: '时间解析错误', hasError: true };
+      }
+
+      // 计算时间差（分钟）
+      const diffMs = endTime.getTime() - startTime.getTime();
+      const totalMinutes = Math.max(0, Math.floor(diffMs / (1000 * 60)));
+      const hours = Math.floor(totalMinutes / 60);
+      const minutes = totalMinutes % 60;
+
+      // 简单的时长显示
+      let display = '';
+      if (hours > 0) {
+        display = minutes > 0 ? `${hours}小时${minutes}分钟` : `${hours}小时`;
+      } else if (minutes > 0) {
+        display = `${minutes}分钟`;
+      } else {
+        display = '少于1分钟';
+      }
+
+      console.log('🕐 [签退页面] 计算结果:', { totalMinutes, hours, minutes, display });
+
+      const duration = { minutes: totalMinutes, display, isValid: true };
+
+      // 返回计算结果
+      return {
+        hours,
+        minutes: minutes,
+        display,
+        hasError: false
+      };
+    } catch (error) {
+      console.error('工作时长计算失败:', error);
+      return { hours: 0, minutes: 0, display: '计算错误', hasError: true };
+    }
   }, [volunteer.checkInTime]);
 
   const workDuration = calculateWorkDuration();
 
   // 格式化时间显示 - 将后端时间转换为本地时间显示
   const formatTime = (dateString?: string) => {
+    // 🔍 调试：检查格式化的输入
+    console.log('🕐 [formatTime] 输入dateString:', dateString);
+
     if (!dateString) return '--:--';
 
-    try {
-      // 解析后端时间（北京时间格式）
-      const parsedDate = safeParseTime(dateString);
-      if (!parsedDate) return '--:--';
+    // 使用新的统一时间服务
+    const parsedDate = timeService.parseServerTime(dateString);
+    console.log('🕐 [formatTime] 解析后Date对象:', parsedDate);
+    console.log('🕐 [formatTime] UTC时间:', parsedDate?.toUTCString());
 
-      // 使用本地时间格式化显示
-      return formatLocalTime(parsedDate);
-    } catch (error) {
-      if (__DEV__) {
-        console.error('❌ [FORMAT-TIME] 时间格式化失败:', error, 'Input:', dateString);
-      }
-      return '--:--';
-    }
+    if (!parsedDate) return '--:--';
+
+    // formatForDisplay默认只显示时间，会自动转换为本地时间
+    const result = timeService.formatForDisplay(parsedDate, { showDate: false, showTime: true });
+    console.log('🕐 [formatTime] 最终显示:', result);
+    return result;
   };
 
   // 处理快捷选择
@@ -207,7 +273,7 @@ export const VolunteerCheckOutScreen: React.FC = () => {
     if (description.trim()) {
       Alert.alert(
         t('common.confirm'),
-        '确定要放弃当前输入的内容吗？',
+        t('volunteer.checkout.confirmDiscard', '确定要放弃当前输入的内容吗？'),
         [
           { text: t('common.cancel'), style: 'cancel' },
           {
@@ -234,25 +300,25 @@ export const VolunteerCheckOutScreen: React.FC = () => {
 
     if (!description.trim()) {
       console.log('❌ [DEBUG] 描述为空，显示提示');
-      Alert.alert('提示', '请输入工作内容描述');
+      Alert.alert(t('common.hint', '提示'), t('volunteer.checkout.workDescriptionRequired', '请输入工作内容描述'));
       return; // 直接返回，不设置isSubmitting，因为还没开始提交
     }
 
     // 检查时间异常
     if (workDuration.hasError) {
       Alert.alert(
-        '时间异常',
-        workDuration.errorMessage || '签到时间记录异常，无法完成签退',
+        t('volunteer.checkout.timeAbnormal', '时间异常'),
+        workDuration.errorMessage || t('volunteer.checkout.timeAbnormalMessage', '签到时间记录异常，无法完成签退'),
         [
           {
-            text: '返回',
+            text: t('common.back', '返回'),
             onPress: () => navigation.goBack(),
             style: 'cancel'
           },
           {
-            text: '联系管理员',
+            text: t('volunteer.checkout.contactAdmin', '联系管理员'),
             onPress: () => {
-              Alert.alert('提示', '请联系管理员处理时间异常问题');
+              Alert.alert(t('common.hint', '提示'), t('volunteer.checkout.contactAdminMessage', '请联系管理员处理时间异常问题'));
             }
           }
         ]
@@ -272,7 +338,7 @@ export const VolunteerCheckOutScreen: React.FC = () => {
       const operateLegalName = currentUser?.legalName;
 
       if (!operateUserId || !operateLegalName) {
-        Alert.alert(t('common.error'), '无法获取操作用户信息');
+        Alert.alert(t('common.error'), t('volunteer.checkout.cannotGetOperatorInfo', '无法获取操作用户信息'));
         setIsSubmitting(false);
         return;
       }
@@ -298,34 +364,74 @@ export const VolunteerCheckOutScreen: React.FC = () => {
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         }
 
+        // 清除该志愿者的缓存记录
+        try {
+          apiCache.clearKey(`volunteerRecord:${volunteer?.userId}`);
+          apiCache.clearByPattern(`volunteerRecord:*`);
+          console.log(`🗑️ [SIGN-OUT] 清除志愿者${volunteer?.userId}的缓存记录`);
+        } catch (e) {
+          console.warn('[SIGN-OUT] 清除缓存失败:', e);
+        }
+
         // 🚀 立即更新VolunteerContext状态，并触发数据刷新
         volunteerContext.updateStatus('signed_out', null);
         // 强制刷新状态，确保历史记录也会更新
         volunteerContext.refreshStatus();
         console.log('✅ [SIGN-OUT] 签退成功，已更新全局状态并触发数据刷新');
 
+        // 手动构建时长显示，确保语言一致
+        const formatDurationForDialog = () => {
+          if (workDuration.hours > 0) {
+            if (workDuration.minutes > 0) {
+              return t('common.time.hoursAndMinutes', {
+                hours: workDuration.hours,
+                minutes: workDuration.minutes
+              });
+            } else {
+              return t('common.time.hours', { hours: workDuration.hours });
+            }
+          } else if (workDuration.minutes > 0) {
+            return t('common.time.minutes', { minutes: workDuration.minutes });
+          } else {
+            return t('common.time.lessThanOneMinute');
+          }
+        };
+
         // 显示成功提示并返回
         Alert.alert(
-          '签退成功',
-          `工作时长：${workDuration.display}`,
+          t('wellbeing.volunteer.checkout.checkOutSuccess', '签退成功'),
+          t('wellbeing.volunteer.checkout.workDurationResult', '工作时长：{{duration}}', {
+            duration: formatDurationForDialog()
+          }),
           [
             {
-              text: '确定',
+              text: t('common.confirm', '确定'),
               onPress: () => {
-                console.log('✅ [SIGN-OUT] 返回上一页，Context将自动刷新UI');
-                // 简化导航逻辑，依赖VolunteerContext自动刷新UI
+                console.log('✅ [SIGN-OUT] 签退成功，清理缓存并返回');
+
+                // 清理所有相关缓存，确保所有页面获取最新数据
+                try {
+                  apiCache.clearByPattern(`volunteerRecord:${volunteer.userId}`);
+                  apiCache.clearKey('volunteerRecords');
+                  apiCache.clearKey('volunteerHours');
+                  console.log('✅ [CHECKOUT-SUCCESS] 已清理缓存');
+                } catch (error) {
+                  console.warn('签退成功后缓存清理失败:', error);
+                }
+
+                // 简化导航：直接返回，让页面自动刷新
                 navigation.goBack();
               }
             }
           ]
         );
       } else {
-        const errorMsg = result?.msg || '签退失败，请重试';
-        Alert.alert('签退失败', errorMsg);
+        const errorMsg = result?.msg || t('volunteer.checkout.checkOutFailed', '签退失败，请重试');
+        Alert.alert(t('volunteer.checkout.checkOutFailedTitle', '签退失败'), errorMsg);
       }
     } catch (error) {
       console.error('签退失败:', error);
-      Alert.alert('签退失败', '网络错误，请稍后重试');
+      Alert.alert(t('volunteer.checkout.checkOutFailedTitle', '签退失败'), t('common.network_error_retry', '网络错误，请稍后重试'));
     } finally {
       setIsSubmitting(false);
     }
@@ -361,7 +467,7 @@ export const VolunteerCheckOutScreen: React.FC = () => {
               <Text style={styles.backText}>{t('common.cancel')}</Text>
             </TouchableOpacity>
             <Text style={styles.title}>
-              志愿者签退
+              {t('wellbeing.volunteer.signOut.title', '志愿者签退')}
             </Text>
             <View style={styles.placeholder} />
           </View>
@@ -399,7 +505,7 @@ export const VolunteerCheckOutScreen: React.FC = () => {
                 <View style={styles.timeCardHeader}>
                   <Ionicons name="time-outline" size={20} color={theme.colors.primary} />
                   <Text style={[styles.timeCardTitle, isDarkMode && styles.textDark]}>
-                    工作时间统计
+                    {t('wellbeing.volunteer.work_status', '工作时间统计')}
                   </Text>
                 </View>
 
@@ -407,25 +513,25 @@ export const VolunteerCheckOutScreen: React.FC = () => {
 
                 <View style={styles.timeRow}>
                   <Text style={[styles.timeLabel, isDarkMode && styles.textSecondaryDark]}>
-                    签到时间
+                    {t('volunteerCheckIn.time.checkInTime', '签到时间')}
                   </Text>
                   <Text style={[styles.timeValue, isDarkMode && styles.textDark]}>
-                    {formatTime(volunteer.checkInTime)}
+                    {volunteer.checkInTime ? volunteer.checkInTime.substring(11, 16) : '--:--'}
                   </Text>
                 </View>
 
                 <View style={styles.timeRow}>
                   <Text style={[styles.timeLabel, isDarkMode && styles.textSecondaryDark]}>
-                    签退时间
+                    {t('volunteerCheckIn.time.checkOutTime', '签退时间')}
                   </Text>
                   <Text style={[styles.timeValue, isDarkMode && styles.textDark]}>
-                    {formatLocalTime(new Date())}
+                    {timeService.formatForDisplay(new Date(), { showDate: false, showTime: true })}
                   </Text>
                 </View>
 
                 <View style={[styles.timeRow, styles.durationRow]}>
                   <Text style={[styles.timeLabel, isDarkMode && styles.textSecondaryDark]}>
-                    工作时长
+                    {t('volunteerCheckIn.time.worked', '工作时长')}
                   </Text>
                   <Text style={[
                     styles.timeValue,
@@ -456,7 +562,7 @@ export const VolunteerCheckOutScreen: React.FC = () => {
             <View style={styles.descriptionHeader}>
               <View style={styles.descriptionLabelContainer}>
                 <Text style={styles.descriptionLabel}>
-                  工作内容描述
+                  {t('wellbeing.volunteer.history.workDescription', '工作内容描述')}
                 </Text>
                 <Text style={styles.requiredMark}>*</Text>
               </View>
@@ -466,7 +572,7 @@ export const VolunteerCheckOutScreen: React.FC = () => {
                   onPress={dismissKeyboard}
                   style={styles.keyboardDismissButton}
                 >
-                  <Text style={styles.keyboardDismissText}>完成</Text>
+                  <Text style={styles.keyboardDismissText}>{t('common.done', '完成')}</Text>
                 </TouchableOpacity>
               )}
             </View>
@@ -476,7 +582,7 @@ export const VolunteerCheckOutScreen: React.FC = () => {
                 ref={textInputRef}
                 style={styles.textInput}
                 multiline
-                placeholder="请描述您今天的志愿工作内容..."
+                placeholder={t('wellbeing.volunteer.signOut.placeholder', '请描述您今天的志愿工作内容...')}
                 placeholderTextColor={theme.colors.text.tertiary}
                 value={description}
                 onChangeText={setDescription}
@@ -544,7 +650,7 @@ export const VolunteerCheckOutScreen: React.FC = () => {
                 <ActivityIndicator size="small" color="white" />
               ) : (
                 <Text style={styles.submitButtonText}>
-                  确认签退
+                  {t('wellbeing.volunteer.signOut.confirmButton', '确认签退')}
                 </Text>
               )}
             </LinearGradient>
@@ -561,7 +667,7 @@ export const VolunteerCheckOutScreen: React.FC = () => {
               onPress={dismissKeyboard}
               style={styles.inputAccessoryButton}
             >
-              <Text style={styles.inputAccessoryButtonText}>完成</Text>
+              <Text style={styles.inputAccessoryButtonText}>{t('common.done', '完成')}</Text>
             </TouchableOpacity>
           </View>
         </InputAccessoryView>
@@ -749,22 +855,23 @@ const styles = StyleSheet.create({
   },
   quickButtonsRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexWrap: 'wrap',        // 允许换行
+    justifyContent: 'flex-start',  // 左对齐
+    gap: 8,                  // 按钮间距
   },
   quickButton: {
-    flex: 1,  // 让按钮平分宽度
-    paddingHorizontal: 10,  // 适中的水平padding
-    paddingVertical: 10,    // 增加垂直padding
-    borderRadius: 12,       // 稍大的圆角
-    marginHorizontal: 3,    // 减少按钮间距
-    alignItems: 'center',   // 内容居中
-    borderWidth: 1,         // 添加边框
-    borderColor: 'rgba(0, 0, 0, 0.08)',  // 加强边框颜色
-    shadowColor: '#000',    // 添加阴影
+    minWidth: 80,            // 最小宽度
+    paddingHorizontal: 12,   // 水平padding
+    paddingVertical: 10,     // 垂直padding
+    borderRadius: 12,        // 圆角
+    alignItems: 'center',    // 内容居中
+    borderWidth: 1,          // 边框
+    borderColor: 'rgba(0, 0, 0, 0.08)',
+    shadowColor: '#000',     // 阴影
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.06,
     shadowRadius: 4,
-    elevation: 3,           // Android阴影
+    elevation: 3,
   },
   quickButtonText: {
     fontSize: 13,           // 稍微增大字体提高可读性

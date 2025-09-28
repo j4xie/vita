@@ -36,9 +36,22 @@ class EnvironmentManager {
   private readonly STORAGE_KEY = '@PomeloX:environment';
   
   private constructor() {
-    // 初始化时从环境变量读取当前环境
-    this.currentEnv = (process.env.EXPO_PUBLIC_ENVIRONMENT as Environment) || 'production';
-    this.loadStoredEnvironment();
+    // 初始化时从环境变量读取当前环境，环境变量优先级最高
+    const envFromVariable = process.env.EXPO_PUBLIC_ENVIRONMENT as Environment;
+    this.currentEnv = envFromVariable || 'production';
+
+    // 调试日志
+    console.log(`🔧 [Environment] 环境管理器初始化:`);
+    console.log(`   环境变量: ${envFromVariable || 'undefined'}`);
+    console.log(`   当前环境: ${this.currentEnv}`);
+
+    // 只有在没有环境变量时才从AsyncStorage加载
+    if (!envFromVariable) {
+      console.log(`   将从AsyncStorage加载环境设置`);
+      this.loadStoredEnvironment();
+    } else {
+      console.log(`   使用环境变量设置: ${envFromVariable}`);
+    }
   }
 
   public static getInstance(): EnvironmentManager {
@@ -104,16 +117,23 @@ class EnvironmentManager {
    * 获取API基础URL
    */
   getApiUrl(): string {
-    // 强制使用正式环境API地址
-    return 'https://www.vitaglobal.icu';
+    const url = this.currentEnv === 'development'
+      ? 'http://106.14.165.234:8085'  // 测试环境
+      : 'https://www.vitaglobal.icu'; // 生产环境
+
+    // 调试日志
+    console.log(`🌍 [Environment] 当前环境: ${this.currentEnv}, API URL: ${url}`);
+
+    return url;
   }
 
   /**
    * 获取WebSocket URL
    */
   getWsUrl(): string {
-    // 强制使用正式环境WebSocket地址
-    return 'wss://www.vitaglobal.icu/ws';
+    return this.currentEnv === 'development'
+      ? 'ws://106.14.165.234:8085/ws'   // 测试环境WebSocket
+      : 'wss://www.vitaglobal.icu/ws'; // 生产环境WebSocket
   }
 
   /**

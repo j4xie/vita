@@ -96,8 +96,8 @@ export default function App() {
         // 5. 请求定位权限（首次启动时）
         console.log('[LOCATION] 检查定位权限...');
         try {
-          const { default: LocationService } = await import('./src/services/LocationService');
-          const locationService = LocationService.getInstance();
+          const { default: locationService } = await import('./src/services/LocationService');
+          // LocationService 默认导出已经是实例，不需要再调用 getInstance()
           const permissionStatus = await locationService.checkPermissionStatus();
           console.log('[LOCATION] 当前权限状态:', permissionStatus);
 

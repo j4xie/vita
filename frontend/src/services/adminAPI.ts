@@ -3,8 +3,9 @@
  */
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { getApiUrl } from '../utils/environment';
 
-const BASE_URL = 'https://www.vitaglobal.icu';
+const getBaseUrl = () => getApiUrl();
 
 // 存储键名
 const ADMIN_STORAGE_KEYS = {
@@ -49,7 +50,7 @@ interface APIResponse<T = any> {
  */
 export const getCaptcha = async (): Promise<CaptchaResponse> => {
   try {
-    const response = await fetch(`${BASE_URL}/captchaImage`, {
+    const response = await fetch(`${getBaseUrl()}/captchaImage`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -82,7 +83,7 @@ export const adminLogin = async (credentials: AdminLoginRequest): Promise<APIRes
     formData.append('code', credentials.code);
     formData.append('uuid', credentials.uuid);
 
-    const response = await fetch(`${BASE_URL}/login`, {
+    const response = await fetch(`${getBaseUrl()}/login`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
@@ -124,7 +125,7 @@ export const getUserList = async (): Promise<APIResponse<any[]>> => {
       throw new Error('管理员未登录');
     }
 
-    const response = await fetch(`${BASE_URL}/app/user/list`, {
+    const response = await fetch(`${getBaseUrl()}/app/user/list`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -157,7 +158,7 @@ export const getInvitationInfo = async (): Promise<APIResponse<any>> => {
     }
 
     // 使用form-data格式
-    const response = await fetch(`${BASE_URL}/app/invitation/invInfo`, {
+    const response = await fetch(`${getBaseUrl()}/app/invitation/invInfo`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
@@ -190,7 +191,7 @@ export const generateInvitationCode = async (): Promise<APIResponse> => {
       throw new Error('管理员未登录');
     }
 
-    const response = await fetch(`${BASE_URL}/app/invitation/addInv`, {
+    const response = await fetch(`${getBaseUrl()}/app/invitation/addInv`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
@@ -223,7 +224,7 @@ export const resetInvitationCode = async (): Promise<APIResponse> => {
       throw new Error('管理员未登录');
     }
 
-    const response = await fetch(`${BASE_URL}/app/invitation/resetInv`, {
+    const response = await fetch(`${getBaseUrl()}/app/invitation/resetInv`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',

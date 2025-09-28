@@ -1,7 +1,7 @@
 {
   "name": "pomelox-app",
   "version": "1.0.31",
-  "main": "index.ts",
+  "main": "node_modules/expo/AppEntry.js",
   "scripts": {
     "validate-translations": "node package-scripts/validate-translations.js",
     "start": "expo start",
@@ -86,7 +86,8 @@
     "react-native-screens": "~4.4.0",
     "react-native-svg": "15.8.0",
     "react-native-web": "~0.19.13",
-    "text-encoding": "^0.7.0"
+    "text-encoding": "^0.7.0",
+    "@react-native-community/datetimepicker": "8.2.0"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",

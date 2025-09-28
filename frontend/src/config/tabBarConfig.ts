@@ -63,7 +63,6 @@ export const mustHideTabBar = (routeName: string): boolean => {
     'Login',
     'Register',
     'SchoolDetail',
-    'VolunteerCheckIn',
   ];
   
   return criticalHiddenPages.includes(routeName);
@@ -94,7 +93,6 @@ export const HIDDEN_TAB_BAR_PAGES = [
   
   // 安心功能页面
   'SchoolDetail',               // 学校详情
-  'VolunteerCheckIn',           // 志愿者签到
   
   // 通用功能页面
   'QRScanner',                  // 二维码扫描

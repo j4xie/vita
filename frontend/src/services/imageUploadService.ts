@@ -1,4 +1,5 @@
 import { Platform } from 'react-native';
+import { getApiUrl } from '../utils/environment';
 
 // Cloudflare R2配置 - 从环境变量获取
 const R2_CONFIG = {
@@ -46,7 +47,7 @@ export const uploadAvatar = async (imageUri: string, userId: number): Promise<Up
     // - 参数: multipart/form-data 包含 file (MultipartFile)
     // - 返回: {code: 200, data: {url: "文件URL"}}
 
-    const response = await fetch('https://www.vitaglobal.icu/file/upload', {
+    const response = await fetch(`${getApiUrl()}/file/upload`, {
       method: 'POST',
       body: formData,
       // 不要手动设置Content-Type，让浏览器自动设置multipart/form-data的boundary

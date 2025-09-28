@@ -453,8 +453,8 @@ export const PersonalInfoCard: React.FC<PersonalInfoCardProps> = ({
         {/* 右侧操作按钮 - 编辑和QR码 */}
         {!isGuest && (onEditPress || onQRCodePress) && (
           <View style={styles.rightButtonsContainer}>
-            {/* 编辑按钮 - 🚫 临时封禁：由于后端角色字段问题暂时禁用 */}
-            {false && onEditPress && (
+            {/* 编辑按钮 - ✅ 已修复：roleId和postId字段问题已解决 */}
+            {onEditPress && (
               <TouchableOpacity
                 style={[styles.actionButton, styles.editButton]}
                 onPress={onEditPress}

@@ -2,15 +2,16 @@
 import axios, { AxiosInstance, AxiosResponse, AxiosError } from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ApiResponse, AuthTokens, User, LoginRequest, RegisterRequest } from '../types/api';
+import { getApiUrl } from '../utils/environment';
 
 class ApiService {
   private client: AxiosInstance;
   private baseURL: string;
 
   constructor() {
-    // Use production API URL
-    this.baseURL = 'https://www.vitaglobal.icu';
-    
+    // Use environment-managed API URL - dynamically get each time
+    this.baseURL = getApiUrl();
+
     this.client = axios.create({
       baseURL: this.baseURL,
       timeout: 30000,
@@ -23,10 +24,30 @@ class ApiService {
     this.setupInterceptors();
   }
 
+  // 重新初始化API客户端以获取最新的环境URL
+  private reinitializeClient() {
+    const newBaseURL = getApiUrl();
+    if (newBaseURL !== this.baseURL) {
+      this.baseURL = newBaseURL;
+      this.client = axios.create({
+        baseURL: this.baseURL,
+        timeout: 30000,
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+      });
+      this.setupInterceptors();
+    }
+  }
+
   private setupInterceptors() {
     // Request interceptor to add auth token
     this.client.interceptors.request.use(
       async (config) => {
+        // 检查并更新环境URL
+        this.reinitializeClient();
+
         const token = await AsyncStorage.getItem('access_token');
         if (token) {
           config.headers.Authorization = `Bearer ${token}`;

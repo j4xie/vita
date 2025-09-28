@@ -25,6 +25,7 @@ import { pomeloXAPI } from '../../services/PomeloXAPI';
 import { FrontendActivity } from '../../utils/activityAdapter';
 import { useUser } from '../../context/UserContext';
 import { LiquidSuccessModal } from '../../components/modals/LiquidSuccessModal';
+import { timeService } from '../../utils/UnifiedTimeService';
 
 const { width: screenWidth } = Dimensions.get('window');
 
@@ -253,10 +254,17 @@ export const ActivityDetailScreen: React.FC = () => {
   const isActivityEnded = () => {
     try {
       const now = new Date();
-      const activityEnd = activity.endDate 
-        ? new Date(activity.endDate + ' 23:59:59') 
-        : new Date(activity.date + ' ' + (activity.time || '00:00'));
-      
+      // 使用统一时间服务解析活动结束时间
+      const endTimeStr = activity.endDate
+        ? `${activity.endDate} 23:59:59`
+        : `${activity.date} ${activity.time || '00:00:00'}`;
+
+      const activityEnd = timeService.parseServerTime(endTimeStr);
+      if (!activityEnd) {
+        console.warn('无法解析活动结束时间:', endTimeStr);
+        return false;
+      }
+
       return activityEnd.getTime() < now.getTime();
     } catch (error) {
       console.warn('检查活动结束时间失败:', error);
@@ -604,11 +612,19 @@ export const ActivityDetailScreen: React.FC = () => {
 
   // 格式化时间为12小时制
   const formatTime = (timeString: string) => {
-    const [hours, minutes] = timeString.split(':');
-    const hour24 = parseInt(hours);
-    const hour12 = hour24 === 0 ? 12 : hour24 > 12 ? hour24 - 12 : hour24;
-    const ampm = hour24 >= 12 ? 'PM' : 'AM';
-    return `${hour12}:${minutes} ${ampm}`;
+    // 解析时间字符串
+    const date = timeService.parseServerTime(`2025-01-01 ${timeString}`);
+    if (!date) {
+      // 如果解析失败，使用原始逻辑
+      const [hours, minutes] = timeString.split(':');
+      const hour24 = parseInt(hours);
+      const hour12 = hour24 === 0 ? 12 : hour24 > 12 ? hour24 - 12 : hour24;
+      const ampm = hour24 >= 12 ? 'PM' : 'AM';
+      return `${hour12}:${minutes} ${ampm}`;
+    }
+
+    // 使用统一时间服务格式化，但只显示时间部分
+    return timeService.formatForDisplay(date, { showTime: true, showDate: false });
   };
 
   return (

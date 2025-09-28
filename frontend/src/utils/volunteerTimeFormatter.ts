@@ -1,6 +1,14 @@
 /**
  * 志愿者时间格式化工具
  * 统一主屏幕和历史记录的时间显示格式
+ *
+ * @deprecated 此文件已废弃，请使用 UnifiedTimeService
+ * import { timeService } from '../utils/UnifiedTimeService';
+ *
+ * 迁移指南:
+ * - formatVolunteerTime() → timeService.formatForDisplay()
+ * - calculateVolunteerDuration() → timeService.calculateDuration()
+ * - isValidVolunteerTime() → timeService.parseServerTime() !== null
  */
 
 import { safeParseTime, formatDateTime } from './timeHelper';
@@ -9,6 +17,7 @@ import { i18n } from './i18n';
 /**
  * 统一的志愿者时间格式化函数
  * 复用主屏幕的时间显示逻辑
+ * @deprecated 使用 timeService.formatForDisplay() 替代
  */
 export const formatVolunteerTime = (timeString: string): string => {
   try {
@@ -68,6 +77,7 @@ export const formatVolunteerTime = (timeString: string): string => {
 /**
  * 计算并格式化志愿者工作时长
  * 统一时长计算逻辑，处理异常情况
+ * @deprecated 使用 timeService.calculateDuration() 替代
  */
 export const calculateVolunteerDuration = (startTime: string, endTime: string) => {
   try {
@@ -125,6 +135,7 @@ export const calculateVolunteerDuration = (startTime: string, endTime: string) =
 
 /**
  * 检查时间是否有效
+ * @deprecated 使用 timeService.parseServerTime(timeString) !== null 替代
  */
 export const isValidVolunteerTime = (timeString: string): boolean => {
   try {

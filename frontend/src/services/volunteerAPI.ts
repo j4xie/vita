@@ -5,6 +5,12 @@
 import { getCurrentToken } from './authAPI';
 import { notifyVolunteerCheckIn, notifyVolunteerCheckOut } from './smartAlertSystem';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+// 导入新的统一时间服务
+import { timeService } from '../utils/UnifiedTimeService';
+import { apiCache } from './apiCache';
+import { getApiUrl } from '../utils/environment';
+
+// 保留旧的导入以支持向后兼容（将逐步废弃）
 import {
   parseTimestamp as parseVolunteerTimestamp,
   safeParseTime,
@@ -16,7 +22,7 @@ import {
   toBeijingTimeString
 } from '../utils/timeHelper';
 
-const BASE_URL = 'https://www.vitaglobal.icu';
+const getBaseUrl = () => getApiUrl();
 
 // 导出别名以保持向后兼容
 export { parseVolunteerTimestamp };
@@ -129,61 +135,12 @@ const clearLocalCheckIn = (userId: number): void => {
 
 /**
  * 格式化时间为API需要的格式 (YYYY-MM-DD HH:mm:ss)
- * 🌍 修复版本：确保输出正确的北京时间，避免双重转换
+ * 统一策略：使用本地时间，后端按接收到的时间直接处理
  */
 const formatTimeForAPI = (timeInput: string | Date): string => {
-  try {
-    let date: Date;
-
-    // 处理不同的输入格式
-    if (typeof timeInput === 'string') {
-      // 如果已经是正确格式，且看起来是当前日期，直接返回
-      if (/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(timeInput)) {
-        const testDate = new Date(timeInput.replace(' ', 'T') + '+08:00');
-        const now = new Date();
-        const timeDiff = Math.abs(testDate.getTime() - now.getTime());
-
-        // 如果时间差小于24小时，认为是有效的当前时间
-        if (timeDiff < 24 * 60 * 60 * 1000) {
-          if (__DEV__) {
-            console.log('🔧 [API-FORMAT] 检测到有效格式，直接使用:', timeInput);
-          }
-          return timeInput;
-        }
-      }
-
-      date = new Date(timeInput);
-    } else {
-      date = timeInput;
-    }
-
-    if (isNaN(date.getTime())) {
-      throw new Error('无效的日期对象');
-    }
-
-    // 🚀 使用修复后的时区转换函数
-    const result = toBeijingTimeString(date);
-
-    if (__DEV__) {
-      console.log('🔧 [API-FORMAT] 时间格式化完成:', {
-        input: typeof timeInput === 'string' ? timeInput : timeInput.toISOString(),
-        output: result,
-        inputType: typeof timeInput
-      });
-    }
-
-    return result;
-  } catch (error) {
-    if (__DEV__) {
-      console.error('❌ [API-FORMAT] 时间格式化失败:', error, 'Input:', timeInput);
-    }
-    // 最后的fallback：返回当前北京时间
-    const fallback = toBeijingTimeString(new Date());
-    if (__DEV__) {
-      console.warn('⚠️ [API-FORMAT] 使用fallback时间:', fallback);
-    }
-    return fallback;
-  }
+  const date = typeof timeInput === 'string' ? new Date(timeInput) : timeInput;
+  // 统一使用本地时间格式，避免时区转换混乱
+  return timeService.formatLocalTime(date);
 };
 
 // 根据API文档第10-13条定义的志愿者打卡记录类型
@@ -268,7 +225,7 @@ export const getVolunteerRecords = async (filters?: {
     //   queryParams.append('endDate', filters.endDate);
     // }
 
-    const url = `${BASE_URL}/app/hour/recordList${queryParams.toString() ? '?' + queryParams.toString() : ''}`;
+    const url = `${getBaseUrl()}/app/hour/recordList${queryParams.toString() ? '?' + queryParams.toString() : ''}`;
 
     const response = await fetch(url, {
       method: 'GET',
@@ -337,7 +294,7 @@ export const getVolunteerHours = async (filters?: {
       queryParams.append('userId', filters.userId.toString());
     }
 
-    const url = `${BASE_URL}/app/hour/hourList${queryParams.toString() ? '?' + queryParams.toString() : ''}`;
+    const url = `${getBaseUrl()}/app/hour/hourList${queryParams.toString() ? '?' + queryParams.toString() : ''}`;
 
     const response = await fetch(url, {
       method: 'GET',
@@ -463,12 +420,12 @@ export const volunteerSignRecord = async (
     // 生产环境简化请求日志
     if (__DEV__) {
       console.log('[API-REQUEST] 志愿者API请求:', {
-        url: `${BASE_URL}/app/hour/signRecord`,
+        url: `${getBaseUrl()}/app/hour/signRecord`,
         operation: type === 1 ? '签到' : '签退'
       });
     }
 
-    const response = await fetch(`${BASE_URL}/app/hour/signRecord`, {
+    const response = await fetch(`${getBaseUrl()}/app/hour/signRecord`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
@@ -564,115 +521,59 @@ export const volunteerSignRecord = async (
   }
 };
 
-// 🚀 修复：安全的工作时长计算，处理时区问题
+/**
+ * 计算工作时长
+ * @deprecated 请使用 timeService.calculateDuration() 替代
+ * 🚀 修复：安全的工作时长计算，处理时区问题
+ */
 const calculateWorkDuration = (startTime: string | null | undefined, endTime: string | null | undefined): string => {
-  try {
-    if (!startTime || !endTime) {
-      if (__DEV__) {
-        console.warn('🚨 [DURATION] 缺少时间参数:', {
-          startTime: startTime || 'null',
-          endTime: endTime || 'null'
-        });
-      }
-      return '未知时长';
-    }
-    
-    // 详细调试仅在开发环境
-    if (__DEV__) {
-      console.log('🕐 [DURATION-DEBUG] 原始时间:', { startTime, endTime });
-    }
-    
-    // 🚨 处理不同的时间格式
-    const parseTime = (timeStr: string): Date => {
-      // API时间格式: "2025-08-18T12:11:23.000+08:00"
-      // ISO时间格式: "2025-08-31T00:22:00.000Z"
-      
-      if (timeStr.includes('T') && (timeStr.includes('+') || timeStr.includes('Z'))) {
-        // 标准ISO格式，直接解析
-        return new Date(timeStr);
-      } else if (timeStr.includes(' ')) {
-        // "YYYY-MM-DD HH:mm:ss" 格式，需要添加时区
-        const isoTime = timeStr.replace(' ', 'T') + '+08:00';
-        return new Date(isoTime);
-      } else {
-        // 尝试直接解析
-        return new Date(timeStr);
-      }
-    };
-    
-    const start = parseTime(startTime);
-    const end = parseTime(endTime);
-    
-    // 详细调试仅在开发环境
-    if (__DEV__) {
-      console.log('🕐 [DURATION-DEBUG] 解析后时间:', { 
-        start: start.toISOString(), 
-        end: end.toISOString()
-      });
-    }
-    
-    // 🚨 验证时间有效性
-    if (isNaN(start.getTime()) || isNaN(end.getTime())) {
-      console.warn('🚨 [DURATION] 时间解析失败:', { startTime, endTime });
-      return '未知时长';
-    }
-    
-    const durationMs = end.getTime() - start.getTime();
-    
-    // 详细计算调试仅在开发环境
-    if (__DEV__) {
-      console.log('🕐 [DURATION-DEBUG] 计算结果:', { 
-        durationMs, 
-        durationMinutes: Math.floor(durationMs / (1000 * 60))
-      });
-    }
-    
-    // 🚨 验证时长合理性
-    if (durationMs < 0) {
-      if (__DEV__) {
-        console.warn('🚨 [DURATION] 时长为负数:', durationMs);
-      }
-      return '未知时长';
-    }
-    
-    if (durationMs > 12 * 60 * 60 * 1000) { // 超过12小时 - 用户要求的最大限制
-      if (__DEV__) {
-        console.warn('🚨 [DURATION] 时长超过12小时限制:', Math.floor(durationMs / (1000 * 60 * 60)), '小时');
-      }
-      return '超过12小时（需要自动签退）';
-    }
-    
-    const totalMinutes = Math.floor(durationMs / (1000 * 60));
-    const hours = Math.floor(totalMinutes / 60);
-    const minutes = totalMinutes % 60;
-    
-    // 根据分钟数返回合适的显示格式
-    // 0分钟时显示"少于1分钟"而不是"0分钟"
-    const result = hours > 0
-      ? (minutes > 0 ? `${hours}小时${minutes}分钟` : `${hours}小时`)
-      : (minutes > 0 ? `${minutes}分钟` : '少于1分钟');
-      
-    // 最终结果仅在开发环境显示
-    if (__DEV__) {
-      console.log('🕐 [DURATION-RESULT] 最终时长:', result);
-    }
-    return result;
-  } catch (error) {
-    if (__DEV__) {
-      console.error('🚨 [DURATION] 计算工作时长失败:', error);
-    }
+  // 使用新的统一时间服务
+  const startDate = startTime ? timeService.parseServerTime(startTime) : null;
+  const endDate = endTime ? timeService.parseServerTime(endTime) : null;
+
+  if (!startDate || !endDate) {
     return '未知时长';
   }
+
+  const duration = timeService.calculateDuration(startDate, endDate);
+
+  // 处理超时12小时的特殊情况
+  if (duration.isOvertime) {
+    return '超过12小时（需要自动签退）';
+  }
+
+  return duration.display;
 };
 
 
 /**
  * 根据API文档第13条获取志愿者最后记录（增强版：支持重试和本地缓存）
  * URL: /app/hour/lastRecordList
+ *
+ * 2025年9月更新: 由于后端SQL歧义问题，优先使用recordList接口
  */
 export const getLastVolunteerRecord = async (userId: number): Promise<APIResponse<VolunteerRecord>> => {
   if (__DEV__) {
     console.log('[VOLUNTEER-API] 开始获取志愿者最后记录:', { userId });
+  }
+
+  // 测试后端是否已修复SQL问题 - 临时禁用降级方案
+  const useRecordListFirst = false;
+
+  if (useRecordListFirst) {
+    try {
+      const fallbackResult = await getLastRecordFromRecordList(userId);
+      if (fallbackResult.code === 200 && fallbackResult.data) {
+        if (__DEV__) {
+          console.log('[VOLUNTEER-API] 使用recordList接口成功获取数据');
+        }
+        return fallbackResult;
+      }
+    } catch (error) {
+      if (__DEV__) {
+        console.log('[VOLUNTEER-API] recordList接口失败，尝试其他方案:', error);
+      }
+    }
   }
 
   // 使用重试机制调用API
@@ -683,7 +584,7 @@ export const getLastVolunteerRecord = async (userId: number): Promise<APIRespons
       throw new Error('用户未登录');
     }
 
-    const response = await fetch(`${BASE_URL}/app/hour/lastRecordList?userId=${userId}`, {
+    const response = await fetch(`${getBaseUrl()}/app/hour/lastRecordList?userId=${userId}`, {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -712,13 +613,48 @@ export const getLastVolunteerRecord = async (userId: number): Promise<APIRespons
   };
 
   try {
-    // 使用重试机制：首次延迟200ms，最多重试2次，加快响应速度
-    return await retryWithBackoff(fetchWithRetry, 2, 200);
-  } catch (error) {
+    // 检测是否是已知的SQL歧义错误
+    const testResponse = await fetchWithRetry();
 
-    // 如果重试失败，先尝试本地缓存
+    // 如果是500错误且包含SQL歧义问题，直接使用备用接口
+    if (testResponse.code === 500 &&
+        (testResponse.msg?.includes('ambiguous') ||
+         testResponse.msg?.includes('SQL') ||
+         testResponse.msg?.includes('Internal Server Error'))) {
+      if (__DEV__) {
+        console.log('[VOLUNTEER-API] 检测到SQL歧义错误，直接使用备用接口');
+      }
+      // 直接跳转到备用方案
+      throw new Error('SQL ambiguity detected');
+    }
+
+    return testResponse;
+  } catch (error) {
+    if (__DEV__) {
+      console.log('[VOLUNTEER-API] lastRecordList失败，尝试备用方案:', error);
+    }
+
+    // 优先尝试recordList接口（更可靠）
+    try {
+      const fallbackResult = await getLastRecordFromRecordList(userId);
+      if (fallbackResult.code === 200 && fallbackResult.data) {
+        if (__DEV__) {
+          console.log('[VOLUNTEER-API] 备用接口成功获取数据');
+        }
+        return fallbackResult;
+      }
+    } catch (fallbackError) {
+      if (__DEV__) {
+        console.error('[VOLUNTEER-API] 备用接口也失败:', fallbackError);
+      }
+    }
+
+    // 如果备用接口失败，尝试本地缓存
     const localRecord = getLocalCheckIn(userId);
     if (localRecord) {
+      if (__DEV__) {
+        console.log('[VOLUNTEER-API] 使用本地缓存数据');
+      }
       return {
         code: 200,
         msg: '使用本地缓存记录',
@@ -726,21 +662,11 @@ export const getLastVolunteerRecord = async (userId: number): Promise<APIRespons
       };
     }
 
-    // 再次尝试recordList接口，也使用重试机制
-    try {
-      return await retryWithBackoff(
-        () => getLastRecordFromRecordList(userId),
-        1, // 进一步减少重试次数
-        200 // 统一使用200ms延迟
-      );
-    } catch (fallbackError) {
-
-      // 返回更友好的错误信息
-      return {
-        code: 404,
-        msg: '暂时无法获取签到记录，请稍后再试或联系管理员'
-      };
-    }
+    // 返回更友好的错误信息
+    return {
+      code: 404,
+      msg: '志愿者状态暂时无法获取，请稍后重试'
+    };
   }
 };
 
@@ -754,7 +680,7 @@ const getLastRecordFromRecordList = async (userId: number): Promise<APIResponse<
       return { code: 401, msg: '用户未登录' };
     }
 
-    const response = await fetch(`${BASE_URL}/app/hour/recordList?userId=${userId}`, {
+    const response = await fetch(`${getBaseUrl()}/app/hour/recordList?userId=${userId}`, {
       method: 'GET',
       headers: { 'Authorization': `Bearer ${token}` },
     });
@@ -798,7 +724,7 @@ export const searchVolunteerByPhone = async (phoneNumber: string): Promise<APIRe
     }
 
     // 这个接口可能需要根据实际后端接口调整
-    const response = await fetch(`${BASE_URL}/app/user/searchByPhone?phone=${phoneNumber}`, {
+    const response = await fetch(`${getBaseUrl()}/app/user/searchByPhone?phone=${phoneNumber}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -874,35 +800,24 @@ export const performVolunteerCheckIn = async (
       throw error;
     }
 
-    // 🕐 直接使用当前时间进行API格式化（避免复杂转换）
+    // 🕐 统一策略：使用本地时间格式
     const now = new Date();
-    const currentTime = formatTimeForAPI(now);
+    const currentTime = timeService.formatLocalTime(now);
 
-    // 🔧 详细调试：记录完整的时间转换过程
+    // 🔧 详细调试：记录本地时间
     if (__DEV__) {
-      console.log('🔍 [CHECKIN-TIME-DEBUG] 完整时间转换过程:', {
+      console.log('🔍 [CHECKIN-TIME-DEBUG] 本地时间生成:', {
         originalTime: now.toISOString(),
         originalLocal: now.toLocaleString(),
         userTimezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
         timezoneOffset: now.getTimezoneOffset(),
-        generatedBeijingTime: currentTime,
-        // 验证转换是否正确
-        beijingNow: new Intl.DateTimeFormat('zh-CN', {
-          timeZone: 'Asia/Shanghai',
-          year: 'numeric',
-          month: '2-digit',
-          day: '2-digit',
-          hour: '2-digit',
-          minute: '2-digit',
-          second: '2-digit',
-          hour12: false
-        }).format(now),
-        shouldMatch: 'generatedBeijingTime === beijingNow'
+        generatedLocalTime: currentTime,
+        note: '后端期望接收本地时间，不需要转换到北京时间'
       });
     }
 
-    // 验证时间格式正确性
-    const testParse = new Date(currentTime.replace(' ', 'T') + '+08:00');
+    // 验证时间格式正确性 - 本地时间不需要时区转换
+    const testParse = new Date(currentTime.replace(' ', 'T'));
     if (isNaN(testParse.getTime())) {
       if (__DEV__) {
         console.error('❌ [CHECKIN-TIME] 生成的时间格式无效:', {
@@ -913,24 +828,23 @@ export const performVolunteerCheckIn = async (
       throw new Error('系统时间格式错误');
     }
 
-    // 🚨 关键验证：确保生成的时间不是未来时间
-    const beijingTimeParsed = new Date(currentTime.replace(' ', 'T') + '+08:00');
-    const timeDiffMinutes = (beijingTimeParsed.getTime() - now.getTime()) / (1000 * 60);
+    // 🚨 验证时间合理性
+    const timeDiffMinutes = (testParse.getTime() - now.getTime()) / (1000 * 60);
 
     if (__DEV__) {
       console.log('⏰ [TIME-VALIDATION] 时间验证:', {
         localTime: now.toISOString(),
-        beijingTime: beijingTimeParsed.toISOString(),
+        generatedLocalTime: testParse.toISOString(),
         differenceMinutes: timeDiffMinutes.toFixed(1),
-        isReasonable: Math.abs(timeDiffMinutes) < 24 * 60 // 不应该超过24小时差异
+        isReasonable: Math.abs(timeDiffMinutes) < 1 // 本地时间应该几乎一致
       });
     }
 
-    // 如果时间差异超过24小时，说明转换有问题
-    if (Math.abs(timeDiffMinutes) > 24 * 60) {
-      const errorMsg = `时间转换异常，差异${timeDiffMinutes.toFixed(1)}分钟`;
+    // 如果时间差异超过1分钟，说明有问题
+    if (Math.abs(timeDiffMinutes) > 1) {
+      const errorMsg = `本地时间生成异常，差异${timeDiffMinutes.toFixed(1)}分钟`;
       if (__DEV__) {
-        console.error('❌ [TIME-CONVERSION-ERROR]', errorMsg);
+        console.error('❌ [TIME-GENERATION-ERROR]', errorMsg);
       }
       throw new Error(errorMsg);
     }
@@ -1117,7 +1031,8 @@ export const performVolunteerCheckOut = async (
 
       // 使用统一的解析函数
       try {
-        parsedTime = parseVolunteerTimestamp(rawValue);
+        // 使用新的统一时间服务解析
+        parsedTime = timeService.parseServerTime(rawValue);
         if (__DEV__) {
           console.log('📊 [TIMESTAMP-PARSE] 成功解析时间戳:', {
             input: rawValue,
@@ -1347,8 +1262,8 @@ export const performVolunteerCheckOut = async (
       // 🚀 新逻辑：允许超时签退，但提供警告信息
       console.log('📅 [VOLUNTEER-CHECKOUT] 执行超时签退，记录实际工作时间');
 
-      // 🕐 使用统一的API格式化函数
-      const actualTimeString = formatTimeForAPI(currentTime);
+      // 🕐 统一策略：使用本地时间格式
+      const actualTimeString = timeService.formatLocalTime(currentTime);
       
       const overtimeResult = await volunteerSignRecord(
         userId,
@@ -1378,8 +1293,8 @@ export const performVolunteerCheckOut = async (
     }
     
     // 第二步：正常签退（12小时内）
-    // 🕐 使用统一的API格式化函数
-    const normalTimeString = formatTimeForAPI(currentTime);
+    // 🕐 统一策略：使用本地时间格式
+    const normalTimeString = timeService.formatLocalTime(currentTime);
 
     console.log('📅 [VOLUNTEER-CHECKOUT] 生成标准化签退时间:', {
       formattedTime: normalTimeString,
@@ -1474,7 +1389,7 @@ export const getPersonalVolunteerHours = async (userId: number): Promise<APIResp
 
     console.log('🔍 [PERSONAL-HOURS] 获取个人工时:', { userId });
 
-    const response = await fetch(`${BASE_URL}/app/hour/userHour?userId=${userId}`, {
+    const response = await fetch(`${getBaseUrl()}/app/hour/userHour?userId=${userId}`, {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -1520,7 +1435,7 @@ export const getPersonalVolunteerRecords = async (userId: number): Promise<APIRe
 
     console.log('🔍 [PERSONAL-RECORDS] 获取个人打卡记录:', { userId });
 
-    const response = await fetch(`${BASE_URL}/app/hour/recordList?userId=${userId}`, {
+    const response = await fetch(`${getBaseUrl()}/app/hour/recordList?userId=${userId}`, {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -1646,6 +1561,128 @@ export const autoCheckoutOvertimeUsers = async (
   } catch (error) {
     console.error('❌ [AUTO-CHECKOUT] 自动签退检查失败:', error);
     return { autoCheckoutCount: 0, affectedUsers: [] };
+  }
+};
+
+/**
+ * 🆕 补录工时功能（Time Entry）
+ * 该功能允许管理员为志愿者补录工时记录
+ * 通过调用两次签到签退接口（type=1签到 + type=2签退）完成一条完整的补录记录
+ * @param userId 目标志愿者用户ID
+ * @param operateUserId 操作用户ID（当前管理员）
+ * @param operateLegalName 操作用户姓名
+ * @param startTime 开始时间（ISO字符串格式）
+ * @param endTime 结束时间（ISO字符串格式）
+ * @param remark 工作描述（会自动添加【补录】前缀）
+ * @returns 返回操作结果
+ */
+export const performTimeEntry = async (
+  userId: number,
+  operateUserId: number,
+  operateLegalName: string,
+  startTime: string,
+  endTime: string,
+  remark: string
+): Promise<{ success: boolean; message: string; recordId?: number }> => {
+  try {
+    console.log('📝 [TIME-ENTRY] 开始补录工时:', {
+      userId,
+      startTime,
+      endTime,
+      remark
+    });
+
+    // 第一步：调用签到接口（type=1）
+    const checkInResult = await volunteerSignRecord(
+      userId,
+      1, // type=1 签到
+      operateUserId,
+      operateLegalName,
+      startTime, // 提供开始时间
+      undefined,
+      undefined
+    );
+
+    if (checkInResult.code !== 200) {
+      console.error('❌ [TIME-ENTRY] 签到失败:', checkInResult.msg);
+      return {
+        success: false,
+        message: checkInResult.msg || '补录签到失败'
+      };
+    }
+
+    // 获取签到记录ID（从返回数据或最新记录中获取）
+    let recordId: number | undefined;
+
+    // 尝试从返回数据中获取记录ID
+    if (checkInResult.data && checkInResult.data.id) {
+      recordId = checkInResult.data.id;
+    } else {
+      // 如果返回数据中没有ID，尝试获取最新记录
+      try {
+        const lastRecord = await getLastVolunteerRecord(userId);
+        if (lastRecord.code === 200 && lastRecord.data) {
+          recordId = lastRecord.data.id;
+        }
+      } catch (error) {
+        console.warn('获取最新记录失败:', error);
+      }
+    }
+
+    if (!recordId) {
+      console.error('❌ [TIME-ENTRY] 无法获取签到记录ID');
+      return {
+        success: false,
+        message: '无法获取签到记录ID，请重试'
+      };
+    }
+
+    console.log('✅ [TIME-ENTRY] 签到成功，记录ID:', recordId);
+
+    // 第二步：调用签退接口（type=2）
+    const checkOutResult = await volunteerSignRecord(
+      userId,
+      2, // type=2 签退
+      operateUserId,
+      operateLegalName,
+      undefined,
+      endTime, // 提供结束时间
+      recordId, // 使用第一步返回的记录ID
+      remark // 包含【补录】前缀的工作描述
+    );
+
+    if (checkOutResult.code !== 200) {
+      console.error('❌ [TIME-ENTRY] 签退失败:', checkOutResult.msg);
+      return {
+        success: false,
+        message: `签到成功但签退失败: ${checkOutResult.msg || '请重试签退'}`,
+        recordId // 返回记录ID以便重试
+      };
+    }
+
+    console.log('✅ [TIME-ENTRY] 补录成功');
+
+    // 清除缓存，确保数据刷新
+    try {
+      apiCache.clearByPattern(`volunteerRecord:${userId}`);
+      apiCache.clearKey('volunteerRecords');
+      apiCache.clearKey('volunteerHours');
+    } catch (error) {
+      console.warn('[TIME-ENTRY] 清除缓存失败:', error);
+    }
+
+    return {
+      success: true,
+      message: '补录成功',
+      recordId
+    };
+
+  } catch (error) {
+    console.error('❌ [TIME-ENTRY] 补录失败:', error);
+    return {
+      success: false,
+      message: error instanceof Error ? error.message : '补录失败，请重试'
+    };
   }
 };
 

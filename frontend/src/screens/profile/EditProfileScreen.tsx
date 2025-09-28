@@ -145,8 +145,19 @@ export const EditProfileScreen: React.FC = () => {
   const insets = useSafeAreaInsets();
   const { user, refreshUserInfo } = useUser();
 
-  // 检查用户是否有权限访问第二邮箱功能（普通用户以上）
-  const canUseAlternateEmail = user?.roles?.some(role => role.key !== 'common') || false;
+  // 检查用户是否有权限访问第二邮箱功能（内部成员：staff、管理员）
+  // 同时检查 role 对象和 roles 数组，因为后端可能返回任一格式
+  const canUseAlternateEmail =
+    // 检查 roles 数组
+    (user?.roles?.some(role =>
+      role.key && ['manage', 'part_manage', 'staff'].includes(role.key)
+    )) ||
+    // 检查单个 role 对象
+    (user?.role?.roleKey && ['manage', 'part_manage', 'staff'].includes(user.role.roleKey)) ||
+    false;
+
+  // 检测是否首次填写（有权限但还没有第二邮箱）
+  const isFirstTimeAlternateEmail = canUseAlternateEmail && !user?.alternateEmail;
 
   // 如果用户未登录，返回登录页面
   if (!user) {
@@ -179,6 +190,18 @@ export const EditProfileScreen: React.FC = () => {
   // 原始数据状态 - 用于检测变化
   const [originalData, setOriginalData] = useState(null);
 
+  // 判断第一邮箱是否是工作邮箱（@chineseunion.org）
+  const isWorkEmail = formData.email?.toLowerCase().endsWith('@chineseunion.org');
+
+  // 动态确定第二邮箱的标签和占位符
+  const alternateEmailLabel = isWorkEmail
+    ? t('profile.edit.schoolEmail', '学校邮箱')
+    : t('profile.edit.workEmail', '工作邮箱');
+
+  const alternateEmailPlaceholder = isWorkEmail
+    ? t('profile.edit.schoolEmailPlaceholder', '请输入学校邮箱')
+    : t('profile.edit.workEmailPlaceholder', '请输入工作邮箱');
+
   // 是否有更改
   const [hasChanges, setHasChanges] = useState(false);
 
@@ -206,12 +229,6 @@ export const EditProfileScreen: React.FC = () => {
 
           if (response.code === 200 && response.data) {
             const userData = response.data;
-            console.log('📊 后端返回的用户数据:', {
-              sex: userData.sex,
-              gender: userData.gender, // 应该是undefined
-              legalName: userData.legalName
-            });
-
             const newFormData = {
               legalName: userData.legalName || '',
               nickName: userData.nickName || '',
@@ -223,11 +240,6 @@ export const EditProfileScreen: React.FC = () => {
               gender: userData.sex || '2', // 后端返回sex字段，映射为gender
               university: userData.dept?.deptName || '',
             };
-
-            console.log('📝 设置的表单数据:', {
-              gender: newFormData.gender,
-              genderMeaning: newFormData.gender === '0' ? '男' : newFormData.gender === '1' ? '女' : '其他'
-            });
 
             setFormData(newFormData);
             setOriginalData({ ...newFormData }); // 保存原始数据
@@ -294,9 +306,42 @@ export const EditProfileScreen: React.FC = () => {
         }
       }
     };
-    
+
     loadUserAvatar();
   }, [user?.userId]);
+
+  // 监听导航事件，处理必填字段验证
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('beforeRemove', (e) => {
+      // 如果不是必填情况或已填写，允许正常导航
+      if (!isFirstTimeAlternateEmail || formData.alternateEmail) {
+        return;
+      }
+
+      // 阻止默认导航行为
+      e.preventDefault();
+
+      // 显示确认对话框
+      const emailType = isWorkEmail ? t('profile.edit.schoolEmail', '学校邮箱') : t('profile.edit.workEmail', '工作邮箱');
+      Alert.alert(
+        t('profile.edit.mandatoryFieldTitle', '必填信息未完成'),
+        t('profile.edit.mandatoryFieldMessage', { emailType }),
+        [
+          {
+            text: t('profile.edit.continueEditing', '继续填写'),
+            style: 'cancel',
+          },
+          {
+            text: t('profile.edit.discardAndExit', '放弃并退出'),
+            style: 'destructive',
+            onPress: () => navigation.dispatch(e.data.action),
+          },
+        ]
+      );
+    });
+
+    return unsubscribe;
+  }, [navigation, isFirstTimeAlternateEmail, formData.alternateEmail, isWorkEmail, t]);
 
   const handleChangeAvatar = async () => {
     try {
@@ -418,40 +463,19 @@ export const EditProfileScreen: React.FC = () => {
         updateData.avatar = avatarUri;
       }
 
-      // 🔧 临时解决方案：保持用户角色信息，避免被后端清空
-      // 原因：后端在更新用户信息时会意外清空角色，这是后端的Bug
-      if (user?.roles && user.roles.length > 0) {
-        try {
-          // 方法1：发送角色ID列表
-          const roleIds = user.roles.map(r => r.roleId).filter(id => id).join(',');
-          if (roleIds) {
-            updateData.roleIds = roleIds;
-            console.log('🔧 临时方案: 添加roleIds参数:', roleIds);
-          }
-
-          // 方法2：发送完整角色信息
-          const rolesData = user.roles.map(role => ({
-            roleId: role.roleId,
-            roleName: role.roleName,
-            roleKey: role.roleKey,
-            admin: role.admin
-          }));
-          updateData.roles = JSON.stringify(rolesData);
-          console.log('🔧 临时方案: 添加roles参数:', rolesData);
-
-          // 方法3：发送主要角色信息
-          const primaryRole = user.roles.find(r => r.admin) || user.roles[0];
-          if (primaryRole) {
-            updateData.roleId = primaryRole.roleId;
-            updateData.roleKey = primaryRole.roleKey;
-            console.log('🔧 临时方案: 添加主角色:', primaryRole.roleKey);
-          }
-
-        } catch (error) {
-          console.warn('⚠️ 角色信息处理失败:', error);
-        }
-      } else {
-        console.warn('⚠️ 用户没有角色信息，无法保持角色');
+      // ✅ 修复方案：根据最新API文档，roleId和postId会在API层自动填充
+      // updateUserProfile函数内部会自动获取当前用户的roleId和postId并包含在请求中
+      // 这样可以防止角色权限被意外清空
+      // 首次必须填写第二邮箱（内部成员）
+      if (isFirstTimeAlternateEmail && !formData.alternateEmail) {
+        const emailType = isWorkEmail ? '学校邮箱' : '工作邮箱';
+        Alert.alert(
+          t('common.error'),
+          `作为内部成员，请填写您的${emailType}`,
+          [{ text: t('common.confirm', '确定') }]
+        );
+        setIsLoading(false);
+        return;
       }
 
       // 检查是否有数据需要更新
@@ -464,23 +488,10 @@ export const EditProfileScreen: React.FC = () => {
         return;
       }
 
-      console.log('📝 准备更新的数据:', updateData);
-      console.log('📝 发送参数数量:', Object.keys(updateData).length);
-
-      // 显示临时方案状态
-      if (updateData.roleIds || updateData.roles || updateData.roleId) {
-        console.log('✅ 临时方案已激活：将发送角色信息以避免被清空');
-      } else {
-        console.log('⚠️ 临时方案未激洺：未找到角色信息');
-      }
-
-      // ⚠️ 注意：由于后端暂无用户修改接口，这个调用可能会失败
-      // 当后端实现接口后，这个功能将正常工作
+      // 调用更新接口 - roleId和postId会在API层自动包含
       const response = await updateUserProfile(updateData);
 
       if (response.code === 200) {
-        console.log('✅ 用户资料更新成功');
-
         // 更新原始数据状态，清除hasChanges标记
         setOriginalData({ ...formData });
         setHasChanges(false);
@@ -488,26 +499,7 @@ export const EditProfileScreen: React.FC = () => {
         // 刷新用户信息
         await refreshUserInfo();
 
-        // 检查角色是否保持完整
-        setTimeout(async () => {
-          try {
-            const token = await getCurrentToken();
-            const userId = await getCurrentUserId();
-            if (token && userId) {
-              const updatedUserResponse = await getUserInfo(token, userId);
-              if (updatedUserResponse.code === 200 && updatedUserResponse.data?.roles) {
-                const currentRoles = updatedUserResponse.data.roles;
-                if (currentRoles.length > 0) {
-                  console.log('✅ 临时方案成功：角色信息保持完整', currentRoles);
-                } else {
-                  console.log('❌ 临时方案失败：角色仍被清空');
-                }
-              }
-            }
-          } catch (error) {
-            console.warn('检查角色状态失败:', error);
-          }
-        }, 1000);
+        // 角色验证已移除 - roleId和postId自动填充机制已确保角色不会丢失
 
         Alert.alert(
           t('profile.edit.saveSuccess', '保存成功'),
@@ -549,6 +541,26 @@ export const EditProfileScreen: React.FC = () => {
   };
 
   const handleCancel = () => {
+    // 检查是否有必填字段未填写
+    if (isFirstTimeAlternateEmail && !formData.alternateEmail) {
+      const emailType = isWorkEmail ? t('profile.edit.schoolEmail', '学校邮箱') : t('profile.edit.workEmail', '工作邮箱');
+      Alert.alert(
+        t('profile.edit.mandatoryFieldTitle', '必填信息未完成'),
+        t('profile.edit.mandatoryFieldMessage', { emailType }),
+        [
+          {
+            text: t('profile.edit.continueEditing', '继续填写'),
+            style: 'cancel',
+          },
+          {
+            text: t('profile.edit.discardAndExit', '放弃并退出'),
+            style: 'destructive',
+            onPress: () => navigation.goBack(),
+          },
+        ]
+      );
+      return;
+    }
     navigation.goBack();
   };
 
@@ -852,6 +864,13 @@ export const EditProfileScreen: React.FC = () => {
       marginTop: 4,
       fontStyle: 'italic',
     },
+    requiredHint: {
+      fontSize: 12,
+      marginTop: 4,
+      marginLeft: 16,
+      marginBottom: 8,
+      fontStyle: 'italic',
+    },
   });
 
   return (
@@ -916,14 +935,26 @@ export const EditProfileScreen: React.FC = () => {
                 placeholder={t('profile.edit.emailPlaceholder', '请输入邮箱地址')}
                 fieldKey="email"
               />
+
               {canUseAlternateEmail && (
-                <FormField
-                  label={t('profile.edit.alternateEmail', '工作邮箱')}
-                  value={formData.alternateEmail}
-                  onChangeText={(text) => updateField('alternateEmail', text)}
-                  placeholder={t('profile.edit.alternateEmailPlaceholder', '请输入工作邮箱')}
-                  fieldKey="alternateEmail"
-                />
+                <>
+                  <FormField
+                    label={alternateEmailLabel + (isFirstTimeAlternateEmail ? ' *' : '')}
+                    value={formData.alternateEmail}
+                    onChangeText={(text) => updateField('alternateEmail', text)}
+                    placeholder={alternateEmailPlaceholder}
+                    fieldKey="alternateEmail"
+                    editable={true}
+                  />
+                  {isFirstTimeAlternateEmail && (
+                    <Text style={[
+                      styles.requiredHint,
+                      { color: isDarkMode ? '#f87171' : '#ef4444' }
+                    ]}>
+                      * 内部成员必须填写{isWorkEmail ? '学校' : '工作'}邮箱
+                    </Text>
+                  )}
+                </>
               )}
               {/* 手机号和区号 */}
               <View style={styles.phoneContainer}>

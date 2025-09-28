@@ -14,6 +14,7 @@ export interface BaseUserInfo {
   legalName?: string;
   nickName?: string;
   email?: string;
+  alternateEmail?: string;  // 第二邮箱/工作邮箱/学校邮箱
   phonenumber?: string;
   avatarUrl?: string;
   studentId?: string;

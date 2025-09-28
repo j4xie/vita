@@ -1,5 +1,7 @@
 // 用户数据适配器 - 转换后端用户数据到前端格式
 
+import { timeService } from './UnifiedTimeService';
+
 // 后端用户数据接口（完整结构）
 export interface BackendUserInfo {
   createBy: string;
@@ -71,6 +73,7 @@ export interface BackendUserInfo {
   orgId: string | null;
   admin: boolean;
   area?: string; // 地域字段
+  alternateEmail?: string; // 第二邮箱/工作邮箱/学校邮箱
 }
 
 // 前端用户数据接口（简化格式）
@@ -81,6 +84,7 @@ export interface FrontendUser {
   legalName: string;
   nickName: string;
   email: string;
+  alternateEmail?: string; // 第二邮箱/工作邮箱/学校邮箱
   phone: string;
   phonenumber?: string; // 兼容字段，与phone相同
   avatar: string;
@@ -151,9 +155,10 @@ const convertGender = (sex: string): 'male' | 'female' | 'unknown' => {
 /**
  * 解析用户权限
  */
-const parsePermissions = (roles: BackendUserInfo['roles'], isAdmin: boolean) => {
-  const hasRole = (roleKey: string) => roles.some(role => role.key === roleKey);
-  
+const parsePermissions = (roles: BackendUserInfo['roles'] | [], isAdmin: boolean) => {
+  const safeRoles = Array.isArray(roles) ? roles : [];
+  const hasRole = (roleKey: string) => safeRoles.some(role => role.roleKey === roleKey);
+
   return {
     isAdmin,
     isPartAdmin: hasRole('part_manage'), // 分管理员
@@ -167,11 +172,13 @@ const parsePermissions = (roles: BackendUserInfo['roles'], isAdmin: boolean) => 
  * 格式化时间字符串
  */
 const formatDateTime = (dateTime: string): string => {
-  try {
-    return new Date(dateTime).toISOString();
-  } catch {
-    return dateTime;
+  // 使用统一时间服务解析时间
+  const parsedDate = timeService.parseServerTime(dateTime);
+  if (parsedDate) {
+    return parsedDate.toISOString();
   }
+  // 如果解析失败，返回原始值
+  return dateTime;
 };
 
 /**
@@ -179,8 +186,24 @@ const formatDateTime = (dateTime: string): string => {
  */
 export const adaptUserInfo = (backendUser: BackendUserInfo): FrontendUser => {
   const userId = backendUser.userId.toString();
-  const permissions = parsePermissions(backendUser.roles, backendUser.admin);
-  
+
+  // 处理角色数据：后端可能返回 role 对象或 roles 数组
+  let safeRoles = Array.isArray(backendUser.roles) ? backendUser.roles : [];
+
+  // 如果有 role 对象但 roles 数组为空，将 role 对象转换为数组格式
+  if (backendUser.role && safeRoles.length === 0) {
+    safeRoles = [{
+      roleId: backendUser.role.roleId,
+      roleName: backendUser.role.roleName,
+      roleKey: backendUser.role.roleKey,
+      admin: backendUser.role.admin,
+      roleSort: backendUser.role.roleSort,
+      dataScope: backendUser.role.dataScope,
+    }];
+  }
+
+  const permissions = parsePermissions(safeRoles, backendUser.admin);
+
   return {
     id: userId,
     userId, // 兼容字段
@@ -188,6 +211,7 @@ export const adaptUserInfo = (backendUser: BackendUserInfo): FrontendUser => {
     legalName: backendUser.legalName,
     nickName: backendUser.nickName,
     email: backendUser.email,
+    alternateEmail: backendUser.alternateEmail,
     phone: backendUser.phonenumber,
     phonenumber: backendUser.phonenumber, // 兼容字段
     avatar: backendUser.avatar || '', // 处理空头像
@@ -198,7 +222,7 @@ export const adaptUserInfo = (backendUser: BackendUserInfo): FrontendUser => {
     
     // 🆕 保留原始权限字段供权限检查系统使用
     admin: backendUser.admin,
-    rawRoles: backendUser.roles, // 重命名避免重复键
+    rawRoles: safeRoles, // 使用安全的roles数组
     role: backendUser.role,
     post: backendUser.post,
     
@@ -215,11 +239,11 @@ export const adaptUserInfo = (backendUser: BackendUserInfo): FrontendUser => {
     },
     deptId: backendUser.deptId || 0, // 兼容字段
     
-    // 角色信息
-    roles: backendUser.roles.map(role => ({
+    // 角色信息 - 使用安全的roles数组
+    roles: safeRoles.map(role => ({
       id: role.roleId,
       name: role.roleName,
-      key: role.key || role.roleKey,
+      key: role.roleKey,  // 后端返回的字段是roleKey
       isAdmin: role.admin,
     })),
     

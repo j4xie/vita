@@ -3,9 +3,10 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getCurrentToken } from './authAPI';
 import { Platform, DeviceEventEmitter } from 'react-native';
 import { notifyRegistrationSuccess, scheduleActivityReminder } from './smartAlertSystem';
+import { getApiUrl } from '../utils/environment';
 
-// 🔧 强制使用生产环境API - 遵循CLAUDE规范
-const BASE_URL = 'https://www.vitaglobal.icu';
+// 🔧 使用环境管理器统一管理API地址 - 动态获取
+const getBaseUrl = () => getApiUrl();
 
 // 检测是否为iOS模拟器
 const isIOSSimulator = Platform.OS === 'ios' && __DEV__;
@@ -115,7 +116,7 @@ class PomeloXAPI {
     }
 
     try {
-      const response = await fetchWithRetry(`${BASE_URL}${endpoint}`, {
+      const response = await fetchWithRetry(`${getBaseUrl()}${endpoint}`, {
         ...options,
         headers,
       });
@@ -145,7 +146,7 @@ class PomeloXAPI {
    * 发送短信验证码
    */
   async sendSMSVerification(phone: string): Promise<SMSResponse> {
-    const response = await fetchWithRetry(`${BASE_URL}/sms/vercodeSms?phoneNum=${phone}`, {
+    const response = await fetchWithRetry(`${getBaseUrl()}/sms/vercodeSms?phoneNum=${phone}`, {
       method: 'GET',
       headers: {
         'Accept': 'application/json',
@@ -163,7 +164,7 @@ class PomeloXAPI {
    * 获取学校列表 (公开接口，无需认证)
    */
   async getSchoolList(): Promise<ApiResponse<APISchoolData[]>> {
-    const response = await fetchWithRetry(`${BASE_URL}/app/dept/list`, {
+    const response = await fetchWithRetry(`${getBaseUrl()}/app/dept/list`, {
       method: 'GET',
       headers: {
         'Accept': 'application/json',
@@ -225,7 +226,7 @@ class PomeloXAPI {
       return acc;
     }, {} as any));
     
-    const response = await fetchWithRetry(`${BASE_URL}/app/user/add`, {
+    const response = await fetchWithRetry(`${getBaseUrl()}/app/user/add`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
@@ -262,7 +263,7 @@ class PomeloXAPI {
     
     console.log('📝 发送到后端的参数:', { username: data.userName, password: '[HIDDEN]', areaCode: data.areaCode });
     
-    const response = await fetchWithRetry(`${BASE_URL}/app/login`, {
+    const response = await fetchWithRetry(`${getBaseUrl()}/app/login`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
@@ -318,7 +319,7 @@ class PomeloXAPI {
     
     // 根据API文档，使用分开的phoneNum和areaCode参数
     const apiAreaCode = areaCode === 'CN' ? '86' : '1';
-    const smsUrl = `${BASE_URL}/sms/vercodeSms?phoneNum=${phone}&areaCode=${apiAreaCode}`;
+    const smsUrl = `${getBaseUrl()}/sms/vercodeSms?phoneNum=${phone}&areaCode=${apiAreaCode}`;
     
     console.log('🌐 [PomeloXAPI] 发送短信验证码请求:', { 
       url: smsUrl,
@@ -378,7 +379,7 @@ class PomeloXAPI {
     formData.append('password', data.password);
     formData.append('areaCode', cleanAreaCode);
 
-    const response = await fetchWithRetry(`${BASE_URL}/app/resetPwd`, {
+    const response = await fetchWithRetry(`${getBaseUrl()}/app/resetPwd`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
@@ -552,7 +553,7 @@ class PomeloXAPI {
     const isGuestMode = !params.userId || !token;
     
     console.log(`🔐 活动列表API调用:`, { 
-      endpoint: `${BASE_URL}${endpoint}`,
+      endpoint: `${getBaseUrl()}${endpoint}`,
       mode: isGuestMode ? '访客模式' : '个性化模式',
       hasToken: !!token,
       hasUserId: !!params.userId,
@@ -572,7 +573,7 @@ class PomeloXAPI {
     }
     
     console.log(`🌐 发起网络请求:`, { 
-      url: `${BASE_URL}${endpoint}`,
+      url: `${getBaseUrl()}${endpoint}`,
       method: 'GET',
       mode: isGuestMode ? '访客模式' : '个性化模式'
     });
@@ -586,9 +587,9 @@ class PomeloXAPI {
         // 移除AbortController，让系统处理超时
       };
       
-      console.log('📡 发起网络请求:', { url: `${BASE_URL}${endpoint}` });
+      console.log('📡 发起网络请求:', { url: `${getBaseUrl()}${endpoint}` });
       
-      response = await fetchWithRetry(`${BASE_URL}${endpoint}`, fetchOptions, 3);
+      response = await fetchWithRetry(`${getBaseUrl()}${endpoint}`, fetchOptions, 3);
       
       console.log(`✅ API响应成功: ${response.status}`);
       
@@ -636,7 +637,7 @@ class PomeloXAPI {
             }).filter(([_, v]) => v !== undefined))) 
           : '');
       
-      const fallbackResponse = await fetchWithRetry(`${BASE_URL}${fallbackEndpoint}`, {
+      const fallbackResponse = await fetchWithRetry(`${getBaseUrl()}${fallbackEndpoint}`, {
         method: 'GET',
         headers: headers,
       });
@@ -927,7 +928,7 @@ class PomeloXAPI {
       userId,
       signStatus,
       queryString,
-      endpoint: `${BASE_URL}${endpoint}`
+      endpoint: `${getBaseUrl()}${endpoint}`
     });
     
     return this.request(endpoint, {
@@ -985,7 +986,7 @@ class PomeloXAPI {
     console.log('🔍 使用专门API验证邀请码:', inviteCode);
 
     try {
-      const response = await fetchWithRetry(`${BASE_URL}/app/invitation/checkInviteCode?inviteCode=${inviteCode}`, {
+      const response = await fetchWithRetry(`${getBaseUrl()}/app/invitation/checkInviteCode?inviteCode=${inviteCode}`, {
         method: 'GET',
         headers: {
           'Accept': 'application/json',

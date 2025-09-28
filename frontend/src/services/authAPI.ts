@@ -4,9 +4,10 @@
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { APIResponse } from '../types/registration';
+import { getApiUrl } from '../utils/environment';
 
-// API基础URL配置
-const BASE_URL = 'https://www.vitaglobal.icu';
+// API基础URL配置 - 使用环境管理器 - 动态获取
+const getBaseUrl = () => getApiUrl();
 
 // 存储键名
 const STORAGE_KEYS = {
@@ -99,7 +100,7 @@ export const login = async (credentials: LoginRequest): Promise<APIResponse<Logi
       }
     });
 
-    const response = await fetch(`${BASE_URL}/app/login`, {
+    const response = await fetch(`${getBaseUrl()}/app/login`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
@@ -154,8 +155,8 @@ export const getUserInfo = async (token?: string, userId?: number): Promise<APIR
 
     // 构建URL，根据截图，需要userId参数
     const url = targetUserId 
-      ? `${BASE_URL}/app/user/info?userId=${targetUserId}`
-      : `${BASE_URL}/app/user/info`;
+      ? `${getBaseUrl()}/app/user/info?userId=${targetUserId}`
+      : `${getBaseUrl()}/app/user/info`;
 
     const response = await fetch(url, {
       method: 'GET',
@@ -174,12 +175,12 @@ export const getUserInfo = async (token?: string, userId?: number): Promise<APIR
     }
 
     const data = await response.json();
-    
+
     // 保存用户信息到本地
     if (data.code === 200 && data.data) {
       await AsyncStorage.setItem(STORAGE_KEYS.USER_INFO, JSON.stringify(data.data));
     }
-    
+
     return data;
   } catch (error) {
     // 如果是因为没有token（用户未登录），则这是正常的，不记录为错误
@@ -203,6 +204,7 @@ export const getUserInfo = async (token?: string, userId?: number): Promise<APIR
  * 支持参数：
  * - userId (必需)、avatar、userName、legalName、nickName、password
  * - areaCode、phonenumber、email、gender、alternateEmail、deptId、orgId、identity、area
+ * - roleId (必需，自动填充)、postId (自动填充)
  */
 export const updateUserProfile = async (profileData: {
   legalName?: string;
@@ -218,11 +220,9 @@ export const updateUserProfile = async (profileData: {
   orgId?: string;
   identity?: string;
   area?: string;
-  // 🔧 临时解决方案：添加角色相关参数，避免角色被清空
-  roleIds?: string; // 角色ID列表，逗号分隔
-  roles?: string; // 角色信息JSON字符串
-  roleId?: number; // 主要角色ID
-  roleKey?: string; // 主要角色Key
+  // ✅ 修复后的角色和岗位字段 - 根据最新API文档
+  roleId?: number; // 角色ID - 必须回填，用户不可修改
+  postId?: number; // 岗位ID - 自动回填
 }): Promise<APIResponse<any>> => {
   try {
     const authToken = await AsyncStorage.getItem(STORAGE_KEYS.TOKEN);
@@ -235,6 +235,45 @@ export const updateUserProfile = async (profileData: {
       throw new Error('No user ID found');
     }
 
+    // 🔧 关键修复：获取当前用户信息以保持roleId和postId
+    const userInfoResponse = await getUserInfo(authToken, parseInt(userId));
+    console.log('获取到的用户信息响应:', userInfoResponse);
+
+    if (userInfoResponse.code === 200 && userInfoResponse.data) {
+      const currentUser = userInfoResponse.data;
+      console.log('当前用户的角色信息:', {
+        roles: currentUser.roles,
+        role: currentUser.role,
+        post: currentUser.post
+      });
+
+      // 强制包含roleId（从roles数组或role对象中获取）
+      if (!profileData.roleId) {
+        if (currentUser.role?.roleId) {
+          profileData.roleId = currentUser.role.roleId;
+          console.log('从role对象获取roleId:', profileData.roleId);
+        } else if (currentUser.roles && currentUser.roles.length > 0) {
+          profileData.roleId = currentUser.roles[0].roleId;
+          console.log('从roles数组获取roleId:', profileData.roleId);
+        } else {
+          console.warn('⚠️ 警告：无法获取用户的roleId');
+        }
+      }
+
+      // 自动包含postId（如果存在）
+      if (!profileData.postId && currentUser.post?.postId) {
+        profileData.postId = currentUser.post.postId;
+        console.log('获取到postId:', profileData.postId);
+      }
+
+      console.log('最终的角色和岗位信息:', {
+        roleId: profileData.roleId,
+        postId: profileData.postId
+      });
+    } else {
+      console.error('⚠️ 无法获取用户信息，状态码:', userInfoResponse.code);
+    }
+
     // 准备POST请求的form参数
     const formData = new URLSearchParams();
     formData.append('userId', userId);
@@ -242,14 +281,14 @@ export const updateUserProfile = async (profileData: {
     // 添加有值的字段
     Object.entries(profileData).forEach(([key, value]) => {
       if (value !== undefined && value !== null && value !== '') {
-        formData.append(key, value);
+        formData.append(key, value.toString());
       }
     });
 
     console.log('正在调用用户修改接口:', `/app/user/edit?userId=${userId}`);
     console.log('请求参数:', Object.fromEntries(formData.entries()));
 
-    const response = await fetch(`${BASE_URL}/app/user/edit?userId=${userId}`, {
+    const response = await fetch(`${getBaseUrl()}/app/user/edit?userId=${userId}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',

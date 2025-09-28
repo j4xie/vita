@@ -76,6 +76,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       // 使用新的authAPI获取用户信息
       const response = await getAuthUserInfo();
+
       // 适配响应数据格式
       const adaptedResponse = {
         msg: response.msg || '',
@@ -87,7 +88,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
         posts: response.posts || []
       };
       const adaptedData = adaptUserInfoResponse(adaptedResponse);
-      
+
       if (adaptedData.success && adaptedData.user) {
         console.log('✅ 用户信息获取成功:', {
           userName: adaptedData.user.userName,
@@ -165,46 +166,11 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // 更新用户权限信息
   const updateUserPermissions = (userData: any) => {
     try {
-      // 🔧 内联权限调试，避免循环依赖
-      console.log('🔧 [PERMISSION-DEBUG] ===== 权限调试信息 =====');
-      console.log('👤 用户基本信息:', {
-        userName: userData?.userName,
-        userId: userData?.userId || userData?.id,
-      });
-      console.log('🔍 后端原始权限数据:', {
-        admin: userData?.admin,
-        adminType: typeof userData?.admin,
-        roles: userData?.roles,
-        role: userData?.role,
-        post: userData?.post,
-      });
-      
       const level = getUserPermissionLevel(userData);
       const checker = createPermissionChecker(userData);
-      
-      console.log('🎯 权限解析结果:', {
-        computedLevel: level,
-        hasVolunteerAccess: checker.hasVolunteerManagementAccess(),
-        isAdmin: checker.isAdmin(),
-        isStaff: checker.isStaff(),
-      });
-      console.log('🔧 [PERMISSION-DEBUG] ===== 调试信息结束 =====');
-      
+
       setPermissionLevel(level);
       setPermissions(checker);
-      
-      console.log('✅ 用户权限已更新:', {
-        userName: userData.userName,
-        permissionLevel: level,
-        isAdmin: checker.isAdmin(),
-        hasVolunteerAccess: checker.hasVolunteerManagementAccess(),
-        canCheckInOut: checker.canCheckInOut(),
-        rawUserData: {
-          admin: userData.admin,
-          roles: userData.roles?.map((r: any) => ({ roleKey: r.key || r.roleKey, roleName: r.roleName || r.name })),
-          posts: userData.posts?.map((p: any) => ({ postCode: p.postCode, postName: p.postName }))
-        }
-      });
     } catch (error) {
       console.error('更新用户权限失败:', error);
       setPermissionLevel('guest');

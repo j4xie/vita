@@ -19,6 +19,7 @@ import { useTheme } from '../../context/ThemeContext';
 import { getLastVolunteerRecord, volunteerSignRecord } from '../../services/volunteerAPI';
 import { UserIdentityData } from '../../types/userIdentity';
 import { useUser } from '../../context/UserContext';
+import { timeService } from '../../utils/UnifiedTimeService';
 
 // 志愿者记录类型
 interface VolunteerRecord {
@@ -92,8 +93,8 @@ const VolunteerQuickActionModalComponent: React.FC<VolunteerQuickActionModalProp
 
     setProcessing(true);
     try {
-      const now = new Date();
-      const startTime = now.toISOString().replace('T', ' ').substring(0, 19);
+      // 统一策略：使用本地时间格式，避免时区转换混乱
+      const startTime = timeService.formatLocalTime(new Date());
       
       const response = await volunteerSignRecord(
         parseInt(userData.userId),
@@ -119,7 +120,7 @@ const VolunteerQuickActionModalComponent: React.FC<VolunteerQuickActionModalProp
           t('qr.results.volunteer_checkin_success'),
           t('qr.results.volunteer_checkin_success_msg', {
             name: userData.legalName,
-            time: formatTime(startTime)
+            time: timeService.formatForDisplay(new Date(startTime.replace(' ', 'T')), { showTime: true })
           }),
           [
             {
@@ -152,7 +153,7 @@ const VolunteerQuickActionModalComponent: React.FC<VolunteerQuickActionModalProp
     } finally {
       setProcessing(false);
     }
-  }, [userData.userId, userData.legalName, user, hasActiveSession, onActionComplete, onClose, loadVolunteerStatus, t, formatTime]);
+  }, [userData.userId, userData.legalName, user, hasActiveSession, onActionComplete, onClose, loadVolunteerStatus, t]);
 
   const handleCheckout = useCallback(async () => {
     if (!user || !currentRecord || processing) return;
@@ -164,8 +165,8 @@ const VolunteerQuickActionModalComponent: React.FC<VolunteerQuickActionModalProp
 
     setProcessing(true);
     try {
-      const now = new Date();
-      const endTime = now.toISOString().replace('T', ' ').substring(0, 19);
+      // 统一策略：使用本地时间格式，避免时区转换混乱
+      const endTime = timeService.formatLocalTime(new Date());
       
       const response = await volunteerSignRecord(
         parseInt(userData.userId),
@@ -185,7 +186,10 @@ const VolunteerQuickActionModalComponent: React.FC<VolunteerQuickActionModalProp
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         }
 
-        const workDuration = calculateWorkDuration(currentRecord.startTime, endTime);
+        // 使用统一时间服务计算工作时长
+        const startDate = timeService.parseServerTime(currentRecord.startTime);
+        const duration = startDate ? timeService.calculateDuration(startDate, endTime) : null;
+        const workDuration = duration ? duration.display : '--:--';
 
         // 先重新加载状态，确保UI更新
         await loadVolunteerStatus();
@@ -196,7 +200,7 @@ const VolunteerQuickActionModalComponent: React.FC<VolunteerQuickActionModalProp
           t('qr.results.volunteer_checkout_success_msg', {
             name: userData.legalName,
             duration: workDuration,
-            time: formatTime(endTime)
+            time: timeService.formatForDisplay(new Date(endTime.replace(' ', 'T')), { showTime: true })
           }),
           [
             {
@@ -229,7 +233,7 @@ const VolunteerQuickActionModalComponent: React.FC<VolunteerQuickActionModalProp
     } finally {
       setProcessing(false);
     }
-  }, [userData.userId, userData.legalName, user, hasActiveSession, currentRecord, onActionComplete, onClose, loadVolunteerStatus, t, formatTime, calculateWorkDuration]);
+  }, [userData.userId, userData.legalName, user, hasActiveSession, currentRecord, onActionComplete, onClose, loadVolunteerStatus, t]);
 
   
 
@@ -463,7 +467,7 @@ const VolunteerQuickActionModalComponent: React.FC<VolunteerQuickActionModalProp
                   ]}
                 >
                   {hasActiveSession && currentRecord
-                    ? `签到时间：${formatTime(currentRecord.startTime)}\n工作进行中...`
+                    ? `签到时间：${timeService.formatForDisplay(timeService.parseServerTime(currentRecord.startTime, true), { showTime: true })}\n工作进行中...`
                     : '该志愿者尚未开始工作'}
                 </Text>
               </View>
@@ -530,20 +534,6 @@ const VolunteerQuickActionModalComponent: React.FC<VolunteerQuickActionModalProp
 
 // 使用React.memo优化重新渲染
 export const VolunteerQuickActionModal = memo(VolunteerQuickActionModalComponent, (prevProps, nextProps) => {
-  const formatTime = (date: Date): string => {
-    return date.toLocaleTimeString('zh-CN', {
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: false
-    });
-  };
-  const calculateWorkDuration = (start: Date, end: Date): string => {
-    const diffMs = end.getTime() - start.getTime();
-    const hours = Math.floor(diffMs / (1000 * 60 * 60));
-    const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
-    return `${hours}小时${minutes}分钟`;
-  };
-
   return (
     prevProps.visible === nextProps.visible &&
     prevProps.userData?.userId === nextProps.userData?.userId

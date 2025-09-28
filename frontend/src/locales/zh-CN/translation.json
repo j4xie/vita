@@ -7,6 +7,9 @@
     "error": "错误",
     "success": "成功",
     "network_error": "网络连接失败，请稍后重试",
+    "volunteer_status_error": "志愿者状态暂时无法获取",
+    "volunteer_status_retry": "正在获取志愿者状态，请稍候...",
+    "system_maintenance": "系统维护中，部分功能可能受限",
     "confirm": "确认",
     "cancel": "取消",
     "save": "保存",
@@ -79,8 +82,15 @@
     "organization": "组织",
     "school": "学校",
     "time": {
-      "hours": "小时",
-      "minutes": "分钟"
+      "hours": "{{hours}}小时",
+      "minutes": "{{minutes}}分钟",
+      "hoursAndMinutes": "{{hours}}小时{{minutes}}分钟",
+      "lessThanOneMinute": "少于1分钟",
+      "overtime": " (超时)",
+      "invalidDuration": "无效时长",
+      "endTimeBeforeStart": "结束时间早于开始时间",
+      "zeroHoursMinutes": "0小时0分钟",
+      "parseError": "时间解析错误"
     }
   },
   "language": {
@@ -859,7 +869,11 @@
       "nameRestrictedMessage": "法定姓名注册后不可更改",
       "usernameRestrictedMessage": "用户名与邮箱保持一致，不可单独修改",
       "emailRestrictedMessage": "邮箱是您的登录账号，不可修改",
-      "phoneRestrictedMessage": "手机号修改需要验证，功能即将推出"
+      "phoneRestrictedMessage": "手机号修改需要验证，功能即将推出",
+      "mandatoryFieldTitle": "必填信息未完成",
+      "mandatoryFieldMessage": "作为内部成员，您需要填写{{emailType}}才能继续。",
+      "continueEditing": "继续填写",
+      "discardAndExit": "放弃并退出"
     },
     "activity": {
       "not_checked_in_title": "待签到活动",
@@ -1147,10 +1161,6 @@
       "historyRecords": "历史记录",
       "viewHistory": "查询"
     },
-    "checkout": {
-      "success_title": "✅ 志愿者签退成功",
-      "success_message": "本次志愿服务时长：{{duration}}，感谢您的付出！"
-    },
     "position": {
       "president": "主席",
       "vice_president": "副主席",
@@ -1270,6 +1280,49 @@
     "usa": {
       "name": "美国",
       "description": "适用美国联邦和州相关法律法规"
+    }
+  },
+  "volunteerTimeEntry": {
+    "title": "补录工时",
+    "dateLabel": "选择日期",
+    "startTime": "开始时间",
+    "endTime": "结束时间",
+    "duration": "工作时长",
+    "description": "工作说明",
+    "descriptionPrefix": "【补录】",
+    "descriptionPlaceholder": "请详细描述工作内容（必填）",
+    "submit": "提交补录",
+    "success": "补录成功",
+    "successMessage": "已成功补录 {{duration}} 的工时",
+    "confirmClose": "确定要放弃当前输入的内容吗？",
+    "dateRangeHint": "最多可选择前7天内的日期",
+    "selectDateTitle": "选择补录日期",
+    "workDuration": "工作时长",
+    "manualInput": "手动输入",
+    "backToSelector": "返回选择器",
+    "dateFormat": "格式：YYYY-MM-DD",
+    "timeFormat": "格式：HH:MM",
+    "dateInputPlaceholder": "例如：2025-09-27",
+    "timeInputPlaceholder": "例如：14:30",
+    "selectEndTimeTitle": "选择结束时间",
+    "pickerActions": {
+      "cancel": "取消",
+      "confirm": "确定"
+    },
+    "errors": {
+      "futureDate": "不能选择未来日期",
+      "futureTime": "不能选择未来时间",
+      "dateRange": "只能补录近7天内的工时",
+      "selectStartFirst": "请先选择开始时间",
+      "endBeforeStart": "结束时间必须晚于开始时间",
+      "duration": "单次工作时长不能超过12小时",
+      "overlap": "所选时间段与已有记录重叠，请调整",
+      "requiredFields": "请填写开始时间、结束时间和工作说明",
+      "userInfoMissing": "无法获取用户信息",
+      "submitFailed": "补录提交失败，请重试",
+      "invalidDateFormat": "日期格式错误，请使用YYYY-MM-DD格式",
+      "invalidTimeFormat": "时间格式错误，请使用HH:MM格式",
+      "descriptionRequired": "请填写工作说明"
     }
   },
   "volunteer": {
@@ -1419,6 +1472,9 @@
     "open_scanner_failed": "打开扫码失败",
     "open_scanner_failed_message": "无法启动扫码功能，请检查相机权限"
   },
+  "volunteerHome": {
+    "quickActions": "快捷操作"
+  },
   "volunteerCheckIn": {
     "viewVolunteer": "查看志愿者记录",
     "viewSchoolVolunteer": "查看本校志愿者记录",
@@ -1433,6 +1489,7 @@
     "todayRecords": "今日记录",
     "checkIn": "签到",
     "checkOut": "签退",
+    "timeEntry": "补录工时",
     "time": {
       "checkInTime": "签到时间",
       "checkOutTime": "签退时间",
@@ -1455,7 +1512,37 @@
       "checkin_title": "签到成功",
       "checkout_title": "签退成功"
     },
-    "noPermission": "您没有志愿者管理权限"
+    "checkout": {
+      "title": "志愿者签退",
+      "timeStatistics": "工作时间统计",
+      "duration": "工作时长",
+      "workDescription": "工作内容描述",
+      "workDescriptionRequired": "请输入工作内容描述",
+      "workDescriptionPlaceholder": "请描述您今天的志愿工作内容...",
+      "confirmCheckOut": "确认签退",
+      "quickOptions": {
+        "departmentActivity": "分部活动",
+        "airportPickup": "接机活动",
+        "departmentBooth": "分部摆摊",
+        "meetAndGreet": "见面会"
+      }
+    },
+    "checkout": {
+      "checkOutSuccess": "签退成功",
+      "workDurationResult": "工作时长：{{duration}}"
+    },
+    "noPermission": "您没有志愿者管理权限",
+    "checkoutTitle": "志愿者签退",
+    "timeStatistics": "工作时间统计",
+    "workDescription": "工作内容描述",
+    "workDescriptionPlaceholder": "请描述您今天的志愿工作内容...",
+    "confirmCheckOut": "确认签退",
+    "quickOptions": {
+      "departmentActivity": "分部活动",
+      "airportPickup": "接机活动",
+      "departmentBooth": "分部摆摊",
+      "meetAndGreet": "见面会"
+    }
   },
   "filters": {
     "title": "筛选",

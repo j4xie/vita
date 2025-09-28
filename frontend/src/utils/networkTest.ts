@@ -3,6 +3,8 @@
  * 用于诊断iOS开发环境的网络问题
  */
 
+import { getApiUrl } from './environment';
+
 export const testNetworkConnectivity = async (): Promise<{
   success: boolean;
   details: string;
@@ -18,12 +20,12 @@ export const testNetworkConnectivity = async (): Promise<{
     },
     {
       name: '测试目标域名',
-      url: 'https://www.vitaglobal.icu/app/activity/list',
+      url: `${getApiUrl()}/app/activity/list`,
       timeout: 10000
     },
     {
       name: '测试简化请求',
-      url: 'https://www.vitaglobal.icu',
+      url: getApiUrl(),
       timeout: 5000
     }
   ];

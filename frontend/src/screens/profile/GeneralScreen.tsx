@@ -389,9 +389,9 @@ export const GeneralScreen: React.FC = () => {
       console.log('📝 开始删除账户，userId:', user?.id);
 
       // Call delete account API (接口20)
-      // 使用正确的生产环境API地址和路径
-      const BASE_URL = 'https://www.vitaglobal.icu';
-      const response = await fetch(`${BASE_URL}/app/user/logoff?userId=${user?.id}`, {
+      // 使用环境管理器统一管理API地址
+      const { getApiUrl } = await import('../../utils/environment');
+      const response = await fetch(`${getApiUrl()}/app/user/logoff?userId=${user?.id}`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,

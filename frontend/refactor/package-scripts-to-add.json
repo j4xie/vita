@@ -1,0 +1,56 @@
+{
+  "scripts": {
+    "// === 阶段0: 基线检测 ===": "",
+    "arch:baseline": "node refactor/stage0-baseline-detection.js",
+    "arch:perf-ios": "node refactor/performance-validation.js ios",
+    "arch:perf-android": "node refactor/performance-validation.js android",
+
+    "// === 阶段2: 新架构切换 ===": "",
+    "arch:enable": "node refactor/rollback-switch.js enable",
+    "arch:enable:ios": "node refactor/rollback-switch.js enable-ios",
+    "arch:disable": "node refactor/rollback-switch.js disable",
+    "arch:status": "node refactor/rollback-switch.js status",
+    "arch:validate": "node refactor/rollback-switch.js validate",
+    "arch:backup": "node refactor/rollback-switch.js backup",
+
+    "// === 阶段4: Hermes 引擎灰度 (新架构稳定后) ===": "",
+    "hermes:enable": "node refactor/rollback-switch.js enable-hermes",
+    "hermes:gray:5": "node refactor/rollback-switch.js enable-hermes-gray-5",
+    "hermes:gray:15": "node refactor/rollback-switch.js enable-hermes-gray-15",
+    "hermes:gray:30": "node refactor/rollback-switch.js enable-hermes-gray-30",
+    "hermes:disable": "node refactor/rollback-switch.js disable-hermes",
+
+    "// === 构建和清理 ===": "",
+    "arch:rebuild:ios": "cd ios && pod install && cd ..",
+    "arch:rebuild:android": "cd android && ./gradlew clean && cd ..",
+    "arch:clean": "npx react-native-clean-project",
+
+    "// === 监控和报告 ===": "",
+    "arch:report": "node refactor/generate-migration-report.js",
+    "arch:monitor": "node refactor/monitor-performance.js"
+  },
+
+  "_comments": {
+    "migration_order": [
+      "阶段0: 运行 arch:baseline 建立基线",
+      "阶段1: 预处理（无脚本，手动配置）",
+      "阶段2: 运行 arch:enable 启用新架构（保持JSC）",
+      "阶段3: 性能优化（FlashList等，手动）",
+      "阶段4: Hermes灰度（arch稳定2-4周后）",
+      "阶段5: Android对齐（基于iOS经验）"
+    ],
+
+    "important_notes": {
+      "ota_warning": "Hermes ↔ JSC 切换必须禁用OTA，需要完整重签包",
+      "rollback_strategy": "崩溃率超基线+10%或秒退立即回滚",
+      "platform_strategy": "iOS先行，Android延后对齐",
+      "gray_schedule": "5%(1周) → 15%(1周) → 30%(2周) → 50% → 100%"
+    },
+
+    "success_criteria": {
+      "hard_requirements": "性能不劣化，功能不缺失",
+      "target_metrics": "5-10%性能提升",
+      "crash_threshold": "基线+5%警戒，+10%回滚"
+    }
+  }
+}

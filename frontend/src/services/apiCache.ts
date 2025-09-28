@@ -108,6 +108,46 @@ class APICacheService {
   }
 
   /**
+   * 清空所有缓存（兼容别名）
+   */
+  clearAll(): void {
+    this.clear();
+  }
+
+  /**
+   * 按模式清除缓存键
+   * @param pattern 要匹配的键模式（例如 "volunteerRecord:*"）
+   */
+  clearByPattern(pattern: string): number {
+    let cleared = 0;
+    const regex = new RegExp(pattern.replace('*', '.*'));
+
+    for (const key of this.cache.keys()) {
+      if (regex.test(key)) {
+        this.cache.delete(key);
+        cleared++;
+      }
+    }
+
+    if (cleared > 0) {
+      console.log(`🗑️ [CACHE] 清除了 ${cleared} 个匹配 "${pattern}" 的缓存项`);
+    }
+
+    return cleared;
+  }
+
+  /**
+   * 清除特定键的缓存
+   */
+  clearKey(key: string): boolean {
+    const deleted = this.cache.delete(key);
+    if (deleted) {
+      console.log(`🗑️ [CACHE] 清除了缓存键: ${key}`);
+    }
+    return deleted;
+  }
+
+  /**
    * 获取缓存统计
    */
   getStats(): { size: number; keys: string[] } {

@@ -1,10 +1,25 @@
 /**
  * 统一的时间处理工具库
  * 用于处理所有时间戳相关的解析、格式化和计算
+ *
+ * @deprecated 此文件已废弃，请使用 UnifiedTimeService
+ * import { timeService } from '../utils/UnifiedTimeService';
+ *
+ * 迁移指南:
+ * - parseTimestamp() → timeService.parseServerTime()
+ * - safeParseTime() → timeService.parseServerTime()
+ * - calculateDuration() → timeService.calculateDuration()
+ * - formatDateTime() → timeService.formatForDisplay()
+ * - toBeijingTimeString() → timeService.formatForServer()
+ * - formatBeijingTime() → timeService.formatForDisplay()
+ * - formatLocalTime() → timeService.formatForDisplay()
+ * - detectTimeAnomaly() → timeService.isReasonableTime()
+ * - formatRelativeTime() → timeService.formatRelativeTime()
  */
 
 /**
  * 智能解析时间戳，支持多种格式，防止双重时区转换
+ * @deprecated 使用 timeService.parseServerTime() 替代
  * @param rawValue 原始时间值（可能是Unix秒、Unix毫秒、ISO字符串等）
  * @returns 解析后的Date对象
  */
@@ -143,6 +158,7 @@ export const parseTimestamp = (rawValue: any): Date => {
 
 /**
  * 安全的时间解析（带null检查和错误处理）
+ * @deprecated 使用 timeService.parseServerTime() 替代
  * @param rawValue 原始时间值
  * @param defaultValue 解析失败时的默认值
  * @returns Date对象或默认值
@@ -165,6 +181,7 @@ export const safeParseTime = (
 
 /**
  * 计算两个时间之间的时长
+ * @deprecated 使用 timeService.calculateDuration() 替代
  * @param startTime 开始时间
  * @param endTime 结束时间（默认为当前时间）
  * @returns 时长信息对象
@@ -248,6 +265,7 @@ export const calculateDuration = (
 
 /**
  * 格式化日期时间为本地字符串
+ * @deprecated 使用 timeService.formatForDisplay() 替代
  * @param dateTime 日期时间
  * @param options 格式化选项
  * @returns 格式化后的字符串
@@ -293,6 +311,7 @@ export const formatDateTime = (
 
 /**
  * 检测时间异常
+ * @deprecated 使用 timeService.isReasonableTime() 替代
  * @param checkInTime 签到时间
  * @returns 异常信息或null
  */
@@ -378,10 +397,12 @@ export const getCurrentISOTime = (): string => {
 };
 
 // 导出用于志愿者API的别名（保持向后兼容）
+// @deprecated 使用 timeService.parseServerTime() 替代
 export const parseVolunteerTimestamp = parseTimestamp;
 
 /**
  * 将本地时间转换为北京时间字符串（适用于全球所有时区）
+ * @deprecated 使用 timeService.formatForServer() 替代
  * 使用Intl.DateTimeFormat处理时区转换，自动处理夏令时和各种时区偏移
  * @param localDate 本地Date对象
  * @returns 格式化的北京时间字符串 YYYY-MM-DD HH:mm:ss
@@ -474,6 +495,7 @@ export const toBeijingTimeStringManual = (localDate: Date): string => {
 
 /**
  * 将任意时间转换为北京时间并格式化为简短时间显示（HH:mm）
+ * @deprecated 使用 timeService.formatForDisplay() 替代
  * 🔧 增强版：使用智能解析防止时区错误
  * @param dateTime 日期时间（支持Date、字符串、时间戳等各种格式）
  * @returns 北京时间格式的时间字符串 HH:mm，如果解析失败返回 --:--
@@ -569,6 +591,7 @@ export const formatBeijingTime = (dateTime: any): string => {
 
 /**
  * 格式化为手机本地时间显示（HH:mm）
+ * @deprecated 使用 timeService.formatForDisplay() 替代
  * @param dateTime 日期时间，默认为当前时间
  * @returns 本地时间格式的时间字符串 HH:mm
  */

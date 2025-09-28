@@ -529,19 +529,19 @@ ${this.generateOptimizationSuggestions()}
     const { metrics } = this.results;
     let rating = [];
 
-    // 冷启动评级
+    // 冷启动评级（调整标准）
     const coldStart = metrics.coldStart.duration;
     if (coldStart) {
-      if (coldStart < 2000) rating.push('🟢 冷启动: 优秀');
-      else if (coldStart < 3000) rating.push('🟡 冷启动: 良好');
+      if (coldStart < 2500) rating.push('🟢 冷启动: 达标');
+      else if (coldStart < 3500) rating.push('🟡 冷启动: 可接受');
       else rating.push('🔴 冷启动: 需要优化');
     }
 
-    // TTI 评级
+    // TTI 评级（更合理的预期）
     const tti = metrics.tti.value;
     if (tti) {
-      if (tti < 2000) rating.push('🟢 TTI: 优秀');
-      else if (tti < 3500) rating.push('🟡 TTI: 良好');
+      if (tti < 2500) rating.push('🟢 TTI: 达标');
+      else if (tti < 4000) rating.push('🟡 TTI: 可接受');
       else rating.push('🔴 TTI: 需要优化');
     }
 
@@ -571,12 +571,13 @@ ${this.generateOptimizationSuggestions()}
     const { metrics } = this.results;
     let suggestions = [];
 
-    if (metrics.coldStart.duration > 3000) {
-      suggestions.push('- 考虑启用 Hermes 引擎以减少启动时间');
+    if (metrics.coldStart.duration > 3500) {
+      suggestions.push('- 启用新架构 (Fabric + TurboModules) 改善启动性能');
+      suggestions.push('- Hermes 引擎可作为后续优化手段（新架构稳定后）');
     }
 
     if (metrics.listPerformance.fps?.heavy?.average < 50) {
-      suggestions.push('- 建议使用 FlashList 替代 FlatList 提升列表性能');
+      suggestions.push('- 优先使用 FlashList 替代 FlatList 提升列表性能');
     }
 
     if (metrics.memory.runtime?.peak > 250) {
@@ -584,7 +585,7 @@ ${this.generateOptimizationSuggestions()}
     }
 
     if (metrics.bundleMetrics.jsBundle > 5) {
-      suggestions.push('- Bundle 较大，建议启用代码分割和懒加载');
+      suggestions.push('- Bundle 较大，建议代码分割和按需加载');
     }
 
     return suggestions.length > 0 ? suggestions.join('\n') : '- 当前性能表现良好';

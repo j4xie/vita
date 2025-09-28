@@ -27,6 +27,7 @@ import { safeParseTime, detectTimeAnomaly, formatDateTime } from '../../utils/ti
 import { getUserList } from '../../services/userStatsAPI';
 import { pomeloXAPI } from '../../services/PomeloXAPI';
 import { getUserPermissionLevel } from '../../types/userPermissions';
+import { getApiUrl } from '../../utils/environment';
 import { useUser } from '../../context/UserContext';
 import { useVolunteerContext } from '../../context/VolunteerContext';
 import { 
@@ -43,6 +44,7 @@ import { i18n } from '../../utils/i18n';
 import { useAllDarkModeStyles } from '../../hooks/useDarkModeStyles';
 import { formatVolunteerTime as formatChineseDateTime } from '../../utils/volunteerTimeFormatter';
 import VolunteerHistoryBottomSheet from '../../components/volunteer/VolunteerHistoryBottomSheet';
+import { VolunteerTimeEntryModal } from '../../components/modals/VolunteerTimeEntryModal';
 // 移除SearchBar导入，改为使用内置搜索组件
 
 
@@ -87,6 +89,10 @@ export const VolunteerSchoolDetailScreen: React.FC = () => {
   // 历史记录弹窗状态
   const [showHistoryModal, setShowHistoryModal] = useState(false);
   const [selectedHistoryUser, setSelectedHistoryUser] = useState<{userId: number, name: string} | null>(null);
+
+  // 补录工时模态框状态
+  const [showTimeEntryModal, setShowTimeEntryModal] = useState(false);
+  const [timeEntryUser, setTimeEntryUser] = useState<{userId: number, name: string} | null>(null);
   const [expandedVolunteer, setExpandedVolunteer] = useState<string | null>(null);
   
   // 搜索功能状态
@@ -400,7 +406,6 @@ export const VolunteerSchoolDetailScreen: React.FC = () => {
   // 页面聚焦时刷新数据（处理从签退页面返回的情况）
   useFocusEffect(
     React.useCallback(() => {
-
       // 🔧 改进：检查多种刷新条件
       const shouldRefresh = route.params?.refresh;
       const hasTimestamp = route.params?.timestamp;
@@ -412,14 +417,29 @@ export const VolunteerSchoolDetailScreen: React.FC = () => {
         r => r.name === 'VolunteerCheckOut' && r.params?.checkoutSuccess
       );
 
-      const needsRefresh = shouldRefresh || shouldRefreshGlobal || hasCheckoutInStack || hasTimestamp;
-      const delay = needsRefresh ? 1000 : 300; // 增加延迟确保后端数据同步
+      // 检查是否从志愿者管理主页进入（可能刚刚进行了Quick Actions操作）
+      const fromVolunteerHome = navigationState.routes.some(r => r.name === 'VolunteerHome');
 
+      const needsRefresh = shouldRefresh || shouldRefreshGlobal || hasCheckoutInStack || hasTimestamp || fromVolunteerHome;
+      const delay = needsRefresh ? 500 : 300; // 减少延迟，加快响应
+
+      console.log('🔄 [FOCUS-EFFECT] 学校详情页面聚焦，检查刷新条件:', {
+        shouldRefresh,
+        hasTimestamp,
+        shouldRefreshGlobal,
+        hasCheckoutInStack,
+        fromVolunteerHome,
+        needsRefresh
+      });
 
       // 延迟执行，确保导航动画完成和后端数据更新
       const timer = setTimeout(() => {
         if (needsRefresh) {
+          console.log('🔄 [FOCUS-EFFECT] 强制刷新志愿者数据');
           loadVolunteerData(true); // 强制刷新
+        } else {
+          // 即使不强制刷新，也要加载数据确保最新状态
+          loadVolunteerData(false);
         }
 
         // 清除刷新参数，避免重复刷新
@@ -549,13 +569,13 @@ export const VolunteerSchoolDetailScreen: React.FC = () => {
         const dataScope = permissions.getDataScope();
         if (dataScope === 'all') {
           // 总管理员：需要动态pageSize获取完整数据
-          const initialResponse = await fetch(`https://www.vitaglobal.icu/system/user/list`, {
+          const initialResponse = await fetch(`${getApiUrl()}/system/user/list`, {
             headers: { 'Authorization': `Bearer ${token}` }
           });
           const initialData = await initialResponse.json();
           
           if (initialData.code === 200 && initialData.rows?.length < initialData.total) {
-            const fullResponse = await fetch(`https://www.vitaglobal.icu/system/user/list?pageSize=${initialData.total}`, {
+            const fullResponse = await fetch(`${getApiUrl()}/system/user/list?pageSize=${initialData.total}`, {
               headers: { 'Authorization': `Bearer ${token}` }
             });
             const fullData = await fullResponse.json();
@@ -565,7 +585,7 @@ export const VolunteerSchoolDetailScreen: React.FC = () => {
           }
         } else {
           // 分管理员：直接使用默认API（后端已过滤）
-          const response = await fetch(`https://www.vitaglobal.icu/system/user/list`, {
+          const response = await fetch(`${getApiUrl()}/system/user/list`, {
             headers: { 'Authorization': `Bearer ${token}` }
           });
           const data = await response.json();
@@ -1171,6 +1191,15 @@ export const VolunteerSchoolDetailScreen: React.FC = () => {
       return;
     }
 
+    // 使用当前时间作为签到时间，避免历史数据的问题
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    const hours = String(now.getHours()).padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    const seconds = String(now.getSeconds()).padStart(2, '0');
+    const currentTime = `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
 
     // 构建志愿者记录对象
     const volunteerRecord = {
@@ -1179,7 +1208,7 @@ export const VolunteerSchoolDetailScreen: React.FC = () => {
       name: volunteer.legalName || volunteer.name || '志愿者',
       phone: volunteer.phonenumber || '',
       school: school?.deptName || '',
-      checkInTime: volunteer.checkInTime,
+      checkInTime: currentTime, // 使用当前时间替代可能有问题的历史时间
       status: 'checked_in' as const,
     };
 
@@ -1340,7 +1369,9 @@ export const VolunteerSchoolDetailScreen: React.FC = () => {
                   {!!item.checkInTime && (
                     <View style={styles.statusRow}>
                       <Text style={styles.statusLabel}>{t('volunteer_status.check_in_time_label') || '签到时间:'}</Text>
-                      <Text style={styles.statusValue}>{formatChineseDateTime(item.checkInTime)}</Text>
+                      <Text style={styles.statusValue}>
+                        {item.checkInTime ? item.checkInTime.substring(11, 16) : '--:--'}
+                      </Text>
                     </View>
                   )}
 
@@ -1348,7 +1379,9 @@ export const VolunteerSchoolDetailScreen: React.FC = () => {
                   {!!item.checkOutTime && (
                     <View style={styles.statusRow}>
                       <Text style={styles.statusLabel}>{t('volunteer_status.check_out_time_label') || '签退时间:'}</Text>
-                      <Text style={styles.statusValue}>{formatChineseDateTime(item.checkOutTime)}</Text>
+                      <Text style={styles.statusValue}>
+                        {item.checkOutTime ? item.checkOutTime.substring(11, 16) : '--:--'}
+                      </Text>
                     </View>
                   )}
 
@@ -1359,7 +1392,7 @@ export const VolunteerSchoolDetailScreen: React.FC = () => {
                         {t('volunteer_status.last_check_in_label') || '上次签到:'}
                       </Text>
                       <Text style={[styles.statusValue, { color: '#666' }]}>
-                        {formatChineseDateTime(item.lastCheckInTime)}
+                        {item.lastCheckInTime ? item.lastCheckInTime.substring(11, 16) : '--:--'}
                       </Text>
                     </View>
                   )}
@@ -1371,7 +1404,7 @@ export const VolunteerSchoolDetailScreen: React.FC = () => {
                         {t('volunteer_status.last_check_out_label') || '上次签退:'}
                       </Text>
                       <Text style={[styles.statusValue, { color: '#666' }]}>
-                        {formatChineseDateTime(item.lastCheckOutTime)}
+                        {item.lastCheckOutTime ? item.lastCheckOutTime.substring(11, 16) : '--:--'}
                       </Text>
                     </View>
                   )}
@@ -1487,6 +1520,25 @@ export const VolunteerSchoolDetailScreen: React.FC = () => {
                                 })()}
                               </>
                             )}
+
+                            {/* 补录工时按钮 - 始终显示，不依赖签到状态 */}
+                            <TouchableOpacity
+                              style={[styles.actionButton, styles.timeEntryBtn]}
+                              onPress={() => {
+                                setTimeEntryUser({
+                                  userId: item?.userId,
+                                  name: item?.name
+                                });
+                                setShowTimeEntryModal(true);
+                              }}
+                              accessibilityRole="button"
+                              accessibilityLabel={`补录我的工时`}
+                              accessibilityHint="点击补录自己的工时记录"
+                            >
+                              <Text style={[styles.actionButtonText, { color: '#8B5CF6' }]}>
+                                {t('volunteerCheckIn.timeEntry', '补录工时')}
+                              </Text>
+                            </TouchableOpacity>
                           </>
                         )}
                       </>
@@ -1765,6 +1817,21 @@ export const VolunteerSchoolDetailScreen: React.FC = () => {
           currentUser={userInfo}
         />
       )}
+
+      {/* 补录工时模态框 */}
+      <VolunteerTimeEntryModal
+        visible={showTimeEntryModal}
+        onClose={() => {
+          setShowTimeEntryModal(false);
+          setTimeEntryUser(null);
+        }}
+        onSuccess={() => {
+          setShowTimeEntryModal(false);
+          setTimeEntryUser(null);
+          // 补录成功后刷新数据
+          loadVolunteerData(true);
+        }}
+      />
     </SafeAreaView>
   );
 };
@@ -2283,6 +2350,13 @@ const styles = StyleSheet.create({
   historyBtn: {
     borderWidth: 1,
     borderColor: '#FF6B35',
+    backgroundColor: '#FFFFFF',
+  },
+
+  // 补录工时按钮样式
+  timeEntryBtn: {
+    borderWidth: 1,
+    borderColor: '#8B5CF6',
     backgroundColor: '#FFFFFF',
   },
 

@@ -58,7 +58,6 @@ import { ConsultingScreen } from '../screens/consulting/ConsultingScreen';
 import { CommunityScreen } from '../screens/community/CommunityScreen';
 import { WellbeingScreen } from '../screens/wellbeing/WellbeingScreen';
 import { SearchScreen } from '../screens/search/SearchScreen';
-import { VolunteerCheckInScreen } from '../screens/volunteer/VolunteerCheckInScreen';
 import { VolunteerHomeScreen } from '../screens/volunteer/VolunteerHomeScreen';
 import { VolunteerCheckOutScreen } from '../screens/volunteer/VolunteerCheckOutScreen';
 import { VolunteerSchoolListScreen } from '../screens/volunteer/VolunteerSchoolListScreen';
@@ -433,14 +432,6 @@ const ProfileNavigator = () => {
         component={VolunteerSchoolDetailScreen}
         options={{
           headerShown: false,
-          ...pageTransitions.slideFromRight,
-        }}
-      />
-      <ProfileStack.Screen
-        name="VolunteerCheckIn"
-        component={VolunteerCheckInScreen}
-        options={{
-          title: t('navigation.headers.volunteer_checkin'),
           ...pageTransitions.slideFromRight,
         }}
       />

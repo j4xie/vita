@@ -19,7 +19,22 @@ PomeloX Mobile App is a **production-ready** React Native application for Chines
 ### **🚫 API Usage Rules (ZERO TOLERANCE)**
 - ❌ **NEVER use Mock APIs** - Only real backend endpoints
 - ❌ **NEVER hardcode fake data** - Show real 0 states instead of fake numbers
+- ❌ **NEVER hardcode API URLs** - Always use environment manager (`getApiUrl()`)
 - ✅ **Real data only** - All user stats, activity data must come from actual APIs
+- ✅ **Unified API management** - All API calls must use `src/utils/environment.ts`
+
+### **🚨 Known Backend Issues (2025年9月)**
+- **志愿者状态查询SQL错误**
+  - **问题**: `/app/hour/lastRecordList` 接口返回500错误
+  - **错误信息**: "Column 'user_id' in where clause is ambiguous"
+  - **原因**: 后端SQL JOIN查询中多表包含user_id字段，WHERE子句未指定表前缀
+  - **影响**: 志愿者签到/签退状态无法正确显示
+  - **前端临时方案**:
+    - 优先使用备用接口 `/app/hour/recordList`
+    - 增强错误处理，显示友好提示而非技术错误
+    - 使用本地缓存保持状态
+  - **后端修复方案**: SQL查询中将 `user_id` 改为 `vmh.user_id`
+  - **状态**: 等待后端修复
 
 ### **🌍 Internationalization Rules (MANDATORY)**
 - ❌ **NEVER hardcode Chinese text** - All user-visible text must use `t()` function
@@ -37,14 +52,41 @@ PomeloX Mobile App is a **production-ready** React Native application for Chines
 - **Animation:** React Native Reanimated 3
 - **Build:** EAS Build
 
-## 🌐 **API Configuration**
+## 🌐 **Environment Management (环境切换)**
 
-### **Production API**
-- **Base URL**: `https://www.vitaglobal.icu`
-- **Auth**: JWT Bearer Token (`Authorization: Bearer {token}`)
+### **一键环境切换 (推荐)**
+```bash
+# 测试环境
+npm run ios:dev      # 自动切换到测试环境并启动iOS
+npm run android:dev  # 自动切换到测试环境并启动Android
 
-### **Test Environment** (for development)
-- **Base URL**: `http://106.14.165.234:8085`
+# 生产环境
+npm run ios:prod     # 自动切换到生产环境并启动iOS
+npm run android:prod # 自动切换到生产环境并启动Android
+```
+
+### **手动环境切换**
+```bash
+# 使用智能脚本
+./switch-env.sh test   # 切换到测试环境
+./switch-env.sh prod   # 切换到生产环境
+./switch-env.sh status # 查看当前环境
+
+# 然后启动
+npm run ios
+```
+
+### **环境数据差异**
+**测试环境** (`http://106.14.165.234:8085`):
+- 中秋国庆预热活动, UMN免费接机, UCSB免费接机
+
+**生产环境** (`https://www.vitaglobal.icu`):
+- UMN中秋嘉年华, UCLA 2025新生活动, UCSD开学大典
+
+### **技术实现** (2025年9月完成)
+- ✅ **动态API地址**: 所有API服务使用 `getBaseUrl()` 动态获取
+- ✅ **环境配置文件**: `.env.development` 和 `.env.production`
+- ✅ **零硬编码**: 44处动态获取，0处硬编码
 
 ## 📋 **Key Commands**
 
@@ -53,15 +95,16 @@ PomeloX Mobile App is a **production-ready** React Native application for Chines
 # Install dependencies
 npm install
 
-# iOS development
+# iOS development (生产环境)
 npm run ios
 
-# Android development
+# Android development (生产环境)
 npm run android
 
 # Start Expo development server
 npm start
 ```
+
 
 ### Building & Deployment
 ```bash
@@ -240,10 +283,11 @@ frontend/
 ### Development Guidelines
 - **Components**: Create reusable components in `src/components/`
 - **Screens**: One screen per file in `src/screens/`
-- **Services**: API calls in `src/services/`
+- **Services**: API calls in `src/services/` - **MUST use `getApiUrl()` from environment manager**
 - **Types**: TypeScript types in `src/types/`
 - **Constants**: App constants in `src/constants/`
 - **Utils**: Helper functions in `src/utils/`
+- **Environment**: All API URLs through `src/utils/environment.ts` - **NO hardcoding allowed**
 
 ## 📚 **Related Documentation**
 
