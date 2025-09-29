@@ -50,7 +50,7 @@ export const NearbyFilterChip: React.FC<NearbyFilterChipProps> = ({
         isSelected ? styles.selectedText : styles.unselectedText,
       ]}>
         {distance 
-          ? t('location.nearby_with_distance', '附近 {{distance}}', { distance }) 
+          ? t('location.nearby_with_distance', { distance }) 
           : t('location.nearby', '附近')
         }
       </Text>

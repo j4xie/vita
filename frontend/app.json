@@ -4,9 +4,9 @@
       "silentLaunch": true,
       "showDeveloperMenu": false
     },
-    "name": "PomeloX App",
-    "slug": "vitaglobal",
-    "version": "1.0.31",
+    "name": "西柚Pomelo",
+    "slug": "pomelox",
+    "version": "1.0.32",
     "owner": "pomelox",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -24,14 +24,14 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.jietaoxie.pomeloapp",
-      "buildNumber": "3",
+      "bundleIdentifier": "com.pomelotech.pomelo",
+      "buildNumber": "2",
       "deploymentTarget": "13.0",
       "infoPlist": {
         "NSAppTransportSecurity": {
           "NSAllowsArbitraryLoads": true,
           "NSAllowsArbitraryLoadsForMedia": true,
-          "NSAllowsArbitraryLoadsInWebContent": true,  
+          "NSAllowsArbitraryLoadsInWebContent": true,
           "NSAllowsLocalNetworking": true,
           "NSExceptionDomains": {
             "106.14.165.234": {

@@ -53,7 +53,7 @@ export const LiquidGlassTab: React.FC<LiquidGlassTabProps> = ({
       const performanceCheck = () => {
         // In production, implement actual FPS monitoring
         // For now, assume blur is supported on Android 8+
-        setShouldUseBlur(Platform.Version >= 26);
+        setShouldUseBlur(Number(Platform.Version) >= 26);
       };
       performanceCheck();
     }

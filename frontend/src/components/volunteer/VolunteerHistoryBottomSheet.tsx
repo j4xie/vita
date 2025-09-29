@@ -46,9 +46,9 @@ const HistoryRecordItem = React.memo<{
   const durationInfo = useMemo(() => {
     if (!record.startTime || !record.endTime) return null;
 
-    // 使用统一时间服务计算时长（startTime和endTime是本地时间）
-    const startDate = timeService.parseServerTime(record.startTime, true);
-    const endDate = timeService.parseServerTime(record.endTime, true);
+    // 使用统一时间服务计算时长（直接解析本地时间）
+    const startDate = timeService.parseServerTime(record.startTime);
+    const endDate = timeService.parseServerTime(record.endTime);
     const durationResult = startDate && endDate ? timeService.calculateDuration(startDate, endDate) : null;
 
     const result = durationResult ? {
@@ -176,7 +176,7 @@ const HistoryRecordItem = React.memo<{
             {t('wellbeing.volunteer.history.checkInTime')}
           </Text>
           <SafeText style={[styles.timeValue, { color: theme.colors.text.primary }]} fallback="--:--">
-            {timeService.formatForDisplay(timeService.parseServerTime(record.startTime, true), { showDate: true, showTime: true }) || '--:--'}
+            {timeService.formatForDisplay(timeService.parseServerTime(record.startTime), { showDate: true, showTime: true }) || '--:--'}
           </SafeText>
         </View>
 
@@ -187,7 +187,7 @@ const HistoryRecordItem = React.memo<{
               {t('wellbeing.volunteer.history.checkOutTime')}
             </Text>
             <SafeText style={[styles.timeValue, { color: theme.colors.text.primary }]} fallback="--:--">
-              {timeService.formatForDisplay(timeService.parseServerTime(record.endTime, true), { showDate: true, showTime: true }) || '--:--'}
+              {timeService.formatForDisplay(timeService.parseServerTime(record.endTime), { showDate: true, showTime: true }) || '--:--'}
             </SafeText>
           </View>
         )}
@@ -302,6 +302,33 @@ export const VolunteerHistoryBottomSheet: React.FC<VolunteerHistoryBottomSheetPr
   // Refs - 内存管理
   const loadingRef = useRef(false);
 
+  // 加载历史记录 - 使用useCallback优化
+  const loadHistoryRecords = useCallback(async (days: 1 | 3 | 7 | 30) => {
+    if (loadingRef.current) return; // 防止重复调用
+
+    try {
+      loadingRef.current = true;
+      setLoading(true);
+      setError('');
+      console.log(`🔍 [HISTORY-LOAD] 开始加载${userName}的${days}天历史记录`);
+      const result = await getVolunteerHistoryRecords(userId, days, userPermission);
+
+      if (result.code === 200 && result.rows) {
+        setRecords(result.rows || []);
+        console.log(`✅ [HISTORY-LOAD] 成功加载${result.rows?.length || 0}条记录`);
+      } else {
+        console.error('❌ [HISTORY-LOAD] 加载失败:', result.msg);
+        setError(result.msg || t('wellbeing.volunteer.history.loadError'));
+      }
+    } catch (error) {
+      console.error('❌ [HISTORY-LOAD] 网络错误:', error);
+      setError(t('common.network_error'));
+    } finally {
+      loadingRef.current = false;
+      setLoading(false);
+    }
+  }, [userId, userName, userPermission, t]);
+
   // 监听VolunteerContext状态变化，自动刷新历史记录
   useEffect(() => {
     if (visible && volunteerContext.currentStatus === 'signed_out') {
@@ -339,35 +366,6 @@ export const VolunteerHistoryBottomSheet: React.FC<VolunteerHistoryBottomSheetPr
   const modalOpacity = useRef(new Animated.Value(0)).current;
   const modalTranslateY = useRef(new Animated.Value(screenHeight)).current;
 
-  // 加载历史记录 - 使用useCallback优化
-  const loadHistoryRecords = useCallback(async (days: 1 | 3 | 7 | 30) => {
-    if (loadingRef.current) return; // 防止重复调用
-    
-    try {
-      loadingRef.current = true;
-      setLoading(true);
-      setError('');
-
-      console.log(`🔍 [HISTORY-LOAD] 开始加载${userName}的${days}天历史记录`);
-
-      const result = await getVolunteerHistoryRecords(userId, days, userPermission);
-      
-      if (result.code === 200 && result.rows) {
-        setRecords(result.rows);
-        console.log(`✅ [HISTORY-LOAD] 成功加载${result.rows.length}条历史记录`);
-      } else {
-        setRecords([]);
-        setError(result.msg || t('wellbeing.volunteer.history.loadFailed'));
-      }
-    } catch (err: any) {
-      console.error('❌ [HISTORY-LOAD] 加载历史记录失败:', err);
-      setRecords([]);
-      setError(err.message || t('wellbeing.volunteer.history.loadError'));
-    } finally {
-      setLoading(false);
-      loadingRef.current = false;
-    }
-  }, [userId, userName, userPermission, t]);
 
   // 时间范围选择处理 - 使用useCallback优化
   const handleTimeRangeSelect = useCallback((days: 1 | 3 | 7 | 30) => {

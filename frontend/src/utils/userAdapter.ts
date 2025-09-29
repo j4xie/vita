@@ -95,10 +95,9 @@ export interface FrontendUser {
   
   // 🆕 保留原始权限字段供权限检查系统使用
   admin?: boolean;
-  roles?: any[];
   role?: any;
   post?: any;
-  
+
   // 学校信息
   school: {
     id: string;
@@ -111,7 +110,7 @@ export interface FrontendUser {
     deptName: string;
   };
   deptId?: number; // 兼容字段
-  
+
   // 角色权限
   roles: {
     id: number;
@@ -191,15 +190,26 @@ export const adaptUserInfo = (backendUser: BackendUserInfo): FrontendUser => {
   let safeRoles = Array.isArray(backendUser.roles) ? backendUser.roles : [];
 
   // 如果有 role 对象但 roles 数组为空，将 role 对象转换为数组格式
-  if (backendUser.role && safeRoles.length === 0) {
+  const role = (backendUser as any).role;
+  if (role && safeRoles.length === 0) {
     safeRoles = [{
-      roleId: backendUser.role.roleId,
-      roleName: backendUser.role.roleName,
-      roleKey: backendUser.role.roleKey,
-      admin: backendUser.role.admin,
-      roleSort: backendUser.role.roleSort,
-      dataScope: backendUser.role.dataScope,
-    }];
+      roleId: role.roleId,
+      roleName: role.roleName,
+      roleKey: role.roleKey,
+      admin: role.admin,
+      roleSort: role.roleSort,
+      dataScope: role.dataScope,
+      // Add missing required properties with defaults
+      createBy: role.createBy || '',
+      createTime: role.createTime || '',
+      updateBy: role.updateBy || '',
+      updateTime: role.updateTime || '',
+      remark: role.remark || '',
+      status: role.status || '0',
+      flag: role.flag || false,
+      menuCheckStrictly: role.menuCheckStrictly || false,
+      deptCheckStrictly: role.deptCheckStrictly || false,
+    } as any];
   }
 
   const permissions = parsePermissions(safeRoles, backendUser.admin);
@@ -222,9 +232,8 @@ export const adaptUserInfo = (backendUser: BackendUserInfo): FrontendUser => {
     
     // 🆕 保留原始权限字段供权限检查系统使用
     admin: backendUser.admin,
-    rawRoles: safeRoles, // 使用安全的roles数组
-    role: backendUser.role,
-    post: backendUser.post,
+    role: role,
+    post: (backendUser as any).post,
     
     // 学校信息 - 处理deptId为null的情况
     school: {

@@ -86,7 +86,7 @@ export const UserActivityModal: React.FC<UserActivityModalProps> = ({
       
       if (response.code === 200) {
         // userActivitylist API的响应结构：{ total, rows, code, msg }
-        const activities = response.rows || [];
+        const activities = (response as any).rows || [];
         setActivities(activities);
         console.log('🔄 UserActivityModal获取到活动:', {
           activityType,

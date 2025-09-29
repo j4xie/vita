@@ -158,12 +158,19 @@ export const PersonalInfoCard: React.FC<PersonalInfoCardProps> = ({
       borderRadius: 12,
       alignSelf: 'flex-start', // 让徽章贴合内容大小
       marginLeft: 8, // 与左侧文字的间距
+      marginRight: 8, // 与右侧按钮的最小间距
     },
     organizationRow: {
       flexDirection: 'row',
       alignItems: 'center', // 垂直居中对齐
       marginBottom: 8, // 与下方统计数据的间距
-      justifyContent: 'flex-start', // 左对齐
+      justifyContent: 'space-between', // 两端对齐，左侧信息，右侧按钮
+    },
+    organizationInfo: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      flex: 1, // 占据剩余空间
+      marginRight: 8, // 确保与右侧按钮保持间距
     },
     chevron: {
       marginLeft: 8,
@@ -374,32 +381,73 @@ export const PersonalInfoCard: React.FC<PersonalInfoCardProps> = ({
             </View>
           )}
           
-          {/* 学校 • 组织信息 与 岗位徽章同行显示 - 仅登录用户显示 */}
-          {!isGuest && (school || organization || position) && (
+          {/* 学校 • 组织信息 与 岗位徽章 与 右侧按钮同行显示 - 仅登录用户显示 */}
+          {!isGuest && ((school || organization || position) || (onEditPress || onQRCodePress)) && (
             <View style={styles.organizationRow}>
-              {/* 学校组织信息 */}
-              {(school || organization) && (
-                <Text 
-                  style={[styles.email, dmStyles.text.secondary]}
-                  allowFontScaling={true}
-                  maxFontSizeMultiplier={1.3}
-                  numberOfLines={1}
-                >
-                  {school && organization ? `${school} • ${organization}` : (school || organization)}
-                </Text>
-              )}
-              
-              {/* 岗位徽章 */}
-              {position && (
-                <View style={styles.positionBadge}>
-                  <Text 
-                    style={styles.position}
+              <View style={styles.organizationInfo}>
+                {/* 学校组织信息 */}
+                {(school || organization) && (
+                  <Text
+                    style={[styles.email, dmStyles.text.secondary]}
                     allowFontScaling={true}
-                    maxFontSizeMultiplier={1.1}
+                    maxFontSizeMultiplier={1.3}
                     numberOfLines={1}
                   >
-                    {position}
+                    {school && organization ? `${school} • ${organization}` : (school || organization)}
                   </Text>
+                )}
+
+                {/* 岗位徽章 */}
+                {position && (
+                  <View style={styles.positionBadge}>
+                    <Text
+                      style={styles.position}
+                      allowFontScaling={true}
+                      maxFontSizeMultiplier={1.1}
+                      numberOfLines={1}
+                    >
+                      {position}
+                    </Text>
+                  </View>
+                )}
+              </View>
+
+              {/* 右侧操作按钮 - 编辑和QR码 */}
+              {(onEditPress || onQRCodePress) && (
+                <View style={styles.rightButtonsContainer}>
+                  {/* 编辑按钮 */}
+                  {onEditPress && (
+                    <TouchableOpacity
+                      style={[styles.actionButton, styles.editButton]}
+                      onPress={onEditPress}
+                      activeOpacity={0.8}
+                      accessibilityRole="button"
+                      accessibilityLabel={t('profile.edit.title', '编辑资料')}
+                    >
+                      <Ionicons
+                        name="pencil"
+                        size={16}
+                        color={dmIcons?.primary || (isDarkMode ? '#FFFFFF' : '#374151')}
+                      />
+                    </TouchableOpacity>
+                  )}
+
+                  {/* QR码按钮 */}
+                  {onQRCodePress && (
+                    <TouchableOpacity
+                      style={[styles.actionButton, styles.qrCodeButton]}
+                      onPress={onQRCodePress}
+                      activeOpacity={0.8}
+                      accessibilityRole="button"
+                      accessibilityLabel={t('profile.qr_code', 'QR 码')}
+                    >
+                      <Ionicons
+                        name="qr-code"
+                        size={16}
+                        color={dmIcons?.primary || (isDarkMode ? '#FFFFFF' : '#374151')}
+                      />
+                    </TouchableOpacity>
+                  )}
                 </View>
               )}
             </View>
@@ -449,45 +497,6 @@ export const PersonalInfoCard: React.FC<PersonalInfoCardProps> = ({
             </View>
           )}
         </View>
-        
-        {/* 右侧操作按钮 - 编辑和QR码 */}
-        {!isGuest && (onEditPress || onQRCodePress) && (
-          <View style={styles.rightButtonsContainer}>
-            {/* 编辑按钮 - ✅ 已修复：roleId和postId字段问题已解决 */}
-            {onEditPress && (
-              <TouchableOpacity
-                style={[styles.actionButton, styles.editButton]}
-                onPress={onEditPress}
-                activeOpacity={0.8}
-                accessibilityRole="button"
-                accessibilityLabel={t('profile.edit.title', '编辑资料')}
-              >
-                <Ionicons
-                  name="pencil"
-                  size={16}
-                  color={dmIcons?.primary || (isDarkMode ? '#FFFFFF' : '#374151')}
-                />
-              </TouchableOpacity>
-            )}
-
-            {/* QR码按钮 */}
-            {onQRCodePress && (
-              <TouchableOpacity
-                style={[styles.actionButton, styles.qrCodeButton]}
-                onPress={onQRCodePress}
-                activeOpacity={0.8}
-                accessibilityRole="button"
-                accessibilityLabel={t('profile.qr_code', 'QR 码')}
-              >
-                <Ionicons
-                  name="qr-code"
-                  size={16}
-                  color={dmIcons?.primary || (isDarkMode ? '#FFFFFF' : '#374151')}
-                />
-              </TouchableOpacity>
-            )}
-          </View>
-        )}
       </Animated.View>
     </Pressable>
   );

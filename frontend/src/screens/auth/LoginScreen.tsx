@@ -26,6 +26,7 @@ import { useAllDarkModeStyles } from '../../hooks/useDarkModeStyles';
 import { fadeIn, slideInFromBottom } from '../../utils/animations';
 import { pomeloXAPI } from '../../services/PomeloXAPI';
 import { useUser } from '../../context/UserContext';
+import { validateEmail, validatePassword, parseApiError } from '../../utils/formValidation';
 
 const { width, height } = Dimensions.get('window');
 
@@ -76,103 +77,51 @@ export const LoginScreen: React.FC = () => {
     }
   }, [email, password, formValid]);
 
-  const validateEmail = (email: string) => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email);
-  };
-
   const validateForm = () => {
     const newErrors: {email?: string; password?: string} = {};
-    
-    if (!email) {
-      newErrors.email = t('auth.validation.email_required');
+
+    // 邮箱/用户名验证（支持两种格式）
+    if (!email || email.trim().length === 0) {
+      newErrors.email = t('auth.errors.form_validation.email_required');
     } else if (email.length < 3) {
-      newErrors.email = t('auth.validation.username_min_length');
+      newErrors.email = '用户名至少需要3位字符';
+    } else if (email.includes('@')) {
+      // 如果包含@符号，按邮箱格式验证
+      const emailValidation = validateEmail(email, t);
+      if (!emailValidation.isValid) {
+        newErrors.email = emailValidation.errorMessage;
+      }
     }
-    // 移除邮箱格式验证，允许用户名格式
-    
-    if (!password) {
-      newErrors.password = t('auth.validation.password_required');
+
+    // 密码验证
+    if (!password || password.trim().length === 0) {
+      newErrors.password = t('auth.errors.form_validation.password_required');
     } else if (password.length < 6) {
-      newErrors.password = t('auth.validation.password_min_length');
+      newErrors.password = '密码至少需要6位字符';
     }
-    
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  // 🔧 智能错误处理函数
-  const parseLoginError = (result: any, error?: Error): string => {
-    // 处理API响应错误
-    if (result && result.code !== 200) {
-      const msg = result.msg || '';
-      const code = result.code;
-      
-      // 用户相关错误 (通常返回500) - 根据后端具体信息分别处理
-      if (msg.includes('用户不存在') || msg.includes('用户名不存在') || msg.includes('邮箱不存在')) {
-        return t('auth.errors.user_not_found');
-      }
-      if (msg.includes('密码错误') || msg.includes('密码不正确')) {
-        return t('auth.errors.invalid_password');
-      }
-      if (msg.includes('账户锁定') || msg.includes('账户被锁')) {
-        return t('auth.errors.account_locked');
-      }
-      if (msg.includes('频繁') || msg.includes('限制')) {
-        return t('auth.errors.rate_limited');
-      }
-      
-      // HTTP状态码错误
-      if (code === 400) {
-        return t('auth.errors.invalid_credentials');
-      }
-      if (code === 401) {
-        return t('auth.errors.authentication_failed');
-      }
-      if (code === 403) {
-        return t('auth.errors.account_locked');
-      }
-      if (code === 429) {
-        return t('auth.errors.rate_limited');
-      }
-      if (code === 500) {
-        return t('auth.errors.server_error');
-      }
-      if (code === 503) {
-        return t('auth.errors.server_unavailable');
-      }
-      
-      // 返回后端提供的错误信息（已经很友好的情况下）
-      if (msg && msg.length > 0 && msg.length < 100) {
-        return msg;
-      }
-      
-      return t('auth.errors.invalid_credentials');
-    }
-    
-    // 处理网络异常
-    if (error) {
-      const errorMessage = error.message || '';
-      
-      if (errorMessage.includes('timeout') || errorMessage.includes('超时')) {
-        return t('auth.errors.network_timeout');
-      }
-      if (errorMessage.includes('Network request failed') || errorMessage.includes('网络连接失败')) {
-        return t('auth.errors.network_connection_failed');
-      }
-      if (errorMessage.includes('fetch') || errorMessage.includes('XMLHttpRequest')) {
-        return t('auth.errors.network_connection_failed');
-      }
-      if (errorMessage.includes('AbortError')) {
-        return t('auth.errors.network_timeout');
-      }
-      if (errorMessage.includes('500') || errorMessage.includes('502') || errorMessage.includes('503')) {
-        return t('auth.errors.server_error');
+  // 实时邮箱格式验证
+  const validateEmailFormat = (emailValue: string) => {
+    if (emailValue.includes('@')) {
+      const validation = validateEmail(emailValue, t);
+      if (!validation.isValid && emailValue.length > 0) {
+        setErrors(prev => ({
+          ...prev,
+          email: validation.errorMessage
+        }));
+      } else {
+        setErrors(prev => ({
+          ...prev,
+          email: undefined
+        }));
       }
     }
-    
-    return t('auth.errors.unknown_error');
   };
+
 
   // 🎨 动态按钮样式计算函数
   const getButtonStyles = () => {
@@ -246,11 +195,21 @@ export const LoginScreen: React.FC = () => {
           });
         }
       } else {
-        // 🔧 使用智能错误解析
-        const errorMessage = parseLoginError(result);
-        console.warn('❌ 登录失败:', { code: result.code, msg: result.msg, parsedError: errorMessage });
-        
-        Alert.alert(t('auth.errors.login_failed'), errorMessage);
+        // 🔧 使用新的API错误解析
+        const errorInfo = parseApiError(result, 'login', t);
+        console.warn('❌ 登录失败:', { code: result.code, msg: result.msg, parsedError: errorInfo.message });
+
+        Alert.alert(
+          errorInfo.title,
+          `${errorInfo.message}${errorInfo.suggestion ? '\n\n' + errorInfo.suggestion : ''}`,
+          [
+            { text: t('common.cancel'), style: 'cancel' },
+            ...(errorInfo.action ? [{
+              text: errorInfo.action,
+              onPress: () => setLoading(false)
+            }] : [])
+          ]
+        );
       }
     } catch (error) {
       console.error('❌ 登录异常:', {
@@ -258,11 +217,21 @@ export const LoginScreen: React.FC = () => {
         message: error instanceof Error ? error.message : 'Unknown error',
         timestamp: new Date().toISOString()
       });
-      
-      // 🔧 使用智能错误解析
-      const errorMessage = parseLoginError(null, error as Error);
-      
-      Alert.alert(t('auth.errors.login_failed'), errorMessage);
+
+      // 🔧 使用新的API错误解析
+      const errorInfo = parseApiError(error, 'login', t);
+
+      Alert.alert(
+        errorInfo.title,
+        `${errorInfo.message}${errorInfo.suggestion ? '\n\n' + errorInfo.suggestion : ''}`,
+        [
+          { text: t('common.cancel'), style: 'cancel' },
+          {
+            text: errorInfo.action || t('auth.errors.actions.retry'),
+            onPress: () => setLoading(false)
+          }
+        ]
+      );
     } finally {
       setLoading(false);
     }
@@ -338,6 +307,8 @@ export const LoginScreen: React.FC = () => {
                   onChangeText={(text) => {
                     setEmail(text);
                     if (errors.email) setErrors({...errors, email: undefined});
+                    // 实时验证邮箱格式
+                    setTimeout(() => validateEmailFormat(text), 500);
                   }}
                   onFocus={() => setFocusedInput('email')}
                   onBlur={() => setFocusedInput(null)}
@@ -349,6 +320,9 @@ export const LoginScreen: React.FC = () => {
               </View>
               {errors.email && (
                 <Text style={styles.errorText}>{errors.email}</Text>
+              )}
+              {email.includes('@') && !errors.email && email.length > 0 && (
+                <Text style={styles.hintText}>{t('auth.errors.form_validation.email_example')}</Text>
               )}
             </View>
 
@@ -380,6 +354,9 @@ export const LoginScreen: React.FC = () => {
               </View>
               {errors.password && (
                 <Text style={styles.errorText}>{errors.password}</Text>
+              )}
+              {!errors.password && password.length > 0 && password.length < 6 && (
+                <Text style={styles.hintText}>{t('auth.errors.form_validation.password_format_hint')}</Text>
               )}
             </View>
 
@@ -483,7 +460,7 @@ const styles = StyleSheet.create({
     backgroundColor: LIQUID_GLASS_LAYERS.L1.background.light,
     borderRadius: theme.borderRadius.xl,
     padding: theme.spacing.xl,
-    ...theme.shadows[LIQUID_GLASS_LAYERS.L1.shadow],
+    ...theme.shadows[LIQUID_GLASS_LAYERS.L1.shadow.light],
     borderWidth: LIQUID_GLASS_LAYERS.L1.border.width,
     borderColor: LIQUID_GLASS_LAYERS.L1.border.color.light,
   },
@@ -582,6 +559,12 @@ const styles = StyleSheet.create({
     color: theme.colors.danger,
     marginTop: theme.spacing.xs,
     fontWeight: theme.typography.fontWeight.medium,
+  },
+  hintText: {
+    fontSize: theme.typography.fontSize.xs,
+    color: theme.colors.text.secondary,
+    marginTop: theme.spacing.xs,
+    fontStyle: 'italic',
   },
   
   // Options Row

@@ -1,99 +1,90 @@
 /**
- * Dark Mode 测试组件 - 用于调试主题切换
+ * Light Mode Test Component - Light mode only
  */
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
 import { useTheme } from '../../context/ThemeContext';
 import { useMemoizedDarkMode } from '../../hooks/useDarkMode';
 
 export const DarkModeTest: React.FC = () => {
   const themeContext = useTheme();
-  const darkModeHook = useMemoizedDarkMode();
-  
-  console.log('🌙 Dark Mode Debug:', {
+  const lightModeHook = useMemoizedDarkMode();
+
+  console.log('☀️ Light Mode Debug:', {
     themeMode: themeContext.themeMode,
     contextIsDarkMode: themeContext.isDarkMode,
-    hookIsDarkMode: darkModeHook.isDarkMode,
-    systemTheme: 'checking...'
+    hookIsDarkMode: lightModeHook.isDarkMode,
+    status: 'Light mode only'
   });
-
-  const toggleTheme = async () => {
-    const newMode = themeContext.themeMode === 'dark' ? 'light' : 'dark';
-    await themeContext.changeThemeMode(newMode);
-    console.log('🔄 主题已切换到:', newMode);
-  };
 
   return (
     <View style={[
       styles.container,
-      { 
-        backgroundColor: darkModeHook.isDarkMode ? '#1C1C1E' : '#FFFFFF',
-      }
+      { backgroundColor: '#FFFFFF' }
     ]}>
       <Text style={[
         styles.title,
-        { color: darkModeHook.isDarkMode ? '#FFFFFF' : '#000000' }
+        { color: '#000000' }
       ]}>
-        Dark Mode 测试
+        Light Mode Test
       </Text>
-      
-      <Text style={[
-        styles.info,
-        { color: darkModeHook.isDarkMode ? '#EBEBF599' : '#666666' }
-      ]}>
-        当前模式: {themeContext.themeMode}
-      </Text>
-      
-      <Text style={[
-        styles.info,
-        { color: darkModeHook.isDarkMode ? '#EBEBF599' : '#666666' }
-      ]}>
-        isDarkMode: {darkModeHook.isDarkMode ? '是' : '否'}
-      </Text>
-      
-      <TouchableOpacity
-        style={[
-          styles.button,
-          { 
-            backgroundColor: darkModeHook.isDarkMode ? '#0A84FF' : '#007AFF',
-          }
-        ]}
-        onPress={toggleTheme}
-      >
-        <Text style={styles.buttonText}>
-          切换到 {themeContext.themeMode === 'dark' ? '浅色' : '深色'}模式
+
+      <View style={styles.infoSection}>
+        <Text style={[styles.infoText, { color: '#666666' }]}>
+          Current Theme: {themeContext.themeMode}
         </Text>
-      </TouchableOpacity>
+        <Text style={[styles.infoText, { color: '#666666' }]}>
+          Is Dark Mode: {themeContext.isDarkMode ? 'Yes' : 'No'}
+        </Text>
+        <Text style={[styles.infoText, { color: '#666666' }]}>
+          Hook Dark Mode: {lightModeHook.isDarkMode ? 'Yes' : 'No'}
+        </Text>
+      </View>
+
+      <View style={[
+        styles.colorBox,
+        { backgroundColor: lightModeHook.primaryBackground }
+      ]}>
+        <Text style={[
+          styles.boxText,
+          { color: lightModeHook.primaryText }
+        ]}>
+          Light Mode Background
+        </Text>
+      </View>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
+    flex: 1,
     padding: 20,
-    margin: 20,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: 'rgba(84, 84, 88, 0.4)',
+    justifyContent: 'center',
   },
   title: {
-    fontSize: 18,
+    fontSize: 24,
     fontWeight: 'bold',
-    marginBottom: 12,
+    textAlign: 'center',
+    marginBottom: 30,
   },
-  info: {
-    fontSize: 14,
+  infoSection: {
+    marginBottom: 30,
+  },
+  infoText: {
+    fontSize: 16,
     marginBottom: 8,
+    textAlign: 'center',
   },
-  button: {
-    padding: 12,
-    borderRadius: 8,
+  colorBox: {
+    padding: 20,
+    borderRadius: 12,
+    marginBottom: 20,
     alignItems: 'center',
-    marginTop: 16,
   },
-  buttonText: {
-    color: '#FFFFFF',
-    fontWeight: '600',
+  boxText: {
+    fontSize: 16,
+    fontWeight: '500',
   },
 });
 

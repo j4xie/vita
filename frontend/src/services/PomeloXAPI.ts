@@ -308,46 +308,108 @@ class PomeloXAPI {
    * @param areaCode 区域代码 (可选，用于区分中国和美国手机号码)
    */
   async sendPasswordResetCode(phone: string, areaCode?: string): Promise<ApiResponse> {
-    console.log('📱 发送忘记密码验证码（修复后）:', { phone, areaCode });
-    
+    console.log('📱 [PomeloXAPI] 发送忘记密码验证码开始:', {
+      phone: phone,
+      areaCode: areaCode,
+      phonePrefix: phone.substring(0, 3),
+      timestamp: new Date().toISOString()
+    });
+
     const formData = new URLSearchParams();
     formData.append('phone', phone);
-    
+
     if (areaCode) {
       formData.append('areaCode', areaCode);
     }
-    
+
     // 根据API文档，使用分开的phoneNum和areaCode参数
     const apiAreaCode = areaCode === 'CN' ? '86' : '1';
     const smsUrl = `${getBaseUrl()}/sms/vercodeSms?phoneNum=${phone}&areaCode=${apiAreaCode}`;
-    
-    console.log('🌐 [PomeloXAPI] 发送短信验证码请求:', { 
+
+    console.log('🌐 [PomeloXAPI] 发送短信验证码请求详情:', {
       url: smsUrl,
+      baseUrl: getBaseUrl(),
       phoneNum: phone,
       areaCode: apiAreaCode,
-      originalAreaCode: areaCode
+      originalAreaCode: areaCode,
+      phonePrefix: phone.substring(0, 3),
+      phoneLength: phone.length
     });
-    
-    const response = await fetchWithRetry(smsUrl, {
-      method: 'GET',
-      headers: {
-        'Accept': 'application/json',
-      },
-    });
-    
-    console.log('📥 [PomeloXAPI] 忘记密码API响应:', { 
-      status: response.status, 
-      ok: response.ok 
-    });
-    
-    if (!response.ok) {
-      console.error('❌ [PomeloXAPI] HTTP错误:', response.status);
-      throw new Error(`HTTP ${response.status}: 发送验证码失败`);
+
+    let response;
+    try {
+      response = await fetchWithRetry(smsUrl, {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+        },
+      });
+
+      console.log('📥 [PomeloXAPI] 忘记密码HTTP响应:', {
+        status: response.status,
+        statusText: response.statusText,
+        ok: response.ok,
+        headers: Object.fromEntries(response.headers.entries())
+      });
+
+    } catch (networkError: any) {
+      console.error('❌ [PomeloXAPI] 网络请求失败:', {
+        error: networkError.message,
+        phone: phone,
+        prefix: phone.substring(0, 3),
+        url: smsUrl
+      });
+      throw new Error(`网络请求失败: ${networkError.message}`);
     }
-    
-    const result = await response.json();
-    console.log('📋 [PomeloXAPI] 忘记密码响应数据:', result);
-    
+
+    if (!response.ok) {
+      let errorText = '';
+      try {
+        errorText = await response.text();
+      } catch (e) {
+        console.warn('无法读取错误响应内容');
+      }
+
+      console.error('❌ [PomeloXAPI] HTTP错误详情:', {
+        status: response.status,
+        statusText: response.statusText,
+        errorText: errorText,
+        phone: phone,
+        prefix: phone.substring(0, 3)
+      });
+
+      throw new Error(`HTTP ${response.status}: 发送验证码失败 - ${errorText || response.statusText}`);
+    }
+
+    let result;
+    try {
+      result = await response.json();
+    } catch (parseError: any) {
+      console.error('❌ [PomeloXAPI] JSON解析失败:', parseError);
+      throw new Error('服务器响应格式错误');
+    }
+
+    console.log('📋 [PomeloXAPI] 忘记密码响应数据详情:', {
+      result: result,
+      code: result.code,
+      codeType: typeof result.code,
+      message: result.message,
+      msg: result.msg,
+      bizId: result.bizId,
+      phone: phone,
+      prefix: phone.substring(0, 3)
+    });
+
+    // 分析响应结果
+    if (result.code !== "OK" && result.code !== 200) {
+      console.warn('⚠️ [PomeloXAPI] 业务逻辑失败:', {
+        code: result.code,
+        message: result.message || result.msg,
+        phone: phone,
+        prefix: phone.substring(0, 3)
+      });
+    }
+
     return result;
   }
 

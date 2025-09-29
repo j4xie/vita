@@ -18,7 +18,6 @@ import * as Haptics from 'expo-haptics';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { theme } from '../../theme';
-import { useTheme } from '../../context/ThemeContext';
 import { useAllDarkModeStyles } from '../../hooks/useDarkModeStyles';
 import { LIQUID_GLASS_LAYERS, DAWN_GRADIENTS } from '../../theme/core';
 
@@ -35,7 +34,8 @@ export const AIAssistantModal: React.FC<AIAssistantModalProps> = ({
 }) => {
   const { t } = useTranslation();
   const darkModeSystem = useAllDarkModeStyles();
-  const { isDarkMode, styles: dmStyles, gradients: dmGradients } = darkModeSystem;
+  const { styles: dmStyles, gradients: dmGradients } = darkModeSystem;
+  const isDarkMode = false;
   const insets = useSafeAreaInsets();
 
   // Animation values
@@ -260,11 +260,7 @@ export const AIAssistantModal: React.FC<AIAssistantModalProps> = ({
                   onPress={handleClose}
                   activeOpacity={0.8}
                 >
-                  <View style={[
-                    styles.primaryButton,
-                    styles.l2BrandGlassButton // L2品牌玻璃按钮（推荐方案A）
-                  ]}
-                  >
+                  <View style={styles.primaryButton}>
                     <Text style={styles.primaryButtonText}>
                       {t('ai.gotIt')}
                     </Text>
@@ -450,7 +446,7 @@ const styles = StyleSheet.create({
     borderWidth: LIQUID_GLASS_LAYERS.L3.border.width,
     borderColor: LIQUID_GLASS_LAYERS.L3.border.color.light,
     borderRadius: LIQUID_GLASS_LAYERS.L3.borderRadius.modal,
-    ...theme.shadows[LIQUID_GLASS_LAYERS.L3.shadow],
+    ...theme.shadows.lg,
   },
   
   // V2.0 内容玻璃效果

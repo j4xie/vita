@@ -64,7 +64,7 @@ import LocationService from '../../services/LocationService';
 
 // Using LiquidGlassTab component for V1.1 compliance
 
-export const ActivityListScreen: React.FC = () => {
+const ActivityListScreenInternal: React.FC = () => {
   const { t } = useTranslation();
   const navigation = useNavigation<any>();
   const insets = useSafeAreaInsets();
@@ -383,7 +383,7 @@ export const ActivityListScreen: React.FC = () => {
         { rotate: `${rotate}deg` }
       ],
       opacity,
-    };
+    } as any;
   });
 
   // Animation now handled by LiquidGlassTab component
@@ -525,7 +525,7 @@ export const ActivityListScreen: React.FC = () => {
         hasPersonalizedData: result.data?.rows?.[0]?.signStatus !== undefined,
         sampleActivity: result.data?.rows?.[0] ? {
           id: result.data.rows[0].id,
-          title: result.data.rows[0].activityName,
+          title: result.data.rows[0].name,
           signStatus: result.data.rows[0].signStatus
         } : null
       });
@@ -852,7 +852,7 @@ export const ActivityListScreen: React.FC = () => {
         }
         // 地点过滤
         if (locationFilters.some(f => f.id === filterId)) {
-          return activity.locationType === filterId;
+          return activity.location === filterId;
         }
         // 日期过滤
         if (dateFilters.some(f => f.id === filterId)) {
@@ -967,7 +967,7 @@ export const ActivityListScreen: React.FC = () => {
           return false;
         }
         if (locationFilters.some(f => f.id === filterId)) {
-          return activity.locationType === filterId;
+          return activity.location === filterId;
         }
         return false;
       });
@@ -1548,7 +1548,7 @@ const OrganizationSwitcherWrapper: React.FC = () => {
 const ActivityListScreenWithProvider: React.FC = () => {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <ActivityListScreen />
+      <ActivityListScreenInternal />
     </GestureHandlerRootView>
   );
 };

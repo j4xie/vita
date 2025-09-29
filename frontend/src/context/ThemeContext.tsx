@@ -1,9 +1,6 @@
-import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { useColorScheme, Appearance, Platform } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useTranslation } from 'react-i18next';
+import React, { createContext, useContext, ReactNode } from 'react';
 
-export type ThemeMode = 'light' | 'dark' | 'auto';
+export type ThemeMode = 'light';
 
 interface ThemeContextType {
   themeMode: ThemeMode;
@@ -18,88 +15,23 @@ interface ThemeProviderProps {
   children: ReactNode;
 }
 
-const THEME_STORAGE_KEY = '@pomelo_theme_mode';
-
 export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
-  const systemColorScheme = useColorScheme();
-  const [themeMode, setThemeMode] = useState<ThemeMode>('light');
-  const [isDarkMode, setIsDarkMode] = useState(false);
+  // Always light mode - simplified implementation
+  const themeMode: ThemeMode = 'light';
+  const isDarkMode = false;
 
-  // 初始化主题设置
-  useEffect(() => {
-    const initializeTheme = async () => {
-      try {
-        const savedThemeMode = await AsyncStorage.getItem(THEME_STORAGE_KEY);
-        if (savedThemeMode && ['light', 'dark', 'auto'].includes(savedThemeMode)) {
-          setThemeMode(savedThemeMode as ThemeMode);
-        } else {
-          // 如果没有保存的主题设置，默认设置为浅色模式
-          setThemeMode('light');
-          await AsyncStorage.setItem(THEME_STORAGE_KEY, 'light');
-        }
-      } catch (error) {
-        console.error('Error loading theme mode:', error);
-        // 出错时也设置为浅色模式
-        setThemeMode('light');
-      }
-    };
-
-    initializeTheme();
-  }, []);
-
-  // 计算实际的深色模式状态
-  useEffect(() => {
-    let actualDarkMode = false;
-    
-    // 移动端主题模式处理
-    switch (themeMode) {
-      case 'dark':
-        actualDarkMode = true;
-        break;
-      case 'light':
-        actualDarkMode = false;
-        break;
-      case 'auto':
-      default:
-        actualDarkMode = systemColorScheme === 'dark';
-        break;
-    }
-    
-    setIsDarkMode(actualDarkMode);
-  }, [themeMode, systemColorScheme]);
-
-  // 更改主题模式
+  // Simplified change function - only accepts light mode
   const changeThemeMode = async (mode: ThemeMode) => {
-    try {
-      setThemeMode(mode);
-      await AsyncStorage.setItem(THEME_STORAGE_KEY, mode);
-      console.log(`Theme mode changed to: ${mode}`);
-    } catch (error) {
-      console.error('Error saving theme mode:', error);
-      throw error;
-    }
+    // Only light mode is supported
+    console.log('Light mode only - theme change ignored');
   };
 
-  // 获取主题模式显示名称 - 使用i18n国际化
+  // Simplified display name function
   const getThemeModeDisplayName = (mode: ThemeMode, t?: (key: string) => string): string => {
-    const modeKeys = {
-      'light': 'profile.general.light_mode',
-      'dark': 'profile.general.dark_mode', 
-      'auto': 'profile.general.auto_mode',
-    };
-    
     if (t) {
-      return t(modeKeys[mode]) || mode;
+      return t('profile.general.light_mode') || 'Light Mode';
     }
-    
-    // Fallback when t function is not available
-    const fallbackNames = {
-      'light': '浅色模式',
-      'dark': '深色模式', 
-      'auto': '跟随系统',
-    };
-    
-    return fallbackNames[mode] || mode;
+    return '浅色模式';
   };
 
   const contextValue: ThemeContextType = {

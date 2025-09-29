@@ -240,7 +240,21 @@
       "reset_button": "Reset Password",
       "success_title": "Password Reset Successfully",
       "success_message": "Your password has been reset successfully. Please login with your new password",
-      "reset_failed": "Password reset failed, please try again later"
+      "reset_failed": "Password reset failed, please try again later",
+      "errors": {
+        "password_format_rejected": "Password format does not meet requirements",
+        "password_format_details": "Password must be at least 6 characters with letters and numbers",
+        "verification_code_expired": "Verification code has expired",
+        "verification_code_invalid": "Verification code is incorrect",
+        "phone_not_found": "Phone number not found",
+        "network_error": "Network connection failed",
+        "server_error": "Server error",
+        "unknown_error": "Unknown error",
+        "retry_suggestion": "Please check your input and try again",
+        "get_new_code": "Please get a new verification code",
+        "check_network": "Please check your network connection and try again",
+        "contact_support": "If the problem persists, please contact customer support"
+      }
     },
     "password": {
       "strength": {
@@ -272,6 +286,66 @@
       "rate_limited": "Too many login attempts, please try again later",
       "authentication_failed": "Authentication failed, please login again",
       "session_expired": "Session expired, please login again",
+      "form_validation": {
+        "email_required": "Please enter your email address",
+        "email_format_invalid": "Invalid email format",
+        "email_format_hint": "Please enter a valid email address like: example@university.edu",
+        "email_example": "Example: zhang.san@ucla.edu",
+        "password_required": "Please enter your password",
+        "password_format_invalid": "Password format does not meet requirements",
+        "password_format_hint": "Password must be at least 6 characters with letters and numbers",
+        "password_example": "Example: abc123 (letters + numbers)",
+        "phone_required": "Please enter your phone number",
+        "phone_format_invalid_cn": "Invalid Chinese phone number format",
+        "phone_format_hint_cn": "Please enter an 11-digit Chinese phone number starting with 1",
+        "phone_example_cn": "Example: 13812345678",
+        "phone_format_invalid_us": "Invalid US phone number format",
+        "phone_format_hint_us": "Please enter a 10-digit US phone number",
+        "phone_example_us": "Example: 5551234567",
+        "username_required": "Please enter your username",
+        "username_format_invalid": "Invalid username format",
+        "username_format_hint": "Username must be 6-20 characters with letters and numbers",
+        "username_example": "Example: zhang123 (letters and numbers)",
+        "verification_code_required": "Please enter verification code",
+        "verification_code_format_invalid": "Invalid verification code format",
+        "verification_code_format_hint": "Please enter a 6-digit verification code",
+        "verification_code_example": "Example: 123456",
+        "confirm_password_required": "Please confirm your password",
+        "password_mismatch": "Passwords do not match",
+        "password_mismatch_hint": "Please ensure both passwords are exactly the same"
+      },
+      "registration": {
+        "username_taken": "Username is already taken",
+        "username_taken_suggestion": "Please use a different email or login directly",
+        "email_taken": "Email is already registered",
+        "email_taken_suggestion": "Please use a different email address or try password recovery",
+        "phone_taken": "Phone number is already registered",
+        "phone_taken_suggestion": "Please use a different phone number or login directly",
+        "verification_code_expired": "Verification code has expired",
+        "verification_code_invalid": "Invalid verification code",
+        "verification_code_suggestion": "Please get a new verification code",
+        "registration_failed": "Registration failed",
+        "service_unavailable": "Registration service is temporarily unavailable",
+        "contact_admin": "Please contact administrator or try again later"
+      },
+      "network": {
+        "connection_failed": "Network connection failed",
+        "connection_suggestion": "Please check your network connection and retry",
+        "timeout": "Request timeout",
+        "timeout_suggestion": "Network is slow, please try again later",
+        "ssl_error": "Secure connection failed",
+        "ssl_suggestion": "Please check network settings or switch networks"
+      },
+      "actions": {
+        "retry": "Retry",
+        "get_new_code": "Get new verification code",
+        "contact_support": "Contact support",
+        "check_input": "Check input",
+        "try_different": "Try different option",
+        "go_to_login": "Go to Login",
+        "change_email": "Change Email",
+        "change_phone": "Change Phone"
+      },
       "school_load_failed": "Failed to load school list, please try again",
       "unknown_error": "An unknown error occurred, please try again later"
     },
@@ -623,6 +697,24 @@
       "privacy_policy": "Privacy Policy",
       "terms_of_service": "Terms of Service"
     }
+  },
+  "debug": {
+    "permission_tool": "Permission Debug Tool",
+    "current_user_permissions": "Current User Permission Status",
+    "permission_level": "Permission Level",
+    "volunteer_access": "Volunteer Access",
+    "accessible": "Accessible",
+    "not_accessible": "Not Accessible",
+    "checkin_operations": "Check-in Operations",
+    "can_operate": "Can Operate",
+    "cannot_operate": "Cannot Operate",
+    "admin": "Admin",
+    "part_manager": "Part Manager",
+    "staff": "Staff",
+    "user_basic_info": "User Basic Information",
+    "user_id": "User ID",
+    "username": "Username",
+    "legal_name": "Legal Name"
   },
   "activities": {
     "discover": "Discover Events",
@@ -1360,7 +1452,10 @@
       "creation_failed": "Creation failed",
       "card_creation_error": "Membership card creation failed",
       "switch_failed": "Switch failed",
-      "organization_switch_error": "Organization switch failed"
+      "organization_switch_error": "Organization switch failed",
+      "invalid_activity_qr": "Invalid activity QR code",
+      "scan_process_failed": "QR scan processing failed",
+      "process_error": "Error processing scan result"
     },
     "identity": {
       "title": "My Identity Code",
@@ -1390,7 +1485,7 @@
     "success": "Entry Successful",
     "successMessage": "Successfully recorded {{duration}} hours",
     "confirmClose": "Discard current input?",
-    "dateRangeHint": "You can select dates within the last 7 days",
+    "dateRangeHint": "You can select dates within the last 30 days",
     "selectDateTitle": "Select Entry Date",
     "workDuration": "Work Duration",
     "manualInput": "Manual Input",
@@ -1407,7 +1502,7 @@
     "errors": {
       "futureDate": "Cannot select future date",
       "futureTime": "Cannot select future time",
-      "dateRange": "Can only enter time within the last 7 days",
+      "dateRange": "Can only enter time within the last 30 days",
       "selectStartFirst": "Please select start time first",
       "endBeforeStart": "End time must be after start time",
       "duration": "Single entry cannot exceed 12 hours",
@@ -1418,6 +1513,55 @@
       "invalidDateFormat": "Invalid date format, please use YYYY-MM-DD",
       "invalidTimeFormat": "Invalid time format, please use HH:MM",
       "descriptionRequired": "Please fill in work description"
+    },
+    "approvalMessages": {
+      "success": "Entry successful",
+      "staffReviewRequired": "Staff entries require review",
+      "overdueReviewRequired": "Overdue entries require review",
+      "overtimeReviewRequired": "Overtime work requires review",
+      "generalReviewRequired": "Review required"
+    }
+  },
+  "autoCheckout": {
+    "title": "Auto Checkout",
+    "description": "Automatically check out volunteer work when you exit the app",
+    "enabled": "Auto checkout enabled",
+    "disabled": "Auto checkout disabled",
+    "delaySeconds": "Delay time (seconds)",
+    "showConfirmation": "Show confirmation dialog",
+    "settings": {
+      "title": "Auto Checkout Settings",
+      "enable": "Enable Auto Checkout",
+      "delay": "Delay Time",
+      "delayDescription": "How long after app goes to background to auto checkout",
+      "confirmation": "Confirmation Dialog",
+      "confirmationDescription": "Whether to show confirmation dialog before auto checkout"
+    },
+    "notifications": {
+      "autoCheckedOut": "Auto checked out",
+      "workDuration": "Work duration: {{duration}}",
+      "reason": "Auto checked out due to app exit"
+    },
+    "errors": {
+      "initializationFailed": "Auto checkout service initialization failed",
+      "recordFailed": "Failed to record auto checkout state",
+      "clearFailed": "Failed to clear auto checkout state"
+    }
+  },
+  "autoApproval": {
+    "title": "Auto Approval",
+    "description": "Normal time records for administrators are automatically approved",
+    "rules": {
+      "signout": "Signout auto approval: Admin permission + ≤8 hours work + Non-abnormal record",
+      "timeEntry": "Time entry auto approval: Admin permission + ≤7 days entry + ≤8 hours work",
+      "staff": "Staff members: All records require manual review",
+      "overtime": "Overtime work: >8 hours requires manual review",
+      "overdue": "Overdue entry: >7 days requires manual review"
+    },
+    "status": {
+      "autoApproved": "Auto approved by system",
+      "pendingReview": "Pending manual review",
+      "abnormalRecord": "Abnormal record requires review"
     }
   },
   "volunteer": {
@@ -1541,7 +1685,15 @@
     "open_scanner_failed_message": "Unable to start scan function, please check camera permission"
   },
   "volunteerHome": {
-    "quickActions": "Quick Actions"
+    "quickActions": "Quick Actions",
+    "redirectToSchool": "Redirecting to your school...",
+    "recentCheckout": "Last checkout",
+    "currentCheckin": "Current session",
+    "worked": "Worked",
+    "working": "Working for",
+    "hours": "hours",
+    "minutes": "minutes",
+    "noWorkRecord": "No work record"
   },
   "volunteerCheckIn": {
     "searchVolunteer": "Search Volunteer",
@@ -1550,9 +1702,9 @@
     "search": "Search",
     "viewOnly": "View",
     "userInfo": "User Info",
-    "checkIn": "Check In",
+    "checkIn": "Check In Timer",
     "checkOut": "Check Out",
-    "timeEntry": "Time Entry",
+    "timeEntry": "Log Hours",
     "personalDashboard": "Personal Hours",
     "personalDashboardDesc": "View your volunteer hour records",
     "personalHours": "My Hours Statistics",

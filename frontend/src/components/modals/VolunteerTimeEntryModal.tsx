@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -11,6 +11,7 @@ import {
   ActivityIndicator,
   KeyboardAvoidingView,
   Pressable,
+  Keyboard,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
@@ -22,6 +23,7 @@ import { i18n } from '../../utils/i18n';
 
 import { theme } from '../../theme';
 import { useUser } from '../../context/UserContext';
+import { getUserPermissionLevel } from '../../types/userPermissions';
 import { performTimeEntry, getPersonalVolunteerRecords } from '../../services/volunteerAPI';
 import { timeService } from '../../utils/UnifiedTimeService';
 import { SafeAlert } from '../../utils/SafeAlert';
@@ -105,13 +107,13 @@ export const VolunteerTimeEntryModal: React.FC<VolunteerTimeEntryModalProps> = (
 
   // 日期选择处理
   const handleDateConfirm = (date: Date) => {
-    // 验证日期范围（过去7天至今天）
+    // 验证日期范围（过去30天至今天）
     const today = new Date();
     today.setHours(23, 59, 59, 999);
 
-    const sevenDaysAgo = new Date();
-    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-    sevenDaysAgo.setHours(0, 0, 0, 0);
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    thirtyDaysAgo.setHours(0, 0, 0, 0);
 
     if (date > today) {
       SafeAlert.alert(
@@ -122,7 +124,7 @@ export const VolunteerTimeEntryModal: React.FC<VolunteerTimeEntryModalProps> = (
       return;
     }
 
-    if (date < sevenDaysAgo) {
+    if (date < thirtyDaysAgo) {
       SafeAlert.alert(
         t('common.error'),
         t('volunteerTimeEntry.errors.dateRange')
@@ -238,7 +240,7 @@ export const VolunteerTimeEntryModal: React.FC<VolunteerTimeEntryModalProps> = (
       });
 
       // 获取用户7天内的记录
-      const response = await getPersonalVolunteerRecords(targetUserId);
+      const response = await getPersonalVolunteerRecords(Number(targetUserId));
       if (response.code === 200 && response.rows) {
         console.log('🔍 [OVERLAP-CHECK] 获取到历史记录:', response.rows.length, '条');
 
@@ -331,8 +333,8 @@ export const VolunteerTimeEntryModal: React.FC<VolunteerTimeEntryModalProps> = (
 
       // 调用补录API
       const result = await performTimeEntry(
-        targetUserId,
-        user.id, // operateUserId
+        Number(targetUserId),
+        Number(user.id), // operateUserId
         user.legalName, // operateLegalName
         timeService.formatLocalTime(startTime),
         timeService.formatLocalTime(endTime),
@@ -343,11 +345,39 @@ export const VolunteerTimeEntryModal: React.FC<VolunteerTimeEntryModalProps> = (
         // 计算时长用于显示
         const duration = timeService.calculateDuration(startTime, endTime);
 
+        // 🆕 计算审核状态提示
+        const getApprovalStatusMessage = (): string => {
+          const userPermission = getUserPermissionLevel(user);
+          const entryStartDate = timeService.parseServerTime(timeService.formatLocalTime(startTime));
+          const now = new Date();
+          const daysSinceEntry = entryStartDate ?
+            (now.getTime() - entryStartDate.getTime()) / (1000 * 60 * 60 * 24) : 999;
+
+          const workDurationHours = duration.minutes / 60;
+
+          // 自动审核判断（与后端逻辑保持一致）
+          const willAutoApprove =
+            ['manage', 'part_manage'].includes(userPermission) &&  // 管理员权限
+            daysSinceEntry <= 7 &&                                // 7天内补录
+            workDurationHours <= 8;                               // 8小时内工作
+
+          if (willAutoApprove) {
+            return `\n\n✅ ${t('autoApproval.status.autoApproved')}`;
+          } else {
+            const reason =
+              !['manage', 'part_manage'].includes(userPermission) ? t('volunteerTimeEntry.approvalMessages.staffReviewRequired') :
+              daysSinceEntry > 7 ? t('volunteerTimeEntry.approvalMessages.overdueReviewRequired') :
+              workDurationHours > 8 ? t('volunteerTimeEntry.approvalMessages.overtimeReviewRequired') : t('volunteerTimeEntry.approvalMessages.generalReviewRequired');
+
+            return `\n\n⏸️ ${t('volunteerTimeEntry.approvalMessages.success')}，${reason}`;
+          }
+        };
+
         SafeAlert.alert(
           t('volunteerTimeEntry.success'),
           t('volunteerTimeEntry.successMessage', {
             duration: duration.display
-          }),
+          }) + getApprovalStatusMessage(),
           [
             {
               text: t('common.confirm'),
@@ -387,11 +417,11 @@ export const VolunteerTimeEntryModal: React.FC<VolunteerTimeEntryModalProps> = (
     // 验证日期范围
     const today = new Date();
     today.setHours(23, 59, 59, 999);
-    const sevenDaysAgo = new Date();
-    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-    sevenDaysAgo.setHours(0, 0, 0, 0);
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    thirtyDaysAgo.setHours(0, 0, 0, 0);
 
-    if (date > today || date < sevenDaysAgo) return null;
+    if (date > today || date < thirtyDaysAgo) return null;
 
     return date;
   };
@@ -489,58 +519,22 @@ export const VolunteerTimeEntryModal: React.FC<VolunteerTimeEntryModalProps> = (
     setManualEndTimeText('');
   };
 
-  // 生成可选的7天日期列表
-  const getSelectableDates = () => {
-    const dates = [];
+
+  // 获取最早可选日期（30天前）
+  const getMinSelectableDate = () => {
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    thirtyDaysAgo.setHours(0, 0, 0, 0);
+    return thirtyDaysAgo;
+  };
+
+  // 获取最晚可选日期（今天）
+  const getMaxSelectableDate = () => {
     const today = new Date();
-
-    for (let i = 0; i < 7; i++) {
-      const date = new Date(today);
-      date.setDate(today.getDate() - i);
-      dates.push(date);
-    }
-
-    return dates;
+    today.setHours(23, 59, 59, 999);
+    return today;
   };
 
-  // 生成可选的结束时间列表（基于开始时间）
-  const getSelectableEndTimes = () => {
-    if (!startTime) return [];
-
-    const endTimes = [];
-    const now = new Date();
-    const isToday = selectedDate.toDateString() === now.toDateString();
-
-    // 计算一天中的结束范围
-    const dayEnd = new Date(selectedDate);
-    dayEnd.setHours(23, 59, 59, 999);
-
-    // 计算最大结束时间（开始时间+12小时 或 当天结束 或 当前时间+5分钟，取最小值）
-    const maxEndTime = new Date(Math.min(
-      startTime.getTime() + 12 * 60 * 60 * 1000, // 12小时后
-      dayEnd.getTime(), // 当天结束
-      isToday ? now.getTime() + 5 * 60 * 1000 : dayEnd.getTime() // 如果是今天，当前时间+5分钟
-    ));
-
-    // 从开始时间后1分钟开始，每5分钟一个选项
-    const startMillis = startTime.getTime() + 60 * 1000; // +1分钟
-    const endMillis = maxEndTime.getTime();
-
-    for (let time = startMillis; time <= endMillis; time += 5 * 60 * 1000) { // 每5分钟
-      endTimes.push(new Date(time));
-    }
-
-    console.log('🕐 [DEBUG] 生成结束时间列表:', {
-      startTime: startTime.toISOString(),
-      maxEndTime: maxEndTime.toISOString(),
-      isToday,
-      count: endTimes.length,
-      firstOption: endTimes[0]?.toISOString(),
-      lastOption: endTimes[endTimes.length - 1]?.toISOString()
-    });
-
-    return endTimes;
-  };
 
   // 格式化日期显示
   const formatDate = (date: Date) => {
@@ -565,28 +559,6 @@ export const VolunteerTimeEntryModal: React.FC<VolunteerTimeEntryModalProps> = (
     });
   };
 
-  // 格式化日期选择器中的显示
-  const formatDateForPicker = (date: Date) => {
-    const today = new Date();
-    const yesterday = new Date(today);
-    yesterday.setDate(yesterday.getDate() - 1);
-
-    if (date.toDateString() === today.toDateString()) {
-      return t('common.today', '今天');
-    } else if (date.toDateString() === yesterday.toDateString()) {
-      return t('common.yesterday', '昨天');
-    }
-
-    // 根据当前语言动态选择格式
-    const currentLang = i18n.language;
-    const locale = currentLang.startsWith('zh') ? 'zh-CN' : 'en-US';
-
-    return date.toLocaleDateString(locale, {
-      month: 'short',
-      day: 'numeric',
-      weekday: 'short'
-    });
-  };
 
   // 格式化时间显示
   const formatTime = (date: Date | null) => {
@@ -604,7 +576,6 @@ export const VolunteerTimeEntryModal: React.FC<VolunteerTimeEntryModalProps> = (
     return timeService.calculateDuration(startTime, endTime);
   };
 
-  const duration = calculateDuration();
 
   return (
     <Modal
@@ -742,6 +713,13 @@ export const VolunteerTimeEntryModal: React.FC<VolunteerTimeEntryModalProps> = (
                         <Text style={styles.prefixText}>
                           {t('volunteerTimeEntry.descriptionPrefix')}
                         </Text>
+                        {/* 键盘收起按钮 */}
+                        <TouchableOpacity
+                          style={styles.keyboardDismissButton}
+                          onPress={() => Keyboard.dismiss()}
+                        >
+                          <Ionicons name="chevron-down" size={16} color={theme.colors.text.secondary} />
+                        </TouchableOpacity>
                       </View>
                       <TextInput
                         style={styles.textInput}
@@ -767,7 +745,7 @@ export const VolunteerTimeEntryModal: React.FC<VolunteerTimeEntryModalProps> = (
                     <LinearGradient
                       colors={(!startTime || !endTime || !description.trim()) ?
                         ['#C7C7CC', '#B0B0B5'] :
-                        [theme.colors.primary, theme.colors.primaryDark || theme.colors.primary]
+                        [theme.colors.primary, theme.colors.primaryPressed]
                       }
                       style={styles.submitButton}
                       start={{ x: 0, y: 0 }}
@@ -927,48 +905,23 @@ export const VolunteerTimeEntryModal: React.FC<VolunteerTimeEntryModalProps> = (
                 ) : (
                   /* 选择器模式 */
                   <>
-                    {/* 自定义7天日期选择器 - 两列布局 */}
+                    {/* 原生日期选择器 - 支持30天范围 */}
                     {showDatePicker && (
-                      <View style={styles.customDatePicker}>
+                      <View style={styles.nativeDatePickerContainer}>
                         <Text style={styles.datePickerTitle}>
                           {t('volunteerTimeEntry.selectDateTitle', '选择补录日期')}
                         </Text>
-                        <View style={styles.dateGrid}>
-                          {getSelectableDates().map((date, index) => {
-                            const isSelected = date.toDateString() === tempDate.toDateString();
-                            return (
-                              <TouchableOpacity
-                                key={index}
-                                style={[
-                                  styles.dateGridItem,
-                                  isSelected && styles.dateGridItemSelected
-                                ]}
-                                onPress={() => setTempDate(date)}
-                              >
-                                <Text style={[
-                                  styles.dateGridText,
-                                  isSelected && styles.dateGridTextSelected
-                                ]}>
-                                  {formatDateForPicker(date)}
-                                </Text>
-                                <Text style={[
-                                  styles.dateGridDate,
-                                  isSelected && styles.dateGridDateSelected
-                                ]}>
-                                  {date.toLocaleDateString('zh-CN', {
-                                    month: '2-digit',
-                                    day: '2-digit'
-                                  })}
-                                </Text>
-                                {isSelected && (
-                                  <View style={styles.selectedIndicator}>
-                                    <Ionicons name="checkmark" size={16} color="white" />
-                                  </View>
-                                )}
-                              </TouchableOpacity>
-                            );
-                          })}
-                        </View>
+                        <DateTimePicker
+                          value={tempDate}
+                          mode="date"
+                          display="spinner"
+                          onChange={(_, date) => {
+                            if (date) setTempDate(date);
+                          }}
+                          minimumDate={getMinSelectableDate()}
+                          maximumDate={getMaxSelectableDate()}
+                          style={styles.picker}
+                        />
                       </View>
                     )}
 
@@ -978,7 +931,7 @@ export const VolunteerTimeEntryModal: React.FC<VolunteerTimeEntryModalProps> = (
                         value={tempStartTime}
                         mode="time"
                         display="spinner"
-                        onChange={(event, time) => {
+                        onChange={(_, time) => {
                           if (time) setTempStartTime(time);
                         }}
                         is24Hour={true}
@@ -996,7 +949,7 @@ export const VolunteerTimeEntryModal: React.FC<VolunteerTimeEntryModalProps> = (
                           value={tempEndTime}
                           mode="time"
                           display="spinner"
-                          onChange={(event, time) => {
+                          onChange={(_, time) => {
                             if (time) setTempEndTime(time);
                           }}
                           is24Hour={true}
@@ -1157,11 +1110,19 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   prefixContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     backgroundColor: theme.colors.background.secondary,
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: theme.colors.border.primary,
+  },
+  keyboardDismissButton: {
+    padding: 4,
+    borderRadius: 4,
+    backgroundColor: 'rgba(0, 0, 0, 0.1)',
   },
   prefixText: {
     fontSize: 14,
@@ -1489,4 +1450,10 @@ const styles = StyleSheet.create({
     backgroundColor: 'white',
     paddingVertical: 16,
   },
+  // 原生日期选择器样式
+  nativeDatePickerContainer: {
+    backgroundColor: 'white',
+    paddingVertical: 20,
+    paddingHorizontal: 16,
+  }
 });

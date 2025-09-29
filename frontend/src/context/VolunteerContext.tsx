@@ -5,6 +5,7 @@
 
 import React, { createContext, useContext, useState, useCallback, ReactNode } from 'react';
 import { VolunteerRecord } from '../services/volunteerAPI';
+import { useVolunteerAutoCheckout } from '../hooks/useVolunteerAutoCheckout';
 
 // 志愿者状态类型
 export type VolunteerStatus = 'not_signed_in' | 'signed_in' | 'signed_out';
@@ -35,6 +36,9 @@ interface VolunteerContextActions {
   clearState: () => void;
   // 强制刷新状态
   refreshStatus: () => Promise<void>;
+  // 自动签退相关方法
+  recordAutoCheckout: (userId: string, userName: string, recordId: number) => Promise<void>;
+  clearAutoCheckout: (userId: string) => Promise<void>;
 }
 
 // 合并的Context类型
@@ -62,6 +66,9 @@ const initialState: VolunteerContextState = {
  */
 export const VolunteerProvider: React.FC<VolunteerProviderProps> = ({ children }) => {
   const [state, setState] = useState<VolunteerContextState>(initialState);
+
+  // 集成自动签退功能
+  const autoCheckout = useVolunteerAutoCheckout();
 
   // 更新志愿者状态
   const updateStatus = useCallback((status: VolunteerStatus, record?: VolunteerRecord | null) => {
@@ -144,6 +151,34 @@ export const VolunteerProvider: React.FC<VolunteerProviderProps> = ({ children }
     }
   }, [setLoading, setError]);
 
+  // 记录自动签退状态
+  const recordAutoCheckout = useCallback(async (userId: string, userName: string, recordId: number) => {
+    try {
+      if (autoCheckout.isInitialized) {
+        await autoCheckout.recordCheckin(userId, userName, recordId);
+        if (__DEV__) {
+          console.log('✅ [VOLUNTEER-CONTEXT] 已记录自动签退状态:', { userId, userName, recordId });
+        }
+      }
+    } catch (error) {
+      console.error('❌ [VOLUNTEER-CONTEXT] 记录自动签退状态失败:', error);
+    }
+  }, [autoCheckout]);
+
+  // 清除自动签退状态
+  const clearAutoCheckout = useCallback(async (userId: string) => {
+    try {
+      if (autoCheckout.isInitialized) {
+        await autoCheckout.recordCheckout(userId);
+        if (__DEV__) {
+          console.log('✅ [VOLUNTEER-CONTEXT] 已清除自动签退状态:', { userId });
+        }
+      }
+    } catch (error) {
+      console.error('❌ [VOLUNTEER-CONTEXT] 清除自动签退状态失败:', error);
+    }
+  }, [autoCheckout]);
+
   // Context值
   const contextValue: VolunteerContextType = {
     // 状态
@@ -155,6 +190,9 @@ export const VolunteerProvider: React.FC<VolunteerProviderProps> = ({ children }
     setError,
     clearState,
     refreshStatus,
+    // 自动签退方法
+    recordAutoCheckout,
+    clearAutoCheckout,
   };
 
   return (

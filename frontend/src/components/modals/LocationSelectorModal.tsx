@@ -169,7 +169,7 @@ export const LocationSelectorModal: React.FC<LocationSelectorModalProps> = ({
     // 处理用户学校字符串
     let schoolName: string;
     if (typeof userSchool === 'object' && userSchool) {
-      schoolName = (userSchool as any).name || userSchool.toString();
+      schoolName = (userSchool as any).name || String(userSchool);
     } else {
       schoolName = userSchool;
     }

@@ -30,14 +30,6 @@ PomeloX is a **production-ready** mobile platform for Chinese international stud
 - ❌ **NEVER create missing APIs** - Report missing endpoints immediately
 - ✅ **Real data only** - All user stats, activity data must come from actual APIs
 
-### **🚫 临时禁用功能 (CRITICAL - 2025年9月)**
-- ❌ **用户资料编辑功能已临时封禁** - `/app/user/edit` 接口存在后端Bug
-  - **问题**：编辑用户信息时会意外清空用户角色，导致权限丢失
-  - **影响**：志愿者管理按钮消失，用户权限被重置
-  - **解决方案**：编辑按钮已隐藏 (`PersonalInfoCard.tsx:457`)
-  - **代码位置**：`EditProfileScreen.tsx` 完整保留，仅入口被禁用
-  - **恢复条件**：等待后端修复角色字段处理逻辑
-  - **联系人**：需与后端开发确认 `/app/user/edit` 接口的角色保持机制
 
 ### **🌐 Environment Configuration (CRITICAL)**
 
@@ -58,6 +50,45 @@ PomeloX is a **production-ready** mobile platform for Chinese international stud
 - ❌ **NEVER single-language development** - Add both `zh-CN` and `en-US` translations
 - ✅ **Semantic key names** - Use `auth.login.welcome` not `text1`
 - ✅ **Dual sync** - Every translation key exists in both language files
+
+### **⚠️ 角色数据结构兼容性 (IMPORTANT - 2025年9月)**
+后端API在不同情况下返回角色数据的格式不一致，必须同时处理两种格式：
+
+#### **问题描述**
+- **格式1**: `role` 对象（单个角色，字段名 `roleKey`）
+  ```json
+  {
+    "role": { "roleId": 2, "roleKey": "manage", "roleName": "总管理员" },
+    "roles": []
+  }
+  ```
+- **格式2**: `roles` 数组（多个角色，字段名 `key`）
+  ```json
+  {
+    "roles": [{ "id": 2, "key": "manage", "name": "总管理员" }],
+    "role": null
+  }
+  ```
+
+#### **解决方案**
+1. **userAdapter.ts** - 统一转换为数组格式：
+   ```typescript
+   if (backendUser.role && safeRoles.length === 0) {
+     safeRoles = [{ ...backendUser.role, key: backendUser.role.roleKey }];
+   }
+   ```
+
+2. **权限检查** - 同时检查两种格式：
+   ```typescript
+   const hasPermission =
+     user?.roles?.some(r => r.key === 'manage') ||
+     user?.role?.roleKey === 'manage';
+   ```
+
+#### **影响范围**
+- EditProfileScreen (alternateEmail权限判断)
+- UserContext (权限等级计算)
+- 任何依赖角色权限的功能模块
 
 ## 🏗️ **Tech Stack**
 
@@ -84,13 +115,16 @@ PomeloX is a **production-ready** mobile platform for Chinese international stud
 # Database services
 docker-compose up -d postgres redis
 
-# Frontend development (App)
-cd frontend && npm run ios
+# Frontend development (App) - 生产环境
+cd frontend && npm run ios:prod
+
+# Frontend development (App) - 测试环境
+cd frontend && npm run ios:dev
 
 # Web测试环境 (Port 8091)
 cd frontend-web-testenv && npm run web:dev
 
-# Web生产环境 (Port 8090)  
+# Web生产环境 (Port 8090)
 cd frontend-web && npm run web:dev
 ```
 
@@ -378,6 +412,11 @@ This is a **live application** serving real users. Always:
 - Use real data and APIs
 - Follow established patterns
 - Report issues immediately
+
+### **Environment Management (2025年9月更新)**
+- **App环境切换**: `npm run ios:dev` (测试) / `npm run ios:prod` (生产)
+- **一键切换**: 自动更新.env文件并启动对应环境
+- **零硬编码**: 所有API地址通过环境管理器动态获取
 
 ---
 

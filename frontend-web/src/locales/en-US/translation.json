@@ -441,6 +441,10 @@
           "try_different_username": "Try a different username",
           "check_registered_email": "Check if email is already registered",
           "contact_support_account": "Contact support to recover account",
+          "use_different_email": "Use a different email address",
+          "use_different_phone": "Use a different phone number",
+          "try_login_instead": "Login with this account directly",
+          "reset_password": "If you forgot your password, you can reset it",
           "get_new_code": "Get new verification code",
           "check_sms": "Check SMS",
           "contact_admin_enable": "Contact admin to enable",
@@ -458,7 +462,10 @@
           "service_suspended": "Registration feature is temporarily disabled",
           "username_issue": "Username already exists or format is incorrect",
           "verification_code_error": "Verification code error or expired",
-          "email_issue": "Email format is incorrect or already in use"
+          "email_issue": "Email format is incorrect or already in use",
+          "email_already_registered_message": "This email is already registered, please use a different email or login directly",
+          "phone_already_registered_message": "This phone number is already registered, please use a different phone number or login directly",
+          "username_already_exists_message": "This username is already taken, please use a different email"
         },
         "error_titles": {
           "information_format_error": "Information Format Error",
@@ -466,7 +473,10 @@
           "service_suspended": "Service Suspended",
           "username_problem": "Username Problem",
           "verification_code_error": "Verification Code Error",
-          "email_problem": "Email Problem"
+          "email_problem": "Email Problem",
+          "email_already_registered_title": "Email Already Registered",
+          "phone_already_registered_title": "Phone Number Already Registered",
+          "username_already_exists_title": "Username Already Exists"
         }
       },
       "verification": {
@@ -544,6 +554,7 @@
         "last_name_placeholder": "",
         "school_email_preview": "School Email Preview",
         "email_username_placeholder": "e.g. zhang.san, alex123",
+        "email_use": "e.g. zhang.san, alex123",
         "email_prefix_placeholder": "username",
         "complete_email": "Complete Email",
         "loading_schools": "Loading schools...",
@@ -605,6 +616,10 @@
           "try_different_username": "Try a different username",
           "check_registered_email": "Check if email is already registered",
           "contact_support_account": "Contact support to recover account",
+          "use_different_email": "Use a different email address",
+          "use_different_phone": "Use a different phone number",
+          "try_login_instead": "Login with this account directly",
+          "reset_password": "If you forgot your password, you can reset it",
           "get_new_code": "Get new verification code",
           "check_sms": "Check SMS",
           "contact_admin_enable": "Contact admin to enable",
@@ -622,7 +637,10 @@
           "service_suspended": "Registration feature is temporarily disabled",
           "username_issue": "Username already exists or format is incorrect",
           "verification_code_error": "Verification code error or expired",
-          "email_issue": "Email format is incorrect or already in use"
+          "email_issue": "Email format is incorrect or already in use",
+          "email_already_registered_message": "This email is already registered, please use a different email or login directly",
+          "phone_already_registered_message": "This phone number is already registered, please use a different phone number or login directly",
+          "username_already_exists_message": "This username is already taken, please use a different email"
         },
         "error_titles": {
           "information_format_error": "Information Format Error",
@@ -630,7 +648,10 @@
           "service_suspended": "Service Suspended",
           "username_problem": "Username Problem",
           "verification_code_error": "Verification Code Error",
-          "email_problem": "Email Problem"
+          "email_problem": "Email Problem",
+          "email_already_registered_title": "Email Already Registered",
+          "phone_already_registered_title": "Phone Number Already Registered",
+          "username_already_exists_title": "Username Already Exists"
         }
       },
       "parent": {

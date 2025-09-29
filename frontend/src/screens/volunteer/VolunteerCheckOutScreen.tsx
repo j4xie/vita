@@ -179,15 +179,15 @@ export const VolunteerCheckOutScreen: React.FC = () => {
 
     if (!volunteer.checkInTime) return { hours: 0, minutes: 0, display: t('common.time.zeroHoursMinutes', '0小时0分钟'), hasError: false };
 
-    // 简单直接的时间解析，避免时区转换
+    // 🆕 使用统一时间服务进行时间解析
     try {
-      const startTime = new Date(volunteer.checkInTime.replace(' ', 'T'));
+      const startTime = timeService.parseServerTime(volunteer.checkInTime);
       const endTime = new Date();
 
-      console.log('🕐 [签退页面] 开始时间(简单解析):', startTime.toISOString());
+      console.log('🕐 [签退页面] 开始时间(UnifiedTimeService):', startTime?.toISOString());
       console.log('🕐 [签退页面] 结束时间(当前):', endTime.toISOString());
 
-      if (isNaN(startTime.getTime())) {
+      if (!startTime || isNaN(startTime.getTime())) {
         return { hours: 0, minutes: 0, display: '时间解析错误', hasError: true };
       }
 
@@ -406,8 +406,16 @@ export const VolunteerCheckOutScreen: React.FC = () => {
           [
             {
               text: t('common.confirm', '确定'),
-              onPress: () => {
+              onPress: async () => {
                 console.log('✅ [SIGN-OUT] 签退成功，清理缓存并返回');
+
+                // 🆕 清除自动签退状态
+                try {
+                  await volunteerContext.clearAutoCheckout(volunteer.userId.toString());
+                  console.log('✅ [CHECKOUT-SUCCESS] 已清除自动签退状态');
+                } catch (autoCheckoutError) {
+                  console.error('❌ [CHECKOUT-SUCCESS] 清除自动签退状态失败:', autoCheckoutError);
+                }
 
                 // 清理所有相关缓存，确保所有页面获取最新数据
                 try {
@@ -516,7 +524,9 @@ export const VolunteerCheckOutScreen: React.FC = () => {
                     {t('volunteerCheckIn.time.checkInTime', '签到时间')}
                   </Text>
                   <Text style={[styles.timeValue, isDarkMode && styles.textDark]}>
-                    {volunteer.checkInTime ? volunteer.checkInTime.substring(11, 16) : '--:--'}
+                    {volunteer.checkInTime ?
+                      timeService.formatForDisplay(timeService.parseServerTime(volunteer.checkInTime), { showDate: false, showTime: true })
+                      : '--:--'}
                   </Text>
                 </View>
 

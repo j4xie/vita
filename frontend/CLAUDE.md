@@ -107,15 +107,65 @@ npm start
 
 
 ### Building & Deployment
+
+#### 🔧 **环境切换命令**
 ```bash
-# Build for production (iOS)
-eas build --platform ios --profile production
+# 切换到开发环境 (TestFlight用)
+npm run env:dev
 
-# Submit to App Store
-eas submit --platform ios --profile production
+# 切换到生产环境 (App Store用)
+npm run env:prod
 
-# Build for TestFlight
-eas build --platform ios --profile preview
+# 查看当前环境状态
+npm run env:status
+
+# 清理项目缓存
+npm run env:clean
+```
+
+#### ⚡ **一键发布准备命令**
+```bash
+# TestFlight发布准备 (自动化流程)
+npm run prepare:testflight
+
+# App Store发布准备 (自动化流程)
+npm run prepare:appstore
+```
+
+#### 📱 **手动Xcode发布流程**
+
+**TestFlight发布 (开发环境)**:
+```bash
+# 1. 切换到开发环境
+npm run env:dev
+
+# 2. 清理和预构建
+npx expo prebuild --clean
+
+# 3. 打开Xcode项目
+open ios/PomeloXApp.xcworkspace
+
+# 4. Xcode操作:
+#    - Product → Archive
+#    - Distribute App → App Store Connect
+#    - 选择 TestFlight
+```
+
+**App Store发布 (生产环境)**:
+```bash
+# 1. 切换到生产环境
+npm run env:prod
+
+# 2. 清理和预构建
+npx expo prebuild --clean
+
+# 3. 打开Xcode项目
+open ios/PomeloXApp.xcworkspace
+
+# 4. Xcode操作:
+#    - Product → Archive
+#    - Distribute App → App Store Connect
+#    - 选择 App Store
 ```
 
 ### Version Management
@@ -138,11 +188,13 @@ eas build --platform ios --profile preview
 
 #### **版本更新命令**
 ```bash
-# Update version (updates app.json)
-npm run update-version
+# 更新版本号 (patch/minor/major)
+npm run version:patch
+npm run version:minor
+npm run version:major
 
-# Quick release to TestFlight
-./scripts/quick-release.sh
+# 查看当前版本状态
+npm run version:status
 ```
 
 ## ⚡ **Performance Requirements (MANDATORY)**
@@ -227,27 +279,79 @@ import { NavigationContainer } from '@react-navigation/native';
 ### **⚠️ React Native Reanimated Warning**
 **NEVER use `useAnimatedScrollHandler` with FlatList/SectionList** - Causes "onScroll is not a function" error. Use `useCallback` instead.
 
-## 🚀 **iOS Release Process**
+## 🚀 **环境切换与发布流程**
 
-1. **Update Version**
-   ```bash
-   npm run update-version
-   ```
+### 🔄 **环境切换**
 
-2. **Build for Production**
-   ```bash
-   eas build --platform ios --profile production
-   ```
+```bash
+# 切换到开发环境 (TestFlight测试用)
+npm run env:dev
 
-3. **Submit to App Store**
-   ```bash
-   eas submit --platform ios --profile production
-   ```
+# 切换到生产环境 (App Store正式用)
+npm run env:prod
 
-4. **Monitor in App Store Connect**
-   - Processing typically takes 30-60 minutes
-   - TestFlight available immediately after processing
-   - App Store review takes 24-48 hours
+# 查看当前环境状态
+npm run env:status
+```
+
+**环境对比**:
+| 项目 | 开发环境 | 生产环境 |
+|------|----------|----------|
+| **API地址** | `http://106.14.165.234:8085` | `https://www.vitaglobal.icu` |
+| **环境标识** | 测试环境 | 正式环境 |
+| **调试模式** | 启用 | 禁用 |
+
+### 📱 **一键发布准备 (推荐)**
+
+#### **TestFlight发布准备**
+```bash
+# 一键准备TestFlight发布 (自动切换环境+更新版本+预构建+打开Xcode)
+npm run prepare:testflight
+```
+
+#### **App Store发布准备**
+```bash
+# 一键准备App Store发布 (自动切换环境+更新版本+预构建+打开Xcode)
+npm run prepare:appstore
+```
+
+### 📱 **手动发布流程 (备用)**
+
+#### **TestFlight发布 (开发环境)**
+```bash
+# 1. 切换环境
+npm run env:dev
+
+# 2. 更新版本 (可选)
+npm run version:beta
+
+# 3. 预构建
+npx expo prebuild --clean
+
+# 4. 打开Xcode
+open ios/PomeloXApp.xcworkspace
+
+# 5. Xcode操作:
+#    Product → Archive → TestFlight
+```
+
+#### **App Store发布 (生产环境)**
+```bash
+# 1. 切换环境
+npm run env:prod
+
+# 2. 更新版本 (可选)
+npm run version:patch
+
+# 3. 预构建
+npx expo prebuild --clean
+
+# 4. 打开Xcode
+open ios/PomeloXApp.xcworkspace
+
+# 5. Xcode操作:
+#    Product → Archive → App Store
+```
 
 ## 📂 **Project Structure**
 ```

@@ -103,9 +103,15 @@ export interface UserPermissions {
   canViewContactInfo: boolean;
   canViewStudentId: boolean;
   canViewActivityStats: boolean;
+  canViewRecentActivities: boolean;
   canViewFullProfile: boolean;
   canEditInfo: boolean;
   canManageUsers: boolean;
+  canManageUser: boolean;
+  canManageActivities: boolean;
+  canAccessPlatform: boolean;
+  canViewSensitiveInfo: boolean;
+  isHigherAuthority: boolean;
   canViewDetails?: boolean; // Legacy compatibility
   canViewContact?: boolean; // Legacy compatibility
   canViewActivities?: boolean; // Legacy compatibility

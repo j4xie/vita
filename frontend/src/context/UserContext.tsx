@@ -81,13 +81,13 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const adaptedResponse = {
         msg: response.msg || '',
         code: response.code,
-        roleIds: response.roleIds || [],
+        roleIds: (response as any).roleIds || [],
         data: response.data,
-        postIds: response.postIds || [],
-        roles: response.roles || [],
-        posts: response.posts || []
+        postIds: (response as any).postIds || [],
+        roles: (response as any).roles || [],
+        posts: (response as any).posts || []
       };
-      const adaptedData = adaptUserInfoResponse(adaptedResponse);
+      const adaptedData = adaptUserInfoResponse(adaptedResponse as any);
 
       if (adaptedData.success && adaptedData.user) {
         console.log('✅ 用户信息获取成功:', {
@@ -134,7 +134,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
           roles: userInfo.roles || [],
           posts: userInfo.posts || []
         };
-        const adaptedData = adaptUserInfoResponse(adaptedResponse);
+        const adaptedData = adaptUserInfoResponse(adaptedResponse as any);
         if (adaptedData.success && adaptedData.user) {
           setUser(adaptedData.user);
           await AsyncStorage.setItem('userData', JSON.stringify(adaptedData.user));

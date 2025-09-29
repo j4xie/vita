@@ -69,6 +69,11 @@ export const SimpleSearchTabBar: React.FC<SimpleSearchTabBarProps> = ({
     isValid: false
   });
 
+  // 页面检测 - 只在探索页面显示搜索按钮
+  const currentRoute = state.routes[state.index];
+  const isExplorePage = currentRoute?.name === 'Explore';
+  const showSearchButton = isExplorePage;
+
   // 基于参考图的精确几何计算 - 支持自适应宽度
   const geometry = useMemo(() => {
     // 根据是否显示搜索按钮调整TabBar宽度
@@ -112,12 +117,6 @@ export const SimpleSearchTabBar: React.FC<SimpleSearchTabBarProps> = ({
     { key: 'Wellbeing', label: '安心', icon: 'shield-outline', iconFocused: 'shield' },
     { key: 'Profile', label: '个人', icon: 'person-outline', iconFocused: 'person' },
   ];
-
-  // 页面检测 - 只在探索页面显示搜索按钮
-  const currentRoute = state.routes[state.index];
-  const isExplorePage = currentRoute?.name === 'Explore';
-  const showSearchButton = isExplorePage;
-
 
   // 气泡状态保护机制
   const saveBubbleState = useCallback(() => {

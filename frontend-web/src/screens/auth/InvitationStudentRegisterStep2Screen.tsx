@@ -450,17 +450,51 @@ export const InvitationStudentRegisterStep2Screen: React.FC = () => {
         }
       } else {
         console.error('❌ 注册失败，错误码:', response.code, '错误信息:', response.msg);
-        
+
         // 先关闭进度对话框
-        Alert.alert(''); 
-        
+        Alert.alert('');
+
         // 详细的错误处理
         let errorTitle = t('auth.register.errors.registration_failed_title');
         let errorMessage = response.msg || t('auth.register.errors.register_failed_message');
         let suggestions = [];
-        
-        // 根据错误码和消息提供具体的解决建议
-        if (!response.msg) {
+
+        // 根据错误消息和错误码提供具体的解决建议
+        // 首先检查具体的错误消息
+        if (response.msg) {
+          // 检查是否是邮箱或手机号已注册
+          if (response.msg.includes('邮箱已被注册') || response.msg.includes('email already registered') ||
+              response.msg.includes('Email already exists') || response.msg.includes('该邮箱已存在')) {
+            errorTitle = t('auth.register.errors.email_already_registered_title');
+            errorMessage = t('auth.register.errors.email_already_registered_message');
+            suggestions = [
+              `✓ ${t('auth.register.errors.suggestions.use_different_email')}`,
+              `✓ ${t('auth.register.errors.suggestions.try_login_instead')}`,
+              `✓ ${t('auth.register.errors.suggestions.reset_password')}`
+            ];
+          } else if (response.msg.includes('手机号已被注册') || response.msg.includes('phone number already registered') ||
+                     response.msg.includes('Phone already exists') || response.msg.includes('该手机号已存在')) {
+            errorTitle = t('auth.register.errors.phone_already_registered_title');
+            errorMessage = t('auth.register.errors.phone_already_registered_message');
+            suggestions = [
+              `✓ ${t('auth.register.errors.suggestions.use_different_phone')}`,
+              `✓ ${t('auth.register.errors.suggestions.try_login_instead')}`,
+              `✓ ${t('auth.register.errors.suggestions.contact_support')}`
+            ];
+          } else if (response.msg.includes('用户名已存在') || response.msg.includes('username already exists') ||
+                     response.msg.includes('Username taken')) {
+            errorTitle = t('auth.register.errors.username_already_exists_title');
+            errorMessage = t('auth.register.errors.username_already_exists_message');
+            suggestions = [
+              `✓ ${t('auth.register.errors.suggestions.try_different_username')}`,
+              `✓ ${t('auth.register.errors.suggestions.use_different_email')}`,
+              `✓ ${t('auth.register.errors.suggestions.try_login_instead')}`
+            ];
+          }
+        }
+
+        // 如果没有匹配的特定错误消息，则根据错误码处理
+        if (!response.msg || suggestions.length === 0) {
           switch (response.code) {
             case 500:
               errorTitle = t('auth.register.errors.server_error_title');

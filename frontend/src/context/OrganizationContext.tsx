@@ -352,7 +352,7 @@ export const OrganizationProvider: React.FC<OrganizationProviderProps> = ({
         // 使用Mock API获取用户组织数据
         // 使用真实API替代MockAPI
         const organizationsResult = await fetchOrganizationList();
-        const organizations = organizationsResult.success ? organizationsResult.organizations : [];
+        const organizations = organizationsResult.code === 200 && organizationsResult.data ? organizationsResult.data as any : [];
         const memberships: UserOrganization[] = [];
         
         dispatch({ type: 'SET_ORGANIZATIONS', payload: organizations });
@@ -361,7 +361,7 @@ export const OrganizationProvider: React.FC<OrganizationProviderProps> = ({
         // 设置当前组织
         const currentMembership = memberships.find(m => m.isCurrent);
         if (currentMembership) {
-          const currentOrg = organizations.find(o => o.id === currentMembership.organizationId);
+          const currentOrg = organizations.find(o => o.id == currentMembership.organizationId);
           if (currentOrg) {
             dispatch({ type: 'SET_CURRENT_ORGANIZATION', payload: currentOrg });
             await saveToStorage(STORAGE_KEYS.CURRENT_ORGANIZATION, currentOrg);
@@ -377,7 +377,7 @@ export const OrganizationProvider: React.FC<OrganizationProviderProps> = ({
       } else {
         // 无用户ID时也使用真实API获取组织数据
         const organizationsResult = await fetchOrganizationList();
-        const organizations = organizationsResult.success ? organizationsResult.organizations : [];
+        const organizations = organizationsResult.code === 200 && organizationsResult.data ? organizationsResult.data as any : [];
         dispatch({ type: 'SET_ORGANIZATIONS', payload: organizations });
       }
 

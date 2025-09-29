@@ -18,6 +18,7 @@ import * as Haptics from 'expo-haptics';
 
 import { theme } from '../../theme';
 import { useTheme } from '../../context/ThemeContext';
+import packageInfo from '../../../package.json';
 
 interface SettingRowProps {
   title: string;
@@ -36,8 +37,7 @@ const SettingRow: React.FC<SettingRowProps> = ({
   isLast = false,
   isExternal = false,
 }) => {
-  const themeContext = useTheme();
-  const isDarkMode = themeContext.isDarkMode;
+  const isDarkMode = false;
 
   const handlePress = () => {
     if (Platform.OS === 'ios') {
@@ -73,7 +73,7 @@ const SettingRow: React.FC<SettingRowProps> = ({
     settingText: {
       fontSize: 17,
       fontWeight: '400',
-      color: isDarkMode ? '#ffffff' : '#000000',
+      color: '#000000',
       flex: 1,
     },
     settingTextDark: {
@@ -85,7 +85,7 @@ const SettingRow: React.FC<SettingRowProps> = ({
     },
     settingValue: {
       fontSize: 15,
-      color: isDarkMode ? '#8e8e93' : '#8e8e93',
+      color: '#8e8e93',
       marginRight: 8,
     },
     settingValueDark: {
@@ -116,7 +116,7 @@ const SettingRow: React.FC<SettingRowProps> = ({
         <Text
           style={[
             rowStyles.settingText,
-            isDarkMode && rowStyles.settingTextDark,
+            false && rowStyles.settingTextDark,
           ]}
           allowFontScaling={true}
           maxFontSizeMultiplier={1.4}
@@ -150,8 +150,6 @@ const SettingRow: React.FC<SettingRowProps> = ({
 export const AboutSupportScreen: React.FC = () => {
   const { t } = useTranslation();
   const navigation = useNavigation<any>();
-  const themeContext = useTheme();
-  const isDarkMode = themeContext.isDarkMode;
   const insets = useSafeAreaInsets();
 
   const handleAppInfo = () => {
@@ -176,7 +174,7 @@ export const AboutSupportScreen: React.FC = () => {
       id: 'app-info',
       title: t('profile.about.aboutApp'),
       icon: 'information-circle-outline' as keyof typeof Ionicons.glyphMap,
-      value: 'v1.0.4',
+      value: `v${packageInfo.version}`,
       onPress: handleAppInfo,
     },
   ];
@@ -202,7 +200,7 @@ export const AboutSupportScreen: React.FC = () => {
   const styles = StyleSheet.create({
     container: {
       flex: 1,
-      backgroundColor: isDarkMode ? '#000000' : '#f2f2f7',
+      backgroundColor: '#f2f2f7',
     },
     safeArea: {
       flex: 1,
@@ -221,13 +219,13 @@ export const AboutSupportScreen: React.FC = () => {
     groupTitle: {
       fontSize: 13,
       fontWeight: '400',
-      color: isDarkMode ? '#8e8e93' : '#8e8e93',
+      color: '#8e8e93',
       textTransform: 'uppercase',
       marginBottom: 8,
       marginLeft: 16,
     },
     listContainer: {
-      backgroundColor: isDarkMode ? '#1c1c1e' : '#ffffff',
+      backgroundColor: '#ffffff',
       borderRadius: 14,
       overflow: 'hidden',
       ...Platform.select({
@@ -249,12 +247,12 @@ export const AboutSupportScreen: React.FC = () => {
     },
     versionText: {
       fontSize: 12,
-      color: isDarkMode ? '#8e8e93' : '#8e8e93',
+      color: '#8e8e93',
       textAlign: 'center',
     },
     copyrightText: {
       fontSize: 12,
-      color: isDarkMode ? '#8e8e93' : '#8e8e93',
+      color: '#8e8e93',
       textAlign: 'center',
       marginTop: 4,
     },
@@ -307,7 +305,7 @@ export const AboutSupportScreen: React.FC = () => {
           {/* Version Footer */}
           <View style={styles.versionFooter}>
             <Text style={styles.versionText}>
-              PomeloX v1.0.4
+              {`PomeloX v${packageInfo.version}`}
             </Text>
             <Text style={styles.copyrightText}>
               © 2025 西柚Pomelo. All rights reserved.

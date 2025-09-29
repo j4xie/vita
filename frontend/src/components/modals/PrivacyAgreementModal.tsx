@@ -364,7 +364,7 @@ const styles = StyleSheet.create({
     maxWidth: 400,
     height: '80%', // 🚀 使用固定高度比例确保布局稳定
     backgroundColor: LIQUID_GLASS_LAYERS.L1.background.light,
-    borderRadius: LIQUID_GLASS_LAYERS.L1.borderRadius.modal,
+    borderRadius: 20,
     borderWidth: LIQUID_GLASS_LAYERS.L1.border.width,
     borderColor: LIQUID_GLASS_LAYERS.L1.border.color.light,
     overflow: 'hidden',

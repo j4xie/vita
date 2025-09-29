@@ -18,7 +18,6 @@ import * as Haptics from 'expo-haptics';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { theme } from '../../theme';
-import { useTheme } from '../../context/ThemeContext';
 import { LIQUID_GLASS_LAYERS, DAWN_GRADIENTS } from '../../theme/core';
 
 export interface SchoolInfo {
@@ -42,8 +41,6 @@ export const ConsultingDevModal: React.FC<ConsultingDevModalProps> = ({
   onClose,
 }) => {
   const { t } = useTranslation();
-  const themeContext = useTheme();
-  const isDarkMode = themeContext.isDarkMode;
   const insets = useSafeAreaInsets();
 
   // Animation values
@@ -132,11 +129,11 @@ export const ConsultingDevModal: React.FC<ConsultingDevModalProps> = ({
               <BlurView 
                 intensity={15} // 降低毛玻璃强度，防止发灰
                 style={StyleSheet.absoluteFill}
-                tint={isDarkMode ? 'dark' : 'light'}
+                tint="light"
               />
             ) : (
               <View style={[StyleSheet.absoluteFill, { 
-                backgroundColor: isDarkMode ? 'rgba(0,0,0,0.48)' : 'rgba(0,0,0,0.44)' // 40-48%范围
+                backgroundColor: 'rgba(0,0,0,0.44)' // 40-48%范围
               }]} />
             )}
           </View>
@@ -168,7 +165,7 @@ export const ConsultingDevModal: React.FC<ConsultingDevModalProps> = ({
                 <Ionicons
                   name="close"
                   size={20} // 稍微减小图标尺寸，符合SF Symbols标准
-                  color={isDarkMode ? '#8e8e93' : '#8e8e93'}
+                  color="#8e8e93"
                 />
               </TouchableOpacity>
 
@@ -183,7 +180,7 @@ export const ConsultingDevModal: React.FC<ConsultingDevModalProps> = ({
                 </View>
                 <Text style={[
                   styles.title,
-                  { color: isDarkMode ? '#ffffff' : '#000000' }
+                  { color: '#000000' }
                 ]}>
                   {t('consulting.moduleDevelopment')}
                 </Text>
@@ -202,7 +199,7 @@ export const ConsultingDevModal: React.FC<ConsultingDevModalProps> = ({
                   </View>
                   <Text style={[
                     styles.schoolFullName,
-                    { color: isDarkMode ? '#ffffff' : '#1d1d1f' }
+                    { color: '#1d1d1f' }
                   ]}>
                     {school.name}
                   </Text>
@@ -213,7 +210,7 @@ export const ConsultingDevModal: React.FC<ConsultingDevModalProps> = ({
               <View style={styles.messageSection}>
                 <Text style={[
                   styles.mainMessage,
-                  { color: isDarkMode ? '#ffffff' : '#1d1d1f' }
+                  { color: '#1d1d1f' }
                 ]}>
                   {school.shortName 
                     ? t('consulting.developmentMessage', { school: school.shortName })
@@ -222,7 +219,7 @@ export const ConsultingDevModal: React.FC<ConsultingDevModalProps> = ({
                 </Text>
                 <Text style={[
                   styles.description,
-                  { color: isDarkMode ? '#8e8e93' : '#8e8e93' }
+                  { color: '#8e8e93' }
                 ]}>
                   {t('consulting.developmentDescription')}
                 </Text>
@@ -232,7 +229,7 @@ export const ConsultingDevModal: React.FC<ConsultingDevModalProps> = ({
               <View style={styles.featureSection}>
                 <Text style={[
                   styles.featureTitle,
-                  { color: isDarkMode ? '#ffffff' : '#1d1d1f' }
+                  { color: '#1d1d1f' }
                 ]}>
                   {t('consulting.comingFeatures')}
                 </Text>
@@ -251,7 +248,7 @@ export const ConsultingDevModal: React.FC<ConsultingDevModalProps> = ({
                       />
                       <Text style={[
                         styles.featureText,
-                        { color: isDarkMode ? '#c7c7cc' : '#6d6d70' }
+                        { color: '#6d6d70' }
                       ]}>
                         {feature.text}
                       </Text>
@@ -476,7 +473,7 @@ const styles = StyleSheet.create({
     borderWidth: LIQUID_GLASS_LAYERS.L3.border.width,
     borderColor: LIQUID_GLASS_LAYERS.L3.border.color.light,
     borderRadius: LIQUID_GLASS_LAYERS.L3.borderRadius.modal,
-    ...theme.shadows[LIQUID_GLASS_LAYERS.L3.shadow],
+    ...theme.shadows.lg,
   },
   
   // V2.0 内容玻璃效果

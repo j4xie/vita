@@ -378,7 +378,7 @@ const styles = StyleSheet.create({
     borderColor: LIQUID_GLASS_LAYERS.L1.border.color.light,
     borderWidth: LIQUID_GLASS_LAYERS.L1.border.width,
     padding: theme.spacing.lg,
-    ...theme.shadows[LIQUID_GLASS_LAYERS.L1.shadow],
+    ...theme.shadows[LIQUID_GLASS_LAYERS.L1.shadow.light],
   },
   title: {
     fontSize: theme.typography.fontSize['2xl'],

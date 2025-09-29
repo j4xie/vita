@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useCallback, useMemo } from 'react';
 import {
   View,
   Text,
@@ -29,7 +29,7 @@ interface RouteParams {
   verificationCode: string;
 }
 
-export const SetNewPasswordScreen: React.FC = () => {
+const SetNewPasswordScreenComponent: React.FC = () => {
   const { t } = useTranslation();
   const navigation = useNavigation<any>();
   const route = useRoute();
@@ -52,30 +52,40 @@ export const SetNewPasswordScreen: React.FC = () => {
   const buttonScaleAnim = useRef(new Animated.Value(1)).current;
   const buttonColorAnim = useRef(new Animated.Value(0)).current;
   
-  // 表单验证
+  // 表单验证状态计算
+  const isNewPasswordValid = useMemo(() => validatePassword(newPassword), [newPassword, validatePassword]);
+  const isConfirmPasswordValid = useMemo(() =>
+    newPassword === confirmPassword && confirmPassword.length > 0,
+    [newPassword, confirmPassword]
+  );
+  const isFormValid = useMemo(() =>
+    isNewPasswordValid && isConfirmPasswordValid,
+    [isNewPasswordValid, isConfirmPasswordValid]
+  );
+
+  // 按钮动画（分离动画逻辑）
   React.useEffect(() => {
-    const isNewPasswordValid = validatePassword(newPassword);
-    const isConfirmPasswordValid = newPassword === confirmPassword && confirmPassword.length > 0;
-    const isFormValid = isNewPasswordValid && isConfirmPasswordValid;
-    
-    if (isFormValid !== formValid) {
-      setFormValid(isFormValid);
-      
-      // 按钮颜色动画
-      Animated.timing(buttonColorAnim, {
-        toValue: isFormValid ? 1 : 0,
-        duration: 300,
-        useNativeDriver: false,
-      }).start();
-    }
-  }, [newPassword, confirmPassword, formValid]);
+    Animated.timing(buttonColorAnim, {
+      toValue: isFormValid ? 1 : 0,
+      duration: 300,
+      useNativeDriver: false,
+    }).start();
+  }, [isFormValid, buttonColorAnim]);
 
-  const validatePassword = (password: string) => {
-    // 简化验证：只要求至少6位字符（改善用户体验）
-    return password.length >= 6;
-  };
+  // 同步formValid状态
+  React.useEffect(() => {
+    setFormValid(isFormValid);
+  }, [isFormValid]);
 
-  const getPasswordStrength = (password: string) => {
+  const validatePassword = useCallback((password: string) => {
+    // 匹配UI提示：至少6位，需包含字母和数字
+    if (password.length < 6) return false;
+    const hasLetter = /[a-zA-Z]/.test(password);
+    const hasNumber = /\d/.test(password);
+    return hasLetter && hasNumber;
+  }, []);
+
+  const getPasswordStrength = useCallback((password: string) => {
     let strength = 0;
     if (password.length >= 6) strength++;
     if (password.length >= 8) strength++;
@@ -83,20 +93,20 @@ export const SetNewPasswordScreen: React.FC = () => {
     if (/[A-Z]/.test(password)) strength++;
     if (/\d/.test(password)) strength++;
     if (/[^a-zA-Z0-9]/.test(password)) strength++;
-    
+
     if (strength <= 2) return { level: 'weak', color: theme.colors.danger, text: t('auth.password.strength.weak') };
     if (strength <= 4) return { level: 'medium', color: '#f59e0b', text: t('auth.password.strength.medium') };
     return { level: 'strong', color: theme.colors.success, text: t('auth.password.strength.strong') };
-  };
+  }, [t]);
 
   const handleResetPassword = async () => {
     if (!validateForm()) return;
-    
+
     setLoading(true);
-    
+
     try {
       console.log('🔐 重置密码:', { phone: params.phone, areaCode: params.areaCode });
-      
+
       // 调用真实的密码重置API
       const result = await pomeloXAPI.resetPassword({
         phonenumber: params.phone,
@@ -105,42 +115,176 @@ export const SetNewPasswordScreen: React.FC = () => {
         password: newPassword,
         areaCode: params.areaCode,
       });
-      
+
       if (result.code === 200) {
         console.log('✅ 密码重置成功');
+
+        // 重置成功
+        Alert.alert(
+          t('auth.reset_password.success_title'),
+          t('auth.reset_password.success_message'),
+          [{
+            text: t('common.confirm'),
+            onPress: () => {
+              // 返回登录页面
+              navigation.reset({
+                index: 0,
+                routes: [{ name: 'Login' }],
+              });
+            }
+          }]
+        );
+
+        // 触觉反馈
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       } else {
-        throw new Error(result.msg || '密码重置失败');
+        // 根据错误代码提供具体错误信息
+        const errorInfo = getResetErrorInfo(result.code, result.msg);
+        throw new Error(errorInfo.message);
       }
-      
-      // 重置成功
-      Alert.alert(
-        t('auth.reset_password.success_title'),
-        t('auth.reset_password.success_message'),
-        [{
-          text: t('common.confirm'),
-          onPress: () => {
-            // 返回登录页面
-            navigation.reset({
-              index: 0,
-              routes: [{ name: 'Login' }],
-            });
-          }
-        }]
-      );
-      
-      // 触觉反馈
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      
+
     } catch (error) {
       console.error('密码重置失败:', error);
+
+      // 解析错误并提供具体提示
+      const errorInfo = parseResetError(error);
+
       Alert.alert(
-        t('common.error'),
-        t('auth.reset_password.reset_failed')
+        errorInfo.title,
+        errorInfo.message,
+        errorInfo.buttons
       );
     } finally {
       setLoading(false);
     }
   };
+
+  // 解析API错误码并返回具体错误信息
+  const getResetErrorInfo = useCallback((code: number, message: string) => {
+    switch (code) {
+      case 400:
+        if (message?.includes('密码') || message?.includes('password')) {
+          return {
+            title: t('common.error'),
+            message: `${t('auth.reset_password.errors.password_format_rejected')}\n${t('auth.reset_password.errors.password_format_details')}`,
+            buttons: [
+              { text: t('common.confirm'), style: 'default' as const }
+            ]
+          };
+        }
+        return {
+          title: t('common.error'),
+          message: t('auth.reset_password.errors.retry_suggestion'),
+          buttons: [{ text: t('common.confirm'), style: 'default' as const }]
+        };
+
+      case 401:
+      case 403:
+        return {
+          title: t('common.error'),
+          message: `${t('auth.reset_password.errors.verification_code_invalid')}\n${t('auth.reset_password.errors.get_new_code')}`,
+          buttons: [
+            { text: t('common.cancel'), style: 'cancel' as const },
+            {
+              text: t('auth.forgot_password.resend_code'),
+              style: 'default' as const,
+              onPress: () => navigation.goBack()
+            }
+          ]
+        };
+
+      case 404:
+        return {
+          title: t('common.error'),
+          message: t('auth.reset_password.errors.phone_not_found'),
+          buttons: [{ text: t('common.confirm'), style: 'default' as const }]
+        };
+
+      case 410:
+        return {
+          title: t('common.error'),
+          message: `${t('auth.reset_password.errors.verification_code_expired')}\n${t('auth.reset_password.errors.get_new_code')}`,
+          buttons: [
+            { text: t('common.cancel'), style: 'cancel' as const },
+            {
+              text: t('auth.forgot_password.resend_code'),
+              style: 'default' as const,
+              onPress: () => navigation.goBack()
+            }
+          ]
+        };
+
+      case 500:
+        return {
+          title: t('common.error'),
+          message: `${t('auth.reset_password.errors.server_error')}\n${t('auth.reset_password.errors.contact_support')}`,
+          buttons: [{ text: t('common.confirm'), style: 'default' as const }]
+        };
+
+      default:
+        return {
+          title: t('common.error'),
+          message: message || t('auth.reset_password.errors.unknown_error'),
+          buttons: [{ text: t('common.confirm'), style: 'default' as const }]
+        };
+    }
+  }, [t, navigation]);
+
+  // 解析网络错误和其他异常
+  const parseResetError = useCallback((error: any) => {
+    const errorMessage = error?.message || '';
+
+    // 网络错误
+    if (errorMessage.includes('Network') || errorMessage.includes('网络') ||
+        errorMessage.includes('timeout') || errorMessage.includes('连接')) {
+      return {
+        title: t('common.error'),
+        message: `${t('auth.reset_password.errors.network_error')}\n${t('auth.reset_password.errors.check_network')}`,
+        buttons: [
+          { text: t('common.cancel'), style: 'cancel' as const },
+          {
+            text: t('common.retry'),
+            style: 'default' as const,
+            onPress: () => handleResetPassword()
+          }
+        ]
+      };
+    }
+
+    // 密码格式错误（前端验证通过但后端拒绝）
+    if (errorMessage.includes('密码格式') || errorMessage.includes('password format') ||
+        errorMessage.includes('密码不符合') || errorMessage.includes('format')) {
+      return {
+        title: t('common.error'),
+        message: `${t('auth.reset_password.errors.password_format_rejected')}\n${t('auth.reset_password.errors.password_format_details')}`,
+        buttons: [{ text: t('common.confirm'), style: 'default' as const }]
+      };
+    }
+
+    // 验证码相关错误
+    if (errorMessage.includes('验证码') || errorMessage.includes('verification') ||
+        errorMessage.includes('过期') || errorMessage.includes('expired')) {
+      return {
+        title: t('common.error'),
+        message: `${t('auth.reset_password.errors.verification_code_expired')}\n${t('auth.reset_password.errors.get_new_code')}`,
+        buttons: [
+          { text: t('common.cancel'), style: 'cancel' as const },
+          {
+            text: t('auth.forgot_password.resend_code'),
+            style: 'default' as const,
+            onPress: () => navigation.goBack()
+          }
+        ]
+      };
+    }
+
+    // 默认错误
+    return {
+      title: t('common.error'),
+      message: errorMessage || t('auth.reset_password.reset_failed'),
+      buttons: [{ text: t('common.confirm'), style: 'default' as const }]
+    };
+  }, [t, navigation]);
 
   const validateForm = () => {
     const newErrors: {newPassword?: string; confirmPassword?: string} = {};
@@ -161,29 +305,29 @@ export const SetNewPasswordScreen: React.FC = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleButtonPressIn = () => {
+  const handleButtonPressIn = useCallback(() => {
     if (!formValid || loading) return;
-    
+
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    
+
     Animated.spring(buttonScaleAnim, {
       toValue: 0.95,
       useNativeDriver: true,
       tension: 150,
       friction: 8,
     }).start();
-  };
+  }, [formValid, loading, buttonScaleAnim]);
 
-  const handleButtonPressOut = () => {
+  const handleButtonPressOut = useCallback(() => {
     Animated.spring(buttonScaleAnim, {
       toValue: 1,
       useNativeDriver: true,
       tension: 150,
       friction: 8,
     }).start();
-  };
+  }, [buttonScaleAnim]);
 
-  const getButtonStyles = () => {
+  const getButtonStyles = useMemo(() => {
     const backgroundColor = buttonColorAnim.interpolate({
       inputRange: [0, 1],
       outputRange: [theme.colors.text.disabled, theme.colors.primary],
@@ -193,13 +337,13 @@ export const SetNewPasswordScreen: React.FC = () => {
       backgroundColor,
       transform: [{ scale: buttonScaleAnim }],
     };
-  };
+  }, [buttonColorAnim]);
 
-  const handleBack = () => {
+  const handleBack = useCallback(() => {
     navigation.goBack();
-  };
+  }, [navigation]);
 
-  const passwordStrength = getPasswordStrength(newPassword);
+  const passwordStrength = useMemo(() => getPasswordStrength(newPassword), [newPassword, getPasswordStrength]);
 
   return (
     <LinearGradient
@@ -246,10 +390,15 @@ export const SetNewPasswordScreen: React.FC = () => {
                     style={styles.input}
                     placeholder={t('auth.reset_password.new_password_placeholder')}
                     value={newPassword}
-                    onChangeText={(text) => {
+                    onChangeText={useCallback((text: string) => {
                       setNewPassword(text);
-                      if (errors.newPassword) setErrors({...errors, newPassword: undefined});
-                    }}
+                      // 防抖清除错误，避免竞态条件
+                      if (errors.newPassword) {
+                        setTimeout(() => {
+                          setErrors(prev => ({...prev, newPassword: undefined}));
+                        }, 0);
+                      }
+                    }, [errors.newPassword])}
                     onFocus={() => setFocusedInput('newPassword')}
                     onBlur={() => setFocusedInput(null)}
                     secureTextEntry={!showNewPassword}
@@ -269,7 +418,7 @@ export const SetNewPasswordScreen: React.FC = () => {
                 
                 {/* Password Requirement Hint */}
                 <Text style={styles.hintText}>
-                  {t('auth.reset_password.password_hint')}
+                  {t('auth.reset_password.errors.password_format_details')}
                 </Text>
                 
                 {/* Password Strength Indicator */}
@@ -303,10 +452,15 @@ export const SetNewPasswordScreen: React.FC = () => {
                     style={styles.input}
                     placeholder={t('auth.reset_password.confirm_password_placeholder')}
                     value={confirmPassword}
-                    onChangeText={(text) => {
+                    onChangeText={useCallback((text: string) => {
                       setConfirmPassword(text);
-                      if (errors.confirmPassword) setErrors({...errors, confirmPassword: undefined});
-                    }}
+                      // 防抖清除错误，避免竞态条件
+                      if (errors.confirmPassword) {
+                        setTimeout(() => {
+                          setErrors(prev => ({...prev, confirmPassword: undefined}));
+                        }, 0);
+                      }
+                    }, [errors.confirmPassword])}
                     onFocus={() => setFocusedInput('confirmPassword')}
                     onBlur={() => setFocusedInput(null)}
                     secureTextEntry={!showConfirmPassword}
@@ -352,6 +506,8 @@ export const SetNewPasswordScreen: React.FC = () => {
   );
 };
 
+export const SetNewPasswordScreen = React.memo(SetNewPasswordScreenComponent);
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -389,7 +545,7 @@ const styles = StyleSheet.create({
     backgroundColor: LIQUID_GLASS_LAYERS.L1.background.light,
     borderRadius: theme.borderRadius.xl,
     padding: theme.spacing.xl,
-    ...theme.shadows[LIQUID_GLASS_LAYERS.L1.shadow],
+    ...theme.shadows[LIQUID_GLASS_LAYERS.L1.shadow.light],
     borderWidth: LIQUID_GLASS_LAYERS.L1.border.width,
     borderColor: LIQUID_GLASS_LAYERS.L1.border.color.light,
   },

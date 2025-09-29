@@ -8,6 +8,7 @@ import {
   View,
   StyleSheet,
   Animated,
+  DimensionValue,
   ViewStyle,
   Dimensions,
 } from 'react-native';
@@ -64,20 +65,20 @@ export const SkeletonElement: React.FC<SkeletonScreenProps> = ({
         };
       case 'text':
         return {
-          width,
+          width: typeof width === 'number' ? width : parseInt(String(width)) || 0,
           height: 16,
           borderRadius: theme.borderRadius.xs,
         };
       case 'card':
         return {
-          width,
-          height: height || 200,
+          width: width as DimensionValue,
+          height: (height || 200) as DimensionValue,
           borderRadius: theme.borderRadius.md,
         };
       default:
         return {
-          width,
-          height,
+          width: width as DimensionValue,
+          height: height as DimensionValue,
           borderRadius: borderRadius || theme.borderRadius.sm,
         };
     }

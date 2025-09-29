@@ -15,7 +15,6 @@ import { useTranslation } from 'react-i18next';
 import * as Haptics from 'expo-haptics';
 
 import { theme } from '../../theme';
-import { useTheme } from '../../context/ThemeContext';
 import { useUser } from '../../context/UserContext';
 import { getCurrentToken } from '../../services/authAPI';
 import { UserIdentityData, ScannedUserInfo } from '../../types/userIdentity';
@@ -42,17 +41,15 @@ export const ScannedUserInfoModal: React.FC<ScannedUserInfoModalProps> = ({
   scannedUserData,
 }) => {
   const { t } = useTranslation();
-  const themeContext = useTheme();
-  const isDarkMode = themeContext.isDarkMode;
   const { user: currentUser } = useUser();
-  
+
   const [userInfo, setUserInfo] = useState<ScannedUserInfo | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
   // 计算当前用户的权限等级
   const getCurrentUserPermissionLevel = (): PermissionLevel => {
     if (!currentUser) return PermissionLevel.GUEST;
-    
+
     // 从当前用户的角色信息获取权限等级
     // 这里需要根据实际的用户数据结构来获取权限
     // 示例：假设用户数据中有roles字段
@@ -61,7 +58,7 @@ export const ScannedUserInfoModal: React.FC<ScannedUserInfoModalProps> = ({
       const primaryRole = userRoles[0];
       return getPermissionLevelFromRoleKey(primaryRole.roleKey || primaryRole.key);
     }
-    
+
     // 临时返回员工权限用于演示，实际应该从用户数据获取
     return PermissionLevel.STAFF;
   };
@@ -105,15 +102,9 @@ export const ScannedUserInfoModal: React.FC<ScannedUserInfoModalProps> = ({
           },
           // 🆕 映射到旧权限接口以保持兼容性
           permissions: {
-            canViewBasicInfo: permissions.canViewPersonalInfo,
-            canViewContactInfo: permissions.canViewPersonalInfo,
-            canViewStudentId: permissions.canViewPersonalInfo,
-            canViewActivityStats: permissions.canViewVolunteerHours,
-            canViewRecentActivities: permissions.canViewVolunteerHours,
-            canViewFullProfile: permissions.canViewPersonalInfo,
-            canManageUser: permissions.canHelpActivityCheckIn,
-            canManageActivities: permissions.canHelpActivityCheckIn,
-            canAccessPlatform: true
+            canViewDetails: permissions.canViewPersonalInfo,
+            canViewContact: permissions.canViewPersonalInfo,
+            canViewActivities: permissions.canViewVolunteerHours
           },
           // 🆕 最近活动 - 根据志愿者时间查看权限
           recentActivities: permissions.canViewVolunteerHours ? [
@@ -154,8 +145,8 @@ export const ScannedUserInfoModal: React.FC<ScannedUserInfoModalProps> = ({
       '是否跳转到用户的完整档案页面？',
       [
         { text: '取消', style: 'cancel' },
-        { 
-          text: '查看', 
+        {
+          text: '查看',
           onPress: () => {
             // TODO: 导航到用户详情页面
             console.log('Navigate to full profile:', scannedUserData.userId);
@@ -267,7 +258,7 @@ export const ScannedUserInfoModal: React.FC<ScannedUserInfoModalProps> = ({
       paddingHorizontal: 20,
     },
     container: {
-      backgroundColor: isDarkMode ? '#1F2937' : '#FFFFFF',
+      backgroundColor: '#FFFFFF',
       borderRadius: 20,
       maxWidth: screenWidth - 40,
       width: '100%',
@@ -279,12 +270,12 @@ export const ScannedUserInfoModal: React.FC<ScannedUserInfoModalProps> = ({
       justifyContent: 'space-between',
       padding: 20,
       borderBottomWidth: 1,
-      borderBottomColor: isDarkMode ? '#374151' : '#E5E7EB',
+      borderBottomColor: '#E5E7EB',
     },
     title: {
       fontSize: 18,
       fontWeight: '600',
-      color: isDarkMode ? '#FFFFFF' : theme.colors.text.primary,
+      color: theme.colors.text.primary,
       flex: 1,
       textAlign: 'center',
     },
@@ -294,7 +285,7 @@ export const ScannedUserInfoModal: React.FC<ScannedUserInfoModalProps> = ({
       alignItems: 'center',
       justifyContent: 'center',
       borderRadius: 16,
-      backgroundColor: isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)',
+      backgroundColor: 'rgba(0, 0, 0, 0.05)',
     },
     content: {
       padding: 20,
@@ -317,13 +308,13 @@ export const ScannedUserInfoModal: React.FC<ScannedUserInfoModalProps> = ({
     userName: {
       fontSize: 20,
       fontWeight: '600',
-      color: isDarkMode ? '#FFFFFF' : '#111827',
+      color: '#111827',
       marginBottom: 4,
       textAlign: 'center',
     },
     userNickName: {
       fontSize: 16,
-      color: isDarkMode ? '#9CA3AF' : '#6B7280',
+      color: '#6B7280',
       marginBottom: 8,
       textAlign: 'center',
     },
@@ -341,7 +332,7 @@ export const ScannedUserInfoModal: React.FC<ScannedUserInfoModalProps> = ({
     },
     organizationText: {
       fontSize: 14,
-      color: isDarkMode ? '#9CA3AF' : '#6B7280',
+      color: '#6B7280',
       textAlign: 'center',
     },
     infoSection: {
@@ -350,23 +341,23 @@ export const ScannedUserInfoModal: React.FC<ScannedUserInfoModalProps> = ({
     sectionTitle: {
       fontSize: 16,
       fontWeight: '600',
-      color: isDarkMode ? '#FFFFFF' : '#111827',
+      color: '#111827',
       marginBottom: 12,
     },
     infoItem: {
       flexDirection: 'row',
       paddingVertical: 8,
       borderBottomWidth: 1,
-      borderBottomColor: isDarkMode ? '#374151' : '#F3F4F6',
+      borderBottomColor: '#F3F4F6',
     },
     infoLabel: {
       fontSize: 14,
-      color: isDarkMode ? '#9CA3AF' : '#6B7280',
+      color: '#6B7280',
       width: 80,
     },
     infoValue: {
       fontSize: 14,
-      color: isDarkMode ? '#FFFFFF' : '#111827',
+      color: '#111827',
       flex: 1,
     },
     statsGrid: {
@@ -377,7 +368,7 @@ export const ScannedUserInfoModal: React.FC<ScannedUserInfoModalProps> = ({
     statItem: {
       flex: 1,
       alignItems: 'center',
-      backgroundColor: isDarkMode ? '#374151' : '#F9FAFB',
+      backgroundColor: '#F9FAFB',
       padding: 16,
       borderRadius: 12,
       marginHorizontal: 4,
@@ -390,14 +381,14 @@ export const ScannedUserInfoModal: React.FC<ScannedUserInfoModalProps> = ({
     },
     statLabel: {
       fontSize: 12,
-      color: isDarkMode ? '#9CA3AF' : '#6B7280',
+      color: '#6B7280',
       textAlign: 'center',
     },
     activitiesList: {
       marginBottom: 20,
     },
     activityItem: {
-      backgroundColor: isDarkMode ? '#374151' : '#F9FAFB',
+      backgroundColor: '#F9FAFB',
       padding: 12,
       borderRadius: 8,
       marginBottom: 8,
@@ -405,22 +396,22 @@ export const ScannedUserInfoModal: React.FC<ScannedUserInfoModalProps> = ({
     activityTitle: {
       fontSize: 14,
       fontWeight: '500',
-      color: isDarkMode ? '#FFFFFF' : '#111827',
+      color: '#111827',
       marginBottom: 4,
     },
     activityMeta: {
       fontSize: 12,
-      color: isDarkMode ? '#9CA3AF' : '#6B7280',
+      color: '#6B7280',
     },
     permissionNote: {
-      backgroundColor: isDarkMode ? '#374151' : '#FEF3CD',
+      backgroundColor: '#FEF3CD',
       padding: 12,
       borderRadius: 8,
       marginBottom: 20,
     },
     permissionText: {
       fontSize: 13,
-      color: isDarkMode ? '#D1D5DB' : '#92400E',
+      color: '#92400E',
       textAlign: 'center',
     },
     actions: {
@@ -439,7 +430,7 @@ export const ScannedUserInfoModal: React.FC<ScannedUserInfoModalProps> = ({
       backgroundColor: '#FF6B35',
     },
     secondaryButton: {
-      backgroundColor: isDarkMode ? '#374151' : '#F3F4F6',
+      backgroundColor: '#F3F4F6',
     },
     managementButton: {
       backgroundColor: '#10B981', // 绿色 - 管理操作
@@ -452,7 +443,7 @@ export const ScannedUserInfoModal: React.FC<ScannedUserInfoModalProps> = ({
     secondaryButtonText: {
       fontSize: 16,
       fontWeight: '600',
-      color: isDarkMode ? '#FFFFFF' : '#374151',
+      color: '#374151',
     },
     managementButtonText: {
       fontSize: 16,
@@ -465,7 +456,7 @@ export const ScannedUserInfoModal: React.FC<ScannedUserInfoModalProps> = ({
     },
     loadingText: {
       fontSize: 16,
-      color: isDarkMode ? '#9CA3AF' : '#6B7280',
+      color: '#6B7280',
       marginTop: 16,
     },
   });
@@ -491,7 +482,7 @@ export const ScannedUserInfoModal: React.FC<ScannedUserInfoModalProps> = ({
               <Ionicons
                 name="close"
                 size={20}
-                color={isDarkMode ? '#FFFFFF' : theme.colors.text.secondary}
+                color={theme.colors.text.secondary}
               />
             </TouchableOpacity>
           </View>
@@ -499,10 +490,10 @@ export const ScannedUserInfoModal: React.FC<ScannedUserInfoModalProps> = ({
           <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
             {isLoading ? (
               <View style={styles.loadingContainer}>
-                <Ionicons 
-                  name="hourglass-outline" 
-                  size={32} 
-                  color={isDarkMode ? '#9CA3AF' : '#6B7280'} 
+                <Ionicons
+                  name="hourglass-outline"
+                  size={32}
+                  color="#6B7280"
                 />
                 <Text style={styles.loadingText}>正在验证权限...</Text>
               </View>
@@ -535,7 +526,17 @@ export const ScannedUserInfoModal: React.FC<ScannedUserInfoModalProps> = ({
                 {/* Permission Notice */}
                 <View style={styles.permissionNote}>
                   <Text style={styles.permissionText}>
-                    {getPermissionDescription(userInfo.permissions!)}
+                    {getPermissionDescription({
+                      canViewBasicInfo: userInfo.permissions?.canViewDetails || false,
+                      canViewContactInfo: userInfo.permissions?.canViewContact || false,
+                      canViewStudentId: userInfo.permissions?.canViewDetails || false,
+                      canViewActivityStats: userInfo.permissions?.canViewActivities || false,
+                      canViewRecentActivities: userInfo.permissions?.canViewActivities || false,
+                      canViewSensitiveInfo: userInfo.permissions?.canViewActivities || false,
+                      canViewFullProfile: userInfo.permissions?.canViewDetails || false,
+                      isHigherAuthority: userInfo.permissions?.canViewActivities || false,
+                      accessLevel: userInfo.permissions?.canViewActivities ? PermissionLevel.ADMIN : PermissionLevel.GUEST
+                    })}
                   </Text>
                 </View>
 
@@ -550,7 +551,7 @@ export const ScannedUserInfoModal: React.FC<ScannedUserInfoModalProps> = ({
                     <Text style={styles.infoLabel}>邮箱</Text>
                     <Text style={styles.infoValue}>{userInfo.user?.email}</Text>
                   </View>
-                  {userInfo.permissions?.canViewStudentId && userInfo.user?.studentId && (
+                  {userInfo.permissions?.canViewDetails && userInfo.user?.studentId && (
                     <View style={styles.infoItem}>
                       <Text style={styles.infoLabel}>学号</Text>
                       <Text style={styles.infoValue}>{userInfo.user.studentId}</Text>
@@ -604,7 +605,7 @@ export const ScannedUserInfoModal: React.FC<ScannedUserInfoModalProps> = ({
 
                 {/* Actions */}
                 <View style={styles.actions}>
-                  {userInfo.permissions?.canViewFullProfile && (
+                  {userInfo.permissions?.canViewDetails && (
                     <TouchableOpacity
                       style={[styles.actionButton, styles.primaryButton]}
                       onPress={handleViewFullProfile}
@@ -613,7 +614,7 @@ export const ScannedUserInfoModal: React.FC<ScannedUserInfoModalProps> = ({
                       <Text style={styles.primaryButtonText}>查看档案</Text>
                     </TouchableOpacity>
                   )}
-                  
+
                   {/* 管理操作按钮 - 员工及以上权限 */}
                   {getCurrentUserPermissionLevel() >= PermissionLevel.STAFF && (
                     <TouchableOpacity
@@ -624,7 +625,7 @@ export const ScannedUserInfoModal: React.FC<ScannedUserInfoModalProps> = ({
                       <Text style={styles.managementButtonText}>管理操作</Text>
                     </TouchableOpacity>
                   )}
-                  
+
                   <TouchableOpacity
                     style={[styles.actionButton, styles.secondaryButton]}
                     onPress={handleClose}

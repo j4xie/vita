@@ -11,14 +11,41 @@
       "cache": {
         "disabled": false,
         "paths": ["node_modules"]
+      },
+      "env": {
+        "EXPO_PUBLIC_ENVIRONMENT": "development",
+        "EXPO_PUBLIC_API_URL": "http://106.14.165.234:8085",
+        "EXPO_PUBLIC_DEBUG_MODE": "true"
+      }
+    },
+    "staging": {
+      "distribution": "internal",
+      "channel": "staging",
+      "cache": {
+        "disabled": false,
+        "paths": ["node_modules"]
+      },
+      "env": {
+        "EXPO_PUBLIC_ENVIRONMENT": "development",
+        "EXPO_PUBLIC_API_URL": "http://106.14.165.234:8085",
+        "EXPO_PUBLIC_DEBUG_MODE": "true"
+      },
+      "ios": {
+        "simulator": false,
+        "buildConfiguration": "Release"
       }
     },
     "preview": {
-      "distribution": "internal", 
+      "distribution": "internal",
       "channel": "preview",
       "cache": {
         "disabled": false,
         "paths": ["node_modules"]
+      },
+      "env": {
+        "EXPO_PUBLIC_ENVIRONMENT": "development",
+        "EXPO_PUBLIC_API_URL": "http://106.14.165.234:8085",
+        "EXPO_PUBLIC_DEBUG_MODE": "true"
       },
       "ios": {
         "simulator": false,
@@ -32,15 +59,27 @@
         "disabled": false,
         "paths": ["node_modules", "ios/Pods"]
       },
+      "env": {
+        "EXPO_PUBLIC_ENVIRONMENT": "production",
+        "EXPO_PUBLIC_API_URL": "https://www.vitaglobal.icu",
+        "EXPO_PUBLIC_DEBUG_MODE": "false"
+      },
       "ios": {
         "simulator": false,
         "buildConfiguration": "Release",
         "scheme": "PomeloXApp",
         "enterpriseProvisioning": "universal"
-      },
+      }
     }
   },
   "submit": {
+    "staging": {
+      "ios": {
+        "appleId": "dev@americanpromotioncompany.com",
+        "ascAppId": "6751477195",
+        "appleTeamId": "5RYR7K29A7"
+      }
+    },
     "production": {
       "ios": {
         "appleId": "dev@americanpromotioncompany.com",

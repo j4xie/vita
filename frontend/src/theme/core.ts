@@ -1075,25 +1075,25 @@ export const SYSTEM_MATERIALS = {
 
 // Dark Mode 动态样式获取工具
 export const getDynamicStyle = (lightValue: any, darkValue: any, isDarkMode: boolean) => {
-  return isDarkMode ? darkValue : lightValue;
+  return lightValue;
 };
 
 // Dark Mode 材质获取工具  
 export const getMaterialConfig = (materialType: keyof typeof SYSTEM_MATERIALS, isDarkMode: boolean) => {
-  return SYSTEM_MATERIALS[materialType][isDarkMode ? 'dark' : 'light'];
+  return SYSTEM_MATERIALS[materialType].light;
 };
 
 // Dark Mode 分层配置获取工具
 export const getLayerConfig = (layerType: 'L1' | 'L2' | 'L3', isDarkMode: boolean) => {
   const layer = LIQUID_GLASS_LAYERS[layerType];
   return {
-    background: layer.background[isDarkMode ? 'dark' : 'light'],
-    border: layer.border.color[isDarkMode ? 'dark' : 'light'],
-    blur: typeof layer.blur === 'object' && 'ios' in layer.blur 
-      ? layer.blur.ios[isDarkMode ? 'dark' : 'light']
+    background: layer.background.light,
+    border: layer.border.color.light,
+    blur: typeof layer.blur === 'object' && 'ios' in layer.blur
+      ? layer.blur.ios.light
       : layer.blur,
     shadow: typeof layer.shadow === 'object' && 'dark' in layer.shadow
-      ? layer.shadow[isDarkMode ? 'dark' : 'light'] 
+      ? layer.shadow.light
       : layer.shadow,
   };
 };

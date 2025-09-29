@@ -159,31 +159,31 @@ export class EdgeCaseTestSuite {
         name: '总管理员扫描任何用户',
         scanner: users.superAdmin,
         scanned: scannedUsers.uscStudent,
-        expected: { volunteerCheckin: true, activityCheckin: true }
+        expected: { volunteerCheckIn: true, activityCheckIn: true }
       },
       {
         name: '同校分管理员扫描同校用户',
         scanner: users.partManagerUCD,
         scanned: scannedUsers.ucdVolunteer,
-        expected: { volunteerCheckin: true, activityCheckin: true }
+        expected: { volunteerCheckIn: true, activityCheckIn: true }
       },
       {
         name: '跨校分管理员扫描其他学校用户',
         scanner: users.partManagerUSC,
         scanned: scannedUsers.ucdVolunteer,
-        expected: { volunteerCheckin: false, activityCheckin: true }
+        expected: { volunteerCheckIn: false, activityCheckIn: true }
       },
       {
         name: '普通用户扫描其他用户',
         scanner: users.commonUser,
         scanned: scannedUsers.ucdVolunteer,
-        expected: { volunteerCheckin: false, activityCheckin: true }
+        expected: { volunteerCheckIn: false, activityCheckIn: true }
       },
       {
         name: '无权限用户扫描',
         scanner: users.noRoleUser,
         scanned: scannedUsers.ucdVolunteer,
-        expected: { volunteerCheckin: false, activityCheckin: true }
+        expected: { volunteerCheckIn: false, activityCheckIn: true }
       },
     ];
 
@@ -191,8 +191,8 @@ export class EdgeCaseTestSuite {
       try {
         const result = getScanPermissions(testCase.scanner, testCase.scanned);
         const passed = 
-          result.availableOptions.volunteerCheckin === testCase.expected.volunteerCheckin &&
-          result.availableOptions.activityCheckin === testCase.expected.activityCheckin;
+          result.availableOptions.volunteerCheckIn === testCase.expected.volunteerCheckIn &&
+          result.availableOptions.activityCheckIn === testCase.expected.activityCheckIn;
 
         testResults.push({
           test: testCase.name,
@@ -388,7 +388,7 @@ export class EdgeCaseTestSuite {
 
     edgeCaseUsers.forEach(testCase => {
       try {
-        const result = getUserPermissionLevel(testCase.user);
+        const result = getUserPermissionLevel(testCase.user as any);
         const passed = result === testCase.expected;
 
         testResults.push({
@@ -537,7 +537,7 @@ export class PerformanceTestSuite {
   static testMemoryLeaks() {
     console.log('🧪 [PERF] 开始内存泄漏测试...');
     
-    const initialMemory = performance.memory ? performance.memory.usedJSHeapSize : 0;
+    const initialMemory = (performance as any).memory ? (performance as any).memory.usedJSHeapSize : 0;
     
     // 模拟大量QR码生成
     for (let i = 0; i < 1000; i++) {
@@ -553,7 +553,7 @@ export class PerformanceTestSuite {
       generateUserQRContent(userData as UserIdentityData);
     }
 
-    const afterGeneration = performance.memory ? performance.memory.usedJSHeapSize : 0;
+    const afterGeneration = (performance as any).memory ? (performance as any).memory.usedJSHeapSize : 0;
     
     // 模拟大量权限检查
     const testUser = QRTestDataGenerator.generateTestUsers().superAdmin;
@@ -567,7 +567,7 @@ export class PerformanceTestSuite {
       getScanPermissions(testUser, scannedData);
     }
 
-    const finalMemory = performance.memory ? performance.memory.usedJSHeapSize : 0;
+    const finalMemory = (performance as any).memory ? (performance as any).memory.usedJSHeapSize : 0;
 
     console.log('📊 内存使用情况:', {
       initial: `${(initialMemory / 1024 / 1024).toFixed(2)} MB`,

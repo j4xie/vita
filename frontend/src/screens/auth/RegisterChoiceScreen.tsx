@@ -165,28 +165,30 @@ export const RegisterChoiceScreen: React.FC = () => {
             </View>
           </TouchableOpacity>
 
-          {/* Normal Registration */}
-          <TouchableOpacity
-            style={[styles.optionCard, styles.secondaryCard, detectingLocation && styles.optionCardDisabled]}
-            onPress={handleNormalRegister}
-            activeOpacity={detectingLocation ? 1 : 0.9}
-            disabled={detectingLocation}
-          >
-            <View style={styles.cardContent}>
-              <View style={[styles.iconContainer, styles.secondaryIconContainer]}>
-                <Ionicons name="person-add" size={40} color={theme.colors.primary} />
+          {/* Normal Registration - Temporarily hidden due to SMS verification issues */}
+          {false && (
+            <TouchableOpacity
+              style={[styles.optionCard, styles.secondaryCard, detectingLocation && styles.optionCardDisabled]}
+              onPress={handleNormalRegister}
+              activeOpacity={detectingLocation ? 1 : 0.9}
+              disabled={detectingLocation}
+            >
+              <View style={styles.cardContent}>
+                <View style={[styles.iconContainer, styles.secondaryIconContainer]}>
+                  <Ionicons name="person-add" size={40} color={theme.colors.primary} />
+                </View>
+                <View style={styles.textContainer}>
+                  <Text style={[styles.cardTitle, styles.secondaryCardTitle]}>
+                    {t('auth.register.normal_registration')}
+                  </Text>
+                  <Text style={[styles.cardDescription, styles.secondaryCardDescription]}>
+                    {t('auth.register.normal_description')}
+                  </Text>
+                </View>
+                <Ionicons name="chevron-forward" size={24} color={theme.colors.text.tertiary} />
               </View>
-              <View style={styles.textContainer}>
-                <Text style={[styles.cardTitle, styles.secondaryCardTitle]}>
-                  {t('auth.register.normal_registration')}
-                </Text>
-                <Text style={[styles.cardDescription, styles.secondaryCardDescription]}>
-                  {t('auth.register.normal_description')}
-                </Text>
-              </View>
-              <Ionicons name="chevron-forward" size={24} color={theme.colors.text.tertiary} />
-            </View>
-          </TouchableOpacity>
+            </TouchableOpacity>
+          )}
         </View>
 
         {/* Benefits Section */}

@@ -644,7 +644,7 @@ export const AppNavigator = () => {
             name="Auth" 
             component={AuthNavigator}
             options={{
-              animationEnabled: false,
+              headerShown: false,
             }}
           />
           

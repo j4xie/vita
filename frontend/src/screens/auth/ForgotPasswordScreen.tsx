@@ -96,9 +96,36 @@ export const ForgotPasswordScreen: React.FC = () => {
 
   const validatePhone = (phone: string) => {
     if (areaCode === '+86') {
-      // 中国手机号验证
+      // 中国手机号验证 - 支持所有运营商号段
+      // 移动: 134-139, 150-152, 157-159, 182-184, 187-188, 178, 198
+      // 联通: 130-132, 155-156, 185-186, 175-176
+      // 电信: 133, 153, 180-181, 189, 177, 199
+      // 虚拟运营商: 170-171, 162-165, 167
       const phoneRegex = /^1[3-9]\d{9}$/;
-      return phoneRegex.test(phone);
+
+      // 验证长度和基本格式
+      if (!phoneRegex.test(phone)) {
+        return false;
+      }
+
+      // 验证号段 - 包含所有已知的有效号段
+      const prefix = phone.substring(0, 3);
+      const validPrefixes = [
+        // 移动
+        '134', '135', '136', '137', '138', '139',
+        '150', '151', '152', '157', '158', '159',
+        '182', '183', '184', '187', '188',
+        '178', '198',
+        // 联通
+        '130', '131', '132', '133', '155', '156',
+        '185', '186', '175', '176',
+        // 电信
+        '153', '180', '181', '189', '177', '199',
+        // 虚拟运营商
+        '170', '171', '162', '163', '164', '165', '167'
+      ];
+
+      return validPrefixes.includes(prefix);
     } else {
       // 美国手机号验证 (简化验证)
       const phoneRegex = /^[2-9]\d{2}[2-9]\d{6}$/;
@@ -154,13 +181,13 @@ export const ForgotPasswordScreen: React.FC = () => {
       console.log('📊 [App-ForgotPassword] API返回结果分析:', {
         code: result.code,
         codeType: typeof result.code,
-        isOK: (result.code as string) === "OK",
+        isOK: String(result.code) === "OK",
         is200: result.code === 200,
-        bizId: result.bizId,
-        message: result.message
+        bizId: (result as any).bizId,
+        message: (result as any).message
       });
-      
-      if ((result.code as string) === "OK" && result.bizId) {
+
+      if (String(result.code) === "OK" && (result as any).bizId) {
         console.log('✅ [App-ForgotPassword] 验证码发送成功');
 
         if (isMounted.current) {
@@ -173,9 +200,29 @@ export const ForgotPasswordScreen: React.FC = () => {
         await safeHaptics.notification(Haptics.NotificationFeedbackType.Success);
       } else {
         console.log('❌ [App-ForgotPassword] API返回失败:', result);
+
+        // 分析具体失败原因
+        let errorMessage = result.msg || (result as any).message || t('auth.forgot_password.send_code_failed');
+
+        // 根据错误信息提供更明确的提示
+        if (errorMessage.includes('手机号') || errorMessage.includes('phone')) {
+          errorMessage = `手机号码验证失败 (${phone})，请检查号码是否正确或联系客服`;
+        } else if (errorMessage.includes('号段') || errorMessage.includes('segment')) {
+          errorMessage = `号码段 ${phone.substring(0, 3)} 暂不支持，请使用其他号码或联系客服`;
+        } else if (errorMessage.includes('频率') || errorMessage.includes('limit')) {
+          errorMessage = '发送验证码过于频繁，请稍后再试';
+        }
+
+        console.log('🔍 [App-ForgotPassword] 错误详情:', {
+          originalError: result,
+          processedMessage: errorMessage,
+          phone: phone,
+          prefix: phone.substring(0, 3)
+        });
+
         Alert.alert(
           t('common.error'),
-          result.msg || t('auth.forgot_password.send_code_failed')
+          errorMessage
         );
       }
     } catch (error) {
@@ -539,7 +586,7 @@ const styles = StyleSheet.create({
     backgroundColor: LIQUID_GLASS_LAYERS.L1.background.light,
     borderRadius: theme.borderRadius.xl,
     padding: theme.spacing.xl,
-    ...theme.shadows[LIQUID_GLASS_LAYERS.L1.shadow],
+    ...theme.shadows[LIQUID_GLASS_LAYERS.L1.shadow.light],
     borderWidth: LIQUID_GLASS_LAYERS.L1.border.width,
     borderColor: LIQUID_GLASS_LAYERS.L1.border.color.light,
   },

@@ -13,8 +13,8 @@ async function quickUpload() {
         const targetPath = "/www/wwwroot/project/h5";
         
         const filesToUpload = [
-            "index.html", 
-            "_expo/static/js/web/index-d1cc01bc9572c0dae48246e8693480fc.js"
+            "index.html",
+            "_expo/static/js/web/index-4bfbeb9278a5315367fe10403ab41d72.js"
         ];
         
         for (const relativeFilePath of filesToUpload) {

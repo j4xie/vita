@@ -107,7 +107,7 @@ export const CheckInFloatingLayer: React.FC<CheckInFloatingLayerProps> = ({
           <Text style={styles.activityName} numberOfLines={1}>
             {activityTitle}
           </Text>
-          <Text style={styles.distance}>{t('location.distance_from_venue', '距离活动地点 {{distance}}', { distance })}</Text>
+          <Text style={styles.distance}>{t('location.distance_from_venue', { distance })}</Text>
         </View>
         
         <TouchableOpacity 

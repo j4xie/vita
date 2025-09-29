@@ -78,28 +78,28 @@ export const PermissionDebugModal: React.FC<Props> = ({ visible, onClose }) => {
     >
       <View style={styles.container}>
         <View style={styles.header}>
-          <Text style={styles.title}>🔍 权限调试工具</Text>
+          <Text style={styles.title}>🔍 {t('debug.permission_tool', '权限调试工具')}</Text>
           <TouchableOpacity style={styles.closeButton} onPress={onClose}>
-            <Text style={styles.closeText}>关闭</Text>
+            <Text style={styles.closeText}>{t('common.close', '关闭')}</Text>
           </TouchableOpacity>
         </View>
         
         <ScrollView style={styles.content}>
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>📊 当前用户权限状态</Text>
-            <Text style={styles.item}>权限级别: {debugData.permissionLevel}</Text>
-            <Text style={styles.item}>志愿者功能: {debugData.hasVolunteerAccess ? '✅ 可访问' : '❌ 不可访问'}</Text>
-            <Text style={styles.item}>签到操作: {debugData.canCheckInOut ? '✅ 可操作' : '❌ 不可操作'}</Text>
-            <Text style={styles.item}>总管理员: {debugData.isAdmin ? '✅' : '❌'}</Text>
-            <Text style={styles.item}>分管理员: {debugData.isPartManager ? '✅' : '❌'}</Text>
-            <Text style={styles.item}>内部员工: {debugData.isStaff ? '✅' : '❌'}</Text>
+            <Text style={styles.sectionTitle}>📊 {t('debug.current_user_permissions', '当前用户权限状态')}</Text>
+            <Text style={styles.item}>{t('debug.permission_level', '权限级别')}: {debugData.permissionLevel}</Text>
+            <Text style={styles.item}>{t('debug.volunteer_access', '志愿者功能')}: {debugData.hasVolunteerAccess ? '✅ ' + t('debug.accessible', '可访问') : '❌ ' + t('debug.not_accessible', '不可访问')}</Text>
+            <Text style={styles.item}>{t('debug.checkin_operations', '签到操作')}: {debugData.canCheckInOut ? '✅ ' + t('debug.can_operate', '可操作') : '❌ ' + t('debug.cannot_operate', '不可操作')}</Text>
+            <Text style={styles.item}>{t('debug.admin', '总管理员')}: {debugData.isAdmin ? '✅' : '❌'}</Text>
+            <Text style={styles.item}>{t('debug.part_manager', '分管理员')}: {debugData.isPartManager ? '✅' : '❌'}</Text>
+            <Text style={styles.item}>{t('debug.staff', '内部员工')}: {debugData.isStaff ? '✅' : '❌'}</Text>
           </View>
 
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>👤 用户基本信息</Text>
-            <Text style={styles.item}>用户ID: {debugData.userId}</Text>
-            <Text style={styles.item}>用户名: {debugData.userName}</Text>
-            <Text style={styles.item}>法定姓名: {debugData.legalName}</Text>
+            <Text style={styles.sectionTitle}>👤 {t('debug.user_basic_info', '用户基本信息')}</Text>
+            <Text style={styles.item}>{t('debug.user_id', '用户ID')}: {debugData.userId}</Text>
+            <Text style={styles.item}>{t('debug.username', '用户名')}: {debugData.userName}</Text>
+            <Text style={styles.item}>{t('debug.legal_name', '法定姓名')}: {debugData.legalName}</Text>
             <Text style={styles.item}>部门ID: {debugData.deptId}</Text>
             <Text style={styles.item}>学校: {JSON.stringify(debugData.school)}</Text>
           </View>

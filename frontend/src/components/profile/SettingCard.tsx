@@ -98,12 +98,10 @@ export const SettingCard: React.FC<SettingCardProps> = ({
       fontWeight: '600',
       textAlign: 'center',
       marginBottom: 4,
-      numberOfLines: 1,
     },
     subtitle: {
       fontSize: 13,
       textAlign: 'center',
-      numberOfLines: 1,
     },
     badge: {
       position: 'absolute',
@@ -153,19 +151,21 @@ export const SettingCard: React.FC<SettingCardProps> = ({
           />
         </Animated.View>
         
-        <Text 
+        <Text
           style={[styles.title, dmStyles.text.primary]}
           allowFontScaling={true}
           maxFontSizeMultiplier={1.4}
+          numberOfLines={1}
         >
           {title}
         </Text>
         
         {subtitle && (
-          <Text 
+          <Text
             style={[styles.subtitle, dmStyles.text.secondary]}
             allowFontScaling={true}
             maxFontSizeMultiplier={1.3}
+            numberOfLines={1}
           >
             {subtitle}
           </Text>

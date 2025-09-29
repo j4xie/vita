@@ -137,7 +137,7 @@ export const usePerformanceDegradation = () => {
       const performanceConfig = blurStrategies?.performance?.[performanceLevel] || { enableBlur: false };
 
       // 背景配置
-      const colorScheme = isDarkMode ? 'dark' : 'light';
+      const colorScheme = 'light';
       let backgroundConfig;
       
       if (layer === 'L2' && layerData.background) {
@@ -206,7 +206,7 @@ export const usePerformanceDegradation = () => {
         };
       }
 
-      const colorScheme = isDarkMode ? 'dark' : 'light';
+      const colorScheme = 'light';
       const gradientColors = fallbackGradients[layer]?.[colorScheme] || fallbackGradients.L1.light;
 
       return {
@@ -230,22 +230,22 @@ export const usePerformanceDegradation = () => {
   const getFallbackLayerConfig = (layer: 'L1' | 'L2' | 'L3', isDarkMode: boolean) => {
     const baseConfigs = {
       L1: {
-        background: isDarkMode ? 'rgba(28, 28, 30, 0.85)' : 'rgba(255, 255, 255, 0.85)',
-        border: { color: isDarkMode ? 'rgba(255, 255, 255, 0.15)' : 'rgba(255, 255, 255, 0.30)', width: 1 },
+        background: 'rgba(255, 255, 255, 0.85)',
+        border: { color: 'rgba(255, 255, 255, 0.30)', width: 1 },
         borderRadius: { card: 16, surface: 20, compact: 12 },
         blur: 0,
         shadow: 'xs' as const,
       },
       L2: {
-        background: isDarkMode ? 'rgba(255, 107, 53, 0.12)' : 'rgba(255, 107, 53, 0.14)',
-        border: { color: isDarkMode ? 'rgba(255, 107, 53, 0.18)' : 'rgba(255, 107, 53, 0.22)', width: 1 },
+        background: 'rgba(255, 107, 53, 0.14)',
+        border: { color: 'rgba(255, 107, 53, 0.22)', width: 1 },
         borderRadius: { card: 16, surface: 20, compact: 12, pill: 24 },
         blur: 0,
         shadow: 'xs' as const,
       },
       L3: {
-        background: isDarkMode ? 'rgba(28, 28, 30, 0.90)' : 'rgba(255, 255, 255, 0.90)',
-        border: { color: isDarkMode ? 'rgba(255, 255, 255, 0.20)' : 'rgba(255, 255, 255, 0.30)', width: 1 },
+        background: 'rgba(255, 255, 255, 0.90)',
+        border: { color: 'rgba(255, 255, 255, 0.30)', width: 1 },
         borderRadius: { modal: 24, tooltip: 16, fab: 28 },
         blur: 0,
         shadow: 'sm' as const,

@@ -117,19 +117,9 @@ export const ThemeSelectionModal: React.FC<ThemeSelectionModalProps> = ({
     description: string;
   }[] = [
     {
-      mode: 'auto',
-      title: t('profile.general.auto_mode'),
-      description: t('profile.general.auto_description'),
-    },
-    {
       mode: 'light',
       title: t('profile.general.light_mode'),
       description: t('profile.general.light_description'),
-    },
-    {
-      mode: 'dark',
-      title: t('profile.general.dark_mode'),
-      description: t('profile.general.dark_description'),
     },
   ];
 

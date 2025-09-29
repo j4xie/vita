@@ -17,7 +17,6 @@ import * as Haptics from 'expo-haptics';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { theme } from '../../theme';
-import { useTheme } from '../../context/ThemeContext';
 import { LIQUID_GLASS_LAYERS } from '../../theme/core';
 
 interface AppearanceDevModalProps {
@@ -32,8 +31,6 @@ export const AppearanceDevModal: React.FC<AppearanceDevModalProps> = ({
   onClose,
 }) => {
   const { t } = useTranslation();
-  const themeContext = useTheme();
-  const isDarkMode = themeContext.isDarkMode;
   const insets = useSafeAreaInsets();
 
   // Animation values
@@ -116,11 +113,11 @@ export const AppearanceDevModal: React.FC<AppearanceDevModalProps> = ({
               <BlurView 
                 intensity={15}
                 style={StyleSheet.absoluteFill}
-                tint={isDarkMode ? 'dark' : 'light'}
+                tint="light"
               />
             ) : (
               <View style={[StyleSheet.absoluteFill, { 
-                backgroundColor: isDarkMode ? 'rgba(0,0,0,0.48)' : 'rgba(0,0,0,0.44)'
+                backgroundColor: 'rgba(0,0,0,0.44)'
               }]} />
             )}
           </View>
@@ -152,7 +149,7 @@ export const AppearanceDevModal: React.FC<AppearanceDevModalProps> = ({
                 <Ionicons
                   name="close"
                   size={20}
-                  color={isDarkMode ? '#8e8e93' : '#8e8e93'}
+                  color="#8e8e93"
                 />
               </TouchableOpacity>
 
@@ -167,7 +164,7 @@ export const AppearanceDevModal: React.FC<AppearanceDevModalProps> = ({
                 </View>
                 <Text style={[
                   styles.title,
-                  { color: isDarkMode ? '#ffffff' : '#000000' }
+                  { color: '#000000' }
                 ]}>
                   {t('common.feature_developing')}
                 </Text>
@@ -177,13 +174,13 @@ export const AppearanceDevModal: React.FC<AppearanceDevModalProps> = ({
               <View style={styles.messageSection}>
                 <Text style={[
                   styles.mainMessage,
-                  { color: isDarkMode ? '#ffffff' : '#1d1d1f' }
+                  { color: '#1d1d1f' }
                 ]}>
                   {t('profile.general.appearanceDevelopmentTitle')}
                 </Text>
                 <Text style={[
                   styles.description,
-                  { color: isDarkMode ? '#8e8e93' : '#8e8e93' }
+                  { color: '#8e8e93' }
                 ]}>
                   {t('profile.general.appearanceDevelopmentMessage')}
                 </Text>
@@ -193,7 +190,7 @@ export const AppearanceDevModal: React.FC<AppearanceDevModalProps> = ({
               <View style={styles.featureSection}>
                 <Text style={[
                   styles.featureTitle,
-                  { color: isDarkMode ? '#ffffff' : '#1d1d1f' }
+                  { color: '#1d1d1f' }
                 ]}>
                   {t('profile.general.appearanceComingFeatures')}
                 </Text>
@@ -212,7 +209,7 @@ export const AppearanceDevModal: React.FC<AppearanceDevModalProps> = ({
                       />
                       <Text style={[
                         styles.featureText,
-                        { color: isDarkMode ? '#c7c7cc' : '#6d6d70' }
+                        { color: '#6d6d70' }
                       ]}>
                         {feature.text}
                       </Text>
@@ -376,7 +373,7 @@ const styles = StyleSheet.create({
     borderWidth: LIQUID_GLASS_LAYERS.L3.border.width,
     borderColor: LIQUID_GLASS_LAYERS.L3.border.color.light,
     borderRadius: LIQUID_GLASS_LAYERS.L3.borderRadius.modal,
-    ...theme.shadows[LIQUID_GLASS_LAYERS.L3.shadow],
+    ...theme.shadows.lg,
   },
   contentGlass: {
     backgroundColor: 'transparent',

@@ -94,3 +94,21 @@ export const formatCurrentDuration = (checkInTime: string, currentTime: Date): s
   const diffMinutes = Math.floor((currentTime.getTime() - start.getTime()) / (1000 * 60));
   return formatDuration(diffMinutes);
 };
+
+// Add missing exports for timezoneFixTest.ts
+export const formatVolunteerTime = (date?: Date): string => {
+  const targetDate = date || new Date();
+  return targetDate.toISOString().replace('T', ' ').slice(0, 19);
+};
+
+export const getCurrentLocalTimestamp = (): string => {
+  return formatVolunteerTime();
+};
+
+export const validateAndFormatTime = (timeString: string): string => {
+  const date = new Date(timeString);
+  if (isNaN(date.getTime())) {
+    throw new Error('Invalid time format');
+  }
+  return formatVolunteerTime(date);
+};

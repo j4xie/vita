@@ -1,4 +1,7 @@
-import { TFunction } from 'react-i18next';
+import { i18n } from 'i18next';
+
+// Define TFunction type locally since it's not exported from react-i18next
+type TFunction = (key: string, options?: any) => string;
 import { isChinese } from './i18n';
 
 // 简单拼音映射表 (常用汉字)

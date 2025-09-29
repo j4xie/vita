@@ -29,14 +29,16 @@ export class UnifiedTimeService {
   /**
    * 核心方法1: 解析后端时间
    *
+   * 架构设计：前后端都使用本地时间，无时区转换
+   * 后端返回什么时间，前端就按照该时间直接解析和显示
+   *
    * @param serverTime 后端返回的时间字符串，格式: "YYYY-MM-DD HH:mm:ss"
-   * @param isLocalTime 是否为本地时间（默认true，统一使用本地时间）
+   * @param _deprecated 兼容参数，已弃用
    * @returns JavaScript Date对象
    * @example
-   * const date = parseServerTime("2025-01-25 14:30:00"); // 本地时间
-   * const beijingDate = parseServerTime("2025-01-25 14:30:00", false); // 北京时间（兼容旧数据）
+   * const date = parseServerTime("2025-01-25 14:30:00"); // 直接解析为本地时间
    */
-  parseServerTime(serverTime: string | null | undefined, isLocalTime: boolean = true): Date | null {
+  parseServerTime(serverTime: string | null | undefined, _deprecated?: boolean): Date | null {
     if (!serverTime) {
       return null;
     }
@@ -53,22 +55,23 @@ export class UnifiedTimeService {
         return date;
       }
 
-      // 根据isLocalTime参数决定是否添加时区
-      let date: Date;
-      if (isLocalTime) {
-        // 本地时间，不添加时区标识
-        const isoString = serverTime.replace(' ', 'T');
-        date = new Date(isoString);
-      } else {
-        // 北京时间（默认），需要加上 +08:00 时区标识
-        const isoString = serverTime.replace(' ', 'T') + '+08:00';
-        date = new Date(isoString);
-      }
+      // 🔧 核心修复：后端返回的时间格式 "YYYY-MM-DD HH:mm:ss" 直接作为本地时间解析
+      // 不添加任何时区信息，避免时区转换错误
+      const isoString = serverTime.replace(' ', 'T');
+      const date = new Date(isoString);
 
       // 验证日期有效性
       if (isNaN(date.getTime())) {
         console.error('[UnifiedTimeService] 无效的时间格式:', serverTime);
         return null;
+      }
+
+      if (__DEV__) {
+        console.log('📅 [LocalTime] 本地时间解析:', {
+          input: serverTime,
+          output: date.toLocaleString(),
+          timestamp: date.getTime()
+        });
       }
 
       return date;
@@ -249,13 +252,6 @@ export class UnifiedTimeService {
     return this.formatForServer(new Date());
   }
 
-  /**
-   * @deprecated 使用 getCurrentLocalTime() 替代
-   * 保留此方法以兼容现有代码
-   */
-  getCurrentBeijingTime(): string {
-    return this.getCurrentLocalTime();
-  }
 
   /**
    * 格式化为本地时间字符串（不转换时区）
@@ -281,24 +277,6 @@ export class UnifiedTimeService {
     return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
   }
 
-  /**
-   * 后备方案：手动格式化为北京时间
-   * 当 Intl.DateTimeFormat 不可用时使用
-   */
-  private formatForServerFallback(date: Date): string {
-    // 获取UTC时间并加8小时
-    const utcTime = date.getTime() + date.getTimezoneOffset() * 60000;
-    const beijingTime = new Date(utcTime + 8 * 60 * 60000);
-
-    const year = beijingTime.getFullYear();
-    const month = String(beijingTime.getMonth() + 1).padStart(2, '0');
-    const day = String(beijingTime.getDate()).padStart(2, '0');
-    const hour = String(beijingTime.getHours()).padStart(2, '0');
-    const minute = String(beijingTime.getMinutes()).padStart(2, '0');
-    const second = String(beijingTime.getSeconds()).padStart(2, '0');
-
-    return `${year}-${month}-${day} ${hour}:${minute}:${second}`;
-  }
 
   /**
    * 工具方法：验证时间合理性
@@ -346,6 +324,95 @@ export class UnifiedTimeService {
     } else {
       return this.formatForDisplay(date, { showDate: true, showTime: false });
     }
+  }
+
+  /**
+   * 检测时间异常 - 替代旧的detectTimeAnomaly函数
+   *
+   * @param checkInTime 签到时间（字符串或Date对象）
+   * @returns 异常检测结果
+   */
+  detectTimeAnomaly(
+    checkInTime?: any
+  ): { type: 'future' | 'too_long' | null; message?: string } {
+    if (!checkInTime) return { type: null };
+
+    try {
+      const checkIn = this.parseServerTime(checkInTime);
+      if (!checkIn) return { type: null };
+
+      const now = new Date();
+      const diffMs = now.getTime() - checkIn.getTime();
+
+      // 检测未来时间
+      if (diffMs < 0) {
+        return {
+          type: 'future',
+          message: '签到时间在未来'
+        };
+      }
+
+      // 检测超长时间（超过24小时）
+      const twentyFourHoursMs = 24 * 60 * 60 * 1000;
+      if (diffMs > twentyFourHoursMs) {
+        const hours = Math.floor(diffMs / (1000 * 60 * 60));
+        return {
+          type: 'too_long',
+          message: `已签到${hours}小时，可能存在异常`
+        };
+      }
+
+      return { type: null };
+    } catch (error) {
+      console.error('检测时间异常失败:', error);
+      return { type: null };
+    }
+  }
+
+  /**
+   * 预防性状态检查 - 检测可能需要重置的用户
+   */
+  checkVolunteerStatusHealth(volunteers: any[]): {
+    needResetUsers: any[];
+    longTermUsers: any[];
+    totalAnomalies: number;
+  } {
+    const needResetUsers = [];
+    const longTermUsers = [];
+
+    for (const volunteer of volunteers) {
+      if (!volunteer.checkInTime || volunteer.checkInStatus !== 'checked_in') {
+        continue;
+      }
+
+      const anomaly = this.detectTimeAnomaly(volunteer.checkInTime);
+      if (anomaly.type === 'too_long') {
+        const parsedTime = this.parseServerTime(volunteer.checkInTime);
+        if (parsedTime) {
+          const hoursElapsed = (new Date().getTime() - parsedTime.getTime()) / (1000 * 60 * 60);
+
+          if (hoursElapsed > 24) {
+            needResetUsers.push({
+              ...volunteer,
+              hoursElapsed: Math.floor(hoursElapsed),
+              anomalyMessage: anomaly.message
+            });
+          } else if (hoursElapsed > 8) {
+            longTermUsers.push({
+              ...volunteer,
+              hoursElapsed: Math.floor(hoursElapsed),
+              anomalyMessage: anomaly.message
+            });
+          }
+        }
+      }
+    }
+
+    return {
+      needResetUsers,
+      longTermUsers,
+      totalAnomalies: needResetUsers.length + longTermUsers.length
+    };
   }
 }
 

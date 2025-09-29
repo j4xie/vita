@@ -13,7 +13,7 @@ const testUsers = {
     legalName: '总管理员',
     deptId: 223,
     dept: { deptId: 223, deptName: '东华大学' },
-    roles: [{ key: 'manage', roleName: '总管理员' }],
+    roles: [{ roleId: 1, key: 'manage', roleKey: 'manage', roleName: '总管理员', roleSort: 1, admin: true, status: 'active', flag: true }],
     admin: true
   },
   deptAdmin1: {
@@ -22,7 +22,7 @@ const testUsers = {
     legalName: 'UCB分管理员',
     deptId: 211,
     dept: { deptId: 211, deptName: '加州大学伯克利分校' },
-    roles: [{ key: 'part_manage', roleName: '分管理员' }],
+    roles: [{ roleId: 2, key: 'part_manage', roleKey: 'part_manage', roleName: '分管理员', roleSort: 2, admin: false, status: 'active', flag: true }],
     admin: false
   },
   deptAdmin2: {
@@ -31,7 +31,7 @@ const testUsers = {
     legalName: '清华分管理员',
     deptId: 203,
     dept: { deptId: 203, deptName: '清华大学' },
-    roles: [{ key: 'part_manage', roleName: '分管理员' }],
+    roles: [{ roleId: 2, key: 'part_manage', roleKey: 'part_manage', roleName: '分管理员', roleSort: 2, admin: false, status: 'active', flag: true }],
     admin: false
   },
   staff1: {
@@ -40,7 +40,7 @@ const testUsers = {
     legalName: '内部员工1',
     deptId: 223,
     dept: { deptId: 223, deptName: '东华大学' },
-    roles: [{ key: 'staff', roleName: '内部员工' }],
+    roles: [{ roleId: 3, key: 'staff', roleKey: 'staff', roleName: '内部员工', roleSort: 3, admin: false, status: 'active', flag: true }],
     admin: false
   },
   staff2: {
@@ -49,7 +49,7 @@ const testUsers = {
     legalName: '内部员工2',
     deptId: 211,
     dept: { deptId: 211, deptName: '加州大学伯克利分校' },
-    roles: [{ key: 'staff', roleName: '内部员工' }],
+    roles: [{ roleId: 3, key: 'staff', roleKey: 'staff', roleName: '内部员工', roleSort: 3, admin: false, status: 'active', flag: true }],
     admin: false
   },
   commonUser: {
@@ -58,7 +58,7 @@ const testUsers = {
     legalName: '普通学生',
     deptId: 203,
     dept: { deptId: 203, deptName: '清华大学' },
-    roles: [{ key: 'common', roleName: '普通用户' }],
+    roles: [{ roleId: 4, key: 'common', roleKey: 'common', roleName: '普通用户', roleSort: 4, admin: false, status: 'active', flag: true }],
     admin: false
   }
 };

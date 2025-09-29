@@ -51,6 +51,14 @@ import { i18n } from '../../utils/i18n';
 import { useUser } from '../../context/UserContext';
 import { login } from '../../services/authAPI';
 import LiquidSuccessModal from '../../components/modals/LiquidSuccessModal';
+import {
+  validateEmail,
+  validatePassword as validatePasswordNew,
+  validatePhone,
+  validateUsername,
+  validateVerificationCode,
+  parseApiError
+} from '../../utils/formValidation';
 
 interface RouteParams {
   step1Data: RegistrationStep1Data & {
@@ -95,6 +103,10 @@ export const StudentNormalRegisterStep2Screen: React.FC = () => {
   const [phoneNumber, setPhoneNumber] = useState('');
   const [areaCode, setAreaCode] = useState<'86' | '1'>('86');
   const [verificationCode, setVerificationCode] = useState('');
+
+  // 实时验证状态
+  const [phoneNumberValid, setPhoneNumberValid] = useState<boolean | null>(null);
+  const [verificationCodeValid, setVerificationCodeValid] = useState<boolean | null>(null);
   
   // 实时验证状态
   const [realtimeErrors, setRealtimeErrors] = useState<ValidationErrors>({});
@@ -119,6 +131,50 @@ export const StudentNormalRegisterStep2Screen: React.FC = () => {
   
   const scrollViewRef = useRef<ScrollView>(null);
   const [showScrollHint, setShowScrollHint] = useState(false);
+
+  // 实时验证手机号
+  const validatePhoneNumberRealtime = (phone: string) => {
+    if (phone.length === 0) {
+      setPhoneNumberValid(null);
+      return;
+    }
+
+    const validation = validatePhone(phone, areaCode, t);
+    setPhoneNumberValid(validation.isValid);
+  };
+
+  // 实时验证验证码
+  const validateVerificationCodeRealtime = (code: string) => {
+    if (code.length === 0) {
+      setVerificationCodeValid(null);
+      return;
+    }
+
+    const validation = validateVerificationCode(code, t);
+    setVerificationCodeValid(validation.isValid);
+  };
+
+  // 手机号输入处理
+  const handlePhoneNumberChange = (text: string) => {
+    setPhoneNumber(text);
+    validatePhoneNumberRealtime(text);
+
+    // 清除可能的错误状态
+    if (errors.phoneNumber) {
+      setErrors(prev => ({ ...prev, phoneNumber: undefined }));
+    }
+  };
+
+  // 验证码输入处理
+  const handleVerificationCodeChange = (text: string) => {
+    setVerificationCode(text);
+    validateVerificationCodeRealtime(text);
+
+    // 清除可能的错误状态
+    if (errors.verificationCode) {
+      setErrors(prev => ({ ...prev, verificationCode: undefined }));
+    }
+  };
 
   // 实时验证功能暂时禁用，跳过重复检查约束
   // 等后端接口完善后再启用
@@ -177,20 +233,16 @@ export const StudentNormalRegisterStep2Screen: React.FC = () => {
   const validateForm = (): boolean => {
     const newErrors: ValidationErrors = {};
 
-    // 验证手机号
-    if (!phoneNumber) {
-      newErrors.phoneNumber = t('validation.phone_required');
-    } else if (!validatePhoneNumber(phoneNumber, areaCode)) {
-      newErrors.phoneNumber = areaCode === '86'
-        ? t('validation.phone_china_invalid')
-        : t('validation.phone_us_invalid');
+    // 使用新的手机号验证
+    const phoneValidation = validatePhone(phoneNumber, areaCode, t);
+    if (!phoneValidation.isValid) {
+      newErrors.phoneNumber = phoneValidation.errorMessage;
     }
 
-    // 验证验证码
-    if (!verificationCode.trim()) {
-      newErrors.verificationCode = t('validation.verification_code_required');
-    } else if (!/^\d{6}$/.test(verificationCode)) {
-      newErrors.verificationCode = t('validation.verification_code_format');
+    // 使用新的验证码验证
+    const codeValidation = validateVerificationCode(verificationCode, t);
+    if (!codeValidation.isValid) {
+      newErrors.verificationCode = codeValidation.errorMessage;
     }
 
     // 验证条款同意
@@ -424,98 +476,82 @@ export const StudentNormalRegisterStep2Screen: React.FC = () => {
         }
       } else {
         console.error('❌ 注册失败，错误码:', response.code, '错误信息:', response.msg);
-        
-        // 详细的错误处理
-        let errorTitle = t('auth.register.errors.register_failed');
-        let errorMessage = response.msg || t('auth.register.errors.register_failed_message');
-        let suggestions = [];
-        
-        // 根据错误码和消息提供具体的解决建议
-        if (!response.msg) {
-          switch (response.code) {
-            case 500:
-              errorTitle = '🔧 服务器错误';
-              errorMessage = '服务器暂时不可用，请稍后重试';
-              suggestions = ['✓ 检查网络连接', '✓ 稍后重试', '✓ 联系客服'];
-              break;
-            case 400:
-              errorTitle = '📝 信息格式错误';
-              errorMessage = '注册信息格式不正确，请检查后重试';
-              suggestions = ['✓ 检查用户名格式(6-20位)', '✓ 检查密码强度', '✓ 确认邮箱格式'];
-              break;
-            case 409:
-              errorTitle = '👥 信息已存在';
-              errorMessage = '用户名或邮箱已被使用';
-              suggestions = ['✓ 尝试其他用户名', '✓ 检查邮箱是否已注册', '✓ 联系客服找回账户'];
-              break;
-            default:
-              errorMessage = `注册失败 (错误码: ${response.code})`;
-              suggestions = ['✓ 稍后重试', '✓ 联系客服'];
-          }
+
+        // 🔧 使用新的API错误解析
+        const errorInfo = parseApiError(response, 'register', t);
+
+        const buttons: any[] = [
+          { text: t('common.cancel'), style: 'cancel' }
+        ];
+
+        // 根据错误类型添加不同的按钮
+        if (errorInfo.actionType === 'login') {
+          buttons.push({
+            text: errorInfo.action || t('auth.errors.actions.go_to_login'),
+            onPress: () => {
+              navigation.reset({
+                index: 0,
+                routes: [{ name: 'Login' }],
+              });
+            }
+          });
         } else {
-          // 特殊错误消息处理
-          if (errorMessage.includes('注册功能') || errorMessage.includes('暂未开启')) {
-            errorTitle = '🚫 服务暂停';
-            errorMessage = '注册功能暂未开启';
-            suggestions = ['✓ 联系管理员开启', '✓ 使用推荐码注册'];
-          } else if (errorMessage.includes('用户名')) {
-            errorTitle = '👤 用户名问题';
-            errorMessage = '用户名已存在或格式不正确';
-            suggestions = ['✓ 尝试其他用户名', '✓ 6-20位字母数字组合'];
-          } else if (errorMessage.includes('验证码')) {
-            errorTitle = t('auth.register.errors.verification_code_error_title');
-            errorMessage = t('auth.register.errors.verification_code_error_message');
-            suggestions = t('auth.register.errors.retry_solutions').map((solution: string) => `✓ ${solution}`);
-          } else if (errorMessage.includes('邮箱')) {
-            errorTitle = '📧 邮箱问题';
-            errorMessage = '邮箱格式不正确或已被使用';
-            suggestions = ['✓ 检查邮箱格式', '✓ 尝试其他邮箱'];
-          }
+          buttons.push({
+            text: errorInfo.action || t('auth.errors.actions.retry'),
+            onPress: () => setLoading(false)
+          });
         }
-        
-        const fullMessage = errorMessage + 
-          (suggestions.length > 0 ? '\n\n建议解决方案:\n' + suggestions.join('\n') : '');
-        
+
+        buttons.push({
+          text: t('common.back'),
+          style: 'cancel',
+          onPress: () => navigation.goBack()
+        });
+
         Alert.alert(
-          errorTitle,
-          fullMessage,
-          [
-            { text: '重试', onPress: () => setLoading(false) },
-            { text: t('common.back'), style: 'cancel', onPress: () => navigation.goBack() }
-          ]
+          errorInfo.title,
+          `${errorInfo.message}${errorInfo.suggestion ? '\n\n' + errorInfo.suggestion : ''}`,
+          buttons
         );
       }
     } catch (error) {
       console.error('❌ 注册网络错误:', error);
-      
-      // 网络错误的具体处理
-      let errorTitle = '🌐 网络错误';
-      let errorMessage = '网络连接失败，请检查网络后重试';
-      let suggestions = ['✓ 检查WiFi/数据连接', '✓ 重启网络', '✓ 稍后重试'];
-      
-      if (error instanceof Error) {
-        if (error.message.includes('Network request failed')) {
-          errorMessage = 'SSL证书验证失败或网络不可达';
-          suggestions = ['✓ 检查网络连接', '✓ 尝试切换网络', '✓ 联系客服'];
-        } else if (error.message.includes('timeout')) {
-          errorMessage = '请求超时，服务器响应缓慢';
-          suggestions = ['✓ 稍后重试', '✓ 检查网络速度'];
-        } else if (error.message.includes('500')) {
-          errorTitle = '🔧 服务器错误';
-          errorMessage = '服务器内部错误，请稍后重试';
-          suggestions = ['✓ 稍后重试', '✓ 联系客服'];
-        }
+
+      // 🔧 使用新的API错误解析
+      const errorInfo = parseApiError(error, 'register', t);
+
+      const buttons: any[] = [
+        { text: t('common.cancel'), style: 'cancel' }
+      ];
+
+      // 根据错误类型添加不同的按钮
+      if (errorInfo.actionType === 'login') {
+        buttons.push({
+          text: errorInfo.action || t('auth.errors.actions.go_to_login'),
+          onPress: () => {
+            navigation.reset({
+              index: 0,
+              routes: [{ name: 'Login' }],
+            });
+          }
+        });
+      } else {
+        buttons.push({
+          text: errorInfo.action || t('auth.errors.actions.retry'),
+          onPress: () => setLoading(false)
+        });
       }
-      
-      const fullMessage = errorMessage + '\n\n解决建议:\n' + suggestions.join('\n');
-      
+
+      buttons.push({
+        text: t('common.back'),
+        style: 'cancel',
+        onPress: () => navigation.goBack()
+      });
+
       Alert.alert(
-        errorTitle,
-        fullMessage,
-        [
-          { text: '重试', onPress: () => setLoading(false) },
-          { text: t('common.back'), style: 'cancel', onPress: () => navigation.goBack() }
-        ]
+        errorInfo.title,
+        `${errorInfo.message}${errorInfo.suggestion ? '\n\n' + errorInfo.suggestion : ''}`,
+        buttons
       );
     } finally {
       setLoading(false);
@@ -632,15 +668,49 @@ export const StudentNormalRegisterStep2Screen: React.FC = () => {
                   <Ionicons name="chevron-down" size={16} color={theme.colors.text.secondary} />
                 </TouchableOpacity>
                 <TextInput
-                  style={[styles.phoneInput, errors.phoneNumber && styles.inputError]}
+                  style={[
+                    styles.phoneInput,
+                    errors.phoneNumber && styles.inputError,
+                    phoneNumberValid === true && styles.inputSuccess,
+                    phoneNumberValid === false && styles.inputWarning
+                  ]}
                   placeholder={areaCode === '86' ? '13812345678' : '2025550123'}
                   value={phoneNumber}
-                  onChangeText={setPhoneNumber}
+                  onChangeText={handlePhoneNumberChange}
                   keyboardType="phone-pad"
                   placeholderTextColor={theme.colors.text.disabled}
                 />
+                {phoneNumberValid === true && (
+                  <Ionicons
+                    name="checkmark-circle"
+                    size={20}
+                    color={theme.colors.success}
+                    style={styles.validationIcon}
+                  />
+                )}
+                {phoneNumberValid === false && (
+                  <Ionicons
+                    name="warning"
+                    size={20}
+                    color="#f59e0b"
+                    style={styles.validationIcon}
+                  />
+                )}
               </View>
               {errors.phoneNumber && <Text style={styles.errorText}>{errors.phoneNumber}</Text>}
+              {!errors.phoneNumber && phoneNumber.length > 0 && (
+                <Text style={phoneNumberValid === true ? styles.successText : styles.hintText}>
+                  {phoneNumberValid === true
+                    ? '✓ 手机号格式正确'
+                    : t('auth.errors.form_validation.phone_format_hint_cn')
+                  }
+                </Text>
+              )}
+              {phoneNumber.length === 0 && (
+                <Text style={styles.hintText}>
+                  {t('auth.errors.form_validation.phone_example_cn')}
+                </Text>
+              )}
             </View>
 
             {/* 条款同意 */}
@@ -703,14 +773,35 @@ export const StudentNormalRegisterStep2Screen: React.FC = () => {
               <Text style={styles.label}>{t('auth.register.form.verification_code_label')}</Text>
               <View style={styles.verificationContainer}>
                 <TextInput
-                  style={[styles.verificationInput, errors.verificationCode && styles.inputError]}
+                  style={[
+                    styles.verificationInput,
+                    errors.verificationCode && styles.inputError,
+                    verificationCodeValid === true && styles.inputSuccess,
+                    verificationCodeValid === false && styles.inputWarning
+                  ]}
                   placeholder={t('auth.register.form.verification_code_placeholder')}
                   value={verificationCode}
-                  onChangeText={setVerificationCode}
+                  onChangeText={handleVerificationCodeChange}
                   keyboardType="number-pad"
                   maxLength={6}
                   placeholderTextColor={theme.colors.text.disabled}
                 />
+                {verificationCodeValid === true && (
+                  <Ionicons
+                    name="checkmark-circle"
+                    size={20}
+                    color={theme.colors.success}
+                    style={styles.validationIconCode}
+                  />
+                )}
+                {verificationCodeValid === false && (
+                  <Ionicons
+                    name="warning"
+                    size={20}
+                    color="#f59e0b"
+                    style={styles.validationIconCode}
+                  />
+                )}
                 <TouchableOpacity
                   style={[
                     styles.sendCodeButton,
@@ -732,6 +823,19 @@ export const StudentNormalRegisterStep2Screen: React.FC = () => {
                 </TouchableOpacity>
               </View>
               {errors.verificationCode && <Text style={styles.errorText}>{errors.verificationCode}</Text>}
+              {!errors.verificationCode && verificationCode.length > 0 && (
+                <Text style={verificationCodeValid === true ? styles.successText : styles.hintText}>
+                  {verificationCodeValid === true
+                    ? '✓ 验证码格式正确'
+                    : t('auth.errors.form_validation.verification_code_format_hint')
+                  }
+                </Text>
+              )}
+              {verificationCode.length === 0 && (
+                <Text style={styles.hintText}>
+                  {t('auth.errors.form_validation.verification_code_example')}
+                </Text>
+              )}
             </View>
             {/* Register Button - 跟随内容在表单底部 */}
             <View style={styles.bottomContainer}>
@@ -848,7 +952,7 @@ const styles = StyleSheet.create({
     borderColor: LIQUID_GLASS_LAYERS.L1.border.color.light,
     borderWidth: LIQUID_GLASS_LAYERS.L1.border.width,
     padding: theme.spacing.lg,
-    ...theme.shadows[LIQUID_GLASS_LAYERS.L1.shadow],
+    ...theme.shadows[LIQUID_GLASS_LAYERS.L1.shadow.light],
   },
   stepTitle: {
     fontSize: theme.typography.fontSize['2xl'],
@@ -891,6 +995,9 @@ const styles = StyleSheet.create({
   inputSuccess: {
     borderColor: theme.colors.success,
   },
+  inputWarning: {
+    borderColor: '#f59e0b',
+  },
   inputWithValidation: {
     position: 'relative',
   },
@@ -914,6 +1021,19 @@ const styles = StyleSheet.create({
     fontSize: theme.typography.fontSize.xs,
     color: theme.colors.success,
     marginTop: theme.spacing[1],
+    fontWeight: theme.typography.fontWeight.medium,
+  },
+  hintText: {
+    fontSize: theme.typography.fontSize.xs,
+    color: theme.colors.text.secondary,
+    marginTop: theme.spacing[1],
+    fontStyle: 'italic',
+  },
+  validationIconCode: {
+    position: 'absolute',
+    right: 80, // 为发送验证码按钮留出空间
+    top: '50%',
+    transform: [{ translateY: -10 }],
   },
   organizationSelector: {
     backgroundColor: theme.colors.background.secondary,

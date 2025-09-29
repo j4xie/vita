@@ -14,18 +14,20 @@ import { useTranslation } from 'react-i18next';
 import * as Haptics from 'expo-haptics';
 
 import { theme } from '../../theme';
-import { useTheme } from '../../context/ThemeContext';
-import { useAllDarkModeStyles } from '../../hooks/useDarkModeStyles';
 import { ScannedUserModalProps, ScannedUserInfo } from '../../types/userIdentity';
+
+const { width: screenWidth } = Dimensions.get('window');
 
 const styles = StyleSheet.create({
     overlay: {
       flex: 1,
+      backgroundColor: 'rgba(0, 0, 0, 0.5)',
       justifyContent: 'center',
       alignItems: 'center',
       paddingHorizontal: 20,
     },
     container: {
+      backgroundColor: '#FFFFFF',
       borderRadius: 20,
       padding: 24,
       maxWidth: screenWidth - 40,
@@ -41,6 +43,7 @@ const styles = StyleSheet.create({
     title: {
       fontSize: 18,
       fontWeight: '600',
+      color: '#111827',
       flex: 1,
     },
     closeButton: {
@@ -49,8 +52,9 @@ const styles = StyleSheet.create({
       alignItems: 'center',
       justifyContent: 'center',
       borderRadius: 16,
+      backgroundColor: '#F3F4F6',
     },
-    
+
     // 用户信息区域
     userSection: {
       alignItems: 'center',
@@ -60,35 +64,35 @@ const styles = StyleSheet.create({
       width: 80,
       height: 80,
       borderRadius: 40,
-      backgroundColor: isDarkMode ? '#374151' : '#F3F4F6',
+      backgroundColor: '#F3F4F6',
       alignItems: 'center',
       justifyContent: 'center',
       marginBottom: 16,
       borderWidth: 3,
-      borderColor: isDarkMode ? 'rgba(255, 138, 101, 0.3)' : 'rgba(255, 107, 53, 0.2)',
+      borderColor: 'rgba(255, 107, 53, 0.2)',
     },
     userName: {
       fontSize: 20,
       fontWeight: '600',
-      color: isDarkMode ? '#FFFFFF' : '#111827',
+      color: '#111827',
       marginBottom: 4,
       textAlign: 'center',
     },
     userNickName: {
       fontSize: 16,
-      color: isDarkMode ? '#9CA3AF' : '#6B7280',
+      color: '#6B7280',
       marginBottom: 8,
       textAlign: 'center',
     },
     userEmail: {
       fontSize: 14,
-      color: isDarkMode ? '#D1D5DB' : '#9CA3AF',
+      color: '#9CA3AF',
       textAlign: 'center',
     },
-    
+
     // 组织信息
     organizationSection: {
-      backgroundColor: isDarkMode ? '#374151' : '#F9FAFB',
+      backgroundColor: '#F9FAFB',
       borderRadius: 12,
       padding: 16,
       marginBottom: 20,
@@ -96,15 +100,15 @@ const styles = StyleSheet.create({
     organizationTitle: {
       fontSize: 14,
       fontWeight: '600',
-      color: isDarkMode ? '#D1D5DB' : '#374151',
+      color: '#374151',
       marginBottom: 8,
     },
     organizationName: {
       fontSize: 16,
       fontWeight: '500',
-      color: isDarkMode ? '#FFFFFF' : '#111827',
+      color: '#111827',
     },
-    
+
     // 统计数据
     statsSection: {
       marginBottom: 20,
@@ -112,13 +116,13 @@ const styles = StyleSheet.create({
     sectionTitle: {
       fontSize: 16,
       fontWeight: '600',
-      color: isDarkMode ? '#FFFFFF' : '#111827',
+      color: '#111827',
       marginBottom: 12,
     },
     statsGrid: {
       flexDirection: 'row',
       justifyContent: 'space-around',
-      backgroundColor: isDarkMode ? '#374151' : '#F9FAFB',
+      backgroundColor: '#F9FAFB',
       borderRadius: 12,
       padding: 16,
     },
@@ -128,15 +132,15 @@ const styles = StyleSheet.create({
     statNumber: {
       fontSize: 18,
       fontWeight: '600',
-      color: isDarkMode ? dmIcons.brand : '#FF6B35',
+      color: '#FF6B35',
       marginBottom: 4,
     },
     statLabel: {
       fontSize: 12,
-      color: isDarkMode ? '#9CA3AF' : '#6B7280',
+      color: '#6B7280',
       textAlign: 'center',
     },
-    
+
     // 最近活动
     activitiesSection: {
       marginBottom: 20,
@@ -146,7 +150,7 @@ const styles = StyleSheet.create({
       alignItems: 'center',
       paddingVertical: 12,
       paddingHorizontal: 16,
-      backgroundColor: isDarkMode ? '#374151' : '#F9FAFB',
+      backgroundColor: '#F9FAFB',
       borderRadius: 8,
       marginBottom: 8,
     },
@@ -154,7 +158,7 @@ const styles = StyleSheet.create({
       width: 36,
       height: 36,
       borderRadius: 18,
-      backgroundColor: isDarkMode ? 'rgba(255, 138, 101, 0.16)' : 'rgba(255, 107, 53, 0.1)',
+      backgroundColor: 'rgba(255, 107, 53, 0.1)',
       alignItems: 'center',
       justifyContent: 'center',
       marginRight: 12,
@@ -165,27 +169,27 @@ const styles = StyleSheet.create({
     activityTitle: {
       fontSize: 14,
       fontWeight: '500',
-      color: isDarkMode ? '#FFFFFF' : '#111827',
+      color: '#111827',
       marginBottom: 2,
     },
     activityDate: {
       fontSize: 12,
-      color: isDarkMode ? '#9CA3AF' : '#6B7280',
+      color: '#6B7280',
     },
-    
+
     // 权限提示
     permissionNotice: {
-      backgroundColor: isDarkMode ? '#451A03' : '#FEF3C7',
+      backgroundColor: '#FEF3C7',
       borderRadius: 8,
       padding: 12,
       marginBottom: 20,
     },
     permissionNoticeText: {
       fontSize: 14,
-      color: isDarkMode ? '#FCD34D' : '#92400E',
+      color: '#92400E',
       textAlign: 'center',
     },
-    
+
     // 操作按钮
     actions: {
       flexDirection: 'row',
@@ -205,9 +209,9 @@ const styles = StyleSheet.create({
       backgroundColor: theme.colors.primary,
     },
     secondaryButton: {
-      backgroundColor: isDarkMode ? '#374151' : '#F3F4F6',
+      backgroundColor: '#F3F4F6',
       borderWidth: 1,
-      borderColor: isDarkMode ? '#4B5563' : '#E5E7EB',
+      borderColor: '#E5E7EB',
     },
     disabledButton: {
       backgroundColor: '#F3F4F6',
@@ -221,19 +225,17 @@ const styles = StyleSheet.create({
     secondaryButtonText: {
       fontSize: 14,
       fontWeight: '600',
-      color: isDarkMode ? '#FFFFFF' : '#374151',
+      color: '#374151',
     },
-    
+
     // 错误状态
     errorText: {
       fontSize: 16,
-      color: isDarkMode ? '#F87171' : '#DC2626',
+      color: '#DC2626',
       textAlign: 'center',
       marginBottom: 20,
     },
   });
-
-const { width: screenWidth } = Dimensions.get('window');
 
 export const ScannedUserModal: React.FC<ScannedUserModalProps> = ({
   visible,
@@ -242,9 +244,6 @@ export const ScannedUserModal: React.FC<ScannedUserModalProps> = ({
   scannerOrganization,
 }) => {
   const { t } = useTranslation();
-  const themeContext = useTheme();
-  const darkModeSystem = useAllDarkModeStyles();
-  const { isDarkMode, styles: dmStyles, gradients: dmGradients, blur: dmBlur, icons: dmIcons } = darkModeSystem;
 
   const handleClose = () => {
     if (Platform.OS === 'ios') {
@@ -275,10 +274,10 @@ export const ScannedUserModal: React.FC<ScannedUserModalProps> = ({
         animationType="fade"
         onRequestClose={handleClose}
       >
-        <View style={[styles.overlay, dmStyles.modal.overlay]}>
-          <View style={[styles.container, dmStyles.modal.container]}>
+        <View style={styles.overlay}>
+          <View style={styles.container}>
             <View style={styles.header}>
-              <Text style={[styles.title, dmStyles.text.title]}>
+              <Text style={styles.title}>
                 {t('qr.user.error_title', '扫描失败')}
               </Text>
               <TouchableOpacity
@@ -289,15 +288,15 @@ export const ScannedUserModal: React.FC<ScannedUserModalProps> = ({
                 <Ionicons
                   name="close"
                   size={20}
-                  color={dmIcons.secondary}
+                  color="#6B7280"
                 />
               </TouchableOpacity>
             </View>
-            <Text style={[styles.errorText, dmStyles.text.secondary]}>
+            <Text style={styles.errorText}>
               {userInfo.error || t('qr.user.unknown_error', '无法读取用户信息')}
             </Text>
             <TouchableOpacity
-              style={[styles.actionButton, dmStyles.button.primary]}
+              style={[styles.actionButton, styles.primaryButton]}
               onPress={handleClose}
               activeOpacity={0.7}
             >
@@ -325,12 +324,12 @@ export const ScannedUserModal: React.FC<ScannedUserModalProps> = ({
       animationType="fade"
       onRequestClose={handleClose}
     >
-      <View style={[styles.overlay, dmStyles.modal.overlay]}>
-        <View style={[styles.container, dmStyles.modal.container]}>
+      <View style={styles.overlay}>
+        <View style={styles.container}>
           <ScrollView showsVerticalScrollIndicator={false}>
             {/* Header */}
             <View style={styles.header}>
-              <Text style={[styles.title, dmStyles.text.title]}>
+              <Text style={styles.title}>
                 {t('qr.user.profile_title', '用户信息')}
               </Text>
               <TouchableOpacity
@@ -341,7 +340,7 @@ export const ScannedUserModal: React.FC<ScannedUserModalProps> = ({
                 <Ionicons
                   name="close"
                   size={20}
-                  color={dmIcons.secondary}
+                  color="#6B7280"
                 />
               </TouchableOpacity>
             </View>
@@ -351,9 +350,9 @@ export const ScannedUserModal: React.FC<ScannedUserModalProps> = ({
               <View style={styles.avatar}>
                 {user.avatarUrl ? (
                   // TODO: 显示实际头像
-                  <Ionicons name="person" size={32} color={dmIcons.tertiary} />
+                  <Ionicons name="person" size={32} color="#9CA3AF" />
                 ) : (
-                  <Ionicons name="person" size={32} color={dmIcons.tertiary} />
+                  <Ionicons name="person" size={32} color="#9CA3AF" />
                 )}
               </View>
               <Text style={styles.userName}>
@@ -417,15 +416,15 @@ export const ScannedUserModal: React.FC<ScannedUserModalProps> = ({
                   {t('qr.user.recent_activities', '最近活动')}
                 </Text>
                 {recentActivities.slice(0, 3).map((activity, index) => (
-                  <View 
+                  <View
                     key={activity.id}
                     style={styles.activityItem}
                   >
                     <View style={styles.activityIcon}>
-                      <Ionicons 
-                        name={activity.role === 'organizer' ? 'star' : 'calendar'} 
-                        size={16} 
-                        color={dmIcons.brand} 
+                      <Ionicons
+                        name={activity.role === 'organizer' ? 'star' : 'calendar'}
+                        size={16}
+                        color="#FF6B35"
                       />
                     </View>
                     <View style={styles.activityInfo}>
@@ -459,17 +458,17 @@ export const ScannedUserModal: React.FC<ScannedUserModalProps> = ({
                 onPress={handleViewContact}
                 activeOpacity={0.7}
               >
-                <Ionicons 
-                  name="person-add-outline" 
-                  size={16} 
-                  color={dmIcons.primary} 
+                <Ionicons
+                  name="person-add-outline"
+                  size={16}
+                  color="#374151"
                 />
                 <Text style={styles.secondaryButtonText}>
                   {t('qr.user.add_contact', '添加联系')}
                 </Text>
               </TouchableOpacity>
             )}
-            
+
             <TouchableOpacity
               style={[styles.actionButton, styles.primaryButton]}
               onPress={handleClose}

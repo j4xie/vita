@@ -35,6 +35,8 @@ import { pomeloXAPI } from '../../services/PomeloXAPI';
 import { getCurrentToken } from '../../services/authAPI';
 import { getVolunteerHours, VolunteerHours, getPersonalVolunteerHours } from '../../services/volunteerAPI';
 import VolunteerHistoryBottomSheet from '../../components/volunteer/VolunteerHistoryBottomSheet';
+import { positionService } from '../../services/positionService';
+import { apiCache } from '../../services/apiCache';
 
 interface SettingRowProps {
   title: string;
@@ -200,11 +202,14 @@ export const ProfileHomeScreen: React.FC = () => {
     points: 0, // 积分系统暂未实现
   });
   const [isLoadingVolunteerStats, setIsLoadingVolunteerStats] = useState(false);
-  
+
+  // ✅ 组织信息状态 - 存储异步获取的岗位信息
+  const [organizationInfo, setOrganizationInfo] = useState({ school: '', organization: '', position: '' });
+
   // 用户活动模态框状态
   const [showActivityModal, setShowActivityModal] = useState(false);
   const [activityModalType, setActivityModalType] = useState<'not_checked_in' | 'checked_in'>('not_checked_in');
-  
+
   // 登录提示模态框状态
   const [showLoginModal, setShowLoginModal] = useState(false);
 
@@ -245,8 +250,8 @@ export const ProfileHomeScreen: React.FC = () => {
     return user.nickName?.trim() || user.legalName?.trim() || user.userName || '用户';
   };
 
-  // 获取用户组织信息 - 🆕 支持最新API的role和post字段
-  const getUserOrganizationInfo = () => {
+  // 获取用户组织信息 - ✅ 使用positionService统一管理岗位
+  const getUserOrganizationInfo = async () => {
     if (!user || !isAuthenticated) return { school: '', organization: '', position: '' };
 
     // 🆕 学校信息 - 支持完整的dept结构，并处理英文简称
@@ -261,29 +266,24 @@ export const ProfileHomeScreen: React.FC = () => {
     // 🆕 组织信息 - 统一显示为CU
     const organization = school ? 'CU' : '';
 
-    // 🆕 岗位信息显示逻辑 - 仅显示具体职位，过滤掉权限角色名
+    // ✅ 使用positionService统一获取岗位信息（支持动态更新和i18n）
     let position = '';
     const permissionLevel = permissions.getPermissionLevel();
 
     // 只有管理员、分管理员、内部员工才显示职位
     if (['manage', 'part_manage', 'staff'].includes(permissionLevel)) {
-      // 权限角色名黑名单 - 这些不是真正的职位
-      const roleBlacklist = ['总管理员', '分管理员', '内部员工', '普通用户', 'admin', 'manager', 'staff', 'common'];
+      try {
+        // 使用positionService动态获取岗位
+        const positionInfo = await positionService.getUserPositionDisplay(user);
 
-      // 优先显示具体岗位(post)
-      if (user.post?.postName && !roleBlacklist.includes(user.post.postName)) {
-        position = user.post.postName;
-      } else if (user.role?.roleName && !roleBlacklist.includes(user.role.roleName)) {
-        // 如果没有具体岗位且角色名不在黑名单中，显示角色名称
-        position = user.role.roleName;
-      } else if (user.roles && user.roles.length > 0) {
-        // 兼容旧格式：从roles数组获取，跳过黑名单
-        for (const role of user.roles) {
-          if (role.roleName && !roleBlacklist.includes(role.roleName)) {
-            position = role.roleName;
-            break;
-          }
+        if (positionInfo) {
+          position = positionInfo.level || '';
+          console.log('✅ [PROFILE] 从positionService获取岗位成功:', position);
+        } else {
+          console.log('⚠️ [PROFILE] positionService返回null，无岗位信息');
         }
+      } catch (error) {
+        console.error('❌ [PROFILE] 获取岗位信息失败:', error);
       }
     }
 
@@ -499,6 +499,23 @@ export const ProfileHomeScreen: React.FC = () => {
     }
   };
 
+  // ✅ 加载组织信息（包括岗位）
+  const loadOrganizationInfo = async () => {
+    if (!isAuthenticated || !user) {
+      setOrganizationInfo({ school: '', organization: '', position: '' });
+      return;
+    }
+
+    try {
+      const info = await getUserOrganizationInfo();
+      setOrganizationInfo(info);
+      console.log('✅ [PROFILE] 组织信息加载成功:', info);
+    } catch (error) {
+      console.error('❌ [PROFILE] 加载组织信息失败:', error);
+      setOrganizationInfo({ school: '', organization: '', position: '' });
+    }
+  };
+
   // 页面加载时获取统计数据 - 只在已登录且有用户ID时调用
   useEffect(() => {
     const userIdString = user?.userId || user?.id;
@@ -506,6 +523,7 @@ export const ProfileHomeScreen: React.FC = () => {
     if (isAuthenticated && userIdToUse && !isNaN(userIdToUse)) {
       loadActivityStats();
       loadVolunteerStats();
+      loadOrganizationInfo(); // ✅ 加载组织信息
     }
   }, [isAuthenticated, user?.userId, user?.id]);
 
@@ -515,8 +533,14 @@ export const ProfileHomeScreen: React.FC = () => {
       const userIdString = user?.userId || user?.id;
       const userIdToUse = userIdString ? parseInt(userIdString, 10) : undefined;
       if (isAuthenticated && userIdToUse && !isNaN(userIdToUse)) {
+        // ✅ 清空缓存，确保获取最新数据
+        apiCache.clearByPattern('userInfo:');
+        positionService.clearCache();
+        console.log('🧹 [PROFILE-FOCUS] 已清空用户信息和岗位缓存');
+
         loadActivityStats();
         loadVolunteerStats();
+        loadOrganizationInfo(); // ✅ 刷新组织信息
       }
     }, [isAuthenticated, user?.userId, user?.id])
   );
@@ -1208,7 +1232,7 @@ export const ProfileHomeScreen: React.FC = () => {
             <View style={styles.personalInfoShadowContainer}>
               <PersonalInfoCard
                 name={getDisplayName()}
-                {...getUserOrganizationInfo()}
+                {...organizationInfo}
                 email={user?.email}
                 avatarUrl={undefined}
                 onPress={!isAuthenticated ? () => {

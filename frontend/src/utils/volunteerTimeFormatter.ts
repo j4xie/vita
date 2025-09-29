@@ -11,7 +11,7 @@
  * - isValidVolunteerTime() → timeService.parseServerTime() !== null
  */
 
-import { safeParseTime, formatDateTime } from './timeHelper';
+import { timeService } from './UnifiedTimeService';
 import { i18n } from './i18n';
 
 /**
@@ -23,8 +23,8 @@ export const formatVolunteerTime = (timeString: string): string => {
   try {
     if (!timeString) return '--:--';
 
-    // 使用安全的时间解析
-    const date = safeParseTime(timeString);
+    // 使用统一时间服务解析
+    const date = timeService.parseServerTime(timeString);
     if (!date) return '--:--';
 
     const now = new Date();
@@ -42,23 +42,20 @@ export const formatVolunteerTime = (timeString: string): string => {
 
     if (isToday) {
       // 今天只显示时间
-      const time = formatDateTime(timeString, {
+      const time = timeService.formatForDisplay(date, {
         showDate: false,
-        showTime: true,
-        timeStyle: 'short'
+        showTime: true
       });
       return i18n.language === 'en-US' ? `Today ${time}` : `今日 ${time}`;
     } else {
       // 非今天显示完整的日期和时间，使用统一格式化
-      const fullDateTime = formatDateTime(timeString, {
+      const fullDateTime = timeService.formatForDisplay(date, {
         showDate: true,
-        showTime: true,
-        dateStyle: 'short',
-        timeStyle: 'short'
+        showTime: true
       });
 
       // 如果格式化失败，使用备用格式
-      if (fullDateTime === '无效时间' || fullDateTime === '格式化错误') {
+      if (!fullDateTime || fullDateTime === '--:--') {
         const month = date.getMonth() + 1;
         const day = date.getDate();
         const hours = date.getHours().toString().padStart(2, '0');
@@ -81,8 +78,8 @@ export const formatVolunteerTime = (timeString: string): string => {
  */
 export const calculateVolunteerDuration = (startTime: string, endTime: string) => {
   try {
-    const start = safeParseTime(startTime);
-    const end = safeParseTime(endTime);
+    const start = timeService.parseServerTime(startTime);
+    const end = timeService.parseServerTime(endTime);
 
     if (!start || !end) {
       return {
@@ -139,7 +136,7 @@ export const calculateVolunteerDuration = (startTime: string, endTime: string) =
  */
 export const isValidVolunteerTime = (timeString: string): boolean => {
   try {
-    const parsed = safeParseTime(timeString);
+    const parsed = timeService.parseServerTime(timeString);
     return !!parsed && !isNaN(parsed.getTime());
   } catch {
     return false;

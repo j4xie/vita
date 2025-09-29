@@ -14,6 +14,7 @@ import { initializeSmartAlerts } from './src/services/smartAlertSystem';
 import { timeManager, validateDeviceTime } from './src/services/timeManager';
 import { theme } from './src/theme';
 import initI18next, { i18n } from './src/utils/i18n';
+import volunteerAutoCheckoutService from './src/services/volunteerAutoCheckoutService';
 
 // TextEncoder polyfill for react-native-qrcode-svg
 global.TextEncoder = TextEncoder;
@@ -92,17 +93,26 @@ export default function App() {
         console.log('[ALERT] 初始化智能提醒系统...');
         const alertSystemInitialized = await initializeSmartAlerts();
         console.log('[ALERT]', alertSystemInitialized ? '✅ 智能提醒系统启用' : '❌ 智能提醒系统失败');
+
+        // 5. 初始化志愿者自动签退服务
+        console.log('[AUTO-CHECKOUT] 初始化志愿者自动签退服务...');
+        try {
+          await volunteerAutoCheckoutService.initialize();
+          console.log('[AUTO-CHECKOUT] ✅ 志愿者自动签退服务启用');
+        } catch (error) {
+          console.error('[AUTO-CHECKOUT] ❌ 志愿者自动签退服务初始化失败:', error);
+        }
         
-        // 5. 请求定位权限（首次启动时）
+        // 6. 请求定位权限（首次启动时）
         console.log('[LOCATION] 检查定位权限...');
         try {
-          const { default: locationService } = await import('./src/services/LocationService');
+          const { default: locationService, LocationPermissionStatus } = await import('./src/services/LocationService');
           // LocationService 默认导出已经是实例，不需要再调用 getInstance()
           const permissionStatus = await locationService.checkPermissionStatus();
           console.log('[LOCATION] 当前权限状态:', permissionStatus);
 
           // 如果权限未确定，请求权限
-          if (permissionStatus === 'NOT_DETERMINED') {
+          if (permissionStatus === LocationPermissionStatus.NOT_DETERMINED) {
             console.log('[LOCATION] 首次启动，请求定位权限...');
             const granted = await locationService.requestForegroundPermission();
             console.log('[LOCATION] 权限请求结果:', granted ? '已授权' : '已拒绝');
@@ -111,7 +121,7 @@ export default function App() {
           console.error('[LOCATION] 权限检查失败:', error);
         }
 
-        // 6. 启动地理检测预检测（后台运行，不阻塞启动）
+        // 7. 启动地理检测预检测（后台运行，不阻塞启动）
         console.log('[REGION] 启动地理检测预检测...');
         RegionDetectionService.preDetect().then(() => {
           console.log('[REGION] ✅ 地理检测预检测完成，结果已缓存');
@@ -129,9 +139,10 @@ export default function App() {
 
     initializeApp();
     
-    // 应用退出时清理时间管理器
+    // 应用退出时清理时间管理器和自动签退服务
     return () => {
       timeManager.cleanup();
+      volunteerAutoCheckoutService.cleanup();
     };
   }, []);
 

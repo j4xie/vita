@@ -19,7 +19,9 @@ import { LIQUID_GLASS_LAYERS } from '../../theme/core';
 import { usePerformanceDegradation } from '../../hooks/usePerformanceDegradation';
 import { useAllDarkModeStyles } from '../../hooks/useDarkModeStyles';
 import { useUser } from '../../context/UserContext';
+import { useVolunteerContext } from '../../context/VolunteerContext';
 import { VolunteerSchoolListScreen } from './VolunteerSchoolListScreen';
+import volunteerAutoCheckoutService from '../../services/volunteerAutoCheckoutService';
 import { getVolunteerRecords, getLastVolunteerRecord, getPersonalVolunteerHours, volunteerSignRecord, performVolunteerCheckOut } from '../../services/volunteerAPI';
 import { pomeloXAPI } from '../../services/PomeloXAPI';
 import { timeService } from '../../utils/UnifiedTimeService';
@@ -34,6 +36,7 @@ const PersonalVolunteerDataFixed: React.FC = () => {
   const { user } = useUser();
   const { t } = useTranslation();
   const navigation = useNavigation<any>();
+  const volunteerContext = useVolunteerContext();
   const [personalData, setPersonalData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -62,6 +65,13 @@ const PersonalVolunteerDataFixed: React.FC = () => {
     React.useCallback(() => {
       console.log('📱 [VolunteerHome] 页面获得焦点，刷新数据');
       loadPersonalData();
+
+      // 🆕 检查超时签到状态
+      if (user?.userId) {
+        volunteerAutoCheckoutService.triggerOvertimeCheck().catch(error => {
+          console.warn('⚠️ [VolunteerHome] 超时检查失败:', error);
+        });
+      }
     }, [user])
   );
 
@@ -79,12 +89,12 @@ const PersonalVolunteerDataFixed: React.FC = () => {
   const calculateWorkDuration = (startTime: string, endTime: string | null): number => {
     if (!startTime || !endTime) return 0;
     try {
-      // 使用统一时间服务解析时间（startTime和endTime是本地时间）
-      const start = timeService.parseServerTime(startTime, true);
-      const end = timeService.parseServerTime(endTime, true);
+      // 使用统一时间服务解析
+      const start = timeService.parseServerTime(startTime);
+      const end = timeService.parseServerTime(endTime);
 
       if (!start || !end) return 0;
-      
+
       return Math.max(0, Math.floor((end.getTime() - start.getTime()) / (1000 * 60)));
     } catch {
       return 0;
@@ -95,8 +105,8 @@ const PersonalVolunteerDataFixed: React.FC = () => {
   const calculateCurrentWorkDuration = (startTime: string): number => {
     if (!startTime) return 0;
     try {
-      // 使用统一时间服务解析开始时间（startTime是本地时间）
-      const start = timeService.parseServerTime(startTime, true);
+      // 使用统一时间服务解析
+      const start = timeService.parseServerTime(startTime);
       if (!start) return 0;
 
       const now = currentTime;
@@ -242,6 +252,23 @@ const PersonalVolunteerDataFixed: React.FC = () => {
 
       if (result.code === 200) {
         SafeAlert.alert(t('volunteer.signin_success'), t('volunteer.signin_success_msg', { name: user.legalName }));
+
+        // 🆕 记录自动签退状态
+        try {
+          // 获取刚创建的记录ID，通常可以从API响应中获取，或从最后记录中获取
+          const lastRecordResult = await getLastVolunteerRecord(parseInt(user.userId));
+          if (lastRecordResult.code === 200 && lastRecordResult.data) {
+            await volunteerContext.recordAutoCheckout(
+              user.userId.toString(),
+              user.legalName,
+              lastRecordResult.data.id
+            );
+            console.log('✅ [VOLUNTEER-HOME] 已记录自动签退状态');
+          }
+        } catch (autoCheckoutError) {
+          console.error('❌ [VOLUNTEER-HOME] 记录自动签退状态失败:', autoCheckoutError);
+        }
+
         // 刷新数据
         setTimeout(() => loadPersonalData(true), 1000);
       } else {
@@ -370,7 +397,7 @@ const PersonalVolunteerDataFixed: React.FC = () => {
           <View style={styles.recordRow}>
             <Text style={styles.recordLabel}>{t('wellbeing.personal.recent_record.checkin_time')}</Text>
             <Text style={styles.recordValue}>
-              {timeService.formatForDisplay(timeService.parseServerTime(personalData.recentRecord.startTime, true), { showDate: true, showTime: true })}
+              {timeService.formatForDisplay(timeService.parseServerTime(personalData.recentRecord.startTime), { showDate: true, showTime: true })}
             </Text>
           </View>
           {personalData.recentRecord.endTime ? (
@@ -378,7 +405,7 @@ const PersonalVolunteerDataFixed: React.FC = () => {
               <View style={styles.recordRow}>
                 <Text style={styles.recordLabel}>{t('wellbeing.personal.recent_record.checkout_time')}</Text>
                 <Text style={styles.recordValue}>
-                  {timeService.formatForDisplay(timeService.parseServerTime(personalData.recentRecord.endTime, true), { showDate: true, showTime: true })}
+                  {timeService.formatForDisplay(timeService.parseServerTime(personalData.recentRecord.endTime), { showDate: true, showTime: true })}
                 </Text>
               </View>
               <View style={styles.recordRow}>
@@ -452,7 +479,173 @@ const PersonalVolunteerDataFixed: React.FC = () => {
               {t('volunteerCheckIn.timeEntry')}
             </Text>
           </TouchableOpacity>
+
+          {/* 查看历史记录按钮 */}
+          <TouchableOpacity
+            style={[styles.quickActionButton, styles.queryButton]}
+            onPress={() => setShowHistory(!showHistory)}
+            disabled={isOperating}
+          >
+            <Ionicons name="list-outline" size={18} color="white" />
+            <Text style={styles.quickActionText}>
+              {t('wellbeing.volunteer.viewHistory', '查看历史')}
+            </Text>
+          </TouchableOpacity>
         </View>
+        {/* 最近签退状态显示 */}
+        {(() => {
+          // 查找最近的完整工作记录（已签退的，包含pending和approved，排除rejected）
+          const findLatestCompletedRecord = () => {
+            console.log('🔍 [RECORD-SEARCH] 开始查找最近完整记录...');
+            console.log('📊 [DATA-CHECK] personalData.allRecords:', personalData.allRecords);
+
+            if (!personalData.allRecords || personalData.allRecords.length === 0) {
+              console.log('❌ [RECORD-SEARCH] 没有任何记录数据');
+              return null;
+            }
+
+            console.log(`📋 [RECORD-COUNT] 总记录数: ${personalData.allRecords.length}`);
+
+            // 筛选出有完整签到签退时间且未被拒绝的记录
+            const completedRecords = personalData.allRecords.filter(record => {
+              const hasTime = record.startTime && record.endTime;
+              const notRejected = record.status !== 2;  // 排除被拒绝的记录
+
+              console.log(`📝 [RECORD-FILTER] ID:${record.id} - 有时间:${hasTime}, 状态:${record.status}, 未拒绝:${notRejected}`);
+
+              return hasTime && notRejected;
+            });
+
+            console.log(`✅ [FILTER-RESULT] 有效完整记录数: ${completedRecords.length}`);
+
+            if (completedRecords.length === 0) {
+              console.log('❌ [RECORD-SEARCH] 没有找到有效的完整记录');
+              return null;
+            }
+
+            // 按签退时间排序，获取最新的
+            completedRecords.sort((a, b) =>
+              new Date(b.endTime).getTime() - new Date(a.endTime).getTime()
+            );
+
+            const latestRecord = completedRecords[0];
+            console.log('🎯 [LATEST-RECORD] 找到最新记录:', {
+              id: latestRecord.id,
+              startTime: latestRecord.startTime,
+              endTime: latestRecord.endTime,
+              status: latestRecord.status
+            });
+
+            return latestRecord;
+          };
+
+          // 格式化状态信息（根据当前工作状态显示不同内容）
+          const formatStatusInfo = () => {
+            console.log('📱 [STATUS-FORMAT] 当前状态:', personalData.currentStatus);
+
+            // 情况1: 用户当前正在工作中（显示签退按钮）
+            if (personalData.currentStatus === 'signed_in') {
+              console.log('✅ [STATUS-CHECK] 用户正在工作中，显示当前签到信息');
+              // 显示本次签到时间和已工作时长
+              if (personalData.recentRecord && personalData.recentRecord.startTime && !personalData.recentRecord.endTime) {
+                const startTime = timeService.parseServerTime(personalData.recentRecord.startTime);
+                if (startTime) {
+                  const timeStr = startTime.toLocaleTimeString('zh-CN', {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    hour12: false
+                  });
+
+                  // 计算已工作时长（实时）
+                  const now = new Date();
+                  const workingMinutes = Math.floor((now.getTime() - startTime.getTime()) / (1000 * 60));
+                  const hours = Math.floor(workingMinutes / 60);
+                  const minutes = workingMinutes % 60;
+
+                  let durationStr;
+                  if (hours > 0) {
+                    durationStr = `**${hours}** ${t('volunteerHome.hours', '小时')} ${minutes > 0 ? `**${minutes}** ${t('volunteerHome.minutes', '分钟')}` : ''}`;
+                  } else {
+                    durationStr = `**${minutes}** ${t('volunteerHome.minutes', '分钟')}`;
+                  }
+
+                  return `${t('volunteerHome.currentCheckin', '本次签到')}: **${timeStr}** • ${t('volunteerHome.working', '已工作')} ${durationStr}`;
+                }
+              }
+              return `${t('volunteerHome.currentCheckin', '本次签到')}: ${t('volunteerHome.working', '已工作')}`;
+            }
+
+            // 情况2: 用户当前未工作（显示签到按钮）
+            console.log('⏱️ [STATUS-CHECK] 用户当前未工作，查找历史记录');
+            // 查找并显示上一次完整的工作记录
+            const latestCompletedRecord = findLatestCompletedRecord();
+            if (latestCompletedRecord) {
+              console.log('🎯 [FOUND-RECORD] 找到历史记录，开始格式化显示');
+              const endTime = timeService.parseServerTime(latestCompletedRecord.endTime);
+              if (endTime && latestCompletedRecord.startTime) {
+                const timeStr = endTime.toLocaleTimeString('zh-CN', {
+                  hour: '2-digit',
+                  minute: '2-digit',
+                  hour12: false
+                });
+
+                const duration = calculateWorkDuration(
+                  latestCompletedRecord.startTime,
+                  latestCompletedRecord.endTime
+                );
+                const hours = Math.floor(duration / 60);
+                const minutes = duration % 60;
+
+                let durationStr;
+                if (hours > 0) {
+                  durationStr = `**${hours}** ${t('volunteerHome.hours', '小时')} ${minutes > 0 ? `**${minutes}** ${t('volunteerHome.minutes', '分钟')}` : ''}`;
+                } else {
+                  durationStr = `**${minutes}** ${t('volunteerHome.minutes', '分钟')}`;
+                }
+
+                return `${t('volunteerHome.recentCheckout', '最近签退')}: **${timeStr}** • ${t('volunteerHome.worked', '工作')} ${durationStr}`;
+              }
+            }
+
+            // 如果没有任何工作记录
+            console.log('❌ [NO-RECORD] 没有找到任何有效的工作记录');
+            return t('volunteerHome.noWorkRecord', '暂无工作记录');
+          };
+
+          const recentInfo = formatStatusInfo();
+          console.log('🎯 [FINAL-DISPLAY] 最终显示内容:', recentInfo);
+
+          // 处理加粗显示
+          const renderFormattedText = (text: string) => {
+            console.log('🎨 [TEXT-FORMAT] 原始文本:', text);
+            // 将 **text** 格式转换为加粗Text组件
+            const parts = text.split(/(\*\*.*?\*\*)/g);
+            console.log('🎨 [TEXT-SPLIT] 分割结果:', parts);
+
+            return (
+              <Text style={styles.recentActivityText}>
+                {parts.map((part, index) => {
+                  if (part.startsWith('**') && part.endsWith('**')) {
+                    // 移除**标记并加粗
+                    const boldText = part.slice(2, -2);
+                    return (
+                      <Text key={index} style={{ fontWeight: '700' }}>
+                        {boldText}
+                      </Text>
+                    );
+                  }
+                  return part;
+                })}
+              </Text>
+            );
+          };
+
+          return (
+            <View style={styles.recentActivityContainer}>
+              {renderFormattedText(recentInfo)}
+            </View>
+          );
+        })()}
       </View>
 
       {/* 历史记录按钮 */}
@@ -487,7 +680,7 @@ const PersonalVolunteerDataFixed: React.FC = () => {
                   })}
                 </Text>
                 <Text style={styles.historyTime}>
-                  {timeService.formatForDisplay(timeService.parseServerTime(record.startTime, true), { showTime: true })}
+                  {timeService.formatForDisplay(timeService.parseServerTime(record.startTime), { showTime: true })}
                 </Text>
               </View>
               <View style={styles.historyDetailsColumn}>
@@ -502,7 +695,7 @@ const PersonalVolunteerDataFixed: React.FC = () => {
                       })()}
                     </Text>
                     <Text style={styles.historyEndTime}>
-                      {t('wellbeing.personal.history.end_time_until')} {timeService.formatForDisplay(timeService.parseServerTime(record.endTime, true), { showTime: true })}
+                      {t('wellbeing.personal.history.end_time_until')} {timeService.formatForDisplay(timeService.parseServerTime(record.endTime), { showTime: true })}
                     </Text>
                   </>
                 ) : (
@@ -543,6 +736,20 @@ interface School {
   nameEN?: string;
 }
 
+// 计算工作时长（分钟）- 通用函数
+const calculateWorkDuration = (startTime: string, endTime: string | null): number => {
+  if (!startTime || !endTime) return 0;
+  try {
+    const start = timeService.parseServerTime(startTime);
+    const end = timeService.parseServerTime(endTime);
+    if (!start || !end) return 0;
+    return Math.floor((end.getTime() - start.getTime()) / (1000 * 60));
+  } catch (error) {
+    console.error('时长计算失败:', error);
+    return 0;
+  }
+};
+
 export const VolunteerHomeScreen: React.FC = () => {
   const { t } = useTranslation();
   const route = useRoute();
@@ -557,6 +764,8 @@ export const VolunteerHomeScreen: React.FC = () => {
   const [showTimeEntryModal, setShowTimeEntryModal] = useState(false);
   const [isOperating, setIsOperating] = useState(false);
   const [currentRecord, setCurrentRecord] = useState<any>(null);
+  const [adminHistoryRecord, setAdminHistoryRecord] = useState<any>(null);
+
 
   // 加载管理员的志愿者状态
   const loadAdminVolunteerStatus = async () => {
@@ -574,10 +783,32 @@ export const VolunteerHomeScreen: React.FC = () => {
         } else {
           setAdminVolunteerStatus('checked_out');
         }
+
+        // 额外获取历史记录用于显示
+        console.log('🔍 [ADMIN-HISTORY-LOAD] 获取管理员历史记录...');
+        try {
+          const historyResponse = await getVolunteerRecords({ userId: parseInt(user.userId) });
+          if (historyResponse.code === 200 && historyResponse.rows) {
+            // 找到最近的完整记录
+            const completedRecords = historyResponse.rows.filter(r =>
+              r.startTime && r.endTime && r.status !== 2
+            );
+            if (completedRecords.length > 0) {
+              completedRecords.sort((a, b) =>
+                new Date(b.endTime).getTime() - new Date(a.endTime).getTime()
+              );
+              setAdminHistoryRecord(completedRecords[0]);
+              console.log('✅ [ADMIN-HISTORY-LOAD] 找到历史记录:', completedRecords[0]);
+            }
+          }
+        } catch (historyError) {
+          console.log('❌ [ADMIN-HISTORY-LOAD] 获取历史记录失败:', historyError);
+        }
       } else {
         // 没有记录，状态为未签到
         setAdminVolunteerStatus('checked_out');
         setCurrentRecord(null);
+        setAdminHistoryRecord(null);
       }
     } catch (error) {
       console.error('加载管理员志愿者状态失败:', error);
@@ -647,8 +878,7 @@ export const VolunteerHomeScreen: React.FC = () => {
       console.log('🕐 [SIGNIN-DEBUG] 本地时间ISO:', now.toISOString());
       console.log('🕐 [SIGNIN-DEBUG] 本地时间字符串:', now.toString());
       console.log('🕐 [SIGNIN-DEBUG] 格式化后时间:', startTime);
-      console.log('🕐 [SIGNIN-DEBUG] 用户时区:', Intl.DateTimeFormat().resolvedOptions().timeZone);
-      console.log('🕐 [SIGNIN-DEBUG] 时区偏移(分钟):', now.getTimezoneOffset());
+      console.log('🕐 [SIGNIN-DEBUG] 本地时间:', now.toLocaleString());
       console.log('🕐 [SIGNIN-DEBUG] ================================');
 
       const result = await volunteerSignRecord(
@@ -662,6 +892,18 @@ export const VolunteerHomeScreen: React.FC = () => {
       if (result.code === 200) {
         // 乐观更新：立即更新本地状态
         setAdminVolunteerStatus('checked_in');
+
+        // 🆕 立即创建临时签到记录，避免用户立即点击Check Out时出现"无法获取签到时间"错误
+        const tempRecord = {
+          id: Date.now(), // 临时ID
+          userId: user.id,
+          startTime: startTime,
+          endTime: null,
+          type: 1,
+          legalName: user.legalName
+        };
+        setCurrentRecord(tempRecord);
+        console.log('✅ [CHECKIN-SUCCESS] 立即设置临时签到记录:', tempRecord);
 
         // 彻底清理所有相关缓存，确保其他页面能获取到最新数据
         try {
@@ -690,7 +932,7 @@ export const VolunteerHomeScreen: React.FC = () => {
             {
               text: t('common.confirm'),
               onPress: () => {
-                // 后台验证状态
+                // 后台验证状态，确保数据一致性
                 setTimeout(() => loadAdminVolunteerStatus(), 1000);
               }
             }
@@ -711,25 +953,21 @@ export const VolunteerHomeScreen: React.FC = () => {
   const handleAdminCheckOut = () => {
     if (adminVolunteerStatus !== 'checked_in') return;
 
-    // 直接使用简单的当前时间，避免API获取的复杂性
-    const now = new Date();
-    const year = now.getFullYear();
-    const month = String(now.getMonth() + 1).padStart(2, '0');
-    const day = String(now.getDate()).padStart(2, '0');
-    const hours = String(now.getHours()).padStart(2, '0');
-    const minutes = String(now.getMinutes()).padStart(2, '0');
-    const seconds = String(now.getSeconds()).padStart(2, '0');
-    const currentTime = `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+    // 🔧 修复：使用真实的签到时间，而不是当前时间
+    if (!currentRecord?.startTime) {
+      SafeAlert.alert(t('common.error'), '无法获取签到时间，请重新签到');
+      return;
+    }
 
     const volunteerRecord = {
       userId: user?.id,
       name: user?.legalName || user?.userName,
       school: user?.dept?.deptName || '',
-      checkInTime: currentTime, // 使用当前时间作为签到时间
+      checkInTime: currentRecord.startTime, // 使用真实的签到时间
       status: 'checked_in' as const,
     };
 
-    console.log('🔄 [CHECKOUT-NAV] 跳转到签退页面，使用当前时间作为签到时间:', currentTime);
+    console.log('🔄 [CHECKOUT-NAV] 跳转到签退页面，使用真实签到时间:', currentRecord.startTime);
 
     // 跳转到签退页面
     navigation.navigate('VolunteerCheckOut', {
@@ -756,55 +994,238 @@ export const VolunteerHomeScreen: React.FC = () => {
         {permissions.getDataScope() === 'self' ? (
           // Staff：只显示自己的志愿者工作记录，header已经有标题了
           <PersonalVolunteerDataFixed />
+        ) : permissions.getDataScope() === 'school' ? (
+          // 分管理员：直接跳转到自己学校详情
+          <View style={styles.partManagerRedirect}>
+            <Text style={styles.redirectMessage}>
+              {t('volunteerHome.redirectToSchool', '正在跳转到您的学校...')}
+            </Text>
+            {React.useEffect(() => {
+              // 获取分管理员的学校信息并直接跳转
+              const userSchool = {
+                id: user?.deptId,
+                deptId: user?.deptId,
+                deptName: user?.dept?.deptName || '我的学校',
+                engName: user?.dept?.engName,
+                aprName: user?.dept?.aprName
+              };
+
+              // 延迟跳转，显示跳转提示
+              setTimeout(() => {
+                navigation.replace('VolunteerSchoolDetail', { school: userSchool });
+              }, 500);
+            }, [])}
+          </View>
         ) : (
-          // 总管理员和分管理员：显示学校管理界面
+          // 总管理员：显示学校管理界面 + 快捷操作
           <View style={styles.adminContentContainer}>
             {/* 快捷操作区域 - 只有总管理员显示 */}
-            {permissions.isAdmin() && (
-              <View style={styles.personalQuickSection}>
-                <Text style={styles.quickActionsTitle}>{t('volunteerHome.quickActions')}</Text>
-                <View style={styles.quickActionsRow}>
-                  {/* 动态显示签到或签退按钮 */}
-                  {adminVolunteerStatus === 'checked_out' && (
-                    <TouchableOpacity
-                      style={[styles.quickActionButton, styles.checkInButtonBorder]}
-                      onPress={handleAdminCheckIn}
-                      disabled={isOperating}
-                    >
-                      <Ionicons name="log-in-outline" size={16} color={theme.colors.primary} />
-                      <Text style={[styles.quickActionText, { color: theme.colors.primary }]}>
-                        {isOperating ? t('common.loading', '加载中...') : t('volunteerCheckIn.checkIn')}
-                      </Text>
-                    </TouchableOpacity>
-                  )}
-
-                  {adminVolunteerStatus === 'checked_in' && (
-                    <TouchableOpacity
-                      style={[styles.quickActionButton, styles.checkOutButtonBorder]}
-                      onPress={handleAdminCheckOut}
-                      disabled={isOperating}
-                    >
-                      <Ionicons name="log-out-outline" size={16} color={theme.colors.success} />
-                      <Text style={[styles.quickActionText, { color: theme.colors.success }]}>
-                        {t('volunteerCheckIn.checkOut')}
-                      </Text>
-                    </TouchableOpacity>
-                  )}
-
-                  {/* Time Entry 按钮 - 始终显示，直接打开模态框 */}
+            <View style={styles.personalQuickSection}>
+              <Text style={styles.quickActionsTitle}>{t('volunteerHome.quickActions')}</Text>
+              <View style={styles.quickActionsRow}>
+                {/* 动态显示签到或签退按钮 */}
+                {adminVolunteerStatus === 'checked_out' && (
                   <TouchableOpacity
-                    style={[styles.quickActionButton, styles.timeEntryButtonBorder]}
-                    onPress={() => setShowTimeEntryModal(true)}
+                    style={[styles.quickActionButton, styles.checkInButtonBorder]}
+                    onPress={handleAdminCheckIn}
                     disabled={isOperating}
                   >
-                    <Ionicons name="time-outline" size={16} color="#8B5CF6" />
-                    <Text style={[styles.quickActionText, { color: '#8B5CF6' }]}>
-                      {t('volunteerCheckIn.timeEntry')}
+                    <Ionicons name="log-in-outline" size={16} color={theme.colors.primary} />
+                    <Text style={[styles.quickActionText, { color: theme.colors.primary }]}>
+                      {isOperating ? t('common.loading', '加载中...') : t('volunteerCheckIn.checkIn')}
                     </Text>
                   </TouchableOpacity>
-                </View>
+                )}
+
+                {adminVolunteerStatus === 'checked_in' && (
+                  <TouchableOpacity
+                    style={[styles.quickActionButton, styles.checkOutButtonBorder]}
+                    onPress={handleAdminCheckOut}
+                    disabled={isOperating}
+                  >
+                    <Ionicons name="log-out-outline" size={16} color={theme.colors.success} />
+                    <Text style={[styles.quickActionText, { color: theme.colors.success }]}>
+                      {t('volunteerCheckIn.checkOut')}
+                    </Text>
+                  </TouchableOpacity>
+                )}
+
+                {/* Time Entry 按钮 - 始终显示，直接打开模态框 */}
+                <TouchableOpacity
+                  style={[styles.quickActionButton, styles.timeEntryButtonBorder]}
+                  onPress={() => setShowTimeEntryModal(true)}
+                  disabled={isOperating}
+                >
+                  <Ionicons name="time-outline" size={16} color="#8B5CF6" />
+                  <Text style={[styles.quickActionText, { color: '#8B5CF6' }]}>
+                    {t('volunteerCheckIn.timeEntry')}
+                  </Text>
+                </TouchableOpacity>
               </View>
-            )}
+              {/* 管理员最近签退状态显示 */}
+              {(() => {
+                // 格式化管理员状态信息（根据当前工作状态显示不同内容）
+                const formatAdminStatusInfo = () => {
+                  console.log('🎯 [ADMIN-STATUS] 管理员状态格式化开始:', {
+                    adminVolunteerStatus,
+                    currentRecord,
+                    hasRecord: !!currentRecord
+                  });
+
+                  // 情况1: 管理员当前正在工作中（显示签退按钮）
+                  if (adminVolunteerStatus === 'checked_in') {
+                    console.log('✅ [ADMIN-WORKING] 管理员正在工作，显示当前会话信息');
+                    // 显示本次签到时间和已工作时长
+                    if (currentRecord && currentRecord.startTime && !currentRecord.endTime) {
+                      const startTime = timeService.parseServerTime(currentRecord.startTime);
+                      if (startTime) {
+                        const timeStr = startTime.toLocaleTimeString('zh-CN', {
+                          hour: '2-digit',
+                          minute: '2-digit',
+                          hour12: false
+                        });
+
+                        // 计算已工作时长（实时）
+                        const now = new Date();
+                        const workingMinutes = Math.floor((now.getTime() - startTime.getTime()) / (1000 * 60));
+                        const hours = Math.floor(workingMinutes / 60);
+                        const minutes = workingMinutes % 60;
+
+                        let durationStr;
+                        if (hours > 0) {
+                          durationStr = `${hours}${t('volunteerHome.hours')}${minutes > 0 ? ` ${minutes}${t('volunteerHome.minutes')}` : ''}`;
+                        } else {
+                          durationStr = `${minutes}${t('volunteerHome.minutes')}`;
+                        }
+
+                        return `${t('volunteerHome.currentCheckin', '本次签到')}: **${timeStr}** • ${t('volunteerHome.working', '已工作')} **${durationStr}**`;
+                      }
+                    }
+                    return `${t('volunteerHome.currentCheckin', '本次签到')}: ${t('volunteerHome.working', '已工作')}`;
+                  }
+
+                  // 情况2: 管理员当前未工作（显示签到按钮）
+                  console.log('⏱️ [ADMIN-NOT-WORKING] 管理员未工作，检查历史记录');
+                  console.log('📊 [CURRENT-RECORD-CHECK]:', {
+                    hasCurrentRecord: !!currentRecord,
+                    currentRecordType: typeof currentRecord,
+                    isArray: Array.isArray(currentRecord),
+                    currentRecord
+                  });
+
+                  // 修复：确保currentRecord是有效对象且有完整时间
+                  if (adminVolunteerStatus === 'checked_out' &&
+                      currentRecord &&
+                      typeof currentRecord === 'object' &&
+                      !Array.isArray(currentRecord) &&
+                      currentRecord.endTime &&
+                      currentRecord.startTime) {
+                    console.log('✅ [ADMIN-HISTORY] 找到有效的历史记录');
+
+                    const endTime = timeService.parseServerTime(currentRecord.endTime);
+                    if (endTime && currentRecord.startTime) {
+                      const timeStr = endTime.toLocaleTimeString('zh-CN', {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        hour12: false
+                      });
+
+                      const duration = calculateWorkDuration(
+                        currentRecord.startTime,
+                        currentRecord.endTime
+                      );
+                      const hours = Math.floor(duration / 60);
+                      const minutes = duration % 60;
+
+                      let durationStr;
+                      if (hours > 0) {
+                        durationStr = `**${hours}**${t('volunteerHome.hours', '小时')}${minutes > 0 ? ` **${minutes}** ${t('volunteerHome.minutes', '分钟')}` : ''}`;
+                      } else {
+                        durationStr = `**${minutes}** ${t('volunteerHome.minutes', '分钟')}`;
+                      }
+
+                      return `${t('volunteerHome.recentCheckout', '最近签退')}: ${timeStr} • ${t('volunteerHome.worked', '工作')} ${durationStr}`;
+                    }
+                  }
+
+                  // 如果currentRecord是空数组，尝试使用专门的历史记录
+                  if (Array.isArray(currentRecord)) {
+                    console.log('🔧 [DATA-FIX] 使用专门的历史记录数据');
+
+                    if (adminHistoryRecord && adminHistoryRecord.endTime && adminHistoryRecord.startTime) {
+                      console.log('✅ [ADMIN-HISTORY-USE] 使用历史记录显示');
+
+                      const endTime = timeService.parseServerTime(adminHistoryRecord.endTime);
+                      if (endTime) {
+                        const timeStr = endTime.toLocaleTimeString('zh-CN', {
+                          hour: '2-digit',
+                          minute: '2-digit',
+                          hour12: false
+                        });
+
+                        const duration = calculateWorkDuration(
+                          adminHistoryRecord.startTime,
+                          adminHistoryRecord.endTime
+                        );
+                        const hours = Math.floor(duration / 60);
+                        const minutes = duration % 60;
+
+                        let durationStr;
+                        if (hours > 0) {
+                          durationStr = `**${hours}** ${t('volunteerHome.hours', '小时')} ${minutes > 0 ? `**${minutes}** ${t('volunteerHome.minutes', '分钟')}` : ''}`;
+                        } else {
+                          durationStr = `**${minutes}** ${t('volunteerHome.minutes', '分钟')}`;
+                        }
+
+                        return `${t('volunteerHome.recentCheckout', '最近签退')}: **${timeStr}** • ${t('volunteerHome.worked', '工作')} ${durationStr}`;
+                      }
+                    }
+
+                    return '历史记录加载中...';
+                  }
+
+                  // 如果没有任何工作记录
+                  console.log('❌ [ADMIN-NO-RECORD] 确实没有工作记录');
+                  return t('volunteerHome.noWorkRecord', '暂无工作记录');
+                };
+
+                const recentInfo = formatAdminStatusInfo();
+                console.log('🎯 [ADMIN-FINAL-DISPLAY] 管理员最终显示内容:', recentInfo);
+                console.log('📊 [ADMIN-DATA] 管理员数据状态:', {
+                  adminVolunteerStatus,
+                  currentRecord,
+                  hasCurrentRecord: !!currentRecord
+                });
+                // 处理加粗显示
+                const renderFormattedText = (text: string) => {
+                  // 将 **text** 格式转换为加粗Text组件
+                  const parts = text.split(/(\*\*.*?\*\*)/g);
+
+                  return (
+                    <Text style={styles.recentActivityText}>
+                      {parts.map((part, index) => {
+                        if (part.startsWith('**') && part.endsWith('**')) {
+                          // 移除**标记并加粗
+                          const boldText = part.slice(2, -2);
+                          return (
+                            <Text key={index} style={[styles.recentActivityText, { fontWeight: '700' }]}>
+                              {boldText}
+                            </Text>
+                          );
+                        }
+                        return <Text key={index} style={styles.recentActivityText}>{part}</Text>;
+                      })}
+                    </Text>
+                  );
+                };
+
+                return (
+                  <View style={styles.recentActivityContainer}>
+                    {renderFormattedText(recentInfo)}
+                  </View>
+                );
+              })()}
+            </View>
 
             {/* 学校管理界面 */}
             <View style={styles.schoolManagementSection}>
@@ -1248,5 +1669,33 @@ const styles = StyleSheet.create({
   quickActionText: {
     fontSize: 13,
     fontWeight: '600',
+  },
+  // 最近活动状态样式
+  recentActivityContainer: {
+    marginTop: 10,
+    paddingHorizontal: 4,
+  },
+  recentActivityText: {
+    fontSize: 12,
+    color: theme.colors.textSecondary,
+    textAlign: 'center',
+    opacity: 0.8,
+    fontWeight: '400',
+  },
+  // 分管理员跳转样式
+  partManagerRedirect: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 40,
+  },
+  redirectMessage: {
+    fontSize: 16,
+    color: theme.colors.text.secondary,
+    textAlign: 'center',
+  },
+  // Query按钮样式
+  queryButton: {
+    backgroundColor: '#FF6B35',
   },
 });

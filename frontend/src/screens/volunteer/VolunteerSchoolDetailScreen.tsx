@@ -21,11 +21,12 @@ import { useTranslation } from 'react-i18next';
 import { Glass } from '../../ui/glass/GlassTheme';
 import { GlassCapsule } from '../../components/consulting/GlassCapsule';
 import { getSchoolLogo } from '../../utils/schoolLogos';
-import { getVolunteerRecords, getVolunteerHours, performVolunteerCheckIn, performVolunteerCheckOut, getLastVolunteerRecord, getVolunteerStatus, parseVolunteerTimestamp } from '../../services/volunteerAPI';
+import { getVolunteerRecords, getVolunteerHours, performVolunteerCheckIn, performVolunteerCheckOut, getLastVolunteerRecord, getVolunteerStatus, forceResetVolunteerStatus } from '../../services/volunteerAPI';
 import { VolunteerStateService, VolunteerInfo } from '../../services/volunteerStateService';
-import { safeParseTime, detectTimeAnomaly, formatDateTime } from '../../utils/timeHelper';
+import { timeService } from '../../utils/UnifiedTimeService';
 import { getUserList } from '../../services/userStatsAPI';
 import { pomeloXAPI } from '../../services/PomeloXAPI';
+import { positionService } from '../../services/positionService';
 import { getUserPermissionLevel } from '../../types/userPermissions';
 import { getApiUrl } from '../../utils/environment';
 import { useUser } from '../../context/UserContext';
@@ -176,10 +177,10 @@ export const VolunteerSchoolDetailScreen: React.FC = () => {
               const updates: Partial<VolunteerStatusUpdate> = { checkInStatus: expectedStatus };
               
               if (currentStatus === 'signed_in') {
-                // 使用parseVolunteerTimestamp解析时间戳
+                // 使用timeService.parseServerTime解析时间戳
                 try {
-                  const parsedTime = parseVolunteerTimestamp(backendRecord.startTime);
-                  updates.checkInTime = parsedTime.toISOString();
+                  const parsedTime = timeService.parseServerTime(backendRecord.startTime);
+                  updates.checkInTime = parsedTime ? parsedTime.toISOString() : backendRecord.startTime;
                 } catch (e) {
                   updates.checkInTime = backendRecord.startTime;
                 }
@@ -189,7 +190,7 @@ export const VolunteerSchoolDetailScreen: React.FC = () => {
                 updates.checkInTime = null;
                 // 解析签退时间
                 try {
-                  const parsedTime = parseVolunteerTimestamp(backendRecord.endTime);
+                  const parsedTime = timeService.parseServerTime(backendRecord.endTime);
                   updates.checkOutTime = parsedTime.toISOString();
                 } catch (e) {
                   updates.checkOutTime = backendRecord.endTime;
@@ -484,6 +485,10 @@ export const VolunteerSchoolDetailScreen: React.FC = () => {
           if (typeof (apiCache as any)?.clearAll === 'function') {
             (apiCache as any).clearAll();
           }
+
+          // 🆕 清理职位服务缓存，确保获取最新岗位信息
+          positionService.clearCache();
+          console.log('✅ [CACHE] API缓存和职位缓存已清理');
         } catch (e) {
           if (__DEV__) {
             console.warn('缓存清理失败:', e);
@@ -689,7 +694,7 @@ export const VolunteerSchoolDetailScreen: React.FC = () => {
               userRecord = cachedRecord;
             }
 
-            // 极简化权限判断，避免复杂对象操作
+            // 🔄 动态获取岗位信息，支持后台更新
             let positionInfo = null;
 
             try {
@@ -703,30 +708,40 @@ export const VolunteerSchoolDetailScreen: React.FC = () => {
                 return null;
               }
 
-              // 根据权限级别确定显示信息
-              let level = '';
-              let major = '';
+              // ✅ 使用positionService动态获取岗位，优先使用后端posts字段
+              positionInfo = await positionService.getUserPositionDisplay(userData);
 
-              switch (userPermissionLevel) {
-                case 'manage':
-                  level = 'President';
-                  major = '总管理员';
-                  break;
-                case 'part_manage':
-                  level = 'Vice President';
-                  major = '分管理员';
-                  break;
-                case 'staff':
-                  level = 'EB';
-                  major = '内部员工';
-                  break;
-                default:
-                  return null;
+              // 如果positionService无法获取岗位信息，使用备用逻辑
+              if (!positionInfo) {
+                console.log('⚠️ [POSITION] positionService返回null，使用备用逻辑');
+
+                let level = '';
+                let major = '';
+
+                switch (userPermissionLevel) {
+                  case 'manage':
+                    level = 'President';
+                    major = '总管理员';
+                    break;
+                  case 'part_manage':
+                    level = 'Vice President';
+                    major = '分管理员';
+                    break;
+                  case 'staff':
+                    level = 'EB';
+                    major = '内部员工';
+                    break;
+                  default:
+                    return null;
+                }
+
+                positionInfo = { level: level, major: major };
+              } else {
+                console.log('✅ [POSITION] 从positionService获取岗位成功:', positionInfo);
               }
 
-              positionInfo = { level: level, major: major };
-
             } catch (error) {
+              console.error('❌ [POSITION] 获取岗位信息失败:', error);
               return null;
             }
 
@@ -807,8 +822,8 @@ export const VolunteerSchoolDetailScreen: React.FC = () => {
               checkInTime: (() => {
                 if (initialCheckInStatus === 'checked_in' && actualRecord?.startTime) {
                   try {
-                    const parsedTime = parseVolunteerTimestamp(actualRecord.startTime);
-                    return parsedTime.toISOString();
+                    const parsedTime = timeService.parseServerTime(actualRecord.startTime);
+                    return parsedTime ? parsedTime.toISOString() : actualRecord.startTime;
                   } catch (e) {
                       return actualRecord.startTime;
                   }
@@ -818,8 +833,8 @@ export const VolunteerSchoolDetailScreen: React.FC = () => {
               checkOutTime: (() => {
                 if (initialCheckInStatus === 'not_checked_in' && actualRecord?.endTime) {
                   try {
-                    const parsedTime = parseVolunteerTimestamp(actualRecord.endTime);
-                    return parsedTime.toISOString();
+                    const parsedTime = timeService.parseServerTime(actualRecord.endTime);
+                    return parsedTime ? parsedTime.toISOString() : actualRecord.endTime;
                   } catch (e) {
                       return actualRecord.endTime;
                   }
@@ -831,7 +846,7 @@ export const VolunteerSchoolDetailScreen: React.FC = () => {
               lastCheckInTime: (() => {
                 if (actualRecord?.startTime) {
                   try {
-                    const parsedTime = parseVolunteerTimestamp(actualRecord.startTime);
+                    const parsedTime = timeService.parseServerTime(actualRecord.startTime);
                     return parsedTime.toISOString();
                   } catch (e) {
                     return actualRecord.startTime;
@@ -842,7 +857,7 @@ export const VolunteerSchoolDetailScreen: React.FC = () => {
               lastCheckOutTime: (() => {
                 if (actualRecord?.endTime && initialCheckInStatus === 'not_checked_in') {
                   try {
-                    const parsedTime = parseVolunteerTimestamp(actualRecord.endTime);
+                    const parsedTime = timeService.parseServerTime(actualRecord.endTime);
                     return parsedTime.toISOString();
                   } catch (e) {
                     return actualRecord.endTime;
@@ -861,7 +876,24 @@ export const VolunteerSchoolDetailScreen: React.FC = () => {
         
 
 
-        setVolunteers(schoolStaff);
+        // 将当前用户置顶显示
+        const sortedStaff = schoolStaff.sort((a, b) => {
+          // 当前用户始终排在第一位
+          const isCurrentUserA = a.userId === userInfo?.userId ||
+                                 a.name === userInfo?.legalName ||
+                                 a.legalName === userInfo?.legalName;
+          const isCurrentUserB = b.userId === userInfo?.userId ||
+                                 b.name === userInfo?.legalName ||
+                                 b.legalName === userInfo?.legalName;
+
+          if (isCurrentUserA && !isCurrentUserB) return -1;
+          if (!isCurrentUserA && isCurrentUserB) return 1;
+
+          // 其他用户按原有顺序（按姓名排序）
+          return (a.name || '').localeCompare(b.name || '');
+        });
+
+        setVolunteers(sortedStaff);
       } else {
         setVolunteers([]);
       }
@@ -916,26 +948,226 @@ export const VolunteerSchoolDetailScreen: React.FC = () => {
             try {
               setOperationInProgress(prev => ({ ...prev, [volunteerId]: true }));
 
-              // 强制签退以清理异常状态
-              const result = await performVolunteerCheckOut(
+              console.log('🚨 [RESET] 开始重置用户状态:', {
+                volunteerId,
+                userId: volunteer.userId,
+                userName: volunteer.name,
+                operateUserId: userInfo?.userId,
+                operateLegalName: userInfo?.legalName
+              });
+
+              // 🆕 智能获取recordId - 通用方案
+              const getResetRecordId = async (): Promise<number> => {
+                console.log('🔍 [RESET] 开始智能获取recordId...');
+
+                // 1. 优先使用已有的recordId字段
+                if (volunteer.recordId) {
+                  console.log('✅ [RESET] 使用volunteer.recordId:', volunteer.recordId);
+                  return volunteer.recordId;
+                }
+
+                if (volunteer.id && typeof volunteer.id === 'number') {
+                  console.log('✅ [RESET] 使用volunteer.id:', volunteer.id);
+                  return volunteer.id;
+                }
+
+                // 2. 基于异常检测推断：如果能显示重置按钮，说明有记录存在
+                const anomaly = timeService.detectTimeAnomaly(volunteer.checkInTime);
+                if (anomaly.type === 'too_long') {
+                  console.log('🔍 [RESET] 检测到超长时间异常，尝试API获取recordId...');
+
+                  try {
+                    // 使用较短的超时时间，避免用户等待过久
+                    const timeoutPromise = new Promise<never>((_, reject) =>
+                      setTimeout(() => reject(new Error('API调用超时')), 3000)
+                    );
+
+                    const lastRecord = await Promise.race([
+                      getLastVolunteerRecord(volunteer.userId),
+                      timeoutPromise
+                    ]);
+
+                    if (lastRecord.code === 200 && lastRecord.data?.id) {
+                      console.log('✅ [RESET] 从API获取到recordId:', lastRecord.data.id);
+                      return lastRecord.data.id;
+                    }
+                  } catch (apiError) {
+                    console.warn('⚠️ [RESET] API获取recordId失败:', apiError.message);
+                  }
+                }
+
+                // 3. 最后尝试：从现有的志愿者列表数据中查找
+                const volunteerWithRecord = volunteers.find(v =>
+                  v.userId === volunteer.userId && (v.recordId || v.id)
+                );
+                if (volunteerWithRecord) {
+                  const foundRecordId = volunteerWithRecord.recordId || volunteerWithRecord.id;
+                  console.log('✅ [RESET] 从志愿者列表找到recordId:', foundRecordId);
+                  return foundRecordId;
+                }
+
+                // 4. 如果所有方法都失败
+                throw new Error(`无法获取用户 ${volunteer.name} 的签到记录ID\n\n可能原因：\n• 网络连接问题\n• 数据同步延迟\n• 记录已被删除\n\n请稍后重试或联系管理员`);
+              };
+
+              const recordId = await getResetRecordId();
+              console.log('🎯 [RESET] 最终确定的recordId:', recordId);
+
+              // 🔧 验证必要参数
+              if (!recordId) {
+                throw new Error('无法确定要重置的记录ID，请联系管理员');
+              }
+
+              const effectiveOperateUserId = userInfo?.userId || volunteer.userId;
+              const effectiveOperateLegalName = userInfo?.legalName || volunteer.name || '管理员';
+
+              console.log('🔍 [RESET] 重置参数确认:', {
+                targetUserId: volunteer.userId,
+                targetUserName: volunteer.name,
+                operateUserId: effectiveOperateUserId,
+                operateLegalName: effectiveOperateLegalName,
+                recordId
+              });
+
+              // 使用简化的重置函数
+              const result = await forceResetVolunteerStatus(
                 volunteer.userId,
-                userInfo?.userId || '',
-                userInfo?.legalName || '',
-                '时间异常自动重置'
+                effectiveOperateUserId,
+                effectiveOperateLegalName,
+                recordId
               );
 
-              if (result?.code === 200 || result?.success) {
-                Alert.alert('成功', '状态已重置，请重新签到');
-                // 刷新数据
-                await loadVolunteerData(true);
+              console.log('📊 [RESET] 重置结果:', {
+                success: result.code === 200,
+                code: result.code,
+                msg: result.msg
+              });
+
+              if (result.code === 200) {
+                console.log('✅ [RESET] 重置API调用成功');
+
+                // 🧹 立即清理相关缓存
+                try {
+                  apiCache.clearByPattern(`volunteerRecord:${volunteer.userId}`);
+                  apiCache.clearKey('volunteerRecords');
+                  apiCache.clearKey('volunteerHours');
+                  console.log('🧹 [RESET] 缓存清理完成');
+                } catch (cacheError) {
+                  console.warn('缓存清理失败:', cacheError);
+                }
+
+                Alert.alert('✅ 重置成功', `用户 ${volunteer.name} 的签到状态已重置\n\n现在可以重新签到了`, [
+                  {
+                    text: '确定',
+                    onPress: async () => {
+                      console.log('🔄 [RESET] 开始强制刷新所有数据...');
+
+                      // 🚀 多重刷新确保状态同步
+                      try {
+                        // 1. 刷新志愿者数据
+                        await loadVolunteerData(true);
+                        console.log('✅ [RESET] 志愿者数据刷新完成');
+
+                        // 2. 额外等待确保后端数据同步
+                        await new Promise(resolve => setTimeout(resolve, 1000));
+
+                        // 3. 再次刷新确保UI更新
+                        await loadVolunteerData(true);
+                        console.log('✅ [RESET] 二次数据刷新完成');
+
+                      } catch (refreshError) {
+                        console.error('❌ [RESET] 数据刷新失败:', refreshError);
+                        Alert.alert('提示', '重置成功但页面刷新失败，请手动刷新页面');
+                      }
+                    }
+                  }
+                ]);
               } else {
-                Alert.alert('失败', '状态重置失败，请联系管理员');
+                const errorMsg = result.msg || '状态重置失败';
+                console.error('❌ [RESET] 重置API失败:', {
+                  code: result.code,
+                  message: result.msg,
+                  userId: volunteer.userId,
+                  recordId
+                });
+
+                Alert.alert('❌ 重置失败',
+                  `重置操作失败：${errorMsg}\n\n` +
+                  `用户ID: ${volunteer.userId}\n` +
+                  `记录ID: ${recordId}\n\n` +
+                  `请联系管理员或稍后重试`, [
+                  {
+                    text: '重试',
+                    onPress: () => {
+                      console.log('🔄 [RESET] 用户选择重试');
+                      // 递归调用重置
+                      handleResetStatus(volunteerId);
+                    }
+                  },
+                  {
+                    text: '取消',
+                    style: 'cancel'
+                  }
+                ]);
               }
             } catch (error) {
-              console.error('重置状态失败:', error);
-              Alert.alert('错误', '网络错误，请稍后重试');
+              console.error('❌ [RESET] 重置状态异常:', {
+                error: error.message,
+                stack: error.stack,
+                userId: volunteer.userId,
+                userName: volunteer.name,
+                recordId,
+                operateUserId: userInfo?.userId,
+                timestamp: new Date().toISOString()
+              });
+
+              // 🔍 详细错误分析和用户友好提示
+              let errorMessage = '网络错误，请稍后重试';
+              let showRetryOption = true;
+
+              if (error.message.includes('记录ID')) {
+                errorMessage = `无法确定要重置的记录ID\n\n用户: ${volunteer.name}\nID: ${volunteer.userId}\n\n这可能是数据同步问题，请联系管理员`;
+                showRetryOption = false;
+              } else if (error.message.includes('记录')) {
+                errorMessage = '无法获取签到记录，可能是网络问题或数据异常';
+              } else if (error.message.includes('权限')) {
+                errorMessage = '权限不足，请确认您有管理员权限';
+                showRetryOption = false;
+              } else if (error.message.includes('网络') || error.message.includes('fetch')) {
+                errorMessage = '网络连接失败，请检查网络后重试';
+              } else if (error.message.includes('超时')) {
+                errorMessage = '操作超时，请检查网络连接后重试';
+              }
+
+              const alertActions = [];
+
+              if (showRetryOption) {
+                alertActions.push({
+                  text: '重试',
+                  onPress: () => {
+                    console.log('🔄 [RESET] 用户选择重试重置');
+                    handleResetStatus(volunteerId);
+                  }
+                });
+              }
+
+              alertActions.push({
+                text: '刷新页面',
+                onPress: () => {
+                  console.log('🔄 [RESET] 用户选择刷新页面');
+                  loadVolunteerData(true);
+                }
+              });
+
+              alertActions.push({
+                text: '取消',
+                style: 'cancel'
+              });
+
+              Alert.alert('❌ 重置失败', errorMessage, alertActions);
             } finally {
               setOperationInProgress(prev => ({ ...prev, [volunteerId]: false }));
+              console.log('🏁 [RESET] 重置操作结束，解除loading状态');
             }
           }
         }
@@ -1080,7 +1312,7 @@ export const VolunteerSchoolDetailScreen: React.FC = () => {
                       checkInStatus: 'checked_in',
                       checkInTime: (() => {
                         try {
-                          const parsedTime = parseVolunteerTimestamp(lastData.startTime);
+                          const parsedTime = timeService.parseServerTime(lastData.startTime);
                           return parsedTime.toISOString();
                         } catch (e) {
                                   return lastData.startTime;
@@ -1113,7 +1345,7 @@ export const VolunteerSchoolDetailScreen: React.FC = () => {
                       checkInStatus: 'checked_in',
                       checkInTime: (() => {
                         try {
-                          const parsedTime = parseVolunteerTimestamp(lastData.startTime);
+                          const parsedTime = timeService.parseServerTime(lastData.startTime);
                           return parsedTime.toISOString();
                         } catch (e) {
                                   return lastData.startTime;
@@ -1191,15 +1423,7 @@ export const VolunteerSchoolDetailScreen: React.FC = () => {
       return;
     }
 
-    // 使用当前时间作为签到时间，避免历史数据的问题
-    const now = new Date();
-    const year = now.getFullYear();
-    const month = String(now.getMonth() + 1).padStart(2, '0');
-    const day = String(now.getDate()).padStart(2, '0');
-    const hours = String(now.getHours()).padStart(2, '0');
-    const minutes = String(now.getMinutes()).padStart(2, '0');
-    const seconds = String(now.getSeconds()).padStart(2, '0');
-    const currentTime = `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+    // 🔧 修复：直接使用志愿者真实的签到时间，确保时间显示一致性
 
     // 构建志愿者记录对象
     const volunteerRecord = {
@@ -1208,7 +1432,7 @@ export const VolunteerSchoolDetailScreen: React.FC = () => {
       name: volunteer.legalName || volunteer.name || '志愿者',
       phone: volunteer.phonenumber || '',
       school: school?.deptName || '',
-      checkInTime: currentTime, // 使用当前时间替代可能有问题的历史时间
+      checkInTime: volunteer.checkInTime, // 使用真实的签到时间，保持一致性
       status: 'checked_in' as const,
     };
 
@@ -1493,7 +1717,7 @@ export const VolunteerSchoolDetailScreen: React.FC = () => {
                                 {/* 时间异常时显示重置按钮 */}
                                 {(() => {
                                   // 使用统一的异常检测函数
-                                  const anomaly = detectTimeAnomaly(item?.checkInTime);
+                                  const anomaly = timeService.detectTimeAnomaly(item?.checkInTime);
 
                                   // 如果检测到异常，显示重置按钮
                                   if (anomaly.type) {

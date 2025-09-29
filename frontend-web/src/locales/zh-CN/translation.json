@@ -434,6 +434,10 @@
           "try_different_username": "尝试其他用户名",
           "check_registered_email": "检查邮箱是否已注册",
           "contact_support_account": "联系客服找回账户",
+          "use_different_email": "使用其他邮箱地址",
+          "use_different_phone": "使用其他手机号",
+          "try_login_instead": "直接使用该账号登录",
+          "reset_password": "如果忘记密码，可以重置密码",
           "get_new_code": "重新获取验证码",
           "check_sms": "检查短信",
           "contact_admin_enable": "联系管理员开启",
@@ -451,7 +455,10 @@
           "service_suspended": "注册功能暂未开启",
           "username_issue": "用户名已存在或格式不正确",
           "verification_code_error": "验证码错误或已过期",
-          "email_issue": "邮箱格式不正确或已被使用"
+          "email_issue": "邮箱格式不正确或已被使用",
+          "email_already_registered_message": "该邮箱已被注册，请使用其他邮箱或直接登录",
+          "phone_already_registered_message": "该手机号已被注册，请使用其他手机号或直接登录",
+          "username_already_exists_message": "该用户名已被使用，请更换其他邮箱"
         },
         "error_titles": {
           "information_format_error": "信息格式错误",
@@ -459,7 +466,10 @@
           "service_suspended": "服务暂停",
           "username_problem": "用户名问题",
           "verification_code_error": "验证码错误",
-          "email_problem": "邮箱问题"
+          "email_problem": "邮箱问题",
+          "email_already_registered_title": "邮箱已被注册",
+          "phone_already_registered_title": "手机号已被注册",
+          "username_already_exists_title": "用户名已存在"
         }
       },
       "verification": {
@@ -592,6 +602,10 @@
           "try_different_username": "尝试其他用户名",
           "check_registered_email": "检查邮箱是否已注册",
           "contact_support_account": "联系客服找回账户",
+          "use_different_email": "使用其他邮箱地址",
+          "use_different_phone": "使用其他手机号",
+          "try_login_instead": "直接使用该账号登录",
+          "reset_password": "如果忘记密码，可以重置密码",
           "get_new_code": "重新获取验证码",
           "check_sms": "检查短信",
           "contact_admin_enable": "联系管理员开启",
@@ -609,7 +623,10 @@
           "service_suspended": "注册功能暂未开启",
           "username_issue": "用户名已存在或格式不正确",
           "verification_code_error": "验证码错误或已过期",
-          "email_issue": "邮箱格式不正确或已被使用"
+          "email_issue": "邮箱格式不正确或已被使用",
+          "email_already_registered_message": "该邮箱已被注册，请使用其他邮箱或直接登录",
+          "phone_already_registered_message": "该手机号已被注册，请使用其他手机号或直接登录",
+          "username_already_exists_message": "该用户名已被使用，请更换其他邮箱"
         },
         "error_titles": {
           "information_format_error": "信息格式错误",
@@ -617,7 +634,10 @@
           "service_suspended": "服务暂停",
           "username_problem": "用户名问题",
           "verification_code_error": "验证码错误",
-          "email_problem": "邮箱问题"
+          "email_problem": "邮箱问题",
+          "email_already_registered_title": "邮箱已被注册",
+          "phone_already_registered_title": "手机号已被注册",
+          "username_already_exists_title": "用户名已存在"
         }
       },
       "sms": {

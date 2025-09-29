@@ -137,15 +137,15 @@ class ShadowOptimizer {
    * Get glass-themed shadow for Liquid Glass components
    */
   getGlassShadowConfig(level: ShadowLevel, isDarkMode: boolean = false): OptimizedShadowConfig {
-    const glassShadowColor = isDarkMode ? '#FFFFFF' : '#000000';
-    const config = this.getShadowConfig(level, { 
-      color: glassShadowColor, 
-      transparent: true 
+    const glassShadowColor = '#000000';
+    const config = this.getShadowConfig(level, {
+      color: glassShadowColor,
+      transparent: true
     });
 
     // Glass components need slightly different opacity
     if (config.shadowOpacity) {
-      config.shadowOpacity *= isDarkMode ? 0.3 : 0.7;
+      config.shadowOpacity *= 0.7;
     }
 
     return config;
@@ -202,7 +202,7 @@ export const getOptimizedShadow = (level: ShadowLevel, options?: {
  * Convenience function for glass shadows
  */
 export const getGlassShadow = (level: ShadowLevel, isDarkMode?: boolean): OptimizedShadowConfig => {
-  return shadowOptimizer.getGlassShadowConfig(level, isDarkMode);
+  return shadowOptimizer.getGlassShadowConfig(level, false);
 };
 
 /**

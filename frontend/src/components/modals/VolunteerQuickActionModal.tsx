@@ -188,7 +188,7 @@ const VolunteerQuickActionModalComponent: React.FC<VolunteerQuickActionModalProp
 
         // 使用统一时间服务计算工作时长
         const startDate = timeService.parseServerTime(currentRecord.startTime);
-        const duration = startDate ? timeService.calculateDuration(startDate, endTime) : null;
+        const duration = startDate ? timeService.calculateDuration(startDate, new Date(endTime)) : null;
         const workDuration = duration ? duration.display : '--:--';
 
         // 先重新加载状态，确保UI更新
@@ -467,7 +467,7 @@ const VolunteerQuickActionModalComponent: React.FC<VolunteerQuickActionModalProp
                   ]}
                 >
                   {hasActiveSession && currentRecord
-                    ? `签到时间：${timeService.formatForDisplay(timeService.parseServerTime(currentRecord.startTime, true), { showTime: true })}\n工作进行中...`
+                    ? `签到时间：${timeService.formatForDisplay(timeService.parseServerTime(currentRecord.startTime), { showTime: true })}\n工作进行中...`
                     : '该志愿者尚未开始工作'}
                 </Text>
               </View>

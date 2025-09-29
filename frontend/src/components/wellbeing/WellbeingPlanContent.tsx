@@ -159,7 +159,7 @@ const styles = StyleSheet.create({
 
   header: {
     paddingTop: 12,
-    paddingBottom: 24,
+    paddingBottom: 12, // 减少底部间距，让标题更靠近下方内容
     paddingHorizontal: 8,
     alignItems: 'center',
   },

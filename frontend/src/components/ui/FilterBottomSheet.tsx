@@ -471,20 +471,20 @@ export const FilterBottomSheet: React.FC<FilterBottomSheetProps> = ({
               outputRange: [theme.liquidGlass.floating.background, 'rgba(255, 255, 255, 0.98)'],
               extrapolate: 'clamp',
             }),
-            // 深色模式适配
-            ...(theme.colors.text.primary === '#ffffff' && {
+            // 深色模式适配（已禁用，保持light模式）
+            ...(false ? {
               backgroundColor: keyboardAnimatedValue.interpolate({
                 inputRange: [0, 1],
                 outputRange: ['rgba(28, 28, 30, 0.95)', 'rgba(28, 28, 30, 0.98)'],
                 extrapolate: 'clamp',
               }),
-            }),
+            } : {}),
           }
         ]}>
           {showResultCount && (
             <Text style={styles.resultCount}>
               {filteredCount > 0 
-                ? t('filters.resultsCountNumber', '找到 {{count}} 个活动', { count: filteredCount })
+                ? t('filters.resultsCountNumber', { count: filteredCount })
                 : t('filters.noResults', '没有找到活动')
               }
             </Text>
@@ -526,7 +526,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: LIQUID_GLASS_LAYERS.L3.backdrop,
+    backgroundColor: LIQUID_GLASS_LAYERS.L3.backdrop.light as any,
     zIndex: 999998, // 提高层级确保覆盖所有UI元素包括导航栏
   },
   backdropTouchable: {
@@ -542,7 +542,7 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderLeftWidth: 1,
     borderRightWidth: 1,
-    ...theme.shadows[LIQUID_GLASS_LAYERS.L3.shadow],
+    ...(theme.shadows as any)[LIQUID_GLASS_LAYERS.L3.shadow.light],
     zIndex: 999999, // 确保在遮罩之上并覆盖所有UI元素
     elevation: 999, // Android兼容性
   },
@@ -644,10 +644,10 @@ const styles = StyleSheet.create({
     marginLeft: theme.spacing.sm,
     fontSize: theme.typography.fontSize.base,
     color: theme.colors.text.primary,
-    // 深色模式输入框优化
-    ...(theme.colors.text.primary === '#ffffff' && {
+    // 深色模式输入框优化（已禁用）
+    ...(false ? {
       color: '#ffffff', // 主文字颜色保持最高对比度
-    }),
+    } : {}),
   },
 
   // 内容区域
@@ -710,11 +710,10 @@ const styles = StyleSheet.create({
     color: theme.colors.text.secondary,
     lineHeight: theme.typography.fontSize.sm * 1.2, // lineHeight ≈ fontSize × 1.2
     flexShrink: 1, // 允许收缩，避免溢出
-    maxFontSizeMultiplier: 1.2, // 限制动态字体放大倍数
     // 深色模式对比度优化 - 确保≥ 4.5:1 对比度
-    ...(theme.colors.text.primary === '#ffffff' && {
+    ...(false ? {
       color: 'rgba(255, 255, 255, 0.85)', // 更高对比度的深色模式文字
-    }),
+    } : {}),
   },
   filterLabelActive: {
     color: theme.colors.text.inverse,
@@ -755,19 +754,19 @@ const styles = StyleSheet.create({
     borderTopColor: theme.liquidGlass.card.border,
     backgroundColor: theme.liquidGlass.floating.background,
     // 深色模式适配
-    ...(theme.colors.text.primary === '#ffffff' && {
+    ...(false ? {
       backgroundColor: 'rgba(28, 28, 30, 0.95)',
       borderTopColor: 'rgba(255, 255, 255, 0.1)',
-    }),
+    } : {}),
   },
   resultCount: {
     fontSize: theme.typography.fontSize.sm,
     color: theme.colors.text.secondary,
     flex: 1,
     // 深色模式对比度优化
-    ...(theme.colors.text.primary === '#ffffff' && {
+    ...(false ? {
       color: 'rgba(255, 255, 255, 0.75)', // 次级文字但仍保持可读性
-    }),
+    } : {}),
   },
   // Apply Button Shadow容器 - 解决阴影冲突
   applyButtonShadowContainer: {

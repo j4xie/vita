@@ -235,7 +235,21 @@
       "reset_button": "重置密码",
       "success_title": "密码重置成功",
       "success_message": "您的密码已成功重置，请使用新密码登录",
-      "reset_failed": "密码重置失败，请稍后重试"
+      "reset_failed": "密码重置失败，请稍后重试",
+      "errors": {
+        "password_format_rejected": "密码格式不符合要求",
+        "password_format_details": "密码需要至少6位字符，包含字母和数字",
+        "verification_code_expired": "验证码已过期",
+        "verification_code_invalid": "验证码错误",
+        "phone_not_found": "手机号不存在",
+        "network_error": "网络连接失败",
+        "server_error": "服务器错误",
+        "unknown_error": "未知错误",
+        "retry_suggestion": "请检查输入信息后重试",
+        "get_new_code": "请重新获取验证码",
+        "check_network": "请检查网络连接后重试",
+        "contact_support": "如问题持续，请联系客服"
+      }
     },
     "password": {
       "strength": {
@@ -576,6 +590,66 @@
       "rate_limited": "登录尝试过于频繁，请稍后再试",
       "authentication_failed": "身份验证失败，请重新登录",
       "session_expired": "登录已过期，请重新登录",
+      "form_validation": {
+        "email_required": "请输入邮箱地址",
+        "email_format_invalid": "邮箱格式不正确",
+        "email_format_hint": "请输入有效的邮箱地址，如：example@university.edu",
+        "email_example": "示例：zhang.san@ucla.edu",
+        "password_required": "请输入密码",
+        "password_format_invalid": "密码格式不符合要求",
+        "password_format_hint": "密码需要至少6位字符，包含字母和数字",
+        "password_example": "示例：abc123（字母+数字组合）",
+        "phone_required": "请输入手机号码",
+        "phone_format_invalid_cn": "中国手机号格式不正确",
+        "phone_format_hint_cn": "请输入11位中国手机号，以1开头",
+        "phone_example_cn": "示例：13812345678",
+        "phone_format_invalid_us": "美国手机号格式不正确",
+        "phone_format_hint_us": "请输入10位美国手机号",
+        "phone_example_us": "示例：5551234567",
+        "username_required": "请输入用户名",
+        "username_format_invalid": "用户名格式不正确",
+        "username_format_hint": "用户名需要6-20位字母和数字组合",
+        "username_example": "示例：zhang123（字母数字组合）",
+        "verification_code_required": "请输入验证码",
+        "verification_code_format_invalid": "验证码格式不正确",
+        "verification_code_format_hint": "请输入6位数字验证码",
+        "verification_code_example": "示例：123456",
+        "confirm_password_required": "请确认密码",
+        "password_mismatch": "两次输入的密码不一致",
+        "password_mismatch_hint": "请确保两次输入的密码完全相同"
+      },
+      "registration": {
+        "username_taken": "用户名已被使用",
+        "username_taken_suggestion": "请更换邮箱或直接登录",
+        "email_taken": "邮箱已被注册",
+        "email_taken_suggestion": "请使用其他邮箱地址或尝试找回密码",
+        "phone_taken": "手机号已被注册",
+        "phone_taken_suggestion": "请更换手机号或直接登录",
+        "verification_code_expired": "验证码已过期",
+        "verification_code_invalid": "验证码错误",
+        "verification_code_suggestion": "请重新获取验证码",
+        "registration_failed": "注册失败",
+        "service_unavailable": "注册服务暂时不可用",
+        "contact_admin": "请联系管理员或稍后重试"
+      },
+      "network": {
+        "connection_failed": "网络连接失败",
+        "connection_suggestion": "请检查网络连接后重试",
+        "timeout": "请求超时",
+        "timeout_suggestion": "网络较慢，请稍后重试",
+        "ssl_error": "安全连接失败",
+        "ssl_suggestion": "请检查网络设置或切换网络"
+      },
+      "actions": {
+        "retry": "重试",
+        "get_new_code": "重新获取验证码",
+        "contact_support": "联系客服",
+        "check_input": "检查输入",
+        "try_different": "尝试其他选项",
+        "go_to_login": "前往登录",
+        "change_email": "更换邮箱",
+        "change_phone": "更换手机号"
+      },
       "school_load_failed": "加载学校列表失败，请重试",
       "unknown_error": "发生未知错误，请稍后重试"
     },
@@ -616,6 +690,24 @@
       "privacy_policy": "隐私政策",
       "terms_of_service": "服务条款"
     }
+  },
+  "debug": {
+    "permission_tool": "权限调试工具",
+    "current_user_permissions": "当前用户权限状态",
+    "permission_level": "权限级别",
+    "volunteer_access": "志愿者功能",
+    "accessible": "可访问",
+    "not_accessible": "不可访问",
+    "checkin_operations": "签到操作",
+    "can_operate": "可操作",
+    "cannot_operate": "不可操作",
+    "admin": "总管理员",
+    "part_manager": "分管理员",
+    "staff": "内部员工",
+    "user_basic_info": "用户基本信息",
+    "user_id": "用户ID",
+    "username": "用户名",
+    "legal_name": "法定姓名"
   },
   "activities": {
     "discover": "发现精彩活动",
@@ -749,7 +841,7 @@
     "settings": "设置",
     "language": "语言",
     "privacy": "隐私设置",
-    "volunteer_hours_label": "志愿",
+    "volunteer_hours_label": "志愿小时",
     "points_label": "积分",
     "verification_code_label": "核销码",
     "settings_and_help": "设置与帮助",
@@ -1295,7 +1387,7 @@
     "success": "补录成功",
     "successMessage": "已成功补录 {{duration}} 的工时",
     "confirmClose": "确定要放弃当前输入的内容吗？",
-    "dateRangeHint": "最多可选择前7天内的日期",
+    "dateRangeHint": "最多可选择前30天内的日期",
     "selectDateTitle": "选择补录日期",
     "workDuration": "工作时长",
     "manualInput": "手动输入",
@@ -1312,7 +1404,7 @@
     "errors": {
       "futureDate": "不能选择未来日期",
       "futureTime": "不能选择未来时间",
-      "dateRange": "只能补录近7天内的工时",
+      "dateRange": "只能补录近30天内的工时",
       "selectStartFirst": "请先选择开始时间",
       "endBeforeStart": "结束时间必须晚于开始时间",
       "duration": "单次工作时长不能超过12小时",
@@ -1323,6 +1415,55 @@
       "invalidDateFormat": "日期格式错误，请使用YYYY-MM-DD格式",
       "invalidTimeFormat": "时间格式错误，请使用HH:MM格式",
       "descriptionRequired": "请填写工作说明"
+    },
+    "approvalMessages": {
+      "success": "补录成功",
+      "staffReviewRequired": "内部员工补录需要审核",
+      "overdueReviewRequired": "超期补录需要审核",
+      "overtimeReviewRequired": "长时间工作需要审核",
+      "generalReviewRequired": "需要审核"
+    }
+  },
+  "autoCheckout": {
+    "title": "自动签退",
+    "description": "当您退出应用时自动签退志愿者工作",
+    "enabled": "已启用自动签退",
+    "disabled": "已禁用自动签退",
+    "delaySeconds": "延迟时间（秒）",
+    "showConfirmation": "显示确认对话框",
+    "settings": {
+      "title": "自动签退设置",
+      "enable": "启用自动签退",
+      "delay": "延迟时间",
+      "delayDescription": "应用进入后台后多久执行自动签退",
+      "confirmation": "确认对话框",
+      "confirmationDescription": "是否在自动签退前显示确认对话框"
+    },
+    "notifications": {
+      "autoCheckedOut": "已自动签退",
+      "workDuration": "工作时长：{{duration}}",
+      "reason": "由于应用退出自动签退"
+    },
+    "errors": {
+      "initializationFailed": "自动签退服务初始化失败",
+      "recordFailed": "记录自动签退状态失败",
+      "clearFailed": "清除自动签退状态失败"
+    }
+  },
+  "autoApproval": {
+    "title": "自动审核",
+    "description": "管理员用户的正常工时记录自动审核通过",
+    "rules": {
+      "signout": "签退自动审核：管理员权限 + 8小时内工作 + 非异常记录",
+      "timeEntry": "补录自动审核：管理员权限 + 7天内补录 + 8小时内工作",
+      "staff": "内部员工：所有记录需要人工审核",
+      "overtime": "超长工作：超过8小时需要人工审核",
+      "overdue": "超期补录：7天外需要人工审核"
+    },
+    "status": {
+      "autoApproved": "系统自动审核通过",
+      "pendingReview": "待人工审核",
+      "abnormalRecord": "异常记录需要审核"
     }
   },
   "volunteer": {
@@ -1473,7 +1614,15 @@
     "open_scanner_failed_message": "无法启动扫码功能，请检查相机权限"
   },
   "volunteerHome": {
-    "quickActions": "快捷操作"
+    "quickActions": "快捷操作",
+    "redirectToSchool": "正在跳转到您的学校...",
+    "recentCheckout": "最近签退",
+    "currentCheckin": "本次签到",
+    "worked": "工作",
+    "working": "已工作",
+    "hours": "小时",
+    "minutes": "分钟",
+    "noWorkRecord": "暂无工作记录"
   },
   "volunteerCheckIn": {
     "viewVolunteer": "查看志愿者记录",
@@ -1487,9 +1636,9 @@
     "search": "搜索",
     "userInfo": "用户信息",
     "todayRecords": "今日记录",
-    "checkIn": "签到",
+    "checkIn": "签到计时",
     "checkOut": "签退",
-    "timeEntry": "补录工时",
+    "timeEntry": "录入小时",
     "time": {
       "checkInTime": "签到时间",
       "checkOutTime": "签退时间",
@@ -2093,7 +2242,10 @@
       "creation_failed": "创建失败",
       "card_creation_error": "会员卡创建失败",
       "switch_failed": "切换失败",
-      "organization_switch_error": "组织切换失败"
+      "organization_switch_error": "组织切换失败",
+      "invalid_activity_qr": "无效的活动二维码",
+      "scan_process_failed": "扫码处理失败",
+      "process_error": "处理扫码结果时出错"
     },
     "identity": {
       "title": "我的身份码",

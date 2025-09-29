@@ -1,4 +1,4 @@
-import { useColorScheme, Platform } from 'react-native';
+import { Platform } from 'react-native';
 import { RESTRAINED_COLORS } from '../theme/core';
 
 /**
@@ -6,18 +6,17 @@ import { RESTRAINED_COLORS } from '../theme/core';
  * 处理深色模式适配和Android降级策略
  */
 export const useRestrainedColors = () => {
-  const colorScheme = useColorScheme();
-  const isDarkMode = colorScheme === 'dark';
+  const isDarkMode = false;
   const isAndroid = Platform.OS === 'android';
 
   // L1容器配置
   const getL1Container = () => ({
-    background: RESTRAINED_COLORS.L1_CONTAINER.background[isDarkMode ? 'dark' : 'light'],
+    background: RESTRAINED_COLORS.L1_CONTAINER.background.light,
     border: {
-      color: RESTRAINED_COLORS.L1_CONTAINER.border.color[isDarkMode ? 'dark' : 'light'],
+      color: RESTRAINED_COLORS.L1_CONTAINER.border.color.light,
       width: RESTRAINED_COLORS.L1_CONTAINER.border.width,
     },
-    innerRim: RESTRAINED_COLORS.L1_CONTAINER.innerRim[isDarkMode ? 'dark' : 'light'],
+    innerRim: RESTRAINED_COLORS.L1_CONTAINER.innerRim.light,
     shadow: RESTRAINED_COLORS.L1_CONTAINER.shadow,
     borderRadius: RESTRAINED_COLORS.L1_CONTAINER.borderRadius,
   });
@@ -25,12 +24,12 @@ export const useRestrainedColors = () => {
   // L2品牌强调配置
   const getL2Emphasis = () => {
     const baseConfig = {
-      background: RESTRAINED_COLORS.L2_EMPHASIS.background[isDarkMode ? 'dark' : 'light'],
+      background: RESTRAINED_COLORS.L2_EMPHASIS.background.light,
       border: {
-        color: RESTRAINED_COLORS.L2_EMPHASIS.border.color[isDarkMode ? 'dark' : 'light'],
+        color: RESTRAINED_COLORS.L2_EMPHASIS.border.color.light,
         width: RESTRAINED_COLORS.L2_EMPHASIS.border.width,
       },
-      textColor: RESTRAINED_COLORS.L2_EMPHASIS.textColor[isDarkMode ? 'dark' : 'light'],
+      textColor: RESTRAINED_COLORS.L2_EMPHASIS.textColor.light,
       shadow: RESTRAINED_COLORS.L2_EMPHASIS.shadow,
       borderRadius: RESTRAINED_COLORS.L2_EMPHASIS.borderRadius,
     };
@@ -73,8 +72,8 @@ export const useRestrainedColors = () => {
   const getFABSystem = () => ({
     container: {
       ...RESTRAINED_COLORS.FAB_SYSTEM.container,
-      background: RESTRAINED_COLORS.L1_CONTAINER.background[isDarkMode ? 'dark' : 'light'],
-      border: RESTRAINED_COLORS.L1_CONTAINER.border.color[isDarkMode ? 'dark' : 'light'],
+      background: RESTRAINED_COLORS.L1_CONTAINER.background.light,
+      border: RESTRAINED_COLORS.L1_CONTAINER.border.color.light,
     },
     icon: {
       ...RESTRAINED_COLORS.FAB_SYSTEM.icon,

@@ -390,7 +390,7 @@ export const QRScannerScreen: React.FC = () => {
         const activityId = parseActivityQRCode(qrData);
         if (!activityId) {
           if (onScanError) {
-            onScanError('无效的活动二维码');
+            onScanError(t('qr.errors.invalid_activity_qr', '无效的活动二维码'));
           } else {
             showScanError(
               t('qr.results.invalid_qr_title'),
@@ -404,9 +404,9 @@ export const QRScannerScreen: React.FC = () => {
         await onScanSuccess(qrData);
       } catch (error) {
         if (onScanError) {
-          onScanError('扫码处理失败');
+          onScanError(t('qr.errors.scan_process_failed', '扫码处理失败'));
         } else {
-          showScanError('扫码失败', '处理扫码结果时出错');
+          showScanError(t('qr.errors.scan_failed', '扫码失败'), t('qr.errors.process_error', '处理扫码结果时出错'));
         }
       }
       return;

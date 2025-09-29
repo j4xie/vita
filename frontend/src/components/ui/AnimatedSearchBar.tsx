@@ -14,7 +14,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 
 import { useTheme } from '../../theme';
-import { useTheme as useThemeContext } from '../../context/ThemeContext';
 
 interface AnimatedSearchBarProps {
   searchText: string;
@@ -30,11 +29,10 @@ const AnimatedSearchBar: React.FC<AnimatedSearchBarProps> = ({
   placeholder,
 }) => {
   const { t } = useTranslation();
-  const theme = useStaticTheme();
+  const theme = useTheme();
   const insets = useSafeAreaInsets();
-  const themeContext = useThemeContext();
-  const isDarkMode = themeContext.isDarkMode;
   const inputRef = useRef<TextInput>(null);
+  const isDarkMode = false;
 
   // Animation thresholds (as specified in requirements)
   const SHOW_THRESHOLD = 240; // 240pt
@@ -80,19 +78,19 @@ const AnimatedSearchBar: React.FC<AnimatedSearchBarProps> = ({
         easing: Easing.bezier(0.4, 0, 0.2, 1),
       }),
       transform: [
-        { 
+        {
           translateY: withTiming(translateY, {
             duration: 200,
             easing: Easing.bezier(0.4, 0, 0.2, 1),
-          }) 
+          })
         },
-        { 
+        {
           scale: withTiming(scale, {
             duration: 200,
             easing: Easing.bezier(0.4, 0, 0.2, 1),
           })
         },
-      ],
+      ] as any,
     };
   });
 
@@ -177,7 +175,7 @@ const AnimatedSearchBar: React.FC<AnimatedSearchBarProps> = ({
             <Icon
               name="close"
               size={14}
-              color={theme.colors.surface}
+              color={theme.colors.text.primary}
             />
           </TouchableOpacity>
         )}
