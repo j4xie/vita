@@ -13,6 +13,7 @@ GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 PURPLE='\033[0;35m'
+BOLD='\033[1m'
 NC='\033[0m' # No Color
 
 # 日志函数
@@ -105,7 +106,9 @@ confirm_version_number() {
     CURRENT_VERSION=$(node -p "require('./package.json').version")
 
     echo ""
-    log_info "当前版本号: ${CURRENT_VERSION}"
+    log_info "📱 配置应用版本号"
+    echo -e "   当前版本号: ${CURRENT_VERSION}"
+    echo ""
 
     # 自动计算下一个 patch 版本号
     IFS='.' read -r -a version_parts <<< "$CURRENT_VERSION"
@@ -131,6 +134,7 @@ confirm_version_number() {
     echo
 
     if [[ $REPLY =~ ^[Nn]$ ]]; then
+        echo ""
         read -p "请输入新的版本号 (例如: 1.1.0): " NEW_VERSION
 
         # 验证版本号格式
@@ -139,13 +143,57 @@ confirm_version_number() {
             exit 1
         fi
 
-        log_info "将更新版本号为: ${NEW_VERSION}"
+        log_success "新版本号: ${NEW_VERSION}"
         VERSION_CHANGED=true
     else
         NEW_VERSION=$SUGGESTED_VERSION
         log_info "将更新版本号为: ${NEW_VERSION}"
         VERSION_CHANGED=true
     fi
+}
+
+# 确认"关于应用"界面版本号
+confirm_about_screen_version() {
+    # 读取当前应用内显示版本号
+    CURRENT_DISPLAY=$(grep "APP_DISPLAY_VERSION = " src/screens/profile/AboutSupportScreen.tsx | sed "s/.*= '\(.*\)'.*/\1/")
+
+    echo ""
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    log_important "📱 配置应用内「关于应用」显示版本"
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo ""
+    echo -e "   ${BLUE}提交给苹果的技术版本:${NC} ${NEW_VERSION}"
+    echo -e "   ${YELLOW}当前应用内显示版本:${NC} v${CURRENT_DISPLAY}"
+    echo ""
+    echo -e "   用户将在 设置 > 应用信息 > 关于应用 中看到此版本号"
+    echo ""
+    read -p "是否修改应用内显示版本号? (y/N): " -n 1 -r
+    echo
+
+    if [[ $REPLY =~ ^[Yy]$ ]]; then
+        echo ""
+        read -p "请输入应用内要显示的版本号 (例如: 1.0.6): " DISPLAY_VERSION
+
+        # 验证版本号格式
+        if [[ ! $DISPLAY_VERSION =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            log_error "版本号格式无效，请使用格式: x.y.z"
+            DISPLAY_VERSION=$CURRENT_DISPLAY
+            log_info "保持原显示版本号: v${DISPLAY_VERSION}"
+        else
+            # 使用 sed 修改 AboutSupportScreen.tsx 中的硬编码版本号
+            sed -i '' "s/APP_DISPLAY_VERSION = '.*'/APP_DISPLAY_VERSION = '${DISPLAY_VERSION}'/" src/screens/profile/AboutSupportScreen.tsx
+            log_success "应用内显示版本号已更新为: v${DISPLAY_VERSION}"
+        fi
+    else
+        DISPLAY_VERSION=$CURRENT_DISPLAY
+        log_success "应用内显示版本号保持为: v${DISPLAY_VERSION}"
+    fi
+
+    echo ""
+    log_important "📋 版本配置总结"
+    echo -e "   ${BLUE}提交给苹果 (技术版本):${NC} ${NEW_VERSION}"
+    echo -e "   ${YELLOW}应用内显示 (用户可见):${NC} v${DISPLAY_VERSION}"
+    echo ""
 }
 
 # 应用版本号更新
@@ -301,6 +349,7 @@ main() {
     show_current_status
     switch_to_production
     confirm_version_number
+    confirm_about_screen_version
     apply_version_update
     production_safety_check
     run_prechecks

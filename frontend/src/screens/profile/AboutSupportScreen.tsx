@@ -18,7 +18,6 @@ import * as Haptics from 'expo-haptics';
 
 import { theme } from '../../theme';
 import { useTheme } from '../../context/ThemeContext';
-import packageInfo from '../../../package.json';
 
 interface SettingRowProps {
   title: string;
@@ -168,13 +167,16 @@ export const AboutSupportScreen: React.FC = () => {
     navigation.navigate('Terms', { type: 'terms' });
   };
 
+  // 应用内显示版本号（独立于发布版本）
+  // 由发布脚本自动更新，请勿手动修改
+  const APP_DISPLAY_VERSION = '1.0.6';
 
   const appInfoItems = [
     {
       id: 'app-info',
       title: t('profile.about.aboutApp'),
       icon: 'information-circle-outline' as keyof typeof Ionicons.glyphMap,
-      value: `v${packageInfo.version}`,
+      value: `v${APP_DISPLAY_VERSION}`,
       onPress: handleAppInfo,
     },
   ];
@@ -305,7 +307,7 @@ export const AboutSupportScreen: React.FC = () => {
           {/* Version Footer */}
           <View style={styles.versionFooter}>
             <Text style={styles.versionText}>
-              {`PomeloX v${packageInfo.version}`}
+              {`PomeloX v${APP_DISPLAY_VERSION}`}
             </Text>
             <Text style={styles.copyrightText}>
               © 2025 西柚Pomelo. All rights reserved.

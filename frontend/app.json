@@ -6,7 +6,7 @@
     },
     "name": "西柚Pomelo",
     "slug": "pomelox",
-    "version": "1.0.33",
+    "version": "1.0.34",
     "owner": "pomelox",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -25,7 +25,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.pomelotech.pomelo",
-      "buildNumber": "4",
+      "buildNumber": "1",
       "deploymentTarget": "13.0",
       "infoPlist": {
         "NSAppTransportSecurity": {
