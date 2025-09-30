@@ -57,19 +57,7 @@ export const optimizeThemeForHermes = () => {
 };
 
 // 类型定义
-export type Theme = {
-  colors: core.CoreColors;
-  spacing: core.CoreSpacing;
-  borderRadius: core.CoreBorderRadius;
-  typography: core.CoreTypography;
-  touchTarget: core.CoreTouchTarget;
-  liquidGlass: core.CoreLiquidGlass;
-  shadows: core.CoreShadows;
-  animations: core.CoreAnimations;
-  gestures: core.CoreGestures;
-  layout: core.CoreLayout;
-  performance: any;
-};
+export type ThemeType = typeof theme;
 
 // 向后兼容的导出 - 直接从核心配置导出
 export const colors = core.CORE_COLORS;

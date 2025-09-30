@@ -530,7 +530,12 @@ const ActivityListScreenInternal: React.FC = () => {
         } : null
       });
 
-      const adaptedData = adaptActivityList(result, currentLanguage);
+      const adaptedData = adaptActivityList({
+        total: result.data?.total || 0,
+        rows: result.data?.rows || [],
+        code: result.code,
+        msg: result.msg
+      }, currentLanguage);
       
       // 调试：检查适配后的活动状态
       console.log('🎯 活动数据适配结果:', {
@@ -857,7 +862,7 @@ const ActivityListScreenInternal: React.FC = () => {
         // 日期过滤
         if (dateFilters.some(f => f.id === filterId)) {
           // 简化的日期匹配逻辑
-          const activityDate = new Date(activity.startTime);
+          const activityDate = new Date(activity.date);
           const today = new Date();
           const tomorrow = new Date(today);
           tomorrow.setDate(tomorrow.getDate() + 1);
@@ -989,7 +994,7 @@ const ActivityListScreenInternal: React.FC = () => {
       const granted = await requestForegroundPermission();
       if (!granted) {
         // 如果被拒绝，显示设置提示
-        LocationService.getInstance().showSettingsAlert();
+        LocationService.showSettingsAlert();
       }
     } else {
       // 显示位置选择模态框

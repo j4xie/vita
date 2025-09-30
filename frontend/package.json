@@ -1,6 +1,6 @@
 {
   "name": "pomelox-app",
-  "version": "1.0.32",
+  "version": "1.0.33",
   "main": "node_modules/expo/AppEntry.js",
   "scripts": {
     "validate-translations": "node package-scripts/validate-translations.js",
@@ -55,6 +55,8 @@
     "env:prod": "./scripts/switch-env.sh prod",
     "env:status": "./scripts/switch-env.sh status",
     "env:clean": "./scripts/switch-env.sh clean",
+    "dev:full": "./scripts/switch-env.sh dev --auto-restart",
+    "prod:full": "./scripts/switch-env.sh prod --auto-restart",
     "prepare:testflight": "./scripts/prepare-testflight.sh",
     "prepare:appstore": "./scripts/prepare-appstore.sh"
   },

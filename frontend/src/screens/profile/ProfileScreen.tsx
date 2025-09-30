@@ -166,8 +166,8 @@ export const ProfileScreen: React.FC = () => {
       // 显示成功提示
       Alert.alert(
         t('common.success'),
-        t('profile.region_updated_successfully', { 
-          region: UserRegionPreferences.getRegionDisplayName(newRegion, currentLanguage)
+        t('profile.region_updated_successfully', {
+          region: UserRegionPreferences.getRegionDisplayName(newRegion, currentLanguage.startsWith('zh') ? 'zh' : 'en')
         })
       );
     } catch (error) {
@@ -235,7 +235,7 @@ export const ProfileScreen: React.FC = () => {
       id: 'region',
       title: t('profile.region'),
       icon: 'location-outline' as keyof typeof Ionicons.glyphMap,
-      value: `${UserRegionPreferences.getRegionIcon(currentRegion)} ${UserRegionPreferences.getRegionDisplayName(currentRegion, currentLanguage)}`,
+      value: `${UserRegionPreferences.getRegionIcon(currentRegion)} ${UserRegionPreferences.getRegionDisplayName(currentRegion, currentLanguage.startsWith('zh') ? 'zh' : 'en')}`,
       onPress: handleRegionPress,
     },
     {
@@ -742,6 +742,6 @@ const styles = StyleSheet.create({
     borderWidth: LIQUID_GLASS_LAYERS.L1.border.width,
     borderColor: LIQUID_GLASS_LAYERS.L1.border.color.light,
     borderRadius: LIQUID_GLASS_LAYERS.L1.borderRadius.card, // 16pt圆角
-    ...theme.shadows[LIQUID_GLASS_LAYERS.L1.shadow],
+    ...theme.shadows[LIQUID_GLASS_LAYERS.L1.shadow.light],
   },
 });

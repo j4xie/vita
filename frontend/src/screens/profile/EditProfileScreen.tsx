@@ -182,8 +182,8 @@ export const EditProfileScreen: React.FC = () => {
     email: user?.email || '',
     alternateEmail: user?.alternateEmail || '', // 🆕 第二邮箱
     phonenumber: user?.phonenumber || '',
-    areaCode: user?.areaCode || '86', // 🆕 区号，默认中国+86
-    gender: user?.sex || '2', // 0-男 1-女 2-未知 (后端返回sex字段)
+    areaCode: (user as any)?.areaCode || '86', // 🆕 区号，默认中国+86
+    gender: (user as any)?.sex || '2', // 0-男 1-女 2-未知 (后端返回sex字段)
     university: user?.dept?.deptName || '',
   });
 
@@ -261,8 +261,8 @@ export const EditProfileScreen: React.FC = () => {
             email: user.email || '',
             alternateEmail: user.alternateEmail || '', // 🆕 第二邮箱
             phonenumber: user.phonenumber || '',
-            areaCode: user.areaCode || '86', // 🆕 区号
-            gender: user.sex || '2', // 后端返回sex字段，映射为gender
+            areaCode: (user as any).areaCode || '86', // 🆕 区号
+            gender: (user as any).sex || '2', // 后端返回sex字段，映射为gender
             university: user.dept?.deptName || '',
           };
           setFormData(fallbackData);
@@ -299,7 +299,8 @@ export const EditProfileScreen: React.FC = () => {
   useEffect(() => {
     const loadUserAvatar = async () => {
       if (user?.userId) {
-        const avatarUrl = getUserAvatarUrl(user.userId);
+        const userId = typeof user.userId === 'string' ? parseInt(user.userId) : user.userId;
+        const avatarUrl = getUserAvatarUrl(userId);
         const exists = await checkAvatarExists(avatarUrl);
         if (exists) {
           setAvatarUri(avatarUrl);
@@ -312,7 +313,7 @@ export const EditProfileScreen: React.FC = () => {
 
   // 监听导航事件，处理必填字段验证
   useEffect(() => {
-    const unsubscribe = navigation.addListener('beforeRemove', (e) => {
+    const unsubscribe = navigation.addListener('beforeRemove', (e: any) => {
       // 如果不是必填情况或已填写，允许正常导航
       if (!isFirstTimeAlternateEmail || formData.alternateEmail) {
         return;
@@ -380,9 +381,10 @@ export const EditProfileScreen: React.FC = () => {
                 if (!result.canceled && result.assets[0] && user?.userId) {
                   const localUri = result.assets[0].uri;
                   setAvatarUri(localUri); // 先显示本地图片
-                  
+
                   // 上传到Cloudflare R2
-                  const uploadResult = await uploadAvatar(localUri, user.userId);
+                  const userId = typeof user.userId === 'string' ? parseInt(user.userId) : user.userId;
+                  const uploadResult = await uploadAvatar(localUri, userId);
                   if (uploadResult.success && uploadResult.url) {
                     setAvatarUri(uploadResult.url);
                     Alert.alert(t('common.success'), 'Avatar uploaded successfully!');
@@ -401,9 +403,10 @@ export const EditProfileScreen: React.FC = () => {
               if (!result.canceled && result.assets[0] && user?.userId) {
                 const localUri = result.assets[0].uri;
                 setAvatarUri(localUri); // 先显示本地图片
-                
+
                 // 上传到Cloudflare R2
-                const uploadResult = await uploadAvatar(localUri, user.userId);
+                const userId = typeof user.userId === 'string' ? parseInt(user.userId) : user.userId;
+                const uploadResult = await uploadAvatar(localUri, userId);
                 if (uploadResult.success && uploadResult.url) {
                   setAvatarUri(uploadResult.url);
                   Alert.alert(t('common.success'), 'Avatar uploaded successfully!');
@@ -762,8 +765,6 @@ export const EditProfileScreen: React.FC = () => {
       backgroundColor: isDarkMode ? 'rgba(28, 28, 30, 0.95)' : 'rgba(242, 242, 247, 0.95)',
       borderTopWidth: StyleSheet.hairlineWidth,
       borderTopColor: isDarkMode ? 'rgba(84, 84, 88, 0.6)' : '#c6c6c8',
-      // 添加模糊背景效果
-      backdropFilter: 'blur(20px)',
     },
     floatingSaveButtonsRow: {
       flexDirection: 'row',

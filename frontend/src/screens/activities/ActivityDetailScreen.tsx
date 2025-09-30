@@ -552,43 +552,84 @@ export const ActivityDetailScreen: React.FC = () => {
     };
   }, [activity.id, activity.registeredCount, activity.attendees]); // 添加依赖项确保闭包正确
 
-  // ✅ API数据刷新函数
+  // ✅ API数据刷新函数 - 获取最新的活动信息和状态
   const refreshActivityFromAPI = async () => {
     try {
       const userId = user?.id || user?.userId;
-      if (!userId) return;
-      
-      const parsedUserId = parseInt(String(userId));
       const parsedActivityId = parseInt(String(activity.id));
-      
-      if (isNaN(parsedUserId) || isNaN(parsedActivityId)) {
-        console.warn('⚠️ [refreshActivityFromAPI] ID解析失败');
+
+      if (isNaN(parsedActivityId)) {
+        console.warn('⚠️ [refreshActivityFromAPI] 活动ID解析失败');
         return;
       }
-      
-      console.log('🔍 [refreshActivityFromAPI] 获取最新数据:', {
+
+      console.log('🔍 [refreshActivityFromAPI] 获取最新活动数据:', {
         activityId: parsedActivityId,
-        userId: parsedUserId
+        userId: userId || '访客模式'
       });
-      
-      // 同时获取状态和更新的活动数据
-      const [statusResponse] = await Promise.all([
-        pomeloXAPI.getSignInfo(parsedActivityId, parsedUserId)
-      ]);
-      
-      if (statusResponse.code === 200) {
-        const newStatus = statusResponse.data === -1 ? 'registered' : 
-                         statusResponse.data === 1 ? 'checked_in' : 'upcoming';
-        
-        console.log('📊 [refreshActivityFromAPI] 状态验证结果:', {
-          signInfo: statusResponse.data,
-          finalStatus: newStatus
-        });
-        
-        setRegistrationStatus(newStatus);
-        setIsRegistered(newStatus !== 'upcoming');
+
+      // 🔄 获取最新的活动列表数据（包含时间更新）
+      const listResponse = await pomeloXAPI.getActivityList({
+        pageNum: 1,
+        pageSize: 20,
+        userId: userId ? parseInt(String(userId)) : undefined,
+      });
+
+      if (listResponse.code === 200 && listResponse.data?.rows) {
+        // 从列表中找到当前活动
+        const updatedActivityData = listResponse.data.rows.find((a: any) => a.id === parsedActivityId);
+
+        if (updatedActivityData) {
+          // 使用适配器重新解析（会重新解析时间）
+          const { adaptActivity, clearTimeParseCache } = await import('../../utils/activityAdapter');
+
+          // 清除时间缓存确保获取最新时间
+          clearTimeParseCache();
+
+          const freshActivity = adaptActivity(updatedActivityData, i18n.language === 'zh-CN' ? 'zh' : 'en');
+
+          console.log('✅ [refreshActivityFromAPI] 活动数据已更新:', {
+            activityId: parsedActivityId,
+            oldDate: activity.date,
+            oldEndDate: activity.endDate,
+            newDate: freshActivity.date,
+            newEndDate: freshActivity.endDate,
+            dateChanged: activity.date !== freshActivity.date || activity.endDate !== freshActivity.endDate
+          });
+
+          // 更新activity状态
+          setActivity(freshActivity);
+
+          // 更新报名状态
+          const newStatus = freshActivity.status as 'upcoming' | 'registered' | 'checked_in';
+          setRegistrationStatus(newStatus);
+          setIsRegistered(newStatus !== 'upcoming');
+        } else {
+          console.warn('⚠️ [refreshActivityFromAPI] 列表中未找到该活动');
+        }
       }
-      
+
+      // 🔄 如果用户已登录，额外获取精确的报名状态
+      if (userId) {
+        const parsedUserId = parseInt(String(userId));
+        if (!isNaN(parsedUserId)) {
+          const statusResponse = await pomeloXAPI.getSignInfo(parsedActivityId, parsedUserId);
+
+          if (statusResponse.code === 200) {
+            const newStatus = statusResponse.data === -1 ? 'registered' :
+                             statusResponse.data === 1 ? 'checked_in' : 'upcoming';
+
+            console.log('📊 [refreshActivityFromAPI] 报名状态验证:', {
+              signInfo: statusResponse.data,
+              finalStatus: newStatus
+            });
+
+            setRegistrationStatus(newStatus);
+            setIsRegistered(newStatus !== 'upcoming');
+          }
+        }
+      }
+
     } catch (error) {
       console.warn('⚠️ [refreshActivityFromAPI] 刷新失败:', error);
     }

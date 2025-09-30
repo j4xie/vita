@@ -337,12 +337,11 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: 'rgba(255, 255, 255, 0.2)',
     position: 'relative',
-    backdropFilter: 'blur(10px)',
   },
   languageOptionSelected: {
     backgroundColor: 'rgba(255, 255, 255, 0.25)',
     borderColor: theme.colors.primary,
-    ...theme.shadows.card,
+    ...theme.shadows.sm,
   },
   
   // 推荐标签
@@ -471,4 +470,4 @@ const styles = StyleSheet.create({
   loadingDotDelay2: {
     // 可以添加动画延迟
   },
-});
+}) as any;

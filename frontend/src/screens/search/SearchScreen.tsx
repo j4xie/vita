@@ -97,23 +97,23 @@ export const SearchScreen: React.FC = ({ route }: any) => {
         searchText: text 
       });
       
-      console.log('🔍 [SearchScreen] API响应:', { 
-        code: response.code, 
-        total: response.total, 
-        rowsCount: response.rows?.length 
+      console.log('🔍 [SearchScreen] API响应:', {
+        code: response.code,
+        total: response.data?.total,
+        rowsCount: response.data?.rows?.length
       });
-      
-      if (response.code === 200 && response.rows) {
+
+      if (response.code === 200 && response.data?.rows) {
         // 添加前端过滤作为双重保障
-        const filteredRows = response.rows.filter((activity: any) => 
+        const filteredRows = response.data.rows.filter((activity: any) =>
           activity.name.toLowerCase().includes(text.toLowerCase()) ||
           activity.address?.toLowerCase().includes(text.toLowerCase())
         );
-        
-        console.log('🔍 [SearchScreen] 过滤后结果:', { 
-          原始数量: response.rows.length,
+
+        console.log('🔍 [SearchScreen] 过滤后结果:', {
+          原始数量: response.data.rows.length,
           过滤后数量: filteredRows.length,
-          搜索词: text 
+          搜索词: text
         });
         
         // 使用标准的activityAdapter确保数据一致性

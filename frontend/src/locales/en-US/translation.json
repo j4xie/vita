@@ -217,7 +217,7 @@
       "code_sent_title": "Code Sent",
       "code_sent_message": "Verification code sent to {{phone}}, please check your SMS",
       "code_sent_success": "Verification code sent successfully!",
-      "check_sms_instruction": "Please check the verification code in your SMS and follow the instructions to reset your password",
+      "check_sms_instruction": "Please enter the verification code you received to reset your password",
       "send_code_failed": "Failed to send verification code",
       "send_code_error": "Error occurred while sending verification code, please try again later",
       "verification_code_label": "Verification Code",

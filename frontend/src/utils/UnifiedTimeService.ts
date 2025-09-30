@@ -32,11 +32,18 @@ export class UnifiedTimeService {
    * 架构设计：前后端都使用本地时间，无时区转换
    * 后端返回什么时间，前端就按照该时间直接解析和显示
    *
+   * ⚠️ 时区处理说明：
+   * 1. 后端返回格式: "YYYY-MM-DD HH:mm:ss" (本地时间字符串，无时区信息)
+   * 2. 解析方式: new Date("YYYY-MM-DDTHH:mm:ss") - 按设备本地时区解析
+   * 3. **关键**: 解析结果的Date对象代表的是"该时间在设备本地时区的时刻"
+   * 4. 不使用toISOString()等UTC转换方法，避免时区错误
+   *
    * @param serverTime 后端返回的时间字符串，格式: "YYYY-MM-DD HH:mm:ss"
    * @param _deprecated 兼容参数，已弃用
-   * @returns JavaScript Date对象
+   * @returns JavaScript Date对象（本地时区）
    * @example
-   * const date = parseServerTime("2025-01-25 14:30:00"); // 直接解析为本地时间
+   * const date = parseServerTime("2025-01-25 14:30:00");
+   * // 解析为设备本地时区的1月25日14:30
    */
   parseServerTime(serverTime: string | null | undefined, _deprecated?: boolean): Date | null {
     if (!serverTime) {

@@ -5,7 +5,7 @@
 
 // 检查是否为真机或模拟器环境
 const isNativeEnvironment = () => {
-  return typeof global !== 'undefined' && global.HermesInternal;
+  return typeof global !== 'undefined' && (global as any).HermesInternal;
 };
 
 /**
@@ -50,7 +50,8 @@ const initializeAsyncStorage = async (): Promise<void> => {
  */
 const initializeNetworkInfo = async (): Promise<void> => {
   try {
-    const NetInfo = await import('@react-native-community/netinfo');
+    // NetInfo 可能没有安装，使用 try-catch 处理
+    const NetInfo = await import('@react-native-community/netinfo' as any);
     console.log('✅ NetInfo 初始化成功');
   } catch (error) {
     console.warn('⚠️ NetInfo 初始化失败:', error);

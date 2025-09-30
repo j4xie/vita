@@ -32,6 +32,8 @@ export interface UserDepartment {
   parentId?: number;
   ancestors?: string;
   status?: string;
+  engName?: string; // 英文名称
+  aprName?: string; // 简称
 }
 
 /**
@@ -72,6 +74,9 @@ export interface FrontendUser extends BaseUserInfo {
   permissionLevel: PermissionLevel;
   isAdmin: boolean;
   status: 'active' | 'inactive' | 'pending';
+  areaCode?: string; // 区号
+  sex?: string; // 性别
+  postCode?: string; // 岗位代码
 }
 
 /**

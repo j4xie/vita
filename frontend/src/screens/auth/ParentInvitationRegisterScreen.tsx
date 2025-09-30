@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import {
   View,
   Text,
@@ -95,6 +95,16 @@ export const ParentInvitationRegisterScreen: React.FC = () => {
   const [countdown, setCountdown] = useState(0);
   const [bizId, setBizId] = useState<string>('');
 
+  // 🔧 组件挂载状态跟踪 - 防止组件卸载后setState
+  const isMountedRef = useRef(true);
+
+  // 🔧 防抖：防止重复点击注册按钮
+  const lastSubmitTimeRef = useRef(0);
+  const SUBMIT_DEBOUNCE_MS = 2000;
+
+  // 🔧 请求去重：缓存最近的请求参数
+  const lastRequestRef = useRef<string>('');
+
   const [formData, setFormData] = useState<ParentFormData>({
     firstName: '',
     lastName: '',
@@ -112,12 +122,34 @@ export const ParentInvitationRegisterScreen: React.FC = () => {
   });
 
   const [errors, setErrors] = useState<ValidationErrors>({});
-  
+
   // 🔧 成功弹窗状态 - 与其他注册页面保持一致
   const [showSuccessModal, setShowSuccessModal] = useState(false);
-  
+
   // 实时验证状态
   const [realtimeErrors, setRealtimeErrors] = useState<ValidationErrors>({});
+
+  // 🔧 组件挂载状态管理
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+      console.log('🔄 [ParentInvitationRegister] Component unmounted');
+    };
+  }, []);
+
+  // 🔧 Loading超时自动重置
+  useEffect(() => {
+    if (loading) {
+      const timer = setTimeout(() => {
+        if (isMountedRef.current) {
+          console.warn('⚠️ [ParentInvitationRegister] Loading timeout, auto reset');
+          setLoading(false);
+        }
+      }, 30000);
+      return () => clearTimeout(timer);
+    }
+  }, [loading]);
   
   // 检查是否有任何验证错误 - 使用 useMemo 优化性能
   const hasValidationErrors = useMemo(() => {
@@ -139,7 +171,6 @@ export const ParentInvitationRegisterScreen: React.FC = () => {
   // 创建实时验证处理器
   const handleFirstNameChange = createRealtimeValidator(
     TextType.FIRST_NAME,
-    t,
     (isValid, message) => {
       setRealtimeErrors(prev => ({
         ...prev,
@@ -147,10 +178,9 @@ export const ParentInvitationRegisterScreen: React.FC = () => {
       }));
     }
   );
-  
+
   const handleLastNameChange = createRealtimeValidator(
     TextType.LAST_NAME,
-    t,
     (isValid, message) => {
       setRealtimeErrors(prev => ({
         ...prev,
@@ -314,6 +344,14 @@ export const ParentInvitationRegisterScreen: React.FC = () => {
   const handleRegister = async () => {
     if (!validateForm()) return;
 
+    // 🔧 防抖：2秒内只能点击一次
+    const now = Date.now();
+    if (now - lastSubmitTimeRef.current < SUBMIT_DEBOUNCE_MS) {
+      console.log('⏱️ [ParentInvitationRegister] Debounce: Ignoring duplicate submit');
+      return;
+    }
+    lastSubmitTimeRef.current = now;
+
     setLoading(true);
 
     try {
@@ -348,6 +386,17 @@ export const ParentInvitationRegisterScreen: React.FC = () => {
           invCode: referralCode,
         }),
       };
+
+      // 🔧 请求去重：检测重复请求
+      const requestKey = JSON.stringify(registrationData);
+      if (lastRequestRef.current === requestKey) {
+        console.warn('⚠️ [ParentInvitationRegister] Duplicate request detected, ignoring');
+        if (isMountedRef.current) {
+          setLoading(false);
+        }
+        return;
+      }
+      lastRequestRef.current = requestKey;
 
       console.log('家长注册数据:', registrationData);
 
@@ -396,10 +445,16 @@ export const ParentInvitationRegisterScreen: React.FC = () => {
             console.log('✅ 家长账户自动登录成功！');
             
             // 🔧 使用LiquidSuccessModal替代Alert - 统一用户体验
-            setLoading(false);
-            setShowSuccessModal(true);
+            if (isMountedRef.current) {
+              setLoading(false);
+              setShowSuccessModal(true);
+            }
           } else {
             // 注册成功但登录失败
+            // 🔧 Alert显示前先重置loading
+            if (isMountedRef.current) {
+              setLoading(false);
+            }
             Alert.alert(
               '✅ ' + t('auth.register.success.title'),
               t('auth.register.success.manual_login', { email: formData.email }),
@@ -416,6 +471,10 @@ export const ParentInvitationRegisterScreen: React.FC = () => {
           }
         } catch (loginError) {
           console.error('❌ 自动登录失败:', loginError);
+          // 🔧 Alert显示前先重置loading
+          if (isMountedRef.current) {
+            setLoading(false);
+          }
           Alert.alert(
             '✅ ' + t('auth.register.success.title'),
             t('auth.register.success.manual_login', { email: formData.email }),
@@ -431,29 +490,40 @@ export const ParentInvitationRegisterScreen: React.FC = () => {
           );
         }
       } else {
+        // 🔧 Alert显示前先重置loading
+        if (isMountedRef.current) {
+          setLoading(false);
+        }
         Alert.alert(''); // 关闭进度提示
         Alert.alert(
           '❌ ' + t('auth.register.parent.failed_title'),
           response.msg || t('auth.register.parent.failed_message'),
           [
-            { text: t('common.retry'), onPress: () => setLoading(false) },
+            { text: t('common.retry') },
             { text: t('common.back'), style: 'cancel', onPress: () => navigation.goBack() }
           ]
         );
       }
     } catch (error) {
       console.error('❌ 家长注册网络错误:', error);
+      // 🔧 Alert显示前先重置loading
+      if (isMountedRef.current) {
+        setLoading(false);
+      }
       Alert.alert(''); // 关闭进度提示
       Alert.alert(
         '🌐 ' + t('common.network_error'),
         t('auth.register.network_error_message'),
         [
-          { text: t('common.retry'), onPress: () => setLoading(false) },
+          { text: t('common.retry') },
           { text: t('common.back'), style: 'cancel', onPress: () => navigation.goBack() }
         ]
       );
     } finally {
-      setLoading(false);
+      // 🔧 Finally块兜底：确保loading总能重置
+      if (isMountedRef.current) {
+        setLoading(false);
+      }
     }
   };
 
@@ -900,7 +970,7 @@ const styles = StyleSheet.create({
     paddingVertical: theme.spacing[4],
     backgroundColor: theme.colors.background.tertiary,
     borderRightWidth: 1,
-    borderRightColor: theme.colors.border,
+    borderRightColor: theme.colors.border.primary,
   },
   areaCodeText: {
     fontSize: theme.typography.fontSize.sm,
@@ -945,7 +1015,7 @@ const styles = StyleSheet.create({
     paddingVertical: theme.spacing[3],
     borderRadius: theme.borderRadius.lg,
     borderWidth: 1,
-    borderColor: theme.colors.border,
+    borderColor: theme.colors.border.primary,
     alignItems: 'center',
   },
   genderActive: {
@@ -1019,4 +1089,4 @@ const styles = StyleSheet.create({
     flex: 1,
     marginBottom: 0,
   },
-});
+}) as any;

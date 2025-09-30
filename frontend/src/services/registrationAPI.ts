@@ -137,6 +137,10 @@ export const fetchOrganizationList = async (): Promise<APIResponse<OrganizationD
  */
 export const registerUser = async (registrationData: RegistrationAPIRequest): Promise<APIResponse> => {
   try {
+    // 🔧 添加30秒超时保护 - 防止并发时永久卡住
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 30000);
+
     // 构建form-data格式的请求体
     const formData = new URLSearchParams();
     Object.entries(registrationData).forEach(([key, value]) => {
@@ -151,7 +155,10 @@ export const registerUser = async (registrationData: RegistrationAPIRequest): Pr
         'Content-Type': 'application/x-www-form-urlencoded',
       },
       body: formData.toString(),
+      signal: controller.signal,
     });
+
+    clearTimeout(timeoutId);
 
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
@@ -161,6 +168,10 @@ export const registerUser = async (registrationData: RegistrationAPIRequest): Pr
     return data;
   } catch (error) {
     console.error('用户注册失败:', error);
+    // 🔧 增强超时错误提示
+    if ((error as Error).name === 'AbortError') {
+      throw new Error('注册请求超时，请检查网络后重试');
+    }
     throw error;
   }
 };
@@ -210,11 +221,15 @@ export const checkUserNameAvailability = async (userName: string): Promise<{ ava
  * @param email 邮箱地址
  * @returns 是否可用
  */
-export const checkEmailAvailability = async (email: string): Promise<{ available: boolean; message?: string }> => {
+export const checkEmailAvailability = async (email: string): Promise<{ available: boolean; message?: string; skipValidation?: boolean }> => {
   try {
     if (!validateEmailFormat(email)) {
       return { available: false, message: '邮箱格式不正确' };
     }
+
+    // 🔧 添加10秒超时保护 - 防止实时验证卡住
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000);
 
     // 调用后端接口检查邮箱是否已被注册
     const response = await fetch(`${getBaseUrl()}/app/user/checkEmail?email=${encodeURIComponent(email)}`, {
@@ -222,8 +237,11 @@ export const checkEmailAvailability = async (email: string): Promise<{ available
       headers: {
         'Content-Type': 'application/json',
       },
+      signal: controller.signal,
     });
-    
+
+    clearTimeout(timeoutId);
+
     if (response.ok) {
       const data = await response.json();
       if (data.code === 200) {
@@ -231,14 +249,21 @@ export const checkEmailAvailability = async (email: string): Promise<{ available
       } else {
         return { available: false, message: data.msg || '邮箱检查失败' };
       }
+    } else if (response.status === 404) {
+      // 🔧 接口不存在 - 优雅降级，不阻塞注册流程
+      console.warn('⚠️ checkEmail接口不存在(404)，跳过实时验证');
+      return { available: true, skipValidation: true };
     } else {
-      // 如果接口不存在，只做格式验证
-      console.warn('邮箱检查接口不存在，只进行格式验证');
+      // 其他HTTP错误
+      console.warn(`checkEmail接口错误(${response.status})，跳过实时验证`);
       return { available: true };
     }
   } catch (error) {
     console.error('检查邮箱可用性失败:', error);
-    // 网络错误时默认通过
+    // 🔧 超时或网络错误时默认通过，不阻塞用户
+    if ((error as Error).name === 'AbortError') {
+      console.warn('邮箱检查超时，跳过验证');
+    }
     return { available: true };
   }
 };

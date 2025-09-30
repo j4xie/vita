@@ -353,7 +353,7 @@ export const ActivityRegistrationFormScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: theme.colors.background,
+    backgroundColor: theme.colors.background.primary,
   },
   header: {
     flexDirection: 'row',

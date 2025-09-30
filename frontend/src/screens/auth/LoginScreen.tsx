@@ -251,7 +251,7 @@ export const LoginScreen: React.FC = () => {
 
   return (
     <LinearGradient
-      colors={isDarkMode ? dmGradients.page.background : DAWN_GRADIENTS.skyCool}
+      colors={isDarkMode ? ['#1C1C1E', '#2C2C2E', '#3A3A3C'] : DAWN_GRADIENTS.skyCool}
       style={styles.container}
     >
       <SafeAreaView style={styles.safeArea}>
@@ -531,7 +531,6 @@ const styles = StyleSheet.create({
     paddingVertical: theme.spacing.md, // 增加垂直内边距
     borderWidth: 1.5,
     borderColor: 'transparent', // Default state has no visible border
-    transition: 'border-color 0.3s ease-in-out',
     minHeight: 52, // 设置最小高度，让输入框更舒适
   },
   inputFocused: {

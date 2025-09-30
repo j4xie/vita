@@ -81,6 +81,7 @@ export const StudentNormalRegisterStep1Screen: React.FC = () => {
   const [formData, setFormData] = useState<ExtendedFormData>({
     firstName: '',
     lastName: '',
+    phoneNumber: '',
     selectedSchool: null,
     generatedEmail: '',
     nickName: '',
@@ -950,7 +951,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: theme.spacing[4],
     borderBottomWidth: 1,
-    borderBottomColor: theme.colors.border,
+    borderBottomColor: theme.colors.border.primary,
   },
   modalTitle: {
     fontSize: theme.typography.fontSize.lg,
@@ -973,4 +974,4 @@ const styles = StyleSheet.create({
     fontSize: theme.typography.fontSize.base,
     color: theme.colors.text.primary,
   },
-});
+}) as any;

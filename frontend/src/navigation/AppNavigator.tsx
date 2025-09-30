@@ -81,6 +81,7 @@ const AuthNavigator = () => {
   
   return (
     <AuthStack.Navigator
+      {...({ id: "auth" } as any)}
       screenOptions={{
         headerShown: false,
         ...pageTransitions.slideFromRight,
@@ -205,6 +206,7 @@ const AuthNavigator = () => {
 const WellbeingNavigator = () => {
   return (
     <WellbeingStack.Navigator
+      {...({ id: "wellbeing" } as any)}
       screenOptions={{
         headerShown: false,
         ...pageTransitions.slideFromRight,
@@ -236,6 +238,7 @@ const WellbeingNavigator = () => {
 const HomeNavigator = () => {
   return (
     <MainStack.Navigator
+      {...({ id: "home" } as any)}
       screenOptions={{
         headerShown: false,
         ...pageTransitions.slideFromRight,
@@ -306,6 +309,7 @@ const ProfileNavigator = () => {
   
   return (
     <ProfileStack.Navigator
+      {...({ id: "profile" } as any)}
       screenOptions={{
         headerShown: true,
         headerStyle: {
@@ -475,6 +479,7 @@ const TabNavigator = () => {
       <GlobalTouchHandler>
         <View style={{ flex: 1 }}>
           <Tab.Navigator
+          {...({ id: "main-tab" } as any)}
           tabBar={(props) => <CustomTabBar {...props} />}
           screenOptions={{
             headerShown: false,
@@ -632,6 +637,7 @@ export const AppNavigator = () => {
           <VolunteerProvider>
             <NavigationContainer>
         <RootStack.Navigator
+          {...({ id: "root" } as any)}
           screenOptions={{
             headerShown: false,
           }}

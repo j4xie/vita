@@ -1,3 +1,4 @@
+// @ts-nocheck - Test file with intentional malicious data types
 /**
  * QR扫码功能安全性测试套件
  * 专门测试权限边界、安全漏洞、恶意输入等
@@ -134,17 +135,17 @@ export class SecurityTestSuite {
     crossAccessTests.forEach(test => {
       try {
         const result = getScanPermissions(test.scanner, test.target);
-        const isSecure = result.availableOptions.volunteerCheckin === test.expectedVolunteerAccess;
+        const isSecure = result.availableOptions.volunteerCheckIn === test.expectedVolunteerAccess;
 
         testResults.push({
           test: test.name,
           passed: isSecure,
           expected: test.expectedVolunteerAccess,
-          actual: result.availableOptions.volunteerCheckin,
+          actual: result.availableOptions.volunteerCheckIn,
           secure: isSecure
         });
 
-        console.log(`${isSecure ? '✅' : '🚨'} ${test.name}: ${result.availableOptions.volunteerCheckin ? '有' : '无'}志愿者权限`);
+        console.log(`${isSecure ? '✅' : '🚨'} ${test.name}: ${result.availableOptions.volunteerCheckIn ? '有' : '无'}志愿者权限`);
       } catch (error) {
         testResults.push({
           test: test.name,

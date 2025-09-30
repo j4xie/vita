@@ -34,7 +34,7 @@ class LocationService {
   private currentLocation: LocationData | null = null;
   private lastLocationTime: number = 0;
   private locationCache: Map<string, LocationData> = new Map();
-  private watchId: string | null = null;
+  private watchId: any = null;
   private geofences: GeofenceRegion[] = [];
   
   // 缓存时间：5-10分钟
@@ -150,12 +150,11 @@ class LocationService {
       let location;
       try {
         location = await Location.getCurrentPositionAsync({
-          accuracy: highAccuracy 
-            ? Location.Accuracy.BestForNavigation 
+          accuracy: highAccuracy
+            ? Location.Accuracy.BestForNavigation
             : Location.Accuracy.Balanced,
-          maximumAge: useCache ? this.CACHE_DURATION : 0,
-          timeout: highAccuracy ? this.HIGH_ACCURACY_TIMEOUT : timeout,
-        });
+          timeInterval: useCache ? this.CACHE_DURATION : 0,
+        } as any);
       } catch (locationError) {
         console.log('获取位置失败，可能是权限问题:', locationError);
         return null;
@@ -324,7 +323,7 @@ class LocationService {
    */
   async stopLocationUpdates(): Promise<void> {
     if (this.watchId) {
-      await Location.removeWatchAsync(this.watchId);
+      this.watchId.remove();
       this.watchId = null;
     }
   }

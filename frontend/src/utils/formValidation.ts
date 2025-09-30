@@ -3,7 +3,8 @@
  * 用于登录、注册等界面的表单验证
  */
 
-import { TFunction } from 'i18next';
+// 简化的翻译函数类型，避免i18next版本冲突
+type TranslateFunction = (key: string, options?: any) => string;
 
 export interface ValidationResult {
   isValid: boolean;
@@ -24,7 +25,7 @@ export interface ValidationOptions {
 /**
  * 邮箱验证
  */
-export const validateEmail = (email: string, t: TFunction): ValidationResult => {
+export const validateEmail = (email: string, t: TranslateFunction): ValidationResult => {
   if (!email || email.trim().length === 0) {
     return {
       isValid: false,
@@ -51,7 +52,7 @@ export const validateEmail = (email: string, t: TFunction): ValidationResult => 
 /**
  * 密码验证
  */
-export const validatePassword = (password: string, t: TFunction): ValidationResult => {
+export const validatePassword = (password: string, t: TranslateFunction): ValidationResult => {
   if (!password || password.trim().length === 0) {
     return {
       isValid: false,
@@ -93,7 +94,7 @@ export const validatePassword = (password: string, t: TFunction): ValidationResu
 export const validateConfirmPassword = (
   password: string,
   confirmPassword: string,
-  t: TFunction
+  t: TranslateFunction
 ): ValidationResult => {
   if (!confirmPassword || confirmPassword.trim().length === 0) {
     return {
@@ -121,7 +122,7 @@ export const validateConfirmPassword = (
 export const validatePhone = (
   phone: string,
   areaCode: string,
-  t: TFunction
+  t: TranslateFunction
 ): ValidationResult => {
   if (!phone || phone.trim().length === 0) {
     return {
@@ -164,7 +165,7 @@ export const validatePhone = (
 /**
  * 用户名验证
  */
-export const validateUsername = (username: string, t: TFunction): ValidationResult => {
+export const validateUsername = (username: string, t: TranslateFunction): ValidationResult => {
   if (!username || username.trim().length === 0) {
     return {
       isValid: false,
@@ -203,7 +204,7 @@ export const validateUsername = (username: string, t: TFunction): ValidationResu
  */
 export const validateVerificationCode = (
   code: string,
-  t: TFunction
+  t: TranslateFunction
 ): ValidationResult => {
   if (!code || code.trim().length === 0) {
     return {
@@ -233,7 +234,7 @@ export const validateVerificationCode = (
 export const validateField = (
   value: string,
   options: ValidationOptions,
-  t: TFunction,
+  t: TranslateFunction,
   fieldName: string
 ): ValidationResult => {
   if (options.required && (!value || value.trim().length === 0)) {
@@ -277,7 +278,7 @@ export const validateField = (
 /**
  * 获取密码强度
  */
-export const getPasswordStrength = (password: string, t: TFunction) => {
+export const getPasswordStrength = (password: string, t: TranslateFunction) => {
   let strength = 0;
   if (password.length >= 6) strength++;
   if (password.length >= 8) strength++;
@@ -313,22 +314,25 @@ export const getPasswordStrength = (password: string, t: TFunction) => {
 export const parseApiError = (
   error: any,
   errorType: 'login' | 'register' | 'general',
-  t: TFunction
+  t: TranslateFunction
 ) => {
   const errorMessage = error?.message || error?.msg || '';
   const errorCode = error?.code;
 
-  // 网络错误
+  // 网络错误和超时
   if (
     errorMessage.includes('Network') ||
     errorMessage.includes('网络') ||
     errorMessage.includes('timeout') ||
+    errorMessage.includes('超时') ||
     errorMessage.includes('连接')
   ) {
     return {
-      title: t('common.error'),
-      message: t('auth.errors.network.connection_failed'),
-      suggestion: t('auth.errors.network.connection_suggestion'),
+      title: '🌐 网络错误',
+      message: errorMessage.includes('超时') || errorMessage.includes('timeout')
+        ? '注册请求超时（30秒无响应），可能是网络不稳定或服务器繁忙'
+        : t('auth.errors.network.connection_failed'),
+      suggestion: '建议：✓ 检查WiFi/数据连接 ✓ 稍后重试 ✓ 联系客服',
       action: t('auth.errors.actions.retry'),
     };
   }
@@ -352,8 +356,36 @@ export const parseApiError = (
   }
 
   if (errorType === 'register') {
-    // 用户名重复错误
-    if (errorMessage.includes('用户名') || errorMessage.includes('username')) {
+    // 🔧 邮箱重复错误 - 增强识别（支持多种格式）
+    const emailConflictPatterns = [
+      /邮箱.*存在/i,
+      /email.*exist/i,
+      /email.*taken/i,
+      /email.*occupied/i,
+      /duplicate.*email/i,
+      /email.*unique/i,
+      /email.*constraint/i,
+      /duplicate entry.*@.*for key/i, // MySQL错误: Duplicate entry 'xxx@xxx' for key 'email'
+    ];
+
+    // 检查是否匹配任何邮箱冲突模式
+    const isEmailConflict = emailConflictPatterns.some(pattern => pattern.test(errorMessage));
+
+    // 特殊检查：如果错误消息包含@符号，很可能是邮箱冲突
+    const containsEmailAddress = /@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/.test(errorMessage);
+
+    if (isEmailConflict || containsEmailAddress) {
+      return {
+        title: '📧 邮箱已注册',
+        message: '此邮箱已经注册过账号，您可能已经有账户了',
+        suggestion: '建议：✓ 使用此邮箱直接登录 ✓ 点击"忘记密码"重置密码 ✓ 使用其他邮箱注册',
+        action: '去登录',
+        actionType: 'login',
+      };
+    }
+
+    // 用户名重复错误（排除邮箱情况）
+    if ((errorMessage.includes('用户名') || errorMessage.includes('username')) && !containsEmailAddress) {
       return {
         title: t('auth.errors.registration.registration_failed'),
         message: t('auth.errors.registration.username_taken'),
@@ -371,15 +403,6 @@ export const parseApiError = (
         suggestion: t('auth.errors.registration.phone_taken_suggestion'),
         action: t('auth.errors.actions.go_to_login'),
         actionType: 'login',
-      };
-    }
-
-    // 邮箱重复错误
-    if (errorMessage.includes('邮箱') || errorMessage.includes('email')) {
-      return {
-        title: t('auth.errors.registration.registration_failed'),
-        message: t('auth.errors.registration.email_taken'),
-        suggestion: t('auth.errors.registration.email_taken_suggestion'),
       };
     }
 

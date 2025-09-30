@@ -35,7 +35,7 @@ export function canOperateTargetUser(
 
   // Staff can only operate on themselves
   if (currentUser.permissionLevel === 'staff') {
-    const currentId = String(currentUser.userId || currentUser.id);
+    const currentId = String(currentUser.userId);
     const targetId = String(targetUser.userId || (targetUser as any).id);
     return currentId === targetId;
   }

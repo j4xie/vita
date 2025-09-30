@@ -62,7 +62,7 @@ export const testAllPermissionCombinations = () => {
   Object.entries(mockUsers).forEach(([scannerType, scanner]) => {
     // 遍历所有被扫码者
     Object.entries(mockScannedUsers).forEach(([scannedType, scanned]) => {
-      const scannerLevel = getUserPermissionLevel(scanner);
+      const scannerLevel = getUserPermissionLevel(scanner as any);
       const permissions = getScanPermissions(scanner, {
         userId: scanned.userId,
         deptId: scanned.deptId,
@@ -75,8 +75,8 @@ export const testAllPermissionCombinations = () => {
         扫码者权限: scannerLevel,
         被扫用户: scanned.legalName,
         是否同校: permissions.isSameSchool,
-        志愿者管理权限: permissions.availableOptions.volunteerCheckin,
-        活动签到权限: permissions.availableOptions.activityCheckin,
+        志愿者管理权限: permissions.availableOptions.volunteerCheckIn,
+        活动签到权限: permissions.availableOptions.activityCheckIn,
         预期行为: getExpectedBehavior(scannerLevel, permissions)
       };
 
@@ -101,8 +101,8 @@ export const testAllPermissionCombinations = () => {
  * 获取预期行为描述
  */
 const getExpectedBehavior = (scannerLevel: string, permissions: any): string => {
-  const hasVolunteer = permissions.availableOptions.volunteerCheckin;
-  const hasActivity = permissions.availableOptions.activityCheckin;
+  const hasVolunteer = permissions.availableOptions.volunteerCheckIn;
+  const hasActivity = permissions.availableOptions.activityCheckIn;
 
   if (scannerLevel === 'manage') {
     return hasVolunteer && hasActivity ? '显示完整操作选项' : '总管理员权限异常';
@@ -140,7 +140,7 @@ export const testSpecificScenario = (
 
   console.log(`🎯 [测试场景] ${scannerType} 扫码 ${scannedType}`);
   
-  const scannerLevel = getUserPermissionLevel(scanner);
+  const scannerLevel = getUserPermissionLevel(scanner as any);
   const permissions = getScanPermissions(scanner, {
     userId: scanned.userId,
     deptId: scanned.deptId,
@@ -150,8 +150,8 @@ export const testSpecificScenario = (
   console.log('📊 测试结果:');
   console.log(`   扫码者权限级别: ${scannerLevel}`);
   console.log(`   是否同校: ${permissions.isSameSchool}`);
-  console.log(`   志愿者管理: ${permissions.availableOptions.volunteerCheckin}`);
-  console.log(`   活动签到: ${permissions.availableOptions.activityCheckin}`);
+  console.log(`   志愿者管理: ${permissions.availableOptions.volunteerCheckIn}`);
+  console.log(`   活动签到: ${permissions.availableOptions.activityCheckIn}`);
   console.log(`   预期UI: ${getExpectedBehavior(scannerLevel, permissions)}`);
 
   return {

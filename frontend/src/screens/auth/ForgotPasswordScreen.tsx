@@ -209,8 +209,10 @@ export const ForgotPasswordScreen: React.FC = () => {
           errorMessage = `手机号码验证失败 (${phone})，请检查号码是否正确或联系客服`;
         } else if (errorMessage.includes('号段') || errorMessage.includes('segment')) {
           errorMessage = `号码段 ${phone.substring(0, 3)} 暂不支持，请使用其他号码或联系客服`;
-        } else if (errorMessage.includes('频率') || errorMessage.includes('limit')) {
-          errorMessage = '发送验证码过于频繁，请稍后再试';
+        } else if (errorMessage.includes('频率') || errorMessage.includes('limit') ||
+                   errorMessage.includes('流控') || errorMessage.includes('Permits') ||
+                   errorMessage.includes('BUSINESS_LIMIT_CONTROL')) {
+          errorMessage = '发送验证码过于频繁，请1小时后再试';
         }
 
         console.log('🔍 [App-ForgotPassword] 错误详情:', {
@@ -355,7 +357,7 @@ export const ForgotPasswordScreen: React.FC = () => {
 
   return (
     <LinearGradient
-      colors={isDarkMode ? DAWN_GRADIENTS.nightDeep : DAWN_GRADIENTS.skyCool}
+      colors={isDarkMode ? ['#1C1C1E', '#2C2C2E', '#3A3A3C'] : DAWN_GRADIENTS.skyCool}
       style={styles.container}
     >
       <SafeAreaView style={styles.safeArea}>

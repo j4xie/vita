@@ -70,8 +70,8 @@ class ApiService {
         return response;
       },
       async (error: AxiosError) => {
-        const originalRequest = error.config;
-        
+        const originalRequest = error.config as any;
+
         // Handle 401 errors (token expired)
         if (error.response?.status === 401 && originalRequest && !originalRequest._retry) {
           originalRequest._retry = true;
@@ -212,7 +212,7 @@ class ApiService {
       // Server responded with error status
       return {
         success: false,
-        error: error.response.data?.error || {
+        error: (error.response.data as any)?.error || {
           code: 'API_ERROR',
           message: '服务器错误',
           message_en: 'Server error',

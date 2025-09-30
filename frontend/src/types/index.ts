@@ -30,16 +30,6 @@ export type {
   SimpleRoleInfo,
 } from './userPermissions';
 
-export type {
-  FrontendActivity,
-  BackendActivity,
-} from './activity';
-
-export type {
-  Organization,
-  OrganizationContextData,
-} from './organization';
-
 // Re-export utility functions
 export {
   // User utilities

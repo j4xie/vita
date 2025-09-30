@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import {
   View,
   Text,
@@ -134,6 +134,14 @@ export const StudentInvitationRegisterScreen: React.FC = React.memo(() => {
 
   const [loading, setLoading] = useState(false);
 
+  // 🔧 组件挂载状态跟踪
+  const isMountedRef = useRef(true);
+
+  // 🔧 防抖和请求去重
+  const lastSubmitTimeRef = useRef(0);
+  const lastRequestRef = useRef<string>('');
+  const SUBMIT_DEBOUNCE_MS = 2000;
+
   // UCLA学生类型选择
   const [studentType, setStudentType] = useState<'undergraduate' | 'graduate'>('undergraduate');
 
@@ -164,6 +172,28 @@ export const StudentInvitationRegisterScreen: React.FC = React.memo(() => {
   const [errors, setErrors] = useState<ValidationErrors>({});
   const [realtimeErrors, setRealtimeErrors] = useState<ValidationErrors>({});
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+
+  // 🔧 组件挂载状态管理
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+      console.log('🔄 [StudentInvitationRegister] Component unmounted');
+    };
+  }, []);
+
+  // 🔧 Loading超时自动重置
+  useEffect(() => {
+    if (loading) {
+      const timer = setTimeout(() => {
+        if (isMountedRef.current) {
+          console.warn('⚠️ [StudentInvitationRegister] Loading timeout, auto reset');
+          setLoading(false);
+        }
+      }, 30000);
+      return () => clearTimeout(timer);
+    }
+  }, [loading]);
 
   // 检查是否有任何验证错误 - 使用 useMemo 优化性能
   const hasValidationErrors = useMemo(() => {
@@ -438,6 +468,14 @@ export const StudentInvitationRegisterScreen: React.FC = React.memo(() => {
   const handleRegister = useCallback(async () => {
     if (!validateForm()) return;
 
+    // 🔧 防抖：2秒内只能点击一次
+    const now = Date.now();
+    if (now - lastSubmitTimeRef.current < SUBMIT_DEBOUNCE_MS) {
+      console.log('⏱️ [StudentInvitationRegister] Debounce: Ignoring duplicate submit');
+      return;
+    }
+    lastSubmitTimeRef.current = now;
+
     setLoading(true);
     setIsRegistering(true);
     console.log('🚀 [StudentInvitationRegister] Starting invitation registration...');
@@ -503,6 +541,18 @@ export const StudentInvitationRegisterScreen: React.FC = React.memo(() => {
         }
       });
 
+      // 🔧 请求去重：检测重复请求
+      const requestKey = JSON.stringify(registrationData);
+      if (lastRequestRef.current === requestKey) {
+        console.warn('⚠️ [StudentInvitationRegister] Duplicate request detected, ignoring');
+        if (isMountedRef.current) {
+          setLoading(false);
+          setIsRegistering(false);
+        }
+        return;
+      }
+      lastRequestRef.current = requestKey;
+
       const response = await registerUser(registrationData);
 
       if (response.code === 200) {
@@ -521,25 +571,34 @@ export const StudentInvitationRegisterScreen: React.FC = React.memo(() => {
             await userLogin(loginResult.data.token);
             console.log('✅ [StudentInvitationRegister] Auto login successful!');
 
-            setLoading(false);
-            setIsRegistering(false);
-            setRegistrationSuccess(true);
-            setShowSuccessModal(true);
+            if (isMountedRef.current) {
+              setLoading(false);
+              setIsRegistering(false);
+              setRegistrationSuccess(true);
+              setShowSuccessModal(true);
+            }
           } else {
             console.log('❌ [StudentInvitationRegister] Auto login failed:', loginResult);
-            setLoading(false);
-            setIsRegistering(false);
+            if (isMountedRef.current) {
+              setLoading(false);
+              setIsRegistering(false);
+            }
           }
         } catch (loginError) {
           console.error('❌ [StudentInvitationRegister] Auto login failed:', loginError);
-          setLoading(false);
-          setIsRegistering(false);
+          if (isMountedRef.current) {
+            setLoading(false);
+            setIsRegistering(false);
+          }
         }
       } else {
         console.error('❌ [StudentInvitationRegister] Registration failed:', response);
-        setLoading(false);
 
-        setIsRegistering(false);
+        // 🔧 Alert显示前先重置loading
+        if (isMountedRef.current) {
+          setLoading(false);
+          setIsRegistering(false);
+        }
 
         // 处理特定的错误类型
         const errorMsg = response.msg || '';
@@ -568,8 +627,17 @@ export const StudentInvitationRegisterScreen: React.FC = React.memo(() => {
       }
     } catch (error) {
       console.error('❌ [StudentInvitationRegister] Network error:', error);
-      setLoading(false);
-      setIsRegistering(false);
+      // 🔧 Alert显示前先重置loading
+      if (isMountedRef.current) {
+        setLoading(false);
+        setIsRegistering(false);
+      }
+    } finally {
+      // 🔧 Finally块兜底：确保loading总能重置
+      if (isMountedRef.current) {
+        setLoading(false);
+        setIsRegistering(false);
+      }
     }
   }, [validateForm, formData, referralCode, detectedRegion, userLogin, navigation, t]);
 
@@ -1106,7 +1174,7 @@ const styles = StyleSheet.create({
     paddingVertical: theme.spacing[3],
     borderRadius: theme.borderRadius.lg,
     borderWidth: 1,
-    borderColor: theme.colors.border,
+    borderColor: theme.colors.border.primary,
     alignItems: 'center',
   },
   genderActive: {
@@ -1207,7 +1275,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: theme.spacing[6],
     paddingVertical: theme.spacing[4],
     borderBottomWidth: 1,
-    borderBottomColor: theme.colors.border,
+    borderBottomColor: theme.colors.border.primary,
   },
   modalTitle: {
     fontSize: theme.typography.fontSize.lg,
@@ -1260,7 +1328,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingRight: theme.spacing[3],
     borderRightWidth: 1,
-    borderRightColor: theme.colors.border,
+    borderRightColor: theme.colors.border.primary,
     marginRight: theme.spacing[3],
   },
   areaCodeText: {
@@ -1322,4 +1390,4 @@ const styles = StyleSheet.create({
     color: theme.colors.primary,
     fontWeight: theme.typography.fontWeight.medium,
   },
-});
+}) as any;

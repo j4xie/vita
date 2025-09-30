@@ -504,7 +504,7 @@ export const volunteerSignRecord = async (
             // 🔍 获取操作用户信息和权限
             const operateUserInfo = await getUserInfo();
             if (operateUserInfo.code === 200 && operateUserInfo.data) {
-              const operateUserPermission = getUserPermissionLevel(operateUserInfo.data);
+              const operateUserPermission = getUserPermissionLevel(operateUserInfo.data as any);
 
               // 📊 获取完整记录以计算工作时长
               const recordResponse = await getLastRecordFromRecordList(userId);
@@ -606,7 +606,7 @@ export const smartVolunteerSignOut = async (
     });
 
     if (operateUserInfo.code === 200 && operateUserInfo.data) {
-      const operateUserPermission = getUserPermissionLevel(operateUserInfo.data);
+      const operateUserPermission = getUserPermissionLevel(operateUserInfo.data as any);
       console.log('🔑 [PERMISSION] 用户权限级别:', operateUserPermission);
 
       // 📊 获取签到记录以计算工作时长
@@ -1204,8 +1204,8 @@ export const performVolunteerCheckOut = async (
           parsedTime = new Date(now.getTime() - 5 * 60 * 1000);
         }
 
-        // 更新为标准化的ISO时间
-        lastRecord.startTime = parsedTime.toISOString();
+        // 🔧 更新为标准化的本地时间格式（与后端一致）
+        lastRecord.startTime = timeService.formatForServer(parsedTime);
         if (__DEV__) {
           console.log('✅ [TIMESTAMP-NORMALIZED] 标准化后的签到时间:', lastRecord.startTime);
         }
@@ -1770,7 +1770,7 @@ export const performTimeEntry = async (
     try {
       const operateUserInfo = await getUserInfo();
       if (operateUserInfo.code === 200 && operateUserInfo.data) {
-        const operateUserPermission = getUserPermissionLevel(operateUserInfo.data);
+        const operateUserPermission = getUserPermissionLevel(operateUserInfo.data as any);
 
         // 计算补录时间距离现在的天数
         const entryStartDate = timeService.parseServerTime(startTime);

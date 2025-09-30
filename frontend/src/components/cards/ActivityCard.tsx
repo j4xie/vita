@@ -43,6 +43,7 @@ interface ActivityCardProps {
     title: string;
     location: string;
     date: string;
+    endDate?: string;
     time: string;
     image: string;
     attendees: number;
@@ -105,6 +106,7 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({
     title: safeString(activity.title, 'Activity'),
     location: safeString(activity.location, 'TBD'),
     date: safeString(activity.date),
+    endDate: activity.endDate ? safeString(activity.endDate) : undefined,
     time: safeString(activity.time, 'TBD'),
     image: safeString(activity.image),
     attendees: safeNumber(activity.attendees, 0),
@@ -141,6 +143,29 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({
     } catch (error) {
       return '待定日期';
     }
+  };
+
+  // 格式化日期范围（与ActivityDetailScreen逻辑一致）
+  const formatDateRange = (): string => {
+    if (!safeActivity.date) return 'TBD';
+
+    // 如果有endDate且与startDate不同，显示日期范围
+    if (safeActivity.endDate && safeActivity.endDate !== safeActivity.date) {
+      const startParts = safeActivity.date.split('-');
+      const endParts = safeActivity.endDate.split('-');
+
+      if (startParts.length === 3 && endParts.length === 3) {
+        const startMonth = startParts[1].padStart(2, '0');
+        const startDay = startParts[2].padStart(2, '0');
+        const endMonth = endParts[1].padStart(2, '0');
+        const endDay = endParts[2].padStart(2, '0');
+
+        return `${startMonth}/${startDay}-${endMonth}/${endDay}`;
+      }
+    }
+
+    // 否则只显示单个日期
+    return formatDate(safeActivity.date);
   };
 
   const getStatusConfig = (status: string) => {
@@ -497,7 +522,7 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({
                   <Text style={[
                     staticStyles.metaText,
                     { color: isDarkMode ? dmStyles.text.secondary.color : theme.colors.text.secondary }
-                  ]}>{formatDate(safeActivity.date)}</Text>
+                  ]}>{formatDateRange()}</Text>
                 </View>
                 <View style={styles.metaItem}>
                   <Ionicons name="time-outline" size={14} color={dmIcons.secondary} />

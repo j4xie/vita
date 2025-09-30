@@ -51,7 +51,16 @@ const SetNewPasswordScreenComponent: React.FC = () => {
   // 动画状态
   const buttonScaleAnim = useRef(new Animated.Value(1)).current;
   const buttonColorAnim = useRef(new Animated.Value(0)).current;
-  
+
+  // 密码验证函数 - 必须在useMemo之前定义
+  const validatePassword = useCallback((password: string) => {
+    // 匹配UI提示：至少6位，需包含字母和数字
+    if (password.length < 6) return false;
+    const hasLetter = /[a-zA-Z]/.test(password);
+    const hasNumber = /\d/.test(password);
+    return hasLetter && hasNumber;
+  }, []);
+
   // 表单验证状态计算
   const isNewPasswordValid = useMemo(() => validatePassword(newPassword), [newPassword, validatePassword]);
   const isConfirmPasswordValid = useMemo(() =>
@@ -76,14 +85,6 @@ const SetNewPasswordScreenComponent: React.FC = () => {
   React.useEffect(() => {
     setFormValid(isFormValid);
   }, [isFormValid]);
-
-  const validatePassword = useCallback((password: string) => {
-    // 匹配UI提示：至少6位，需包含字母和数字
-    if (password.length < 6) return false;
-    const hasLetter = /[a-zA-Z]/.test(password);
-    const hasNumber = /\d/.test(password);
-    return hasLetter && hasNumber;
-  }, []);
 
   const getPasswordStrength = useCallback((password: string) => {
     let strength = 0;
@@ -347,7 +348,7 @@ const SetNewPasswordScreenComponent: React.FC = () => {
 
   return (
     <LinearGradient
-      colors={isDarkMode ? DAWN_GRADIENTS.nightDeep : DAWN_GRADIENTS.skyCool}
+      colors={isDarkMode ? ['#1C1C1E', '#2C2C2E', '#3A3A3C'] : DAWN_GRADIENTS.skyCool}
       style={styles.container}
     >
       <SafeAreaView style={styles.safeArea}>
@@ -480,7 +481,7 @@ const SetNewPasswordScreenComponent: React.FC = () => {
               </View>
 
               {/* Reset Password Button */}
-              <Animated.View style={[styles.resetButtonContainer, getButtonStyles()]}>
+              <Animated.View style={[styles.resetButtonContainer, getButtonStyles]}>
                 <TouchableOpacity
                   style={styles.resetButtonInner}
                   onPress={handleResetPassword}

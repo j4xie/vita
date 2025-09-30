@@ -212,7 +212,7 @@
       "code_sent_title": "验证码已发送",
       "code_sent_message": "验证码已发送至 {{phone}}，请查收短信",
       "code_sent_success": "验证码发送成功！",
-      "check_sms_instruction": "请查看短信中的验证码，按照提示完成密码重置",
+      "check_sms_instruction": "请输入收到的验证码完成密码重置",
       "send_code_failed": "验证码发送失败",
       "send_code_error": "发送验证码时出现错误，请稍后重试",
       "verification_code_label": "验证码",

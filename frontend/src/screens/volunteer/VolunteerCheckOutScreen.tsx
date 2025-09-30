@@ -37,12 +37,20 @@ import { Glass } from '../../ui/glass/GlassTheme';
 import { useUser } from '../../context/UserContext';
 import { useVolunteerContext } from '../../context/VolunteerContext';
 import { performVolunteerCheckOut } from '../../services/volunteerAPI';
-import { VolunteerRecord } from './components/VolunteerCard';
 import { useAllDarkModeStyles } from '../../hooks/useDarkModeStyles';
 import { timeService } from '../../utils/UnifiedTimeService';
 import { apiCache } from '../../services/apiCache';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
+
+// 志愿者记录类型定义
+interface VolunteerRecord {
+  userId?: string | number;
+  name: string;
+  school: string;
+  checkInTime: any;
+  status: 'checked_in';
+}
 
 interface QuickOption {
   id: number;
@@ -177,7 +185,7 @@ export const VolunteerCheckOutScreen: React.FC = () => {
     console.log('🔍 [CHECKOUT-DEBUG] 当前时间:', new Date().toString());
     console.log('🔍 [CHECKOUT-DEBUG] ================================================');
 
-    if (!volunteer.checkInTime) return { hours: 0, minutes: 0, display: t('common.time.zeroHoursMinutes', '0小时0分钟'), hasError: false };
+    if (!volunteer.checkInTime) return { hours: 0, minutes: 0, display: t('common.time.zeroHoursMinutes', '0小时0分钟'), hasError: false, errorMessage: '' };
 
     // 🆕 使用统一时间服务进行时间解析
     try {
@@ -188,7 +196,7 @@ export const VolunteerCheckOutScreen: React.FC = () => {
       console.log('🕐 [签退页面] 结束时间(当前):', endTime.toISOString());
 
       if (!startTime || isNaN(startTime.getTime())) {
-        return { hours: 0, minutes: 0, display: '时间解析错误', hasError: true };
+        return { hours: 0, minutes: 0, display: '时间解析错误', hasError: true, errorMessage: '签到时间记录异常' };
       }
 
       // 计算时间差（分钟）
@@ -216,11 +224,12 @@ export const VolunteerCheckOutScreen: React.FC = () => {
         hours,
         minutes: minutes,
         display,
-        hasError: false
+        hasError: false,
+        errorMessage: ''
       };
     } catch (error) {
       console.error('工作时长计算失败:', error);
-      return { hours: 0, minutes: 0, display: '计算错误', hasError: true };
+      return { hours: 0, minutes: 0, display: '计算错误', hasError: true, errorMessage: '时长计算失败' };
     }
   }, [volunteer.checkInTime]);
 
@@ -334,17 +343,20 @@ export const VolunteerCheckOutScreen: React.FC = () => {
     Keyboard.dismiss();
 
     try {
-      const operateUserId = currentUser?.userId;
+      const operateUserIdRaw = currentUser?.userId;
       const operateLegalName = currentUser?.legalName;
 
-      if (!operateUserId || !operateLegalName) {
+      if (!operateUserIdRaw || !operateLegalName) {
         Alert.alert(t('common.error'), t('volunteer.checkout.cannotGetOperatorInfo', '无法获取操作用户信息'));
         setIsSubmitting(false);
         return;
       }
 
+      const userId = typeof volunteer.userId === 'string' ? parseInt(volunteer.userId) : (volunteer.userId || 0);
+      const operateUserId = typeof operateUserIdRaw === 'string' ? parseInt(operateUserIdRaw) : operateUserIdRaw;
+
       console.log('📤 [DEBUG] 提交签退参数:', {
-        userId: volunteer.userId,
+        userId,
         operateUserId,
         operateLegalName,
         remark: description.trim(),
@@ -352,13 +364,13 @@ export const VolunteerCheckOutScreen: React.FC = () => {
       });
 
       const result = await performVolunteerCheckOut(
-        volunteer.userId,
+        userId,
         operateUserId,
         operateLegalName,
         description.trim() // 传递工作描述
       );
 
-      if (result && (result.code === 200 || result.success)) {
+      if (result && result.code === 200) {
         // 成功反馈
         if (Platform.OS === 'ios') {
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
@@ -399,13 +411,13 @@ export const VolunteerCheckOutScreen: React.FC = () => {
 
         // 显示成功提示并返回
         Alert.alert(
-          t('wellbeing.volunteer.checkout.checkOutSuccess', '签退成功'),
-          t('wellbeing.volunteer.checkout.workDurationResult', '工作时长：{{duration}}', {
+          t('wellbeing.volunteer.checkout.checkOutSuccess') || '签退成功',
+          t('wellbeing.volunteer.checkout.workDurationResult', {
             duration: formatDurationForDialog()
-          }),
+          }) || `工作时长：${formatDurationForDialog()}`,
           [
             {
-              text: t('common.confirm', '确定'),
+              text: t('common.confirm') || '确定',
               onPress: async () => {
                 console.log('✅ [SIGN-OUT] 签退成功，清理缓存并返回');
 
@@ -650,7 +662,7 @@ export const VolunteerCheckOutScreen: React.FC = () => {
             <LinearGradient
               colors={!description.trim() ?
                 ['#C7C7CC', '#B0B0B5'] :
-                [theme.colors.primary, theme.colors.primaryDark || theme.colors.primary]
+                [theme.colors.primary, theme.colors.primaryPressed]
               }
               style={styles.submitButton}
               start={{ x: 0, y: 0 }}

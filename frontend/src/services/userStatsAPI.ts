@@ -117,8 +117,7 @@ export const getUserList = async (): Promise<{
         code: data.code,
         msg: data.msg,
         data: users,
-        total: users.length
-      };
+      } as any;
     }
     
     return {

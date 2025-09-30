@@ -99,6 +99,16 @@ export const StudentNormalRegisterStep2Screen: React.FC = () => {
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [agreedToSMS, setAgreedToSMS] = useState(false);
 
+  // 🔧 防抖：防止重复点击注册按钮
+  const [lastSubmitTime, setLastSubmitTime] = useState(0);
+  const SUBMIT_DEBOUNCE_MS = 2000; // 2秒防抖
+
+  // 🔧 组件挂载状态跟踪 - 防止组件卸载后setState
+  const isMountedRef = useRef(true);
+
+  // 🔧 请求去重：缓存最近的请求参数
+  const lastRequestRef = useRef<string>('');
+
   // 手机号相关
   const [phoneNumber, setPhoneNumber] = useState('');
   const [areaCode, setAreaCode] = useState<'86' | '1'>('86');
@@ -121,6 +131,28 @@ export const StudentNormalRegisterStep2Screen: React.FC = () => {
     );
   }, [realtimeErrors, errors]);
   
+  // 🔧 组件挂载状态管理 - 防止组件卸载后setState
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+      console.log('🔄 [RegisterStep2] Component unmounted, cleaning up...');
+    };
+  }, []);
+
+  // 🔧 Loading超时自动重置 - 兜底保护机制
+  useEffect(() => {
+    if (loading) {
+      const timer = setTimeout(() => {
+        if (isMountedRef.current) {
+          console.warn('⚠️ [RegisterStep2] Loading timeout after 30s, auto reset');
+          setLoading(false);
+        }
+      }, 30000); // 30秒后自动重置
+      return () => clearTimeout(timer);
+    }
+  }, [loading]);
+
   // 调试：检查当前系统语言
   useEffect(() => {
     console.log('🌍 [RegisterStep2] Language detection:', {
@@ -349,6 +381,14 @@ export const StudentNormalRegisterStep2Screen: React.FC = () => {
   const handleRegister = async () => {
     if (!validateForm()) return;
 
+    // 🔧 防抖：2秒内只能点击一次
+    const now = Date.now();
+    if (now - lastSubmitTime < SUBMIT_DEBOUNCE_MS) {
+      console.log('⏱️ [RegisterStep2] Debounce: Ignoring duplicate submit');
+      return;
+    }
+    setLastSubmitTime(now);
+
     setLoading(true);
     console.log('🚀 [RegisterStep2] Starting registration process...');
 
@@ -365,7 +405,6 @@ export const StudentNormalRegisterStep2Screen: React.FC = () => {
 
       // 构建普通注册请求数据
       const registrationData: RegistrationAPIRequest = {
-        identity: 1, // 学生身份
         userName: step1Data.generatedEmail, // 使用邮箱作为用户名
         legalName: nameData.legalName, // 使用生成的法定姓名
         nickName: nameData.nickName, // 使用生成的昵称（常用名+姓氏拼音）
@@ -380,6 +419,17 @@ export const StudentNormalRegisterStep2Screen: React.FC = () => {
         verCode: verificationCode, // 验证码从本页面
         bizId: bizId,
       };
+
+      // 🔧 请求去重：检测重复请求
+      const requestKey = JSON.stringify(registrationData);
+      if (lastRequestRef.current === requestKey) {
+        console.warn('⚠️ [RegisterStep2] Duplicate request detected, ignoring');
+        if (isMountedRef.current) {
+          setLoading(false);
+        }
+        return;
+      }
+      lastRequestRef.current = requestKey;
 
       console.log('[RegisterStep2] Sending registration data:', registrationData); // Debug info
 
@@ -399,7 +449,6 @@ export const StudentNormalRegisterStep2Screen: React.FC = () => {
             password: '[HIDDEN]',
             registrationUserName: registrationData.userName,
             registrationEmail: registrationData.email,
-            formDataEmail: step1Data.email,
             step1GeneratedEmail: step1Data.generatedEmail
           });
           
@@ -437,12 +486,17 @@ export const StudentNormalRegisterStep2Screen: React.FC = () => {
             console.log('✅ [RegisterStep2] Auto login successful! UserContext updated');
             
             // 🔧 使用LiquidSuccessModal替代Alert
-            setLoading(false);
-            setShowSuccessModal(true);
+            if (isMountedRef.current) {
+              setLoading(false);
+              setShowSuccessModal(true);
+            }
           } else {
             // 登录失败，但注册成功
             console.log('❌ [RegisterStep2] Auto login failed, but registration successful:', loginResult);
-            setLoading(false);
+            // 🔧 Alert显示前先重置loading，防止Alert关闭时loading卡住
+            if (isMountedRef.current) {
+              setLoading(false);
+            }
             Alert.alert(
               t('auth.register.success.title'),
               t('auth.register.success.manual_login_message'),
@@ -459,7 +513,10 @@ export const StudentNormalRegisterStep2Screen: React.FC = () => {
           }
         } catch (loginError) {
           console.error('❌ 自动登录失败:', loginError);
-          setLoading(false);
+          // 🔧 Alert显示前先重置loading，防止Alert关闭时loading卡住
+          if (isMountedRef.current) {
+            setLoading(false);
+          }
           Alert.alert(
             t('auth.register.success.title'),
             t('auth.register.success.manual_login_message'),
@@ -508,6 +565,11 @@ export const StudentNormalRegisterStep2Screen: React.FC = () => {
           onPress: () => navigation.goBack()
         });
 
+        // 🔧 Alert显示前先重置loading，防止Alert关闭时loading卡住
+        if (isMountedRef.current) {
+          setLoading(false);
+        }
+
         Alert.alert(
           errorInfo.title,
           `${errorInfo.message}${errorInfo.suggestion ? '\n\n' + errorInfo.suggestion : ''}`,
@@ -537,8 +599,7 @@ export const StudentNormalRegisterStep2Screen: React.FC = () => {
         });
       } else {
         buttons.push({
-          text: errorInfo.action || t('auth.errors.actions.retry'),
-          onPress: () => setLoading(false)
+          text: errorInfo.action || t('auth.errors.actions.retry')
         });
       }
 
@@ -548,13 +609,21 @@ export const StudentNormalRegisterStep2Screen: React.FC = () => {
         onPress: () => navigation.goBack()
       });
 
+      // 🔧 Alert显示前先重置loading，防止Alert关闭时loading卡住
+      if (isMountedRef.current) {
+        setLoading(false);
+      }
+
       Alert.alert(
         errorInfo.title,
         `${errorInfo.message}${errorInfo.suggestion ? '\n\n' + errorInfo.suggestion : ''}`,
         buttons
       );
     } finally {
-      setLoading(false);
+      // 🔧 Finally块兜底：确保loading总能重置
+      if (isMountedRef.current) {
+        setLoading(false);
+      }
     }
   };
 
@@ -1077,7 +1146,7 @@ const styles = StyleSheet.create({
     paddingVertical: theme.spacing[3],
     borderRadius: theme.borderRadius.lg,
     borderWidth: 1,
-    borderColor: theme.colors.border,
+    borderColor: theme.colors.border.primary,
     alignItems: 'center',
   },
   genderActive: {
@@ -1178,7 +1247,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: theme.spacing[6],
     paddingVertical: theme.spacing[4],
     borderBottomWidth: 1,
-    borderBottomColor: theme.colors.border,
+    borderBottomColor: theme.colors.border.primary,
   },
   modalTitle: {
     fontSize: theme.typography.fontSize.lg,
@@ -1274,7 +1343,7 @@ const styles = StyleSheet.create({
     paddingVertical: theme.spacing[4],
     backgroundColor: theme.colors.background.tertiary,
     borderRightWidth: 1,
-    borderRightColor: theme.colors.border,
+    borderRightColor: theme.colors.border.primary,
   },
   areaCodeText: {
     fontSize: theme.typography.fontSize.sm,
@@ -1306,7 +1375,7 @@ const styles = StyleSheet.create({
     height: 20,
     borderRadius: 4,
     borderWidth: 2,
-    borderColor: theme.colors.border,
+    borderColor: theme.colors.border.primary,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -1396,4 +1465,4 @@ const styles = StyleSheet.create({
     lineHeight: 16,
     textAlign: 'left',
   },
-});
+}) as any;

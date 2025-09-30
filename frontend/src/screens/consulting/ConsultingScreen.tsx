@@ -68,6 +68,7 @@ export const ConsultingScreen: React.FC = () => {
       id: schoolId,
       name: 'Consulting Service Developing',
       shortName: 'DEV',
+      color: theme.colors.primary,
     });
     setShowModal(true);
   };
@@ -103,7 +104,7 @@ export const ConsultingScreen: React.FC = () => {
     ]}>
       {/* iOS风格Header背景：增强对比的暖色渐变 */}
       <LinearGradient
-        colors={isDarkMode ? dmGradients.page.background : [
+        colors={isDarkMode ? ['#1C1C1E', '#2C2C2E', '#3A3A3C'] : [
           Glass.pageBgTop,     // 更深的暖色
           Glass.pageBgBottom,  // 明显对比
           '#F8F9FA',          // 渐变到浅灰

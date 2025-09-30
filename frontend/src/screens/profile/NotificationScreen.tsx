@@ -429,7 +429,6 @@ export const NotificationScreen: React.FC = () => {
                   key={item.id}
                   title={item.title}
                   icon={item.icon}
-                  subtitle={item.subtitle}
                   hasSwitch={item.hasSwitch}
                   switchValue={item.switchValue}
                   onSwitchChange={item.onSwitchChange}

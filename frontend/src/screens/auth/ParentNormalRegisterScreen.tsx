@@ -758,7 +758,7 @@ const styles = StyleSheet.create({
     paddingVertical: theme.spacing[4],
     backgroundColor: theme.colors.background.tertiary,
     borderRightWidth: 1,
-    borderRightColor: theme.colors.border,
+    borderRightColor: theme.colors.border.primary,
   },
   areaCodeText: {
     fontSize: theme.typography.fontSize.sm,
@@ -814,7 +814,7 @@ const styles = StyleSheet.create({
     paddingVertical: theme.spacing[3],
     borderRadius: theme.borderRadius.lg,
     borderWidth: 1,
-    borderColor: theme.colors.border,
+    borderColor: theme.colors.border.primary,
     alignItems: 'center',
   },
   genderActive: {
@@ -868,4 +868,4 @@ const styles = StyleSheet.create({
     fontWeight: theme.typography.fontWeight.semibold,
     color: theme.colors.text.inverse,
   },
-});
+}) as any;

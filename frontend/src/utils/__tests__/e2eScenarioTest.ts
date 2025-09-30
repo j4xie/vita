@@ -402,18 +402,19 @@ export class E2EScenarioTestSuite {
     totalScenarios += results.stressTests.length;
     passedScenarios += results.stressTests.filter(t => t.result.includes('✅')).length;
 
-    const successRate = ((passedScenarios / totalScenarios) * 100).toFixed(1);
+    const successRateNum = (passedScenarios / totalScenarios) * 100;
+    const successRate = successRateNum.toFixed(1);
 
     console.log(`\n🎯 端到端测试总结:`);
     console.log(`📊 场景通过率: ${passedScenarios}/${totalScenarios} (${successRate}%)`);
-    console.log(`🏆 用户体验评分: ${successRate >= 95 ? 'A+' : successRate >= 90 ? 'A' : successRate >= 85 ? 'B' : 'C'}`);
+    console.log(`🏆 用户体验评分: ${successRateNum >= 95 ? 'A+' : successRateNum >= 90 ? 'A' : successRateNum >= 85 ? 'B' : 'C'}`);
     
     return {
       summary: {
         totalScenarios,
         passedScenarios,
         successRate: successRate + '%',
-        grade: successRate >= 95 ? 'A+' : successRate >= 90 ? 'A' : 'B'
+        grade: successRateNum >= 95 ? 'A+' : successRateNum >= 90 ? 'A' : 'B'
       },
       results
     };

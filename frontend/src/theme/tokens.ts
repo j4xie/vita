@@ -36,9 +36,6 @@ export const performance = {
     skeletonDuration: 1100, // shimmer 动画时长
     loadingTimeout: 300,    // 骨架屏显示阈值
   },
-  
-  // 降级策略
-  degradation: core.CORE_LIQUID_GLASS.degradation,
 } as const;
 
 // 平台特定优化 - 基于核心配置

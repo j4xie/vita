@@ -87,6 +87,16 @@ export const ParentNormalRegisterStep2Screen: React.FC = () => {
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [agreedToSMS, setAgreedToSMS] = useState(false);
 
+  // 🔧 防抖：防止重复点击注册按钮
+  const [lastSubmitTime, setLastSubmitTime] = useState(0);
+  const SUBMIT_DEBOUNCE_MS = 2000; // 2秒防抖
+
+  // 🔧 组件挂载状态跟踪 - 防止组件卸载后setState
+  const isMountedRef = useRef(true);
+
+  // 🔧 请求去重：缓存最近的请求参数
+  const lastRequestRef = useRef<string>('');
+
   // 手机号相关
   const [phoneNumber, setPhoneNumber] = useState('');
   const [areaCode, setAreaCode] = useState<'86' | '1'>('86');
@@ -105,6 +115,28 @@ export const ParentNormalRegisterStep2Screen: React.FC = () => {
     );
   }, [realtimeErrors, errors]);
   
+  // 🔧 组件挂载状态管理 - 防止组件卸载后setState
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+      console.log('🔄 [RegisterStep2] Component unmounted, cleaning up...');
+    };
+  }, []);
+
+  // 🔧 Loading超时自动重置 - 兜底保护机制
+  useEffect(() => {
+    if (loading) {
+      const timer = setTimeout(() => {
+        if (isMountedRef.current) {
+          console.warn('⚠️ [RegisterStep2] Loading timeout after 30s, auto reset');
+          setLoading(false);
+        }
+      }, 30000); // 30秒后自动重置
+      return () => clearTimeout(timer);
+    }
+  }, [loading]);
+
   // 调试：检查当前系统语言
   useEffect(() => {
     console.log('🌍 [RegisterStep2] Language detection:', {
@@ -293,6 +325,14 @@ export const ParentNormalRegisterStep2Screen: React.FC = () => {
   const handleRegister = async () => {
     if (!validateForm()) return;
 
+    // 🔧 防抖：2秒内只能点击一次
+    const now = Date.now();
+    if (now - lastSubmitTime < SUBMIT_DEBOUNCE_MS) {
+      console.log('⏱️ [RegisterStep2] Debounce: Ignoring duplicate submit');
+      return;
+    }
+    setLastSubmitTime(now);
+
     setLoading(true);
     console.log('🚀 [RegisterStep2] Starting registration process...');
 
@@ -323,6 +363,17 @@ export const ParentNormalRegisterStep2Screen: React.FC = () => {
         verCode: verificationCode, // 验证码从本页面
         bizId: bizId,
       };
+
+      // 🔧 请求去重：检测重复请求
+      const requestKey = JSON.stringify(registrationData);
+      if (lastRequestRef.current === requestKey) {
+        console.warn('⚠️ [RegisterStep2] Duplicate request detected, ignoring');
+        if (isMountedRef.current) {
+          setLoading(false);
+        }
+        return;
+      }
+      lastRequestRef.current = requestKey;
 
       console.log('[RegisterStep2] Sending registration data:', registrationData); // Debug info
 
@@ -379,12 +430,17 @@ export const ParentNormalRegisterStep2Screen: React.FC = () => {
             console.log('✅ [RegisterStep2] Auto login successful! UserContext updated');
             
             // 🔧 使用LiquidSuccessModal替代Alert
-            setLoading(false);
-            setShowSuccessModal(true);
+            if (isMountedRef.current) {
+              setLoading(false);
+              setShowSuccessModal(true);
+            }
           } else {
             // 登录失败，但注册成功
             console.log('❌ [RegisterStep2] Auto login failed, but registration successful:', loginResult);
-            setLoading(false);
+            // 🔧 Alert显示前先重置loading，防止Alert关闭时loading卡住
+            if (isMountedRef.current) {
+              setLoading(false);
+            }
             Alert.alert(
               t('auth.register.success.title'),
               t('auth.register.success.manual_login_message'),
@@ -401,7 +457,10 @@ export const ParentNormalRegisterStep2Screen: React.FC = () => {
           }
         } catch (loginError) {
           console.error('❌ 自动登录失败:', loginError);
-          setLoading(false);
+          // 🔧 Alert显示前先重置loading，防止Alert关闭时loading卡住
+          if (isMountedRef.current) {
+            setLoading(false);
+          }
           Alert.alert(
             t('auth.register.success.title'),
             t('auth.register.success.manual_login_message'),
@@ -459,7 +518,8 @@ export const ParentNormalRegisterStep2Screen: React.FC = () => {
           } else if (errorMessage.includes('验证码')) {
             errorTitle = t('auth.register.errors.verification_code_error_title');
             errorMessage = t('auth.register.errors.verification_code_error_message');
-            suggestions = t('auth.register.errors.retry_solutions').map((solution: string) => `✓ ${solution}`);
+            const retrySolutions = t('auth.register.errors.retry_solutions');
+            suggestions = Array.isArray(retrySolutions) ? retrySolutions.map((solution: string) => `✓ ${solution}`) : ['✓ 重新获取验证码', '✓ 检查手机号'];
           } else if (errorMessage.includes('邮箱')) {
             errorTitle = '📧 邮箱问题';
             errorMessage = '邮箱格式不正确或已被使用';
@@ -467,52 +527,65 @@ export const ParentNormalRegisterStep2Screen: React.FC = () => {
           }
         }
         
-        const fullMessage = errorMessage + 
+        const fullMessage = errorMessage +
           (suggestions.length > 0 ? '\n\n建议解决方案:\n' + suggestions.join('\n') : '');
-        
+
+        // 🔧 Alert显示前先重置loading，防止Alert关闭时loading卡住
+        if (isMountedRef.current) {
+          setLoading(false);
+        }
+
         Alert.alert(
           errorTitle,
           fullMessage,
           [
-            { text: '重试', onPress: () => setLoading(false) },
+            { text: '重试' },
             { text: t('common.back'), style: 'cancel', onPress: () => navigation.goBack() }
           ]
         );
       }
     } catch (error) {
       console.error('❌ 注册网络错误:', error);
-      
+
       // 网络错误的具体处理
       let errorTitle = '🌐 网络错误';
       let errorMessage = '网络连接失败，请检查网络后重试';
       let suggestions = ['✓ 检查WiFi/数据连接', '✓ 重启网络', '✓ 稍后重试'];
-      
+
       if (error instanceof Error) {
         if (error.message.includes('Network request failed')) {
           errorMessage = 'SSL证书验证失败或网络不可达';
           suggestions = ['✓ 检查网络连接', '✓ 尝试切换网络', '✓ 联系客服'];
-        } else if (error.message.includes('timeout')) {
-          errorMessage = '请求超时，服务器响应缓慢';
-          suggestions = ['✓ 稍后重试', '✓ 检查网络速度'];
+        } else if (error.message.includes('timeout') || error.message.includes('超时')) {
+          errorMessage = '注册请求超时（30秒无响应），网络不稳定或服务器繁忙';
+          suggestions = ['✓ 检查网络连接', '✓ 稍后重试', '✓ 联系客服'];
         } else if (error.message.includes('500')) {
           errorTitle = '🔧 服务器错误';
           errorMessage = '服务器内部错误，请稍后重试';
           suggestions = ['✓ 稍后重试', '✓ 联系客服'];
         }
       }
-      
+
       const fullMessage = errorMessage + '\n\n解决建议:\n' + suggestions.join('\n');
-      
+
+      // 🔧 Alert显示前先重置loading，防止Alert关闭时loading卡住
+      if (isMountedRef.current) {
+        setLoading(false);
+      }
+
       Alert.alert(
         errorTitle,
         fullMessage,
         [
-          { text: '重试', onPress: () => setLoading(false) },
+          { text: '重试' },
           { text: t('common.back'), style: 'cancel', onPress: () => navigation.goBack() }
         ]
       );
     } finally {
-      setLoading(false);
+      // 🔧 Finally块兜底：确保loading总能重置
+      if (isMountedRef.current) {
+        setLoading(false);
+      }
     }
   };
 
@@ -955,7 +1028,7 @@ const styles = StyleSheet.create({
     paddingVertical: theme.spacing[3],
     borderRadius: theme.borderRadius.lg,
     borderWidth: 1,
-    borderColor: theme.colors.border,
+    borderColor: theme.colors.border.primary,
     alignItems: 'center',
   },
   genderActive: {
@@ -1056,7 +1129,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: theme.spacing[6],
     paddingVertical: theme.spacing[4],
     borderBottomWidth: 1,
-    borderBottomColor: theme.colors.border,
+    borderBottomColor: theme.colors.border.primary,
   },
   modalTitle: {
     fontSize: theme.typography.fontSize.lg,
@@ -1152,7 +1225,7 @@ const styles = StyleSheet.create({
     paddingVertical: theme.spacing[4],
     backgroundColor: theme.colors.background.tertiary,
     borderRightWidth: 1,
-    borderRightColor: theme.colors.border,
+    borderRightColor: theme.colors.border.primary,
   },
   areaCodeText: {
     fontSize: theme.typography.fontSize.sm,
@@ -1184,7 +1257,7 @@ const styles = StyleSheet.create({
     height: 20,
     borderRadius: 4,
     borderWidth: 2,
-    borderColor: theme.colors.border,
+    borderColor: theme.colors.border.primary,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -1257,4 +1330,4 @@ const styles = StyleSheet.create({
     lineHeight: 16,
     textAlign: 'left',
   },
-});
+}) as any;

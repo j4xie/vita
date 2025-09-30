@@ -39,7 +39,6 @@ import {
   APIResponse 
 } from '../../types/volunteer';
 import { getCurrentToken } from '../../services/authAPI';
-import { getFrontendTimeFormat } from '../../services/timeManager';
 import { apiCache, CacheTTL } from '../../services/apiCache';
 import { i18n } from '../../utils/i18n';
 import { useAllDarkModeStyles } from '../../hooks/useDarkModeStyles';
@@ -53,7 +52,7 @@ import { VolunteerTimeEntryModal } from '../../components/modals/VolunteerTimeEn
 
 export const VolunteerSchoolDetailScreen: React.FC = () => {
   const { t } = useTranslation();
-  const route = useRoute();
+  const route = useRoute<any>();
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
   
@@ -63,6 +62,15 @@ export const VolunteerSchoolDetailScreen: React.FC = () => {
   const school = (route.params as any)?.school;
   const { permissions, user: userInfo, isAuthenticated } = useUser(); // 获取用户权限和用户信息
   const volunteerContext = useVolunteerContext(); // 获取志愿者状态管理
+
+  const [volunteers, setVolunteers] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [loadingProgress, setLoadingProgress] = useState(0);
+  const [loadingMessage, setLoadingMessage] = useState('Loading...');
+
+  // 历史记录弹窗状态
+  const [showHistoryModal, setShowHistoryModal] = useState(false);
+  const [selectedHistoryUser, setSelectedHistoryUser] = useState<{userId: number, name: string} | null>(null);
 
   // 监听VolunteerContext状态变化，自动刷新页面数据
   React.useEffect(() => {
@@ -82,14 +90,6 @@ export const VolunteerSchoolDetailScreen: React.FC = () => {
       }, 500);
     }
   }, [volunteerContext.currentStatus, showHistoryModal, selectedHistoryUser]);
-  const [volunteers, setVolunteers] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [loadingProgress, setLoadingProgress] = useState(0);
-  const [loadingMessage, setLoadingMessage] = useState('Loading...');
-  
-  // 历史记录弹窗状态
-  const [showHistoryModal, setShowHistoryModal] = useState(false);
-  const [selectedHistoryUser, setSelectedHistoryUser] = useState<{userId: number, name: string} | null>(null);
 
   // 补录工时模态框状态
   const [showTimeEntryModal, setShowTimeEntryModal] = useState(false);
@@ -177,10 +177,10 @@ export const VolunteerSchoolDetailScreen: React.FC = () => {
               const updates: Partial<VolunteerStatusUpdate> = { checkInStatus: expectedStatus };
               
               if (currentStatus === 'signed_in') {
-                // 使用timeService.parseServerTime解析时间戳
+                // 🔧 使用timeService保持本地时间格式，不做UTC转换
                 try {
                   const parsedTime = timeService.parseServerTime(backendRecord.startTime);
-                  updates.checkInTime = parsedTime ? parsedTime.toISOString() : backendRecord.startTime;
+                  updates.checkInTime = parsedTime ? timeService.formatForServer(parsedTime) : backendRecord.startTime;
                 } catch (e) {
                   updates.checkInTime = backendRecord.startTime;
                 }
@@ -188,10 +188,10 @@ export const VolunteerSchoolDetailScreen: React.FC = () => {
                 // 移除持久化逻辑
               } else {
                 updates.checkInTime = null;
-                // 解析签退时间
+                // 🔧 解析签退时间，使用本地时间格式
                 try {
                   const parsedTime = timeService.parseServerTime(backendRecord.endTime);
-                  updates.checkOutTime = parsedTime.toISOString();
+                  updates.checkOutTime = parsedTime ? timeService.formatForServer(parsedTime) : backendRecord.endTime;
                 } catch (e) {
                   updates.checkOutTime = backendRecord.endTime;
                 }
@@ -400,7 +400,7 @@ export const VolunteerSchoolDetailScreen: React.FC = () => {
       loadVolunteerData(true); // 强制刷新
 
       // 清除参数避免重复刷新
-      navigation.setParams({ shouldRefresh: false });
+      (navigation as any).setParams({ shouldRefresh: false });
     }
   }, [route.params?.shouldRefresh, route.params?.timestamp]);
 
@@ -415,7 +415,7 @@ export const VolunteerSchoolDetailScreen: React.FC = () => {
       // 检查导航栈中是否有签退成功的标记
       const navigationState = navigation.getState();
       const hasCheckoutInStack = navigationState.routes.some(
-        r => r.name === 'VolunteerCheckOut' && r.params?.checkoutSuccess
+        r => r.name === 'VolunteerCheckOut' && (r.params as any)?.checkoutSuccess
       );
 
       // 检查是否从志愿者管理主页进入（可能刚刚进行了Quick Actions操作）
@@ -436,25 +436,25 @@ export const VolunteerSchoolDetailScreen: React.FC = () => {
       // 延迟执行，确保导航动画完成和后端数据更新
       const timer = setTimeout(() => {
         if (needsRefresh) {
-          console.log('🔄 [FOCUS-EFFECT] 强制刷新志愿者数据');
-          loadVolunteerData(true); // 强制刷新
-        } else {
-          // 即使不强制刷新，也要加载数据确保最新状态
-          loadVolunteerData(false);
-        }
+          console.log('🔄 [FOCUS-EFFECT] 检测到特殊刷新条件，强制清除缓存并刷新');
+          loadVolunteerData(true); // 强制刷新，清除缓存
 
-        // 清除刷新参数，避免重复刷新
-        if (shouldRefresh || shouldRefreshGlobal || hasTimestamp) {
-          navigation.setParams({
-            refresh: undefined,
-            shouldRefresh: undefined,
-            timestamp: undefined
-          });
+          // 清除刷新参数，避免重复刷新
+          if (shouldRefresh || shouldRefreshGlobal || hasTimestamp) {
+            (navigation as any).setParams({
+              refresh: undefined,
+              shouldRefresh: undefined,
+              timestamp: undefined
+            });
+          }
+        } else {
+          console.log('🔄 [FOCUS-EFFECT] 页面聚焦，刷新最新数据');
+          loadVolunteerData(false); // 普通刷新，获取最新数据
         }
       }, delay);
 
       return () => clearTimeout(timer);
-    }, [route.params?.refresh, route.params?.shouldRefresh, route.params?.timestamp, navigation])
+    }, []) // 空依赖数组，只在页面聚焦时检查一次刷新条件
   );
 
   const loadVolunteerData = async (forceClearCache = false) => {
@@ -478,20 +478,27 @@ export const VolunteerSchoolDetailScreen: React.FC = () => {
       setLoading(true);
       setLoadingProgress(0);
       setLoadingMessage(t('volunteer.loading.volunteer_data', { defaultValue: 'Loading volunteer data...' }));
-      
+
+      // 🔄 每次刷新都清理岗位缓存，确保获取最新岗位信息
+      try {
+        positionService.clearCache();
+        console.log('✅ [CACHE] 职位缓存已清理');
+      } catch (e) {
+        if (__DEV__) {
+          console.warn('岗位缓存清理失败:', e);
+        }
+      }
+
       if (forceClearCache) {
         try {
           // 清理API缓存
           if (typeof (apiCache as any)?.clearAll === 'function') {
             (apiCache as any).clearAll();
           }
-
-          // 🆕 清理职位服务缓存，确保获取最新岗位信息
-          positionService.clearCache();
-          console.log('✅ [CACHE] API缓存和职位缓存已清理');
+          console.log('✅ [CACHE] API缓存已清理');
         } catch (e) {
           if (__DEV__) {
-            console.warn('缓存清理失败:', e);
+            console.warn('API缓存清理失败:', e);
           }
         }
       }
@@ -578,6 +585,11 @@ export const VolunteerSchoolDetailScreen: React.FC = () => {
             headers: { 'Authorization': `Bearer ${token}` }
           });
           const initialData = await initialResponse.json();
+
+          // 🐛 打印第一个用户的完整数据结构，用于调试
+          if (initialData.rows && initialData.rows.length > 0) {
+            console.log('🔍 [API-RAW-DATA] /system/user/list 返回的第一个用户数据:', JSON.stringify(initialData.rows[0], null, 2));
+          }
           
           if (initialData.code === 200 && initialData.rows?.length < initialData.total) {
             const fullResponse = await fetch(`${getApiUrl()}/system/user/list?pageSize=${initialData.total}`, {
@@ -708,6 +720,18 @@ export const VolunteerSchoolDetailScreen: React.FC = () => {
                 return null;
               }
 
+              // 🐛 调试日志：查看API返回的用户岗位数据
+              console.log('🔍 [DEBUG-POSITION] 用户岗位数据:', {
+                userName: userData.userName,
+                postIds: userData.postIds,
+                posts: userData.posts,
+                post: userData.post,
+                postCode: userData.postCode,
+                postName: userData.postName,
+                roles: userData.roles,
+                roleKey: userData.roles?.[0]?.key
+              });
+
               // ✅ 使用positionService动态获取岗位，优先使用后端posts字段
               positionInfo = await positionService.getUserPositionDisplay(userData);
 
@@ -823,7 +847,7 @@ export const VolunteerSchoolDetailScreen: React.FC = () => {
                 if (initialCheckInStatus === 'checked_in' && actualRecord?.startTime) {
                   try {
                     const parsedTime = timeService.parseServerTime(actualRecord.startTime);
-                    return parsedTime ? parsedTime.toISOString() : actualRecord.startTime;
+                    return parsedTime ? timeService.formatForServer(parsedTime) : actualRecord.startTime;
                   } catch (e) {
                       return actualRecord.startTime;
                   }
@@ -834,7 +858,7 @@ export const VolunteerSchoolDetailScreen: React.FC = () => {
                 if (initialCheckInStatus === 'not_checked_in' && actualRecord?.endTime) {
                   try {
                     const parsedTime = timeService.parseServerTime(actualRecord.endTime);
-                    return parsedTime ? parsedTime.toISOString() : actualRecord.endTime;
+                    return parsedTime ? timeService.formatForServer(parsedTime) : actualRecord.endTime;
                   } catch (e) {
                       return actualRecord.endTime;
                   }
@@ -847,7 +871,7 @@ export const VolunteerSchoolDetailScreen: React.FC = () => {
                 if (actualRecord?.startTime) {
                   try {
                     const parsedTime = timeService.parseServerTime(actualRecord.startTime);
-                    return parsedTime.toISOString();
+                    return parsedTime ? timeService.formatForServer(parsedTime) : actualRecord.startTime;
                   } catch (e) {
                     return actualRecord.startTime;
                   }
@@ -858,7 +882,7 @@ export const VolunteerSchoolDetailScreen: React.FC = () => {
                 if (actualRecord?.endTime && initialCheckInStatus === 'not_checked_in') {
                   try {
                     const parsedTime = timeService.parseServerTime(actualRecord.endTime);
-                    return parsedTime.toISOString();
+                    return parsedTime ? timeService.formatForServer(parsedTime) : actualRecord.endTime;
                   } catch (e) {
                     return actualRecord.endTime;
                   }
@@ -945,6 +969,7 @@ export const VolunteerSchoolDetailScreen: React.FC = () => {
           text: '确认重置',
           style: 'destructive',
           onPress: async () => {
+            let recordId: number | undefined;
             try {
               setOperationInProgress(prev => ({ ...prev, [volunteerId]: true }));
 
@@ -1010,7 +1035,7 @@ export const VolunteerSchoolDetailScreen: React.FC = () => {
                 throw new Error(`无法获取用户 ${volunteer.name} 的签到记录ID\n\n可能原因：\n• 网络连接问题\n• 数据同步延迟\n• 记录已被删除\n\n请稍后重试或联系管理员`);
               };
 
-              const recordId = await getResetRecordId();
+              recordId = await getResetRecordId();
               console.log('🎯 [RESET] 最终确定的recordId:', recordId);
 
               // 🔧 验证必要参数
@@ -1239,9 +1264,10 @@ export const VolunteerSchoolDetailScreen: React.FC = () => {
       
       // 获取当前操作用户信息
       const currentUser = userInfo;
-      const operateUserId = currentUser?.userId;
+      const operateUserIdRaw = currentUser?.userId;
+      const operateUserId = typeof operateUserIdRaw === 'string' ? parseInt(operateUserIdRaw) : operateUserIdRaw;
       const operateLegalName = currentUser?.legalName;
-      
+
       // 🚨 关键修复：参数验证防止undefined错误
       if (!operateUserId || !operateLegalName) {
         console.error('❌ [VALIDATION] 操作用户信息缺失:', {
@@ -1276,9 +1302,9 @@ export const VolunteerSchoolDetailScreen: React.FC = () => {
       if (apiResult && (apiResult.code === 200 || (apiResult as any).success === true)) {
         const newState = {
           checkInStatus: 'checked_in',
-          checkInTime: getFrontendTimeFormat(),
+          checkInTime: timeService.formatForServer(new Date()),
           checkOutTime: null,
-          lastCheckInTime: getFrontendTimeFormat(), // 更新上次签到时间
+          lastCheckInTime: timeService.formatForServer(new Date()), // 更新上次签到时间
           // 签到时不清除上次签退时间，保持历史记录
         };
         
@@ -1301,7 +1327,7 @@ export const VolunteerSchoolDetailScreen: React.FC = () => {
           // 自动修复：获取后端记录并同步状态
           try {
             const last = await getLastVolunteerRecord(userId);
-            const lastData: VolunteerRecord = last?.data;
+            const lastData: any = last?.data;
             
             if (last?.code === 200 && lastData && lastData.startTime && !lastData.endTime) {
               // 后端确实处于签到状态，同步到前端
@@ -1313,7 +1339,7 @@ export const VolunteerSchoolDetailScreen: React.FC = () => {
                       checkInTime: (() => {
                         try {
                           const parsedTime = timeService.parseServerTime(lastData.startTime);
-                          return parsedTime.toISOString();
+                          return parsedTime ? timeService.formatForServer(parsedTime) : lastData.startTime;
                         } catch (e) {
                                   return lastData.startTime;
                         }
@@ -1323,7 +1349,7 @@ export const VolunteerSchoolDetailScreen: React.FC = () => {
                   : v
               ));
               // 移除持久化逻辑
-              
+
               Alert.alert(t('volunteer.status_synced'), t('volunteer.status_sync_msg'));
             } else {
               Alert.alert(t('volunteer.status_abnormal'), t('volunteer.backend_data_error'));
@@ -1335,7 +1361,7 @@ export const VolunteerSchoolDetailScreen: React.FC = () => {
           // 其他错误的正常处理 - 改进用户体验
           try {
             const last = await getLastVolunteerRecord(userId);
-            const lastData: VolunteerRecord = last?.data;
+            const lastData: any = last?.data;
             const isActuallyCheckedIn = last?.code === 200 && lastData && lastData.userId === userId && lastData.startTime && !lastData.endTime;
             if (isActuallyCheckedIn) {
               setVolunteers(prev => prev.map(v =>
@@ -1346,7 +1372,7 @@ export const VolunteerSchoolDetailScreen: React.FC = () => {
                       checkInTime: (() => {
                         try {
                           const parsedTime = timeService.parseServerTime(lastData.startTime);
-                          return parsedTime.toISOString();
+                          return parsedTime ? timeService.formatForServer(parsedTime) : lastData.startTime;
                         } catch (e) {
                                   return lastData.startTime;
                         }
@@ -1437,7 +1463,7 @@ export const VolunteerSchoolDetailScreen: React.FC = () => {
     };
 
     // 导航到全屏签退页面
-    navigation.navigate('VolunteerCheckOut', {
+    (navigation as any).navigate('VolunteerCheckOut', {
       volunteer: volunteerRecord,
     });
 
@@ -1836,9 +1862,9 @@ export const VolunteerSchoolDetailScreen: React.FC = () => {
           </View>
           <Text style={styles.emptyTitle}>{t('auth.login_required')}</Text>
           <Text style={styles.emptyMessage}>{t('auth.volunteer_login_required_message')}</Text>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.loginButton}
-            onPress={() => navigation.navigate('Login')}
+            onPress={() => (navigation as any).navigate('Login')}
           >
             <Text style={styles.loginButtonText}>{t('auth.login.login')}</Text>
           </TouchableOpacity>
@@ -2037,7 +2063,7 @@ export const VolunteerSchoolDetailScreen: React.FC = () => {
           onClose={handleCloseHistoryModal}
           userId={selectedHistoryUser.userId}
           userName={selectedHistoryUser.name}
-          userPermission={permissions.getPermissionLevel()}
+          userPermission={permissions.getPermissionLevel() as 'manage' | 'part_manage' | 'staff'}
           currentUser={userInfo}
         />
       )}

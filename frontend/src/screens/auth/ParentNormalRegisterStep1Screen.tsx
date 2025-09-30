@@ -22,11 +22,12 @@ import {
   createSchoolDataFromBackend
 } from '../../utils/schoolData';
 import { SchoolSelector } from '../../components/common/SchoolSelector';
-import { 
+import {
   fetchSchoolList,
   validatePhoneNumber,
   sendSMSVerificationCode,
-  registerUser
+  registerUser,
+  checkEmailAvailability
 } from '../../services/registrationAPI';
 import { useUser } from '../../context/UserContext';
 import { login } from '../../services/authAPI';
@@ -84,9 +85,13 @@ export const ParentNormalRegisterStep1Screen: React.FC = () => {
   });
 
   const [errors, setErrors] = useState<ValidationErrors>({});
-  
+
   // 实时验证状态
   const [realtimeErrors, setRealtimeErrors] = useState<ValidationErrors>({});
+
+  // 🔧 邮箱实时验证状态
+  const [emailChecking, setEmailChecking] = useState(false);
+  const [emailAvailable, setEmailAvailable] = useState<boolean | null>(null);
   
   // 检查是否有任何验证错误 - 使用 useMemo 优化性能
   const hasValidationErrors = useMemo(() => {
@@ -103,6 +108,34 @@ export const ParentNormalRegisterStep1Screen: React.FC = () => {
       currentLanguage: i18n.language,
     });
   }, []);
+
+  // 🔧 实时邮箱验证（防抖1秒）- 防止并发重复注册
+  useEffect(() => {
+    if (!formData.email || !formData.email.includes('@')) {
+      setEmailAvailable(null);
+      return;
+    }
+
+    const timer = setTimeout(async () => {
+      setEmailChecking(true);
+      try {
+        const result = await checkEmailAvailability(formData.email);
+        setEmailAvailable(result.available);
+        if (!result.available && result.message) {
+          setErrors(prev => ({ ...prev, email: result.message || '此邮箱已被注册' }));
+        } else {
+          // 清除错误
+          setErrors(prev => ({ ...prev, email: undefined }));
+        }
+      } catch (error) {
+        console.error('邮箱验证失败:', error);
+      } finally {
+        setEmailChecking(false);
+      }
+    }, 1000); // 1秒防抖
+
+    return () => clearTimeout(timer);
+  }, [formData.email]);
   
   // 创建实时验证处理器
   const handleFirstNameChange = createRealtimeValidator(
@@ -294,17 +327,45 @@ export const ParentNormalRegisterStep1Screen: React.FC = () => {
             <View style={styles.inputContainer}>
               <Text style={styles.label}>{t('auth.register.parent.email_label')}</Text>
               <Text style={styles.helpText}>{t('auth.register.parent.email_help')}</Text>
-              <TextInput
-                style={[styles.input, errors.email && styles.inputError]}
-                placeholder={t('auth.register.parent.email_placeholder')}
-                value={formData.email}
-                onChangeText={(text) => updateFormData('email', text)}
-                keyboardType="email-address"
-                autoCapitalize="none"
-                autoCorrect={false}
-                placeholderTextColor={theme.colors.text.disabled}
-              />
+              <View style={styles.emailInputWrapper}>
+                <TextInput
+                  style={[
+                    styles.input,
+                    errors.email && styles.inputError,
+                    emailAvailable === true && styles.inputSuccess,
+                    emailAvailable === false && styles.inputError
+                  ]}
+                  placeholder={t('auth.register.parent.email_placeholder')}
+                  value={formData.email}
+                  onChangeText={(text) => updateFormData('email', text)}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  placeholderTextColor={theme.colors.text.disabled}
+                />
+                {emailChecking && (
+                  <View style={styles.validationIcon}>
+                    <ActivityIndicator size="small" color={theme.colors.primary} />
+                  </View>
+                )}
+                {!emailChecking && emailAvailable === true && (
+                  <View style={styles.validationIcon}>
+                    <Ionicons name="checkmark-circle" size={20} color={theme.colors.success} />
+                  </View>
+                )}
+                {!emailChecking && emailAvailable === false && (
+                  <View style={styles.validationIcon}>
+                    <Ionicons name="close-circle" size={20} color={theme.colors.danger} />
+                  </View>
+                )}
+              </View>
               {errors.email && <Text style={styles.errorText}>{errors.email}</Text>}
+              {!errors.email && emailAvailable === true && (
+                <Text style={styles.successText}>✓ 邮箱可用</Text>
+              )}
+              {!errors.email && emailAvailable === false && (
+                <Text style={styles.errorText}>此邮箱已注册，<Text style={styles.linkText} onPress={() => navigation.navigate('Login')}>去登录</Text></Text>
+              )}
             </View>
 
 
@@ -485,15 +546,38 @@ const styles = StyleSheet.create({
   inputError: {
     borderColor: theme.colors.danger,
   },
+  inputSuccess: {
+    borderColor: theme.colors.success,
+  },
   errorText: {
     fontSize: theme.typography.fontSize.xs,
     color: theme.colors.danger,
     marginTop: theme.spacing[1],
   },
+  successText: {
+    fontSize: theme.typography.fontSize.xs,
+    color: theme.colors.success,
+    marginTop: theme.spacing[1],
+    fontWeight: theme.typography.fontWeight.medium,
+  },
   helpText: {
     fontSize: theme.typography.fontSize.xs,
     color: theme.colors.text.secondary,
     marginBottom: theme.spacing[2],
+  },
+  emailInputWrapper: {
+    position: 'relative',
+  },
+  validationIcon: {
+    position: 'absolute',
+    right: 12,
+    top: '50%',
+    transform: [{ translateY: -10 }],
+  },
+  linkText: {
+    color: theme.colors.primary,
+    textDecorationLine: 'underline',
+    fontWeight: theme.typography.fontWeight.medium,
   },
   phoneInputWrapper: {
     flexDirection: 'row',
@@ -510,7 +594,7 @@ const styles = StyleSheet.create({
     paddingVertical: theme.spacing[4],
     backgroundColor: theme.colors.background.tertiary,
     borderRightWidth: 1,
-    borderRightColor: theme.colors.border,
+    borderRightColor: theme.colors.border.primary,
   },
   areaCodeText: {
     fontSize: theme.typography.fontSize.sm,
@@ -566,7 +650,7 @@ const styles = StyleSheet.create({
     paddingVertical: theme.spacing[3],
     borderRadius: theme.borderRadius.lg,
     borderWidth: 1,
-    borderColor: theme.colors.border,
+    borderColor: theme.colors.border.primary,
     alignItems: 'center',
   },
   genderActive: {
@@ -620,4 +704,4 @@ const styles = StyleSheet.create({
     fontWeight: theme.typography.fontWeight.semibold,
     color: theme.colors.text.inverse,
   },
-});
+}) as any;

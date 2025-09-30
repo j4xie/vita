@@ -104,7 +104,7 @@ class PomeloXAPI {
     const headers: Record<string, string> = {
       'Accept': 'application/json',
       'Content-Type': 'application/json',
-      ...options.headers,
+      ...(options.headers as Record<string, string>),
     };
 
     // Add authorization header if token exists

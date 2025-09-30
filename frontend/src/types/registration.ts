@@ -48,6 +48,7 @@ export interface RegistrationAPIRequest {
   bizId?: string; // 短信验证码接口返回的字段（短信服务未配置时可选）
   orgId?: number; // 组织ID
   area?: string; // 地理检测结果：'zh'-中国, 'en'-美国（只读，由系统检测）
+  areaCode?: string; // 区号
 }
 
 // 组织数据类型
@@ -89,6 +90,8 @@ export interface ValidationErrors {
   confirmPassword?: string;
   verificationCode?: string;
   selectedOrganization?: string;
+  terms?: string; // 服务条款同意验证
+  sms?: string; // 短信通知同意验证
 }
 
 // 注册流程状态

@@ -111,57 +111,66 @@ const convertActivityType = (type?: number): 'available' | 'ended' => {
 const TIME_PARSE_CACHE = new Map<string, { date: string; time: string }>();
 
 /**
+ * 清除时间解析缓存 - 用于强制刷新场景
+ */
+export const clearTimeParseCache = () => {
+  const cacheSize = TIME_PARSE_CACHE.size;
+  TIME_PARSE_CACHE.clear();
+  console.log(`🧹 [CACHE-CLEAR] 清除时间解析缓存: ${cacheSize}条记录`);
+};
+
+/**
  * 美国夏令时检测函数
  * 夏令时规则：3月第二个周日2AM开始 → 11月第一个周日2AM结束
  */
 const isDaylightSavingTime = (date: Date): boolean => {
   const year = date.getFullYear();
-  
+
   // 计算3月第二个周日 (夏令时开始)
   const march = new Date(year, 2, 1); // 3月1日
   const firstSundayInMarch = 7 - march.getDay(); // 第一个周日的日期
   const secondSundayInMarch = firstSundayInMarch + 7; // 第二个周日
   const dstStart = new Date(year, 2, secondSundayInMarch, 2, 0, 0); // 3月第二个周日2AM
-  
-  // 计算11月第一个周日 (夏令时结束)  
+
+  // 计算11月第一个周日 (夏令时结束)
   const november = new Date(year, 10, 1); // 11月1日
   const firstSundayInNovember = 7 - november.getDay(); // 第一个周日的日期
   const dstEnd = new Date(year, 10, firstSundayInNovember, 2, 0, 0); // 11月第一个周日2AM
-  
+
   return date >= dstStart && date < dstEnd;
 };
 
 /**
- * 时区映射表 - 支持夏令时/冬令时动态切换
+ * 时区映射表 - 支持夏令时/冬令时动态切换（仅用于显示时区名称）
  */
-const TIMEZONE_DST_MAP = new Map<string, { 
-  standard: { zh: string; en: string }; 
+const TIMEZONE_DST_MAP = new Map<string, {
+  standard: { zh: string; en: string };
   daylight: { zh: string; en: string };
 }>([
   // 美国中部时区
-  ['central', { 
-    standard: { zh: '美中', en: 'CST' }, 
-    daylight: { zh: '美中', en: 'CDT' } 
+  ['central', {
+    standard: { zh: '美中', en: 'CST' },
+    daylight: { zh: '美中', en: 'CDT' }
   }],
   // 美国西部时区
-  ['pacific', { 
-    standard: { zh: '美西', en: 'PST' }, 
-    daylight: { zh: '美西', en: 'PDT' } 
+  ['pacific', {
+    standard: { zh: '美西', en: 'PST' },
+    daylight: { zh: '美西', en: 'PDT' }
   }],
   // 美国东部时区
-  ['eastern', { 
-    standard: { zh: '美东', en: 'EST' }, 
-    daylight: { zh: '美东', en: 'EDT' } 
+  ['eastern', {
+    standard: { zh: '美东', en: 'EST' },
+    daylight: { zh: '美东', en: 'EDT' }
   }],
   // 美国山区时区
-  ['mountain', { 
-    standard: { zh: '山区', en: 'MST' }, 
-    daylight: { zh: '山区', en: 'MDT' } 
+  ['mountain', {
+    standard: { zh: '山区', en: 'MST' },
+    daylight: { zh: '山区', en: 'MDT' }
   }],
   // 北京时间 (不使用夏令时)
-  ['beijing', { 
-    standard: { zh: '北京', en: 'CST' }, 
-    daylight: { zh: '北京', en: 'CST' } 
+  ['beijing', {
+    standard: { zh: '北京', en: 'CST' },
+    daylight: { zh: '北京', en: 'CST' }
   }],
 ]);
 
@@ -170,7 +179,7 @@ const TIMEZONE_DST_MAP = new Map<string, {
  */
 const TIMEZONE_MAP = new Map<string, { zh: string; en: string }>([
   ['美中部时区(Central Time, CT)', { zh: '美中', en: 'CT' }],
-  ['美西部时区(Pacific Time, PT)', { zh: '美西', en: 'PT' }], 
+  ['美西部时区(Pacific Time, PT)', { zh: '美西', en: 'PT' }],
   ['美东部时区(Eastern Time, ET)', { zh: '美东', en: 'ET' }],
   ['美山区时区(Mountain Time, MT)', { zh: '山区', en: 'MT' }],
   ['北京时间(Beijing Time, CST)', { zh: '北京', en: 'CST' }],
@@ -182,29 +191,29 @@ const TIMEZONE_MAP = new Map<string, { zh: string; en: string }>([
 ]);
 
 /**
- * 获取时区缩写 - 支持夏令时/冬令时智能检测
+ * 获取时区缩写 - 支持夏令时/冬令时智能检测（仅用于显示）
  */
 const getTimezoneAbbreviation = (timezone?: string, activityDate?: string, language: 'zh' | 'en' = 'zh'): string => {
   if (!timezone) return '';
-  
+
   // 先检查传统映射表(完整匹配)
   const exactMatch = TIMEZONE_MAP.get(timezone);
   if (exactMatch) {
     return exactMatch[language];
   }
-  
+
   // 检查部分匹配
   for (const [key, value] of TIMEZONE_MAP.entries()) {
     if (timezone.includes(key) || key.includes(timezone)) {
       return value[language];
     }
   }
-  
-  // 智能夏令时检测逻辑
+
+  // 智能夏令时检测逻辑（仅用于显示时区名称，不转换时间）
   if (activityDate) {
     const activityDateTime = new Date(activityDate);
     const isDST = isDaylightSavingTime(activityDateTime);
-    
+
     // 检测时区类型并应用夏令时规则
     const timezoneKey = detectTimezoneKey(timezone);
     if (timezoneKey) {
@@ -214,7 +223,7 @@ const getTimezoneAbbreviation = (timezone?: string, activityDate?: string, langu
       }
     }
   }
-  
+
   // 传统关键词匹配作为fallback
   if (timezone.toLowerCase().includes('central') || timezone.includes('中部')) {
     return language === 'zh' ? '美中' : 'CT';
@@ -231,7 +240,7 @@ const getTimezoneAbbreviation = (timezone?: string, activityDate?: string, langu
   if (timezone.toLowerCase().includes('beijing') || timezone.includes('北京')) {
     return language === 'zh' ? '北京' : 'CST';
   }
-  
+
   return ''; // 无法识别时返回空
 };
 
@@ -250,34 +259,39 @@ const detectTimezoneKey = (timezone: string): string | null => {
 
 /**
  * 快速解析时间字符串（带缓存）
+ * 🔧 修复：直接字符串拆分，不做时区转换
+ * ⚠️ 后端传什么时间，前端就显示什么时间
  */
 const parseDateTime = (dateTimeString: string): { date: string; time: string } => {
   // 检查缓存
   const cached = TIME_PARSE_CACHE.get(dateTimeString);
   if (cached) return cached;
-  
+
   let result: { date: string; time: string };
-  
-  try {
-    const date = new Date(dateTimeString);
-    result = {
-      date: date.toISOString().split('T')[0], // YYYY-MM-DD
-      time: date.toTimeString().slice(0, 5), // HH:MM
-    };
-  } catch (error) {
-    // Fallback parsing
-    const parts = dateTimeString.split(' ');
-    result = {
-      date: parts[0] || '',
-      time: parts[1]?.slice(0, 5) || '',
-    };
+
+  // 🔧 直接拆分字符串，避免 new Date() 的时区转换问题
+  // 后端返回格式: "2025-09-29 18:00:00"
+  const parts = dateTimeString.split(' ');
+  result = {
+    date: parts[0] || '',              // YYYY-MM-DD
+    time: parts[1]?.slice(0, 5) || '', // HH:MM
+  };
+
+  // 验证日期格式
+  if (!result.date || !/^\d{4}-\d{2}-\d{2}$/.test(result.date)) {
+    console.warn('⚠️ [parseDateTime] 日期格式异常:', dateTimeString, '→', result.date);
   }
-  
+
   // 缓存结果（限制缓存大小，防止内存泄漏）
   if (TIME_PARSE_CACHE.size < 100) {
     TIME_PARSE_CACHE.set(dateTimeString, result);
   }
-  
+
+  console.log('🕐 [parseDateTime]', {
+    input: dateTimeString,
+    output: result
+  });
+
   return result;
 };
 
@@ -430,13 +444,20 @@ export const adaptActivityList = (
     code: number;
     msg: string;
   },
-  language: 'zh' | 'en' = 'zh'
+  language: 'zh' | 'en' = 'zh',
+  forceRefresh: boolean = false
 ): {
   activities: FrontendActivity[];
   total: number;
   success: boolean;
   message: string;
 } => {
+  // 🔄 强制刷新时清除时间解析缓存
+  if (forceRefresh) {
+    clearTimeParseCache();
+    console.log('🔄 [ADAPTER] 强制刷新模式，已清除时间缓存');
+  }
+
   if (backendResponse.code !== 200) {
     return {
       activities: [],

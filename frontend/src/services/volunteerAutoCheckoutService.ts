@@ -342,14 +342,16 @@ class VolunteerAutoCheckoutService {
       // 执行12小时限制的自动签退
       console.log('🎯 [OVERTIME-CHECKOUT] 执行12小时自动签退操作...');
 
+      const operateUserId = typeof userInfo.data.userId === 'string' ? parseInt(userInfo.data.userId) : userInfo.data.userId;
+
       const checkoutResult = await performVolunteerCheckOut(
         parseInt(userId),
-        parseInt(userInfo.data.userId),
+        operateUserId,
         userInfo.data.legalName,
         `【自动签退】超时签到，系统自动处理（原签到时间：${this.currentCheckinState.checkinTime}，实际工作：${originalHoursElapsed.toFixed(1)}小时）`
       );
 
-      if (checkoutResult.code === 200 || checkoutResult.success) {
+      if (checkoutResult.code === 200) {
         console.log('✅ [OVERTIME-CHECKOUT] 超时自动签退成功');
         await this.recordCheckout(userId);
 
@@ -488,14 +490,16 @@ class VolunteerAutoCheckoutService {
       // 执行自动签退
       console.log('🎯 [AUTO-CHECKOUT] 执行自动签退操作...');
 
+      const operateUserId = typeof userInfo.data.userId === 'string' ? parseInt(userInfo.data.userId) : userInfo.data.userId;
+
       const checkoutResult = await performVolunteerCheckOut(
         parseInt(userId),
-        parseInt(userInfo.data.userId),
+        operateUserId,
         userInfo.data.legalName,
         '【自动签退】应用退出时自动签退'
       );
 
-      if (checkoutResult.code === 200 || checkoutResult.success) {
+      if (checkoutResult.code === 200) {
         console.log('✅ [AUTO-CHECKOUT] 自动签退成功');
         await this.recordCheckout(userId);
 

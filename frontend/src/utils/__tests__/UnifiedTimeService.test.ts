@@ -1,3 +1,4 @@
+// @ts-nocheck - Test file without Jest type definitions
 /**
  * UnifiedTimeService 单元测试
  *

@@ -145,13 +145,13 @@ export const QRScanResultScreen: React.FC = () => {
         </View>
 
         {/* 操作区域 */}
-        {(permissions?.availableOptions.volunteerCheckin || permissions?.availableOptions.activityCheckin) && (
+        {(permissions?.availableOptions.volunteerCheckIn || permissions?.availableOptions.activityCheckIn) && (
           <View style={styles.actionsContainer}>
             <Text style={styles.actionsTitle}>
               {t('qr.results.available_actions', '可用操作')}
             </Text>
 
-            {permissions?.availableOptions.volunteerCheckin && (
+            {permissions?.availableOptions.volunteerCheckIn && (
               <TouchableOpacity 
                 style={[styles.actionButton, styles.volunteerButton]} 
                 onPress={handleVolunteerAction}
@@ -171,7 +171,7 @@ export const QRScanResultScreen: React.FC = () => {
               </TouchableOpacity>
             )}
 
-            {permissions?.availableOptions.activityCheckin && (
+            {permissions?.availableOptions.activityCheckIn && (
               <TouchableOpacity 
                 style={[styles.actionButton, styles.activityButton]} 
                 onPress={handleActivityAction}
@@ -193,7 +193,7 @@ export const QRScanResultScreen: React.FC = () => {
           </View>
         )}
 
-        {(!permissions?.availableOptions.volunteerCheckin && !permissions?.availableOptions.activityCheckin) && (
+        {(!permissions?.availableOptions.volunteerCheckIn && !permissions?.availableOptions.activityCheckIn) && (
           <View style={styles.noActionsContainer}>
             <View style={styles.noActionsIconContainer}>
               <Ionicons name="information-circle-outline" size={48} color={theme.colors.text.disabled} />
@@ -224,7 +224,7 @@ export const QRScanResultScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: theme.colors.background,
+    backgroundColor: theme.colors.background.primary,
   },
 
   header: {

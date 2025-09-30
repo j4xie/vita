@@ -97,7 +97,7 @@ export const getUserPermissionLevel = (user: {
   userName?: string;
   legalName?: string;
   role?: UserRoleInfo | null; // 单个role对象（API文档第4页结构）
-  roles?: UserRoleInfo[] | null; // roles数组（备用）
+  roles?: (UserRoleInfo | { id?: number; key: string; name?: string; roleName?: string; isAdmin?: boolean })[] | null; // roles数组（备用，支持FrontendUser格式）
   posts?: UserPost[] | null;
   admin?: boolean;
 }): PermissionLevel => {
@@ -147,7 +147,7 @@ export const getUserPermissionLevel = (user: {
     
     for (const role of user.roles) {
       // 优先使用roleKey字段，key作为备用
-      const roleKey = role.roleKey || role.key;
+      const roleKey = (role as any).roleKey || role.key;
       
       if (roleKey && ['manage', 'part_manage', 'staff', 'common'].includes(roleKey)) {
         console.log(`✅ [PERMISSION] roles数组检测成功: ${roleKey} (来自role.roleKey)`);

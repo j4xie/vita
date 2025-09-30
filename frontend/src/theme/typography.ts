@@ -17,7 +17,7 @@ console.log('🎯 [TYPOGRAPHY] Device Detection:', {
   height,
   screenWidth: screenData.width,
   screenHeight: screenData.height,
-  isPad: Platform.isPad,
+  isPad: isIPad,
   isIPad,
   deviceFontScale: isIPad ? 1.5 : 1.0
 });

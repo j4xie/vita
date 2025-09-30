@@ -78,8 +78,8 @@ export const ExploreScreen: React.FC = () => {
       }
       
       refreshTimeoutRef.current = setTimeout(() => {
-        console.log('🔄 [REFRESH] 刷新探索页面活动数据');
-        loadActivities(searchText.trim() || undefined);
+        console.log('🔄 [REFRESH] 刷新探索页面活动数据（状态变化触发）');
+        loadActivities(searchText.trim() || undefined, true); // 强制刷新获取最新状态
       }, 500); // 500ms防抖延迟
     });
 
@@ -112,48 +112,68 @@ export const ExploreScreen: React.FC = () => {
     };
   }, [searchText]);
 
-  const loadActivities = async (searchQuery?: string) => {
+  const loadActivities = async (searchQuery?: string, forceRefresh: boolean = false) => {
     try {
       if (searchQuery) {
         setSearchLoading(true);
       } else {
         setLoading(true);
       }
-      
-      console.log('🔍 加载活动数据:', { searchQuery });
-      
+
+      console.log('🔍 加载活动数据:', { searchQuery, forceRefresh });
+
       // 🔧 支持访客模式浏览 - userId可选
       const isLoggedIn = !!(user?.id);
-      
-      const result = await pomeloXAPI.getActivityList({
+
+      // 🔄 强制刷新时添加时间戳防止缓存
+      const requestParams: any = {
         pageNum: 1,
         pageSize: 20,
         userId: isLoggedIn ? parseInt(user.id) : undefined, // 🔧 可选参数
         name: searchQuery, // 使用name字段进行搜索
-      });
-      
+      };
+
+      if (forceRefresh) {
+        requestParams._t = Date.now(); // 添加时间戳防止API缓存
+      }
+
+      const result = await pomeloXAPI.getActivityList(requestParams);
+
       console.log('🌍 Explore模式:', {
         mode: isLoggedIn ? '个性化浏览' : '访客浏览',
-        searchQuery
+        searchQuery,
+        forceRefresh
       });
-      
+
       console.log('📊 活动数据响应:', {
         code: result.code,
-        total: result.total || 0,
-        activitiesCount: result.rows?.length || 0
+        total: result.data?.total || 0,
+        activitiesCount: result.data?.rows?.length || 0,
+        timestamp: new Date().toISOString()
       });
-      
-      const adaptedData = adaptActivityList(result, 'zh');
-      
+
+      const adaptedData = adaptActivityList({
+        total: result.data?.total || 0,
+        rows: result.data?.rows || [],
+        code: result.code,
+        msg: result.msg
+      }, 'zh', forceRefresh);
+
       if (adaptedData.success) {
         setActivities(adaptedData.activities);
         console.log('✅ 活动数据加载成功:', {
           searchQuery,
+          forceRefresh,
           totalActivities: adaptedData.activities.length,
-          activities: adaptedData.activities.map(a => ({ 
-            id: a.id, 
-            title: a.title, 
-            location: a.location 
+          activities: adaptedData.activities.map(a => ({
+            id: a.id,
+            title: a.title,
+            location: a.location,
+            date: a.date,
+            endDate: a.endDate,
+            displayDate: a.endDate && a.endDate !== a.date
+              ? `${a.date}-${a.endDate}`
+              : a.date
           }))
         });
       } else {
@@ -176,11 +196,12 @@ export const ExploreScreen: React.FC = () => {
     { id: 'ended', name: t('filters.status.ended') || '已结束', icon: 'checkmark-circle-outline', count: 0 },
   ];
 
-  // Handle refresh
+  // Handle refresh - 🔄 强制刷新，清除缓存
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
     try {
-      await loadActivities(searchText.trim() || undefined);
+      console.log('🔄 [REFRESH] 用户下拉刷新，强制获取最新数据');
+      await loadActivities(searchText.trim() || undefined, true); // 强制刷新标志
     } catch (error) {
       console.error('刷新活动数据失败:', error);
     } finally {
@@ -270,11 +291,6 @@ export const ExploreScreen: React.FC = () => {
     // 显示功能未实现提示
     const categoryName = realCategories.find(c => c.id === categoryId)?.name || t('explore.category_fallback');
     showFeature(categoryName, t('explore.category_developing_message', { category: categoryName }));
-  };
-
-  // Handle activity press
-  const handleActivityPress = (activity: any) => {
-    navigation.navigate('ActivityDetail', { activity });
   };
 
   // School data removed - feature not implemented
@@ -441,7 +457,6 @@ export const ExploreScreen: React.FC = () => {
                         key={activity.id}
                         activity={activity}
                         onPress={() => handleActivityPress(activity)}
-                        style={styles.activityCard}
                       />
                     ))}
                   </View>

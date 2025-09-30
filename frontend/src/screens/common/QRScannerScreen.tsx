@@ -724,7 +724,7 @@ export const QRScannerScreen: React.FC = () => {
           
           if (isValidHash) {
             console.log('🔐 [QR哈希验证] 身份码哈希验证通过');
-            showUserInfo(userResponse.data);
+            showUserInfo(userResponse.data as any);
           } else {
             console.log('❌ [QR哈希验证] 身份码哈希验证失败');
             showScanError(
@@ -847,7 +847,7 @@ export const QRScannerScreen: React.FC = () => {
           if (userData.school && userData.school.parentId !== undefined) {
             // 确保parentId是有效的数字或null
             const parentId = userData.school.parentId;
-            if (parentId === null || parentId === undefined || parentId === '') {
+            if (parentId === null || parentId === undefined || (parentId as any) === '') {
               userData.school.parentId = undefined;
             } else if (typeof parentId === 'string') {
               const numParentId = parseInt(parentId, 10);
@@ -1544,7 +1544,7 @@ const modalStyles = StyleSheet.create({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: theme.colors.background,
+    backgroundColor: theme.colors.background.primary,
     justifyContent: 'center',
     alignItems: 'center',
   },

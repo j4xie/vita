@@ -76,6 +76,9 @@ export interface UserInfo {
     roleName: string;
     roleKey: string;
     admin: boolean;
+    roleSort?: number;
+    status?: string;
+    flag?: boolean;
   };
   post?: { // 🆕 岗位信息
     postId: number;

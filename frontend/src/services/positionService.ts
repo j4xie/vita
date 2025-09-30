@@ -104,43 +104,78 @@ class PositionService {
   async getUserPositionDisplay(userData: any): Promise<{ level: string; major: string } | null> {
     try {
       console.log('🔍 [POSITION-SERVICE] 开始处理用户岗位:', userData?.userName);
-      
+
       const currentLanguage = i18n?.language || 'zh-CN';
       const isEnglish = currentLanguage === 'en-US';
-      
+
       // 🚨 新逻辑：只基于roleKey判断，移除用户名fallback
       const roles = userData?.roles || [];
       if (!Array.isArray(roles) || roles.length === 0) {
         console.log('❌ [POSITION-SERVICE] 用户无roles信息，不显示');
         return null;
       }
-      
+
       const primaryRole = roles[0];
       const roleKey = primaryRole?.key;
-      
+
       // 只有manage/part_manage/staff用户才显示
       if (!['manage', 'part_manage', 'staff'].includes(roleKey)) {
         console.log('❌ [POSITION-SERVICE] roleKey不符合条件，不显示:', roleKey);
         return null;
       }
-      
+
       console.log('👤 用户有有效角色信息:', roleKey);
-      
-      // 🎯 优先使用postIds/posts获取具体岗位
+
+      // 🎯 全面支持所有可能的岗位字段格式
+
+      // 🐛 详细的调试日志
+      console.log('📊 [POSITION-DEBUG] 用户原始数据:', {
+        userName: userData?.userName,
+        完整userData: userData
+      });
+
+      // 方式1: 直接从顶层postName字段获取
+      if (userData?.postName) {
+        console.log('✅ [POSITION-SERVICE] 从顶层postName返回岗位:', userData.postName);
+        return {
+          level: userData.postName,
+          major: userData.postName
+        };
+      }
+
+      // 方式2: 单个post对象（/app/user/info返回格式）
+      if (userData?.post && userData.post.postName) {
+        console.log('✅ [POSITION-SERVICE] 基于post对象返回岗位:', userData.post.postName);
+        return {
+          level: userData.post.postName,
+          major: userData.post.postName
+        };
+      }
+
+      // 方式3: posts数组 + postIds数组（/system/user/list可能的格式）
       const postIds = userData?.postIds || [];
       const posts = userData?.posts || [];
-      
+
       if (Array.isArray(postIds) && postIds.length > 0 && Array.isArray(posts) && posts.length > 0) {
-        // 找到匹配的岗位
         const userPost = posts.find(post => postIds.includes(post.postId));
+        console.log('🔎 [POSITION-MATCH] 从posts数组匹配结果:', userPost);
+
         if (userPost && userPost.postName) {
           console.log('✅ [POSITION-SERVICE] 基于postIds返回具体岗位:', userPost.postName);
           return {
-            level: userPost.postName, // 只显示岗位名称，无后缀
-            major: userPost.postName  // major也使用相同值，保持一致性
+            level: userPost.postName,
+            major: userPost.postName
           };
         }
       }
+
+      // 方式4: 从postCode字段推断
+      if (userData?.postCode) {
+        console.log('⚠️ [POSITION-SERVICE] 从postCode推断岗位:', userData.postCode);
+        // 这里可以添加postCode到岗位名称的映射
+      }
+
+      console.log('⚠️ [POSITION-SERVICE] 所有岗位字段都为空，使用roleKey备用逻辑');
       
       // 备用：基于roleKey显示
       const positionDisplay = this.mapRoleToPositionSimple(roleKey, isEnglish);

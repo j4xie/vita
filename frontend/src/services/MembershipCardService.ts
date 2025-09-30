@@ -265,9 +265,9 @@ export class MembershipCardService {
       : `${displayOrg?.displayNameZh || ''}·${this.getCategoryLabel(displayMerchant?.category || 'retail')}`;
 
     // 构建分类
-    const category = isOrgCard 
-      ? 'organization' as const
-      : (displayMerchant?.category || 'retail') as const;
+    const category = isOrgCard
+      ? 'organization'
+      : (displayMerchant?.category || 'retail');
 
     // 检查是否过期
     const isExpired = card.expiresAt ? new Date(card.expiresAt) < new Date() : false;
@@ -540,7 +540,7 @@ export class MembershipCardService {
         cardNumber,
         displayName: params.cardType === 'organization' ? '组织会员卡' : '商家会员卡',
         points: 0,
-        membershipLevel: params.membershipLevel || 'basic',
+        membershipLevel: (params.membershipLevel || 'basic') as 'basic' | 'premium' | 'vip',
         qrCodeData,
         isActive: true,
         createdAt: new Date().toISOString(),

@@ -112,13 +112,6 @@ class TimeManagerService {
   }
 
   /**
-   * 生成前端用的时间格式 (ISO string)
-   */
-  static getFrontendTimeFormat(date: Date = new Date()): string {
-    return date.toISOString();
-  }
-
-  /**
    * 统一的时间差计算（分钟）
    */
   static getTimeDifferenceMinutes(startTime: string | Date, endTime: Date = new Date()): number {
@@ -228,8 +221,8 @@ class TimeManagerService {
 // 导出单例实例
 export const timeManager = TimeManagerService.getInstance();
 
-// 导出常用的静态方法
-export const { getAPITimeFormat, getFrontendTimeFormat, getTimeDifferenceMinutes, formatDuration, validateDeviceTime } = TimeManagerService;
+// 导出常用的静态方法（已移除getFrontendTimeFormat，使用timeService.formatForServer替代）
+export const { getAPITimeFormat, getTimeDifferenceMinutes, formatDuration, validateDeviceTime } = TimeManagerService;
 
 // React Hook for time management
 export const useGlobalTime = () => {

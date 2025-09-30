@@ -52,6 +52,54 @@ check_env_status() {
     echo ""
 }
 
+# 停止运行中的 Expo 服务器
+stop_expo_server() {
+    log_info "检测运行中的 Expo 服务器..."
+
+    # 查找 expo start 进程
+    EXPO_PIDS=$(ps aux | grep "expo start\|expo run\|metro" | grep -v grep | awk '{print $2}')
+
+    if [ -n "$EXPO_PIDS" ]; then
+        log_info "发现运行中的 Expo 进程，正在停止..."
+        echo "$EXPO_PIDS" | xargs kill -9 2>/dev/null
+        sleep 2
+        log_success "已停止 Expo 服务器"
+    else
+        log_info "没有检测到运行中的 Expo 服务器"
+    fi
+}
+
+# 重启 Expo 服务器
+restart_expo_server() {
+    log_info "重启 Expo 服务器..."
+
+    # 清理缓存
+    clean_cache
+
+    log_info "启动 Expo 服务器 (后台运行)..."
+    echo -e "   端口: 8082"
+    echo -e "   命令: npx expo start --port 8082 --clear --reset-cache"
+    echo ""
+
+    # 在后台启动 Expo
+    nohup npx expo start --port 8082 --clear --reset-cache > expo-server.log 2>&1 &
+    EXPO_PID=$!
+
+    sleep 3
+
+    # 检查进程是否成功启动
+    if ps -p $EXPO_PID > /dev/null; then
+        log_success "Expo 服务器已启动 (PID: $EXPO_PID)"
+        log_info "日志输出: expo-server.log"
+        echo ""
+        log_warning "等待 Metro 打包完成 (约20-30秒)..."
+        log_info "完成后可访问: http://localhost:8082"
+    else
+        log_error "Expo 服务器启动失败，请检查 expo-server.log"
+        exit 1
+    fi
+}
+
 # 切换到开发环境
 switch_to_dev() {
     log_info "切换到开发环境..."
@@ -70,11 +118,18 @@ switch_to_dev() {
     cp .env.development .env
     log_success "已应用开发环境配置"
 
-    # 提示需要重启
-    log_warning "请重启 Expo 开发服务器以应用新配置:"
-    echo -e "   ${YELLOW}1. 停止当前服务 (Ctrl+C)${NC}"
-    echo -e "   ${YELLOW}2. 运行: npx expo start --clear --reset-cache${NC}"
-    echo -e "   ${YELLOW}3. 运行: npx expo run:ios${NC}"
+    # 检查是否需要自动重启
+    if [ "$AUTO_RESTART" = true ]; then
+        log_info "自动重启模式已启用"
+        stop_expo_server
+        restart_expo_server
+    else
+        # 提示需要重启
+        log_warning "请重启 Expo 开发服务器以应用新配置:"
+        echo -e "   ${YELLOW}1. 停止当前服务 (Ctrl+C)${NC}"
+        echo -e "   ${YELLOW}2. 运行: npx expo start --clear --reset-cache${NC}"
+        echo -e "   ${YELLOW}或直接运行: npm run dev:full${NC}"
+    fi
 
     log_success "开发环境切换完成! 🔧"
     echo -e "   API服务器: http://106.14.165.234:8085"
@@ -101,11 +156,18 @@ switch_to_prod() {
     cp .env.production .env
     log_success "已应用生产环境配置"
 
-    # 提示需要重启
-    log_warning "请重启 Expo 开发服务器以应用新配置:"
-    echo -e "   ${YELLOW}1. 停止当前服务 (Ctrl+C)${NC}"
-    echo -e "   ${YELLOW}2. 运行: npx expo start --clear --reset-cache${NC}"
-    echo -e "   ${YELLOW}3. 运行: npx expo run:ios${NC}"
+    # 检查是否需要自动重启
+    if [ "$AUTO_RESTART" = true ]; then
+        log_info "自动重启模式已启用"
+        stop_expo_server
+        restart_expo_server
+    else
+        # 提示需要重启
+        log_warning "请重启 Expo 开发服务器以应用新配置:"
+        echo -e "   ${YELLOW}1. 停止当前服务 (Ctrl+C)${NC}"
+        echo -e "   ${YELLOW}2. 运行: npx expo start --clear --reset-cache${NC}"
+        echo -e "   ${YELLOW}或直接运行: npm run prod:full${NC}"
+    fi
 
     log_success "生产环境切换完成! 🚀"
     echo -e "   API服务器: https://www.vitaglobal.icu"
@@ -179,6 +241,12 @@ main() {
         exit 1
     fi
 
+    # 检查是否有 --auto-restart 参数
+    AUTO_RESTART=false
+    if [ "$2" = "--auto-restart" ]; then
+        AUTO_RESTART=true
+    fi
+
     case "$1" in
         dev|development)
             switch_to_dev
@@ -209,4 +277,4 @@ main() {
 }
 
 # 运行主程序
-main "$1"
+main "$1" "$2"

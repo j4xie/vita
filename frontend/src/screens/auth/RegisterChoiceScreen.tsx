@@ -165,9 +165,8 @@ export const RegisterChoiceScreen: React.FC = () => {
             </View>
           </TouchableOpacity>
 
-          {/* Normal Registration - Temporarily hidden due to SMS verification issues */}
-          {false && (
-            <TouchableOpacity
+          {/* Normal Registration */}
+          <TouchableOpacity
               style={[styles.optionCard, styles.secondaryCard, detectingLocation && styles.optionCardDisabled]}
               onPress={handleNormalRegister}
               activeOpacity={detectingLocation ? 1 : 0.9}
@@ -188,7 +187,6 @@ export const RegisterChoiceScreen: React.FC = () => {
                 <Ionicons name="chevron-forward" size={24} color={theme.colors.text.tertiary} />
               </View>
             </TouchableOpacity>
-          )}
         </View>
 
         {/* Benefits Section */}

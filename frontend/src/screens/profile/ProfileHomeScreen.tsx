@@ -8,6 +8,7 @@ import {
   ScrollView,
   Platform,
   DeviceEventEmitter,
+  Alert,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
@@ -516,8 +517,9 @@ export const ProfileHomeScreen: React.FC = () => {
     }
   };
 
-  // 页面加载时获取统计数据 - 只在已登录且有用户ID时调用
+  // 页面首次加载时获取统计数据
   useEffect(() => {
+    console.log('🔄 [PROFILE-INIT] 页面首次加载，获取统计数据');
     const userIdString = user?.userId || user?.id;
     const userIdToUse = userIdString ? parseInt(userIdString, 10) : undefined;
     if (isAuthenticated && userIdToUse && !isNaN(userIdToUse)) {
@@ -525,11 +527,12 @@ export const ProfileHomeScreen: React.FC = () => {
       loadVolunteerStats();
       loadOrganizationInfo(); // ✅ 加载组织信息
     }
-  }, [isAuthenticated, user?.userId, user?.id]);
+  }, []); // 空依赖数组，只在组件挂载时加载一次
 
-  // 页面聚焦时刷新统计数据（用户从活动页面返回时）
+  // 页面聚焦时刷新统计数据（用户从其他页面返回时）
   useFocusEffect(
     useCallback(() => {
+      console.log('📱 [PROFILE-FOCUS] 页面获得焦点，刷新统计数据');
       const userIdString = user?.userId || user?.id;
       const userIdToUse = userIdString ? parseInt(userIdString, 10) : undefined;
       if (isAuthenticated && userIdToUse && !isNaN(userIdToUse)) {
@@ -542,7 +545,7 @@ export const ProfileHomeScreen: React.FC = () => {
         loadVolunteerStats();
         loadOrganizationInfo(); // ✅ 刷新组织信息
       }
-    }, [isAuthenticated, user?.userId, user?.id])
+    }, []) // 空依赖数组，只在页面聚焦时触发，避免无限刷新
   );
 
   // 监听活动报名成功事件
