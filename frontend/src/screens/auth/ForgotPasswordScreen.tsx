@@ -10,8 +10,8 @@ import {
   Platform,
   ScrollView,
   Alert,
-  ActivityIndicator,
   Animated,
+  Keyboard,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
@@ -22,6 +22,7 @@ import { LIQUID_GLASS_LAYERS, DAWN_GRADIENTS } from '../../theme/core';
 import { useAllDarkModeStyles } from '../../hooks/useDarkModeStyles';
 import { pomeloXAPI } from '../../services/PomeloXAPI';
 import * as Haptics from 'expo-haptics';
+import { LoaderOne } from '../../components/ui/LoaderOne';
 
 // 安全的Haptics封装
 const safeHaptics = {
@@ -443,6 +444,11 @@ export const ForgotPasswordScreen: React.FC = () => {
                     onBlur={() => setFocusedInput(null)}
                     keyboardType="phone-pad"
                     placeholderTextColor={theme.colors.text.disabled}
+                    returnKeyType="done"
+                    onSubmitEditing={() => {
+                      Keyboard.dismiss();
+                      setFocusedInput(null);
+                    }}
                   />
                 </View>
                 {errors.phone && (
@@ -461,12 +467,12 @@ export const ForgotPasswordScreen: React.FC = () => {
                   activeOpacity={0.9}
                 >
                   {loading ? (
-                    <ActivityIndicator color={theme.colors.text.inverse} />
+                    <LoaderOne size="small" color={theme.colors.text.inverse} />
                   ) : (
                     <Text style={styles.sendButtonText}>
-                      {countdown > 0 
+                      {countdown > 0
                         ? t('auth.forgot_password.resend_after', { seconds: countdown })
-                        : codeSent 
+                        : codeSent
                           ? t('auth.forgot_password.resend_code')
                           : t('auth.forgot_password.send_code')
                       }
@@ -497,9 +503,14 @@ export const ForgotPasswordScreen: React.FC = () => {
                       }}
                       onFocus={() => setFocusedInput('code')}
                       onBlur={() => setFocusedInput(null)}
-                      keyboardType="numeric"
+                      keyboardType="number-pad"
                       maxLength={6}
                       placeholderTextColor={theme.colors.text.disabled}
+                      returnKeyType="done"
+                      onSubmitEditing={() => {
+                        Keyboard.dismiss();
+                        setFocusedInput(null);
+                      }}
                     />
                   </View>
                   {errors.code && (
@@ -521,7 +532,7 @@ export const ForgotPasswordScreen: React.FC = () => {
                     activeOpacity={0.9}
                   >
                     {verifyLoading ? (
-                      <ActivityIndicator color={theme.colors.text.inverse} />
+                      <LoaderOne size="small" color={theme.colors.text.inverse} />
                     ) : (
                       <Text style={styles.sendButtonText}>
                         {t('auth.forgot_password.verify_code_button')}

@@ -7,7 +7,6 @@ import {
   SafeAreaView,
   Image,
   Alert,
-  ActivityIndicator,
 } from 'react-native';
 import { useNavigation, CommonActions } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
@@ -17,6 +16,7 @@ import { theme } from '../../theme';
 import { LIQUID_GLASS_LAYERS, DAWN_GRADIENTS } from '../../theme/core';
 import { PrivacyAgreementModal } from '../../components/modals/PrivacyAgreementModal';
 import RegionDetectionService, { RegionCode, RegionDetectionResult } from '../../services/RegionDetectionService';
+import { LoaderOne } from '../../components/ui/LoaderOne';
 
 export const RegisterChoiceScreen: React.FC = () => {
   const navigation = useNavigation<any>();
@@ -238,7 +238,7 @@ export const RegisterChoiceScreen: React.FC = () => {
       {detectingLocation && (
         <View style={styles.loadingOverlay}>
           <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color={theme.colors.primary} />
+            <LoaderOne size="large" color={theme.colors.primary} />
             <Text style={styles.loadingText}>🌍 {t('auth.register.form.area_detecting')}</Text>
             <Text style={styles.loadingSubtext}>{t('auth.register.privacy.subtitle')}</Text>
             <Text style={styles.loadingDebug}>

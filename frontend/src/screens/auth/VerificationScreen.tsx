@@ -7,7 +7,7 @@ import {
   StyleSheet,
   SafeAreaView,
   Alert,
-  ActivityIndicator,
+  Keyboard,
 } from 'react-native';
 import { useNavigation, useRoute, CommonActions } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
@@ -20,6 +20,7 @@ import { useUser } from '../../context/UserContext';
 import { login } from '../../services/authAPI';
 import { LiquidSuccessModal } from '../../components/modals/LiquidSuccessModal';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { LoaderOne } from '../../components/ui/LoaderOne';
 
 export const VerificationScreen: React.FC = () => {
   const navigation = useNavigation<any>();
@@ -290,9 +291,16 @@ export const VerificationScreen: React.FC = () => {
                 value={digit}
                 onChangeText={(value) => handleCodeChange(index, value)}
                 onKeyPress={({ nativeEvent }) => handleKeyPress(index, nativeEvent.key)}
-                keyboardType="numeric"
+                keyboardType="number-pad"
                 maxLength={1}
                 textAlign="center"
+                returnKeyType="done"
+                onSubmitEditing={() => {
+                  // 最后一个输入框按完成时收起键盘
+                  if (index === 5) {
+                    Keyboard.dismiss();
+                  }
+                }}
               />
             ))}
           </View>
@@ -319,7 +327,7 @@ export const VerificationScreen: React.FC = () => {
             disabled={loading || verificationCode.join('').length !== 6}
           >
             {loading ? (
-              <ActivityIndicator color={theme.colors.text.inverse} />
+              <LoaderOne size="small" color={theme.colors.text.inverse} />
             ) : (
               <Text style={styles.verifyButtonText}>{t('auth.verification.verify_and_register')}</Text>
             )}

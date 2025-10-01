@@ -7,7 +7,6 @@ import {
   Dimensions,
   Platform,
   Image,
-  ActivityIndicator,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
@@ -27,6 +26,7 @@ import { LIQUID_GLASS_LAYERS, RESTRAINED_COLORS } from '../../theme/core';
 import { useCardPress } from '../../hooks/useCardPress';
 import { OptimizedImage } from '../common/OptimizedImage';
 import { formatActivityDateWithTimezone, FrontendActivity } from '../../utils/activityAdapter';
+import { LoaderOne } from '../ui/LoaderOne';
 
 const { width: screenWidth } = Dimensions.get('window');
 
@@ -45,10 +45,19 @@ interface GridActivityCardProps {
     image?: string;
     category?: string;
     timeZone?: string; // 时区
+    organizerName?: string; // 组织者名称
+    organizerAvatar?: string; // 组织者头像
   } | null;
   onPress: () => void;
   onBookmark?: (activity: any) => void;
   isBookmarked?: boolean;
+  // 新增操作回调
+  onShare?: () => void;
+  onInterested?: () => void;
+  onJoin?: () => void;
+  isInterested?: boolean;
+  isJoined?: boolean;
+  onMoreOptions?: () => void;
 }
 
 const GridActivityCardComponent: React.FC<GridActivityCardProps> = ({
@@ -56,6 +65,12 @@ const GridActivityCardComponent: React.FC<GridActivityCardProps> = ({
   onPress,
   onBookmark,
   isBookmarked = false,
+  onShare,
+  onInterested,
+  onJoin,
+  isInterested = false,
+  isJoined = false,
+  onMoreOptions,
 }) => {
   const { t, i18n } = useTranslation();
   const [imageLoading, setImageLoading] = useState(true);
@@ -71,8 +86,24 @@ const GridActivityCardComponent: React.FC<GridActivityCardProps> = ({
     return null;
   }
 
-  // 调整高度以适配16:9图片比例
-  const cardHeight = 161; // 优化高度：101px图片区 + 60px信息区
+  // 动态计算卡片高度以精确匹配1200:675图片比例
+  const screenWidth = Dimensions.get('window').width;
+  const containerWidth = screenWidth - 8; // 减去waterfallContainer的paddingHorizontal: 4 (左右共8px)
+  const cardWidth = containerWidth * 0.48; // 瀑布流布局，每列占48%
+  const imageHeight = cardWidth * (675 / 1200); // 精确的图片高度
+  const infoHeight = 90; // 底部信息区固定高度
+  const cardHeight = imageHeight + infoHeight; // 动态卡片总高度，消除留白
+
+  // 调试日志
+  console.log('🎨 [GridActivityCard] 卡片尺寸计算:', {
+    screenWidth,
+    containerWidth,
+    cardWidth,
+    imageHeight,
+    infoHeight,
+    cardHeight,
+    aspectRatio: 1200 / 675
+  });
   
   // 获取活动状态标签 - 优先显示报名状态，其次是时间紧急程度
   const getActivityLabel = () => {
@@ -238,9 +269,9 @@ const GridActivityCardComponent: React.FC<GridActivityCardProps> = ({
         {/* 图片背景 */}
         {activity.image && !imageError ? (
           <>
-            <View style={styles.imageContainer}>
+            <View style={[styles.imageContainer, { height: imageHeight }]}>
               <OptimizedImage
-                source={{ 
+                source={{
                   uri: activity.image,
                   priority: 'normal'
                 }}
@@ -255,13 +286,13 @@ const GridActivityCardComponent: React.FC<GridActivityCardProps> = ({
               />
             </View>
             {imageLoading && (
-              <View style={styles.imageLoadingContainer}>
-                <ActivityIndicator size="small" color={theme.colors.primary} />
+              <View style={[styles.imageLoadingContainer, { height: imageHeight }]}>
+                <LoaderOne size="small" color={theme.colors.primary} />
               </View>
             )}
           </>
         ) : (
-          <View style={styles.imagePlaceholder}>
+          <View style={[styles.imagePlaceholder, { height: imageHeight }]}>
             <Ionicons name="image-outline" size={32} color={theme.colors.text.tertiary} />
           </View>
         )}
@@ -270,11 +301,11 @@ const GridActivityCardComponent: React.FC<GridActivityCardProps> = ({
         <LinearGradient
           colors={[
             RESTRAINED_COLORS.PHOTO_OVERLAY.darkMask.medium,
-            'transparent', 
+            'transparent',
             RESTRAINED_COLORS.PHOTO_OVERLAY.darkMask.strong
           ]}
           locations={[0, 0.4, 1]}
-          style={styles.overlayGradient}
+          style={[styles.overlayGradient, { height: imageHeight }]}
         />
 
         {/* 活动状态标识 */}
@@ -291,16 +322,125 @@ const GridActivityCardComponent: React.FC<GridActivityCardProps> = ({
           </View>
         )}
 
+        {/* 右上角三点菜单 */}
+        {onMoreOptions && (
+          <TouchableOpacity
+            style={styles.moreButton}
+            onPress={(e) => {
+              e.stopPropagation();
+              onMoreOptions();
+            }}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          >
+            <View style={styles.moreButtonCircle}>
+              <Ionicons name="ellipsis-horizontal" size={16} color="#666" />
+            </View>
+          </TouchableOpacity>
+        )}
 
-        {/* 底部信息区 - 紧凑布局 */}
+
+        {/* 底部信息区 - 重构布局 */}
         <View style={styles.infoContainer}>
-          <Text style={styles.title} numberOfLines={3}>
+          {/* 组织者信息行 */}
+          <View style={styles.organizerRow}>
+            <View style={styles.organizerInfo}>
+              {activity.organizerAvatar ? (
+                <Image
+                  source={{ uri: activity.organizerAvatar }}
+                  style={styles.organizerAvatar}
+                />
+              ) : (
+                <View style={[styles.organizerAvatar, styles.organizerAvatarPlaceholder]}>
+                  <Ionicons name="person" size={12} color="#999" />
+                </View>
+              )}
+              <Text style={styles.organizerName} numberOfLines={1}>
+                {activity.organizerName || t('activityCard.organizer.default', 'Organizer')}
+              </Text>
+            </View>
+            <Text style={styles.attendeeCount}>
+              {(activity.registeredCount || activity.attendees || 0)}/{activity.maxAttendees || 0}
+            </Text>
+          </View>
+
+          {/* 活动标题 */}
+          <Text
+            style={styles.title}
+            numberOfLines={2}
+            adjustsFontSizeToFit={true}
+            minimumFontScale={0.85}
+          >
             {String(activity?.title || '')}
           </Text>
-          
+
+          {/* 日期信息 */}
           <Text style={styles.time}>
             {formatActivityDateWithTimezone(activity as FrontendActivity, i18n.language as 'zh' | 'en')}
           </Text>
+
+          {/* 底部操作按钮区 */}
+          {(onShare || onInterested || onJoin) && (
+            <View style={styles.actionButtonsContainer}>
+              {/* Share按钮 */}
+              {onShare && (
+                <TouchableOpacity
+                  style={styles.actionButton}
+                  onPress={(e) => {
+                    e.stopPropagation();
+                    onShare();
+                  }}
+                  hitSlop={{ top: 5, bottom: 5, left: 5, right: 5 }}
+                >
+                  <Ionicons name="paper-plane-outline" size={18} color="#666" />
+                  <Text style={styles.actionButtonText}>
+                    {t('activityCard.actions.share', 'Share')}
+                  </Text>
+                </TouchableOpacity>
+              )}
+
+              {/* Interested按钮 */}
+              {onInterested && (
+                <TouchableOpacity
+                  style={styles.actionButton}
+                  onPress={(e) => {
+                    e.stopPropagation();
+                    onInterested();
+                  }}
+                  hitSlop={{ top: 5, bottom: 5, left: 5, right: 5 }}
+                >
+                  <Ionicons
+                    name={isInterested ? "heart" : "heart-outline"}
+                    size={18}
+                    color={isInterested ? "#EF4444" : "#666"}
+                  />
+                  <Text style={[styles.actionButtonText, isInterested && styles.actionButtonTextActive]}>
+                    {t('activityCard.actions.interested', 'Interested')}
+                  </Text>
+                </TouchableOpacity>
+              )}
+
+              {/* Join按钮 */}
+              {onJoin && (
+                <TouchableOpacity
+                  style={styles.actionButton}
+                  onPress={(e) => {
+                    e.stopPropagation();
+                    onJoin();
+                  }}
+                  hitSlop={{ top: 5, bottom: 5, left: 5, right: 5 }}
+                >
+                  <Ionicons
+                    name={isJoined ? "checkmark-circle" : "checkmark-circle-outline"}
+                    size={18}
+                    color={isJoined ? "#10B981" : "#666"}
+                  />
+                  <Text style={[styles.actionButtonText, isJoined && styles.actionButtonTextActive]}>
+                    {t('activityCard.actions.join', 'Join')}
+                  </Text>
+                </TouchableOpacity>
+              )}
+            </View>
+          )}
         </View>
       </Animated.View>
     </Animated.View>
@@ -371,9 +511,9 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 0,
     left: 0,
-    right: 0,
-    bottom: 60, // 为底部信息区留空间
-    justifyContent: 'flex-start', // 图片向上对齐
+    width: '100%',
+    // height通过inline style动态传递
+    justifyContent: 'center', // 图片居中显示
     alignItems: 'center',
   },
   image: {
@@ -382,16 +522,20 @@ const styles = StyleSheet.create({
   },
   imageLoadingContainer: {
     position: 'absolute',
+    top: 0,
+    left: 0,
     width: '100%',
-    height: '100%',
+    // height通过inline style动态传递
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: theme.colors.background.secondary,
   },
   imagePlaceholder: {
     position: 'absolute',
+    top: 0,
+    left: 0,
     width: '100%',
-    height: '100%',
+    // height通过inline style动态传递
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: theme.colors.background.tertiary,
@@ -400,8 +544,10 @@ const styles = StyleSheet.create({
   // 遮罩层
   overlayGradient: {
     position: 'absolute',
+    top: 0,
+    left: 0,
     width: '100%',
-    height: '100%',
+    // height通过inline style动态传递
     zIndex: 1,
   },
 
@@ -434,26 +580,27 @@ const styles = StyleSheet.create({
   },
 
   
-  // 底部信息区 - 更紧凑的网格布局
+  // 底部信息区 - 重构布局（参考IRL设计）
   infoContainer: {
     position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
-    padding: 8, // 更小的内边距适配变化高度
-    paddingTop: 8,
+    padding: 8,
+    paddingTop: 6,
     backgroundColor: '#FFFFFF',
     borderBottomLeftRadius: theme.borderRadius.card,
     borderBottomRightRadius: theme.borderRadius.card,
     zIndex: 2,
-    minHeight: 60, // 确保最小高度
+    minHeight: 90, // 增加最小高度以容纳新元素
   },
   title: {
-    fontSize: 16, // 提升至最小审核标准16pt
+    fontSize: 15, // 紧凑布局使用稍小字体
     fontWeight: '700',
     color: '#1A1A1A',
-    marginBottom: 6,
-    lineHeight: 20, // 调整行高
+    marginBottom: 4,
+    lineHeight: 20, // 优化行高，改善两行显示效果
+    marginTop: 6, // 与组织者信息的间距
   },
   // 时间和地点布局
   detailsRow: {
@@ -474,8 +621,94 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   time: {
-    fontSize: 13, // 提升至辅助信息最小13pt
-    color: '#555555', // 加深颜色提升对比度
+    fontSize: 12, // 紧凑布局使用更小字体
+    color: '#666666', // 深灰色文字，更协调的视觉层级
     marginTop: 2,
+    marginBottom: 6, // 与操作按钮的间距
+  },
+
+  // 右上角三点菜单
+  moreButton: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    zIndex: 4,
+  },
+  moreButtonCircle: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    ...theme.shadows.sm,
+  },
+
+  // 组织者信息行
+  organizerRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  organizerInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+    marginRight: 8,
+  },
+  organizerAvatar: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    marginRight: 6,
+    backgroundColor: '#F0F0F0',
+  },
+  organizerAvatarPlaceholder: {
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  organizerName: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#333',
+    flex: 1,
+  },
+  attendeeCount: {
+    fontSize: 11,
+    color: '#999',
+    fontWeight: '400',
+  },
+
+  // 底部操作按钮
+  actionButtonsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 6,
+    paddingTop: 6,
+    borderTopWidth: 1,
+    borderTopColor: '#F0F0F0',
+  },
+  actionButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 4,
+    paddingHorizontal: 4,
+    marginHorizontal: 2,
+    borderRadius: 6,
+    backgroundColor: '#F8F8F8',
+  },
+  actionButtonText: {
+    fontSize: 10,
+    fontWeight: '500',
+    color: '#666',
+    marginLeft: 4,
+  },
+  actionButtonTextActive: {
+    color: '#333',
+    fontWeight: '600',
   },
 });

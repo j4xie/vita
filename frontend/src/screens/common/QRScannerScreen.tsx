@@ -635,16 +635,16 @@ export const QRScannerScreen: React.FC = () => {
   const handleUserIdentityScan = async (qrData: string) => {
     try {
       console.log('🔎 [QR扫描] 开始处理用户身份码扫描');
-      
+
       // ✅ 检查是否为新的哈希格式
       if (qrData.startsWith('VG_HASH_')) {
         await handleHashIdentityScan(qrData);
         return;
       }
-      
-      // ✅ 降级到Base64格式处理
+
+      // ✅ 解析二维码（支持Base64和短ID格式）
       const parsedUser = parseUserIdentityQR(qrData);
-      
+
       if (!parsedUser.isValid) {
         console.log('❌ [QR扫描] 身份码无效:', parsedUser.error);
         showScanError(
@@ -655,6 +655,37 @@ export const QRScannerScreen: React.FC = () => {
         return;
       }
 
+      // ✅ 新增：如果是短ID格式，需要API查询
+      if (parsedUser.requiresQuery && parsedUser.userId) {
+        console.log('🌐 [QR扫描-短ID] 查询用户信息，userId:', parsedUser.userId);
+        setIsProcessing(true);
+
+        try {
+          const userResponse = await pomeloXAPI.getUserInfo(parseInt(parsedUser.userId));
+
+          if (userResponse.code === 200 && userResponse.data) {
+            console.log('✅ [QR扫描-短ID] 用户信息查询成功');
+            showUserInfo(userResponse.data as any);
+          } else {
+            console.log('❌ [QR扫描-短ID] 用户信息查询失败:', userResponse.msg);
+            showScanError(
+              t('qr.errors.user_not_found', '用户不存在'),
+              t('qr.errors.network_error', '无法获取用户信息，请检查网络')
+            );
+          }
+        } catch (apiError) {
+          console.error('❌ [QR扫描-短ID] API查询异常:', apiError);
+          showScanError(
+            t('qr.errors.network_error', '网络错误'),
+            t('qr.errors.network_error_try_later', '网络错误，请稍后重试')
+          );
+        } finally {
+          setIsProcessing(false);
+        }
+        return;
+      }
+
+      // ✅ Base64格式直接使用解析数据
       if (!parsedUser.data) {
         console.log('❌ [QR扫描] 身份码数据为空');
         showScanError(
@@ -761,7 +792,7 @@ export const QRScannerScreen: React.FC = () => {
   const parseUserIdentityQR = (qrData: string): ParsedUserQRCode => {
     try {
       console.log('🔍 [QR解析] 开始解析用户身份码:', qrData?.substring(0, 50) + '...');
-      
+
       if (!qrData || typeof qrData !== 'string') {
         console.log('❌ [QR解析] QR数据为空或格式错误');
         return {
@@ -778,6 +809,29 @@ export const QRScannerScreen: React.FC = () => {
         };
       }
 
+      // ✅ 新增：检测短ID格式 VG_USER_ID_{userId}
+      if (qrData.startsWith('VG_USER_ID_')) {
+        const userId = qrData.replace('VG_USER_ID_', '').trim();
+        console.log('🆔 [QR解析] 检测到短ID格式，userId:', userId);
+
+        if (!userId || !/^\d+$/.test(userId)) {
+          console.log('❌ [QR解析] 短ID格式无效:', userId);
+          return {
+            isValid: false,
+            error: '用户ID格式无效'
+          };
+        }
+
+        // 返回需要查询的标记
+        return {
+          isValid: true,
+          requiresQuery: true, // 标记需要API查询
+          userId: userId,
+          data: null // 数据需要异步获取
+        };
+      }
+
+      // 兼容旧的Base64格式
       const base64Data = qrData.replace('VG_USER_', '').trim();
       console.log('🔑 [QR解析] 提取的base64数据长度:', base64Data.length);
       

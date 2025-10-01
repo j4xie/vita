@@ -10,9 +10,9 @@ import {
   Platform,
   ScrollView,
   Alert,
-  ActivityIndicator,
   Animated,
 } from 'react-native';
+import { LoaderOne } from '../../components/ui/LoaderOne';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -491,7 +491,7 @@ const SetNewPasswordScreenComponent: React.FC = () => {
                   activeOpacity={0.9}
                 >
                   {loading ? (
-                    <ActivityIndicator color={theme.colors.text.inverse} />
+                    <LoaderOne color={theme.colors.text.inverse} />
                   ) : (
                     <Text style={styles.resetButtonText}>
                       {t('auth.reset_password.reset_button')}

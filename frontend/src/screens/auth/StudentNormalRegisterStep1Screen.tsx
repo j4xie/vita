@@ -8,7 +8,6 @@ import {
   SafeAreaView,
   ScrollView,
   Alert,
-  ActivityIndicator,
   Keyboard,
   TouchableWithoutFeedback,
   Modal,
@@ -42,13 +41,14 @@ import {
 } from '../../services/registrationAPI';
 import RegionDetectionService from '../../services/RegionDetectionService';
 import UserRegionPreferences from '../../services/UserRegionPreferences';
-import { 
+import {
   validateTextByLanguage,
   TextType,
   createRealtimeValidator,
   getInputPlaceholder
 } from '../../utils/textValidation';
 import { isChinese, i18n } from '../../utils/i18n';
+import { LoaderOne } from '../../components/ui/LoaderOne';
 
 export const StudentNormalRegisterStep1Screen: React.FC = () => {
   const navigation = useNavigation<any>();
@@ -447,6 +447,9 @@ export const StudentNormalRegisterStep1Screen: React.FC = () => {
             autoCapitalize="none"
             autoCorrect={false}
             placeholderTextColor={theme.colors.text.disabled}
+            keyboardType="email-address"
+            returnKeyType="next"
+            onSubmitEditing={() => Keyboard.dismiss()}
           />
           <Text style={styles.emailDomain}>{formData.selectedSchool.emailDomain}</Text>
         </View>
@@ -667,7 +670,7 @@ export const StudentNormalRegisterStep1Screen: React.FC = () => {
           disabled={loading || hasValidationErrors}
         >
           {loading ? (
-            <ActivityIndicator color={theme.colors.text.inverse} />
+            <LoaderOne color={theme.colors.text.inverse} />
           ) : (
             <Text style={styles.nextButtonText}>
               {t('auth.register.form.next_step')}

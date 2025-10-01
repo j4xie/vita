@@ -3,7 +3,6 @@ import {
   View,
   Text,
   TouchableOpacity,
-  TextInput,
   StyleSheet,
   Platform,
   Keyboard,
@@ -40,6 +39,7 @@ import { theme } from '../../theme';
 import { useFilter } from '../../context/FilterContext';
 import { Glass } from '../../ui/glass/GlassTheme';
 import { shouldShowTabBar } from '../../config/tabBarConfig';
+import { CenterTabButton } from './CenterTabButton';
 
 interface CustomTabBarProps extends BottomTabBarProps {
   // 可以添加额外的自定义属性
@@ -54,13 +54,9 @@ export const CustomTabBar: React.FC<CustomTabBarProps> = ({
   const insets = useSafeAreaInsets();
   const { isFilterOpen } = useFilter();
   const [isReduceMotionEnabled, setIsReduceMotionEnabled] = useState(false);
-  
-  // 页面检测 - 只在探索页面显示搜索按钮
-  const currentRoute = state.routes[state.index];
-  const isExplorePage = currentRoute?.name === 'Explore';
-  const showSearchButton = isExplorePage;
-  
+
   // 🔄 实时获取当前路由的嵌套路由名称
+  const currentRoute = state.routes[state.index];
   const getFocusedRouteName = (route: any): string => {
     if (route.state) {
       const nestedRoute = route.state.routes[route.state.index];
@@ -68,48 +64,22 @@ export const CustomTabBar: React.FC<CustomTabBarProps> = ({
     }
     return route.name;
   };
-  
-  const focusedRouteName = getFocusedRouteName(currentRoute);
-  
-  console.log('🔍 TabBar页面检测:', {
-    tabRouteName: currentRoute?.name,
-    focusedRouteName,
-    isExplorePage,
-    showSearchButton,
-    stateIndex: state.index
-  });
-  
-  // 搜索功能状态
-  const [searchMode, setSearchMode] = useState<'default' | 'expanded' | 'input'>('default');
-  const [searchText, setSearchText] = useState('');
-  const [keyboardHeight, setKeyboardHeight] = useState(0);
-  const searchInputRef = useRef<TextInput>(null);
 
-  // 键盘适应动画值
-  const keyboardOffset = useSharedValue(0);
-  
+  const focusedRouteName = getFocusedRouteName(currentRoute);
+
   // 基础动画值
   const tabBarTranslateY = useSharedValue(0);
   const highlightSweepX = useSharedValue(-100);
   const highlightOpacity = useSharedValue(0);
-  
-  // 拖拽气泡动画值系统
-  const dragBubbleVisible = useSharedValue(0); // 单一可信状态
-  const bubbleScale = useSharedValue(1); // 1.0 → 1.06放大
-  const bubbleX = useSharedValue(0); // 拖拽位置
-  const targetTabIndex = useSharedValue(0); // 目标Tab
-  const highlightGain = useSharedValue(1); // 高光增益
-  const rainbowGain = useSharedValue(1); // 彩虹增益
-  const whiteRingOpacity = useSharedValue(0); // 白描边
-  
-  // 搜索功能动画值 - 重新设计
-  const tabsOpacity = useSharedValue(1); // 4个Tab的透明度
-  const compactButtonOpacity = useSharedValue(0); // 圆形按钮的透明度
-  const searchOverlayWidth = useSharedValue(0); // 搜索覆盖层宽度
-  const searchInputOpacity = useSharedValue(0); // 搜索输入框透明度
 
-  // 移除复杂Tab动画值
-  // 保持简洁的Tab切换
+  // 拖拽气泡动画值系统
+  const dragBubbleVisible = useSharedValue(0);
+  const bubbleScale = useSharedValue(1);
+  const bubbleX = useSharedValue(0);
+  const targetTabIndex = useSharedValue(0);
+  const highlightGain = useSharedValue(1);
+  const rainbowGain = useSharedValue(1);
+  const whiteRingOpacity = useSharedValue(0);
   
   // 手势状态
   const [isDragging, setIsDragging] = useState(false);
@@ -123,143 +93,12 @@ export const CustomTabBar: React.FC<CustomTabBarProps> = ({
     AccessibilityInfo.isReduceMotionEnabled().then(setIsReduceMotionEnabled);
   }, []);
 
-  // 移除气泡初始化代码
-  // useEffect(() => {
-  //   // 气泡初始化逻辑已移除
-  // }, [state.index, showSearchButton]);
-
-  // 键盘事件监听 - 确保TabBar不被遮挡
-  useEffect(() => {
-    const keyboardWillShow = (event: KeyboardEvent) => {
-      const keyboardHeight = event.endCoordinates?.height || 0;
-      setKeyboardHeight(keyboardHeight);
-      
-      // TabBar向上移动，避免被键盘遮挡
-      keyboardOffset.value = withTiming(-keyboardHeight * 0.3, { 
-        duration: event.duration || 250,
-        easing: Easing.bezier(0.25, 0.1, 0.25, 1)
-      });
-    };
-    
-    const keyboardWillHide = (event: KeyboardEvent) => {
-      setKeyboardHeight(0);
-      
-      // TabBar恢复原位置
-      keyboardOffset.value = withTiming(0, { 
-        duration: event.duration || 250,
-        easing: Easing.bezier(0.25, 0.1, 0.25, 1)
-      });
-    };
-    
-    const showSubscription = Keyboard.addListener(
-      Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
-      keyboardWillShow
-    );
-    const hideSubscription = Keyboard.addListener(
-      Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide',
-      keyboardWillHide
-    );
-    
-    return () => {
-      showSubscription?.remove();
-      hideSubscription?.remove();
-    };
-  }, []);
-
   // 初始化目标Tab索引
   useEffect(() => {
     if (state?.index !== undefined) {
       targetTabIndex.value = state.index;
     }
   }, [state?.index]);
-
-  // 搜索功能处理
-  const handleSearchPress = useCallback(() => {
-    console.log('🔍 搜索按钮被点击，当前模式:', searchMode);
-    
-    if (Platform.OS === 'ios') {
-      try {
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-      } catch (error) {
-        console.warn('Haptics not available:', error);
-      }
-    }
-
-    if (searchMode === 'default') {
-      // 第一次点击：展开搜索框
-      console.log('🎬 开始搜索展开动画');
-      setSearchMode('expanded');
-      
-      // 阶段1：4个Tab淡出
-      tabsOpacity.value = withTiming(0, { duration: 200 });
-      
-      // 阶段2：圆形按钮出现  
-      compactButtonOpacity.value = withDelay(150, withSpring(1, { 
-        damping: 20, 
-        stiffness: 300 
-      }));
-      
-      // 阶段3：搜索覆盖层展开 - 调整宽度为左侧按钮留出空间
-      searchOverlayWidth.value = withDelay(200, withTiming(Dimensions.get('window').width - 116, { 
-        duration: 300, 
-        easing: Easing.bezier(0.4, 0, 0.2, 1) 
-      }));
-      
-      // 阶段4：搜索框内容显示
-      searchInputOpacity.value = withDelay(400, withTiming(1, { duration: 200 }));
-      
-      console.log('📊 Tab→圆形动画已启动');
-      
-    } else if (searchMode === 'expanded') {
-      // 第二次点击：进入输入模式
-      console.log('🔍 [TABBAR] 切换到输入模式');
-      setSearchMode('input');
-      
-      setTimeout(() => {
-        console.log('🔍 [TABBAR] 搜索框获得焦点');
-        searchInputRef.current?.focus();
-      }, 100);
-    }
-  }, [searchMode]);
-
-  // 新增：只清空搜索内容的函数
-  const handleSearchClear = useCallback(() => {
-    console.log('🔍 [TABBAR] 清空搜索内容');
-    setSearchText('');
-    
-    // 发送清空搜索事件到ActivityListScreen
-    console.log('🔍 [TABBAR] 发送清空搜索事件到ActivityListScreen');
-    DeviceEventEmitter.emit('searchTextChanged', { 
-      searchText: '',
-      timestamp: Date.now()
-    });
-    
-    // 保持搜索模式，不退出
-    // 搜索框保持焦点，用户可以继续输入
-  }, []);
-
-  const handleSearchCancel = useCallback(() => {
-    console.log('❌ 取消搜索，当前模式:', searchMode);
-    setSearchMode('default');
-    setSearchText('');
-    
-    // 发送清空搜索事件到ActivityListScreen
-    console.log('🔍 [TABBAR] 发送清空搜索事件到ActivityListScreen');
-    DeviceEventEmitter.emit('searchTextChanged', { 
-      searchText: '',
-      timestamp: Date.now()
-    });
-    
-    Keyboard.dismiss();
-    
-    // 逆向恢复动画
-    searchInputOpacity.value = withTiming(0, { duration: 150 });
-    searchOverlayWidth.value = withTiming(0, { duration: 250 });
-    compactButtonOpacity.value = withTiming(0, { duration: 200 });
-    tabsOpacity.value = withDelay(200, withTiming(1, { duration: 200 }));
-    
-    console.log('📊 圆形→Tab恢复动画已启动');
-  }, [searchMode]);
 
   // 统一清理函数 - 解决气泡残留
   const clearDragState = useCallback(() => {
@@ -560,11 +399,13 @@ export const CustomTabBar: React.FC<CustomTabBarProps> = ({
       case 'Explore':
         return focused ? 'compass' : 'compass-outline';
       case 'Community':
-        return focused ? 'people' : 'people-outline';
-      case 'Profile':
-        return focused ? 'person' : 'person-outline';
+        return focused ? 'storefront' : 'storefront-outline';
+      case 'Rewards':
+        return focused ? 'card' : 'card-outline';
       case 'Wellbeing':
         return focused ? 'shield' : 'shield-outline';
+      case 'Profile':
+        return focused ? 'person' : 'person-outline';
       default:
         return 'compass-outline';
     }
@@ -576,10 +417,12 @@ export const CustomTabBar: React.FC<CustomTabBarProps> = ({
         return t('navigation.tabs.explore');
       case 'Community':
         return t('navigation.tabs.community');
-      case 'Profile':
-        return t('navigation.tabs.profile');
+      case 'Rewards':
+        return t('navigation.tabs.rewards');
       case 'Wellbeing':
         return t('navigation.tabs.wellbeing');
+      case 'Profile':
+        return t('navigation.tabs.profile');
       default:
         return routeName;
     }
@@ -589,7 +432,6 @@ export const CustomTabBar: React.FC<CustomTabBarProps> = ({
   const animatedTabBarStyle = useAnimatedStyle(() => ({
     transform: [
       { translateY: tabBarTranslateY.value },
-      { translateY: keyboardOffset.value }  // 添加键盘偏移
     ],
   }));
 
@@ -604,27 +446,6 @@ export const CustomTabBar: React.FC<CustomTabBarProps> = ({
       { translateX: bubbleX.value },
     ],
     opacity: Math.max(0, Math.min(1, dragBubbleVisible.value)), // 限制opacity范围
-  }));
-
-  // 搜索区域动画样式 - 修复Reanimated用法
-  const searchAreaAnimatedStyle = useAnimatedStyle(() => ({
-    width: searchOverlayWidth.value,
-    opacity: searchInputOpacity.value,
-  }));
-
-  // 移除气泡动画样式
-  // const selectedBubbleAnimatedStyle = useAnimatedStyle(() => ({
-  //   opacity: 0, // 隐藏气泡
-  // }));
-
-  // Tab区域动画样式 - 简化
-  const tabsAnimatedStyle = useAnimatedStyle(() => ({
-    opacity: tabsOpacity.value,
-  }));
-
-  // 圆形按钮动画样式 - 移除scale避免错误
-  const compactButtonAnimatedStyle = useAnimatedStyle(() => ({
-    opacity: compactButtonOpacity.value,
   }));
 
   // 高光增强样式
@@ -727,16 +548,23 @@ export const CustomTabBar: React.FC<CustomTabBarProps> = ({
 
         {/* Tab容器 */}
         <Animated.View style={[styles.tabBarContainer, tabBarContainerAnimatedStyle]}>
-          {/* 默认模式：4个Tab */}
-          <Animated.View style={[styles.normalTabsContainer, tabsAnimatedStyle]}>
+          {/* 4个普通Tab + 中间占位符 */}
+          <View style={styles.normalTabsContainer}>
             {state.routes.map((route, index) => {
             if (!route || !route.key) return null;
-            
+
             const descriptor = descriptors[route.key];
             if (!descriptor) return null;
-            
+
             const { options } = descriptor;
             const isFocused = state.index === index;
+
+            // 🎯 Rewards Tab - 渲染占位符，实际按钮在外部浮动渲染
+            if (route.name === 'Rewards') {
+              return <View key={route.key} style={styles.centerPlaceholder} />;
+            }
+
+            // 普通Tab渲染
             const iconName = getIconName(route.name, isFocused);
             const label = getTabLabel(route.name);
 
@@ -744,8 +572,8 @@ export const CustomTabBar: React.FC<CustomTabBarProps> = ({
             const tabAnimatedStyle = { transform: [{ scale: 1 }] };
 
             return (
-              <Animated.View 
-                key={route.key} 
+              <Animated.View
+                key={route.key}
                 style={[styles.tabContainer, tabAnimatedStyle]}
               >
                 {/* 移除选中气泡背景 */}
@@ -765,17 +593,17 @@ export const CustomTabBar: React.FC<CustomTabBarProps> = ({
                     <View style={styles.iconContainer}>
                       <Ionicons
                         name={iconName}
-                        size={isFocused ? 24 : 22}
+                        size={isFocused ? 20 : 18}
                         color={isFocused ? '#007AFF' : '#000000'}
                         style={styles.tabIcon}
                       />
                     </View>
-                    
+
                     {/* 文字 - 简化避免动画错误 */}
                     <Text
                       style={[
                         styles.tabLabel,
-                        { 
+                        {
                           color: isFocused ? '#007AFF' : '#000000',
                           opacity: isFocused ? 1.0 : 0.7,
                           fontWeight: isFocused ? '600' : '500',
@@ -793,102 +621,32 @@ export const CustomTabBar: React.FC<CustomTabBarProps> = ({
               </Animated.View>
             );
           })}
-          </Animated.View>
-
-          {/* 紧凑模式：圆形按钮 */}
-          <Animated.View style={[styles.compactButton, compactButtonAnimatedStyle]}>
-            <TouchableOpacity
-              style={styles.compactButtonTouch}
-              onPress={handleSearchCancel}
-              activeOpacity={0.7}
-            >
-              <Ionicons
-                name="grid"
-                size={18}
-                color="#1C1C1E"
-              />
-            </TouchableOpacity>
-          </Animated.View>
-          
-          {/* 搜索按钮 - 只在探索页面和默认状态显示 */}
-          {showSearchButton && searchMode === 'default' && (
-            <TouchableOpacity
-              style={styles.searchButton}
-              onPress={handleSearchPress}
-              activeOpacity={0.7}
-            >
-              <View style={styles.searchButtonContent}>
-                <Ionicons
-                  name="search"
-                  size={22}
-                  color="#007AFF"
-                />
-              </View>
-            </TouchableOpacity>
-          )}
-
-          {/* 取消按钮 - 只在输入状态显示 */}
-          {searchMode === 'input' && (
-            <TouchableOpacity
-              style={styles.searchButton}
-              onPress={handleSearchCancel}
-              activeOpacity={0.7}
-            >
-              <View style={styles.searchButtonContent}>
-                <Ionicons
-                  name="close"
-                  size={22}
-                  color="#007AFF"
-                />
-              </View>
-            </TouchableOpacity>
-          )}
-        </Animated.View>
-
-        {/* 搜索覆盖层 - 独立层级，匹配参考图效果 */}
-        <Animated.View style={[
-          styles.searchOverlay,
-          searchAreaAnimatedStyle
-        ]}>
-          {/* 简洁白色背景 */}
-          
-          <View style={styles.searchOverlayContent}>
-            <Ionicons name="search" size={18} color="#666666" />
-            <TextInput
-              ref={searchInputRef}
-              style={styles.searchOverlayInput}
-              placeholder={t('common.search_placeholder')}
-              placeholderTextColor="#9CA3AF"
-              value={searchText}
-              onChangeText={(text) => {
-                console.log('🔍 [TABBAR] 搜索文本输入:', { oldText: searchText, newText: text, currentMode: searchMode });
-                setSearchText(text);
-                
-                // 发送搜索事件到ActivityListScreen进行当前页面内筛选
-                console.log('🔍 [TABBAR] 发送搜索事件到ActivityListScreen:', text);
-                DeviceEventEmitter.emit('searchTextChanged', { 
-                  searchText: text.trim(),
-                  timestamp: Date.now()
-                });
-              }}
-              autoCapitalize="none"
-              autoCorrect={false}
-            />
-            {/* 条件显示叉叉按钮 - 只有当搜索框有内容时才显示 */}
-            {searchText.length > 0 && (
-              <TouchableOpacity
-                style={styles.searchOverlayClear}
-                onPress={handleSearchClear}
-              >
-                <Ionicons name="close" size={18} color="#666666" />
-              </TouchableOpacity>
-            )}
           </View>
         </Animated.View>
         
         {/* 边框层 */}
         <View style={styles.borderLayer} pointerEvents="none" />
       </View>
+
+      {/* 🎯 浮动中心按钮 - Rewards Tab (在liquidGlassContainer外部) */}
+      {(() => {
+        const rewardsRoute = state.routes.find(route => route.name === 'Rewards');
+        if (!rewardsRoute) return null;
+
+        const rewardsIndex = state.routes.findIndex(route => route.name === 'Rewards');
+        const isFocused = state.index === rewardsIndex;
+
+        return (
+          <View style={styles.floatingCenterButton}>
+            <CenterTabButton
+              focused={isFocused}
+              onPress={() => handleTabPress(rewardsRoute, isFocused)}
+              icon="card"
+              badge={0}
+            />
+          </View>
+        );
+      })()}
     </Animated.View>
   );
 };
@@ -979,36 +737,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16, // 添加水平内边距，让Tab不贴边
   },
 
-  // 紧凑圆形按钮 - 修复垂直对齐
-  compactButton: {
-    position: 'absolute',
-    left: 8,
-    top: '50%',
-    marginTop: -25, // 调整为-25，与搜索框完美对齐
-    width: 50, // 稍微增大，匹配参考图
-    height: 50,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
 
-  compactButtonTouch: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    backgroundColor: 'rgba(255, 255, 255, 0.9)', // Liquid Glass半透明白色
-    alignItems: 'center',
-    justifyContent: 'center',
-    // 添加独立阴影
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-
-  // 图标容器 - 进一步调整间距
+  // 图标容器 - 5-tab布局优化间距
   iconContainer: {
-    marginBottom: 6, // 从4pt增加到6pt，进一步增加图标和文字间距
+    marginBottom: 3, // 5-tab布局：减小到3pt以节省空间
     // transform在JSX中动态设置
   },
 
@@ -1025,8 +757,8 @@ const styles = StyleSheet.create({
   tabContent: {
     alignItems: 'center',
     justifyContent: 'center', // 改回center，使用marginBottom控制间距
-    height: 54, // 增加高度从50pt到54pt
-    paddingVertical: 6, // 增加垂直内边距到6pt
+    height: 46, // 5-tab布局：减小高度以适配更紧凑的设计
+    paddingVertical: 4, // 5-tab布局：减小垂直内边距
   },
 
   tabIcon: {
@@ -1034,10 +766,10 @@ const styles = StyleSheet.create({
   },
 
   tabLabel: {
-    fontSize: Platform.OS === 'ios' && (Dimensions.get('window').width >= 768) ? 24 : 16, // 强制iPad 24pt
+    fontSize: Platform.OS === 'ios' && (Dimensions.get('window').width >= 768) ? 24 : 10, // 5-tab布局：手机端10pt，iPad保持24pt
     fontWeight: '500', // Medium字重
     textAlign: 'center',
-    lineHeight: Platform.OS === 'ios' && (Dimensions.get('window').width >= 768) ? 30 : 20, // 强制iPad行高
+    lineHeight: Platform.OS === 'ios' && (Dimensions.get('window').width >= 768) ? 30 : 13, // 5-tab布局：手机端13pt行高
     // transform和color在JSX中动态设置
   },
 
@@ -1055,98 +787,19 @@ const styles = StyleSheet.create({
     transform: [{ translateY: 200 }],
   },
 
-  // 搜索按钮样式
-  searchButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginLeft: 8,
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  
-  searchButtonContent: {
-    alignItems: 'center',
-    justifyContent: 'center',
+  // 🎯 中间占位符 - 为浮动按钮留出空间
+  centerPlaceholder: {
+    width: 70,
+    height: '100%',
   },
 
-  // 搜索区域样式
-  searchArea: {
-    height: 44,
-    justifyContent: 'center',
-    marginRight: 8,
-  },
-  
-  searchInputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
-    borderRadius: 22,
-    paddingHorizontal: 12,
-    height: 44,
-  },
-  
-  searchInput: {
-    flex: 1,
-    fontSize: 16,
-    color: '#1A1A1A',
-    marginLeft: 8,
-    height: 44,
-  },
-  
-  searchClearButton: {
-    padding: 4,
-    marginLeft: 8,
-  },
-
-  // 移除气泡样式定义
-
-  // 搜索覆盖层样式 - 优化宽度匹配参考图
-  searchOverlay: {
+  // 🎯 浮动中心按钮容器
+  floatingCenterButton: {
     position: 'absolute',
-    left: 62, // 增加左边距，为左侧按钮留出空间
-    right: 54, // 减少右边距，让搜索框更宽
-    top: 11,
-    height: 44,
-    backgroundColor: 'rgba(255, 255, 255, 0.95)', // 简洁白色背景
-    borderRadius: 22,
-    justifyContent: 'center',
-    overflow: 'hidden',
-    // 适度的阴影效果
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-
-  searchOverlayContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 12,
-    height: 44,
-  },
-
-  searchOverlayInput: {
-    flex: 1,
-    fontSize: 16,
-    color: '#1A1A1A',
-    marginLeft: 8,
-    marginRight: 8,
-  },
-
-  searchOverlayClear: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
+    bottom: 15, // 从TabBar底部向上15px，让60px按钮凸出约25px
+    left: '50%',
+    marginLeft: -30, // 60px按钮的一半
+    zIndex: 1001,
   },
 });
 

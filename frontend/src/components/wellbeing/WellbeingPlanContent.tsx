@@ -34,17 +34,17 @@ export const WellbeingPlanContent: React.FC = () => {
     },
 
     cardTitle: {
-      fontSize: 17,
+      fontSize: 16,
       fontWeight: '600' as const,
       marginBottom: 4,
       letterSpacing: 0.2,
-      lineHeight: 22,
+      lineHeight: 21,
       opacity: 0.9,
     },
 
     cardDescription: {
       fontSize: 14,
-      lineHeight: 20,
+      lineHeight: 19,
       opacity: 0.75,
       letterSpacing: 0.1,
       marginTop: 2,
@@ -58,7 +58,7 @@ export const WellbeingPlanContent: React.FC = () => {
     },
 
     sectionTitle: {
-      fontSize: 22,
+      fontSize: 18,
       fontWeight: '700' as const,
       marginBottom: 20,
       letterSpacing: 0.3,
@@ -77,7 +77,7 @@ export const WellbeingPlanContent: React.FC = () => {
       <View style={styles.infoSection}>
         <View style={styles.infoCard}>
           <View style={styles.infoIconContainer}>
-            <Ionicons name="information-circle" size={22} color="#4285F4" />
+            <Ionicons name="information-circle" size={20} color="#4285F4" />
           </View>
           <View style={styles.infoContent}>
             <Text style={styles.infoTitle}>{t('wellbeing.plan.emergency_warning')}</Text>
@@ -101,7 +101,7 @@ export const WellbeingPlanContent: React.FC = () => {
             borderWidth: 2,
             borderColor: 'rgba(255, 71, 87, 0.2)',
           }]}>
-            <Ionicons name="call" size={28} color="#FF4757" />
+            <Ionicons name="call" size={26} color="#FF4757" />
           </View>
           <View style={styles.cardContent}>
             <Text style={[staticCardStyles.cardTitle, styles.cardTitle911]}>Emergency</Text>
@@ -122,7 +122,7 @@ export const WellbeingPlanContent: React.FC = () => {
             borderWidth: 2,
             borderColor: 'rgba(46, 213, 115, 0.2)',
           }]}>
-            <Ionicons name="heart" size={28} color="#2ED573" />
+            <Ionicons name="heart" size={26} color="#2ED573" />
           </View>
           <View style={styles.cardContent}>
             <Text style={[staticCardStyles.cardTitle, styles.cardTitle988]}>Crisis Hotline</Text>
@@ -158,52 +158,52 @@ const styles = StyleSheet.create({
   },
 
   header: {
-    paddingTop: 12,
-    paddingBottom: 12, // 减少底部间距，让标题更靠近下方内容
+    paddingTop: 8,
+    paddingBottom: 8,
     paddingHorizontal: 8,
     alignItems: 'center',
   },
 
   title: {
-    fontSize: 24,
+    fontSize: 22,
     fontWeight: '700',
     color: Glass.textMain,
     textAlign: 'center',
-    marginBottom: 12,
+    marginBottom: 6,
     paddingHorizontal: 8,
-    lineHeight: 30,
+    lineHeight: 28,
     letterSpacing: 0.3,
   },
 
   subtitle: {
-    fontSize: 15,
+    fontSize: 14,
     color: Glass.textWeak,
     textAlign: 'center',
-    lineHeight: 22,
+    lineHeight: 19,
     paddingHorizontal: 16,
-    marginBottom: 8,
-    opacity: 0.85,
+    marginBottom: 4,
+    opacity: 0.75,
     letterSpacing: 0.1,
   },
 
   section: {
-    marginBottom: 40,
+    marginBottom: 32,
     paddingHorizontal: 4,
   },
 
   sectionTitle: {
-    fontSize: 22,
+    fontSize: 17,
     fontWeight: '700',
     color: Glass.textMain,
-    marginBottom: 20,
+    marginBottom: 16,
     letterSpacing: 0.3,
     textAlign: 'left',
   },
 
   emergencyCard: {
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
     borderRadius: 16,
-    padding: 20,
+    padding: 18,
     marginBottom: 12,
     flexDirection: 'row',
     alignItems: 'center',
@@ -212,7 +212,7 @@ const styles = StyleSheet.create({
       width: 0,
       height: 2,
     },
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.08,
     shadowRadius: 8,
     elevation: 3,
   },
@@ -232,59 +232,59 @@ const styles = StyleSheet.create({
   },
 
   iconContainer: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 24,
+    marginRight: 16,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.15,
-    shadowRadius: 6,
-    elevation: 5,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
 
   cardContent: {
     flex: 1,
     justifyContent: 'center',
-    paddingVertical: 4,
+    paddingVertical: 2,
   },
 
   phoneNumberContainer: {
     alignSelf: 'flex-start',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
     borderRadius: 8,
-    marginVertical: 6,
+    marginVertical: 5,
     borderWidth: 1,
     borderColor: 'rgba(0, 0, 0, 0.05)',
   },
 
   infoSection: {
-    marginBottom: 32,
+    marginBottom: 24,
     paddingHorizontal: 4,
   },
 
   infoCard: {
-    backgroundColor: 'rgba(66, 133, 244, 0.08)',
+    backgroundColor: 'rgba(66, 133, 244, 0.05)',
     borderRadius: 12,
-    padding: 16,
-    marginBottom: 16,
+    padding: 14,
+    marginBottom: 12,
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: 'rgba(66, 133, 244, 0.2)',
+    borderColor: 'rgba(66, 133, 244, 0.15)',
   },
 
   infoIconContainer: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: 'rgba(66, 133, 244, 0.15)',
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: 'rgba(66, 133, 244, 0.12)',
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 12,
+    marginRight: 10,
   },
 
   infoContent: {
@@ -300,14 +300,14 @@ const styles = StyleSheet.create({
 
   infoText: {
     fontSize: 13,
-    lineHeight: 18,
+    lineHeight: 17,
     color: '#5F6368',
     fontWeight: '400',
   },
 
   serviceDescription: {
-    fontSize: 12,
-    lineHeight: 16,
+    fontSize: 11,
+    lineHeight: 14,
     textAlign: 'center',
     color: '#9AA0A6',
     fontStyle: 'italic',
@@ -375,6 +375,6 @@ const styles = StyleSheet.create({
   cardDescription: {
     fontSize: 14,
     color: '#666666',
-    lineHeight: 20,
+    lineHeight: 19,
   },
 });

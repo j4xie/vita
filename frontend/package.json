@@ -93,6 +93,7 @@
     "react-i18next": "^15.6.1",
     "react-native": "0.76.9",
     "react-native-base64": "^0.2.1",
+    "react-native-calendars": "^1.1313.0",
     "react-native-fast-image": "^8.6.3",
     "react-native-gesture-handler": "~2.20.2",
     "react-native-localize": "^3.5.1",

@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import {
   View,
   Text,
@@ -7,6 +7,7 @@ import {
   RefreshControl,
   Platform,
   Dimensions,
+  DeviceEventEmitter,
 } from 'react-native';
 import Animated, {
   useSharedValue,
@@ -21,13 +22,13 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTranslation } from 'react-i18next';
 import { useNavigation } from '@react-navigation/native';
+import { LoaderOne } from '../../components/ui/LoaderOne';
 import { getSchoolLogo } from '../../utils/schoolLogos';
 import { fetchSchoolList } from '../../services/registrationAPI';
 import { useUser } from '../../context/UserContext';
 import { getSchoolVolunteerStats } from '../../services/volunteerAPI';
 import { getSchoolVolunteerCount } from '../../services/userStatsAPI';
 import { SegmentedGlass } from '../../ui/glass/SegmentedGlass';
-import { GlassSearchBar } from '../../ui/glass/GlassSearchBar';
 import { LiquidGlassListItem } from '../../ui/glass/LiquidGlassListItem';
 import { Glass } from '../../ui/glass/GlassTheme';
 import { useAllDarkModeStyles } from '../../hooks/useDarkModeStyles';
@@ -43,7 +44,7 @@ export const VolunteerSchoolListScreen: React.FC = () => {
   
   const darkModeSystem = useAllDarkModeStyles();
   const { isDarkMode, styles: dmStyles, gradients: dmGradients, blur: dmBlur, icons: dmIcons } = darkModeSystem;
-  
+
   // 状态管理
   const [searchQuery, setSearchQuery] = useState('');
   const [refreshing, setRefreshing] = useState(false);
@@ -148,6 +149,24 @@ export const VolunteerSchoolListScreen: React.FC = () => {
     loadSchoolData();
   }, []); // 只在组件加载时执行一次
 
+  // 监听FloatingSearchButton搜索事件
+  useEffect(() => {
+    const searchListener = DeviceEventEmitter.addListener(
+      'searchTextChanged',
+      (data: { searchText: string; timestamp: number }) => {
+        console.log('🔍 [VOLUNTEER-SCHOOL-LIST] 收到搜索事件:', {
+          searchText: data.searchText,
+          timestamp: data.timestamp
+        });
+        setSearchQuery(data.searchText);
+      }
+    );
+
+    return () => {
+      searchListener.remove();
+    };
+  }, []);
+
   // 学校显示名称映射
   const getSchoolDisplayName = (deptName: string): string => {
     const nameMap: Record<string, string> = {
@@ -204,7 +223,7 @@ export const VolunteerSchoolListScreen: React.FC = () => {
     opacity: cardOpacity.value,
   }));
 
-  // 🌍 FIXED: 过滤学校数据 - 使用正确的字段名
+  // 搜索过滤学校数据
   const filteredSchools = schools.filter(school => {
     if (!searchQuery) return true;
     const query = searchQuery.toLowerCase();
@@ -413,30 +432,37 @@ export const VolunteerSchoolListScreen: React.FC = () => {
   };
 
   // 渲染空状态
-  const renderEmptyState = () => (
-    <View style={styles.emptyContainer}>
-      <Text style={styles.emptyText}>{t('school.no_volunteers_found')}</Text>
-      <Text style={styles.emptySubtext}>{t('explore.category_developing_message', { category: t('wellbeing.title') })}</Text>
-    </View>
-  );
+  const renderEmptyState = () => {
+    // 如果正在加载，不显示空状态
+    if (loading) {
+      return null;
+    }
+
+    return (
+      <View style={styles.emptyContainer}>
+        <Text style={styles.emptyText}>{t('school.no_volunteers_found')}</Text>
+        <Text style={styles.emptySubtext}>{t('volunteer.no_data_hint', '请稍后再试或联系管理员')}</Text>
+      </View>
+    );
+  };
 
   return (
     <View style={[styles.container, dmStyles.page.container]}>
       {/* 移除背景渐变，由父组件WellbeingScreen提供 */}
 
-      <View style={styles.content}>
-        {/* 搜索框 - 直接显示，不需要Tab判断 */}
-        <View style={styles.searchSection}>
-          <GlassSearchBar
-            placeholder={t('common.search_schools')}
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-          />
+      {/* 加载状态 */}
+      {loading && (
+        <View style={styles.loadingContainer}>
+          <LoaderOne />
         </View>
+      )}
 
-        {/* 志愿者学校列表 - 直接显示 */}
-        <View style={styles.listContainer}>
-          <FlatList
+      {/* 内容区域 */}
+      {!loading && (
+        <View style={styles.content}>
+          {/* 志愿者学校列表 - 直接显示 */}
+          <View style={styles.listContainer}>
+            <FlatList
             data={filteredSchools}
             renderItem={renderSchoolItem}
             keyExtractor={(item) => item.id}
@@ -451,8 +477,9 @@ export const VolunteerSchoolListScreen: React.FC = () => {
               <RefreshControl
                 refreshing={refreshing}
                 onRefresh={onRefresh}
-                tintColor={Glass.textWeak}
-                title={t('common.loading')}
+                tintColor="#FF6B35"
+                colors={['#FF6B35']}
+                progressBackgroundColor="transparent"
               />
             }
             contentContainerStyle={[
@@ -474,7 +501,8 @@ export const VolunteerSchoolListScreen: React.FC = () => {
             })}
           />
         </View>
-      </View>
+        </View>
+      )}
     </View>
   );
 };
@@ -484,15 +512,14 @@ const styles = StyleSheet.create({
     flex: 1,
   },
 
-  content: {
+  loadingContainer: {
     flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 
-  // 搜索区域
-  searchSection: {
-    paddingHorizontal: Glass.touch.spacing.sectionMargin,
-    paddingTop: 16, // 顶部间距
-    marginBottom: 16,
+  content: {
+    flex: 1,
   },
 
   // 列表容器
@@ -501,6 +528,7 @@ const styles = StyleSheet.create({
   },
 
   listContent: {
+    paddingTop: 16, // 顶部间距
     paddingHorizontal: Glass.touch.spacing.sectionMargin,
   },
 

@@ -979,6 +979,8 @@ export const EditProfileScreen: React.FC = () => {
                     placeholderTextColor={isDarkMode ? '#8e8e93' : '#8e8e93'}
                     editable={EDITABLE_FIELDS.includes('phonenumber')}
                     keyboardType="phone-pad"
+                    returnKeyType="done"
+                    onSubmitEditing={() => Keyboard.dismiss()}
                   />
                 </View>
                 {!EDITABLE_FIELDS.includes('phonenumber') && (

@@ -9,11 +9,15 @@ import {
   Animated,
   RefreshControl,
   ScrollView,
+  Platform,
 } from 'react-native';
+import { LoaderOne } from '../../components/ui/LoaderOne';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import * as Haptics from 'expo-haptics';
 import { useTranslation } from 'react-i18next';
 import { useRoute, useNavigation, useFocusEffect } from '@react-navigation/native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { theme } from '../../theme';
 import { LIQUID_GLASS_LAYERS } from '../../theme/core';
 import { usePerformanceDegradation } from '../../hooks/usePerformanceDegradation';
@@ -21,11 +25,11 @@ import { useAllDarkModeStyles } from '../../hooks/useDarkModeStyles';
 import { useUser } from '../../context/UserContext';
 import { useVolunteerContext } from '../../context/VolunteerContext';
 import { VolunteerSchoolListScreen } from './VolunteerSchoolListScreen';
+import { FloatingSearchButton } from '../../components/navigation/FloatingSearchButton';
 import volunteerAutoCheckoutService from '../../services/volunteerAutoCheckoutService';
 import { getVolunteerRecords, getLastVolunteerRecord, getPersonalVolunteerHours, volunteerSignRecord, performVolunteerCheckOut } from '../../services/volunteerAPI';
 import { pomeloXAPI } from '../../services/PomeloXAPI';
 import { timeService } from '../../utils/UnifiedTimeService';
-import { VolunteerTimeEntryModal } from '../../components/modals/VolunteerTimeEntryModal';
 import { SafeAlert } from '../../utils/SafeAlert';
 import { apiCache } from '../../services/apiCache';
 
@@ -44,8 +48,7 @@ const PersonalVolunteerDataFixed: React.FC = () => {
   const [historyRecords, setHistoryRecords] = useState<any[]>([]);
   const [currentTime, setCurrentTime] = useState(new Date());
 
-  // 补录工时模态框状态
-  const [showTimeEntryModal, setShowTimeEntryModal] = useState(false);
+  // 操作状态
   const [isOperating, setIsOperating] = useState(false);
 
   // 实时更新当前时间
@@ -506,7 +509,7 @@ const PersonalVolunteerDataFixed: React.FC = () => {
           {/* 补录工时按钮 */}
           <TouchableOpacity
             style={[styles.quickActionButton, styles.timeEntryButtonBorder]}
-            onPress={() => setShowTimeEntryModal(true)}
+            onPress={() => navigation.navigate('TimeEntry')}
             disabled={isOperating}
           >
             <Ionicons name="time-outline" size={18} color="#8B5CF6" />
@@ -602,17 +605,6 @@ const PersonalVolunteerDataFixed: React.FC = () => {
           )}
         </View>
       )}
-
-      {/* 补录工时模态框 */}
-      <VolunteerTimeEntryModal
-        visible={showTimeEntryModal}
-        onClose={() => setShowTimeEntryModal(false)}
-        onSuccess={() => {
-          setShowTimeEntryModal(false);
-          // 补录成功后刷新数据
-          setTimeout(() => loadPersonalData(true), 1000);
-        }}
-      />
     </ScrollView>
   );
 };
@@ -644,6 +636,7 @@ export const VolunteerHomeScreen: React.FC = () => {
   const route = useRoute();
   const navigation = useNavigation();
   const { permissions, user, refreshUserInfo } = useUser();
+  const insets = useSafeAreaInsets();
 
   const darkModeSystem = useAllDarkModeStyles();
   const { isDarkMode, styles: dmStyles } = darkModeSystem;
@@ -653,7 +646,6 @@ export const VolunteerHomeScreen: React.FC = () => {
 
   // 管理员快捷操作状态管理
   const [adminVolunteerStatus, setAdminVolunteerStatus] = useState<'checked_in' | 'checked_out' | 'loading'>('loading');
-  const [showTimeEntryModal, setShowTimeEntryModal] = useState(false);
   const [isOperating, setIsOperating] = useState(false);
   const [currentRecord, setCurrentRecord] = useState<any>(null);
   const [adminHistoryRecord, setAdminHistoryRecord] = useState<any>(null);
@@ -970,10 +962,10 @@ export const VolunteerHomeScreen: React.FC = () => {
                   </TouchableOpacity>
                 )}
 
-                {/* Time Entry 按钮 - 始终显示，直接打开模态框 */}
+                {/* Time Entry 按钮 - 始终显示，直接导航到页面 */}
                 <TouchableOpacity
                   style={[styles.quickActionButton, styles.timeEntryButtonBorder]}
-                  onPress={() => setShowTimeEntryModal(true)}
+                  onPress={() => navigation.navigate('TimeEntry')}
                   disabled={isOperating}
                 >
                   <Ionicons name="time-outline" size={16} color="#8B5CF6" />
@@ -1177,7 +1169,7 @@ export const VolunteerHomeScreen: React.FC = () => {
       
       {/* 顶部导航栏 */}
       <View style={styles.header}>
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.backButton}
           onPress={() => navigation.goBack()}
           hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
@@ -1202,17 +1194,9 @@ export const VolunteerHomeScreen: React.FC = () => {
         )}
       </View>
 
-      {/* Time Entry 模态框 - 只有总管理员可用 */}
-      {permissions.isAdmin() && (
-        <VolunteerTimeEntryModal
-          visible={showTimeEntryModal}
-          onClose={() => setShowTimeEntryModal(false)}
-          onSuccess={() => {
-            setShowTimeEntryModal(false);
-            // 补录成功后刷新状态
-            setTimeout(() => loadAdminVolunteerStatus(), 1000);
-          }}
-        />
+      {/* 浮动搜索按钮 - 仅总管理员显示（可以看到所有学校） */}
+      {permissions.getDataScope() === 'all' && (
+        <FloatingSearchButton bottom={insets.bottom + 16} />
       )}
     </SafeAreaView>
   );

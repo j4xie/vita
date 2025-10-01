@@ -8,13 +8,13 @@ import {
   SafeAreaView,
   ScrollView,
   Alert,
-  ActivityIndicator,
   Modal,
   FlatList,
   Keyboard,
   TouchableWithoutFeedback,
   Image,
 } from 'react-native';
+import { LoaderOne } from '../../components/ui/LoaderOne';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation, useRoute, CommonActions } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
@@ -791,7 +791,7 @@ export const ParentNormalRegisterStep2Screen: React.FC = () => {
                   disabled={countdown > 0 || loading || !agreedToTerms || !agreedToSMS}
                 >
                   {loading ? (
-                    <ActivityIndicator size="small" color={theme.colors.text.inverse} />
+                    <LoaderOne size="small" color={theme.colors.text.inverse} />
                   ) : (
                     <Text style={styles.sendCodeText}>
                       {countdown > 0
@@ -815,7 +815,7 @@ export const ParentNormalRegisterStep2Screen: React.FC = () => {
                 disabled={loading || hasValidationErrors}
               >
                 {loading ? (
-                  <ActivityIndicator color={theme.colors.text.inverse} />
+                  <LoaderOne color={theme.colors.text.inverse} />
                 ) : (
                   <Text style={styles.registerButtonText}>
                     {t('auth.register.form.complete_registration')}

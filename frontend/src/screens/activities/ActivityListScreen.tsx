@@ -11,7 +11,6 @@ import {
   SafeAreaView,
   TextInput,
   ScrollView,
-  ActivityIndicator,
   Animated,
   Dimensions,
   AccessibilityInfo,
@@ -43,6 +42,7 @@ import { LiquidGlassTab } from '../../components/ui/LiquidGlassTab';
 import { FilterBottomSheet } from '../../components/ui/FilterBottomSheet';
 import { ListSkeleton } from '../../components/ui/SkeletonScreen';
 import CategoryBar from '../../components/ui/CategoryBar';
+import { LoaderOne } from '../../components/ui/LoaderOne';
 import { pomeloXAPI } from '../../services/PomeloXAPI';
 import { adaptActivityList, FrontendActivity } from '../../utils/activityAdapter';
 import { ACTIVITY_CATEGORIES, getCategoryName } from '../../data/activityCategories';
@@ -61,15 +61,27 @@ import { useLocationService } from '../../hooks/useLocationService';
 import { sortActivitiesByLocation, LocationInfo } from '../../utils/locationUtils';
 import { LocationSelectorModal } from '../../components/modals/LocationSelectorModal';
 import LocationService from '../../services/LocationService';
+import { FloatingFilterButton } from '../../components/community/FloatingFilterButton';
+import { ActivityFilterModal, ActivityFilterOptions } from '../../components/modals/ActivityFilterModal';
 
 // Using LiquidGlassTab component for V1.1 compliance
 
 const ActivityListScreenInternal: React.FC = () => {
+  // 🔴 调试：确认组件被加载
+  console.log('🔴🔴🔴 [CRITICAL] ActivityListScreen 组件开始渲染');
+
   const { t } = useTranslation();
   const navigation = useNavigation<any>();
   const insets = useSafeAreaInsets();
   const { setIsFilterOpen } = useFilter();
   const { user } = useUser(); // Fixed user initialization order
+
+  // 🔴 调试：显示用户信息
+  console.log('🔴 [CRITICAL] 用户状态:', {
+    hasUser: !!user,
+    userId: user?.id || user?.userId,
+    userName: user?.userName,
+  });
   
   // 🛡️ TabBar状态守护：ActivityList作为Tab根页面，通常由TabNavigator自动管理
   // 只在需要调试时启用
@@ -91,10 +103,16 @@ const ActivityListScreenInternal: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [activeFilter, setActiveFilter] = useState(0); // Changed to index for CategoryBar
   const [searchText, setSearchText] = useState(''); // 搜索文本状态
-  const [tabBarSearchText, setTabBarSearchText] = useState(''); // TabBar搜索文本状态
+  // ✅ 筛选模态框状态
+  const [filterModalVisible, setFilterModalVisible] = useState(false);
+  const [filterOptions, setFilterOptions] = useState<ActivityFilterOptions>({
+    searchText: '',
+    activityTypes: [],
+    selectedSchools: [],
+    sortBy: 'newest',
+  });
   // ✅ 状态缓存机制：缓存已确认的报名状态
   const [activityStatusCache, setActivityStatusCache] = useState<Map<string, 'registered' | 'checked_in'>>(new Map());
-  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   // 移除viewLayout状态，固定使用grid视图
   
   // V1.1 规范: BottomSheet 过滤器状态
@@ -169,19 +187,24 @@ const ActivityListScreenInternal: React.FC = () => {
   
   
   
-  // v1.2: 模拟初始数据加载
+  // v1.2: 模拟初始数据加载 - 增强调试版本
   useEffect(() => {
+    console.log('🔍 [ACTIVITY-LIST] 初始化骨架屏定时器');
     // 显示骨架屏一段时间后加载数据
     const timer = setTimeout(() => {
       try {
+        console.log('🔍 [ACTIVITY-LIST] 关闭骨架屏，开始加载数据');
         setInitialLoading(false);
       } catch (error) {
-        console.error('Error in loading timer:', error);
+        console.error('❌ [ACTIVITY-LIST] Error in loading timer:', error);
         setInitialLoading(false); // Ensure state is set even if error occurs
       }
     }, theme.performance?.image?.loadingTimeout || 300); // 300ms fallback
-    
-    return () => clearTimeout(timer);
+
+    return () => {
+      console.log('🔍 [ACTIVITY-LIST] 清理骨架屏定时器');
+      clearTimeout(timer);
+    };
   }, []);
   
   // Header 动画值和配置
@@ -219,37 +242,16 @@ const ActivityListScreenInternal: React.FC = () => {
     };
   }, []);
 
-  // 🆕 监听TabBar搜索事件 - 实现当前页面内搜索
-  useEffect(() => {
-    const searchListener = DeviceEventEmitter.addListener('searchTextChanged', (data: { searchText: string; timestamp: number }) => {
-      console.log('🔍 [ACTIVITY-LIST] 收到TabBar搜索事件:', {
-        searchText: data.searchText,
-        timestamp: data.timestamp,
-        currentSearchText: searchText
-      });
-      
-      setTabBarSearchText(data.searchText);
-      
-      // 搜索防抖：清除之前的延时器，300ms后执行搜索
-      if (searchTimeoutRef.current) {
-        clearTimeout(searchTimeoutRef.current);
-      }
-      
-      searchTimeoutRef.current = setTimeout(() => {
-        console.log('🔍 [ACTIVITY-LIST] 防抖执行搜索:', data.searchText);
-        setSearchText(data.searchText);
-      }, 300);
-    });
-    
-    return () => {
-      searchListener?.remove();
-      // 清理搜索防抖定时器
-      if (searchTimeoutRef.current) {
-        clearTimeout(searchTimeoutRef.current);
-        searchTimeoutRef.current = null;
-      }
-    };
-  }, [searchText]);
+  // 应用筛选器回调
+  const handleApplyFilters = useCallback((filters: ActivityFilterOptions) => {
+    console.log('🔍 [ACTIVITY-LIST] 应用筛选:', filters);
+    setFilterOptions(filters);
+    setSearchText(filters.searchText);
+    // 重置到第一页
+    setCurrentPage(1);
+    setActivities([]);
+    setHasMore(true);
+  }, []);
 
   // ✅ 增强状态缓存和同步机制 - 监听报名成功事件
   useEffect(() => {
@@ -475,8 +477,11 @@ const ActivityListScreenInternal: React.FC = () => {
 
   
 
-  // 获取活动数据
+  // 获取活动数据 - 增强调试版本
   const fetchActivities = useCallback(async (page: number = 1, isRefresh: boolean = false) => {
+    console.log('🌐 [FETCH-ACTIVITIES] ========== 开始获取活动数据 ==========');
+    console.log('🌐 [FETCH-ACTIVITIES] 参数:', { page, isRefresh, activeFilter, searchText });
+
     try {
       setError(null); // 清除之前的错误
       
@@ -484,7 +489,9 @@ const ActivityListScreenInternal: React.FC = () => {
         setRefreshing(true);
         setCurrentPage(1);
       } else if (page === 1) {
-        setInitialLoading(true);
+        // 🔧 修复：page===1时只在真正的初始加载时显示骨架屏，筛选器变化时显示loading
+        // initialLoading只应该在组件首次挂载时为true
+        setLoading(true);
       } else {
         setLoading(true);
       }
@@ -521,18 +528,18 @@ const ActivityListScreenInternal: React.FC = () => {
       
       console.log('📋 [FETCH-ACTIVITIES] API响应状态:', {
         success: result.code === 200,
-        dataLength: result.data?.rows?.length || 0,
-        hasPersonalizedData: result.data?.rows?.[0]?.signStatus !== undefined,
-        sampleActivity: result.data?.rows?.[0] ? {
-          id: result.data.rows[0].id,
-          title: result.data.rows[0].name,
-          signStatus: result.data.rows[0].signStatus
+        dataLength: result.rows?.length || 0,
+        hasPersonalizedData: result.rows?.[0]?.signStatus !== undefined,
+        sampleActivity: result.rows?.[0] ? {
+          id: result.rows[0].id,
+          title: result.rows[0].name,
+          signStatus: result.rows[0].signStatus
         } : null
       });
 
       const adaptedData = adaptActivityList({
-        total: result.data?.total || 0,
-        rows: result.data?.rows || [],
+        total: result.total || 0,
+        rows: result.rows || [],
         code: result.code,
         msg: result.msg
       }, currentLanguage);
@@ -660,7 +667,12 @@ const ActivityListScreenInternal: React.FC = () => {
       }
     } catch (error: any) {
       // 优化错误日志，避免在用户界面显示技术错误
-      console.warn('获取活动数据失败:', error.message || error);
+      console.error('❌ [FETCH-ACTIVITIES] ========== 获取活动数据失败 ==========');
+      console.error('❌ [FETCH-ACTIVITIES] 错误详情:', {
+        name: error.name,
+        message: error.message,
+        stack: error.stack?.substring(0, 200),
+      });
       
       // 判断错误类型并设置用户友好的错误信息
       if (error.name === 'AbortError') {
@@ -678,6 +690,14 @@ const ActivityListScreenInternal: React.FC = () => {
         setActivities([]);
       }
     } finally {
+      console.log('✅ [FETCH-ACTIVITIES] ========== 完成获取活动数据 ==========');
+      console.log('✅ [FETCH-ACTIVITIES] 最终状态:', {
+        activitiesCount: activities.length,
+        hasError: !!error,
+        loading: false,
+        refreshing: false,
+        initialLoading: false,
+      });
       setLoading(false);
       setRefreshing(false);
       setInitialLoading(false);
@@ -778,16 +798,31 @@ const ActivityListScreenInternal: React.FC = () => {
 
   // 布局偏好加载已移除 - 固定使用grid布局
 
-  // 初始加载数据
+  // 初始加载数据 - 增强调试版本
   useEffect(() => {
+    console.log('🚀 [ACTIVITY-LIST] 组件挂载，开始初始数据加载');
+    console.log('🔍 [ACTIVITY-LIST] 用户信息:', {
+      hasUser: !!user,
+      userId: user?.id || user?.userId,
+      userName: user?.userName,
+    });
     fetchActivities(1);
   }, []); // 只在组件挂载时执行一次
 
-  // 当筛选条件变化时重新加载
+  // 当筛选条件变化时重新加载 - 增强调试版本
   useEffect(() => {
+    console.log('🔍 [ACTIVITY-LIST] 筛选条件变化:', {
+      initialLoading,
+      activeFilter,
+      searchText,
+      shouldReload: !initialLoading,
+    });
     if (!initialLoading) {
+      console.log('📊 [ACTIVITY-LIST] 重新加载数据 - 筛选条件变化');
       setCurrentPage(1);
       fetchActivities(1);
+    } else {
+      console.log('⏸️ [ACTIVITY-LIST] 跳过重新加载 - 仍在初始加载中');
     }
   }, [activeFilter, searchText]);
 
@@ -1152,9 +1187,11 @@ const ActivityListScreenInternal: React.FC = () => {
   const waterfallData = formatWaterfallData(filteredActivities);
 
   // 为 SectionList 格式化数据 - 固定使用grid布局
+  // 🔧 修复: 检查是否真的有活动数据，而不是只检查waterfallData对象是否存在
+  const hasActivities = filteredActivities.length > 0;
   const sectionData = [{
     title: 'activities',
-    data: waterfallData ? [{ type: 'waterfall', columns: waterfallData }] : [],
+    data: hasActivities ? [{ type: 'waterfall', columns: waterfallData }] : [],
   }];
 
   // 自定义刷新指示器组件 - 使用硬编码文本避免翻译键显示问题
@@ -1178,6 +1215,16 @@ const ActivityListScreenInternal: React.FC = () => {
       </Text>
     </View>
   );
+
+  // 🔴 调试：在渲染前输出关键信息
+  console.log('🔴 [CRITICAL] 准备渲染，状态:', {
+    initialLoading,
+    loading,
+    activitiesCount: activities.length,
+    filteredActivitiesCount: filteredActivities.length,
+    hasActivities,
+    error,
+  });
 
   return (
     <SafeAreaView style={styles.container}>
@@ -1266,12 +1313,17 @@ const ActivityListScreenInternal: React.FC = () => {
 
       {/* Activity List with v1.2 Skeleton Screen */}
       {initialLoading ? (
-        <ListSkeleton 
-          count={3} 
-          showShimmer={!isPerformanceDegraded} // v1.2: 性能降级时禁用shimmer
-        />
+        <>
+          {console.log('🔴 [CRITICAL] 显示骨架屏')}
+          <ListSkeleton
+            count={3}
+            showShimmer={!isPerformanceDegraded} // v1.2: 性能降级时禁用shimmer
+          />
+        </>
       ) : (
-      <SectionList
+      <>
+        {console.log('🔴 [CRITICAL] 显示SectionList, sections数据:', sectionData)}
+        <SectionList
         ref={sectionListRef}
         sections={sectionData}
         keyExtractor={(item: any) => {
@@ -1366,7 +1418,7 @@ const ActivityListScreenInternal: React.FC = () => {
         // 改善滑动性能 (scrollEventThrottle already set above)
         ListFooterComponent={() => loading ? (
           <View style={styles.loadingFooter}>
-            <ActivityIndicator size="small" color={theme.colors.primary} />
+            <LoaderOne size="small" color={theme.colors.primary} />
           </View>
         ) : null}
         ListEmptyComponent={() => (
@@ -1399,6 +1451,7 @@ const ActivityListScreenInternal: React.FC = () => {
           </View>
         )}
       />
+      </>
       )}
       </View>
 
@@ -1536,6 +1589,21 @@ const ActivityListScreenInternal: React.FC = () => {
 
       {/* 组织轮盘切换器 */}
       <OrganizationSwitcherWrapper />
+
+      {/* 浮动筛选按钮 */}
+      <FloatingFilterButton
+        bottom={insets.bottom + 78}
+        onPress={() => setFilterModalVisible(true)}
+      />
+
+      {/* 筛选模态框 */}
+      <ActivityFilterModal
+        visible={filterModalVisible}
+        onClose={() => setFilterModalVisible(false)}
+        onApply={handleApplyFilters}
+        initialFilters={filterOptions}
+        schools={[]} // TODO: 添加学校列表数据源
+      />
 
     </SafeAreaView>
   );

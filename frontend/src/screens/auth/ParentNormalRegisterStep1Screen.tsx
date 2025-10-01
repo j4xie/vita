@@ -7,10 +7,10 @@ import {
   StyleSheet,
   SafeAreaView,
   ScrollView,
-  ActivityIndicator,
   Keyboard,
   TouchableWithoutFeedback,
 } from 'react-native';
+import { LoaderOne } from '../../components/ui/LoaderOne';
 import { useNavigation, useRoute, CommonActions } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
@@ -345,7 +345,7 @@ export const ParentNormalRegisterStep1Screen: React.FC = () => {
                 />
                 {emailChecking && (
                   <View style={styles.validationIcon}>
-                    <ActivityIndicator size="small" color={theme.colors.primary} />
+                    <LoaderOne size="small" color={theme.colors.primary} />
                   </View>
                 )}
                 {!emailChecking && emailAvailable === true && (
@@ -445,7 +445,7 @@ export const ParentNormalRegisterStep1Screen: React.FC = () => {
                 disabled={loading}
               >
                 {loading ? (
-                  <ActivityIndicator color={theme.colors.text.inverse} />
+                  <LoaderOne color={theme.colors.text.inverse} />
                 ) : (
                   <Text style={styles.registerButtonText}>
                     {t('auth.register.form.next_step')}

@@ -6,7 +6,6 @@ import {
   TouchableOpacity,
   StyleSheet,
   ScrollView,
-  ActivityIndicator,
   Alert,
   Platform,
 } from 'react-native';
@@ -17,6 +16,7 @@ import * as Haptics from 'expo-haptics';
 import { theme } from '../../theme';
 import { useTheme } from '../../context/ThemeContext';
 import { pomeloXAPI } from '../../services/PomeloXAPI';
+import { Loading } from '../ui/Loading';
 
 // 活动数据类型
 interface Activity {
@@ -344,8 +344,7 @@ const ActivitySelectionModalComponent: React.FC<ActivitySelectionModalProps> = (
           <View style={styles.content}>
             {loading ? (
               <View style={styles.loadingContainer}>
-                <ActivityIndicator size="large" color="#FF6B35" />
-                <Text style={styles.loadingText}>加载活动列表中...</Text>
+                <Loading size="large" color="#FF6B35" text="加载活动列表中..." />
               </View>
             ) : activities.length === 0 ? (
               <View style={styles.emptyContainer}>
@@ -452,7 +451,7 @@ const ActivitySelectionModalComponent: React.FC<ActivitySelectionModalProps> = (
                 accessibilityState={{ disabled: !selectedActivity || processing }}
               >
                 {processing ? (
-                  <ActivityIndicator size="small" color="#FFFFFF" />
+                  <LoaderOne size="small" color="#FFFFFF" />
                 ) : (
                   <>
                     <Ionicons name="checkmark-circle" size={16} color="#FFFFFF" />

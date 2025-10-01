@@ -676,6 +676,7 @@
       "explore": "Explore",
       "consulting": "Consulting",
       "community": "Community",
+      "rewards": "Rewards",
       "profile": "Profile",
       "wellbeing": "Safety",
       "qr_code": "QR Code"
@@ -864,8 +865,15 @@
     "view_all": "View All",
     "not_participated": "Registered",
     "participated": "Attended",
+    "volunteer_hours_short": "Hours",
     "bookmarked": "Saved",
+    "edit_profile": "EDIT",
+    "qr_code": "QR CODE",
     "pending_review": "Review",
+    "total_activities": "Total Activities",
+    "login_to_view": "Login to view your profile",
+    "level_progress": "Level Progress",
+    "to_next_level": "To Next Level",
     "my_membership": "My Membership",
     "membership_title": "Membership",
     "membership_regular": "Regular",
@@ -1102,7 +1110,21 @@
   "community": {
     "title": "Student Community",
     "subtitle": "Connect students worldwide",
-    "headerTitle": "Student Community",
+    "headerTitle": "Merchant Community",
+    "merchantCommunityTitle": "Merchant Community",
+    "viewMore": "View More",
+    "earn": "Earn",
+    "merchants": {
+      "studentLounge": "Student Lounge",
+      "cafe": "Café",
+      "bookstore": "Bookstore",
+      "mainCampus": "Main Campus",
+      "campusCenter": "Campus Center",
+      "priceFrom": "From USD {{amount}}",
+      "perVisit": "per visit",
+      "perOrder": "per order",
+      "perItem": "per item"
+    },
     "headerSubtitle": "Connect peers, share wonderful moments, grow together",
     "developing": "Coming soon",
     "developingDescription": "Building a warm student community",
@@ -1119,7 +1141,43 @@
     },
     "comingSoon": "Coming Soon",
     "no_schools_available": "No schools available",
-    "check_connection": "Please check your connection"
+    "check_connection": "Please check your connection",
+    "events": {
+      "defaultTitle": "Community Events",
+      "subtitle": "{{count}} events",
+      "empty": "No events found",
+      "emptySubtext": "Try adjusting your filters"
+    },
+    "filter": {
+      "title": "Sort & Filter",
+      "clear": "Clear",
+      "sortBy": "Sort by",
+      "sort": {
+        "date": "Show date",
+        "newest": "Newest",
+        "priceLow": "$ Low - High",
+        "priceHigh": "$ High - Low"
+      },
+      "priceTitle": "Price",
+      "price": {
+        "all": "All Prices",
+        "under100": "Under $100",
+        "range1": "$100 - $250",
+        "over250": "$250+"
+      },
+      "categoryTitle": "Category",
+      "category": {
+        "social": "Social Events",
+        "sports": "Sports",
+        "culture": "Culture",
+        "career": "Career"
+      },
+      "locationTitle": "Location",
+      "locationPlaceholder": "Select location",
+      "dateRangeTitle": "Date Range",
+      "dateRangePlaceholder": "Select date range",
+      "showResults": "Show {{count}} results"
+    }
   },
   "wellbeing": {
     "plan": {
@@ -1160,8 +1218,11 @@
     "volunteer": {
       "history": {
         "title": "History",
+        "pageTitle": "Volunteer History",
         "subtitle": "{{userName}}'s Records",
         "subtitle_personal": "My Records",
+        "totalHours": "TOTAL HOURS",
+        "totalRecords": "TOTAL RECORDS",
         "selectTimeRange": "Time Range",
         "recordsList": "Records",
         "recordsFound": "{{count}} found",
@@ -1349,6 +1410,15 @@
     "allow": "Allow Location",
     "later": "Choose Later",
     "privacy_note": "Your location information is only used to improve service experience, we strictly protect your privacy",
+    "where": "Where?",
+    "search_destinations": "Search destinations",
+    "suggested_destinations": "Suggested destinations",
+    "nearby": "Nearby",
+    "find_around_you": "Find what's around you",
+    "popular_destination": "Popular student destination",
+    "state": "State",
+    "city": "City",
+    "no_results": "No results found",
     "selector_title": "Select Location",
     "current_location": "Current Location",
     "not_set": "Not Set",
@@ -1461,6 +1531,18 @@
       "title": "My Identity Code",
       "scan_instruction": "Scan QR code to view my information"
     },
+    "personal": {
+      "title": "My QR Code",
+      "description": "Share your QR code to quickly show your identity information",
+      "copy_id": "Copy ID",
+      "copy_success": "Copied to clipboard",
+      "scan_others": "Scan QR code",
+      "save_to_album": "Save to album",
+      "share_qr": "Share QR code",
+      "network_info": "Visible to all organization members",
+      "user_info_title": "Personal Information",
+      "qr_code_title": "My Identity Code"
+    },
     "actions": {
       "save": "Save",
       "saving": "Saving...",
@@ -1474,10 +1556,12 @@
   },
   "volunteerTimeEntry": {
     "title": "Time Entry",
-    "dateLabel": "Select Date",
+    "dateLabel": "Date",
     "startTime": "Start Time",
     "endTime": "End Time",
     "duration": "Duration",
+    "location": "Work Location",
+    "locationPlaceholder": "Enter work location (required)",
     "description": "Work Description",
     "descriptionPrefix": "[Time Entry]",
     "descriptionPlaceholder": "Please describe work content in detail (required)",
@@ -1507,6 +1591,7 @@
       "endBeforeStart": "End time must be after start time",
       "duration": "Single entry cannot exceed 12 hours",
       "overlap": "Time overlaps with existing records, please adjust",
+      "locationRequired": "Please enter work location",
       "requiredFields": "Please fill in start time, end time and work description",
       "userInfoMissing": "Unable to get user information",
       "submitFailed": "Entry submission failed, please try again",
@@ -1644,7 +1729,16 @@
       "full": "Full"
     },
     "registered": "Registered",
-    "people": "people"
+    "people": "{{count}} people",
+    "people_label": "people",
+    "actions": {
+      "share": "Share",
+      "interested": "Interested",
+      "join": "Join"
+    },
+    "organizer": {
+      "default": "Organizer"
+    }
   },
   "activityDetail": {
     "peopleRegistered": "people registered",
@@ -1681,6 +1775,19 @@
     "not_registered_cannot_checkin": "You must register first before checking in",
     "scan_failed": "Scan Failed",
     "scan_failed_message": "Please scan the activity check-in QR code again",
+    "invite": "Invite",
+    "more": "More",
+    "free": "Free",
+    "host": "Host",
+    "going": "Going",
+    "about_event": "About Event",
+    "location": "Location",
+    "open_map": "Open in Maps",
+    "invite_coming_soon": "Invite feature coming soon",
+    "more_options_coming_soon": "More options coming soon",
+    "door_code": "Door code",
+    "map_open_failed": "Failed to open map",
+    "verified": "Verified",
     "open_scanner_failed": "Cannot Open Scanner",
     "open_scanner_failed_message": "Unable to start scan function, please check camera permission"
   },
@@ -2330,5 +2437,146 @@
     "volunteer_hours_title": "Volunteer Hours",
     "hours_unit": "hours",
     "no_permission_for_activity_signin": "You do not have permission to sign in this user for activities"
+  },
+  "rewards": {
+    "header": {
+      "title": "Rewards Center",
+      "subtitle": "Points Mall · Coupons · Membership Benefits"
+    },
+    "tiers": {
+      "bronze": "Bronze",
+      "silver": "Silver",
+      "gold": "Gold",
+      "diamond": "Diamond"
+    },
+    "circle": {
+      "description": "Earn points\nLevel up",
+      "points": "Points"
+    },
+    "benefits": {
+      "title": "Member Benefits",
+      "merchant_coupon": "Merchant\nCoupons",
+      "platform_coupon": "Platform\nCoupons",
+      "points_mall": "Points\nMall",
+      "group_buy": "Group\nBuy",
+      "free_meal": "Free\nMeal",
+      "exclusive_coupon": "Exclusive\nOffers",
+      "points_boost": "Bonus\n1.5x"
+    },
+    "menu": {
+      "points_mall": "Points Mall",
+      "points_mall_desc": "Exchange points for rewards",
+      "points_balance": "Points Balance",
+      "points": "Points",
+      "earn_redeem": "Earn/Redeem",
+      "my_coupons": "My Coupons",
+      "refer_friends": "Refer Friends",
+      "earn_points": "Earn",
+      "review_tasks": "Review Tasks",
+      "free_meal_signup": "Free Meal",
+      "red_card_exclusive": "VIP"
+    },
+    "membership_card": {
+      "title": "Membership Card",
+      "coming_soon": "Coming in Next Version"
+    },
+    "points": {
+      "title": "My Points",
+      "balance": "Points Balance",
+      "coming_soon": "Coming Soon"
+    },
+    "coupons": {
+      "title": "My Coupons",
+      "my_coupons": "Coupon Center",
+      "coming_soon": "Coming Soon"
+    },
+    "mall": {
+      "title": "Points Mall",
+      "home_title": "Points Mall",
+      "points_mall": "Redeem with Points",
+      "coming_soon": "Coming Soon",
+      "my_points": "My Points",
+      "earn_points": "Earn Points",
+      "exchange_now": "Redeem Now",
+      "favorites": "My Favorites",
+      "create_collection": "Create Collection",
+      "points_price": "{{points}} Points",
+      "market_price": "Market Price ${{price}}",
+      "stock_available": "In Stock",
+      "out_of_stock": "Out of Stock",
+      "low_stock": "Only {{count}} left",
+      "no_products": "No products available",
+      "load_failed": "Failed to load product details",
+      "insufficient_points": "Insufficient Points",
+      "insufficient_points_desc": "You don't have enough points to exchange this product",
+      "confirm_exchange": "Confirm Exchange",
+      "confirm_exchange_desc": "Confirm exchange using {{points}} points for this product?",
+      "delivery_info": "Free Shipping | Delivery: In stock",
+      "featured_products": "Featured Products",
+      "product_count": "{{count}} Products",
+      "product_detail": "Product Detail",
+      "add_to_cart": "Add to Cart",
+      "buy_now": "Redeem Now",
+      "product_description": "Product Description",
+      "specifications": "Specifications",
+      "exchange_notice": "Exchange Notice",
+      "related_products": "Related Products",
+      "my_orders": "My Orders",
+      "order_status": {
+        "pending": "Pending",
+        "shipped": "Shipped",
+        "completed": "Completed",
+        "cancelled": "Cancelled"
+      },
+      "transaction_types": {
+        "earn": "Earned",
+        "exchange": "Redeemed",
+        "refund": "Refunded",
+        "expire": "Expired"
+      },
+      "categories": {
+        "electronics": "Electronics",
+        "lifestyle": "Lifestyle",
+        "books": "Books",
+        "vouchers": "Vouchers",
+        "courses": "Courses",
+        "food": "Food"
+      },
+      "membership": {
+        "card_title": "PomeloX Membership Card",
+        "bronze_member": "Bronze Member",
+        "silver_member": "Silver Member",
+        "gold_member": "Gold Member",
+        "diamond_member": "Diamond Member",
+        "member_since": "Member Since",
+        "member_number": "Member Number",
+        "points_balance": "Points Balance",
+        "next_tier": "{{points}} more points to next tier",
+        "max_tier": "You've reached the highest tier",
+        "benefits_title": "Membership Benefits",
+        "how_to_earn": "How to Earn Points",
+        "benefits": {
+          "priority_registration": "Priority Registration",
+          "points_exchange": "Points Exchange",
+          "exclusive_coupons": "Exclusive Coupons",
+          "free_checkin": "Free QR Check-in",
+          "leaderboard": "Leaderboard Privileges",
+          "referral_bonus": "Referral Rewards",
+          "stats_report": "Statistics Report",
+          "custom_recommendations": "Custom Recommendations",
+          "priority_support": "Priority Support"
+        }
+      }
+    }
+  },
+  "calendarSelection": {
+    "title": "Select Entry Date",
+    "cancel": "Cancel",
+    "confirm": "Confirm Selection",
+    "selectedDate": "Selected Date"
+  },
+  "timeEntry": {
+    "screenTitle": "Time Entry",
+    "cancel": "Cancel"
   }
 }

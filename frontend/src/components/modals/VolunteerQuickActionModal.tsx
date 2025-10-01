@@ -5,7 +5,6 @@ import {
   Text,
   TouchableOpacity,
   StyleSheet,
-  ActivityIndicator,
   Alert,
   Platform,
 } from 'react-native';
@@ -20,6 +19,7 @@ import { getLastVolunteerRecord, volunteerSignRecord } from '../../services/volu
 import { UserIdentityData } from '../../types/userIdentity';
 import { useUser } from '../../context/UserContext';
 import { timeService } from '../../utils/UnifiedTimeService';
+import { Loading } from '../ui/Loading';
 
 // 志愿者记录类型
 interface VolunteerRecord {
@@ -436,8 +436,7 @@ const VolunteerQuickActionModalComponent: React.FC<VolunteerQuickActionModalProp
             {/* Status */}
             {loading ? (
               <View style={styles.loadingContainer}>
-                <ActivityIndicator size="large" color="#FF6B35" />
-                <Text style={styles.loadingText}>加载志愿者状态中...</Text>
+                <Loading size="large" color="#FF6B35" text="加载志愿者状态中..." />
               </View>
             ) : (
               <View
@@ -492,7 +491,7 @@ const VolunteerQuickActionModalComponent: React.FC<VolunteerQuickActionModalProp
                 accessibilityState={{ disabled: hasActiveSession || processing }}
               >
                 {processing ? (
-                  <ActivityIndicator size="small" color="#FFFFFF" />
+                  <Loading size="small" color="#FFFFFF" />
                 ) : (
                   <>
                     <Ionicons name="log-in-outline" size={16} color="#FFFFFF" />
@@ -516,7 +515,7 @@ const VolunteerQuickActionModalComponent: React.FC<VolunteerQuickActionModalProp
                 accessibilityState={{ disabled: !hasActiveSession || processing }}
               >
                 {processing ? (
-                  <ActivityIndicator size="small" color="#FFFFFF" />
+                  <Loading size="small" color="#FFFFFF" />
                 ) : (
                   <>
                     <Ionicons name="log-out-outline" size={16} color="#FFFFFF" />

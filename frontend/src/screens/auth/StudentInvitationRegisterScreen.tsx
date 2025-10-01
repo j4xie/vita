@@ -7,7 +7,6 @@ import {
   StyleSheet,
   SafeAreaView,
   ScrollView,
-  ActivityIndicator,
   Keyboard,
   TouchableWithoutFeedback,
   Alert,
@@ -43,6 +42,7 @@ import {
   getInputPlaceholder
 } from '../../utils/textValidation';
 import { i18n } from '../../utils/i18n';
+import { LoaderOne } from '../../components/ui/LoaderOne';
 
 interface OrganizationData {
   id: number;
@@ -1003,7 +1003,7 @@ export const StudentInvitationRegisterScreen: React.FC = React.memo(() => {
                 disabled={loading || hasValidationErrors}
               >
                 {loading ? (
-                  <ActivityIndicator color={theme.colors.text.inverse} />
+                  <LoaderOne color={theme.colors.text.inverse} />
                 ) : (
                   <Text style={styles.registerButtonText}>
                     {t('auth.register.student.register_button')}

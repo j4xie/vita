@@ -99,11 +99,131 @@ export const LocationSelectorModal: React.FC<LocationSelectorModalProps> = ({
 }) => {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
-  const [searchText, setSearchText] = useState('');
-  const [currentStep, setCurrentStep] = useState<'main' | 'state' | 'city' | 'school'>('main');
-  const [selectedState, setSelectedState] = useState<string>('');
-  const [selectedCity, setSelectedCity] = useState<string>('');
+  const [mode, setMode] = useState<'browse' | 'search'>('browse');
+  const [searchQuery, setSearchQuery] = useState('');
   const [isLoadingGPS, setIsLoadingGPS] = useState(false);
+
+  // 建议目的地数据
+  const suggestedDestinations = [
+    {
+      id: 'nearby',
+      type: 'gps',
+      icon: 'navigate' as const,
+      title: t('location.nearby', 'Nearby'),
+      subtitle: t('location.find_around_you', 'Find what\'s around you'),
+      color: '#007AFF',
+    },
+    ...(userSchool ? [{
+      id: 'my-school',
+      type: 'school',
+      icon: 'school' as const,
+      title: t('location.my_school', 'My School'),
+      subtitle: typeof userSchool === 'object' && userSchool ? (userSchool as any).name || userSchool : userSchool,
+      color: '#4CAF50',
+    }] : []),
+    {
+      id: 'los-angeles',
+      type: 'city',
+      icon: 'business' as const,
+      title: 'Los Angeles, CA',
+      subtitle: t('location.popular_destination', 'Popular student destination'),
+      color: '#FF9800',
+      data: { state: 'CA', city: '洛杉矶' },
+    },
+    {
+      id: 'new-york',
+      type: 'city',
+      icon: 'business' as const,
+      title: 'New York, NY',
+      subtitle: t('location.popular_destination', 'Popular student destination'),
+      color: '#FF9800',
+      data: { state: 'NY', city: '纽约' },
+    },
+    {
+      id: 'san-francisco',
+      type: 'city',
+      icon: 'business' as const,
+      title: 'San Francisco, CA',
+      subtitle: t('location.popular_destination', 'Popular student destination'),
+      color: '#FF9800',
+      data: { state: 'CA', city: '旧金山' },
+    },
+    {
+      id: 'boston',
+      type: 'city',
+      icon: 'business' as const,
+      title: 'Boston, MA',
+      subtitle: t('location.popular_destination', 'Popular student destination'),
+      color: '#FF9800',
+      data: { state: 'MA', city: '波士顿' },
+    },
+  ];
+
+  // 搜索过滤逻辑
+  const getSearchResults = () => {
+    if (!searchQuery.trim()) {
+      return suggestedDestinations;
+    }
+
+    const query = searchQuery.toLowerCase().trim();
+    const results: any[] = [];
+
+    // 搜索州
+    Object.keys(statesCities).forEach(stateCode => {
+      const stateName = getStateName(stateCode);
+      if (
+        stateCode.toLowerCase().includes(query) ||
+        stateName.toLowerCase().includes(query)
+      ) {
+        results.push({
+          id: `state-${stateCode}`,
+          type: 'state',
+          icon: 'location' as const,
+          title: `${stateName}, ${stateCode}`,
+          subtitle: t('location.state', 'State'),
+          color: '#9C27B0',
+          data: { state: stateCode },
+        });
+      }
+    });
+
+    // 搜索城市
+    Object.entries(statesCities).forEach(([stateCode, cities]) => {
+      cities.forEach(city => {
+        if (city.toLowerCase().includes(query)) {
+          results.push({
+            id: `city-${stateCode}-${city}`,
+            type: 'city',
+            icon: 'business' as const,
+            title: `${city}, ${stateCode}`,
+            subtitle: t('location.city', 'City'),
+            color: '#FF9800',
+            data: { state: stateCode, city },
+          });
+        }
+      });
+    });
+
+    // 搜索学校
+    Object.entries(SCHOOL_COORDINATES).forEach(([schoolCode, schoolInfo]) => {
+      if (
+        schoolCode.toLowerCase().includes(query) ||
+        schoolInfo.city.toLowerCase().includes(query)
+      ) {
+        results.push({
+          id: `school-${schoolCode}`,
+          type: 'school',
+          icon: 'school' as const,
+          title: schoolCode,
+          subtitle: `${schoolInfo.city}, ${schoolInfo.state}`,
+          color: '#4CAF50',
+          data: { school: schoolCode, city: schoolInfo.city, state: schoolInfo.state, ...schoolInfo },
+        });
+      }
+    });
+
+    return results.slice(0, 20); // 限制返回20个结果
+  };
 
   // 处理使用GPS定位
   const handleUseGPS = async () => {
@@ -162,11 +282,39 @@ export const LocationSelectorModal: React.FC<LocationSelectorModalProps> = ({
     }
   };
 
-  // 处理选择用户学校 - 智能映射
+  // 处理选择建议项
+  const handleSelectSuggestion = async (suggestion: any) => {
+    // 触感反馈
+    try {
+      await Haptics.selectionAsync();
+    } catch (e) {}
+
+    if (suggestion.type === 'gps') {
+      // GPS定位
+      await handleUseGPS();
+    } else if (suggestion.type === 'school' && suggestion.id === 'my-school') {
+      // 我的学校
+      await handleSelectUserSchool();
+    } else if (suggestion.data) {
+      // 其他类型（州/城市/学校）
+      const { state, city, school, lat, lng } = suggestion.data;
+      const newLocation: LocationInfo = {
+        state,
+        city,
+        school,
+        lat,
+        lng,
+        source: 'manual',
+      };
+      onLocationSelected(newLocation);
+      onClose();
+    }
+  };
+
+  // 处理选择用户学校
   const handleSelectUserSchool = async () => {
     if (!userSchool) return;
 
-    // 处理用户学校字符串
     let schoolName: string;
     if (typeof userSchool === 'object' && userSchool) {
       schoolName = (userSchool as any).name || String(userSchool);
@@ -174,10 +322,7 @@ export const LocationSelectorModal: React.FC<LocationSelectorModalProps> = ({
       schoolName = userSchool;
     }
 
-    // 直接使用学校名，因为我们已经在SCHOOL_COORDINATES中定义了所有学校
     const mappedSchool = schoolName;
-    console.log('🎓 [我的学校] 学校映射:', { 原学校: userSchool, 映射学校: mappedSchool });
-
     if (SCHOOL_COORDINATES[mappedSchool]) {
       const school = SCHOOL_COORDINATES[mappedSchool];
       const newLocation: LocationInfo = {
@@ -188,336 +333,109 @@ export const LocationSelectorModal: React.FC<LocationSelectorModalProps> = ({
         lng: school.lng,
         source: 'userSchool',
       };
-
-      console.log('🎓 [我的学校] 切换到学校位置:', newLocation);
-
-      // 触感反馈
-      try {
-        await Haptics.selectionAsync();
-      } catch (e) {}
-
-      // 移除位置持久化，只在当前会话有效
-      // await AsyncStorage.setItem('userLocation', JSON.stringify(newLocation));
-
       onLocationSelected(newLocation);
       onClose();
-    } else {
-      console.warn('🎓 [我的学校] 未找到学校坐标:', mappedSchool);
-      // 如果没有找到学校坐标，可以显示提示或使用默认位置
     }
   };
 
-  // 处理手动选择
-  const handleManualSelection = () => {
-    setCurrentStep('state');
-  };
+  // 渲染建议项卡片
+  const renderSuggestionCard = (suggestion: any) => (
+    <TouchableOpacity
+      key={suggestion.id}
+      style={styles.suggestionCard}
+      onPress={() => handleSelectSuggestion(suggestion)}
+      activeOpacity={0.7}
+    >
+      <View style={[styles.suggestionIcon, { backgroundColor: suggestion.color + '15' }]}>
+        <Ionicons name={suggestion.icon} size={24} color={suggestion.color} />
+      </View>
+      <View style={styles.suggestionContent}>
+        <Text style={styles.suggestionTitle}>{suggestion.title}</Text>
+        <Text style={styles.suggestionSubtitle}>{suggestion.subtitle}</Text>
+      </View>
+      <Ionicons name="chevron-forward" size={20} color="#CCC" />
+    </TouchableOpacity>
+  );
 
-  // 选择州
-  const handleSelectState = (state: string) => {
-    setSelectedState(state);
-    setCurrentStep('city');
-  };
-
-  // 选择城市
-  const handleSelectCity = (city: string) => {
-    setSelectedCity(city);
-    // 如果城市有学校，显示学校选择
-    if (cityToSchools[city] && cityToSchools[city].length > 0) {
-      setCurrentStep('school');
-    } else {
-      // 直接使用城市作为位置
-      handleSelectLocation(selectedState, city, null);
-    }
-  };
-
-  // 选择学校
-  const handleSelectSchool = (school: string) => {
-    handleSelectLocation(selectedState, selectedCity, school);
-  };
-
-  // 最终选择位置
-  const handleSelectLocation = async (state: string, city: string, school: string | null) => {
-    const newLocation: LocationInfo = {
-      state,
-      city,
-      school: school || undefined,
-      source: 'manual',
-    };
-
-    if (school && SCHOOL_COORDINATES[school]) {
-      newLocation.lat = SCHOOL_COORDINATES[school].lat;
-      newLocation.lng = SCHOOL_COORDINATES[school].lng;
-    } else if (STATE_COORDINATES[state]) {
-      newLocation.lat = STATE_COORDINATES[state].lat;
-      newLocation.lng = STATE_COORDINATES[state].lng;
-    }
-
-    // 移除位置持久化
-    // await AsyncStorage.setItem('userLocation', JSON.stringify(newLocation));
-    onLocationSelected(newLocation);
-    onClose();
-  };
-
-  // 获取当前位置显示文本
-  const getCurrentLocationText = () => {
-    if (!currentLocation) return t('location.not_set', '未设置');
-
-    let text = '';
-
-    // 格式: 州, 城市 [, 学校]
-    if (currentLocation.state) {
-      text = getStateName(String(currentLocation.state));
-    }
-
-    if (currentLocation.city) {
-      text += text ? `, ${String(currentLocation.city)}` : String(currentLocation.city);
-    }
-
-    if (currentLocation.school) {
-      text += text ? `, ${String(currentLocation.school)}` : String(currentLocation.school);
-    }
-
-    return text || t('location.not_set', '未设置');
-  };
-
-  // 渲染主界面
-  const renderMainScreen = () => (
+  // 渲染浏览模式
+  const renderBrowseMode = () => (
     <View style={styles.modalContent}>
-      <View style={styles.header}>
-        <Text style={styles.title}>
-          {t('location.selector_title', '选择位置')}
-        </Text>
+      {/* 标题 */}
+      <View style={styles.headerRow}>
+        <Text style={styles.whereTitle}>{t('location.where', 'Where?')}</Text>
         <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-          <Ionicons name="close" size={24} color="#666" />
+          <Ionicons name="close" size={28} color="#222" />
         </TouchableOpacity>
       </View>
 
-      {/* 当前位置信息 */}
-      <View style={styles.currentLocationContainer}>
+      {/* 假搜索框 */}
+      <TouchableOpacity
+        style={styles.fakeSearchBox}
+        onPress={() => setMode('search')}
+        activeOpacity={0.7}
+      >
+        <Ionicons name="search" size={20} color="#999" />
+        <Text style={styles.fakeSearchText}>
+          {t('location.search_destinations', 'Search destinations')}
+        </Text>
+      </TouchableOpacity>
+
+      {/* 建议列表 */}
+      <ScrollView style={styles.suggestionsContainer} showsVerticalScrollIndicator={false}>
         <Text style={styles.sectionTitle}>
-          {t('location.current_location', '当前位置')}
+          {t('location.suggested_destinations', 'Suggested destinations')}
         </Text>
-        <View style={styles.currentLocationBox}>
-          <Ionicons
-            name="location"
-            size={20}
-            color={currentLocation ? '#4CAF50' : '#999'}
+        {suggestedDestinations.map(suggestion => renderSuggestionCard(suggestion))}
+      </ScrollView>
+    </View>
+  );
+
+  // 渲染搜索模式
+  const renderSearchMode = () => {
+    const searchResults = getSearchResults();
+
+    return (
+      <View style={styles.modalContent}>
+        {/* 搜索框 */}
+        <View style={styles.searchHeader}>
+          <TouchableOpacity
+            onPress={() => {
+              setMode('browse');
+              setSearchQuery('');
+            }}
+            style={styles.backButton}
+          >
+            <Ionicons name="arrow-back" size={24} color="#222" />
+          </TouchableOpacity>
+          <TextInput
+            style={styles.realSearchInput}
+            placeholder={t('location.search_destinations', 'Search destinations')}
+            placeholderTextColor="#999"
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            autoFocus
+            returnKeyType="search"
           />
-          <Text style={styles.currentLocationText}>
-            {getCurrentLocationText()}
-          </Text>
+          <TouchableOpacity onPress={onClose} style={styles.closeButton}>
+            <Ionicons name="close" size={24} color="#222" />
+          </TouchableOpacity>
         </View>
-      </View>
 
-      {/* 选项列表 */}
-      <ScrollView style={styles.optionsList} showsVerticalScrollIndicator={false}>
-        {/* 我的学校 */}
-        {userSchool && (
-          <TouchableOpacity
-            style={[styles.optionItem, styles.mySchoolOption]}
-            onPress={handleSelectUserSchool}
-            activeOpacity={0.7}
-          >
-            <View style={styles.optionLeft}>
-              <Ionicons name="school" size={24} color="#4CAF50" />
-              <View style={styles.optionTextContainer}>
-                <Text style={styles.optionTitle}>
-                  {t('location.my_school', '我的学校')}
-                </Text>
-                <Text style={styles.optionSubtitle}>
-                  {typeof userSchool === 'object' && userSchool ? (userSchool as any).name || userSchool : userSchool}
-                </Text>
-              </View>
-            </View>
-            <Ionicons name="chevron-forward" size={20} color="#999" />
-          </TouchableOpacity>
-        )}
-
-        {/* GPS定位 */}
-        <TouchableOpacity
-          style={styles.optionItem}
-          onPress={handleUseGPS}
-          activeOpacity={0.7}
-          disabled={isLoadingGPS}
-        >
-          <View style={styles.optionLeft}>
-            <Ionicons
-              name="navigate"
-              size={24}
-              color={hasLocationPermission ? '#007AFF' : '#999'}
-            />
-            <View style={styles.optionTextContainer}>
-              <Text style={styles.optionTitle}>
-                {t('location.use_gps', '使用GPS定位')}
-              </Text>
-              <Text style={styles.optionSubtitle}>
-                {hasLocationPermission
-                  ? t('location.get_current_location', '获取当前位置')
-                  : t('location.need_permission', '需要定位权限')}
+        {/* 搜索结果 */}
+        <ScrollView style={styles.searchResultsContainer} showsVerticalScrollIndicator={false}>
+          {searchResults.map(result => renderSuggestionCard(result))}
+          {searchQuery.trim() && searchResults.length === 0 && (
+            <View style={styles.noResultsContainer}>
+              <Ionicons name="search-outline" size={48} color="#CCC" />
+              <Text style={styles.noResultsText}>
+                {t('location.no_results', 'No results found')}
               </Text>
             </View>
-          </View>
-          {isLoadingGPS ? (
-            <Text style={styles.loadingText}>
-              {t('location.locating', '定位中...')}
-            </Text>
-          ) : (
-            <Ionicons name="chevron-forward" size={20} color="#999" />
           )}
-        </TouchableOpacity>
-
-        {/* 手动选择 */}
-        <TouchableOpacity
-          style={styles.optionItem}
-          onPress={handleManualSelection}
-          activeOpacity={0.7}
-        >
-          <View style={styles.optionLeft}>
-            <Ionicons name="hand-left" size={24} color="#F9A889" />
-            <View style={styles.optionTextContainer}>
-              <Text style={styles.optionTitle}>
-                {t('location.manual_select', '手动选择位置')}
-              </Text>
-              <Text style={styles.optionSubtitle}>
-                {t('location.choose_state_city', '选择州、城市或学校')}
-              </Text>
-            </View>
-          </View>
-          <Ionicons name="chevron-forward" size={20} color="#999" />
-        </TouchableOpacity>
-      </ScrollView>
-    </View>
-  );
-
-  // 渲染州选择
-  const renderStateSelection = () => (
-    <View style={styles.modalContent}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => setCurrentStep('main')} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color="#666" />
-        </TouchableOpacity>
-        <Text style={styles.title}>
-          {t('location.select_state', '选择州')}
-        </Text>
-        <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-          <Ionicons name="close" size={24} color="#666" />
-        </TouchableOpacity>
+        </ScrollView>
       </View>
-
-      <ScrollView style={styles.selectionList} showsVerticalScrollIndicator={false}>
-        {Object.keys(statesCities).sort().map((state) => (
-          <TouchableOpacity
-            key={state}
-            style={styles.selectionItem}
-            onPress={() => handleSelectState(state)}
-            activeOpacity={0.7}
-          >
-            <Text style={styles.selectionItemText}>
-              {getStateName(String(state))} ({String(state)})
-            </Text>
-            <Ionicons name="chevron-forward" size={20} color="#999" />
-          </TouchableOpacity>
-        ))}
-      </ScrollView>
-    </View>
-  );
-
-  // 渲染城市选择
-  const renderCitySelection = () => (
-    <View style={styles.modalContent}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => setCurrentStep('state')} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color="#666" />
-        </TouchableOpacity>
-        <Text style={styles.title}>
-          {t('location.select_city', '选择城市')}
-        </Text>
-        <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-          <Ionicons name="close" size={24} color="#666" />
-        </TouchableOpacity>
-      </View>
-
-      <View style={styles.stateIndicator}>
-        <Text style={styles.stateIndicatorText}>
-          {getStateName(String(selectedState))}
-        </Text>
-      </View>
-
-      <ScrollView style={styles.selectionList} showsVerticalScrollIndicator={false}>
-        {statesCities[selectedState]?.map((city) => (
-          <TouchableOpacity
-            key={city}
-            style={styles.selectionItem}
-            onPress={() => handleSelectCity(city)}
-            activeOpacity={0.7}
-          >
-            <Text style={styles.selectionItemText}>{String(city)}</Text>
-            {cityToSchools[city] && (
-              <View style={styles.schoolBadge}>
-                <Text style={styles.schoolBadgeText}>
-                  {cityToSchools[city].length} {t('location.schools_unit', '所学校')}
-                </Text>
-              </View>
-            )}
-            <Ionicons name="chevron-forward" size={20} color="#999" />
-          </TouchableOpacity>
-        ))}
-      </ScrollView>
-    </View>
-  );
-
-  // 渲染学校选择
-  const renderSchoolSelection = () => (
-    <View style={styles.modalContent}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => setCurrentStep('city')} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color="#666" />
-        </TouchableOpacity>
-        <Text style={styles.title}>
-          {t('location.select_school', '选择学校')}
-        </Text>
-        <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-          <Ionicons name="close" size={24} color="#666" />
-        </TouchableOpacity>
-      </View>
-
-      <View style={styles.stateIndicator}>
-        <Text style={styles.stateIndicatorText}>
-          {String(selectedCity)}, {getStateName(String(selectedState))}
-        </Text>
-      </View>
-
-      <ScrollView style={styles.selectionList} showsVerticalScrollIndicator={false}>
-        {/* 不选择学校选项 */}
-        <TouchableOpacity
-          style={styles.selectionItem}
-          onPress={() => handleSelectLocation(selectedState, selectedCity, null)}
-          activeOpacity={0.7}
-        >
-          <Text style={[styles.selectionItemText, { color: '#666' }]}>
-            {t('location.just_city', '仅选择城市')}
-          </Text>
-          <Ionicons name="chevron-forward" size={20} color="#999" />
-        </TouchableOpacity>
-
-        {/* 学校列表 */}
-        {cityToSchools[selectedCity]?.map((school) => (
-          <TouchableOpacity
-            key={school}
-            style={styles.selectionItem}
-            onPress={() => handleSelectSchool(school)}
-            activeOpacity={0.7}
-          >
-            <View style={styles.schoolItemLeft}>
-              <Ionicons name="school" size={20} color="#4CAF50" />
-              <Text style={styles.selectionItemText}>{String(school)}</Text>
-            </View>
-            <Ionicons name="chevron-forward" size={20} color="#999" />
-          </TouchableOpacity>
-        ))}
-      </ScrollView>
-    </View>
-  );
+    );
+  };
 
   return (
     <Modal
@@ -528,10 +446,7 @@ export const LocationSelectorModal: React.FC<LocationSelectorModalProps> = ({
     >
       <View style={styles.backdrop}>
         <View style={[styles.container, { paddingTop: insets.top }]}>
-          {currentStep === 'main' && renderMainScreen()}
-          {currentStep === 'state' && renderStateSelection()}
-          {currentStep === 'city' && renderCitySelection()}
-          {currentStep === 'school' && renderSchoolSelection()}
+          {mode === 'browse' ? renderBrowseMode() : renderSearchMode()}
         </View>
       </View>
     </Modal>
@@ -541,7 +456,7 @@ export const LocationSelectorModal: React.FC<LocationSelectorModalProps> = ({
 const styles = StyleSheet.create({
   backdrop: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: 'rgba(0, 0, 0, 0.4)',
   },
   container: {
     flex: 1,
@@ -552,135 +467,118 @@ const styles = StyleSheet.create({
   },
   modalContent: {
     flex: 1,
-    paddingHorizontal: 0,
   },
-  header: {
+  // 浏览模式样式
+  headerRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
+    paddingHorizontal: 24,
+    paddingVertical: 20,
   },
-  backButton: {
-    padding: 4,
+  whereTitle: {
+    fontSize: 32,
+    fontWeight: '700',
+    color: '#222',
+    letterSpacing: -0.5,
   },
   closeButton: {
     padding: 4,
   },
-  title: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#333',
-    flex: 1,
-    textAlign: 'center',
+  fakeSearchBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F7F7F7',
+    marginHorizontal: 24,
+    marginBottom: 20,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
   },
-  currentLocationContainer: {
-    padding: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
+  fakeSearchText: {
+    fontSize: 16,
+    color: '#999',
+    marginLeft: 12,
+  },
+  suggestionsContainer: {
+    flex: 1,
+    paddingHorizontal: 24,
   },
   sectionTitle: {
-    fontSize: 14,
-    color: '#666',
-    marginBottom: 8,
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#222',
+    marginBottom: 16,
+    marginTop: 8,
   },
-  currentLocationBox: {
+  suggestionCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#f9f9f9',
-    padding: 12,
-    borderRadius: 12,
-  },
-  currentLocationText: {
-    fontSize: 16,
-    color: '#333',
-    marginLeft: 8,
-    fontWeight: '500',
-  },
-  optionsList: {
-    flex: 1,
-    paddingTop: 12,
-  },
-  optionItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 16,
-    paddingHorizontal: 20,
     backgroundColor: 'white',
-    marginBottom: 1,
-  },
-  mySchoolOption: {
-    backgroundColor: '#f0fdf4',
-  },
-  optionLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-  },
-  optionTextContainer: {
-    marginLeft: 16,
-    flex: 1,
-  },
-  optionTitle: {
-    fontSize: 16,
-    color: '#333',
-    fontWeight: '500',
+    paddingVertical: 16,
+    paddingHorizontal: 0,
     marginBottom: 4,
   },
-  optionSubtitle: {
-    fontSize: 14,
-    color: '#666',
+  suggestionIcon: {
+    width: 56,
+    height: 56,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 16,
   },
-  loadingText: {
-    fontSize: 14,
-    color: '#007AFF',
-  },
-  selectionList: {
+  suggestionContent: {
     flex: 1,
   },
-  selectionItem: {
+  suggestionTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#222',
+    marginBottom: 4,
+  },
+  suggestionSubtitle: {
+    fontSize: 14,
+    color: '#717171',
+  },
+  // 搜索模式样式
+  searchHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 16,
-    paddingHorizontal: 20,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
+    borderBottomColor: '#F0F0F0',
   },
-  selectionItemText: {
-    fontSize: 16,
-    color: '#333',
-    flex: 1,
-  },
-  stateIndicator: {
-    backgroundColor: '#f9f9f9',
-    paddingVertical: 8,
-    paddingHorizontal: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
-  },
-  stateIndicatorText: {
-    fontSize: 14,
-    color: '#666',
-    fontWeight: '500',
-  },
-  schoolBadge: {
-    backgroundColor: '#e8f5e9',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
+  backButton: {
+    padding: 8,
     marginRight: 8,
   },
-  schoolBadgeText: {
-    fontSize: 12,
-    color: '#4CAF50',
-  },
-  schoolItemLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  realSearchInput: {
     flex: 1,
+    fontSize: 16,
+    color: '#222',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    backgroundColor: '#F7F7F7',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+  },
+  searchResultsContainer: {
+    flex: 1,
+    paddingHorizontal: 24,
+    paddingTop: 12,
+  },
+  noResultsContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 60,
+  },
+  noResultsText: {
+    fontSize: 16,
+    color: '#999',
+    marginTop: 16,
   },
 });

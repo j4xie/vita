@@ -7,7 +7,6 @@ import {
   Modal,
   FlatList,
   TextInput,
-  ActivityIndicator,
   Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -15,6 +14,7 @@ import { useTranslation } from 'react-i18next';
 import { theme } from '../../theme';
 import { LIQUID_GLASS_LAYERS } from '../../theme/core';
 import { pomeloXAPI } from '../../services/PomeloXAPI';
+import { Loading } from '../ui/Loading';
 
 interface School {
   deptId: number;
@@ -210,8 +210,7 @@ export const SchoolSelector: React.FC<SchoolSelectorProps> = ({
 
           {loading ? (
             <View style={styles.loadingContainer}>
-              <ActivityIndicator size="large" color={theme.colors.primary} />
-              <Text style={styles.loadingText}>{t('auth.register.form.loading_schools')}</Text>
+              <Loading size="large" color={theme.colors.primary} text={t('auth.register.form.loading_schools')} />
             </View>
           ) : (
             <FlatList

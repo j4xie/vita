@@ -1,6 +1,10 @@
 import { useState, useEffect } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { pomeloXAPI } from '../services/PomeloXAPI';
 import { getSchoolDisplayName } from '../utils/schoolLogos';
+
+const SCHOOL_CACHE_KEY = '@school_data_cache';
+const CACHE_EXPIRY_MS = 24 * 60 * 60 * 1000; // 24小时过期
 
 export interface School {
   id: string;
@@ -16,15 +20,36 @@ export interface School {
   isSubDepartment?: boolean;
 }
 
+interface CachedData {
+  schools: School[];
+  timestamp: number;
+}
+
 export const useSchoolData = () => {
   const [schools, setSchools] = useState<School[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false); // 改为 false，默认不显示加载
 
-  const loadSchools = async () => {
+  const loadSchools = async (forceRefresh = false) => {
     try {
-      setLoading(true);
-      console.log('🏫 开始获取学校列表...');
-      
+      // 1. 先尝试读取缓存
+      if (!forceRefresh) {
+        const cachedString = await AsyncStorage.getItem(SCHOOL_CACHE_KEY);
+        if (cachedString) {
+          const cached: CachedData = JSON.parse(cachedString);
+          const now = Date.now();
+
+          // 检查缓存是否过期
+          if (now - cached.timestamp < CACHE_EXPIRY_MS) {
+            console.log('✅ 使用缓存的学校数据，数量:', cached.schools.length);
+            setSchools(cached.schools);
+            setLoading(false);
+            // 继续后台更新
+          }
+        }
+      }
+
+      // 2. 后台获取最新数据
+      console.log('🏫 后台获取最新学校列表...');
       const response = await pomeloXAPI.getSchoolList();
       console.log('📋 学校列表API响应:', response);
       
@@ -50,16 +75,27 @@ export const useSchoolData = () => {
 
         // 处理所有学校数据（不再过滤）
         const schoolList = processSchoolData(response.data);
-        
+
         console.log('✅ 处理后的学校列表:', schoolList);
         setSchools(schoolList);
+
+        // 3. 保存到缓存
+        const cacheData: CachedData = {
+          schools: schoolList,
+          timestamp: Date.now(),
+        };
+        await AsyncStorage.setItem(SCHOOL_CACHE_KEY, JSON.stringify(cacheData));
+        console.log('💾 学校数据已缓存');
       } else {
         console.warn('⚠️ 获取学校列表失败:', response.msg);
-        setSchools([]);
+        // 如果没有缓存数据，才清空
+        if (schools.length === 0) {
+          setSchools([]);
+        }
       }
     } catch (error) {
       console.error('❌ 加载学校列表失败:', error);
-      setSchools([]);
+      // 保留现有数据，不清空
     } finally {
       setLoading(false);
     }

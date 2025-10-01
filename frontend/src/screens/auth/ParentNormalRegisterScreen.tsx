@@ -7,10 +7,10 @@ import {
   StyleSheet,
   SafeAreaView,
   ScrollView,
-  ActivityIndicator,
   Keyboard,
   TouchableWithoutFeedback,
 } from 'react-native';
+import { LoaderOne } from '../../components/ui/LoaderOne';
 import { useNavigation, useRoute, CommonActions } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
@@ -532,11 +532,11 @@ export const ParentNormalRegisterScreen: React.FC = () => {
                   disabled={countdown > 0 || loading}
                 >
                   {loading ? (
-                    <ActivityIndicator size="small" color={theme.colors.text.inverse} />
+                    <LoaderOne size="small" color={theme.colors.text.inverse} />
                   ) : (
                     <Text style={styles.sendCodeText}>
-                      {countdown > 0 
-                        ? `${countdown}s` 
+                      {countdown > 0
+                        ? `${countdown}s`
                         : t('auth.register.form.send_code')
                       }
                     </Text>
@@ -622,7 +622,7 @@ export const ParentNormalRegisterScreen: React.FC = () => {
                 disabled={loading}
               >
                 {loading ? (
-                  <ActivityIndicator color={theme.colors.text.inverse} />
+                  <LoaderOne color={theme.colors.text.inverse} />
                 ) : (
                   <Text style={styles.registerButtonText}>
                     {t('auth.register.parent.register_button')}

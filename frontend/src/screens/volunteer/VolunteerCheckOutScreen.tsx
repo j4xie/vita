@@ -11,7 +11,6 @@ import {
   Keyboard,
   KeyboardAvoidingView,
   Platform,
-  ActivityIndicator,
   Dimensions,
   TouchableWithoutFeedback,
   InputAccessoryView,
@@ -40,6 +39,7 @@ import { performVolunteerCheckOut } from '../../services/volunteerAPI';
 import { useAllDarkModeStyles } from '../../hooks/useDarkModeStyles';
 import { timeService } from '../../utils/UnifiedTimeService';
 import { apiCache } from '../../services/apiCache';
+import { LoaderOne } from '../../components/ui/LoaderOne';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -669,7 +669,7 @@ export const VolunteerCheckOutScreen: React.FC = () => {
               end={{ x: 1, y: 1 }}
             >
               {isSubmitting ? (
-                <ActivityIndicator size="small" color="white" />
+                <LoaderOne size="small" color="white" />
               ) : (
                 <Text style={styles.submitButtonText}>
                   {t('wellbeing.volunteer.signOut.confirmButton', '确认签退')}

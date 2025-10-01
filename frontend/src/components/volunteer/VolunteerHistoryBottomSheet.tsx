@@ -7,7 +7,6 @@ import {
   Platform,
   Dimensions,
   FlatList,
-  ActivityIndicator,
   Modal,
   ScrollView,
   Animated,
@@ -24,6 +23,7 @@ import { getVolunteerHistoryRecords, VolunteerRecord } from '../../services/volu
 import { timeService } from '../../utils/UnifiedTimeService';
 import { getUserPermissionLevel } from '../../types/userPermissions';
 import { SafeText } from '../common/SafeText';
+import { Loading } from '../ui/Loading';
 
 const { height: screenHeight } = Dimensions.get('window');
 
@@ -568,10 +568,7 @@ export const VolunteerHistoryBottomSheet: React.FC<VolunteerHistoryBottomSheetPr
 
           {loading ? (
             <View style={styles.loadingContainer}>
-              <ActivityIndicator size="small" color={theme.colors.primary} />
-              <Text style={[styles.loadingText, { color: theme.colors.text.secondary }]}>
-                {t('wellbeing.volunteer.history.loading')}
-              </Text>
+              <Loading size="small" color={theme.colors.primary} text={t('wellbeing.volunteer.history.loading', '加载历史记录...')} />
             </View>
           ) : (
             <FlatList

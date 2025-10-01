@@ -21,7 +21,9 @@ import * as Haptics from 'expo-haptics';
 import { theme } from '../../theme';
 import { LIQUID_GLASS_LAYERS } from '../../theme/core';
 import { usePerformanceDegradation } from '../../hooks/usePerformanceDegradation';
-import { PersonalInfoCard } from '../../components/profile/PersonalInfoCard';
+import { ProfileInfoCard } from '../../components/profile/ProfileInfoCard';
+import { StatCard } from '../../components/profile/StatCard';
+import { VolunteerManagementCard } from '../../components/profile/VolunteerManagementCard';
 import { UserIdentityQRModal } from '../../components/modals/UserIdentityQRModal';
 import { UserActivityModal } from '../../components/modals/UserActivityModal';
 import { LoginRequiredModal } from '../../components/modals/LoginRequiredModal';
@@ -35,7 +37,6 @@ import { activityStatsService, UserActivityStats } from '../../services/activity
 import { pomeloXAPI } from '../../services/PomeloXAPI';
 import { getCurrentToken } from '../../services/authAPI';
 import { getVolunteerHours, VolunteerHours, getPersonalVolunteerHours } from '../../services/volunteerAPI';
-import VolunteerHistoryBottomSheet from '../../components/volunteer/VolunteerHistoryBottomSheet';
 import { positionService } from '../../services/positionService';
 import { apiCache } from '../../services/apiCache';
 
@@ -72,27 +73,25 @@ const SettingRow: React.FC<SettingRowProps> = ({
       alignItems: 'center',
       justifyContent: 'space-between',
       paddingHorizontal: 16,
-      paddingVertical: 14, // 使用垂直内边距替代固定高度
-      borderBottomWidth: isLast ? 0 : 0.5,
-      borderBottomColor: 'rgba(0, 0, 0, 0.06)', // 更淡的分割线，小红书风格
+      paddingVertical: 14,
+      borderBottomWidth: isLast ? 0 : StyleSheet.hairlineWidth,
+      borderBottomColor: isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.06)',
     },
     settingRowLeft: {
       flexDirection: 'row',
       alignItems: 'center',
       flex: 1,
     },
-    // 小红书风格图标背景
+    // 简洁风格 - 移除图标背景
     iconBackground: {
-      width: 32,
-      height: 32,
-      borderRadius: 8, // 小红书使用的是圆角矩形，不是圆形
-      backgroundColor: 'rgba(107, 114, 128, 0.1)', // 中性灰色背景 // 很淡的品牌色背景
+      width: 24,
+      height: 24,
       alignItems: 'center',
       justifyContent: 'center',
       marginRight: 12,
     },
     settingText: {
-      fontSize: 17,
+      fontSize: 16,
       fontWeight: '400',
       color: isDarkMode ? '#ffffff' : '#000000',
       flex: 1,
@@ -102,8 +101,8 @@ const SettingRow: React.FC<SettingRowProps> = ({
       alignItems: 'center',
     },
     settingValue: {
-      fontSize: 15,
-      color: isDarkMode ? '#8e8e93' : '#8e8e93',
+      fontSize: 13,
+      color: isDarkMode ? '#9CA3AF' : '#6B7280',
       marginRight: 8,
     },
     badge: {
@@ -117,7 +116,7 @@ const SettingRow: React.FC<SettingRowProps> = ({
     },
     badgeText: {
       color: '#ffffff',
-      fontSize: 14, // 提升至辅助信息最小14pt
+      fontSize: 12,
       fontWeight: '600',
     },
   });
@@ -135,8 +134,8 @@ const SettingRow: React.FC<SettingRowProps> = ({
         <View style={rowStyles.iconBackground}>
           <Ionicons
             name={icon}
-            size={20} // 稍微减小图标尺寸
-            color="#F9A889" // 使用品牌橙色
+            size={22}
+            color={isDarkMode ? '#F9A889' : '#F9A889'}
           />
         </View>
         <Text
@@ -184,10 +183,7 @@ export const ProfileHomeScreen: React.FC = () => {
   
   // 身份二维码状态
   const [showIdentityQR, setShowIdentityQR] = useState(false);
-  
-  // 个人志愿者历史记录弹窗状态
-  const [showPersonalHistoryModal, setShowPersonalHistoryModal] = useState(false);
-  
+
   // 活动统计状态
   const [activityStats, setActivityStats] = useState<UserActivityStats>({
     notParticipated: 0,
@@ -248,7 +244,9 @@ export const ProfileHomeScreen: React.FC = () => {
     }
 
     // 优先显示nickname，如果没有则回退到legalName或userName
-    return user.nickName?.trim() || user.legalName?.trim() || user.userName || '用户';
+    const displayName = user.nickName?.trim() || user.legalName?.trim() || user.userName || '用户';
+    console.log('👤 [PROFILE] 显示名称:', displayName, '认证状态:', isAuthenticated);
+    return displayName;
   };
 
   // 获取用户组织信息 - ✅ 使用positionService统一管理岗位
@@ -571,21 +569,30 @@ export const ProfileHomeScreen: React.FC = () => {
     };
   }, [isAuthenticated]);
 
-  // 处理志愿者小时点击 - 弹出个人历史记录查询
+  // 处理志愿者小时点击 - 导航到历史记录页面
   const handleVolunteerHoursPress = useCallback(() => {
     console.log('🔍 [VOLUNTEER-HOURS] 用户点击志愿者小时:', {
       用户: user?.userName,
       权限级别: permissions.getPermissionLevel(),
       志愿者小时: volunteerStats?.volunteerHours
     });
-    
+
     if (Platform.OS === 'ios') {
       Haptics.selectionAsync();
     }
-    
-    // 直接弹出个人历史记录弹窗，不进行页面跳转
-    setShowPersonalHistoryModal(true);
-  }, [user, permissions, volunteerStats]);
+
+    // 导航到历史记录页面
+    const userIdString = user?.userId || user?.id;
+    const userIdToUse = userIdString ? parseInt(userIdString, 10) : undefined;
+
+    if (userIdToUse && !isNaN(userIdToUse)) {
+      navigation.navigate('VolunteerHistory', {
+        userId: userIdToUse,
+        userName: user?.nickName || user?.legalName || user?.userName || 'User',
+        userPermission: permissions.getPermissionLevel() as 'manage' | 'part_manage' | 'staff',
+      });
+    }
+  }, [user, permissions, volunteerStats, navigation]);
 
   // 处理志愿者功能区域点击
   const handleVolunteerSectionPress = useCallback(() => {
@@ -630,6 +637,7 @@ export const ProfileHomeScreen: React.FC = () => {
   };
 
 
+  // 设置项
   const settingItems = [
     {
       id: 'notifications',
@@ -655,7 +663,7 @@ export const ProfileHomeScreen: React.FC = () => {
   const styles = StyleSheet.create({
     container: {
       flex: 1,
-      backgroundColor: 'transparent', // 使用渐变背景
+      backgroundColor: isDarkMode ? '#000000' : '#F5F5F5', // 浅灰背景
     },
     
     // V2.0 背景层设计 - 避免与容器冲突
@@ -686,21 +694,75 @@ export const ProfileHomeScreen: React.FC = () => {
       paddingTop: 20,
       paddingBottom: 56 + 12 + insets.bottom - 20, // Tab bar height + margin + safe area - 20px向上调整
     },
-    userSection: {
-      marginBottom: 16, // 减少间距，更符合小红书的紧凑设计
+
+    // 访客卡片样式
+    guestCard: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      backgroundColor: isDarkMode ? '#2C2C2E' : '#FFFFFF',
+      borderRadius: 16,
+      paddingHorizontal: 20,
+      paddingVertical: 24,
+      marginBottom: 16,
+      ...Platform.select({
+        ios: {
+          shadowColor: '#000000',
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: 0.1,
+          shadowRadius: 8,
+        },
+        android: {
+          elevation: 4,
+        },
+      }),
+    },
+    guestContent: {
+      flex: 1,
+    },
+    guestTitle: {
+      fontSize: 22,
+      fontWeight: '700',
+      color: isDarkMode ? '#FFFFFF' : '#000000',
+      marginBottom: 4,
+    },
+    guestSubtitle: {
+      fontSize: 13,
+      color: isDarkMode ? '#9CA3AF' : '#6B7280',
+    },
+
+    // 统计卡片网格样式
+    statsGrid: {
+      marginBottom: 16,
+    },
+    statsRow: {
+      flexDirection: 'row',
+      marginBottom: 12,
+      gap: 6,
+    },
+    statCardWrapper: {
+      flex: 1,
+    },
+    statCardThird: {
+      flex: 1,
     },
     listContainer: {
-      backgroundColor: '#FFFFFF', // 小红书风格的纯白背景
-      borderRadius: 12, // 小红书使用的圆角大小
-      marginTop: 0, // 🔧 设为0，让settingsHeader的marginBottom:2生效
-      marginBottom: 8, // 保持下边距
+      backgroundColor: isDarkMode ? '#2C2C2E' : '#FFFFFF',
+      borderRadius: 12,
+      marginTop: 0,
+      marginBottom: 8,
       overflow: 'hidden',
-      // 小红书风格的微妙阴影
-      shadowColor: '#000000',
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.05,
-      shadowRadius: 8,
-      elevation: 2,
+      ...Platform.select({
+        ios: {
+          shadowColor: '#000000',
+          shadowOffset: { width: 0, height: 1 },
+          shadowOpacity: 0.05,
+          shadowRadius: 4,
+        },
+        android: {
+          elevation: 2,
+        },
+      }),
     },
     
     // 小红书风格个人信息卡
@@ -724,7 +786,7 @@ export const ProfileHomeScreen: React.FC = () => {
     sectionTitle: {
       fontSize: 18,
       fontWeight: '600',
-      color: '#000',
+      color: isDarkMode ? '#FFFFFF' : '#000000',
       marginBottom: 12,
       marginLeft: 4,
     },
@@ -737,7 +799,7 @@ export const ProfileHomeScreen: React.FC = () => {
       marginHorizontal: 4,
     },
     seeAllText: {
-      fontSize: 14,
+      fontSize: 13,
       color: '#6B7280', // 中性灰色
       fontWeight: '500',
     },
@@ -792,14 +854,14 @@ export const ProfileHomeScreen: React.FC = () => {
       alignItems: 'center',
     },
     activityLabel: {
-      fontSize: 13, // 13-14pt Secondary灰
-      color: '#9CA3AF',
+      fontSize: 13,
+      color: isDarkMode ? '#9CA3AF' : '#6B7280',
       marginBottom: 2,
     },
     activityCount: {
-      fontSize: 20, // 20-22pt Semibold
+      fontSize: 22,
       fontWeight: '600',
-      color: '#111827', // #111级深色
+      color: isDarkMode ? '#FFFFFF' : '#000000',
     },
     
     // 会员卡L1玻璃设计
@@ -827,9 +889,9 @@ export const ProfileHomeScreen: React.FC = () => {
       marginBottom: 12,
     },
     membershipTitle: {
-      fontSize: 16,
+      fontSize: 15,
       fontWeight: '600',
-      color: '#111827',
+      color: isDarkMode ? '#FFFFFF' : '#000000',
     },
     membershipBadge: {
       backgroundColor: 'rgba(107, 114, 128, 0.1)',
@@ -838,7 +900,7 @@ export const ProfileHomeScreen: React.FC = () => {
       borderRadius: 8,
     },
     membershipBadgeText: {
-      fontSize: 14, // 提升至辅助信息最小14pt
+      fontSize: 12,
       fontWeight: '500',
       color: '#6B7280',
     },
@@ -853,7 +915,7 @@ export const ProfileHomeScreen: React.FC = () => {
       borderColor: 'rgba(55, 65, 81, 0.2)', // 深灰边框
     },
     upgradeTextDawn: {
-      fontSize: 14,
+      fontSize: 13,
       fontWeight: '600',
       color: '#FFF', // 白色文字
     },
@@ -879,7 +941,7 @@ export const ProfileHomeScreen: React.FC = () => {
     },
 
     myCardsText: {
-      fontSize: 13,
+      fontSize: 12,
       fontWeight: '500',
       color: '#374151', // 深灰色文字
       marginLeft: 6,
@@ -897,7 +959,7 @@ export const ProfileHomeScreen: React.FC = () => {
     },
 
     cardCountText: {
-      fontSize: 13, // 提升至辅助信息最小13pt
+      fontSize: 11,
       fontWeight: '600',
       color: '#FFFFFF',
     },
@@ -915,7 +977,7 @@ export const ProfileHomeScreen: React.FC = () => {
     },
 
     orgSwitchText: {
-      fontSize: 13,
+      fontSize: 12,
       fontWeight: '500',
       color: '#374151',
       marginLeft: 6,
@@ -953,13 +1015,13 @@ export const ProfileHomeScreen: React.FC = () => {
       marginBottom: 8,
     },
     serviceLabel: {
-      fontSize: 14,
+      fontSize: 13,
       fontWeight: '600',
       color: '#000',
       marginBottom: 4,
     },
     serviceDesc: {
-      fontSize: 14, // 提升至辅助信息最小14pt
+      fontSize: 12,
       color: '#666',
     },
     
@@ -995,7 +1057,7 @@ export const ProfileHomeScreen: React.FC = () => {
       marginBottom: 6,
     },
     toolLabel: {
-      fontSize: 14, // 提升至辅助信息最小14pt
+      fontSize: 12,
       color: '#000',
       textAlign: 'center',
     },
@@ -1027,7 +1089,7 @@ export const ProfileHomeScreen: React.FC = () => {
       height: 36, // 36-40pt高度
     },
     writeReviewTextL2: {
-      fontSize: 14,
+      fontSize: 13,
       fontWeight: '600',
       color: '#374151', // 深灰色文字
       marginLeft: 4,
@@ -1067,11 +1129,11 @@ export const ProfileHomeScreen: React.FC = () => {
       flex: 1,
     },
     reviewTitleL1: {
-      fontSize: 15, // 15-17pt Semibold
+      fontSize: 14,
       fontWeight: '600',
       color: '#111827',
       marginBottom: 8,
-      lineHeight: 20, // 1-2行截断
+      lineHeight: 20,
     },
     reviewMeta: {
       flexDirection: 'row',
@@ -1083,12 +1145,12 @@ export const ProfileHomeScreen: React.FC = () => {
       marginRight: 12,
     },
     reviewMetaText: {
-      fontSize: 14, // 提升至辅助信息最小14pt
+      fontSize: 12,
       color: '#9CA3AF',
       marginLeft: 4,
     },
     reviewDate: {
-      fontSize: 14, // 提升至辅助信息最小14pt
+      fontSize: 12,
       color: '#9CA3AF',
       marginLeft: 'auto',
     },
@@ -1101,14 +1163,14 @@ export const ProfileHomeScreen: React.FC = () => {
       paddingHorizontal: 20,
     },
     emptyStateText: {
-      fontSize: 16,
+      fontSize: 15,
       fontWeight: '500',
       color: '#6B7280',
       marginTop: 12,
       marginBottom: 4,
     },
     emptyStateSubtext: {
-      fontSize: 14,
+      fontSize: 13,
       color: '#9CA3AF',
       textAlign: 'center',
     },
@@ -1140,87 +1202,15 @@ export const ProfileHomeScreen: React.FC = () => {
       marginRight: 8,
     },
     logoutText: {
-      fontSize: 16,
+      fontSize: 15,
       fontWeight: '600',
-      color: '#DC2626',
+      color: isDarkMode ? '#FF453A' : '#DC2626',
     },
     
-    // 志愿者功能区域样式
-    volunteerSection: {
-      marginVertical: 8,
-    },
-    volunteerCard: {
-      backgroundColor: '#FFFFFF',
-      borderRadius: 12,
-      paddingHorizontal: 16,
-      paddingVertical: 14,
-      flexDirection: 'row',
-      alignItems: 'center',
-      // 小红书风格阴影
-      shadowColor: '#000000',
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.05,
-      shadowRadius: 8,
-      elevation: 2,
-    },
-    volunteerIconContainer: {
-      width: 32,
-      height: 32,
-      borderRadius: 8,
-      backgroundColor: 'rgba(249, 168, 137, 0.1)', // 品牌橙色背景
-      alignItems: 'center',
-      justifyContent: 'center',
-      marginRight: 12,
-    },
-    volunteerContent: {
-      flex: 1,
-    },
-    volunteerTitle: {
-      fontSize: 17,
-      fontWeight: '600',
-      color: '#000000',
-      marginBottom: 2,
-    },
-    volunteerSubtitle: {
-      fontSize: 14,
-      color: '#6B7280',
-    },
-    volunteerHours: {
-      fontSize: 13,
-      fontWeight: '500',
-      color: '#F9A889', // 品牌橙色
-      marginTop: 4,
-    },
   });
 
   return (
     <View style={styles.container}>
-      {/* V2.0 背景层Horizon带 - 不贴容器边 */}
-      <View style={styles.backgroundLayer}>
-        <LinearGradient
-          colors={[
-            '#F8F9FA', // 顶部中性灰
-            '#F5F6F7', // 轻微变化 
-            '#F1F3F4', // 浅灰色
-            '#F8F9FA'  // 回到中性
-          ]}
-          style={styles.horizonBand}
-          locations={[0, 0.4, 0.6, 1]} // 微弱温暖感
-        />
-        {/* 白雾叠加层 */}
-        <View style={styles.mistOverlay} />
-      </View>
-      
-      {/* 统一的应用背景渐变 */}
-      <LinearGradient 
-        colors={[
-          '#F5F6F7', // 稍灰的顶部
-          '#F1F2F3', // 中等灰度
-          '#EDEEF0', // 更明显的底部灰色
-        ]}
-        style={StyleSheet.absoluteFill}
-        locations={[0, 0.5, 1]}
-      />
       <SafeAreaView style={styles.safeArea}>
         <ScrollView
           style={styles.scrollView}
@@ -1229,167 +1219,67 @@ export const ProfileHomeScreen: React.FC = () => {
           onScroll={() => {}} // Explicit empty handler to prevent propagation issues
           scrollEventThrottle={16}
         >
-          {/* 用户信息卡片 */}
-          <View style={styles.userSection}>
-            {/* V2.0 双层结构：外层solid背景用于阴影，内层L2品牌玻璃 */}
-            <View style={styles.personalInfoShadowContainer}>
-              <PersonalInfoCard
-                name={getDisplayName()}
-                {...organizationInfo}
-                email={user?.email}
-                avatarUrl={undefined}
-                onPress={!isAuthenticated ? () => {
-                  // 未登录用户点击个人信息卡片时跳转到登录页面
-                  navigation.navigate('Login');
-                } : () => {
-                  // 已登录用户点击个人信息卡片时不执行任何操作（禁用跳转）
-                }}
-                membershipStatus={membershipStatus}
-                onQRCodePress={user && isAuthenticated ? handleShowIdentityQR : undefined}
-                onEditPress={user && isAuthenticated ? handleEditProfile : undefined}
-                stats={user && permissions.hasVolunteerManagementAccess() ? volunteerStats : undefined}
-                onVolunteerHoursPress={user && isAuthenticated && permissions.hasVolunteerManagementAccess() ? handleVolunteerHoursPress : undefined}
-                isGuest={!isAuthenticated}
-              />
-            </View>
-          </View>
-
-          {/* 志愿者功能区域 - 仅对有权限的用户显示 */}
-          {isAuthenticated && permissions.hasVolunteerManagementAccess() && (
-            <View style={styles.volunteerSection}>
-              <TouchableOpacity 
-                style={styles.volunteerCard}
-                onPress={handleVolunteerSectionPress}
-                activeOpacity={0.7}
-              >
-                <View style={styles.volunteerIconContainer}>
-                  <Ionicons 
-                    name="people-outline" 
-                    size={20} 
-                    color="#F9A889" 
-                  />
-                </View>
-                <View style={styles.volunteerContent}>
-                  <Text style={styles.volunteerTitle}>
-                    {t('profile.volunteer.management', '志愿者管理')}
-                  </Text>
-                </View>
-                <Ionicons 
-                  name="chevron-forward" 
-                  size={16} 
-                  color="#c7c7cc" 
-                />
-              </TouchableOpacity>
-            </View>
+          {/* 个人信息卡片 - 仅登录用户显示 */}
+          {isAuthenticated && user ? (
+            <ProfileInfoCard
+              userName={getDisplayName()}
+              school={organizationInfo.school}
+              position={organizationInfo.position}
+              avatarUrl={user.avatar}
+              onEditPress={() => navigation.navigate('EditProfile')}
+              onQRCodePress={() => navigation.navigate('PersonalQR' as never)}
+            />
+          ) : (
+            /* 访客状态：显示登录引导卡片 */
+            <TouchableOpacity
+              style={styles.guestCard}
+              onPress={() => navigation.navigate('Login')}
+              activeOpacity={0.8}
+            >
+              <View style={styles.guestContent}>
+                <Text style={styles.guestTitle}>{t('userInfo.guest')}</Text>
+                <Text style={styles.guestSubtitle}>
+                  {t('profile.login_to_view', 'Login to view your profile')}
+                </Text>
+              </View>
+              <Ionicons name="chevron-forward" size={24} color="#9CA3AF" />
+            </TouchableOpacity>
           )}
 
-          {/* 我的活动区 - 统一显示活动统计布局 */}
-          <View style={styles.activitySection}>
-            <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>{t('profile.my_activities')}</Text>
-            </View>
-            <View style={styles.activityContainer}>
-              <TouchableOpacity 
-                style={styles.activityItem} 
-                onPress={isAuthenticated && user?.id ? handleNotCheckedInPress : handleUnauthenticatedPress}
-              >
-                <View style={styles.activityIconL2}>
-                  <Ionicons name="time-outline" size={18} color="#6B7280" />
-                </View>
-                <View style={styles.activityInfo}>
-                  <Text 
-                    style={styles.activityLabel}
-                    numberOfLines={1}
-                    ellipsizeMode="tail"
-                    adjustsFontSizeToFit={true}
-                    minimumFontScale={0.8}
-                  >
-                    {t('profile.not_participated')}
-                  </Text>
-                  <Text style={styles.activityCount}>
-                    {isAuthenticated && user?.id ? activityStats.notParticipated : '--'}
-                  </Text>
-                </View>
-              </TouchableOpacity>
-              
-              <View style={styles.activitySeparator} />
-              
-              <TouchableOpacity 
-                style={styles.activityItem} 
-                onPress={isAuthenticated && user?.id ? handleCheckedInPress : handleUnauthenticatedPress}
-              >
-                <View style={styles.activityIconL2}>
-                  <Ionicons name="checkmark-circle" size={18} color="#6B7280" />
-                </View>
-                <View style={styles.activityInfo}>
-                  <Text 
-                    style={styles.activityLabel}
-                    numberOfLines={1}
-                    ellipsizeMode="tail"
-                    adjustsFontSizeToFit={true}
-                    minimumFontScale={0.8}
-                  >
-                    {t('profile.participated')}
-                  </Text>
-                  <Text style={styles.activityCount}>
-                    {isAuthenticated && user?.id ? activityStats.participated : '--'}
-                  </Text>
-                </View>
-              </TouchableOpacity>
-              
-              {/* 收藏功能已隐藏以通过App Store审核 */}
-              {/* <View style={styles.activitySeparator} />
-              
-              <TouchableOpacity 
-                style={styles.activityItem}
-                onPress={isAuthenticated && user?.id ? () => {} : handleUnauthenticatedPress}
-              >
-                <View style={styles.activityIconL2}>
-                  <Ionicons name="heart-outline" size={18} color="#6B7280" />
-                </View>
-                <View style={styles.activityInfo}>
-                  <Text 
-                    style={styles.activityLabel}
-                    numberOfLines={1}
-                    ellipsizeMode="tail"
-                    adjustsFontSizeToFit={true}
-                    minimumFontScale={0.8}
-                  >
-                    {t('profile.bookmarked')}
-                  </Text>
-                  <Text style={styles.activityCount}>
-                    {isAuthenticated && user?.id ? activityStats.bookmarked : '--'}
-                  </Text>
-                </View>
-              </TouchableOpacity>
-              
-              <View style={styles.activitySeparator} /> */}
-              
-              {/* 评价功能已隐藏以通过App Store审核 */}
-              {/* <TouchableOpacity 
-                style={styles.activityItem}
-                onPress={isAuthenticated && user?.id ? () => {} : handleUnauthenticatedPress}
-              >
-                <View style={styles.activityIconL2}>
-                  <Ionicons name="star-outline" size={18} color="#6B7280" />
-                </View>
-                <View style={styles.activityInfo}>
-                  <Text 
-                    style={styles.activityLabel}
-                    numberOfLines={1}
-                    ellipsizeMode="tail"
-                    adjustsFontSizeToFit={true}
-                    minimumFontScale={0.8}
-                  >
-                    {t('profile.pending_review')}
-                  </Text>
-                  <Text style={styles.activityCount}>
-                    {isAuthenticated && user?.id ? activityStats.pendingReview : '--'}
-                  </Text>
-                </View>
-              </TouchableOpacity> */}
+          {/* 统计卡片 - 单行3列布局 */}
+          <View style={styles.statsGrid}>
+            <View style={styles.statsRow}>
+              <View style={styles.statCardThird}>
+                <StatCard
+                  label={t('profile.volunteer_hours_short')}
+                  value={isAuthenticated && user?.id ? volunteerStats.volunteerHours : '--'}
+                  showArrow={true}
+                  onPress={isAuthenticated && user?.id ? handleVolunteerHoursPress : handleUnauthenticatedPress}
+                />
+              </View>
+              <View style={styles.statCardThird}>
+                <StatCard
+                  label={t('profile.not_participated')}
+                  value={isAuthenticated && user?.id ? activityStats.notParticipated : '--'}
+                  showArrow={true}
+                  onPress={isAuthenticated && user?.id ? handleNotCheckedInPress : handleUnauthenticatedPress}
+                />
+              </View>
+              <View style={styles.statCardThird}>
+                <StatCard
+                  label={t('profile.participated')}
+                  value={isAuthenticated && user?.id ? activityStats.participated : '--'}
+                  showArrow={true}
+                  onPress={isAuthenticated && user?.id ? handleCheckedInPress : handleUnauthenticatedPress}
+                />
+              </View>
             </View>
           </View>
+
+          {/* 志愿者管理卡片 - 仅staff及以上显示 */}
+          {isAuthenticated && permissions.hasVolunteerManagementAccess() && (
+            <VolunteerManagementCard onPress={handleVolunteerSectionPress} />
+          )}
 
           {/* 会员卡区域已隐藏以通过App Store审核 */}
           {/* <View style={styles.membershipSection}>
@@ -1542,19 +1432,6 @@ export const ProfileHomeScreen: React.FC = () => {
         onClose={() => setShowLogoutModal(false)}
         onConfirm={performLogout}
       />
-
-      {/* 个人志愿者历史记录弹窗 */}
-      {showPersonalHistoryModal && user?.userId && (
-        <VolunteerHistoryBottomSheet
-          visible={showPersonalHistoryModal}
-          onClose={() => setShowPersonalHistoryModal(false)}
-          userId={parseInt(user.userId)}
-          userName="我" // 个人查询显示"我的志愿者记录"
-          userPermission="staff" // 个人查询使用staff权限，限制为7天内
-          currentUser={user}
-          isPersonalView={true} // 标记为个人查看模式，显示"My Records"
-        />
-      )}
     </View>
   );
 };

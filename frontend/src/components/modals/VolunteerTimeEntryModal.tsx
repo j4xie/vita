@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -8,16 +8,17 @@ import {
   TextInput,
   ScrollView,
   Platform,
-  ActivityIndicator,
   KeyboardAvoidingView,
   Pressable,
   Keyboard,
+  DeviceEventEmitter,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTranslation } from 'react-i18next';
+import { useNavigation } from '@react-navigation/native';
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 import { i18n } from '../../utils/i18n';
 
@@ -27,6 +28,7 @@ import { getUserPermissionLevel } from '../../types/userPermissions';
 import { performTimeEntry, getPersonalVolunteerRecords } from '../../services/volunteerAPI';
 import { timeService } from '../../utils/UnifiedTimeService';
 import { SafeAlert } from '../../utils/SafeAlert';
+import { LoaderOne } from '../ui/LoaderOne';
 
 interface VolunteerTimeEntryModalProps {
   visible: boolean;
@@ -41,6 +43,7 @@ export const VolunteerTimeEntryModal: React.FC<VolunteerTimeEntryModalProps> = (
 }) => {
   const { t } = useTranslation();
   const { user } = useUser();
+  const navigation = useNavigation();
 
   // 只能补录当前登录用户的工时
   const targetUserId = user?.userId;
@@ -52,6 +55,31 @@ export const VolunteerTimeEntryModal: React.FC<VolunteerTimeEntryModalProps> = (
   const [endTime, setEndTime] = useState<Date | null>(null);
   const [description, setDescription] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // 监听日历选择事件
+  useEffect(() => {
+    const subscription = DeviceEventEmitter.addListener(
+      'CalendarDateSelected',
+      (data: { dateString: string }) => {
+        const date = new Date(data.dateString);
+        setSelectedDate(date);
+
+        // 同步更新已选择的时间到新日期
+        if (startTime) {
+          const newStartTime = new Date(date);
+          newStartTime.setHours(startTime.getHours(), startTime.getMinutes(), 0, 0);
+          setStartTime(newStartTime);
+        }
+        if (endTime) {
+          const newEndTime = new Date(date);
+          newEndTime.setHours(endTime.getHours(), endTime.getMinutes(), 0, 0);
+          setEndTime(newEndTime);
+        }
+      }
+    );
+
+    return () => subscription.remove();
+  }, [startTime, endTime]);
 
   // 日期时间选择器状态
   const [showDatePicker, setShowDatePicker] = useState(false);
@@ -619,14 +647,25 @@ export const VolunteerTimeEntryModal: React.FC<VolunteerTimeEntryModalProps> = (
                     <TouchableOpacity
                       style={styles.dateButton}
                       onPress={() => {
-                        setTempDate(selectedDate);
-                        setIsManualDateInput(false);
-                        setShowDatePicker(true);
+                        // 格式化日期为字符串（可序列化）
+                        const formatDateToString = (date: Date) => {
+                          const year = date.getFullYear();
+                          const month = String(date.getMonth() + 1).padStart(2, '0');
+                          const day = String(date.getDate()).padStart(2, '0');
+                          return `${year}-${month}-${day}`;
+                        };
+
+                        // 直接导航到日历选择页面（作为Modal显示在当前Modal之上）
+                        navigation.navigate('CalendarSelection' as never, {
+                          selectedDate: formatDateToString(selectedDate),
+                          minDate: formatDateToString(getMinSelectableDate()),
+                          maxDate: formatDateToString(getMaxSelectableDate()),
+                        } as never);
                       }}
                     >
                       <Ionicons name="calendar-outline" size={20} color={theme.colors.primary} />
                       <Text style={styles.dateText}>{formatDate(selectedDate)}</Text>
-                      <Ionicons name="chevron-down" size={20} color={theme.colors.text.secondary} />
+                      <Ionicons name="chevron-forward" size={20} color={theme.colors.text.secondary} />
                     </TouchableOpacity>
                   </View>
 
@@ -729,6 +768,9 @@ export const VolunteerTimeEntryModal: React.FC<VolunteerTimeEntryModalProps> = (
                         onChangeText={setDescription}
                         multiline
                         maxLength={100}
+                        returnKeyType="done"
+                        blurOnSubmit={true}
+                        onSubmitEditing={() => Keyboard.dismiss()}
                       />
                     </View>
                     <Text style={styles.charCount}>
@@ -752,7 +794,7 @@ export const VolunteerTimeEntryModal: React.FC<VolunteerTimeEntryModalProps> = (
                       end={{ x: 1, y: 1 }}
                     >
                       {isSubmitting ? (
-                        <ActivityIndicator size="small" color="white" />
+                        <LoaderOne size="small" color="white" />
                       ) : (
                         <Text style={styles.submitButtonText}>
                           {t('volunteerTimeEntry.submit')}
@@ -874,6 +916,8 @@ export const VolunteerTimeEntryModal: React.FC<VolunteerTimeEntryModalProps> = (
                         autoFocus={true}
                         keyboardType="numeric"
                         maxLength={5}
+                        returnKeyType="done"
+                        onSubmitEditing={() => Keyboard.dismiss()}
                       />
                     ) : (
                       /* 日期输入（保持原样） */
@@ -905,22 +949,17 @@ export const VolunteerTimeEntryModal: React.FC<VolunteerTimeEntryModalProps> = (
                 ) : (
                   /* 选择器模式 */
                   <>
-                    {/* 原生日期选择器 - 支持30天范围 */}
+                    {/* 月历日期选择器 - 支持30天范围 */}
                     {showDatePicker && (
-                      <View style={styles.nativeDatePickerContainer}>
+                      <View style={styles.calendarPickerContainer}>
                         <Text style={styles.datePickerTitle}>
                           {t('volunteerTimeEntry.selectDateTitle', '选择补录日期')}
                         </Text>
-                        <DateTimePicker
-                          value={tempDate}
-                          mode="date"
-                          display="spinner"
-                          onChange={(_, date) => {
-                            if (date) setTempDate(date);
-                          }}
-                          minimumDate={getMinSelectableDate()}
-                          maximumDate={getMaxSelectableDate()}
-                          style={styles.picker}
+                        <CalendarPicker
+                          selectedDate={tempDate}
+                          onDateSelect={(date) => setTempDate(date)}
+                          minDate={getMinSelectableDate()}
+                          maxDate={getMaxSelectableDate()}
                         />
                       </View>
                     )}
@@ -1189,7 +1228,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'white',
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
-    maxHeight: '65%',
+    maxHeight: '70%',
     overflow: 'hidden',
   },
   pickerHeader: {
@@ -1286,7 +1325,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: theme.colors.text.primary,
     textAlign: 'center',
-    marginBottom: 20,
+    marginBottom: 12,
   },
   dateGrid: {
     flexDirection: 'row',
@@ -1454,6 +1493,13 @@ const styles = StyleSheet.create({
   nativeDatePickerContainer: {
     backgroundColor: 'white',
     paddingVertical: 20,
+    paddingHorizontal: 16,
+  },
+  // 月历选择器样式
+  calendarPickerContainer: {
+    backgroundColor: 'white',
+    paddingTop: 12,
+    paddingBottom: 16,
     paddingHorizontal: 16,
   }
 });

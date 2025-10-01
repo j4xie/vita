@@ -6,7 +6,6 @@ import {
   TouchableOpacity,
   Platform,
   Image,
-  ActivityIndicator,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
@@ -27,6 +26,7 @@ import { useCardPress } from '../../hooks/useCardPress';
 import { useMemoizedDarkMode } from '../../hooks/useDarkMode';
 import { useTheme } from '../../context/ThemeContext';
 import { formatActivityDateWithTimezone, FrontendActivity } from '../../utils/activityAdapter';
+import { LoaderOne } from '../ui/LoaderOne';
 
 interface SimpleActivityCardProps {
   activity: {
@@ -395,7 +395,7 @@ const SimpleActivityCardComponent: React.FC<SimpleActivityCardProps> = ({
           />
           {imageLoading && (
             <View style={styles.imageLoadingContainer}>
-              <ActivityIndicator size="large" color={theme.colors.primary} />
+              <LoaderOne size="large" color={theme.colors.primary} />
             </View>
           )}
         </>

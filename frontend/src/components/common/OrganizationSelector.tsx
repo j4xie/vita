@@ -7,7 +7,6 @@ import {
   Modal,
   FlatList,
   TextInput,
-  ActivityIndicator,
   Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -15,6 +14,7 @@ import { useTranslation } from 'react-i18next';
 import { theme } from '../../theme';
 import { LIQUID_GLASS_LAYERS } from '../../theme/core';
 import { fetchOrganizationList } from '../../services/registrationAPI';
+import { Loading } from '../ui/Loading';
 
 interface Organization {
   id: number;
@@ -169,8 +169,7 @@ export const OrganizationSelector: React.FC<OrganizationSelectorProps> = ({
 
           {loading ? (
             <View style={styles.loadingContainer}>
-              <ActivityIndicator size="large" color={theme.colors.primary} />
-              <Text style={styles.loadingText}>{t('auth.register.form.loading_organizations')}</Text>
+              <Loading size="large" color={theme.colors.primary} text={t('auth.register.form.loading_organizations')} />
             </View>
           ) : (
             <FlatList

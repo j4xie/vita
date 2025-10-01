@@ -24,6 +24,9 @@ import { shouldShowTabBar, mustHideTabBar } from '../config/tabBarConfig';
 import { ActivityListScreen } from '../screens/activities/ActivityListScreen';
 import { ActivityDetailScreen } from '../screens/activities/ActivityDetailScreen';
 import { ActivityRegistrationFormScreen } from '../screens/activities/ActivityRegistrationFormScreen';
+import { PointsMallHomeScreen } from '../screens/rewards/PointsMallHomeScreen';
+import { PointsMallListScreen } from '../screens/rewards/PointsMallListScreen';
+import { PointsMallDetailScreen } from '../screens/rewards/PointsMallDetailScreen';
 import { LoginScreen } from '../screens/auth/LoginScreen';
 import { ForgotPasswordScreen } from '../screens/auth/ForgotPasswordScreen';
 import { SetNewPasswordScreen } from '../screens/auth/SetNewPasswordScreen';
@@ -39,6 +42,7 @@ import { StudentNormalRegisterStep2Screen } from '../screens/auth/StudentNormalR
 import { VerificationScreen } from '../screens/auth/VerificationScreen';
 import { QRScannerScreen } from '../screens/common/QRScannerScreen';
 import { QRScanResultScreen } from '../screens/common/QRScanResultScreen';
+import { CalendarSelectionScreen } from '../screens/common/CalendarSelectionScreen';
 // Profile Screens
 import { ProfileHomeScreen } from '../screens/profile/ProfileHomeScreen';
 // import { AccountSecurityScreen } from '../screens/profile/AccountSecurityScreen'; // 文件已删除
@@ -48,6 +52,7 @@ import { AboutSupportScreen } from '../screens/profile/AboutSupportScreen';
 import { LanguageSelectionScreen } from '../screens/profile/LanguageSelectionScreen';
 import { EditProfileScreen } from '../screens/profile/EditProfileScreen';
 import { ActivityLayoutSelectionScreen } from '../screens/profile/ActivityLayoutSelectionScreen';
+import { PersonalQRScreen } from '../screens/profile/PersonalQRScreen';
 // Cards Screens
 import { MyCardsScreen } from '../screens/cards/MyCardsScreen';
 // Organization Provider
@@ -56,13 +61,17 @@ import { OrganizationProvider } from '../context/OrganizationContext'; // 暂时
 import { ExploreScreen } from '../screens/explore/ExploreScreen';
 import { ConsultingScreen } from '../screens/consulting/ConsultingScreen';
 import { CommunityScreen } from '../screens/community/CommunityScreen';
+import { CommunityEventsScreen } from '../screens/community/CommunityEventsScreen';
 import { WellbeingScreen } from '../screens/wellbeing/WellbeingScreen';
 import { SearchScreen } from '../screens/search/SearchScreen';
 import { VolunteerHomeScreen } from '../screens/volunteer/VolunteerHomeScreen';
 import { VolunteerCheckOutScreen } from '../screens/volunteer/VolunteerCheckOutScreen';
 import { VolunteerSchoolListScreen } from '../screens/volunteer/VolunteerSchoolListScreen';
 import { VolunteerSchoolDetailScreen } from '../screens/volunteer/VolunteerSchoolDetailScreen';
+import { VolunteerHistoryScreen } from '../screens/volunteer/VolunteerHistoryScreen';
+import { TimeEntryScreen } from '../screens/volunteer/TimeEntryScreen';
 import { FloatingAIButton } from '../components/common/FloatingAIButton';
+import { FloatingFilterButton } from '../components/community/FloatingFilterButton';
 import { GlobalTouchHandler } from '../components/common/GlobalTouchHandler';
 import { ErrorBoundary } from '../components/common/ErrorBoundary';
 import { TermsScreen } from '../screens/legal/TermsScreen';
@@ -73,6 +82,8 @@ const AuthStack = createStackNavigator();
 const MainStack = createStackNavigator();
 const ProfileStack = createStackNavigator();
 const WellbeingStack = createStackNavigator();
+const RewardsStack = createStackNavigator();
+const CommunityStack = createStackNavigator();
 const Tab = createBottomTabNavigator();
 
 // Auth Stack Navigator
@@ -226,11 +237,104 @@ const WellbeingNavigator = () => {
         },
       }}
     >
-      <WellbeingStack.Screen 
-        name="WellbeingHome" 
+      <WellbeingStack.Screen
+        name="WellbeingHome"
         component={WellbeingScreen}
       />
     </WellbeingStack.Navigator>
+  );
+};
+
+// Rewards Stack Navigator - 积分商城
+const RewardsNavigator = () => {
+  return (
+    <RewardsStack.Navigator
+      {...({ id: "rewards" } as any)}
+      screenOptions={{
+        headerShown: false,
+        ...pageTransitions.slideFromRight,
+        transitionSpec: {
+          open: {
+            animation: 'timing',
+            config: {
+              duration: 250,
+            },
+          },
+          close: {
+            animation: 'timing',
+            config: {
+              duration: 250,
+            },
+          },
+        },
+      }}
+    >
+      <RewardsStack.Screen
+        name="RewardsHome"
+        component={PointsMallHomeScreen}
+        options={{
+          tabBarStyle: { display: 'flex' }, // 强制显示TabBar
+        }}
+      />
+      <RewardsStack.Screen
+        name="PointsMallList"
+        component={PointsMallListScreen}
+        options={{
+          headerShown: false,
+        }}
+      />
+      <RewardsStack.Screen
+        name="PointsMallDetail"
+        component={PointsMallDetailScreen}
+        options={{
+          headerShown: false,
+        }}
+      />
+      {/* TODO: 添加更多积分商城相关页面
+        - MyPoints (我的积分)
+        - ExchangeOrders (兑换记录)
+        - Favorites (我的收藏)
+        - Checkout (确认兑换)
+        - ShippingAddress (收货地址)
+        - MyOrders (我的订单)
+      */}
+    </RewardsStack.Navigator>
+  );
+};
+
+// Community Stack Navigator - 社区活动
+const CommunityNavigator = () => {
+  return (
+    <CommunityStack.Navigator
+      {...({ id: "community" } as any)}
+      screenOptions={{
+        headerShown: false,
+        ...pageTransitions.slideFromRight,
+        transitionSpec: {
+          open: {
+            animation: 'timing',
+            config: {
+              duration: 250,
+            },
+          },
+          close: {
+            animation: 'timing',
+            config: {
+              duration: 250,
+            },
+          },
+        },
+      }}
+    >
+      <CommunityStack.Screen
+        name="CommunityHome"
+        component={CommunityScreen}
+      />
+      <CommunityStack.Screen
+        name="CommunityEvents"
+        component={CommunityEventsScreen}
+      />
+    </CommunityStack.Navigator>
   );
 };
 
@@ -390,12 +494,20 @@ const ProfileNavigator = () => {
           title: t('navigation.headers.edit_profile'),
         }}
       />
-      <ProfileStack.Screen 
-        name="ActivityLayoutSelection" 
+      <ProfileStack.Screen
+        name="ActivityLayoutSelection"
         component={ActivityLayoutSelectionScreen}
         options={{
           title: t('navigation.headers.layout_selection'),
           headerShown: false,
+        }}
+      />
+      <ProfileStack.Screen
+        name="PersonalQR"
+        component={PersonalQRScreen}
+        options={{
+          headerShown: false,
+          ...pageTransitions.slideFromRight,
         }}
       />
       {/* 会员卡功能已隐藏以通过App Store审核 */}
@@ -447,19 +559,30 @@ const ProfileNavigator = () => {
           ...pageTransitions.slideFromRight,
         }}
       />
+      <ProfileStack.Screen
+        name="VolunteerHistory"
+        component={VolunteerHistoryScreen}
+        options={{
+          headerShown: false,
+          ...pageTransitions.slideFromRight,
+        }}
+      />
     </ProfileStack.Navigator>
   );
 };
 
 // Tab Navigator with permission-based layout
 const TabNavigator = () => {
+  // 追踪当前Tab以控制FloatingSearchButton显示
+  const [currentTab, setCurrentTab] = useState('Explore');
+
   // 🚨 安全检查：防止UserProvider初始化问题
   let permissions, user;
   try {
     const userContext = useUser();
     permissions = userContext.permissions;
     user = userContext.user;
-  
+
     console.log('🔍 [TABS] 渲染Tab导航，用户权限:', {
       hasUser: !!user,
       permissionLevel: permissions.getPermissionLevel(),
@@ -473,7 +596,7 @@ const TabNavigator = () => {
     permissions = createPermissionChecker(null);
     user = null;
   }
-  
+
   return (
     <FilterProvider>
       <GlobalTouchHandler>
@@ -487,25 +610,38 @@ const TabNavigator = () => {
             tabBarActiveTintColor: theme.colors.primary,
             tabBarInactiveTintColor: theme.colors.text.tertiary,
           }}
+          screenListeners={{
+            state: (e) => {
+              // 监听Tab切换事件
+              const state = e.data.state;
+              if (state && state.index !== undefined && state.routes) {
+                const currentRoute = state.routes[state.index];
+                if (currentRoute && currentRoute.name) {
+                  console.log('📱 [TAB-NAVIGATOR] Tab切换到:', currentRoute.name);
+                  setCurrentTab(currentRoute.name);
+                }
+              }
+            },
+          }}
         >
         {/* 探索 - 所有用户都可以访问 */}
-        <Tab.Screen 
-          name="Explore" 
+        <Tab.Screen
+          name="Explore"
           component={HomeNavigator}
           options={({ route }) => {
             const routeName = getFocusedRouteNameFromRoute(route) ?? 'ActivityList';
-            
+
             // 🛡️ 双重保护：先检查是否必须隐藏，再检查是否应该显示
             const mustHide = mustHideTabBar(routeName);
             const shouldShow = !mustHide && shouldShowTabBar(routeName);
-            
-            console.log('📱 [TAB-CONTROL] Explore Tab:', { 
-              routeName, 
-              mustHide, 
-              shouldShow, 
-              finalDisplay: shouldShow ? 'flex' : 'none' 
+
+            console.log('📱 [TAB-CONTROL] Explore Tab:', {
+              routeName,
+              mustHide,
+              shouldShow,
+              finalDisplay: shouldShow ? 'flex' : 'none'
             });
-            
+
             return {
               tabBarStyle: {
                 display: shouldShow ? 'flex' : 'none',
@@ -513,44 +649,65 @@ const TabNavigator = () => {
             };
           }}
         />
-        
-        {/* 社区咨询 - 已隐藏以通过App Store审核 */}
-        {/* <Tab.Screen 
-          name="Community" 
-          component={CommunityScreen}
-          options={() => {
-            const routeName = 'Community';
+
+        {/* 社区 - 商家内容与活动 */}
+        <Tab.Screen
+          name="Community"
+          component={CommunityNavigator}
+          options={({ route }) => {
+            const routeName = getFocusedRouteNameFromRoute(route) ?? 'CommunityHome';
             const mustHide = mustHideTabBar(routeName);
             const shouldShow = !mustHide && shouldShowTabBar(routeName);
-            
+
             console.log('📱 [TAB-CONTROL] Community Tab:', { routeName, mustHide, shouldShow });
-            
+
             return {
               tabBarStyle: {
                 display: shouldShow ? 'flex' : 'none',
               },
             };
           }}
-        /> */}
-        
+        />
+
+        {/* 会员 - 积分商城·优惠券·会员系统 (中心突出Tab) */}
+        <Tab.Screen
+          name="Rewards"
+          component={RewardsNavigator}
+          options={({ route }) => {
+            const routeName = getFocusedRouteNameFromRoute(route) ?? 'RewardsHome';
+
+            console.log('📱 [TAB-CONTROL] Rewards Tab:', {
+              routeName,
+              forcedDisplay: 'flex'
+            });
+
+            // 强制显示TabBar - 会员中心应该始终显示TabBar
+            return {
+              tabBarStyle: {
+                display: 'flex',
+              },
+            };
+          }}
+        />
+
         {/* 安心 - 所有用户都可以访问，内部根据权限显示不同功能 */}
-        <Tab.Screen 
-          name="Wellbeing" 
+        <Tab.Screen
+          name="Wellbeing"
           component={WellbeingNavigator}
           options={({ route }) => {
             const routeName = getFocusedRouteNameFromRoute(route) ?? 'WellbeingHome';
-            
+
             // 🛡️ 双重保护：防止意外显示TabBar
             const mustHide = mustHideTabBar(routeName);
             const shouldShow = !mustHide && shouldShowTabBar(routeName);
-            
-            console.log('📱 [TAB-CONTROL] Wellbeing Tab:', { 
-              routeName, 
-              mustHide, 
+
+            console.log('📱 [TAB-CONTROL] Wellbeing Tab:', {
+              routeName,
+              mustHide,
               shouldShow,
               finalDisplay: shouldShow ? 'flex' : 'none'
             });
-            
+
             return {
               tabBarStyle: {
                 display: shouldShow ? 'flex' : 'none',
@@ -558,25 +715,25 @@ const TabNavigator = () => {
             };
           }}
         />
-        
+
         {/* 个人 - 所有用户都可以访问 */}
-        <Tab.Screen 
-          name="Profile" 
+        <Tab.Screen
+          name="Profile"
           component={ProfileNavigator}
           options={({ route }) => {
             const routeName = getFocusedRouteNameFromRoute(route) ?? 'ProfileHome';
-            
+
             // 🛡️ 关键保护：Profile子页面绝对不能显示TabBar
             const mustHide = mustHideTabBar(routeName);
             const shouldShow = !mustHide && shouldShowTabBar(routeName);
-            
-            console.log('📱 [TAB-CONTROL] Profile Tab:', { 
-              routeName, 
-              mustHide, 
+
+            console.log('📱 [TAB-CONTROL] Profile Tab:', {
+              routeName,
+              mustHide,
               shouldShow,
               finalDisplay: shouldShow ? 'flex' : 'none'
             });
-            
+
             return {
               tabBarStyle: {
                 display: shouldShow ? 'flex' : 'none',
@@ -585,7 +742,7 @@ const TabNavigator = () => {
           }}
         />
         </Tab.Navigator>
-        
+
         {/* 全局悬浮AI助手按钮 - 已隐藏以通过App Store审核 */}
         {/* <ErrorBoundary>
           <FloatingAIButton />
@@ -673,11 +830,31 @@ export const AppNavigator = () => {
           />
           
           {/* Search Screen - 独立搜索页面 */}
-          <RootStack.Screen 
-            name="Search" 
+          <RootStack.Screen
+            name="Search"
             component={SearchScreen}
             options={{
               ...pageTransitions.slideFromRight,
+            }}
+          />
+
+          {/* Calendar Selection Screen - 日历选择页面 */}
+          <RootStack.Screen
+            name="CalendarSelection"
+            component={CalendarSelectionScreen}
+            options={{
+              presentation: 'modal',
+              ...pageTransitions.slideFromBottom,
+            }}
+          />
+
+          {/* Time Entry Screen - 时间补录页面 */}
+          <RootStack.Screen
+            name="TimeEntry"
+            component={TimeEntryScreen}
+            options={{
+              presentation: 'modal',
+              ...pageTransitions.slideFromBottom,
             }}
           />
           

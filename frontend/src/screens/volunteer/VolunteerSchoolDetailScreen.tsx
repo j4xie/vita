@@ -44,7 +44,6 @@ import { i18n } from '../../utils/i18n';
 import { useAllDarkModeStyles } from '../../hooks/useDarkModeStyles';
 import { formatVolunteerTime as formatChineseDateTime } from '../../utils/volunteerTimeFormatter';
 import VolunteerHistoryBottomSheet from '../../components/volunteer/VolunteerHistoryBottomSheet';
-import { VolunteerTimeEntryModal } from '../../components/modals/VolunteerTimeEntryModal';
 // 移除SearchBar导入，改为使用内置搜索组件
 
 
@@ -91,11 +90,9 @@ export const VolunteerSchoolDetailScreen: React.FC = () => {
     }
   }, [volunteerContext.currentStatus, showHistoryModal, selectedHistoryUser]);
 
-  // 补录工时模态框状态
-  const [showTimeEntryModal, setShowTimeEntryModal] = useState(false);
-  const [timeEntryUser, setTimeEntryUser] = useState<{userId: number, name: string} | null>(null);
+  // 志愿者卡片展开状态
   const [expandedVolunteer, setExpandedVolunteer] = useState<string | null>(null);
-  
+
   // 搜索功能状态
   const [searchQuery, setSearchQuery] = useState('');
   const [searchError, setSearchError] = useState('');
@@ -1774,13 +1771,7 @@ export const VolunteerSchoolDetailScreen: React.FC = () => {
                             {/* 补录工时按钮 - 始终显示，不依赖签到状态 */}
                             <TouchableOpacity
                               style={[styles.actionButton, styles.timeEntryBtn]}
-                              onPress={() => {
-                                setTimeEntryUser({
-                                  userId: item?.userId,
-                                  name: item?.name
-                                });
-                                setShowTimeEntryModal(true);
-                              }}
+                              onPress={() => navigation.navigate('TimeEntry')}
                               accessibilityRole="button"
                               accessibilityLabel={`补录我的工时`}
                               accessibilityHint="点击补录自己的工时记录"
@@ -2067,21 +2058,6 @@ export const VolunteerSchoolDetailScreen: React.FC = () => {
           currentUser={userInfo}
         />
       )}
-
-      {/* 补录工时模态框 */}
-      <VolunteerTimeEntryModal
-        visible={showTimeEntryModal}
-        onClose={() => {
-          setShowTimeEntryModal(false);
-          setTimeEntryUser(null);
-        }}
-        onSuccess={() => {
-          setShowTimeEntryModal(false);
-          setTimeEntryUser(null);
-          // 补录成功后刷新数据
-          loadVolunteerData(true);
-        }}
-      />
     </SafeAreaView>
   );
 };

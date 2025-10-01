@@ -10,7 +10,6 @@ import {
   Platform,
   ScrollView,
   Alert,
-  ActivityIndicator,
   Dimensions,
   Animated,
   Image,
@@ -27,6 +26,7 @@ import { fadeIn, slideInFromBottom } from '../../utils/animations';
 import { pomeloXAPI } from '../../services/PomeloXAPI';
 import { useUser } from '../../context/UserContext';
 import { validateEmail, validatePassword, parseApiError } from '../../utils/formValidation';
+import { LoaderOne } from '../../components/ui/LoaderOne';
 
 const { width, height } = Dimensions.get('window');
 
@@ -392,7 +392,7 @@ export const LoginScreen: React.FC = () => {
                     activeOpacity={0.9}
                   >
                     {loading ? (
-                      <ActivityIndicator color={theme.colors.text.inverse} />
+                      <LoaderOne size="small" color={theme.colors.text.inverse} />
                     ) : (
                       <Text style={[
                         styles.loginButtonText,

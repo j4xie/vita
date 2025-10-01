@@ -669,6 +669,7 @@
       "explore": "探索",
       "consulting": "咨询",
       "community": "社区",
+      "rewards": "会员",
       "profile": "个人",
       "wellbeing": "安全",
       "qr_code": "扫码"
@@ -849,8 +850,15 @@
     "view_all": "查看全部",
     "not_participated": "未签到",
     "participated": "已签到",
+    "volunteer_hours_short": "志愿工时",
     "bookmarked": "收藏",
+    "edit_profile": "编辑",
+    "qr_code": "二维码",
     "pending_review": "待评价",
+    "total_activities": "活动总数",
+    "login_to_view": "登录后查看个人资料",
+    "level_progress": "等级进度",
+    "to_next_level": "升至下一级",
     "my_membership": "我的会员",
     "membership_title": "我的会员",
     "membership_regular": "普通",
@@ -1091,7 +1099,21 @@
   "community": {
     "title": "学生社区",
     "subtitle": "连接全球留学生",
-    "headerTitle": "学生社区",
+    "headerTitle": "商家社区",
+    "merchantCommunityTitle": "商家社区",
+    "viewMore": "查看更多",
+    "earn": "赚取",
+    "merchants": {
+      "studentLounge": "学生休息室",
+      "cafe": "咖啡厅",
+      "bookstore": "书店",
+      "mainCampus": "主校区",
+      "campusCenter": "校园中心",
+      "priceFrom": "从 USD {{amount}} 起",
+      "perVisit": "每次",
+      "perOrder": "每单",
+      "perItem": "每件"
+    },
     "headerSubtitle": "连接同学，分享精彩，共同成长",
     "developing": "社区功能正在开发中",
     "developingDescription": "我们正在为您打造一个温馨的学生交流空间",
@@ -1108,7 +1130,43 @@
     },
     "comingSoon": "敬请期待",
     "no_schools_available": "暂无可用学校",
-    "check_connection": "请检查网络连接"
+    "check_connection": "请检查网络连接",
+    "events": {
+      "defaultTitle": "社区活动",
+      "subtitle": "{{count}} 个活动",
+      "empty": "暂无活动",
+      "emptySubtext": "请尝试调整筛选条件"
+    },
+    "filter": {
+      "title": "排序与筛选",
+      "clear": "清空",
+      "sortBy": "排序方式",
+      "sort": {
+        "date": "按日期",
+        "newest": "最新发布",
+        "priceLow": "价格从低到高",
+        "priceHigh": "价格从高到低"
+      },
+      "priceTitle": "价格区间",
+      "price": {
+        "all": "全部价格",
+        "under100": "低于 $100",
+        "range1": "$100 - $250",
+        "over250": "$250 以上"
+      },
+      "categoryTitle": "活动类别",
+      "category": {
+        "social": "社交活动",
+        "sports": "体育运动",
+        "culture": "文化艺术",
+        "career": "职业发展"
+      },
+      "locationTitle": "地点",
+      "locationPlaceholder": "选择地点",
+      "dateRangeTitle": "日期范围",
+      "dateRangePlaceholder": "选择日期范围",
+      "showResults": "显示 {{count}} 个结果"
+    }
   },
   "wellbeing": {
     "plan": {
@@ -1149,8 +1207,11 @@
     "volunteer": {
       "history": {
         "title": "志愿者历史记录",
+        "pageTitle": "志愿者历史",
         "subtitle": "查看 {{userName}} 的打卡记录",
         "subtitle_personal": "我的记录",
+        "totalHours": "累计时长",
+        "totalRecords": "总记录数",
         "selectTimeRange": "选择时间范围",
         "recordsList": "打卡记录",
         "recordsFound": "共{{count}}条记录",
@@ -1338,6 +1399,15 @@
     "android_permission_instruction": "请在设置 > 应用权限 > 位置信息中开启定位权限",
     "check_in_now": "立即签到",
     "permission_denied": "定位权限被拒绝",
+    "where": "去哪里?",
+    "search_destinations": "搜索目的地",
+    "suggested_destinations": "推荐目的地",
+    "nearby": "附近",
+    "find_around_you": "发现你周围的活动",
+    "popular_destination": "热门学生目的地",
+    "state": "州",
+    "city": "城市",
+    "no_results": "未找到结果",
     "selector_title": "选择位置",
     "current_location": "当前位置",
     "not_set": "未设置",
@@ -1376,10 +1446,12 @@
   },
   "volunteerTimeEntry": {
     "title": "补录工时",
-    "dateLabel": "选择日期",
+    "dateLabel": "日期",
     "startTime": "开始时间",
     "endTime": "结束时间",
     "duration": "工作时长",
+    "location": "工作地点",
+    "locationPlaceholder": "请输入工作地点（必填）",
     "description": "工作说明",
     "descriptionPrefix": "【补录】",
     "descriptionPlaceholder": "请详细描述工作内容（必填）",
@@ -1409,6 +1481,7 @@
       "endBeforeStart": "结束时间必须晚于开始时间",
       "duration": "单次工作时长不能超过12小时",
       "overlap": "所选时间段与已有记录重叠，请调整",
+      "locationRequired": "请输入工作地点",
       "requiredFields": "请填写开始时间、结束时间和工作说明",
       "userInfoMissing": "无法获取用户信息",
       "submitFailed": "补录提交失败，请重试",
@@ -1574,7 +1647,16 @@
       "full": "名额已满"
     },
     "registered": "已报名",
-    "people": "人"
+    "people": "{{count}} 人",
+    "people_label": "人",
+    "actions": {
+      "share": "分享",
+      "interested": "感兴趣",
+      "join": "报名"
+    },
+    "organizer": {
+      "default": "主办方"
+    }
   },
   "activityDetail": {
     "activityTime": "活动时间",
@@ -1611,7 +1693,20 @@
     "scan_failed": "扫码失败",
     "scan_failed_message": "请重新扫描活动签到二维码",
     "open_scanner_failed": "打开扫码失败",
-    "open_scanner_failed_message": "无法启动扫码功能，请检查相机权限"
+    "open_scanner_failed_message": "无法启动扫码功能，请检查相机权限",
+    "invite": "邀请",
+    "more": "更多",
+    "free": "免费",
+    "host": "主办方",
+    "going": "人参加",
+    "about_event": "活动详情",
+    "location": "活动地点",
+    "open_map": "在地图中打开",
+    "invite_coming_soon": "邀请功能即将上线",
+    "more_options_coming_soon": "更多选项即将上线",
+    "door_code": "门牌号",
+    "map_open_failed": "无法打开地图",
+    "verified": "已认证"
   },
   "volunteerHome": {
     "quickActions": "快捷操作",
@@ -2251,6 +2346,18 @@
       "title": "我的身份码",
       "scan_instruction": "扫描二维码查看我的信息"
     },
+    "personal": {
+      "title": "我的二维码",
+      "description": "分享二维码给他人，快速展示我的身份信息",
+      "copy_id": "复制ID",
+      "copy_success": "已复制到剪贴板",
+      "scan_others": "扫描他人二维码",
+      "save_to_album": "保存到相册",
+      "share_qr": "分享二维码",
+      "network_info": "支持组织内所有成员查看",
+      "user_info_title": "个人信息",
+      "qr_code_title": "我的身份码"
+    },
     "actions": {
       "save": "保存",
       "saving": "保存中...",
@@ -2306,5 +2413,146 @@
     "volunteer_hours_title": "志愿工时",
     "hours_unit": "小时",
     "no_permission_for_activity_signin": "您没有权限为该用户进行活动签到"
+  },
+  "rewards": {
+    "header": {
+      "title": "会员中心",
+      "subtitle": "积分商城·优惠券·会员权益"
+    },
+    "tiers": {
+      "bronze": "Bronze",
+      "silver": "Silver",
+      "gold": "Gold",
+      "diamond": "Diamond"
+    },
+    "circle": {
+      "description": "赚取积分\n升级等级",
+      "points": "积分"
+    },
+    "benefits": {
+      "title": "Member Benefits",
+      "merchant_coupon": "商家券\nMerchant",
+      "platform_coupon": "平台券\nPlatform",
+      "points_mall": "积分商城\nPoints Mall",
+      "group_buy": "拼团活动\nGroup Buy",
+      "free_meal": "霸王餐\nFree Meal",
+      "exclusive_coupon": "专属券\nExclusive",
+      "points_boost": "积分加成\n1.5x"
+    },
+    "menu": {
+      "points_mall": "积分商城",
+      "points_mall_desc": "用积分兑换好礼",
+      "points_balance": "Points Balance",
+      "points": "Points",
+      "earn_redeem": "Earn/Redeem",
+      "my_coupons": "我的优惠券",
+      "refer_friends": "推荐好友",
+      "earn_points": "赚积分",
+      "review_tasks": "种草任务",
+      "free_meal_signup": "霸王餐",
+      "red_card_exclusive": "红卡"
+    },
+    "membership_card": {
+      "title": "会员卡",
+      "coming_soon": "下一版本上线"
+    },
+    "points": {
+      "title": "我的积分",
+      "balance": "积分余额",
+      "coming_soon": "即将上线"
+    },
+    "coupons": {
+      "title": "我的优惠券",
+      "my_coupons": "优惠券中心",
+      "coming_soon": "即将上线"
+    },
+    "mall": {
+      "title": "积分商城",
+      "home_title": "积分商城",
+      "points_mall": "积分兑换",
+      "coming_soon": "即将上线",
+      "my_points": "我的积分",
+      "earn_points": "赚取积分",
+      "exchange_now": "立即兑换",
+      "favorites": "我的收藏",
+      "create_collection": "创建收藏夹",
+      "points_price": "{{points}}积分",
+      "market_price": "市场价 ¥{{price}}",
+      "stock_available": "库存充足",
+      "out_of_stock": "已兑完",
+      "low_stock": "仅剩{{count}}件",
+      "no_products": "暂无商品",
+      "load_failed": "加载商品详情失败",
+      "insufficient_points": "积分不足",
+      "insufficient_points_desc": "您的积分不足以兑换此商品",
+      "confirm_exchange": "确认兑换",
+      "confirm_exchange_desc": "确认使用 {{points}} 积分兑换此商品？",
+      "delivery_info": "免费配送 | 配送：库存充足",
+      "featured_products": "精选商品",
+      "product_count": "{{count}} 件商品",
+      "product_detail": "商品详情",
+      "add_to_cart": "加入购物车",
+      "buy_now": "立即兑换",
+      "product_description": "商品描述",
+      "specifications": "商品规格",
+      "exchange_notice": "兑换须知",
+      "related_products": "相关推荐",
+      "my_orders": "我的订单",
+      "order_status": {
+        "pending": "待发货",
+        "shipped": "已发货",
+        "completed": "已完成",
+        "cancelled": "已取消"
+      },
+      "transaction_types": {
+        "earn": "赚取",
+        "exchange": "兑换消费",
+        "refund": "退款",
+        "expire": "过期"
+      },
+      "categories": {
+        "electronics": "电子产品",
+        "lifestyle": "生活用品",
+        "books": "图书",
+        "vouchers": "代金券",
+        "courses": "课程",
+        "food": "食品"
+      },
+      "membership": {
+        "card_title": "PomeloX会员卡",
+        "bronze_member": "青铜会员",
+        "silver_member": "白银会员",
+        "gold_member": "黄金会员",
+        "diamond_member": "钻石会员",
+        "member_since": "加入于",
+        "member_number": "会员编号",
+        "points_balance": "积分余额",
+        "next_tier": "再获得 {{points}} 积分即可升级",
+        "max_tier": "您已达到最高等级",
+        "benefits_title": "会员权益",
+        "how_to_earn": "如何赚取积分",
+        "benefits": {
+          "priority_registration": "活动优先报名",
+          "points_exchange": "积分兑换商品",
+          "exclusive_coupons": "专属优惠券",
+          "free_checkin": "免费扫码签到",
+          "leaderboard": "排行榜特权",
+          "referral_bonus": "邀请好友奖励",
+          "stats_report": "数据统计报告",
+          "custom_recommendations": "定制活动推荐",
+          "priority_support": "优先客服支持"
+        }
+      }
+    }
+  },
+  "calendarSelection": {
+    "title": "选择补录日期",
+    "cancel": "取消",
+    "confirm": "确认选择",
+    "selectedDate": "已选日期"
+  },
+  "timeEntry": {
+    "screenTitle": "补录工时",
+    "cancel": "取消"
   }
 }

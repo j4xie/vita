@@ -56,41 +56,42 @@ class ActivityStatsService {
         pomeloXAPI.getUserActivityList(numericUserId, 1)   // 已签到
       ]);
       
-      console.log('📊 📨 API响应详情:', { 
+      console.log('📊 📨 API响应详情:', {
         registered: {
           code: registeredResponse?.code,
-          count: registeredResponse?.data?.rows?.length || 0,
-          activities: registeredResponse?.data?.rows?.map(a => ({ id: a.id, name: a.name, signStatus: a.signStatus })) || []
+          count: (registeredResponse as any)?.rows?.length || 0,
+          activities: (registeredResponse as any)?.rows?.map(a => ({ id: a.id, name: a.name, signStatus: a.signStatus })) || []
         },
         checkedIn: {
           code: checkedInResponse?.code,
-          count: checkedInResponse?.data?.rows?.length || 0,
-          activities: checkedInResponse?.data?.rows?.map(a => ({ id: a.id, name: a.name, signStatus: a.signStatus })) || []
+          count: (checkedInResponse as any)?.rows?.length || 0,
+          activities: (checkedInResponse as any)?.rows?.map(a => ({ id: a.id, name: a.name, signStatus: a.signStatus })) || []
         }
       });
       
       // 合并所有活动数据，避免重复ID
       let activities: any[] = [];
       const activityIds = new Set<number>();
-      
-      if (registeredResponse.code === 200 && registeredResponse.data?.rows) {
-        for (const activity of registeredResponse.data.rows) {
+
+      // 🔧 修复：直接从response.rows获取数据，与UserActivityModal保持一致
+      if (registeredResponse.code === 200 && (registeredResponse as any).rows) {
+        for (const activity of (registeredResponse as any).rows) {
           if (!activityIds.has(activity.id)) {
             activities.push(activity);
             activityIds.add(activity.id);
           }
         }
-        console.log('📊 ✅ 获取到已报名未签到活动:', registeredResponse.data.rows.length);
+        console.log('📊 ✅ 获取到已报名未签到活动:', (registeredResponse as any).rows.length);
       }
-      
-      if (checkedInResponse.code === 200 && checkedInResponse.data?.rows) {
-        for (const activity of checkedInResponse.data.rows) {
+
+      if (checkedInResponse.code === 200 && (checkedInResponse as any).rows) {
+        for (const activity of (checkedInResponse as any).rows) {
           if (!activityIds.has(activity.id)) {
             activities.push(activity);
             activityIds.add(activity.id);
           }
         }
-        console.log('📊 ✅ 获取到已签到活动:', checkedInResponse.data.rows.length);
+        console.log('📊 ✅ 获取到已签到活动:', (checkedInResponse as any).rows.length);
       }
       
       console.log('📊 ✅ 合并后的活动总数(去重):', activities.length);

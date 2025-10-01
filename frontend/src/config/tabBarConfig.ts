@@ -15,6 +15,8 @@ export const TAB_BAR_VISIBLE_PAGES = {
     'ActivityList',    // 活动列表页面 (Explore Tab内)
     'WellbeingHome',   // 安心首页 (Wellbeing Tab内)
     'ProfileHome',     // 个人首页 (Profile Tab内)
+    'CommunityHome',   // 社区首页 (Community Tab内)
+    'RewardsHome',     // 积分商城首页 (Rewards Tab内)
   ],
 } as const;
 
@@ -56,13 +58,14 @@ export const mustHideTabBar = (routeName: string): boolean => {
   // 🚨 关键页面强制隐藏（防止意外显示）
   const criticalHiddenPages = [
     'ActivityDetail',
-    'ActivityRegistrationForm', 
+    'ActivityRegistrationForm',
     'EditProfile',
     'QRScanner',
     'Search',
     'Login',
     'Register',
     'SchoolDetail',
+    'CommunityEvents',  // 社区活动列表页面
   ];
   
   return criticalHiddenPages.includes(routeName);
@@ -98,9 +101,12 @@ export const HIDDEN_TAB_BAR_PAGES = [
   'QRScanner',                  // 二维码扫描
   'Search',                     // 搜索页面
   'Terms',                      // 条款页面
-  
+
   // 探索页面
   'ExploreScreen',              // 探索页面
+
+  // 社区页面
+  'CommunityEvents',            // 社区活动列表
 ] as const;
 
 // 导出类型定义

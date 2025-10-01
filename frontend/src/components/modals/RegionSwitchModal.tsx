@@ -11,7 +11,6 @@ import {
   StyleSheet,
   Modal,
   SafeAreaView,
-  ActivityIndicator,
 } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { Ionicons } from '@expo/vector-icons';
@@ -21,6 +20,7 @@ import { LIQUID_GLASS_LAYERS } from '../../theme/core';
 import { useDarkModeStyles } from '../../hooks/useDarkModeStyles';
 import UserRegionPreferences, { UserRegionCode } from '../../services/UserRegionPreferences';
 import { PrivacyAgreementModal } from './PrivacyAgreementModal';
+import { Loading } from '../ui/Loading';
 
 interface RegionSwitchModalProps {
   visible: boolean;
@@ -290,10 +290,7 @@ export const RegionSwitchModal: React.FC<RegionSwitchModalProps> = ({
                 {/* Loading Overlay */}
                 {loading && (
                   <View style={styles.loadingOverlay}>
-                    <ActivityIndicator size="large" color={theme.colors.primary} />
-                    <Text style={[styles.loadingText, { color: dynamicTextColor }]}>
-                      {t('profile.region_switch.loading', '处理中...')}
-                    </Text>
+                    <Loading size="large" color={theme.colors.primary} text={t('profile.region_switch.loading', '处理中...')} />
                   </View>
                 )}
               </View>

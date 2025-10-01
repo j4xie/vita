@@ -7,7 +7,6 @@ import {
   StyleSheet,
   ScrollView,
   Dimensions,
-  ActivityIndicator,
   Alert,
   Animated,
   Platform,
@@ -26,6 +25,7 @@ import { useTheme } from '../../context/ThemeContext';
 import { useAllDarkModeStyles } from '../../hooks/useDarkModeStyles';
 import UserActivityCard from '../cards/UserActivityCard';
 import { ErrorBoundary } from '../common/ErrorBoundary';
+import { Loading } from '../ui/Loading';
 
 interface UserActivityModalProps {
   visible: boolean;
@@ -266,10 +266,7 @@ export const UserActivityModal: React.FC<UserActivityModalProps> = ({
         >
           {loading ? (
             <View style={styles.loadingContainer}>
-              <ActivityIndicator size="large" color={theme.colors.primary} />
-              <Text style={[styles.loadingText, { color: isDarkMode ? '#8e8e93' : '#8e8e93' }]}>
-                {t('common.loading', '加载中...')}
-              </Text>
+              <Loading size="large" color={theme.colors.primary} text={t('common.loading', '加载中...')} />
             </View>
           ) : activities.length > 0 ? (
             <View style={styles.activitiesContainer}>

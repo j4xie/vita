@@ -8,7 +8,6 @@ import {
   SafeAreaView,
   ScrollView,
   Alert,
-  ActivityIndicator,
   Modal,
   FlatList,
   Keyboard,
@@ -59,6 +58,7 @@ import {
   validateVerificationCode,
   parseApiError
 } from '../../utils/formValidation';
+import { LoaderOne } from '../../components/ui/LoaderOne';
 
 interface RouteParams {
   step1Data: RegistrationStep1Data & {
@@ -748,6 +748,8 @@ export const StudentNormalRegisterStep2Screen: React.FC = () => {
                   onChangeText={handlePhoneNumberChange}
                   keyboardType="phone-pad"
                   placeholderTextColor={theme.colors.text.disabled}
+                  returnKeyType="done"
+                  onSubmitEditing={() => Keyboard.dismiss()}
                 />
                 {phoneNumberValid === true && (
                   <Ionicons
@@ -854,6 +856,8 @@ export const StudentNormalRegisterStep2Screen: React.FC = () => {
                   keyboardType="number-pad"
                   maxLength={6}
                   placeholderTextColor={theme.colors.text.disabled}
+                  returnKeyType="done"
+                  onSubmitEditing={() => Keyboard.dismiss()}
                 />
                 {verificationCodeValid === true && (
                   <Ionicons
@@ -880,7 +884,7 @@ export const StudentNormalRegisterStep2Screen: React.FC = () => {
                   disabled={countdown > 0 || loading || !agreedToTerms || !agreedToSMS}
                 >
                   {loading ? (
-                    <ActivityIndicator size="small" color={theme.colors.text.inverse} />
+                    <LoaderOne size="small" color={theme.colors.text.inverse} />
                   ) : (
                     <Text style={styles.sendCodeText}>
                       {countdown > 0
@@ -910,14 +914,14 @@ export const StudentNormalRegisterStep2Screen: React.FC = () => {
             <View style={styles.bottomContainer}>
               <TouchableOpacity
                 style={[
-                  styles.registerButton, 
+                  styles.registerButton,
                   (loading || hasValidationErrors) && styles.registerButtonDisabled
                 ]}
                 onPress={handleRegister}
                 disabled={loading || hasValidationErrors}
               >
                 {loading ? (
-                  <ActivityIndicator color={theme.colors.text.inverse} />
+                  <LoaderOne color={theme.colors.text.inverse} />
                 ) : (
                   <Text style={styles.registerButtonText}>
                     {t('auth.register.form.complete_registration')}

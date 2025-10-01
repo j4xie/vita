@@ -10,10 +10,12 @@ import {
   Dimensions,
   Alert,
   Keyboard,
+  ImageBackground,
 } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useTranslation } from 'react-i18next';
 import { DeviceEventEmitter } from 'react-native';
 import { theme } from '../../theme';
@@ -26,6 +28,9 @@ import { FrontendActivity } from '../../utils/activityAdapter';
 import { useUser } from '../../context/UserContext';
 import { LiquidSuccessModal } from '../../components/modals/LiquidSuccessModal';
 import { timeService } from '../../utils/UnifiedTimeService';
+import { ActionButtonGroup } from '../../components/activity/ActionButtonGroup';
+import { AttendeesList } from '../../components/activity/AttendeesList';
+import { LocationCard } from '../../components/activity/LocationCard';
 
 const { width: screenWidth } = Dimensions.get('window');
 
@@ -668,167 +673,210 @@ export const ActivityDetailScreen: React.FC = () => {
     return timeService.formatForDisplay(date, { showTime: true, showDate: false });
   };
 
+  // Luma风格日期格式化: "Sun, 29 Jun, 11.00 AM - 12.00 PM"
+  const formatLumaDateTime = () => {
+    try {
+      const startDate = new Date(activity.date);
+      const endDate = activity.endDate ? new Date(activity.endDate) : startDate;
+
+      const weekdays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+      const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+      const weekday = weekdays[startDate.getDay()];
+      const day = startDate.getDate();
+      const month = months[startDate.getMonth()];
+
+      // 格式化时间部分
+      const formatTimeStr = (timeStr: string) => {
+        if (!timeStr || timeStr === '00:00') return '';
+        const [hours, minutes] = timeStr.split(':');
+        const hour24 = parseInt(hours);
+        const hour12 = hour24 === 0 ? 12 : hour24 > 12 ? hour24 - 12 : hour24;
+        const ampm = hour24 >= 12 ? 'PM' : 'AM';
+        return `${hour12}.${minutes} ${ampm}`;
+      };
+
+      const timeStr = formatTimeStr(activity.time);
+
+      // 如果有结束日期且不同于开始日期
+      if (activity.endDate && activity.endDate !== activity.date) {
+        const endDay = endDate.getDate();
+        const endMonth = months[endDate.getMonth()];
+        return `${weekday}, ${day} ${month} - ${endDay} ${endMonth}${timeStr ? ', ' + timeStr : ''}`;
+      }
+
+      return `${weekday}, ${day} ${month}${timeStr ? ', ' + timeStr : ''}`;
+    } catch (error) {
+      console.warn('Date format error:', error);
+      return `${activity.date}${activity.time ? ' ' + activity.time : ''}`;
+    }
+  };
+
+  // Mock价格数据 - 等待后端API支持
+  const getMockPrice = () => {
+    // 基于活动ID生成Mock价格：1/3免费，2/3付费
+    const activityIdNum = parseInt(activity.id) || 0;
+    const isFree = activityIdNum % 3 === 0;
+
+    return {
+      isFree,
+      price: isFree ? null : 25,
+      currency: 'USD',
+    };
+  };
+
+  const mockPriceData = getMockPrice();
+
   return (
-    <SafeAreaView style={[styles.container, dmStyles.page.safeArea]}>
-      {/* 固定在顶部的按钮 */}
-      <View style={[styles.fixedHeader, { top: insets.top }]}>
-        <TouchableOpacity
-          style={styles.fixedBackButton}
-          onPress={handleBack}
-        >
-          <Ionicons name="arrow-back" size={24} color="white" />
-        </TouchableOpacity>
-
-      </View>
-      
-      <ScrollView 
-        bounces={false} 
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ 
-          paddingBottom: 120 // 预留空间给浮动的立即报名按钮
-        }}
+    <>
+      <ImageBackground
+        source={{ uri: activity.image }}
+        style={styles.backgroundImage}
+        blurRadius={20}
+        resizeMode="cover"
       >
-        {/* Image Header */}
-        <View style={styles.imageContainer}>
-          <Image
-            source={{ uri: activity.image }}
-            style={styles.image}
-            resizeMode="cover"
-          />
-        </View>
-
-        {/* Content */}
-        <View style={styles.content}>
-          {/* Title Section */}
-          <View style={styles.titleSection}>
-            <Text style={styles.title}>{activity.title}</Text>
-            <View style={styles.attendeeInfo}>
-              <Ionicons name="people" size={20} color="#111827" />
-              <Text style={styles.attendeeText}>
-                {(() => {
-                  // 只有登录用户才显示报名人数
-                  if (!isAuthenticated) {
-                    return t('auth.login_required_to_view_count') || 'Login to view registration count';
-                  }
-                  
-                  const registeredCount = activity.registeredCount ?? activity.attendees ?? 0;
-                  const maxAttendees = activity.maxAttendees || activity.enrollment || 0;
-                  const isEnglish = i18n.language === 'en-US' || i18n.language === 'en';
-                  
-                  // 极简显示逻辑
-                  if (maxAttendees > 0) {
-                    // 有限制: "5 / 100"
-                    return `${registeredCount} / ${maxAttendees}`;
-                  } else {
-                    // 无限制: "5 / ∞"
-                    return `${registeredCount} / ∞`;
-                  }
-                })()}
-              </Text>
+        <LinearGradient
+          colors={['rgba(0, 0, 0, 0.45)', 'rgba(0, 0, 0, 0.65)']}
+          style={styles.gradientOverlay}
+        >
+          <SafeAreaView style={styles.container}>
+            {/* 固定在顶部的返回按钮 */}
+            <View style={[styles.fixedHeader, { top: insets.top }]}>
+              <TouchableOpacity
+                style={styles.fixedBackButton}
+                onPress={handleBack}
+              >
+                <Ionicons name="arrow-back" size={24} color="white" />
+              </TouchableOpacity>
             </View>
-          </View>
 
-          {/* Info Cards */}
-          <View style={styles.infoCards}>
-            <View style={styles.infoCardShadowContainer}>
-              <View style={styles.infoCard}>
-                <View style={styles.infoCardOverlay} />
-                <View style={styles.infoCardIcon}>
-                  <Ionicons name="calendar" size={20} color="#111827" />
+            <ScrollView
+              bounces={false}
+              showsVerticalScrollIndicator={false}
+              contentContainerStyle={{
+                paddingTop: insets.top + 60, // 留出返回按钮空间
+                paddingBottom: 40,
+              }}
+            >
+              {/* 封面图白色卡片 */}
+              <View style={styles.coverCardContainer}>
+                <View style={styles.coverCard}>
+                  <Image
+                    source={{ uri: activity.image }}
+                    style={styles.coverImage}
+                    resizeMode="cover"
+                  />
+
+                  {/* 价格/免费标签 */}
+                  <View style={styles.priceTagContainer}>
+                    {mockPriceData.isFree ? (
+                      <View style={styles.freeTag}>
+                        <Text style={styles.freeTagText}>
+                          {t('activityDetail.free') || 'Free'}
+                        </Text>
+                      </View>
+                    ) : (
+                      <View style={styles.paidTag}>
+                        <Text style={styles.paidTagText}>
+                          ${mockPriceData.price}
+                        </Text>
+                      </View>
+                    )}
+                  </View>
                 </View>
-                <View style={styles.infoCardContent}>
-                  <Text style={styles.infoCardLabel}>{t('activityDetail.activityTime')}</Text>
-                  <Text style={styles.infoCardValue} numberOfLines={2}>
-                    {activity.date && activity.endDate && activity.endDate !== activity.date 
-                      ? `${activity.date.split('-')[1].padStart(2, '0')}/${activity.date.split('-')[2].padStart(2, '0')}-${activity.endDate.split('-')[1].padStart(2, '0')}/${activity.endDate.split('-')[2].padStart(2, '0')}`
-                      : activity.date ? `${activity.date.split('-')[1].padStart(2, '0')}/${activity.date.split('-')[2].padStart(2, '0')}` : t('common.unknown')
-                    }
-                  </Text>
-                  {activity.time && activity.time !== '00:00' && (
-                    <Text style={[styles.infoCardValue, { fontSize: 14, marginTop: 2 }]}>
-                      {formatTime(activity.time)}
+              </View>
+
+              {/* 活动标题 */}
+              <View style={styles.titleContainer}>
+                <Text style={styles.lumaTitle}>{activity.title}</Text>
+              </View>
+
+              {/* Luma风格日期时间 */}
+              <View style={styles.dateTimeContainer}>
+                <Ionicons name="calendar-outline" size={16} color="rgba(255, 255, 255, 0.8)" />
+                <Text style={styles.lumaDateTime}>{formatLumaDateTime()}</Text>
+              </View>
+
+              {/* 操作按钮组 */}
+              <ActionButtonGroup
+                registrationStatus={registrationStatus}
+                isActivityEnded={isActivityEnded()}
+                loading={loading}
+                onRegister={handleRegister}
+                onSignIn={handleSignIn}
+                onInvite={() => {
+                  // 分享邀请功能 - 未来实现
+                  Alert.alert(
+                    t('activityDetail.invite') || 'Invite',
+                    t('activityDetail.invite_coming_soon') || 'Invite feature coming soon'
+                  );
+                }}
+                onMore={() => {
+                  // 更多选项功能 - 未来实现
+                  Alert.alert(
+                    t('activityDetail.more') || 'More',
+                    t('activityDetail.more_options_coming_soon') || 'More options coming soon'
+                  );
+                }}
+              />
+
+              {/* 参与者列表 */}
+              <AttendeesList count={activity.attendees || 0} />
+
+              {/* 地址卡片 */}
+              <LocationCard location={activity.location} />
+
+              {/* 组织方信息卡片 */}
+              <View style={styles.hostSection}>
+                <Text style={styles.hostTitle}>
+                  {t('activityDetail.host') || 'Host'}
+                </Text>
+                <View style={styles.hostCard}>
+                  <View style={styles.hostAvatar}>
+                    <Text style={styles.hostAvatarText}>
+                      {activity.organizer?.name
+                        ? activity.organizer.name.substring(0, 2).toUpperCase()
+                        : 'ORG'}
+                    </Text>
+                  </View>
+                  <View style={styles.hostInfo}>
+                    <Text style={styles.hostName}>
+                      {activity.organizer?.name || t('activityDetail.official_activity', '官方活动')}
+                    </Text>
+                    {activity.organizer?.verified && (
+                      <View style={styles.verifiedBadge}>
+                        <Ionicons name="checkmark-circle" size={14} color="#4CAF50" />
+                        <Text style={styles.verifiedText}>
+                          {t('activityDetail.verified') || 'Verified'}
+                        </Text>
+                      </View>
+                    )}
+                  </View>
+                </View>
+              </View>
+
+              {/* 活动详情 */}
+              <View style={styles.detailsSection}>
+                <Text style={styles.detailsTitle}>
+                  {t('activityDetail.about_event') || 'About Event'}
+                </Text>
+                <View style={styles.detailsCard}>
+                  {activity.detail ? (
+                    <RichTextRenderer
+                      html={activity.detail}
+                      contentWidth={screenWidth - theme.spacing[4] * 4}
+                    />
+                  ) : (
+                    <Text style={styles.detailsPlaceholder}>
+                      {t('activityDetail.no_details')}
                     </Text>
                   )}
                 </View>
               </View>
-            </View>
-
-            <View style={styles.infoCardShadowContainer}>
-              <View style={styles.infoCard}>
-                <View style={styles.infoCardOverlay} />
-                <View style={styles.infoCardIcon}>
-                  <Ionicons name="location" size={20} color="#111827" />
-                </View>
-                <View style={styles.infoCardContent}>
-                  <Text style={styles.infoCardLabel}>{t('activityDetail.activityLocation')}</Text>
-                  <Text style={styles.infoCardValue}>{activity.location}</Text>
-                </View>
-              </View>
-            </View>
-          </View>
-
-          {/* Description Section */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>{t('activityDetail.activityDetails')}</Text>
-            {activity.detail ? (
-              <RichTextRenderer
-                html={activity.detail}
-                contentWidth={screenWidth - theme.spacing[4] * 2}
-              />
-            ) : (
-              <Text style={styles.description}>
-                {t('activityDetail.no_details')}
-              </Text>
-            )}
-          </View>
-
-
-          {/* Organizer Section */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>{t('activityDetail.organizer')}</Text>
-            <View style={styles.organizerCard}>
-              <View style={styles.organizerAvatar}>
-                <Text style={styles.organizerAvatarText}>
-                  {activity.organizer?.name ? activity.organizer.name.substring(0, 2).toUpperCase() : 'ORG'}
-                </Text>
-              </View>
-              <View style={styles.organizerInfo}>
-                <Text style={styles.organizerName}>{activity.organizer?.name || t('activityDetail.official_activity', '官方活动')}</Text>
-                <Text style={styles.organizerDesc}>
-                  {activity.organizer?.verified ? t('activityDetail.verified_organizer', '官方认证组织') : t('activityDetail.activity_organizer', '活动组织方')}
-                </Text>
-              </View>
-            </View>
-          </View>
-        </View>
-      </ScrollView>
-
-      {/* Bottom Register Button */}
-      <View style={[styles.bottomContainer, { 
-        bottom: insets.bottom - 20, // 继续向下移动，更贴近底部
-      }]}>
-        <View style={[
-          styles.registerButtonShadowContainer,
-          registrationStatus === 'registered' && styles.checkInButton, // 立即签到时使用绿色
-          registrationStatus === 'checked_in' && styles.checkedInButton, // 已签到使用灰色
-          isActivityEnded() && styles.activityEndedButton
-        ]}>
-          <TouchableOpacity
-            style={styles.registerButton}
-            onPress={registrationStatus === 'registered' ? handleSignIn : handleRegister}
-            disabled={loading || registrationStatus === 'checked_in' || isActivityEnded()}
-          >
-            <Text style={styles.registerButtonText}>
-              {loading ? t('common.loading') :
-               isActivityEnded() ? (t('activityDetail.activity_ended') || '活动已结束') :
-               !isAuthenticated ? t('activityDetail.login_required_to_register') :
-               registrationStatus === 'upcoming' ? t('activityDetail.registerNow') :
-               registrationStatus === 'registered' ? t('activityDetail.checkin_now') :
-               registrationStatus === 'checked_in' ? t('activityDetail.checked_in') : t('activityDetail.unavailable')}
-            </Text>
-          </TouchableOpacity>
-        </View>
-      </View>
+            </ScrollView>
+          </SafeAreaView>
+        </LinearGradient>
+      </ImageBackground>
 
       {/* 签到成功提示弹窗 */}
       <LiquidSuccessModal
@@ -859,15 +907,22 @@ export const ActivityDetailScreen: React.FC = () => {
         confirmText={t('common.confirm') || '确认'}
         icon="alert-circle"
       />
-    </SafeAreaView>
+    </>
   );
 };
 
 const styles = StyleSheet.create({
+  backgroundImage: {
+    flex: 1,
+    width: '100%',
+    height: '100%',
+  },
+  gradientOverlay: {
+    flex: 1,
+  },
   container: {
     flex: 1,
   },
-  // 固定在顶部的按钮样式
   fixedHeader: {
     position: 'absolute',
     left: 0,
@@ -883,10 +938,153 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: theme.borderRadius.full,
-    backgroundColor: 'rgba(0, 0, 0, 0.8)', // 增加不透明度避免阴影问题
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
     alignItems: 'center',
     justifyContent: 'center',
   },
+  // 封面图卡片
+  coverCardContainer: {
+    paddingHorizontal: theme.spacing[4],
+    marginBottom: theme.spacing[4],
+  },
+  coverCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: theme.borderRadius.xl,
+    overflow: 'hidden',
+    ...theme.shadows.md,
+    position: 'relative',
+  },
+  coverImage: {
+    width: '100%',
+    height: 220,
+  },
+  priceTagContainer: {
+    position: 'absolute',
+    top: theme.spacing[3],
+    right: theme.spacing[3],
+  },
+  freeTag: {
+    backgroundColor: '#4CAF50',
+    paddingHorizontal: theme.spacing[3],
+    paddingVertical: theme.spacing[2],
+    borderRadius: theme.borderRadius.full,
+  },
+  freeTagText: {
+    color: '#FFFFFF',
+    fontSize: theme.typography.fontSize.sm,
+    fontWeight: theme.typography.fontWeight.bold,
+  },
+  paidTag: {
+    backgroundColor: '#FFA500',
+    paddingHorizontal: theme.spacing[3],
+    paddingVertical: theme.spacing[2],
+    borderRadius: theme.borderRadius.full,
+  },
+  paidTagText: {
+    color: '#FFFFFF',
+    fontSize: theme.typography.fontSize.base,
+    fontWeight: theme.typography.fontWeight.bold,
+  },
+  // 标题区域
+  titleContainer: {
+    paddingHorizontal: theme.spacing[4],
+    marginBottom: theme.spacing[2],
+  },
+  lumaTitle: {
+    fontSize: theme.typography.fontSize['3xl'],
+    fontWeight: theme.typography.fontWeight.bold,
+    color: '#FFFFFF',
+    lineHeight: theme.typography.fontSize['3xl'] * 1.2,
+  },
+  // 日期时间
+  dateTimeContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: theme.spacing[4],
+    marginBottom: theme.spacing[4],
+    gap: theme.spacing[2],
+  },
+  lumaDateTime: {
+    fontSize: theme.typography.fontSize.base,
+    color: 'rgba(255, 255, 255, 0.9)',
+    fontWeight: theme.typography.fontWeight.medium,
+  },
+  // Host区域
+  hostSection: {
+    paddingHorizontal: theme.spacing[4],
+    paddingVertical: theme.spacing[3],
+  },
+  hostTitle: {
+    fontSize: theme.typography.fontSize.lg,
+    fontWeight: theme.typography.fontWeight.semibold,
+    color: '#FFFFFF',
+    marginBottom: theme.spacing[3],
+  },
+  hostCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    padding: theme.spacing[3],
+    borderRadius: theme.borderRadius.lg,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+  },
+  hostAvatar: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: theme.spacing[3],
+  },
+  hostAvatarText: {
+    fontSize: theme.typography.fontSize.lg,
+    fontWeight: theme.typography.fontWeight.bold,
+    color: '#FFFFFF',
+  },
+  hostInfo: {
+    flex: 1,
+  },
+  hostName: {
+    fontSize: theme.typography.fontSize.base,
+    fontWeight: theme.typography.fontWeight.semibold,
+    color: '#FFFFFF',
+    marginBottom: theme.spacing[1],
+  },
+  verifiedBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing[1],
+  },
+  verifiedText: {
+    fontSize: theme.typography.fontSize.xs,
+    color: '#4CAF50',
+    fontWeight: theme.typography.fontWeight.medium,
+  },
+  // 活动详情
+  detailsSection: {
+    paddingHorizontal: theme.spacing[4],
+    paddingVertical: theme.spacing[3],
+  },
+  detailsTitle: {
+    fontSize: theme.typography.fontSize.lg,
+    fontWeight: theme.typography.fontWeight.semibold,
+    color: '#FFFFFF',
+    marginBottom: theme.spacing[3],
+  },
+  detailsCard: {
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    padding: theme.spacing[4],
+    borderRadius: theme.borderRadius.lg,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+  },
+  detailsPlaceholder: {
+    fontSize: theme.typography.fontSize.base,
+    color: 'rgba(255, 255, 255, 0.7)',
+  },
+  // 旧样式保留（以防引用）
   imageContainer: {
     width: screenWidth,
     height: 250,

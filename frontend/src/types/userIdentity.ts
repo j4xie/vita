@@ -107,6 +107,8 @@ export interface ParsedUserQRCode {
   isValid: boolean;
   data?: UserIdentityData;
   error?: string;
+  requiresQuery?: boolean; // 新增：标记是否需要API查询
+  userId?: string; // 新增：短ID格式的用户ID
 }
 
 // 身份验证相关
