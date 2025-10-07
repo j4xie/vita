@@ -18,7 +18,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import { theme } from '../../theme';
 import { BlurView } from 'expo-blur';
-import { AIAssistantModal } from '../modals/AIAssistantModal';
 import { AILoginPromptModal } from '../modals/AILoginPromptModal';
 import { RESTRAINED_COLORS } from '../../theme/core';
 import { useTranslation } from 'react-i18next';
@@ -49,9 +48,7 @@ export const FloatingAIButton: React.FC<FloatingAIButtonProps> = ({
   const navigation = useNavigation<NativeStackNavigationProp<any>>();
   const { t } = useTranslation();
   const { user } = useUser();
-  const [showAIModal, setShowAIModal] = useState(false);
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
-  const [isAnyModalOpen, setIsAnyModalOpen] = useState(false);
   const [isPressed, setIsPressed] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const [inputText, setInputText] = useState('');
@@ -93,7 +90,6 @@ export const FloatingAIButton: React.FC<FloatingAIButtonProps> = ({
   const hasInteracted = useSharedValue(false);
   const autoHideTimer = useRef<NodeJS.Timeout | null>(null);
   const initializationTimer = useRef<NodeJS.Timeout | null>(null);
-  const modalStateRef = useRef(false);
 
   // Start animations when component mounts
   useEffect(() => {
@@ -223,25 +219,6 @@ export const FloatingAIButton: React.FC<FloatingAIButtonProps> = ({
     }
   }, [isThinking]);
 
-  // Monitor modal state changes
-  useEffect(() => {
-    const isModalCurrentlyOpen = showAIModal;
-    modalStateRef.current = isModalCurrentlyOpen;
-    setIsAnyModalOpen(isModalCurrentlyOpen);
-    
-    if (isModalCurrentlyOpen) {
-      // Modal opened: pause auto-hide timer
-      if (autoHideTimer.current) {
-        clearTimeout(autoHideTimer.current);
-        autoHideTimer.current = null;
-      }
-    } else {
-      // Modal closed: restart auto-hide timer if button is visible
-      if (isVisible.value) {
-        resetAutoHideTimer();
-      }
-    }
-  }, [showAIModal]);
 
   // Global interaction event listeners with initialization delay
   useEffect(() => {
@@ -249,8 +226,8 @@ export const FloatingAIButton: React.FC<FloatingAIButtonProps> = ({
     let globalScrollListener: any;
 
     const handleGlobalInteraction = () => {
-      // 忽略所有交互的情况：展开输入框时、模态框打开时
-      if (isExpanded || modalStateRef.current || isAnyModalOpen) {
+      // 忽略所有交互的情况：展开输入框时
+      if (isExpanded) {
         return;
       }
 
@@ -262,8 +239,8 @@ export const FloatingAIButton: React.FC<FloatingAIButtonProps> = ({
       }
 
       // Improved interaction logic: only hide if button has been visible for at least 3 seconds
-      // and no modal/expansion is active
-      if (isVisible.value && !isExpanded && !modalStateRef.current && !isAnyModalOpen) {
+      // and no expansion is active
+      if (isVisible.value && !isExpanded) {
         const timeSinceLastReset = Date.now() - (autoHideTimer.current ? Date.now() - 12000 : 0);
         if (timeSinceLastReset > 3000) {
           hideButton();
@@ -474,15 +451,15 @@ export const FloatingAIButton: React.FC<FloatingAIButtonProps> = ({
       autoHideTimer.current = null;
     }
 
-    // 禁用条件：展开输入框时、模态框打开时
-    if (isExpanded || modalStateRef.current || isAnyModalOpen) {
+    // 禁用条件：展开输入框时
+    if (isExpanded) {
       return; // 不启动自动隐藏
     }
 
-    // Only start timer if no modal/expansion is active
+    // Only start timer if no expansion is active
     autoHideTimer.current = setTimeout(() => {
       // Double-check state before hiding
-      if (isVisible.value && !isExpanded && !modalStateRef.current && !isAnyModalOpen) {
+      if (isVisible.value && !isExpanded) {
         hideButton();
       }
     }, 12000);
@@ -614,7 +591,8 @@ export const FloatingAIButton: React.FC<FloatingAIButtonProps> = ({
   };
 
   // 判断是否显示（在所有hooks之后）
-  const shouldShow = shouldShowAIButton(currentRouteName);
+  // 初始加载时如果路由名未定义，默认显示（假设在主页）
+  const shouldShow = currentRouteName ? shouldShowAIButton(currentRouteName) : true;
 
   // 如果不应该显示，直接返回null
   if (!shouldShow) {
