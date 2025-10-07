@@ -5,7 +5,13 @@ import {
   StyleSheet,
   Platform,
   DeviceEventEmitter,
+  TextInput,
+  Keyboard,
+  Dimensions,
 } from 'react-native';
+import { useNavigation, useNavigationState } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { shouldShowAIButton } from '../../config/aiButtonConfig';
 // import { Ionicons } from '@expo/vector-icons'; // 替换为可爱PomeloX图标
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -13,7 +19,11 @@ import * as Haptics from 'expo-haptics';
 import { theme } from '../../theme';
 import { BlurView } from 'expo-blur';
 import { AIAssistantModal } from '../modals/AIAssistantModal';
+import { AILoginPromptModal } from '../modals/AILoginPromptModal';
 import { RESTRAINED_COLORS } from '../../theme/core';
+import { useTranslation } from 'react-i18next';
+import { Ionicons } from '@expo/vector-icons';
+import { useUser } from '../../context/UserContext';
 // import { useRestrainedColors } from '../../hooks/useRestrainedColors'; // 暂时移除避免hooks错误
 import Animated, {
   useSharedValue,
@@ -32,17 +42,24 @@ interface FloatingAIButtonProps {
   isThinking?: boolean;
 }
 
-export const FloatingAIButton: React.FC<FloatingAIButtonProps> = ({ 
-  isThinking = false 
+export const FloatingAIButton: React.FC<FloatingAIButtonProps> = ({
+  isThinking = false
 }) => {
   const insets = useSafeAreaInsets();
+  const navigation = useNavigation<NativeStackNavigationProp<any>>();
+  const { t } = useTranslation();
+  const { user } = useUser();
   const [showAIModal, setShowAIModal] = useState(false);
+  const [showLoginPrompt, setShowLoginPrompt] = useState(false);
   const [isAnyModalOpen, setIsAnyModalOpen] = useState(false);
   const [isPressed, setIsPressed] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [inputText, setInputText] = useState('');
+  const inputRef = useRef<TextInput>(null);
   const { metrics, getOptimizedStyles } = usePerformanceDegradation();
   const isPerformanceDegraded = metrics.shouldDegrade;
   const optimizedStyles = getOptimizedStyles();
-  
+
   // 简化的平台配置
   const isDarkMode = false;
   const isAndroid = Platform.OS === 'android';
@@ -55,6 +72,13 @@ export const FloatingAIButton: React.FC<FloatingAIButtonProps> = ({
   const borderColorProgress = useSharedValue(0);
   const particleProgress = useSharedValue(0);
   const pressScale = useSharedValue(1);
+
+  // 展开输入框变形动画
+  const inputOpacity = useSharedValue(0);
+  const containerScale = useSharedValue(1);
+  const morphWidth = useSharedValue(66); // 宽度变形：66 → 屏幕宽度-32
+  const morphBorderRadius = useSharedValue(26); // 圆角变形：26 → 32
+  const iconOpacity = useSharedValue(1); // 图标淡出
   
   // Enhanced press feedback animations
   const pressGlowScale = useSharedValue(1);
@@ -225,21 +249,21 @@ export const FloatingAIButton: React.FC<FloatingAIButtonProps> = ({
     let globalScrollListener: any;
 
     const handleGlobalInteraction = () => {
-      // Ignore all interactions if any modal is open
-      if (modalStateRef.current || isAnyModalOpen) {
+      // 忽略所有交互的情况：展开输入框时、模态框打开时
+      if (isExpanded || modalStateRef.current || isAnyModalOpen) {
         return;
       }
-      
+
       if (!hasInteracted.value) {
         // First interaction: mark as interacted and start 12-second timer (don't hide immediately)
         hasInteracted.value = true;
         resetAutoHideTimer();
         return;
       }
-      
+
       // Improved interaction logic: only hide if button has been visible for at least 3 seconds
-      // and no modal is open
-      if (isVisible.value && !modalStateRef.current && !isAnyModalOpen) {
+      // and no modal/expansion is active
+      if (isVisible.value && !isExpanded && !modalStateRef.current && !isAnyModalOpen) {
         const timeSinceLastReset = Date.now() - (autoHideTimer.current ? Date.now() - 12000 : 0);
         if (timeSinceLastReset > 3000) {
           hideButton();
@@ -277,39 +301,147 @@ export const FloatingAIButton: React.FC<FloatingAIButtonProps> = ({
         clearTimeout(initializationTimer.current);
       }
     };
-  }, [optimizedStyles.simplifiedAnimations]);
+  }, [optimizedStyles.simplifiedAnimations, isExpanded]);
 
-  // Define handlePress first
-  const handlePress = () => {
-    // Always show button when clicked
-    if (!isVisible.value) {
-      showButton();
+  // 展开输入框（带丝滑变形动画）
+  const expandInput = () => {
+    // 检查用户登录状态
+    if (!user) {
+      // 访客模式 - 显示登录提示
+      setShowLoginPrompt(true);
+      if (Platform.OS === 'ios') {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+      }
+      return;
     }
-    
-    // Mark as interacted to prevent immediate hiding
+
+    setIsExpanded(true);
     hasInteracted.value = true;
-    
-    // Clear any existing timer since we're opening a modal
+
+    // 清除自动隐藏计时器
     if (autoHideTimer.current) {
       clearTimeout(autoHideTimer.current);
       autoHideTimer.current = null;
     }
-    
-    // Enhanced haptic feedback for better user experience
+
+    // 确保按钮完全显示（重置hideTranslateX）
+    hideTranslateX.value = withSpring(0, { damping: 18, stiffness: 150 });
+    hideOpacity.value = withSpring(1, { damping: 18, stiffness: 150 });
+    isVisible.value = true;
+
+    // 🎨 丝滑变形动画
+    const screenWidth = Dimensions.get('window').width;
+
+    // 图标淡出
+    iconOpacity.value = withTiming(0, { duration: 200, easing: Easing.out(Easing.ease) });
+
+    // 宽度展开（圆形 → 长条）
+    morphWidth.value = withSpring(screenWidth - 32, {
+      damping: 20,
+      stiffness: 140,
+      mass: 0.8, // 更流畅的质感
+    });
+
+    // 圆角变化（26 → 32）
+    morphBorderRadius.value = withSpring(32, {
+      damping: 18,
+      stiffness: 120
+    });
+
+    // 输入框内容淡入（延迟200ms，等待变形开始）
+    setTimeout(() => {
+      inputOpacity.value = withSpring(1, { damping: 15, stiffness: 120 });
+    }, 200);
+
+    // 延迟聚焦输入框，等待动画完成
+    setTimeout(() => {
+      inputRef.current?.focus();
+    }, 500);
+
     if (Platform.OS === 'ios') {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     }
-    
-    // Open modal (timer will be paused by modal state monitoring)
-    setShowAIModal(true);
+  };
+
+  // 收起输入框（反向变形动画）
+  const collapseInput = () => {
+    Keyboard.dismiss();
+    setInputText('');
+
+    // 🎨 反向变形动画
+    // 输入框内容淡出
+    inputOpacity.value = withTiming(0, { duration: 150, easing: Easing.in(Easing.ease) });
+
+    // 延迟变形，等待内容淡出
+    setTimeout(() => {
+      // 宽度收缩（长条 → 圆形）
+      morphWidth.value = withSpring(66, {
+        damping: 20,
+        stiffness: 140,
+        mass: 0.8,
+      });
+
+      // 圆角恢复
+      morphBorderRadius.value = withSpring(26, {
+        damping: 18,
+        stiffness: 120
+      });
+
+      // 图标淡入
+      iconOpacity.value = withTiming(1, { duration: 200, easing: Easing.in(Easing.ease) });
+
+      // 变形完成后更新状态
+      setTimeout(() => {
+        setIsExpanded(false);
+      }, 300);
+    }, 150);
+
+    // 收起后重新启动自动隐藏计时器
+    setTimeout(() => {
+      resetAutoHideTimer();
+    }, 650); // 等待完整动画完成
+  };
+
+  // 处理发送消息
+  const handleSendMessage = () => {
+    const message = inputText.trim();
+    if (!message) return;
+
+    // 收起输入框
+    collapseInput();
+
+    // 延迟导航，等待收起动画完成
+    setTimeout(() => {
+      navigation.navigate('AIChat', { initialMessage: message });
+    }, 300);
+
+    if (Platform.OS === 'ios') {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+    }
+  };
+
+  // Define handlePress first
+  const handlePress = () => {
+    // 如果按钮是隐藏状态，先显示再展开（一气呵成）
+    if (!isVisible.value) {
+      showButton();
+      // 等待显示动画完成后，自动展开输入框
+      setTimeout(() => {
+        expandInput();
+      }, 400); // 400ms后展开，衔接显示动画
+      return;
+    }
+
+    // 按钮已完全显示时，直接展开输入框
+    expandInput();
   };
 
   // Auto-hide animation functions
   const hideButton = () => {
     // Calculate hide distance to show a visible portion for easy re-access
     const buttonSize = 66; // 66px 宽度 (自适应尺寸)
-    const hideDistance = buttonSize * 0.65; // Hide 65% (43px), show 35% (23px) for better visibility
-    
+    const hideDistance = -buttonSize * 0.65; // 向左隐藏 65% (使用负值)
+
     if (isPerformanceDegraded) {
       // Simplified animation for low-end devices
       hideTranslateX.value = withSpring(hideDistance, { damping: 15, stiffness: 120 });
@@ -341,16 +473,19 @@ export const FloatingAIButton: React.FC<FloatingAIButtonProps> = ({
       clearTimeout(autoHideTimer.current);
       autoHideTimer.current = null;
     }
-    
-    // Only start timer if no modal is currently open
-    if (!modalStateRef.current && !isAnyModalOpen) {
-      autoHideTimer.current = setTimeout(() => {
-        // Double-check modal state before hiding
-        if (isVisible.value && !modalStateRef.current && !isAnyModalOpen) {
-          hideButton();
-        }
-      }, 12000);
+
+    // 禁用条件：展开输入框时、模态框打开时
+    if (isExpanded || modalStateRef.current || isAnyModalOpen) {
+      return; // 不启动自动隐藏
     }
+
+    // Only start timer if no modal/expansion is active
+    autoHideTimer.current = setTimeout(() => {
+      // Double-check state before hiding
+      if (isVisible.value && !isExpanded && !modalStateRef.current && !isAnyModalOpen) {
+        hideButton();
+      }
+    }, 12000);
   };
 
   // Enhanced press handlers with multi-layer feedback
@@ -410,6 +545,11 @@ export const FloatingAIButton: React.FC<FloatingAIButtonProps> = ({
     opacity: hideOpacity.value,
   }));
 
+  // 展开时使用的容器样式（不应用hideTranslateX）
+  const expandedContainerAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: hideOpacity.value,
+  }));
+
   const glowAnimatedStyle = useAnimatedStyle(() => ({
     opacity: glowOpacity.value,
     transform: [{ scale: breathingScale.value * pressGlowScale.value }],
@@ -425,11 +565,18 @@ export const FloatingAIButton: React.FC<FloatingAIButtonProps> = ({
   }));
 
   const iconAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: iconOpacity.value, // 添加淡出效果
     transform: [
       { rotate: `${iconRotation.value}deg` },
       { scale: 1.1 },
       { translateY: pressIconBounce.value },
     ] as any,
+  }));
+
+  // 变形动画样式
+  const morphAnimatedStyle = useAnimatedStyle(() => ({
+    width: morphWidth.value,
+    borderRadius: morphBorderRadius.value,
   }));
 
   const particleAnimatedStyle = (index: number) => useAnimatedStyle(() => ({
@@ -445,11 +592,45 @@ export const FloatingAIButton: React.FC<FloatingAIButtonProps> = ({
     ] as any,
   }));
 
+  // 输入框动画样式
+  const inputAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: inputOpacity.value,
+    transform: [{ scale: containerScale.value }],
+  }));
+
+  // 获取当前路由名，判断是否显示AI按钮（必须在所有其他hooks之后，return之前）
+  const currentRouteName = useNavigationState(state => {
+    const route = state?.routes?.[state.index];
+    return route?.state?.routes?.[route.state.index]?.name || route?.name;
+  });
+
+  // 处理登录/注册导航
+  const handleLogin = () => {
+    navigation.navigate('Login' as never);
+  };
+
+  const handleRegister = () => {
+    navigation.navigate('RegisterChoice' as never);
+  };
+
+  // 判断是否显示（在所有hooks之后）
+  const shouldShow = shouldShowAIButton(currentRouteName);
+
+  // 如果不应该显示，直接返回null
+  if (!shouldShow) {
+    return null;
+  }
+
   return (
     <>
-      <Animated.View style={[styles.container, { bottom: insets.bottom + 70 }, containerAnimatedStyle]}>
+      <Animated.View style={[
+        styles.container,
+        { bottom: insets.bottom + 70 },
+        isExpanded ? expandedContainerAnimatedStyle : containerAnimatedStyle,
+        isExpanded && styles.expandedContainerPosition,
+      ]}>
         {/* 温和发光效果 - 克制版本 */}
-        {!isPerformanceDegraded && (
+        {isPerformanceDegraded === false && isExpanded === false && (
           <>
             {/* 外层柔和发光 - 温和版 */}
             <Animated.View
@@ -464,17 +645,20 @@ export const FloatingAIButton: React.FC<FloatingAIButtonProps> = ({
           </>
         )}
 
+        {/* 统一变形容器（按钮 ↔ 输入框）*/}
         <TouchableOpacity
-          onPressIn={handlePressIn}
-          onPressOut={handlePressOut}
-          onPress={handlePress}
+          onPressIn={isExpanded === false ? handlePressIn : undefined}
+          onPressOut={isExpanded === false ? handlePressOut : undefined}
+          onPress={isExpanded === false ? handlePress : undefined}
           activeOpacity={1}
           style={styles.touchable}
+          disabled={isExpanded === true}
         >
           <Animated.View
             style={[
               styles.button,
-              buttonAnimatedStyle,
+              isExpanded === false && buttonAnimatedStyle,
+              morphAnimatedStyle, // 应用变形动画
               { borderWidth: 2 },
             ]}
           >
@@ -500,46 +684,87 @@ export const FloatingAIButton: React.FC<FloatingAIButtonProps> = ({
               {/* 温和品牌渐变背景 */}
               <LinearGradient
                 colors={[
-                  'rgba(249, 168, 137, 0.85)',  // 恢复原来的橙色强度
-                  'rgba(255, 180, 162, 0.85)',  // 恢复原来的珊瑚色强度
-                  'rgba(249, 168, 137, 0.85)',  // 恢复原来的橙色强度
+                  'rgba(249, 168, 137, 0.85)',
+                  'rgba(255, 180, 162, 0.85)',
+                  'rgba(249, 168, 137, 0.85)',
                 ]}
                 style={styles.gradientBackground}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
               >
-                {/* 微妙Shimmer效果 - 保留但降低强度 */}
-                {!isPerformanceDegraded && !optimizedStyles.simplifiedAnimations && (
-                  <Animated.View
-                    style={[styles.shimmer, shimmerAnimatedStyle]}
-                    pointerEvents="none"
-                  />
+                {/* 按钮内容（未展开时显示）*/}
+                {isExpanded === false && (
+                  <>
+                    {/* 微妙Shimmer效果 */}
+                    {isPerformanceDegraded === false && optimizedStyles.simplifiedAnimations === false && (
+                      <Animated.View
+                        style={[styles.shimmer, shimmerAnimatedStyle]}
+                        pointerEvents="none"
+                      />
+                    )}
+
+                    {/* PomeloX图标 */}
+                    <Animated.View
+                      style={[styles.iconContainer, iconAnimatedStyle]}
+                    >
+                      <GrapefruitIcon
+                        size={56}
+                        isThinking={isThinking}
+                        isPressed={isPressed}
+                      />
+                    </Animated.View>
+
+                    {/* 温和内发光 */}
+                    <View style={styles.innerGlow} pointerEvents="none" />
+                  </>
                 )}
-                
-                {/* PomeloX图标 */}
-                <Animated.View
-                  style={[styles.iconContainer, iconAnimatedStyle]}
-                >
-                  <GrapefruitIcon 
-                    size={56} 
-                    isThinking={isThinking}
-                    isPressed={isPressed}
-                  />
-                </Animated.View>
-                
-                {/* 温和内发光 */}
-                <View style={styles.innerGlow} pointerEvents="none" />
+
+                {/* 输入框内容（展开时显示）*/}
+                {isExpanded === true && (
+                  <Animated.View style={[styles.inputContentContainer, inputAnimatedStyle]}>
+                    <TextInput
+                      ref={inputRef}
+                      style={styles.input}
+                      value={inputText}
+                      onChangeText={setInputText}
+                      placeholder={t('ai.inputPlaceholder')}
+                      placeholderTextColor="rgba(255, 255, 255, 0.6)"
+                      onSubmitEditing={handleSendMessage}
+                      returnKeyType="send"
+                      autoFocus
+                    />
+                    <TouchableOpacity
+                      style={styles.sendButton}
+                      onPress={handleSendMessage}
+                      disabled={!inputText.trim()}
+                    >
+                      <Ionicons
+                        name="send"
+                        size={20}
+                        color={inputText.trim() ? '#ffffff' : 'rgba(255, 255, 255, 0.5)'}
+                      />
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={styles.closeInputButton}
+                      onPress={collapseInput}
+                    >
+                      <Ionicons name="close" size={18} color="rgba(255, 255, 255, 0.8)" />
+                    </TouchableOpacity>
+                  </Animated.View>
+                )}
               </LinearGradient>
               </BlurView>
             </Animated.View>
           </Animated.View>
         </TouchableOpacity>
       </Animated.View>
-      
-      {/* AI Assistant Modal */}
-      <AIAssistantModal 
-        visible={showAIModal}
-        onClose={() => setShowAIModal(false)}
+
+      {/* 访客登录提示模态框 */}
+      <AILoginPromptModal
+        visible={showLoginPrompt}
+        onClose={() => setShowLoginPrompt(false)}
+        onLogin={handleLogin}
+        onRegister={handleRegister}
       />
     </>
   );
@@ -548,15 +773,13 @@ export const FloatingAIButton: React.FC<FloatingAIButtonProps> = ({
 const styles = StyleSheet.create({
   container: {
     position: 'absolute',
-    right: 8.5, // 恢复原位置
-    width: 70, // 恢复原尺寸
-    height: 68,
+    left: 8.5, // 默认移动到左侧（未展开状态）
+    height: 64,
     zIndex: 9999,
     alignItems: 'flex-start',
-    justifyContent: 'flex-start',
-    paddingTop: 2,
-    paddingLeft: 2,
+    justifyContent: 'center',
     backgroundColor: 'rgba(255, 255, 255, 0.001)', // Nearly invisible but solid for shadow calculation
+    overflow: 'visible', // 允许内容溢出
   },
   touchable: {
     width: 66, // 恢复原尺寸
@@ -597,7 +820,7 @@ const styles = StyleSheet.create({
   gradientBackground: {
     flex: 1,
     justifyContent: 'center',
-    alignItems: 'center',
+    alignItems: 'center', // 图标居中对齐
   },
   iconContainer: {
     justifyContent: 'center',
@@ -671,6 +894,77 @@ const styles = StyleSheet.create({
         elevation: 0,
       },
     }),
+  },
+  // 展开输入框样式
+  expandedContainer: {
+    width: '100%',
+    height: 64,
+    borderRadius: 32,
+    overflow: 'hidden',
+    ...Platform.select({
+      ios: {
+        shadowColor: '#F9A889',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.25,
+        shadowRadius: 12,
+      },
+      android: {
+        elevation: 8,
+      },
+    }),
+  },
+  // 展开时的定位调整（响应式）
+  expandedContainerPosition: {
+    left: 16, // 重新定位到左侧16px
+    right: 16, // 右侧也16px
+    width: undefined, // 移除固定宽度，使用left+right自动计算
+  },
+  expandedBlur: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 32,
+  },
+  expandedGradient: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    gap: 8,
+  },
+  input: {
+    flex: 1,
+    height: 40,
+    fontSize: 16,
+    color: '#ffffff',
+    fontWeight: '500',
+  },
+  sendButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+  },
+  closeInputButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+  },
+  // 输入框内容容器
+  inputContentContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    gap: 8,
   },
 });
 

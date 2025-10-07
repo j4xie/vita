@@ -62,6 +62,7 @@ import { ExploreScreen } from '../screens/explore/ExploreScreen';
 import { ConsultingScreen } from '../screens/consulting/ConsultingScreen';
 import { CommunityScreen } from '../screens/community/CommunityScreen';
 import { CommunityEventsScreen } from '../screens/community/CommunityEventsScreen';
+import { SchoolMerchantsScreen } from '../screens/community/SchoolMerchantsScreen';
 import { WellbeingScreen } from '../screens/wellbeing/WellbeingScreen';
 import { SearchScreen } from '../screens/search/SearchScreen';
 import { VolunteerHomeScreen } from '../screens/volunteer/VolunteerHomeScreen';
@@ -75,6 +76,7 @@ import { FloatingFilterButton } from '../components/community/FloatingFilterButt
 import { GlobalTouchHandler } from '../components/common/GlobalTouchHandler';
 import { ErrorBoundary } from '../components/common/ErrorBoundary';
 import { TermsScreen } from '../screens/legal/TermsScreen';
+import { AIChatScreen } from '../screens/AIChatScreen';
 
 // Stack Navigators
 const RootStack = createStackNavigator();
@@ -334,6 +336,10 @@ const CommunityNavigator = () => {
         name="CommunityEvents"
         component={CommunityEventsScreen}
       />
+      <CommunityStack.Screen
+        name="SchoolMerchants"
+        component={SchoolMerchantsScreen}
+      />
     </CommunityStack.Navigator>
   );
 };
@@ -376,8 +382,8 @@ const HomeNavigator = () => {
           ...pageTransitions.slideFromRight,
         }}
       />
-      <MainStack.Screen 
-        name="ActivityRegistrationForm" 
+      <MainStack.Screen
+        name="ActivityRegistrationForm"
         component={ActivityRegistrationFormScreen}
         options={{
           ...pageTransitions.slideFromRight,
@@ -743,10 +749,10 @@ const TabNavigator = () => {
         />
         </Tab.Navigator>
 
-        {/* 全局悬浮AI助手按钮 - 已隐藏以通过App Store审核 */}
-        {/* <ErrorBoundary>
+        {/* 全局悬浮AI助手按钮 */}
+        <ErrorBoundary>
           <FloatingAIButton />
-        </ErrorBoundary> */}
+        </ErrorBoundary>
       </View>
       </GlobalTouchHandler>
     </FilterProvider>
@@ -946,14 +952,23 @@ export const AppNavigator = () => {
           />
           
           {/* Legal Screens */}
-          <RootStack.Screen 
-            name="Terms" 
+          <RootStack.Screen
+            name="Terms"
             component={TermsScreen}
             options={{
               ...pageTransitions.slideFromRight,
             }}
           />
-          
+
+          {/* AI Chat Screen */}
+          <RootStack.Screen
+            name="AIChat"
+            component={AIChatScreen}
+            options={{
+              ...pageTransitions.slideFromRight,
+            }}
+          />
+
         </RootStack.Navigator>
             </NavigationContainer>
           </VolunteerProvider>

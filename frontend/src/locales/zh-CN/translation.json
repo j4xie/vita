@@ -1044,7 +1044,45 @@
       "suggestions": "个性化建议"
     },
     "gotIt": "我知道了",
-    "coachMark": "长按试试"
+    "coachMark": "长按试试",
+    "inputPlaceholder": "输入消息...",
+    "send": "发送",
+    "thinking": "正在思考...",
+    "errorMessage": "抱歉，遇到了一些问题",
+    "networkError": "网络连接失败，请稍后重试",
+    "newChat": "新对话",
+    "clearHistory": "清空历史",
+    "confirmClear": "确认清空所有对话记录吗？",
+    "historyCleared": "对话历史已清空",
+    "welcome": "你好，有什么可以帮助你的吗？",
+    "emptyState": "还没有对话记录，快来聊聊吧！",
+    "retry": "重新发送",
+    "questions": {
+      "study_resources": "如何找到学习资源和辅导？",
+      "library_guide": "图书馆在哪里？怎么使用？",
+      "campus_rules": "校园重要规定有哪些？",
+      "writing_help": "论文写作有什么建议？",
+      "visa_policy": "F1签证续签需要注意什么？",
+      "work_permit": "留学生如何申请工作许可？",
+      "legal_advice": "遇到法律问题找谁咨询？",
+      "immigration_status": "如何查询移民身份状态？",
+      "housing_tips": "附近租房有什么建议？",
+      "transportation": "校园周边交通指南",
+      "healthcare": "留学生医疗保险怎么用？",
+      "shopping_guide": "最近的超市和购物中心在哪？",
+      "banking_finance": "如何开银行账户和理财？",
+      "event_planning": "帮我策划一场校园活动",
+      "post_writing": "帮我写一篇社区发帖文案",
+      "volunteer_guide": "志愿者活动怎么参加？",
+      "community_tips": "如何融入本地社区？",
+      "activity_suggest": "推荐适合我的活动"
+    },
+    "loginPrompt": {
+      "title": "登录后使用AI助手",
+      "description": "AI智能助手需要登录后才能使用，为您提供个性化的留学生活建议和帮助。",
+      "login": "立即登录",
+      "register": "注册账号"
+    }
   },
   "explore": {
     "title": "发现页面",

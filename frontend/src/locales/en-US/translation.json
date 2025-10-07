@@ -1059,7 +1059,45 @@
       "suggestions": "Personalized Suggestions"
     },
     "gotIt": "Got it",
-    "coachMark": "Long press to try"
+    "coachMark": "Long press to try",
+    "inputPlaceholder": "Type a message...",
+    "send": "Send",
+    "thinking": "Thinking...",
+    "errorMessage": "Sorry, something went wrong",
+    "networkError": "Network error, please try again later",
+    "newChat": "New Chat",
+    "clearHistory": "Clear History",
+    "confirmClear": "Clear all conversation history?",
+    "historyCleared": "History cleared",
+    "welcome": "Hi, how can I help you?",
+    "emptyState": "No conversations yet. Start chatting!",
+    "retry": "Retry",
+    "questions": {
+      "study_resources": "Where to find study resources?",
+      "library_guide": "Where is the library and how to use it?",
+      "campus_rules": "What are important campus rules?",
+      "writing_help": "Tips for essay writing?",
+      "visa_policy": "F1 visa renewal requirements?",
+      "work_permit": "How to apply for work permit?",
+      "legal_advice": "Where to get legal advice?",
+      "immigration_status": "How to check immigration status?",
+      "housing_tips": "Tips for finding housing nearby?",
+      "transportation": "Campus transportation guide",
+      "healthcare": "How to use student health insurance?",
+      "shopping_guide": "Where are nearby supermarkets?",
+      "banking_finance": "How to open a bank account?",
+      "event_planning": "Help me plan a campus event",
+      "post_writing": "Help write a community post",
+      "volunteer_guide": "How to join volunteer activities?",
+      "community_tips": "How to join local community?",
+      "activity_suggest": "Suggest activities for me"
+    },
+    "loginPrompt": {
+      "title": "Login to Use AI Assistant",
+      "description": "AI assistant requires login to provide personalized advice and help for your student life.",
+      "login": "Login Now",
+      "register": "Sign Up"
+    }
   },
   "explore": {
     "title": "Explore",
