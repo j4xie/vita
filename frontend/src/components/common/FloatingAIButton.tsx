@@ -9,7 +9,7 @@ import {
   Keyboard,
   Dimensions,
 } from 'react-native';
-import { useNavigation, useNavigationState } from '@react-navigation/native';
+import { useNavigation, useNavigationState, useFocusEffect } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { shouldShowAIButton } from '../../config/aiButtonConfig';
 // import { Ionicons } from '@expo/vector-icons'; // 替换为可爱PomeloX图标
@@ -51,6 +51,7 @@ export const FloatingAIButton: React.FC<FloatingAIButtonProps> = ({
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
   const [isPressed, setIsPressed] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
+  const [forceUpdate, setForceUpdate] = useState(0);
   const [inputText, setInputText] = useState('');
   const inputRef = useRef<TextInput>(null);
   const { metrics, getOptimizedStyles } = usePerformanceDegradation();
@@ -578,7 +579,14 @@ export const FloatingAIButton: React.FC<FloatingAIButtonProps> = ({
   // 获取当前路由名，判断是否显示AI按钮（必须在所有其他hooks之后，return之前）
   const currentRouteName = useNavigationState(state => {
     const route = state?.routes?.[state.index];
-    return route?.state?.routes?.[route.state.index]?.name || route?.name;
+    const finalName = route?.state?.routes?.[route.state.index]?.name || route?.name;
+    console.log('🔍 [AI-BUTTON] Navigation State:', {
+      routeName: finalName,
+      stateIndex: state?.index,
+      routesLength: state?.routes?.length,
+      route: route?.name,
+    });
+    return finalName;
   });
 
   // 处理登录/注册导航
@@ -590,12 +598,24 @@ export const FloatingAIButton: React.FC<FloatingAIButtonProps> = ({
     navigation.navigate('RegisterChoice' as never);
   };
 
+  // 延迟检查：初始加载后强制重新渲染一次
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      console.log('⏰ [AI-BUTTON] Force re-render after mount');
+      setForceUpdate(prev => prev + 1);
+    }, 100);
+    return () => clearTimeout(timer);
+  }, []);
+
   // 判断是否显示（在所有hooks之后）
   // 初始加载时如果路由名未定义，默认显示（假设在主页）
   const shouldShow = currentRouteName ? shouldShowAIButton(currentRouteName) : true;
 
+  console.log('🎯 [AI-BUTTON] Should Show:', shouldShow, 'Current Route:', currentRouteName, 'ForceUpdate:', forceUpdate);
+
   // 如果不应该显示，直接返回null
   if (!shouldShow) {
+    console.log('❌ [AI-BUTTON] Hidden due to shouldShow=false');
     return null;
   }
 
