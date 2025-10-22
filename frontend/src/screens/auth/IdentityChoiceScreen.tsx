@@ -16,7 +16,7 @@ import { theme } from '../../theme';
 import { LIQUID_GLASS_LAYERS, DAWN_GRADIENTS } from '../../theme/core';
 
 interface RouteParams {
-  registrationType?: 'phone' | 'invitation';
+  registrationType?: 'phone' | 'invitation' | 'email';
   referralCode?: string;
   hasReferralCode?: boolean;
   detectedRegion?: 'zh' | 'en';
@@ -60,8 +60,17 @@ export const IdentityChoiceScreen: React.FC = () => {
           detectionResult,
           identity: 1, // 学生
         });
+      } else if (registrationType === 'email') {
+        // 邮箱验证学生注册：跳转到StudentNormalRegisterStep1（复用）
+        // Step2会根据registrationType跳转到EmailRegisterStep2
+        navigation.navigate('StudentNormalRegisterStep1', {
+          registrationType,
+          detectedRegion,
+          detectionResult,
+          identity: 1, // 学生
+        });
       } else {
-        // 普通学生注册：跳转到StudentNormalRegisterStep1
+        // 手机号验证学生注册（phone）：跳转到StudentNormalRegisterStep1
         navigation.navigate('StudentNormalRegisterStep1', {
           registrationType,
           detectedRegion,
@@ -81,8 +90,16 @@ export const IdentityChoiceScreen: React.FC = () => {
           detectionResult,
           identity: 2, // 家长
         });
+      } else if (registrationType === 'email') {
+        // 邮箱验证家长注册：跳转到ParentNormalRegisterStep1（复用）
+        navigation.navigate('ParentNormalRegisterStep1', {
+          registrationType,
+          detectedRegion,
+          detectionResult,
+          identity: 2, // 家长
+        });
       } else {
-        // 普通家长注册：跳转到ParentNormalRegisterStep1
+        // 手机号验证家长注册（phone）：跳转到ParentNormalRegisterStep1
         navigation.navigate('ParentNormalRegisterStep1', {
           registrationType,
           detectedRegion,

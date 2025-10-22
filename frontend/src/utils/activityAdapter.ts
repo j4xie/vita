@@ -23,6 +23,10 @@ export interface BackendActivity {
   categoryId?: number;
   registerCount?: number; // 活动已报名人数
   timeZone?: string; // 活动时区
+  deptId?: number; // 🆕 学校ID（主办方）
+  deptName?: string; // 🆕 学校名称（主办方）
+  activityPrice?: number; // 🆕 活动价格（0表示免费）
+  point?: number; // 🆕 活动签到可获得的积分
 }
 
 // 前端活动数据接口
@@ -43,6 +47,7 @@ export interface FrontendActivity {
     name: string;
     avatar?: string;
     verified?: boolean;
+    schoolId?: string; // 🆕 学校ID（用于获取logo）
   };
   // 额外信息
   registrationStartTime?: string;
@@ -50,6 +55,9 @@ export interface FrontendActivity {
   detail?: string;
   enabled?: boolean;
   timeZone?: string; // 活动时区
+  price?: number; // 🆕 活动价格（0或undefined表示免费）
+  currency?: string; // 🆕 货币单位（默认USD）
+  points?: number; // 🆕 活动签到可获得的积分
 }
 
 // 🚀 性能优化：预编译状态映射表
@@ -361,6 +369,16 @@ export const adaptActivity = (
     willUseValue: backendActivity.registerCount ?? 0,
   });
 
+  // 🆕 构建主办方信息（优先使用学校信息）
+  const organizer = backendActivity.deptName && backendActivity.deptId ? {
+    name: backendActivity.deptName,           // 使用学校中文名称（如"南京大学"）
+    verified: true,                            // 学校主办的活动默认认证
+    schoolId: backendActivity.deptId.toString(), // 学校ID用于获取logo
+  } : {
+    name: '官方活动',                          // fallback: 没有学校信息时使用通用名称
+    verified: true,
+  };
+
   return {
     id: backendActivity.id.toString(),
     title: activityTitle,
@@ -373,18 +391,17 @@ export const adaptActivity = (
     maxAttendees: backendActivity.enrollment || 0, // 保持真实的enrollment值，0表示无限制
     registeredCount: backendActivity.registerCount ?? 0, // 已报名人数，支持undefined/null
     status: activityStatus,
-    category: backendActivity.categoryId 
+    category: backendActivity.categoryId
       ? getCategoryName(backendActivity.categoryId, language)
       : undefined,
-    organizer: {
-      name: '官方活动', // 暂时使用通用名称
-      verified: true,
-    },
+    organizer, // 使用动态构建的主办方信息
     registrationStartTime: backendActivity.signStartTime,
     registrationEndTime: backendActivity.signEndTime,
     detail: backendActivity.detail,
     enabled: backendActivity.enabled === 1,
     timeZone: backendActivity.timeZone,
+    price: backendActivity.activityPrice, // 🆕 活动价格，0或undefined表示免费
+    currency: 'USD', // 🆕 默认USD，后续可扩展为多货币支持
   };
 };
 

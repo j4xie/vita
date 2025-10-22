@@ -350,24 +350,6 @@ export const CommunityEventsScreen: React.FC = () => {
           />
         }
         ListEmptyComponent={!isLoading ? renderEmpty : null}
-        ListFooterComponent={() => (
-          // 底部品牌标识区域 - Shangri-La 风格
-          <View style={styles.footerBrand}>
-            <View style={styles.brandIconContainer}>
-              <View style={styles.brandIcon}>
-                <Text style={styles.brandIconText}>P</Text>
-              </View>
-              <Text style={styles.brandName}>PomeloX</Text>
-            </View>
-
-            <View style={styles.curatedByContainer}>
-              <Text style={styles.curatedByText}>curated by</Text>
-              <View style={styles.mobbinLogo}>
-                <Text style={styles.mobbinText}>PomeloX Team</Text>
-              </View>
-            </View>
-          </View>
-        )}
         removeClippedSubviews={true}
         maxToRenderPerBatch={3}
         windowSize={8}
@@ -535,67 +517,6 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     paddingHorizontal: 0, // 无左右边距
     paddingTop: 0, // 无顶部边距
-  },
-
-  // 底部品牌标识区域
-  footerBrand: {
-    backgroundColor: '#1A1A1A',
-    paddingVertical: 32,
-    paddingHorizontal: 20,
-    alignItems: 'center',
-    marginTop: 40,
-  },
-
-  brandIconContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-
-  brandIcon: {
-    width: 32,
-    height: 32,
-    borderRadius: 6,
-    backgroundColor: '#FDB022',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 10,
-  },
-
-  brandIconText: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#1A1A1A',
-  },
-
-  brandName: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#FFFFFF',
-  },
-
-  curatedByContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-
-  curatedByText: {
-    fontSize: 12,
-    color: '#999',
-  },
-
-  mobbinLogo: {
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 4,
-  },
-
-  mobbinText: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#1A1A1A',
   },
 
   // 空状态

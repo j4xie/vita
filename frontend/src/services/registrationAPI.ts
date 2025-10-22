@@ -57,6 +57,155 @@ export const sendSMSVerificationCode = async (phoneNumber: string, areaCode: '86
 };
 
 /**
+ * 发送邮箱验证码
+ * @param email 邮箱地址
+ * @param token 用户token（已登录用户验证邮箱时需要，注册场景无需token）
+ * @returns 邮箱验证码响应（包含后端返回的验证码code字段用于前端对比）
+ */
+export const sendEmailVerificationCode = async (
+  email: string,
+  token?: string
+): Promise<SMSVerificationResponse> => {
+  const url = `${getBaseUrl()}/email/vercodeEmail?email=${encodeURIComponent(email)}`;
+  console.log('📧 [sendEmailVerificationCode] 发送邮箱验证码请求:', {
+    email: email,
+    fullUrl: url,
+    baseUrl: getBaseUrl(),
+    hasToken: !!token
+  });
+
+  try {
+    const headers: Record<string, string> = {
+      'Accept': 'application/json',
+    };
+
+    // 如果提供了token，添加Authorization头（用于已登录用户验证邮箱）
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    const response = await fetch(url, {
+      method: 'GET',
+      headers,
+    });
+
+    console.log('📧 [sendEmailVerificationCode] 后端响应状态:', {
+      status: response.status,
+      statusText: response.statusText,
+      ok: response.ok
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('📧 [sendEmailVerificationCode] HTTP错误响应内容:', errorText);
+      throw new Error(`HTTP error! status: ${response.status}, response: ${errorText}`);
+    }
+
+    const data = await response.json();
+    console.log('📧 [sendEmailVerificationCode] 后端返回数据:', data);
+
+    // 🔧 适配Email API的响应格式
+    // Email API响应: { code: "353702", errorCode: 0, message: "OK", messageId: "...", to: "..." }
+    // SMS API响应: { code: "OK", bizId: "...", message: "..." }
+    if (data.errorCode === 0 && data.messageId) {
+      // 成功：转换为统一格式
+      console.log('✅ [sendEmailVerificationCode] 邮箱验证码发送成功:', {
+        verificationCode: data.code,
+        messageId: data.messageId,
+        to: data.to,
+        hasVerifyParam: !!verify
+      });
+
+      return {
+        code: 'OK',
+        bizId: data.messageId, // 使用messageId作为bizId
+        message: data.message || '验证码已发送',
+        requestId: data.messageId,
+        verificationCode: data.code, // 🔑 保留验证码用于前端对比（注册场景需要）
+      };
+    } else if (data.errorCode !== 0) {
+      // 失败：返回错误信息
+      console.error('❌ [sendEmailVerificationCode] 邮箱验证码发送失败:', data);
+      return {
+        code: 'ERROR',
+        bizId: '',
+        message: data.message || '邮件发送失败',
+        requestId: ''
+      };
+    } else {
+      // 未知格式
+      console.warn('⚠️ [sendEmailVerificationCode] 未知响应格式:', data);
+      return data;
+    }
+  } catch (error) {
+    console.error('📧 [sendEmailVerificationCode] 发送邮箱验证码失败:', error);
+    throw error;
+  }
+};
+
+/**
+ * 验证邮箱验证码
+ * @param email 邮箱地址
+ * @param verCode 验证码（6位数字）
+ * @param bizId 邮件bizId（从sendEmailVerificationCode返回）
+ * @returns 验证结果
+ */
+export const verifyEmailCode = async (params: {
+  email: string;
+  verCode: string;
+  bizId: string;
+}): Promise<APIResponse> => {
+  console.log('🔐 [verifyEmailCode] 开始验证邮箱验证码:', {
+    email: params.email,
+    verCodeLength: params.verCode.length,
+    bizId: params.bizId,
+    baseUrl: getBaseUrl()
+  });
+
+  try {
+    // 使用form-data格式（与/app/user/add保持一致）
+    const formData = new URLSearchParams();
+    formData.append('email', params.email);
+    formData.append('verCode', params.verCode);
+    formData.append('bizId', params.bizId);
+
+    const response = await fetch(`${getBaseUrl()}/app/user/verifyEmail`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: formData.toString(),
+    });
+
+    console.log('🔐 [verifyEmailCode] 后端响应状态:', {
+      status: response.status,
+      statusText: response.statusText,
+      ok: response.ok
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('🔐 [verifyEmailCode] HTTP错误响应:', errorText);
+      throw new Error(`HTTP error! status: ${response.status}, response: ${errorText}`);
+    }
+
+    const data = await response.json();
+    console.log('🔐 [verifyEmailCode] 后端返回数据:', data);
+
+    if (data.code === 200) {
+      console.log('✅ [verifyEmailCode] 邮箱验证码验证成功');
+    } else {
+      console.error('❌ [verifyEmailCode] 邮箱验证码验证失败:', data.msg);
+    }
+
+    return data;
+  } catch (error) {
+    console.error('🔐 [verifyEmailCode] 验证邮箱验证码失败:', error);
+    throw error;
+  }
+};
+
+/**
  * 获取学校列表
  * @returns 学校列表
  */

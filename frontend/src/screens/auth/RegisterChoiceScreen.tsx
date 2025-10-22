@@ -81,6 +81,62 @@ export const RegisterChoiceScreen: React.FC = () => {
     }
   };
 
+  const handleEmailRegister = async () => {
+    // 邮箱验证注册：同样需要地理位置检测
+    setDetectingLocation(true);
+
+    try {
+      const [result] = await Promise.all([
+        RegionDetectionService.detectRegion(),
+        new Promise(resolve => setTimeout(resolve, 2000))
+      ]);
+
+      setDetectionResult(result);
+      setDetectedRegion(result.region);
+      // 标记为邮箱验证注册
+      navigation.navigate('IdentityChoice', {
+        registrationType: 'email',
+        detectedRegion: result.region,
+        detectionResult: result
+      });
+    } catch (error) {
+      console.error('地理位置检测失败:', error);
+
+      Alert.alert(
+        t('common.error'),
+        t('auth.register.form.area_detection_failed'),
+        [
+          {
+            text: t('auth.register.form.manual_select_china'),
+            onPress: () => {
+              navigation.navigate('IdentityChoice', {
+                registrationType: 'email',
+                detectedRegion: 'zh',
+                detectionResult: null
+              });
+            }
+          },
+          {
+            text: t('auth.register.form.manual_select_usa'),
+            onPress: () => {
+              navigation.navigate('IdentityChoice', {
+                registrationType: 'email',
+                detectedRegion: 'en',
+                detectionResult: null
+              });
+            }
+          },
+          {
+            text: t('common.cancel'),
+            style: 'cancel'
+          }
+        ]
+      );
+    } finally {
+      setDetectingLocation(false);
+    }
+  };
+
   const handlePrivacyAccept = () => {
     setShowPrivacyModal(false);
     // 用户同意隐私协议后进入身份选择页面
@@ -165,7 +221,7 @@ export const RegisterChoiceScreen: React.FC = () => {
             </View>
           </TouchableOpacity>
 
-          {/* Normal Registration */}
+          {/* Normal Registration - Phone */}
           <TouchableOpacity
               style={[styles.optionCard, styles.secondaryCard, detectingLocation && styles.optionCardDisabled]}
               onPress={handleNormalRegister}
@@ -174,15 +230,41 @@ export const RegisterChoiceScreen: React.FC = () => {
             >
               <View style={styles.cardContent}>
                 <View style={[styles.iconContainer, styles.secondaryIconContainer]}>
-                  <Ionicons name="person-add" size={40} color={theme.colors.primary} />
+                  <Ionicons name="phone-portrait" size={40} color={theme.colors.primary} />
                 </View>
                 <View style={styles.textContainer}>
                   <Text style={[styles.cardTitle, styles.secondaryCardTitle]}>
-                    {t('auth.register.normal_registration')}
+                    {t('auth.register.phone_registration')}
                   </Text>
                   <Text style={[styles.cardDescription, styles.secondaryCardDescription]}>
-                    {t('auth.register.normal_description')}
+                    {t('auth.register.phone_description')}
                   </Text>
+                </View>
+                <Ionicons name="chevron-forward" size={24} color={theme.colors.text.tertiary} />
+              </View>
+            </TouchableOpacity>
+
+          {/* Email Registration - New */}
+          <TouchableOpacity
+              style={[styles.optionCard, styles.tertiaryCard, detectingLocation && styles.optionCardDisabled]}
+              onPress={handleEmailRegister}
+              activeOpacity={detectingLocation ? 1 : 0.9}
+              disabled={detectingLocation}
+            >
+              <View style={styles.cardContent}>
+                <View style={[styles.iconContainer, styles.tertiaryIconContainer]}>
+                  <Ionicons name="mail" size={40} color="#10B981" />
+                </View>
+                <View style={styles.textContainer}>
+                  <Text style={[styles.cardTitle, styles.tertiaryCardTitle]}>
+                    {t('auth.register.email_registration')}
+                  </Text>
+                  <Text style={[styles.cardDescription, styles.tertiaryCardDescription]}>
+                    {t('auth.register.email_description')}
+                  </Text>
+                  <View style={styles.badgeSecondary}>
+                    <Text style={styles.badgeSecondaryText}>{t('auth.register.email_badge')}</Text>
+                  </View>
                 </View>
                 <Ionicons name="chevron-forward" size={24} color={theme.colors.text.tertiary} />
               </View>
@@ -330,8 +412,12 @@ const styles = StyleSheet.create({
     borderColor: theme.colors.primary,
   },
   secondaryCard: {
-    backgroundColor: '#E5E7EB', // 灰色背景  
+    backgroundColor: '#E5E7EB', // 灰色背景
     borderColor: '#D1D5DB', // 灰色边框
+  },
+  tertiaryCard: {
+    backgroundColor: '#ECFDF5', // 绿色淡背景
+    borderColor: '#10B981', // 绿色边框
   },
   cardContent: {
     flexDirection: 'row',
@@ -349,6 +435,9 @@ const styles = StyleSheet.create({
   secondaryIconContainer: {
     backgroundColor: theme.colors.primary + '15',
   },
+  tertiaryIconContainer: {
+    backgroundColor: '#10B981' + '15',
+  },
   textContainer: {
     flex: 1,
   },
@@ -361,6 +450,9 @@ const styles = StyleSheet.create({
   secondaryCardTitle: {
     color: theme.colors.text.primary,
   },
+  tertiaryCardTitle: {
+    color: '#047857', // 深绿色
+  },
   cardDescription: {
     fontSize: theme.typography.fontSize.sm,
     color: theme.colors.text.inverse,
@@ -369,6 +461,9 @@ const styles = StyleSheet.create({
   },
   secondaryCardDescription: {
     color: theme.colors.text.secondary,
+  },
+  tertiaryCardDescription: {
+    color: '#059669', // 绿色
   },
   badge: {
     backgroundColor: 'rgba(255, 255, 255, 0.25)',
@@ -381,6 +476,18 @@ const styles = StyleSheet.create({
     fontSize: theme.typography.fontSize.xs,
     fontWeight: theme.typography.fontWeight.semibold,
     color: theme.colors.text.inverse,
+  },
+  badgeSecondary: {
+    backgroundColor: '#10B981' + '25',
+    paddingHorizontal: theme.spacing[2],
+    paddingVertical: theme.spacing[1],
+    borderRadius: theme.borderRadius.full,
+    alignSelf: 'flex-start',
+  },
+  badgeSecondaryText: {
+    fontSize: theme.typography.fontSize.xs,
+    fontWeight: theme.typography.fontWeight.semibold,
+    color: '#047857', // 深绿色
   },
   benefitsSection: {
     marginBottom: theme.spacing[6],

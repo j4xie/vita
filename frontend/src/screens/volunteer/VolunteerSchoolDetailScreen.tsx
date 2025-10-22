@@ -568,47 +568,17 @@ export const VolunteerSchoolDetailScreen: React.FC = () => {
       }
       
       try {
-        // 🚨 直接API调用，避免getUserList函数的复杂逻辑
-        const token = await getCurrentToken();
-        if (!token) {
-          throw new Error('未获取到token');
-        }
-        
-        // 根据权限级别决定API调用方式
-        const dataScope = permissions.getDataScope();
-        if (dataScope === 'all') {
-          // 总管理员：需要动态pageSize获取完整数据
-          const initialResponse = await fetch(`${getApiUrl()}/system/user/list`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-          });
-          const initialData = await initialResponse.json();
+        // 🚀 使用优化后的 getUserList() 函数
+        // 后端已过滤角色（管理员、分管理员、内部员工）并返回完整数据
+        userListResult = await getUserList();
 
-          // 🐛 打印第一个用户的完整数据结构，用于调试
-          if (initialData.rows && initialData.rows.length > 0) {
-            console.log('🔍 [API-RAW-DATA] /system/user/list 返回的第一个用户数据:', JSON.stringify(initialData.rows[0], null, 2));
-          }
-          
-          if (initialData.code === 200 && initialData.rows?.length < initialData.total) {
-            const fullResponse = await fetch(`${getApiUrl()}/system/user/list?pageSize=${initialData.total}`, {
-              headers: { 'Authorization': `Bearer ${token}` }
-            });
-            const fullData = await fullResponse.json();
-            userListResult = { code: fullData.code, msg: fullData.msg, data: fullData.rows };
-          } else {
-            userListResult = { code: initialData.code, msg: initialData.msg, data: initialData.rows };
-          }
-        } else {
-          // 分管理员：直接使用默认API（后端已过滤）
-          const response = await fetch(`${getApiUrl()}/system/user/list`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-          });
-          const data = await response.json();
-          userListResult = { code: data.code, msg: data.msg, data: data.rows };
-        }
-        
-        
+        console.log('✅ [OPTIMIZED] 使用新接口获取用户列表:', {
+          code: userListResult.code,
+          total: userListResult.total,
+          dataLength: userListResult.data?.length || 0
+        });
       } catch (error) {
-        console.error('直接API调用失败:', error);
+        console.error('获取用户列表失败:', error);
         userListResult = { code: 500, msg: 'API调用失败', data: [] };
       }
       

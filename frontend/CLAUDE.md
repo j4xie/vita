@@ -240,6 +240,7 @@ npm run version:status
 - `manage`: 总管理员 (Full system access)
 - `part_manage`: 分管理员 (Organization management)
 - `staff`: 内部员工 (Volunteer features)
+- `merchant`: 商家 (Merchant management features)
 - `common`: 普通用户 (Basic features)
 
 ### API Documentation
@@ -278,6 +279,46 @@ import { NavigationContainer } from '@react-navigation/native';
 
 ### **⚠️ React Native Reanimated Warning**
 **NEVER use `useAnimatedScrollHandler` with FlatList/SectionList** - Causes "onScroll is not a function" error. Use `useCallback` instead.
+
+## 🔐 **基于角色的功能访问控制 (2025年10月更新)**
+
+应用使用基于用户角色的动态权限系统，不同角色看到不同的Tab和功能：
+
+### **Tab显示规则**
+
+| Tab | 管理员/员工 | 商家 | 普通用户 | 说明 |
+|-----|------------|------|---------|------|
+| **Explore** | ✅ | ✅ | ✅ | 所有用户可见 |
+| **Community** | ✅ | ✅ (管理视图) | ✅ (浏览视图) | 动态双视图 |
+| **Rewards** | ✅ | ❌ | ✅ | 商家用户不可见 |
+| **Wellbeing** | ✅ | ✅ | ✅ | 所有用户可见 |
+| **Profile** | ✅ | ✅ | ✅ | 所有用户可见 |
+
+### **Community Tab 双视图实现**
+- **商家用户 (roleKey: 'merchant')**:
+  - 显示商家管理面板
+  - 扫码核销入口
+  - 核销记录和统计
+
+- **普通用户**:
+  - 显示商家列表
+  - 按地区/类别浏览
+  - 查看商家优惠
+
+### **权限检查代码示例**
+```typescript
+const { permissions } = useUser();
+
+// 检查是否为商家
+if (permissions.isMerchant()) {
+  // 显示商家专属功能
+}
+
+// 检查是否为管理员
+if (permissions.isAdmin()) {
+  // 显示管理员功能
+}
+```
 
 ## 🚀 **环境切换与发布流程**
 

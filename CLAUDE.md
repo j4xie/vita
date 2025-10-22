@@ -225,6 +225,7 @@ pomeloX/
 - `manage`: 总管理员 (Full access)
 - `part_manage`: 分管理员 (Partial management)
 - `staff`: 内部员工 (Volunteer features only)
+- `merchant`: 商家 (Merchant management features)
 - `common`: 普通用户 (Basic features)
 
 ### Development Workflow

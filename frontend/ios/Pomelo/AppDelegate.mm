@@ -2,6 +2,7 @@
 
 #import <React/RCTBundleURLProvider.h>
 #import <React/RCTLinkingManager.h>
+#import "RNAlipayModule.h"
 
 @implementation AppDelegate
 
@@ -32,6 +33,11 @@
 
 // Linking API
 - (BOOL)application:(UIApplication *)application openURL:(NSURL *)url options:(NSDictionary<UIApplicationOpenURLOptionsKey,id> *)options {
+  // 处理支付宝回调
+  if ([RNAlipayModule handleOpenURL:url]) {
+    return YES;
+  }
+
   return [super application:application openURL:url options:options] || [RCTLinkingManager application:application openURL:url options:options];
 }
 

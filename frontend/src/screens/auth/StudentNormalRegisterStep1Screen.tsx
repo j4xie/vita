@@ -55,8 +55,9 @@ export const StudentNormalRegisterStep1Screen: React.FC = () => {
   const route = useRoute<any>();
   const { t } = useTranslation();
 
-  // 获取地理检测参数
+  // 获取地理检测参数和注册类型
   const detectedRegion = route.params?.detectedRegion || 'zh';
+  const registrationType = route.params?.registrationType || 'phone';
 
   const [loading, setLoading] = useState(false);
 
@@ -354,8 +355,12 @@ export const StudentNormalRegisterStep1Screen: React.FC = () => {
         await UserRegionPreferences.initializePreferences(detectionResult.region);
         console.log('注册流程：用户区域偏好初始化完成');
         
-        // 导航到第二步，传递第一步的数据和地理检测结果
-        navigation.navigate('StudentNormalRegisterStep2', {
+        // 根据注册类型导航到不同的第二步页面
+        const step2Screen = registrationType === 'email'
+          ? 'StudentEmailRegisterStep2'
+          : 'StudentNormalRegisterStep2';
+
+        navigation.navigate(step2Screen, {
           step1Data: {
             ...formData,
             legalName: `${formData.lastName} ${formData.firstName}`.trim(),
@@ -365,7 +370,11 @@ export const StudentNormalRegisterStep1Screen: React.FC = () => {
       } catch (error) {
         console.error('注册流程地理位置检测失败:', error);
         // 即使地理检测失败也继续注册流程，使用默认设置
-        navigation.navigate('StudentNormalRegisterStep2', {
+        const step2Screen = registrationType === 'email'
+          ? 'StudentEmailRegisterStep2'
+          : 'StudentNormalRegisterStep2';
+
+        navigation.navigate(step2Screen, {
           step1Data: {
             ...formData,
             legalName: `${formData.lastName} ${formData.firstName}`.trim(),

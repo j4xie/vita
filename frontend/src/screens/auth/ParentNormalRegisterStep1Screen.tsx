@@ -69,6 +69,9 @@ export const ParentNormalRegisterStep1Screen: React.FC = () => {
   const { t } = useTranslation();
   const { login: userLogin } = useUser();
 
+  // 获取注册类型参数
+  const registrationType = route.params?.registrationType || 'phone';
+
   const [loading, setLoading] = useState(false);
 
   const [formData, setFormData] = useState<ParentStep1FormData>({
@@ -247,8 +250,12 @@ export const ParentNormalRegisterStep1Screen: React.FC = () => {
   const handleNext = () => {
     if (!validateForm()) return;
 
-    // 导航到Step2，传递Step1的数据
-    navigation.navigate('ParentNormalRegisterStep2', {
+    // 根据注册类型导航到不同的Step2页面
+    const step2Screen = registrationType === 'email'
+      ? 'ParentEmailRegisterStep2'
+      : 'ParentNormalRegisterStep2';
+
+    navigation.navigate(step2Screen, {
       step1Data: formData
     });
   };

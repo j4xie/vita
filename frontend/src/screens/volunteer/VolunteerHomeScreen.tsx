@@ -32,6 +32,7 @@ import { pomeloXAPI } from '../../services/PomeloXAPI';
 import { timeService } from '../../utils/UnifiedTimeService';
 import { SafeAlert } from '../../utils/SafeAlert';
 import { apiCache } from '../../services/apiCache';
+import { getTimeOffsetFromBeijing } from '../../utils/timezoneHelper';
 
 const { width: screenWidth } = Dimensions.get('window');
 
@@ -250,12 +251,21 @@ const PersonalVolunteerDataFixed: React.FC = () => {
     try {
       const startTime = timeService.formatLocalTime(new Date());
       const userId = typeof user.userId === 'string' ? parseInt(user.userId) : user.userId;
+
+      // 🆕 获取时区偏移
+      const timeOffset = getTimeOffsetFromBeijing();
+
       const result = await volunteerSignRecord(
         userId, // userId
         1, // 签到
         userId, // operateUserId
         user.legalName, // operateLegalName
-        startTime
+        startTime,
+        undefined, // endTime
+        undefined, // recordId
+        undefined, // remark
+        undefined, // autoApprovalStatus
+        timeOffset // 🆕 时区偏移
       );
 
       if (result.code === 200) {
@@ -808,12 +818,21 @@ export const VolunteerHomeScreen: React.FC = () => {
       console.log('🕐 [SIGNIN-DEBUG] ================================');
 
       const userId = typeof user.userId === 'string' ? parseInt(user.userId) : user.userId;
+
+      // 🆕 获取时区偏移
+      const timeOffset = getTimeOffsetFromBeijing();
+
       const result = await volunteerSignRecord(
         userId, // userId
         1, // 签到
         userId, // operateUserId
         user.legalName, // operateLegalName
-        startTime
+        startTime,
+        undefined, // endTime
+        undefined, // recordId
+        undefined, // remark
+        undefined, // autoApprovalStatus
+        timeOffset // 🆕 时区偏移
       );
 
       if (result.code === 200) {

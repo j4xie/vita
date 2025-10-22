@@ -2,12 +2,13 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { pomeloXAPI } from '../services/PomeloXAPI';
 import { adaptUserInfoResponse, FrontendUser } from '../utils/userAdapter';
-import { 
-  isLoggedIn, 
-  getUserInfo as getAuthUserInfo, 
+import {
+  isLoggedIn,
+  getUserInfo as getAuthUserInfo,
   clearUserSession,
   getCurrentToken
 } from '../services/authAPI';
+import { userAPI } from '../services/userAPI';
 import { 
   createPermissionChecker, 
   PermissionChecker,
@@ -37,6 +38,8 @@ interface UserContextType {
   permissionLevel: PermissionLevel;
   // 新增强制刷新权限方法
   forceRefreshPermissions: () => Promise<void>;
+  // 新增积分刷新方法
+  refreshUserPoints: () => Promise<void>;
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
@@ -97,12 +100,23 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
           deptId: adaptedData.user.deptId,
           roles: adaptedData.user.roles
         });
-        
-        setUser(adaptedData.user);
+
+        // 先查询用户积分
+        let userWithPoints = adaptedData.user;
+        try {
+          const points = await userAPI.getUserPoints();
+          userWithPoints = { ...adaptedData.user, points };
+          console.log('💰 用户积分获取成功:', points);
+        } catch (error) {
+          console.warn('⚠️ 用户积分获取失败，使用默认值0:', error);
+          userWithPoints = { ...adaptedData.user, points: 0 };
+        }
+
+        setUser(userWithPoints);
         // 更新权限信息
-        updateUserPermissions(adaptedData.user);
-        // 缓存用户数据
-        await AsyncStorage.setItem('userData', JSON.stringify(adaptedData.user));
+        updateUserPermissions(userWithPoints);
+        // 缓存用户数据（包含积分）
+        await AsyncStorage.setItem('userData', JSON.stringify(userWithPoints));
       } else {
         console.log('📝 用户未登录或会话已过期:', adaptedData.message || '需要登录');
         setUser(null);
@@ -213,6 +227,31 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  // 刷新用户积分
+  const refreshUserPoints = async () => {
+    try {
+      if (!user) {
+        console.warn('⚠️ [POINTS] 用户未登录，无法刷新积分');
+        return;
+      }
+
+      console.log('💰 [POINTS] 刷新用户积分...');
+      const points = await userAPI.getUserPoints();
+
+      // 更新用户对象的积分
+      const updatedUser = { ...user, points };
+      setUser(updatedUser);
+
+      // 更新本地缓存
+      await AsyncStorage.setItem('userData', JSON.stringify(updatedUser));
+
+      console.log('✅ [POINTS] 积分刷新成功:', points);
+    } catch (error) {
+      console.error('❌ [POINTS] 积分刷新失败:', error);
+      // 积分刷新失败不影响主流程，只记录错误
+    }
+  };
+
   const contextValue: UserContextType = {
     user,
     isAuthenticated: !!user,
@@ -225,6 +264,8 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     permissions,
     permissionLevel,
     forceRefreshPermissions,
+    // 新增积分相关
+    refreshUserPoints,
   };
 
   return (

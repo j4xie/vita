@@ -83,6 +83,12 @@ class MerchantAPI {
       console.log('🏪 [MerchantAPI] 获取商家列表:', url);
 
       const token = await getCurrentToken();
+      console.log('🔐 [MerchantAPI] Token状态:', {
+        hasToken: !!token,
+        tokenLength: token?.length || 0,
+        tokenPreview: token ? `${token.substring(0, 20)}...` : 'null',
+      });
+
       const response = await fetch(url, {
         method: 'GET',
         headers: {
@@ -91,11 +97,42 @@ class MerchantAPI {
         },
       });
 
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}`);
-      }
+      console.log('📡 [MerchantAPI] HTTP响应状态:', {
+        status: response.status,
+        statusText: response.statusText,
+        ok: response.ok,
+      });
 
       const result = await response.json();
+
+      // 检查业务层面的错误（即使HTTP状态是200）
+      if (result.code !== 200) {
+        console.error('❌ [MerchantAPI] 业务错误:', {
+          code: result.code,
+          msg: result.msg,
+        });
+
+        // 检查是否为认证错误
+        if (result.msg?.includes('认证失败') || result.msg?.includes('无法访问系统资源') || result.code === 401) {
+          throw new Error('AUTH_FAILED: ' + (result.msg || '认证失败，请重新登录'));
+        }
+
+        throw new Error(result.msg || `API错误: ${result.code}`);
+      }
+
+      // HTTP错误处理
+      if (!response.ok) {
+        console.error('❌ [MerchantAPI] HTTP错误:', {
+          status: response.status,
+          message: result.msg,
+        });
+
+        if (response.status === 401) {
+          throw new Error('AUTH_FAILED: 认证失败，请重新登录');
+        }
+
+        throw new Error(result.msg || `HTTP ${response.status}`);
+      }
 
       // 详细日志 - 查看返回的数据结构
       console.log('📋 [MerchantAPI] 商家列表响应:', {
@@ -127,11 +164,11 @@ class MerchantAPI {
    * 获取商家详情
    * GET /app/merchant/detail
    */
-  async getMerchantDetail(merchantId: number): Promise<ApiResponse<Merchant>> {
+  async getMerchantDetail(id: number): Promise<ApiResponse<Merchant>> {
     try {
-      const url = `${getBaseUrl()}/app/merchant/detail?merchantId=${merchantId}`;
+      const url = `${getBaseUrl()}/app/merchant/detail?id=${id}`;
 
-      console.log('🏪 [MerchantAPI] 获取商家详情:', merchantId);
+      console.log('🏪 [MerchantAPI] 获取商家详情:', id);
 
       const token = await getCurrentToken();
       const response = await fetch(url, {
@@ -157,23 +194,46 @@ class MerchantAPI {
   }
 
   /**
-   * 按学校获取商家
+   * 获取所有商家（不按学校筛选）
+   * 注意：后端API不支持按deptId筛选，返回所有商家
    */
-  async getMerchantsBySchool(deptId: number): Promise<Merchant[]> {
+  async getAllMerchants(): Promise<Merchant[]> {
     try {
-      const response = await this.getMerchantList({ deptId });
+      // 不传递任何参数，获取所有商家
+      const response = await this.getMerchantList({});
+
+      console.log('🏪 [MerchantAPI] 获取所有商家响应:', {
+        code: response.code,
+        dataType: typeof response.data,
+        rowsType: typeof response.rows,
+        dataCount: Array.isArray(response.data) ? response.data.length : 0,
+        rowsCount: Array.isArray(response.rows) ? response.rows.length : 0,
+      });
 
       if (response.code === 200) {
         // 处理可能的两种数据格式
         const merchants = response.data || response.rows || [];
-        return Array.isArray(merchants) ? merchants : [];
+        const merchantList = Array.isArray(merchants) ? merchants : [];
+
+        console.log(`✅ [MerchantAPI] 成功获取 ${merchantList.length} 个商家`);
+        return merchantList;
       }
 
+      console.warn('⚠️ [MerchantAPI] 获取商家失败:', response.msg);
       return [];
     } catch (error) {
-      console.error('❌ [MerchantAPI] 按学校获取商家失败:', error);
+      console.error('❌ [MerchantAPI] 获取所有商家失败:', error);
       return [];
     }
+  }
+
+  /**
+   * 按学校获取商家（废弃）
+   * @deprecated 后端API不支持按学校筛选，请使用 getAllMerchants() 并在前端过滤
+   */
+  async getMerchantsBySchool(deptId: number): Promise<Merchant[]> {
+    console.warn('⚠️ [MerchantAPI] getMerchantsBySchool已废弃，使用getAllMerchants代替');
+    return this.getAllMerchants();
   }
 }
 

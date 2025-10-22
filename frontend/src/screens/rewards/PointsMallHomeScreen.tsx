@@ -18,6 +18,7 @@ import { TierProgressCircle } from '../../components/rewards/TierProgressCircle'
 import { BenefitsCarousel } from '../../components/rewards/BenefitsCarousel';
 import { useUser } from '../../context/UserContext';
 import { calculateTier, getNextTierPoints } from '../../utils/membershipTierCalculator';
+import { couponAPI } from '../../services/couponAPI';
 
 /**
  * PointsMallHomeScreen - 会员中心页面
@@ -38,6 +39,8 @@ export const PointsMallHomeScreen: React.FC = () => {
   // 状态管理
   const [refreshing, setRefreshing] = useState(false);
   const [mockPoints] = useState(3500); // TODO: 从API获取
+  const [couponCount, setCouponCount] = useState(0); // 优惠券数量
+  const [loadingCoupons, setLoadingCoupons] = useState(true);
 
   // 计算会员等级
   const currentTier = calculateTier(mockPoints);
@@ -59,12 +62,41 @@ export const PointsMallHomeScreen: React.FC = () => {
     { id: '7', icon: 'trending-up', title: t('rewards.benefits.points_boost'), redCardOnly: true },
   ];
 
+  // 获取优惠券数量
+  const fetchCouponCount = useCallback(async () => {
+    if (!user?.userId) return;
+
+    try {
+      setLoadingCoupons(true);
+      const response = await couponAPI.getUserCouponList({
+        userId: user.userId,
+        status: 1, // 1-未使用
+        pageNum: 1,
+        pageSize: 100,
+      });
+
+      if (response.code === 200) {
+        const coupons = response.rows || response.data || [];
+        setCouponCount(Array.isArray(coupons) ? coupons.length : 0);
+      }
+    } catch (error) {
+      console.error('获取优惠券数量失败:', error);
+      setCouponCount(0);
+    } finally {
+      setLoadingCoupons(false);
+    }
+  }, [user?.userId]);
+
+  // 页面加载时获取优惠券数量
+  useEffect(() => {
+    fetchCouponCount();
+  }, [fetchCouponCount]);
+
   // 下拉刷新
   const handleRefresh = useCallback(() => {
     setRefreshing(true);
-    // TODO: 刷新数据
-    setTimeout(() => setRefreshing(false), 1000);
-  }, []);
+    fetchCouponCount().finally(() => setRefreshing(false));
+  }, [fetchCouponCount]);
 
   return (
     <View style={styles.container}>
@@ -159,13 +191,21 @@ export const PointsMallHomeScreen: React.FC = () => {
         </View>
 
         {/* 我的优惠券 */}
-        <TouchableOpacity style={styles.menuItem}>
+        <TouchableOpacity
+          style={styles.menuItem}
+          onPress={() => navigation.navigate('MyCoupons')}
+          activeOpacity={0.7}
+        >
           <View style={styles.menuItemLeft}>
             <Ionicons name="ticket" size={22} color="#1A1A1A" />
             <Text style={styles.menuItemTitle}>{t('rewards.menu.my_coupons')}</Text>
-            <View style={styles.countBadge}>
-              <Text style={styles.countBadgeText}>0</Text>
-            </View>
+            {loadingCoupons ? (
+              <ActivityIndicator size="small" color="#999999" style={{ marginLeft: 8 }} />
+            ) : couponCount > 0 ? (
+              <View style={styles.countBadge}>
+                <Text style={styles.countBadgeText}>{couponCount}</Text>
+              </View>
+            ) : null}
           </View>
           <Ionicons name="chevron-forward" size={16} color="#C7C7CC" />
         </TouchableOpacity>

@@ -63,6 +63,7 @@ import { LocationSelectorModal } from '../../components/modals/LocationSelectorM
 import LocationService from '../../services/LocationService';
 import { FloatingFilterButton } from '../../components/community/FloatingFilterButton';
 import { ActivityFilterModal, ActivityFilterOptions } from '../../components/modals/ActivityFilterModal';
+import { useSchoolData } from '../../hooks/useSchoolData';
 
 // Using LiquidGlassTab component for V1.1 compliance
 
@@ -75,6 +76,9 @@ const ActivityListScreenInternal: React.FC = () => {
   const insets = useSafeAreaInsets();
   const { setIsFilterOpen } = useFilter();
   const { user } = useUser(); // Fixed user initialization order
+
+  // 获取学校数据
+  const { schools: schoolList } = useSchoolData();
 
   // 🔴 调试：显示用户信息
   console.log('🔴 [CRITICAL] 用户状态:', {
@@ -1602,7 +1606,10 @@ const ActivityListScreenInternal: React.FC = () => {
         onClose={() => setFilterModalVisible(false)}
         onApply={handleApplyFilters}
         initialFilters={filterOptions}
-        schools={[]} // TODO: 添加学校列表数据源
+        schools={schoolList.map(school => ({
+          id: school.id,
+          name: school.name
+        }))}
       />
 
     </SafeAreaView>

@@ -20,7 +20,7 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { ChatMessage } from '../types/ai';
-import { apiService } from '../services/api';
+import { aiAPI } from '../services/aiAPI';
 import { theme } from '../theme';
 import { useUser } from '../context/UserContext';
 import { ThinkingIndicator } from '../components/ai/ThinkingIndicator';
@@ -73,7 +73,6 @@ export const AIChatScreen: React.FC<Props> = ({ navigation, route }) => {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputText, setInputText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [sessionId, setSessionId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [suggestedQuestions, setSuggestedQuestions] = useState(() => getRandomQuestions());
 
@@ -143,12 +142,8 @@ export const AIChatScreen: React.FC<Props> = ({ navigation, route }) => {
   // 加载会话
   const loadSession = async () => {
     try {
-      const savedSessionId = await AsyncStorage.getItem('@ai_session_id');
       const savedMessages = await AsyncStorage.getItem('@ai_messages');
 
-      if (savedSessionId) {
-        setSessionId(savedSessionId);
-      }
       if (savedMessages) {
         setMessages(JSON.parse(savedMessages));
       }
@@ -158,12 +153,9 @@ export const AIChatScreen: React.FC<Props> = ({ navigation, route }) => {
   };
 
   // 保存会话
-  const saveSession = async (newMessages: ChatMessage[], newSessionId?: string) => {
+  const saveSession = async (newMessages: ChatMessage[]) => {
     try {
       await AsyncStorage.setItem('@ai_messages', JSON.stringify(newMessages));
-      if (newSessionId) {
-        await AsyncStorage.setItem('@ai_session_id', newSessionId);
-      }
     } catch (error) {
       console.error('Save session error:', error);
     }
@@ -173,6 +165,12 @@ export const AIChatScreen: React.FC<Props> = ({ navigation, route }) => {
   const sendMessage = async (messageText?: string) => {
     const text = messageText || inputText.trim();
     if (!text) return;
+
+    // 检查用户是否登录
+    if (!user?.userId) {
+      setError(t('ai.loginRequired') || '请先登录');
+      return;
+    }
 
     setInputText('');
     setError(null);
@@ -194,30 +192,25 @@ export const AIChatScreen: React.FC<Props> = ({ navigation, route }) => {
     }, 100);
 
     try {
-      // 调用AI API
-      const response = await apiService.sendAIMessage({
-        message: text,
-        session_id: sessionId || undefined,
-        user_id: user?.userId?.toString(),
-      });
+      // 调用新的AI API
+      const response = await aiAPI.sendMessage(text, user.userId.toString());
 
-      // 添加AI回复
+      // 添加AI回复 (注意：新API返回的是 answer 而不是 reply)
       const aiMessage: ChatMessage = {
         role: 'assistant',
-        content: response.reply,
+        content: response.answer,
         timestamp: new Date().toISOString(),
       };
 
       const updatedMessages = [...newMessages, aiMessage];
       setMessages(updatedMessages);
-      setSessionId(response.session_id);
 
       // 启动打字机效果
       const messageIndex = updatedMessages.length - 1;
-      startTypingEffect(messageIndex, response.reply);
+      startTypingEffect(messageIndex, response.answer);
 
       // 保存会话
-      await saveSession(updatedMessages, response.session_id);
+      await saveSession(updatedMessages);
     } catch (err: any) {
       console.error('Send message error:', err);
       setError(err.message || t('ai.errorMessage'));
@@ -229,10 +222,9 @@ export const AIChatScreen: React.FC<Props> = ({ navigation, route }) => {
   // 新建对话
   const startNewChat = async () => {
     setMessages([]);
-    setSessionId(null);
     setError(null);
     setSuggestedQuestions(getRandomQuestions()); // 刷新引导问题
-    await AsyncStorage.multiRemove(['@ai_session_id', '@ai_messages']);
+    await AsyncStorage.removeItem('@ai_messages');
   };
 
   // 点击引导问题

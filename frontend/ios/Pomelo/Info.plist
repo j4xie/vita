@@ -36,9 +36,25 @@
           <string>exp+pomelox</string>
         </array>
       </dict>
+      <dict>
+        <key>CFBundleTypeRole</key>
+        <string>Editor</string>
+        <key>CFBundleURLName</key>
+        <string>alipay</string>
+        <key>CFBundleURLSchemes</key>
+        <array>
+          <string>pomelox</string>
+        </array>
+      </dict>
     </array>
     <key>CFBundleVersion</key>
     <string>1</string>
+    <key>LSApplicationQueriesSchemes</key>
+    <array>
+      <string>alipay</string>
+      <string>alipays</string>
+      <string>alipayshare</string>
+    </array>
     <key>LSMinimumSystemVersion</key>
     <string>12.0</string>
     <key>LSRequiresIPhoneOS</key>
@@ -108,6 +124,8 @@
     <string>The app accesses your camera to let you take photos.</string>
     <key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
     <string>This app needs access to your location to automatically detect your region for appropriate privacy policy content.</string>
+    <key>NSLocationAlwaysUsageDescription</key>
+    <string>Allow $(PRODUCT_NAME) to access your location</string>
     <key>NSLocationUsageDescription</key>
     <string>This app needs access to your location to automatically detect your region for appropriate privacy policy content.</string>
     <key>NSLocationWhenInUseUsageDescription</key>

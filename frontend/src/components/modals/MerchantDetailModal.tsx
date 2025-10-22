@@ -16,6 +16,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LoaderOne } from '../ui/LoaderOne';
 import { useUser } from '../../context/UserContext';
 import couponAPI, { Coupon } from '../../services/couponAPI';
+import merchantAPI, { Merchant } from '../../services/merchantAPI';
 
 interface MerchantDetailModalProps {
   visible: boolean;
@@ -39,9 +40,18 @@ export const MerchantDetailModal: React.FC<MerchantDetailModalProps> = ({
   const insets = useSafeAreaInsets();
   const { user } = useUser();
 
+  const [merchantDetail, setMerchantDetail] = useState<Merchant | null>(null);
   const [coupons, setCoupons] = useState<Coupon[]>([]);
+  const [loadingDetail, setLoadingDetail] = useState(false);
   const [loading, setLoading] = useState(false);
   const [writingOff, setWritingOff] = useState(false);
+
+  // 加载商家详情
+  useEffect(() => {
+    if (visible && merchant) {
+      loadMerchantDetail();
+    }
+  }, [visible, merchant]);
 
   // 加载商家优惠券
   useEffect(() => {
@@ -49,6 +59,26 @@ export const MerchantDetailModal: React.FC<MerchantDetailModalProps> = ({
       loadCoupons();
     }
   }, [visible, merchant, user]);
+
+  const loadMerchantDetail = async () => {
+    if (!merchant) return;
+
+    setLoadingDetail(true);
+    try {
+      const response = await merchantAPI.getMerchantDetail(parseInt(merchant.id));
+
+      if (response.code === 200 && response.data) {
+        setMerchantDetail(response.data);
+        console.log('🏪 [MerchantDetail] 加载商家详情成功:', response.data);
+      } else {
+        console.warn('⚠️ [MerchantDetail] 加载商家详情失败:', response.msg);
+      }
+    } catch (error) {
+      console.error('❌ [MerchantDetail] 加载商家详情异常:', error);
+    } finally {
+      setLoadingDetail(false);
+    }
+  };
 
   const loadCoupons = async () => {
     if (!merchant || !user?.userId) return;
@@ -129,27 +159,87 @@ export const MerchantDetailModal: React.FC<MerchantDetailModalProps> = ({
         </View>
 
         <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
-          {/* 商家信息卡片 */}
-          <View style={styles.merchantCard}>
-            {merchant.image && (
-              <Image source={{ uri: merchant.image }} style={styles.merchantImage} />
-            )}
-            <View style={styles.merchantInfo}>
-              <Text style={styles.merchantName}>{merchant.name}</Text>
-              <View style={styles.locationRow}>
-                <Ionicons name="location" size={16} color="#666" />
-                <Text style={styles.locationText}>{merchant.location}</Text>
-              </View>
-              {merchant.earnPoints && (
-                <View style={styles.pointsRow}>
-                  <View style={styles.qBadge}>
-                    <Text style={styles.qText}>Q</Text>
+          {loadingDetail ? (
+            <View style={styles.loadingContainer}>
+              <LoaderOne size="large" color="#D4A054" />
+              <Text style={styles.loadingText}>{t('common.loading', 'Loading...')}</Text>
+            </View>
+          ) : (
+            <>
+              {/* 商家信息卡片 */}
+              <View style={styles.merchantCard}>
+                {(merchantDetail?.shopImg || merchantDetail?.logo || merchant.image) && (
+                  <Image
+                    source={{ uri: merchantDetail?.shopImg || merchantDetail?.logo || merchant.image }}
+                    style={styles.merchantImage}
+                  />
+                )}
+                <View style={styles.merchantInfo}>
+                  <Text style={styles.merchantName}>
+                    {merchantDetail?.merchantName || merchant.name}
+                  </Text>
+                  <View style={styles.locationRow}>
+                    <Ionicons name="location" size={16} color="#666" />
+                    <Text style={styles.locationText}>
+                      {merchantDetail?.merchantAddress || merchant.location}
+                    </Text>
                   </View>
-                  <Text style={styles.pointsText}>Earn {merchant.earnPoints} points</Text>
+                  {merchant.earnPoints && (
+                    <View style={styles.pointsRow}>
+                      <View style={styles.qBadge}>
+                        <Text style={styles.qText}>P</Text>
+                      </View>
+                      <Text style={styles.pointsText}>
+                        {t('community.earn_points', 'Earn {{points}} points', { points: merchant.earnPoints })}
+                      </Text>
+                    </View>
+                  )}
+                </View>
+              </View>
+
+              {/* 商家详情信息 */}
+              {merchantDetail && (
+                <View style={styles.detailSection}>
+                  {/* 商家描述 */}
+                  {merchantDetail.merchantDesc && (
+                    <View style={styles.detailBlock}>
+                      <View style={styles.detailHeader}>
+                        <Ionicons name="information-circle-outline" size={20} color="#D4A054" />
+                        <Text style={styles.detailTitle}>
+                          {t('community.merchant.description', '商家介绍')}
+                        </Text>
+                      </View>
+                      <Text style={styles.detailText}>{merchantDetail.merchantDesc}</Text>
+                    </View>
+                  )}
+
+                  {/* 联系方式 */}
+                  {(merchantDetail.phonenumber || merchantDetail.email) && (
+                    <View style={styles.detailBlock}>
+                      <View style={styles.detailHeader}>
+                        <Ionicons name="call-outline" size={20} color="#D4A054" />
+                        <Text style={styles.detailTitle}>
+                          {t('community.merchant.contact', '联系方式')}
+                        </Text>
+                      </View>
+                      {merchantDetail.phonenumber && (
+                        <View style={styles.contactRow}>
+                          <Ionicons name="call" size={16} color="#666" />
+                          <Text style={styles.contactText}>{merchantDetail.phonenumber}</Text>
+                        </View>
+                      )}
+                      {merchantDetail.email && (
+                        <View style={styles.contactRow}>
+                          <Ionicons name="mail" size={16} color="#666" />
+                          <Text style={styles.contactText}>{merchantDetail.email}</Text>
+                        </View>
+                      )}
+                    </View>
+                  )}
                 </View>
               )}
-            </View>
-          </View>
+            </>
+          )}
 
           {/* 优惠券列表 */}
           <View style={styles.couponsSection}>
@@ -305,6 +395,74 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     color: '#D4A054',
+  },
+
+  // 详情区域
+  detailSection: {
+    backgroundColor: '#FFFFFF',
+    marginBottom: 16,
+    padding: 16,
+  },
+
+  detailBlock: {
+    marginBottom: 20,
+  },
+
+  detailHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 12,
+  },
+
+  detailTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#1A1A1A',
+  },
+
+  detailText: {
+    fontSize: 14,
+    color: '#666',
+    lineHeight: 22,
+  },
+
+  contactRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginTop: 8,
+  },
+
+  contactText: {
+    fontSize: 14,
+    color: '#666',
+  },
+
+  infoRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 8,
+  },
+
+  infoLabel: {
+    fontSize: 14,
+    color: '#999',
+    width: 80,
+  },
+
+  infoValue: {
+    fontSize: 14,
+    color: '#1A1A1A',
+    flex: 1,
+  },
+
+  licenseImage: {
+    width: '100%',
+    height: 200,
+    borderRadius: 8,
+    backgroundColor: '#F0F0F0',
+    marginTop: 8,
   },
 
   // 优惠券区域

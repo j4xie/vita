@@ -2,7 +2,6 @@
 import axios, { AxiosInstance, AxiosResponse, AxiosError } from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ApiResponse, AuthTokens, User, LoginRequest, RegisterRequest } from '../types/api';
-import { ChatRequest, ChatResponse, SessionHistoryResponse } from '../types/ai';
 import { getApiUrl } from '../utils/environment';
 
 class ApiService {
@@ -243,103 +242,8 @@ class ApiService {
   }
 
   // ==================== AI Chat Methods ====================
-
-  /**
-   * Get AI Chat base URL
-   * 本地开发时使用 localhost:8085
-   * 生产环境使用云服务器地址
-   */
-  private getAIChatBaseUrl(): string {
-    // 在本地开发时使用 localhost
-    if (__DEV__) {
-      return 'http://localhost:8085';
-    }
-
-    // 生产环境待部署后更新此地址
-    // 暂时也使用测试环境地址
-    return 'http://106.14.165.234:8087'; // TODO: 更新为生产环境AI Chat服务地址
-  }
-
-  /**
-   * 发送消息到AI并获取回复
-   */
-  async sendAIMessage(request: ChatRequest): Promise<ChatResponse> {
-    try {
-      const baseUrl = this.getAIChatBaseUrl();
-      const response = await axios.post<ChatResponse>(
-        `${baseUrl}/api/ai/chat`,
-        request,
-        {
-          timeout: 60000, // AI响应可能较慢，设置60秒超时
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        }
-      );
-      return response.data;
-    } catch (error: any) {
-      console.error('AI Chat Error:', error);
-      throw new Error(
-        error.response?.data?.detail ||
-        error.message ||
-        'AI服务暂时不可用，请稍后再试'
-      );
-    }
-  }
-
-  /**
-   * 获取会话历史
-   */
-  async getAISessionHistory(
-    sessionId: string,
-    userId?: string
-  ): Promise<SessionHistoryResponse> {
-    try {
-      const baseUrl = this.getAIChatBaseUrl();
-      const params = userId ? { user_id: userId } : {};
-      const response = await axios.get<SessionHistoryResponse>(
-        `${baseUrl}/api/ai/session/${sessionId}`,
-        { params }
-      );
-      return response.data;
-    } catch (error: any) {
-      console.error('Get AI Session Error:', error);
-      throw new Error(
-        error.response?.data?.detail ||
-        '无法获取会话历史'
-      );
-    }
-  }
-
-  /**
-   * 删除会话
-   */
-  async deleteAISession(sessionId: string, userId?: string): Promise<void> {
-    try {
-      const baseUrl = this.getAIChatBaseUrl();
-      const params = userId ? { user_id: userId } : {};
-      await axios.delete(`${baseUrl}/api/ai/session/${sessionId}`, { params });
-    } catch (error: any) {
-      console.error('Delete AI Session Error:', error);
-      throw new Error('删除会话失败');
-    }
-  }
-
-  /**
-   * 重置会话
-   */
-  async resetAISession(sessionId: string, userId?: string): Promise<void> {
-    try {
-      const baseUrl = this.getAIChatBaseUrl();
-      await axios.post(`${baseUrl}/api/ai/reset`, {
-        session_id: sessionId,
-        user_id: userId,
-      });
-    } catch (error: any) {
-      console.error('Reset AI Session Error:', error);
-      throw new Error('重置会话失败');
-    }
-  }
+  // AI相关功能已迁移到 src/services/aiAPI.ts
+  // 请使用 aiAPI.sendMessage(), aiAPI.getChatHistory() 等新接口
 }
 
 export const apiService = new ApiService();

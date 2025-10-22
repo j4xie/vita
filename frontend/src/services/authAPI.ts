@@ -38,6 +38,7 @@ export interface UserInfo {
   userName: string;
   nickName: string;
   email: string;
+  isEmailVerify: number; // 🆕 邮箱认证状态: -1=未认证, 1=已认证
   phonenumber: string;
   areaCode?: string; // 🆕 国际电话区号
   alternateEmail?: string; // 🆕 第二邮箱/工作邮箱
@@ -416,6 +417,60 @@ export const logout = async (): Promise<void> => {
     await clearUserSession();
   } catch (error) {
     console.error('登出失败:', error);
+    throw error;
+  }
+};
+
+/**
+ * 用户注销（删除账号）
+ * @param email 用户邮箱（用于确认身份）
+ * @param password 用户密码（用于确认身份）
+ * @returns API响应
+ *
+ * 📋 接口说明:
+ * - POST /app/user/delete
+ * - 需要提供邮箱和密码进行二次确认
+ * - 成功后会自动清除本地用户数据
+ */
+export const deleteAccount = async (email: string, password: string): Promise<APIResponse<any>> => {
+  try {
+    const authToken = await getCurrentToken();
+    if (!authToken) {
+      throw new Error('用户未登录');
+    }
+
+    // 构建form-data格式的请求体
+    const formData = new URLSearchParams();
+    formData.append('email', email);
+    formData.append('password', password);
+
+    console.log('🗑️ [DeleteAccount] 发起用户注销请求:', { email });
+
+    const response = await fetch(`${getBaseUrl()}/app/user/delete`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'Authorization': `Bearer ${authToken}`,
+      },
+      body: formData.toString(),
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    console.log('📋 [DeleteAccount] 注销响应:', data);
+
+    // 如果注销成功，清除本地数据
+    if (data.code === 200) {
+      console.log('✅ [DeleteAccount] 注销成功，清除本地数据');
+      await clearUserSession();
+    }
+
+    return data;
+  } catch (error) {
+    console.error('❌ [DeleteAccount] 用户注销失败:', error);
     throw error;
   }
 };

@@ -11,9 +11,9 @@ import { useTranslation } from 'react-i18next';
 import { OptimizedImage } from '../common/OptimizedImage';
 import { LoaderOne } from '../ui/LoaderOne';
 
-const CARD_WIDTH = 280;
-const CARD_HEIGHT = 360;
-const IMAGE_HEIGHT = 200;
+const CARD_WIDTH = 140;
+const CARD_HEIGHT = 180;
+const IMAGE_HEIGHT = 100;
 
 interface MerchantCardProps {
   merchant: {
@@ -68,7 +68,7 @@ export const MerchantCard: React.FC<MerchantCardProps> = ({
           </>
         ) : (
           <View style={styles.imagePlaceholder}>
-            <Ionicons name="image-outline" size={48} color="#CCC" />
+            <Ionicons name="image-outline" size={32} color="#CCC" />
           </View>
         )}
       </View>
@@ -91,7 +91,7 @@ export const MerchantCard: React.FC<MerchantCardProps> = ({
               <Text style={styles.qLogoText}>Q</Text>
             </View>
             <Text style={styles.pointsNumber}>{merchant.earnPoints || 1}</Text>
-            <Ionicons name="chevron-down" size={16} color="#666" />
+            <Ionicons name="chevron-down" size={12} color="#666" />
           </View>
         </View>
 
@@ -116,13 +116,13 @@ const styles = StyleSheet.create({
     width: CARD_WIDTH,
     height: CARD_HEIGHT,
     backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    marginRight: 12,
+    borderRadius: 12,
+    marginRight: 8,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 3,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    elevation: 2,
   },
 
   // 图片区域
@@ -130,8 +130,8 @@ const styles = StyleSheet.create({
     width: '100%',
     height: IMAGE_HEIGHT,
     backgroundColor: '#F5F5F5',
-    borderTopLeftRadius: 16,
-    borderTopRightRadius: 16,
+    borderTopLeftRadius: 12,
+    borderTopRightRadius: 12,
     overflow: 'hidden',
   },
 
@@ -160,40 +160,40 @@ const styles = StyleSheet.create({
   // 底部信息区 - 白色背景
   infoContainer: {
     flex: 1,
-    padding: 12,
-    paddingTop: 14,
+    padding: 8,
+    paddingTop: 8,
     backgroundColor: '#FFFFFF',
-    borderBottomLeftRadius: 16,
-    borderBottomRightRadius: 16,
+    borderBottomLeftRadius: 12,
+    borderBottomRightRadius: 12,
   },
 
   // 商家名称
   title: {
-    fontSize: 15,
+    fontSize: 12,
     fontWeight: '700',
     color: '#1A1A1A',
-    lineHeight: 20,
-    marginBottom: 10,
+    lineHeight: 16,
+    marginBottom: 6,
   },
 
   // Earn 容器
   earnContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 10,
+    marginBottom: 4,
   },
 
   // Earn 标签
   earnBadge: {
     backgroundColor: '#D4A054',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 6,
-    marginRight: 8,
+    paddingHorizontal: 6,
+    paddingVertical: 3,
+    borderRadius: 4,
+    marginRight: 4,
   },
 
   earnText: {
-    fontSize: 11,
+    fontSize: 9,
     fontWeight: '600',
     color: '#FFFFFF',
   },
@@ -202,46 +202,46 @@ const styles = StyleSheet.create({
   qPointsContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
     borderWidth: 1,
     borderColor: '#E5E5E5',
-    borderRadius: 8,
-    gap: 6,
+    borderRadius: 6,
+    gap: 4,
   },
 
   // Q Logo
   qLogo: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
+    width: 14,
+    height: 14,
+    borderRadius: 7,
     backgroundColor: '#FF6B6B',
     justifyContent: 'center',
     alignItems: 'center',
   },
 
   qLogoText: {
-    fontSize: 10,
+    fontSize: 8,
     fontWeight: '700',
     color: '#FFFFFF',
   },
 
   pointsNumber: {
-    fontSize: 13,
+    fontSize: 10,
     fontWeight: '600',
     color: '#1A1A1A',
   },
 
   // 地址
   location: {
-    fontSize: 12,
+    fontSize: 10,
     color: '#666',
-    marginBottom: 6,
+    marginBottom: 3,
   },
 
   // 价格
   price: {
-    fontSize: 11,
+    fontSize: 9,
     color: '#999',
   },
 });

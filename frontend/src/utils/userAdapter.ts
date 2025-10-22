@@ -135,6 +135,9 @@ export interface FrontendUser {
   name?: string; // 与legalName相同
   verified?: boolean;
   area?: 'zh' | 'en'; // 地域选择
+
+  // 积分系统
+  points?: number; // 用户积分
 }
 
 /**

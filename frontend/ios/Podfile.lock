@@ -1,4 +1,5 @@
 PODS:
+  - AlipaySDK-iOS (15.8.30)
   - boost (1.84.0)
   - DoubleConversion (1.1.6)
   - EASClient (0.13.3):
@@ -2005,6 +2006,7 @@ PODS:
     - ZXingObjC/Core
 
 DEPENDENCIES:
+  - AlipaySDK-iOS
   - boost (from `../node_modules/react-native/third-party-podspecs/boost.podspec`)
   - DoubleConversion (from `../node_modules/react-native/third-party-podspecs/DoubleConversion.podspec`)
   - EASClient (from `../node_modules/expo-eas-client/ios`)
@@ -2109,6 +2111,7 @@ DEPENDENCIES:
 
 SPEC REPOS:
   trunk:
+    - AlipaySDK-iOS
     - libwebp
     - ReachabilitySwift
     - SDWebImage
@@ -2317,6 +2320,7 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native/ReactCommon/yoga"
 
 SPEC CHECKSUMS:
+  AlipaySDK-iOS: 913a1df564c64798903e71cf3d63141d9e1904d2
   boost: 1dca942403ed9342f98334bf4c3621f011aa7946
   DoubleConversion: f16ae600a246532c4020132d54af21d0ddb2a385
   EASClient: 88b5fd19d0787186a0c7e6ba76deb2d4f96395ce
@@ -2423,6 +2427,6 @@ SPEC CHECKSUMS:
   Yoga: feb4910aba9742cfedc059e2b2902e22ffe9954a
   ZXingObjC: 8898711ab495761b2dbbdec76d90164a6d7e14c5
 
-PODFILE CHECKSUM: 5eefd36c0060f5a4718e54e596e5e2890ff6c282
+PODFILE CHECKSUM: 4afa62adf7e7c06918c275738ce0544fdaa8a262
 
 COCOAPODS: 1.16.2

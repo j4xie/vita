@@ -49,6 +49,7 @@ export interface RegistrationAPIRequest {
   orgId?: number; // 组织ID
   area?: string; // 地理检测结果：'zh'-中国, 'en'-美国（只读，由系统检测）
   areaCode?: string; // 区号
+  isEmailVerify?: '1'; // 邮箱验证注册时传'1'，告知后端这是邮箱验证注册
 }
 
 // 组织数据类型
@@ -68,6 +69,7 @@ export interface SMSVerificationResponse {
   code: string;
   message: string;
   requestId: string;
+  verificationCode?: string; // 🔑 后端返回的验证码（邮箱注册时需要前端对比）
 }
 
 // API响应基础类型

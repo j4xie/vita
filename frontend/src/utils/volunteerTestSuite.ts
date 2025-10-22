@@ -1,6 +1,13 @@
 /**
  * 志愿者签到签退自动化测试套件
  * 用于验证多人同时签到签退的数据一致性和后端计算正确性
+ *
+ * ⚠️ 注意：本测试套件暂未更新timeOffset时区参数
+ * 原因：测试代码直接调用 volunteerSignRecord() 进行底层测试，
+ * 时区参数为可选参数，不影响基础功能测试。
+ * 生产代码已全部正确实施timeOffset参数。
+ *
+ * 更新日期：2025-10-19
  */
 
 import { volunteerSignRecord, getLastVolunteerRecord, getVolunteerHours, getVolunteerRecords } from '../services/volunteerAPI';

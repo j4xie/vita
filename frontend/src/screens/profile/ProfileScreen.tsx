@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -11,6 +11,7 @@ import {
   Platform,
   useColorScheme,
   AccessibilityInfo,
+  ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
@@ -27,6 +28,9 @@ import { useTheme as useThemeContext } from '../../context/ThemeContext';
 import { PermissionDebugModal } from '../../components/debug/PermissionDebugModal';
 import UserRegionPreferences, { UserRegionCode } from '../../services/UserRegionPreferences';
 import { RegionSwitchModal } from '../../components/modals/RegionSwitchModal';
+import { DeleteAccountModal } from '../../components/modals/DeleteAccountModal';
+import { orderAPI } from '../../services/orderAPI';
+import { addressAPI } from '../../services/addressAPI';
 // import { DarkModeTest } from '../../components/debug/DarkModeTest'; // 已注释以修复渲染错误
 
 export const ProfileScreen: React.FC = () => {
@@ -50,6 +54,15 @@ export const ProfileScreen: React.FC = () => {
   const [currentRegion, setCurrentRegion] = useState<UserRegionCode>('china');
   const [regionLoading, setRegionLoading] = useState(false);
   const [showRegionModal, setShowRegionModal] = useState(false);
+
+  // Delete account state
+  const [showDeleteAccountModal, setShowDeleteAccountModal] = useState(false);
+
+  // Orders & Addresses states
+  const [orderCount, setOrderCount] = useState(0);
+  const [addressCount, setAddressCount] = useState(0);
+  const [loadingOrders, setLoadingOrders] = useState(true);
+  const [loadingAddresses, setLoadingAddresses] = useState(true);
   
   useEffect(() => {
     const checkAccessibility = async () => {
@@ -77,6 +90,40 @@ export const ProfileScreen: React.FC = () => {
       // 使用默认值，不显示错误给用户
     }
   };
+
+  // 获取待处理订单数量
+  const fetchOrderCount = useCallback(async () => {
+    try {
+      setLoadingOrders(true);
+      const count = await orderAPI.getPendingOrderCount();
+      setOrderCount(count);
+    } catch (error) {
+      console.error('获取订单数量失败:', error);
+      setOrderCount(0);
+    } finally {
+      setLoadingOrders(false);
+    }
+  }, []);
+
+  // 获取地址数量
+  const fetchAddressCount = useCallback(async () => {
+    try {
+      setLoadingAddresses(true);
+      const addresses = await addressAPI.getAddressList();
+      setAddressCount(addresses.length);
+    } catch (error) {
+      console.error('获取地址数量失败:', error);
+      setAddressCount(0);
+    } finally {
+      setLoadingAddresses(false);
+    }
+  }, []);
+
+  // 加载订单和地址数据
+  useEffect(() => {
+    fetchOrderCount();
+    fetchAddressCount();
+  }, [fetchOrderCount, fetchAddressCount]);
 
   const handleLogout = () => {
     // Haptic feedback
@@ -191,6 +238,20 @@ export const ProfileScreen: React.FC = () => {
     });
   };
   
+  // Handle delete account
+  const handleDeleteAccountPress = () => {
+    triggerHaptic();
+    setShowDeleteAccountModal(true);
+  };
+
+  const handleDeleteAccountSuccess = () => {
+    // 账号注销成功后，导航到认证页面
+    navigation.reset({
+      index: 0,
+      routes: [{ name: 'Auth' }],
+    });
+  };
+
   // Group 1: Account & Security
   const accountSecurityItems = [
     {
@@ -210,6 +271,13 @@ export const ProfileScreen: React.FC = () => {
         triggerHaptic();
         navigation.navigate('Terms', { type: 'privacy' });
       },
+    },
+    {
+      id: 'deleteAccount',
+      title: t('profile.delete_account.menu_title'),
+      icon: 'trash-outline' as keyof typeof Ionicons.glyphMap,
+      onPress: handleDeleteAccountPress,
+      textColor: theme.colors.danger, // Red color for danger action
     },
   ];
   
@@ -249,6 +317,30 @@ export const ProfileScreen: React.FC = () => {
     },
   ];
   
+  // Group 2.5: Orders & Addresses (新增)
+  const ordersAddressesItems = [
+    {
+      id: 'myOrders',
+      title: t('profile.my_orders'),
+      icon: 'receipt-outline' as keyof typeof Ionicons.glyphMap,
+      badge: loadingOrders ? 'loading' : orderCount > 0 ? orderCount : null,
+      onPress: () => {
+        triggerHaptic();
+        navigation.navigate('MyOrders');
+      },
+    },
+    {
+      id: 'addresses',
+      title: t('profile.delivery_addresses'),
+      icon: 'location-outline' as keyof typeof Ionicons.glyphMap,
+      value: loadingAddresses ? '' : addressCount > 0 ? `${addressCount}` : t('profile.no_address'),
+      onPress: () => {
+        triggerHaptic();
+        navigation.navigate('AddressList');
+      },
+    },
+  ];
+
   // Group 3: About & Support
   const aboutSupportItems = [
     {
@@ -291,7 +383,7 @@ export const ProfileScreen: React.FC = () => {
       activeOpacity={0.6}
       accessibilityRole="button"
       accessibilityLabel={
-        item.value 
+        item.value
           ? `${item.title}, ${item.value}`
           : item.title
       }
@@ -302,13 +394,14 @@ export const ProfileScreen: React.FC = () => {
         <Ionicons
           name={item.icon}
           size={24}
-          color={isDarkMode ? theme.colors.primary : theme.colors.primary}
+          color={item.textColor || (isDarkMode ? theme.colors.primary : theme.colors.primary)}
           style={styles.menuIcon}
         />
-        <Text 
+        <Text
           style={[
             styles.menuItemText,
-            isDarkMode && styles.menuItemTextDark
+            isDarkMode && styles.menuItemTextDark,
+            item.textColor && { color: item.textColor }
           ]}
           numberOfLines={1}
           allowFontScaling={true}
@@ -316,10 +409,18 @@ export const ProfileScreen: React.FC = () => {
         >
           {item.title}
         </Text>
+        {/* Badge (小红点) */}
+        {item.badge === 'loading' ? (
+          <ActivityIndicator size="small" color="#999999" style={{ marginLeft: 8 }} />
+        ) : item.badge && typeof item.badge === 'number' ? (
+          <View style={styles.countBadge}>
+            <Text style={styles.countBadgeText}>{item.badge}</Text>
+          </View>
+        ) : null}
       </View>
       <View style={styles.menuItemRight}>
         {item.value && (
-          <Text 
+          <Text
             style={[
               styles.menuItemValue,
               isDarkMode && styles.menuItemValueDark
@@ -431,10 +532,13 @@ export const ProfileScreen: React.FC = () => {
 
         {/* Account & Security Group */}
         {renderGroup(t('profile.sections.accountSecurity'), accountSecurityItems)}
-        
+
+        {/* Orders & Addresses Group (新增) */}
+        {renderGroup(t('profile.sections.ordersAddresses'), ordersAddressesItems)}
+
         {/* Notifications & General Group */}
         {renderGroup(t('profile.sections.notificationsGeneral'), notificationsGeneralItems)}
-        
+
         {/* About & Support Group */}
         {renderGroup(t('profile.sections.aboutSupport'), aboutSupportItems)}
         
@@ -492,6 +596,13 @@ export const ProfileScreen: React.FC = () => {
         visible={showRegionModal}
         onClose={() => setShowRegionModal(false)}
         onRegionChanged={handleRegionChange}
+      />
+
+      {/* Delete Account Modal */}
+      <DeleteAccountModal
+        visible={showDeleteAccountModal}
+        onClose={() => setShowDeleteAccountModal(false)}
+        onSuccess={handleDeleteAccountSuccess}
       />
     </View>
   );
@@ -743,5 +854,20 @@ const styles = StyleSheet.create({
     borderColor: LIQUID_GLASS_LAYERS.L1.border.color.light,
     borderRadius: LIQUID_GLASS_LAYERS.L1.borderRadius.card, // 16pt圆角
     ...theme.shadows[LIQUID_GLASS_LAYERS.L1.shadow.light],
+  },
+
+  // Badge Styles (小红点样式 - 参照PointsMallHomeScreen)
+  countBadge: {
+    backgroundColor: '#FF3B30',
+    borderRadius: 10,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    marginLeft: 8,
+  },
+
+  countBadgeText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '600',
   },
 });

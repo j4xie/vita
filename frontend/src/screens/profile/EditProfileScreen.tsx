@@ -31,6 +31,7 @@ import { useTheme } from '../../context/ThemeContext';
 import { useUser } from '../../context/UserContext';
 import { uploadAvatar, getUserAvatarUrl, checkAvatarExists } from '../../services/imageUploadService';
 import { updateUserProfile, getUserInfo, getCurrentToken, getCurrentUserId } from '../../services/authAPI';
+import { EmailVerificationModal } from '../../components/modals/EmailVerificationModal';
 
 // 定义可编辑字段 - 控制字段权限
 const EDITABLE_FIELDS = [
@@ -209,6 +210,10 @@ export const EditProfileScreen: React.FC = () => {
   const [isLoadingUserData, setIsLoadingUserData] = useState(true);
   const [avatarUri, setAvatarUri] = useState<string | null>(null);
 
+  // 邮箱验证相关状态
+  const [showEmailVerificationModal, setShowEmailVerificationModal] = useState(false);
+  const [isEmailVerified, setIsEmailVerified] = useState(false);
+
   // 动画状态
   const saveButtonOpacity = useSharedValue(0);
   const saveButtonTranslateY = useSharedValue(50);
@@ -248,6 +253,9 @@ export const EditProfileScreen: React.FC = () => {
             if (userData.avatar) {
               setAvatarUri(userData.avatar);
             }
+
+            // 设置邮箱验证状态
+            setIsEmailVerified(userData.isEmailVerify === 1);
           }
         }
       } catch (error) {
@@ -583,6 +591,24 @@ export const EditProfileScreen: React.FC = () => {
     });
   };
 
+  // 处理邮箱验证成功
+  const handleEmailVerified = async () => {
+    // 刷新用户信息以获取最新的认证状态
+    await refreshUserInfo();
+    setIsEmailVerified(true);
+
+    // 重新加载用户数据
+    const token = await getCurrentToken();
+    const userId = await getCurrentUserId();
+
+    if (token && userId) {
+      const response = await getUserInfo(token, userId);
+      if (response.code === 200 && response.data) {
+        setIsEmailVerified(response.data.isEmailVerify === 1);
+      }
+    }
+  };
+
   // 动画样式
   const animatedSaveButtonStyle = useAnimatedStyle(() => {
     return {
@@ -872,6 +898,81 @@ export const EditProfileScreen: React.FC = () => {
       marginBottom: 8,
       fontStyle: 'italic',
     },
+
+    // Email verification styles
+    emailFieldContainer: {
+      paddingHorizontal: 16,
+      paddingVertical: 12,
+      borderBottomWidth: Platform.select({
+        ios: StyleSheet.hairlineWidth,
+        android: 0.5,
+      }),
+      borderBottomColor: isDarkMode ? 'rgba(84, 84, 88, 0.6)' : '#c6c6c8',
+    },
+    emailLabelRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      marginBottom: 8,
+    },
+    emailLabel: {
+      fontSize: 15,
+      fontWeight: '500',
+      color: isDarkMode ? '#ffffff' : '#000000',
+    },
+    verifiedBadge: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingHorizontal: 8,
+      paddingVertical: 4,
+      borderRadius: 12,
+      backgroundColor: '#10b98120',
+    },
+    verifiedText: {
+      fontSize: 12,
+      fontWeight: '600',
+      color: '#10b981',
+      marginLeft: 4,
+    },
+    unverifiedBadge: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingHorizontal: 8,
+      paddingVertical: 4,
+      borderRadius: 12,
+      backgroundColor: '#f59e0b20',
+    },
+    unverifiedText: {
+      fontSize: 12,
+      fontWeight: '600',
+      color: '#f59e0b',
+      marginLeft: 4,
+    },
+    emailInput: {
+      fontSize: 17,
+      color: isDarkMode ? '#ffffff' : '#000000',
+      backgroundColor: 'transparent',
+      minHeight: 44,
+      paddingVertical: 0,
+    },
+    verifyEmailButton: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginTop: 12,
+      paddingVertical: 10,
+      paddingHorizontal: 16,
+      borderRadius: 8,
+      borderWidth: 1,
+      borderColor: theme.colors.primary,
+      backgroundColor: theme.colors.primary + '10',
+    },
+    verifyEmailButtonText: {
+      fontSize: 15,
+      fontWeight: '600',
+      color: theme.colors.primary,
+      marginLeft: 6,
+    },
   });
 
   return (
@@ -929,13 +1030,47 @@ export const EditProfileScreen: React.FC = () => {
                 placeholder={t('profile.edit.nickNamePlaceholder', '请输入昵称')}
                 fieldKey="nickName"
               />
-              <FormField
-                label={t('profile.edit.email', '主邮箱')}
-                value={formData.email}
-                onChangeText={(text) => updateField('email', text)}
-                placeholder={t('profile.edit.emailPlaceholder', '请输入邮箱地址')}
-                fieldKey="email"
-              />
+              {/* Email field with verification status */}
+              <View style={styles.emailFieldContainer}>
+                <View style={styles.emailLabelRow}>
+                  <Text style={styles.emailLabel}>{t('profile.edit.email', '主邮箱')}</Text>
+                  {isEmailVerified ? (
+                    <View style={styles.verifiedBadge}>
+                      <Ionicons name="checkmark-circle" size={16} color="#10b981" />
+                      <Text style={styles.verifiedText}>{t('profile.email_verified', '已认证')}</Text>
+                    </View>
+                  ) : (
+                    <View style={styles.unverifiedBadge}>
+                      <Ionicons name="alert-circle" size={16} color="#f59e0b" />
+                      <Text style={styles.unverifiedText}>{t('profile.email_unverified', '未认证')}</Text>
+                    </View>
+                  )}
+                </View>
+                <TextInput
+                  style={styles.emailInput}
+                  value={formData.email}
+                  onChangeText={(text) => updateField('email', text)}
+                  placeholder={t('profile.edit.emailPlaceholder', '请输入邮箱地址')}
+                  placeholderTextColor={isDarkMode ? '#8e8e93' : '#8e8e93'}
+                  editable={EDITABLE_FIELDS.includes('email')}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  allowFontScaling={true}
+                  maxFontSizeMultiplier={1.4}
+                />
+                {!isEmailVerified && (
+                  <TouchableOpacity
+                    style={styles.verifyEmailButton}
+                    onPress={() => setShowEmailVerificationModal(true)}
+                    activeOpacity={0.7}
+                  >
+                    <Ionicons name="shield-checkmark-outline" size={18} color={theme.colors.primary} />
+                    <Text style={styles.verifyEmailButtonText}>
+                      {t('profile.verify_email', '认证邮箱')}
+                    </Text>
+                  </TouchableOpacity>
+                )}
+              </View>
 
               {canUseAlternateEmail && (
                 <>
@@ -1074,6 +1209,14 @@ export const EditProfileScreen: React.FC = () => {
             </TouchableOpacity>
           </View>
         </Animated.View>
+
+        {/* Email Verification Modal */}
+        <EmailVerificationModal
+          visible={showEmailVerificationModal}
+          email={formData.email}
+          onClose={() => setShowEmailVerificationModal(false)}
+          onVerified={handleEmailVerified}
+        />
       </SafeAreaView>
     </View>
   );

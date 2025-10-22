@@ -27,6 +27,11 @@ import { ActivityRegistrationFormScreen } from '../screens/activities/ActivityRe
 import { PointsMallHomeScreen } from '../screens/rewards/PointsMallHomeScreen';
 import { PointsMallListScreen } from '../screens/rewards/PointsMallListScreen';
 import { PointsMallDetailScreen } from '../screens/rewards/PointsMallDetailScreen';
+import { MyCouponsScreen } from '../screens/rewards/MyCouponsScreen';
+import { OrderConfirmationScreen } from '../screens/rewards/OrderConfirmationScreen';
+import { MyOrdersScreen } from '../screens/rewards/MyOrdersScreen';
+import { OrderDetailScreen } from '../screens/rewards/OrderDetailScreen';
+import { CouponQRCodeScreen } from '../screens/coupons/CouponQRCodeScreen';
 import { LoginScreen } from '../screens/auth/LoginScreen';
 import { ForgotPasswordScreen } from '../screens/auth/ForgotPasswordScreen';
 import { SetNewPasswordScreen } from '../screens/auth/SetNewPasswordScreen';
@@ -36,9 +41,11 @@ import { ParentInvitationRegisterScreen } from '../screens/auth/ParentInvitation
 import { ParentNormalRegisterScreen } from '../screens/auth/ParentNormalRegisterScreen';
 import { ParentNormalRegisterStep1Screen } from '../screens/auth/ParentNormalRegisterStep1Screen';
 import { ParentNormalRegisterStep2Screen } from '../screens/auth/ParentNormalRegisterStep2Screen';
+import { ParentEmailRegisterStep2Screen } from '../screens/auth/ParentEmailRegisterStep2Screen';
 import { StudentInvitationRegisterScreen } from '../screens/auth/StudentInvitationRegisterScreen';
 import { StudentNormalRegisterStep1Screen } from '../screens/auth/StudentNormalRegisterStep1Screen';
 import { StudentNormalRegisterStep2Screen } from '../screens/auth/StudentNormalRegisterStep2Screen';
+import { StudentEmailRegisterStep2Screen } from '../screens/auth/StudentEmailRegisterStep2Screen';
 import { VerificationScreen } from '../screens/auth/VerificationScreen';
 import { QRScannerScreen } from '../screens/common/QRScannerScreen';
 import { QRScanResultScreen } from '../screens/common/QRScanResultScreen';
@@ -53,6 +60,8 @@ import { LanguageSelectionScreen } from '../screens/profile/LanguageSelectionScr
 import { EditProfileScreen } from '../screens/profile/EditProfileScreen';
 import { ActivityLayoutSelectionScreen } from '../screens/profile/ActivityLayoutSelectionScreen';
 import { PersonalQRScreen } from '../screens/profile/PersonalQRScreen';
+import { AddressListScreen } from '../screens/profile/AddressListScreen';
+import { AddressFormScreen } from '../screens/profile/AddressFormScreen';
 // Cards Screens
 import { MyCardsScreen } from '../screens/cards/MyCardsScreen';
 // Organization Provider
@@ -165,6 +174,13 @@ const AuthNavigator = () => {
         }}
       />
       <AuthStack.Screen
+        name="ParentEmailRegisterStep2"
+        component={ParentEmailRegisterStep2Screen}
+        options={{
+          ...pageTransitions.slideFromRight,
+        }}
+      />
+      <AuthStack.Screen
         name="StudentInvitationRegister"
         component={StudentInvitationRegisterScreen}
         options={{
@@ -185,8 +201,15 @@ const AuthNavigator = () => {
           ...pageTransitions.slideFromRight,
         }}
       />
-      <AuthStack.Screen 
-        name="Verification" 
+      <AuthStack.Screen
+        name="StudentEmailRegisterStep2"
+        component={StudentEmailRegisterStep2Screen}
+        options={{
+          ...pageTransitions.slideFromRight,
+        }}
+      />
+      <AuthStack.Screen
+        name="Verification"
         component={VerificationScreen}
         options={{
           ...pageTransitions.slideFromRight,
@@ -292,13 +315,46 @@ const RewardsNavigator = () => {
           headerShown: false,
         }}
       />
+      <RewardsStack.Screen
+        name="MyCoupons"
+        component={MyCouponsScreen}
+        options={{
+          headerShown: false,
+        }}
+      />
+      <RewardsStack.Screen
+        name="CouponQRCode"
+        component={CouponQRCodeScreen}
+        options={{
+          headerShown: false,
+        }}
+      />
+      {/* Order Management Screens */}
+      <RewardsStack.Screen
+        name="OrderConfirmation"
+        component={OrderConfirmationScreen}
+        options={{
+          headerShown: false,
+        }}
+      />
+      <RewardsStack.Screen
+        name="MyOrders"
+        component={MyOrdersScreen}
+        options={{
+          headerShown: false,
+        }}
+      />
+      <RewardsStack.Screen
+        name="OrderDetail"
+        component={OrderDetailScreen}
+        options={{
+          headerShown: false,
+        }}
+      />
       {/* TODO: 添加更多积分商城相关页面
         - MyPoints (我的积分)
         - ExchangeOrders (兑换记录)
         - Favorites (我的收藏)
-        - Checkout (确认兑换)
-        - ShippingAddress (收货地址)
-        - MyOrders (我的订单)
       */}
     </RewardsStack.Navigator>
   );
@@ -573,6 +629,23 @@ const ProfileNavigator = () => {
           ...pageTransitions.slideFromRight,
         }}
       />
+      {/* Address Management Screens */}
+      <ProfileStack.Screen
+        name="AddressList"
+        component={AddressListScreen}
+        options={{
+          headerShown: false,
+          ...pageTransitions.slideFromRight,
+        }}
+      />
+      <ProfileStack.Screen
+        name="AddressForm"
+        component={AddressFormScreen}
+        options={{
+          headerShown: false,
+          ...pageTransitions.slideFromRight,
+        }}
+      />
     </ProfileStack.Navigator>
   );
 };
@@ -676,25 +749,29 @@ const TabNavigator = () => {
         />
 
         {/* 会员 - 积分商城·优惠券·会员系统 (中心突出Tab) */}
-        <Tab.Screen
-          name="Rewards"
-          component={RewardsNavigator}
-          options={({ route }) => {
-            const routeName = getFocusedRouteNameFromRoute(route) ?? 'RewardsHome';
+        {/* ⚠️ 商家用户不显示此Tab */}
+        {!permissions.isMerchant() && (
+          <Tab.Screen
+            name="Rewards"
+            component={RewardsNavigator}
+            options={({ route }) => {
+              const routeName = getFocusedRouteNameFromRoute(route) ?? 'RewardsHome';
 
-            console.log('📱 [TAB-CONTROL] Rewards Tab:', {
-              routeName,
-              forcedDisplay: 'flex'
-            });
+              console.log('📱 [TAB-CONTROL] Rewards Tab:', {
+                routeName,
+                forcedDisplay: 'flex',
+                isMerchant: permissions.isMerchant()
+              });
 
-            // 强制显示TabBar - 会员中心应该始终显示TabBar
-            return {
-              tabBarStyle: {
-                display: 'flex',
-              },
-            };
-          }}
-        />
+              // 强制显示TabBar - 会员中心应该始终显示TabBar
+              return {
+                tabBarStyle: {
+                  display: 'flex',
+                },
+              };
+            }}
+          />
+        )}
 
         {/* 安心 - 所有用户都可以访问，内部根据权限显示不同功能 */}
         <Tab.Screen
@@ -923,6 +1000,13 @@ export const AppNavigator = () => {
             }}
           />
           <RootStack.Screen
+            name="ParentEmailRegisterStep2"
+            component={ParentEmailRegisterStep2Screen}
+            options={{
+              ...pageTransitions.slideFromRight,
+            }}
+          />
+          <RootStack.Screen
             name="StudentInvitationRegister"
             component={StudentInvitationRegisterScreen}
             options={{
@@ -943,8 +1027,15 @@ export const AppNavigator = () => {
               ...pageTransitions.slideFromRight,
             }}
           />
-          <RootStack.Screen 
-            name="Verification" 
+          <RootStack.Screen
+            name="StudentEmailRegisterStep2"
+            component={StudentEmailRegisterStep2Screen}
+            options={{
+              ...pageTransitions.slideFromRight,
+            }}
+          />
+          <RootStack.Screen
+            name="Verification"
             component={VerificationScreen}
             options={{
               ...pageTransitions.slideFromRight,

@@ -21,6 +21,7 @@ import { useTheme } from '../../context/ThemeContext';
 import EventTracker, { analytics, Events } from '../../analytics/EventTracker';
 import { useSmartGesture } from '../../hooks/useSmartGesture';
 import { useCardPress } from '../../hooks/useCardPress';
+import { SchoolLogo } from '../common/SchoolLogo';
 
 const { width: screenWidth } = Dimensions.get('window');
 const cardWidth = screenWidth - theme.spacing.lg * 2; // 使用语义化间距
@@ -54,6 +55,7 @@ interface ActivityCardProps {
       name: string;
       avatar?: string;
       verified?: boolean;
+      schoolId?: string; // 🆕 学校ID（用于获取logo）
     };
   } | null;
   onPress: () => void;
@@ -115,7 +117,8 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({
     organizer: activity.organizer ? {
       name: safeString(activity.organizer.name, 'Organizer'),
       avatar: safeString(activity.organizer.avatar),
-      verified: Boolean(activity.organizer.verified)
+      verified: Boolean(activity.organizer.verified),
+      schoolId: activity.organizer.schoolId ? safeString(activity.organizer.schoolId) : undefined, // 🆕 学校ID
     } : null
   };
   // 基础动画值
@@ -490,15 +493,24 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({
 
           {/* Bottom Content */}
           <View style={styles.overlayContent}>
-            {/* Organizer Info */}
+            {/* Organizer Info - 🆕 优先显示学校logo */}
             {safeActivity.organizer && (
               <View style={styles.organizerRow}>
-                {safeActivity.organizer.avatar && (
-                  <Image 
-                    source={{ uri: safeActivity.organizer.avatar }} 
-                    style={styles.organizerAvatar} 
+                {/* 🆕 优先使用学校logo，fallback到头像图片 */}
+                {safeActivity.organizer.schoolId ? (
+                  <View style={styles.organizerLogoWrapper}>
+                    <SchoolLogo
+                      schoolId={safeActivity.organizer.schoolId}
+                      size={24}
+                      showFallback={true}
+                    />
+                  </View>
+                ) : safeActivity.organizer.avatar ? (
+                  <Image
+                    source={{ uri: safeActivity.organizer.avatar }}
+                    style={styles.organizerAvatar}
                   />
-                )}
+                ) : null}
                 <Text style={styles.organizerName}>
                   {safeActivity.organizer.name}
                 </Text>
@@ -711,6 +723,10 @@ const styles = StyleSheet.create({
     marginRight: theme.spacing.xs,
     borderWidth: 2,
     borderColor: 'rgba(255, 255, 255, 0.3)',
+  },
+  // 🆕 学校logo包装器样式
+  organizerLogoWrapper: {
+    marginRight: theme.spacing.xs,
   },
   organizerName: {
     fontSize: theme.typography.fontSize.sm,

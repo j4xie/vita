@@ -214,6 +214,53 @@ class PointsMallAPI {
 
     return adaptBackendGoodToProduct(response.data);
   }
+
+  /**
+   * 创建订单（积分兑换）
+   * POST /app/order/createOrder
+   *
+   * ⚠️ 废弃警告：
+   * 此方法已废弃，推荐使用 orderAPI.createOrder() 方法
+   * 新方法支持更多支付方式和订单类型
+   *
+   * @deprecated 使用 orderAPI.createOrder() 替代
+   */
+  async createOrder(params: {
+    goodsId: string;
+    num: number;
+    price: number;
+    addrId?: number;
+    remark?: string;
+  }): Promise<{
+    outTradeNo: string;
+    orderString?: string;
+  }> {
+    console.warn('⚠️ [PointsMall API] pointsMallAPI.createOrder() 已废弃，请使用 orderAPI.createOrder()');
+
+    const queryParams = new URLSearchParams({
+      orderType: '1', // 1-积分商城消费
+      payMode: '2', // 2-积分支付（固定）
+      price: params.price.toString(),
+      addrId: (params.addrId || 1).toString(), // 默认地址ID为1
+      num: params.num.toString(),
+      goodsId: params.goodsId,
+      ...(params.remark && { remark: params.remark }),
+    });
+
+    const response = await this.request<{
+      outTradeNo: string;
+      orderString?: string;
+    }>(
+      `/app/order/createOrder?${queryParams}`,
+      { method: 'POST' }
+    );
+
+    if (!response.data) {
+      throw new Error('订单创建失败');
+    }
+
+    return response.data;
+  }
 }
 
 export const pointsMallAPI = new PointsMallAPI();

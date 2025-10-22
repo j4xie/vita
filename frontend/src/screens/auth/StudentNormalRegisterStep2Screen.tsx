@@ -59,6 +59,7 @@ import {
   parseApiError
 } from '../../utils/formValidation';
 import { LoaderOne } from '../../components/ui/LoaderOne';
+import { SixDigitCodeInput } from '../../components/auth/SixDigitCodeInput';
 
 interface RouteParams {
   step1Data: RegistrationStep1Data & {
@@ -716,19 +717,24 @@ export const StudentNormalRegisterStep2Screen: React.FC = () => {
                 <TouchableOpacity
                   style={styles.areaCodeSelector}
                   onPress={() => {
-                    if (areaCode === '86') {
-                      // 尝试切换到+1时显示提示
-                      Alert.alert(
-                        t('auth.register.form.us_phone_not_supported_title'),
-                        t('auth.register.form.us_phone_not_supported_message') + '\n\n' +
-                        t('auth.register.form.use_china_phone_or_referral'),
-                        [
-                          { text: t('common.cancel'), style: 'cancel' },
-                          { text: t('common.got_it'), style: 'default' }
-                        ]
-                      );
-                    }
-                    // 不执行切换，保持+86
+                    // ✅ 启用区号切换功能
+                    const newAreaCode = areaCode === '86' ? '1' : '86';
+                    setAreaCode(newAreaCode);
+
+                    // 清空手机号和验证码，避免格式混乱
+                    setPhoneNumber('');
+                    setVerificationCode('');
+                    setPhoneNumberValid(null);
+                    setSmsCodeSent(false);
+                    setCountdown(0);
+
+                    // 提示用户区号已切换
+                    Alert.alert(
+                      t('common.success'),
+                      newAreaCode === '1'
+                        ? t('auth.register.form.switched_to_us_phone')
+                        : t('auth.register.form.switched_to_china_phone')
+                    );
                   }}
                 >
                   <Text style={styles.areaCodeText}>
@@ -773,13 +779,18 @@ export const StudentNormalRegisterStep2Screen: React.FC = () => {
                 <Text style={phoneNumberValid === true ? styles.successText : styles.hintText}>
                   {phoneNumberValid === true
                     ? '✓ 手机号格式正确'
-                    : t('auth.errors.form_validation.phone_format_hint_cn')
+                    : areaCode === '86'
+                      ? t('auth.errors.form_validation.phone_format_hint_cn')
+                      : t('auth.errors.form_validation.phone_format_hint_us')
                   }
                 </Text>
               )}
               {phoneNumber.length === 0 && (
                 <Text style={styles.hintText}>
-                  {t('auth.errors.form_validation.phone_example_cn')}
+                  {areaCode === '86'
+                    ? t('auth.errors.form_validation.phone_example_cn')
+                    : t('auth.errors.form_validation.phone_example_us')
+                  }
                 </Text>
               )}
             </View>
@@ -839,77 +850,42 @@ export const StudentNormalRegisterStep2Screen: React.FC = () => {
               </Text>
             </View>
 
-            {/* 验证码输入 */}
-            <View style={styles.inputContainer}>
-              <Text style={styles.label}>{t('auth.register.form.verification_code_label')}</Text>
-              <View style={styles.verificationContainer}>
-                <TextInput
-                  style={[
-                    styles.verificationInput,
-                    errors.verificationCode && styles.inputError,
-                    verificationCodeValid === true && styles.inputSuccess,
-                    verificationCodeValid === false && styles.inputWarning
-                  ]}
-                  placeholder={t('auth.register.form.verification_code_placeholder')}
-                  value={verificationCode}
-                  onChangeText={handleVerificationCodeChange}
-                  keyboardType="number-pad"
-                  maxLength={6}
-                  placeholderTextColor={theme.colors.text.disabled}
-                  returnKeyType="done"
-                  onSubmitEditing={() => Keyboard.dismiss()}
-                />
-                {verificationCodeValid === true && (
-                  <Ionicons
-                    name="checkmark-circle"
-                    size={20}
-                    color={theme.colors.success}
-                    style={styles.validationIconCode}
-                  />
-                )}
-                {verificationCodeValid === false && (
-                  <Ionicons
-                    name="warning"
-                    size={20}
-                    color="#f59e0b"
-                    style={styles.validationIconCode}
-                  />
-                )}
+            {/* 发送验证码按钮 */}
+            {!smsCodeSent && (
+              <View style={styles.sendCodeSection}>
                 <TouchableOpacity
                   style={[
-                    styles.sendCodeButton,
-                    (countdown > 0 || !agreedToTerms || !agreedToSMS) && styles.sendCodeButtonDisabled
+                    styles.sendCodeButtonLarge,
+                    (!agreedToTerms || !agreedToSMS) && styles.sendCodeButtonDisabled
                   ]}
                   onPress={sendVerificationCode}
-                  disabled={countdown > 0 || loading || !agreedToTerms || !agreedToSMS}
+                  disabled={loading || !agreedToTerms || !agreedToSMS}
                 >
                   {loading ? (
                     <LoaderOne size="small" color={theme.colors.text.inverse} />
                   ) : (
-                    <Text style={styles.sendCodeText}>
-                      {countdown > 0
-                        ? `${countdown}s`
-                        : t('auth.register.form.send_code')
-                      }
+                    <Text style={styles.sendCodeTextLarge}>
+                      {t('auth.register.form.send_code')}
                     </Text>
                   )}
                 </TouchableOpacity>
               </View>
-              {errors.verificationCode && <Text style={styles.errorText}>{errors.verificationCode}</Text>}
-              {!errors.verificationCode && verificationCode.length > 0 && (
-                <Text style={verificationCodeValid === true ? styles.successText : styles.hintText}>
-                  {verificationCodeValid === true
-                    ? '✓ 验证码格式正确'
-                    : t('auth.errors.form_validation.verification_code_format_hint')
-                  }
-                </Text>
-              )}
-              {verificationCode.length === 0 && (
-                <Text style={styles.hintText}>
-                  {t('auth.errors.form_validation.verification_code_example')}
-                </Text>
-              )}
-            </View>
+            )}
+
+            {/* 6位验证码输入组件 - 发送验证码后显示 */}
+            <SixDigitCodeInput
+              phoneNumber={phoneNumber}
+              areaCode={areaCode}
+              onCodeChange={handleVerificationCodeChange}
+              onResend={sendVerificationCode}
+              countdown={countdown}
+              visible={smsCodeSent}
+            />
+
+            {/* 验证码错误提示 */}
+            {smsCodeSent && errors.verificationCode && (
+              <Text style={styles.errorText}>{errors.verificationCode}</Text>
+            )}
             {/* Register Button - 跟随内容在表单底部 */}
             <View style={styles.bottomContainer}>
               <TouchableOpacity
@@ -1379,7 +1355,8 @@ const styles = StyleSheet.create({
     height: 20,
     borderRadius: 4,
     borderWidth: 2,
-    borderColor: theme.colors.border.primary,
+    borderColor: '#9CA3AF', // 深灰色边框，更明显
+    backgroundColor: '#FFFFFF', // 白色背景
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -1468,5 +1445,22 @@ const styles = StyleSheet.create({
     color: theme.colors.text.secondary,
     lineHeight: 16,
     textAlign: 'left',
+  },
+  // 发送验证码大按钮样式
+  sendCodeSection: {
+    marginBottom: theme.spacing[4],
+  },
+  sendCodeButtonLarge: {
+    backgroundColor: theme.colors.primary,
+    paddingVertical: theme.spacing[4],
+    borderRadius: theme.borderRadius.lg,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 52,
+  },
+  sendCodeTextLarge: {
+    fontSize: theme.typography.fontSize.base,
+    fontWeight: theme.typography.fontWeight.semibold,
+    color: theme.colors.text.inverse,
   },
 }) as any;

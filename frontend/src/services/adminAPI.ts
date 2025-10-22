@@ -113,37 +113,6 @@ export const adminLogin = async (credentials: AdminLoginRequest): Promise<APIRes
   }
 };
 
-/**
- * 获取用户列表（管理员功能）
- * @returns 用户列表
- */
-export const getUserList = async (): Promise<APIResponse<any[]>> => {
-  try {
-    const token = await getAdminToken();
-    
-    if (!token) {
-      throw new Error('管理员未登录');
-    }
-
-    const response = await fetch(`${getBaseUrl()}/app/user/list`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    const data = await response.json();
-    return data;
-  } catch (error) {
-    console.error('获取用户列表失败:', error);
-    throw error;
-  }
-};
 
 /**
  * 查询邀请码信息

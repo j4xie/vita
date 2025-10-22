@@ -8,11 +8,13 @@ const { width: screenWidth } = Dimensions.get('window');
 interface RichTextRendererProps {
   html: string;
   contentWidth?: number;
+  darkBackground?: boolean; // 是否在深色背景上显示
 }
 
 export const RichTextRenderer: React.FC<RichTextRendererProps> = ({
   html,
-  contentWidth
+  contentWidth,
+  darkBackground = false
 }) => {
   // Safety check for empty or invalid HTML
   if (!html || typeof html !== 'string' || html.trim() === '') {
@@ -20,6 +22,61 @@ export const RichTextRenderer: React.FC<RichTextRendererProps> = ({
   }
 
   const defaultContentWidth = contentWidth || screenWidth - theme.spacing[4] * 2;
+
+  // 🎨 辅助函数：检测颜色是否为黑色或深色
+  const isDarkColor = (color: string): boolean => {
+    if (!color) return false;
+
+    const normalized = color.toLowerCase().trim();
+
+    // 直接匹配黑色
+    if (normalized === '#000' || normalized === '#000000' ||
+        normalized === 'black' || normalized === 'rgb(0,0,0)' ||
+        normalized === 'rgb(0, 0, 0)' || normalized === 'rgba(0,0,0,1)' ||
+        normalized === 'rgba(0, 0, 0, 1)') {
+      return true;
+    }
+
+    // 检测深灰色 (RGB值都小于50)
+    const rgbMatch = normalized.match(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/);
+    if (rgbMatch) {
+      const [, r, g, b] = rgbMatch.map(Number);
+      if (r < 50 && g < 50 && b < 50) return true;
+    }
+
+    // 检测十六进制深色 (#000 到 #333)
+    const hexMatch = normalized.match(/^#([0-9a-f]{3}|[0-9a-f]{6})$/);
+    if (hexMatch) {
+      const hex = hexMatch[1];
+      if (hex.length === 3) {
+        const r = parseInt(hex[0] + hex[0], 16);
+        const g = parseInt(hex[1] + hex[1], 16);
+        const b = parseInt(hex[2] + hex[2], 16);
+        if (r < 50 && g < 50 && b < 50) return true;
+      } else {
+        const r = parseInt(hex.slice(0, 2), 16);
+        const g = parseInt(hex.slice(2, 4), 16);
+        const b = parseInt(hex.slice(4, 6), 16);
+        if (r < 50 && g < 50 && b < 50) return true;
+      }
+    }
+
+    return false;
+  };
+
+  // 🎨 辅助函数：转换样式中的颜色
+  const convertColors = (style: any): any => {
+    if (!darkBackground || !style) return style;
+
+    const converted = { ...style };
+
+    // 转换文字颜色
+    if (style.color && isDarkColor(style.color)) {
+      converted.color = '#FFFFFF';
+    }
+
+    return converted;
+  };
 
   // Define custom font families for different font types
   const fontFamilies = {
@@ -40,12 +97,16 @@ export const RichTextRenderer: React.FC<RichTextRendererProps> = ({
     })
   };
 
+  // 🎨 根据背景选择文字颜色
+  const textColor = darkBackground ? '#FFFFFF' : theme.colors.text.secondary;
+  const primaryTextColor = darkBackground ? '#FFFFFF' : theme.colors.text.primary;
+
   // Comprehensive tag styles supporting all editor features
   const tagsStyles: any = {
     // Basic text container
     body: {
       fontSize: theme.typography.fontSize.base,
-      color: theme.colors.text.secondary,
+      color: textColor,
       lineHeight: theme.typography.fontSize.base * theme.typography.lineHeight.relaxed,
       fontFamily: fontFamilies.standard,
     },
@@ -53,7 +114,7 @@ export const RichTextRenderer: React.FC<RichTextRendererProps> = ({
     // Paragraph
     p: {
       fontSize: theme.typography.fontSize.base,
-      color: theme.colors.text.secondary,
+      color: textColor,
       marginBottom: theme.spacing[3],
       lineHeight: theme.typography.fontSize.base * theme.typography.lineHeight.relaxed,
     },
@@ -61,11 +122,11 @@ export const RichTextRenderer: React.FC<RichTextRendererProps> = ({
     // Text formatting
     strong: {
       fontWeight: theme.typography.fontWeight.bold,
-      color: theme.colors.text.primary,
+      color: primaryTextColor,
     },
     b: {
       fontWeight: theme.typography.fontWeight.bold,
-      color: theme.colors.text.primary,
+      color: primaryTextColor,
     },
     em: {
       fontStyle: 'italic' as const,
@@ -99,42 +160,42 @@ export const RichTextRenderer: React.FC<RichTextRendererProps> = ({
     h1: {
       fontSize: theme.typography.fontSize['3xl'],
       fontWeight: theme.typography.fontWeight.bold,
-      color: theme.colors.text.primary,
+      color: primaryTextColor,
       marginBottom: theme.spacing[4],
       marginTop: theme.spacing[5],
     },
     h2: {
       fontSize: theme.typography.fontSize['2xl'],
       fontWeight: theme.typography.fontWeight.bold,
-      color: theme.colors.text.primary,
+      color: primaryTextColor,
       marginBottom: theme.spacing[3],
       marginTop: theme.spacing[4],
     },
     h3: {
       fontSize: theme.typography.fontSize.xl,
       fontWeight: theme.typography.fontWeight.semibold,
-      color: theme.colors.text.primary,
+      color: primaryTextColor,
       marginBottom: theme.spacing[3],
       marginTop: theme.spacing[3],
     },
     h4: {
       fontSize: theme.typography.fontSize.lg,
       fontWeight: theme.typography.fontWeight.semibold,
-      color: theme.colors.text.primary,
+      color: primaryTextColor,
       marginBottom: theme.spacing[2],
       marginTop: theme.spacing[3],
     },
     h5: {
       fontSize: theme.typography.fontSize.base,
       fontWeight: theme.typography.fontWeight.semibold,
-      color: theme.colors.text.primary,
+      color: primaryTextColor,
       marginBottom: theme.spacing[2],
       marginTop: theme.spacing[2],
     },
     h6: {
       fontSize: theme.typography.fontSize.sm,
       fontWeight: theme.typography.fontWeight.semibold,
-      color: theme.colors.text.primary,
+      color: primaryTextColor,
       marginBottom: theme.spacing[2],
       marginTop: theme.spacing[2],
     },
@@ -150,7 +211,7 @@ export const RichTextRenderer: React.FC<RichTextRendererProps> = ({
     },
     li: {
       fontSize: theme.typography.fontSize.base,
-      color: theme.colors.text.secondary,
+      color: textColor,
       marginBottom: theme.spacing[1],
       lineHeight: theme.typography.fontSize.base * theme.typography.lineHeight.relaxed,
     },
@@ -208,13 +269,13 @@ export const RichTextRenderer: React.FC<RichTextRendererProps> = ({
       borderWidth: 1,
       borderColor: 'rgba(0, 0, 0, 0.1)',
       fontWeight: theme.typography.fontWeight.semibold,
-      color: theme.colors.text.primary,
+      color: primaryTextColor,
     },
     td: {
       padding: theme.spacing[2],
       borderWidth: 1,
       borderColor: 'rgba(0, 0, 0, 0.1)',
-      color: theme.colors.text.secondary,
+      color: textColor,
     },
 
     // Horizontal rule
@@ -245,13 +306,13 @@ export const RichTextRenderer: React.FC<RichTextRendererProps> = ({
     },
     dt: {
       fontWeight: theme.typography.fontWeight.semibold,
-      color: theme.colors.text.primary,
+      color: primaryTextColor,
       marginTop: theme.spacing[2],
     },
     dd: {
       marginLeft: theme.spacing[4],
       marginBottom: theme.spacing[2],
-      color: theme.colors.text.secondary,
+      color: textColor,
     },
 
     // Other semantic elements
@@ -392,6 +453,27 @@ export const RichTextRenderer: React.FC<RichTextRendererProps> = ({
     'Monaco',
   ];
 
+  // 🎨 自定义渲染器：自动转换内联样式中的黑色文字
+  const domVisitors = darkBackground ? {
+    onElement: (element: any) => {
+      // 处理元素的内联样式
+      if (element.attribs?.style) {
+        const styleStr = element.attribs.style;
+
+        // 检测并替换黑色文字
+        if (styleStr.includes('color')) {
+          const colorMatch = styleStr.match(/color:\s*([^;]+)/);
+          if (colorMatch && isDarkColor(colorMatch[1])) {
+            element.attribs.style = styleStr.replace(
+              /color:\s*[^;]+/,
+              'color: #FFFFFF'
+            );
+          }
+        }
+      }
+    }
+  } : undefined;
+
   return (
     <RenderHtml
       contentWidth={defaultContentWidth}
@@ -403,6 +485,7 @@ export const RichTextRenderer: React.FC<RichTextRendererProps> = ({
       enableExperimentalBRCollapsing={true}
       enableExperimentalGhostLinesPrevention={true}
       enableExperimentalMarginCollapsing={true}
+      domVisitors={domVisitors}
     />
   );
 };

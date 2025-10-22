@@ -98,32 +98,24 @@ class CouponAPI {
   /**
    * 核销优惠券
    * POST /app/coupon/writeOff
+   * @param couponNo - 优惠券券码
    */
-  async writeOffCoupon(params: {
-    couponId: number;
-    merchantId: number;
-    userId?: number;
-  }): Promise<ApiResponse> {
+  async writeOffCoupon(couponNo: string): Promise<ApiResponse> {
     try {
-      const formData = new URLSearchParams();
-      formData.append('couponId', params.couponId.toString());
-      formData.append('merchantId', params.merchantId.toString());
-      if (params.userId) {
-        formData.append('userId', params.userId.toString());
-      }
+      const queryParams = new URLSearchParams();
+      queryParams.append('couponNo', couponNo);
 
-      const url = `${getBaseUrl()}/app/coupon/writeOff`;
+      const url = `${getBaseUrl()}/app/coupon/writeOff?${queryParams.toString()}`;
 
-      console.log('🎫 [CouponAPI] 核销优惠券:', params);
+      console.log('🎫 [CouponAPI] 核销优惠券:', { couponNo });
 
       const token = await getCurrentToken();
       const response = await fetch(url, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/x-www-form-urlencoded',
+          'Content-Type': 'application/json',
         },
-        body: formData.toString(),
       });
 
       if (!response.ok) {
@@ -136,6 +128,67 @@ class CouponAPI {
       return result;
     } catch (error) {
       console.error('❌ [CouponAPI] 核销优惠券失败:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * 查询优惠券核销状态
+   * POST /app/coupon/checkCoupon
+   */
+  async checkCouponStatus(userCouponId: number): Promise<{
+    isVerified: boolean;
+    earnedPoints: number;
+    remark: string;
+  }> {
+    try {
+      const queryParams = new URLSearchParams();
+      queryParams.append('userCouponId', userCouponId.toString());
+
+      const url = `${getBaseUrl()}/app/coupon/checkCoupon?${queryParams}`;
+
+      console.log('🔍 [CouponAPI] 查询优惠券核销状态:', userCouponId);
+
+      const token = await getCurrentToken();
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+
+      const result = await response.json();
+
+      // 解析核销状态
+      const isVerified = result.code === 200 && result.data?.remark?.includes('核销成功');
+      let earnedPoints = 0;
+
+      // 从remark中提取积分数值，如 "核销成功，获得积分：0.08"
+      if (isVerified && result.data?.remark) {
+        const match = result.data.remark.match(/获得积分[：:]\s*([\d.]+)/);
+        if (match) {
+          earnedPoints = parseFloat(match[1]);
+        }
+      }
+
+      console.log('📋 [CouponAPI] 核销状态:', {
+        isVerified,
+        earnedPoints,
+        remark: result.data?.remark || '',
+      });
+
+      return {
+        isVerified,
+        earnedPoints,
+        remark: result.data?.remark || '',
+      };
+    } catch (error) {
+      console.error('❌ [CouponAPI] 查询核销状态失败:', error);
       throw error;
     }
   }

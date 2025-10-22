@@ -20,6 +20,7 @@ import { UserIdentityData } from '../../types/userIdentity';
 import { useUser } from '../../context/UserContext';
 import { timeService } from '../../utils/UnifiedTimeService';
 import { Loading } from '../ui/Loading';
+import { getTimeOffsetFromBeijing } from '../../utils/timezoneHelper';
 
 // 志愿者记录类型
 interface VolunteerRecord {
@@ -95,13 +96,21 @@ const VolunteerQuickActionModalComponent: React.FC<VolunteerQuickActionModalProp
     try {
       // 统一策略：使用本地时间格式，避免时区转换混乱
       const startTime = timeService.formatLocalTime(new Date());
-      
+
+      // 🆕 获取时区偏移
+      const timeOffset = getTimeOffsetFromBeijing();
+
       const response = await volunteerSignRecord(
         parseInt(userData.userId),
         1, // 签到
         parseInt(user.userId),
         user.legalName,
-        startTime
+        startTime,
+        undefined, // endTime
+        undefined, // recordId
+        undefined, // remark
+        undefined, // autoApprovalStatus
+        timeOffset // 🆕 时区偏移
       );
 
       if (response.code === 200) {
@@ -167,7 +176,10 @@ const VolunteerQuickActionModalComponent: React.FC<VolunteerQuickActionModalProp
     try {
       // 统一策略：使用本地时间格式，避免时区转换混乱
       const endTime = timeService.formatLocalTime(new Date());
-      
+
+      // 🆕 获取时区偏移
+      const timeOffset = getTimeOffsetFromBeijing();
+
       const response = await volunteerSignRecord(
         parseInt(userData.userId),
         2, // 签退
@@ -175,7 +187,10 @@ const VolunteerQuickActionModalComponent: React.FC<VolunteerQuickActionModalProp
         user.legalName,
         undefined, // 签到时间不需要
         endTime,
-        currentRecord.id
+        currentRecord.id,
+        undefined, // remark
+        undefined, // autoApprovalStatus
+        timeOffset // 🆕 时区偏移
       );
 
       if (response.code === 200) {

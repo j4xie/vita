@@ -205,6 +205,8 @@
       "register_link": "Sign Up Now",
       "skip": "Skip"
     },
+    "relogin": "Login Again",
+    "login_required": "Login Required",
     "forgot_password": {
       "title": "Forgot Password",
       "reset_password": "Reset Password",
@@ -263,6 +265,18 @@
         "strong": "Strong"
       }
     },
+    "verification_code": "Verification Code",
+    "verification_code_sent": "Verification code sent to your email",
+    "send_verification_code": "Send Code",
+    "resend_code": "Resend Code",
+    "resend_after_seconds": "Resend after {{seconds}}s",
+    "send_code_first": "Please send verification code first",
+    "verification_code_invalid": "Please enter 6-digit code",
+    "verification_failed": "Verification failed",
+    "email_verified_success": "Email verified successfully",
+    "enter_6_digit_code": "Enter the 6-digit code sent to your email",
+    "verify": "Verify",
+    "login_required_message": "Please login first to verify your email",
     "guest_prompt": "Tap to access full features",
     "verification": {
       "title": "SMS Verification",
@@ -405,6 +419,11 @@
       "referral_registration": "Referral Registration",
       "referral_description": "Quick signup with referral",
       "referral_badge": "Recommended",
+      "phone_registration": "Phone Verification",
+      "phone_description": "Register with SMS verification code",
+      "email_registration": "Email Verification",
+      "email_description": "Register with email verification code",
+      "email_badge": "No phone verification needed",
       "normal_registration": "Normal Registration",
       "normal_description": "Sign up directly",
       "benefits_title": "After registration, you can:",
@@ -475,8 +494,16 @@
         "contact_info_desc": "Please select and fill in your phone number",
         "phone_verification": "Phone Verification",
         "phone_verification_desc": "Please enter your phone number and verify",
+        "email_verification": "Email Verification",
+        "email_verification_desc": "Please enter your email and verify",
+        "phone_label_for_contact": "Phone Number (for contact) *",
+        "phone_for_contact_only": "💡 This phone number is for contact only, no verification code will be sent",
+        "send_email_code": "Send Email Verification Code",
+        "email_label": "Email Address *",
         "brand_name": "PomeloX",
         "sms_terms_notice": "Message and data rates may apply. Enter your phone number to receive a one-time passcode message to your phone from PomeloX. Msg may vary. Reply \"HELP\" for help. Reply \"STOP\" to cancel.",
+        "switched_to_us_phone": "Switched to US phone number format (+1)",
+        "switched_to_china_phone": "Switched to China phone number format (+86)",
         "us_phone_not_supported_title": "US Phone Numbers Not Currently Supported",
         "us_phone_not_supported_message": "We currently do not support SMS verification for US phone numbers",
         "use_china_phone_or_referral": "Please use a Chinese phone number or referral code registration",
@@ -604,6 +631,14 @@
         "compliance_notice": "Message and data may rates apply. Enter your phone number to receive one time passcode message to your phone from PomeloX. Msg may vary Reply \"HELP\" for help. Reply \"STOP\" to cancel.",
         "service_terms": "Service terms",
         "privacy_policy": "Privacy policy"
+      },
+      "email_verification": {
+        "verify_email": "Verify Your Email",
+        "code_sent_to_email": "Verification code sent to {{email}}",
+        "code_sent_title": "Verification Code Sent",
+        "code_sent_message": "Verification code has been sent to your email {{email}}",
+        "send_failed_title": "Send Failed",
+        "send_failed_message": "Failed to send email verification code, please try again later"
       }
     },
     "validation": {
@@ -854,6 +889,26 @@
       "thirdPartyAccounts": "Third Party Accounts",
       "thirdPartyAccountsMessage": "Third party accounts feature coming soon"
     },
+    "delete_account": {
+      "menu_title": "Delete Account",
+      "title": "Delete Account",
+      "warning": "Warning: This action is irreversible. Please proceed with caution!",
+      "consequences_title": "Consequences",
+      "consequence_1": "All your personal information will be permanently deleted",
+      "consequence_2": "All activity records and volunteer hours will be cleared",
+      "consequence_3": "Points, coupons and other benefits will be forfeited",
+      "verify_identity": "Verify Identity",
+      "email_placeholder": "Enter your email",
+      "password_placeholder": "Enter your password",
+      "enter_email": "Please enter your email",
+      "enter_password": "Please enter your password",
+      "final_confirm_title": "Final Confirmation",
+      "final_confirm_message": "Are you sure you want to permanently delete your account? This cannot be undone!",
+      "confirm_delete": "Confirm Delete",
+      "delete_button": "Delete Account",
+      "success_message": "Account successfully deleted. Thank you for using our service.",
+      "failed_message": "Account deletion failed. Please check your email and password."
+    },
     "settings": "Settings",
     "language": "Language",
     "privacy": "Privacy Settings",
@@ -912,6 +967,10 @@
     "school": {
       "cu_headquarters": "CU HQ"
     },
+    "email_verification": "Email Verification",
+    "email_verified": "Verified",
+    "email_unverified": "Not Verified",
+    "verify_email": "Verify Email",
     "general": {
       "cacheCalculating": "Calculating...",
       "language": "Language",
@@ -1152,6 +1211,13 @@
     "merchantCommunityTitle": "Merchant Community",
     "viewMore": "View More",
     "earn": "Earn",
+    "loading_merchants": "Loading merchants...",
+    "no_merchants_title": "No Merchants Yet",
+    "no_merchants_subtitle": "Check back soon for great deals and offers",
+    "no_merchants": "No merchants found",
+    "login_required_message": "Login to browse merchant offers and deals",
+    "session_expired": "Session Expired",
+    "session_expired_message": "Your session has expired. Please login again to continue browsing",
     "merchants": {
       "studentLounge": "Student Lounge",
       "cafe": "Café",
@@ -1215,6 +1281,23 @@
       "dateRangeTitle": "Date Range",
       "dateRangePlaceholder": "Select date range",
       "showResults": "Show {{count}} results"
+    },
+    "earn_points": "Earn {{points}} points",
+    "merchant": {
+      "description": "About",
+      "contact": "Contact",
+      "owner": "Owner Info",
+      "legal_name": "Legal Name",
+      "contact_person": "Contact Person",
+      "license": "Business License"
+    },
+    "coupon": {
+      "availableCoupons": "Available Coupons",
+      "noCoupons": "No coupons available",
+      "use": "Use",
+      "writeOffTitle": "Use Coupon",
+      "writeOffConfirm": "Confirm to use this coupon?",
+      "writeOffSuccess": "Coupon used successfully!"
     }
   },
   "wellbeing": {
@@ -2081,6 +2164,7 @@
     "phone_us_invalid": "Invalid US phone number format",
     "email_required": "Please enter email",
     "email_invalid": "Invalid email format",
+    "email_format_error": "Invalid email format",
     "email_school_invalid": "Please enter school email",
     "parent_first_name_required": "Please enter parent first name",
     "parent_last_name_required": "Please enter parent last name",
@@ -2526,7 +2610,16 @@
     "coupons": {
       "title": "My Coupons",
       "my_coupons": "Coupon Center",
-      "coming_soon": "Coming Soon"
+      "coming_soon": "Coming Soon",
+      "unused": "Available",
+      "used": "Used",
+      "expired": "Expired",
+      "voucher": "Voucher",
+      "min_amount": "Min. spend ${{amount}}",
+      "valid_period": "{{from}} - {{to}}",
+      "coupon_no": "Coupon No",
+      "no_coupons": "No Coupons Available",
+      "no_coupons_desc": "Participate in activities to earn coupons"
     },
     "mall": {
       "title": "Points Mall",
@@ -2544,6 +2637,8 @@
       "out_of_stock": "Out of Stock",
       "low_stock": "Only {{count}} left",
       "no_products": "No products available",
+      "exchange_success": "Exchange Successful!",
+      "exchange_failed": "Exchange Failed",
       "load_failed": "Failed to load product details",
       "insufficient_points": "Insufficient Points",
       "insufficient_points_desc": "You don't have enough points to exchange this product",
@@ -2616,5 +2711,15 @@
   "timeEntry": {
     "screenTitle": "Time Entry",
     "cancel": "Cancel"
+  },
+  "coupons": {
+    "verify": "Verify",
+    "verify_title": "Verify Coupon",
+    "verify_success": "Verification Successful",
+    "verified": "Verified",
+    "earned_points": "Congratulations! You earned {{points}} points",
+    "earned": "+{{points}} points",
+    "waiting_verify": "Please ask merchant to scan QR code",
+    "checking_status": "Checking verification status..."
   }
 }

@@ -31,6 +31,7 @@ import { timeService } from '../../utils/UnifiedTimeService';
 import { ActionButtonGroup } from '../../components/activity/ActionButtonGroup';
 import { AttendeesList } from '../../components/activity/AttendeesList';
 import { LocationCard } from '../../components/activity/LocationCard';
+import { SchoolLogo } from '../../components/common/SchoolLogo';
 
 const { width: screenWidth } = Dimensions.get('window');
 
@@ -43,7 +44,7 @@ export const ActivityDetailScreen: React.FC = () => {
   const darkModeSystem = useAllDarkModeStyles();
   const { isDarkMode, styles: dmStyles, gradients: dmGradients, blur: dmBlur, icons: dmIcons } = darkModeSystem;
   
-  // activity 现在使用 useState 进行管理
+  // activity 现在使用 useState 进行管��
   const { user, isAuthenticated } = useUser();
   
   const [isRegistered, setIsRegistered] = useState(false);
@@ -712,20 +713,10 @@ export const ActivityDetailScreen: React.FC = () => {
     }
   };
 
-  // Mock价格数据 - 等待后端API支持
-  const getMockPrice = () => {
-    // 基于活动ID生成Mock价格：1/3免费，2/3付费
-    const activityIdNum = parseInt(activity.id) || 0;
-    const isFree = activityIdNum % 3 === 0;
-
-    return {
-      isFree,
-      price: isFree ? null : 25,
-      currency: 'USD',
-    };
-  };
-
-  const mockPriceData = getMockPrice();
+  // 🆕 真实价格数据 - 从后端API获取
+  const isFree = !activity.price || activity.price === 0;
+  const displayPrice = activity.price || 0;
+  const currency = activity.currency || 'USD';
 
   return (
     <>
@@ -736,7 +727,7 @@ export const ActivityDetailScreen: React.FC = () => {
         resizeMode="cover"
       >
         <LinearGradient
-          colors={['rgba(0, 0, 0, 0.45)', 'rgba(0, 0, 0, 0.65)']}
+          colors={['rgba(50, 50, 50, 0.45)', 'rgba(30, 30, 30, 0.65)']}
           style={styles.gradientOverlay}
         >
           <SafeAreaView style={styles.container}>
@@ -769,7 +760,7 @@ export const ActivityDetailScreen: React.FC = () => {
 
                   {/* 价格/免费标签 */}
                   <View style={styles.priceTagContainer}>
-                    {mockPriceData.isFree ? (
+                    {isFree ? (
                       <View style={styles.freeTag}>
                         <Text style={styles.freeTagText}>
                           {t('activityDetail.free') || 'Free'}
@@ -778,7 +769,7 @@ export const ActivityDetailScreen: React.FC = () => {
                     ) : (
                       <View style={styles.paidTag}>
                         <Text style={styles.paidTagText}>
-                          ${mockPriceData.price}
+                          {currency === 'USD' ? '$' : ''}{displayPrice}
                         </Text>
                       </View>
                     )}
@@ -826,19 +817,28 @@ export const ActivityDetailScreen: React.FC = () => {
               {/* 地址卡片 */}
               <LocationCard location={activity.location} />
 
-              {/* 组织方信息卡片 */}
+              {/* 组织方信息卡片 - 🆕 显示学校logo和名称 */}
               <View style={styles.hostSection}>
                 <Text style={styles.hostTitle}>
                   {t('activityDetail.host') || 'Host'}
                 </Text>
                 <View style={styles.hostCard}>
-                  <View style={styles.hostAvatar}>
-                    <Text style={styles.hostAvatarText}>
-                      {activity.organizer?.name
-                        ? activity.organizer.name.substring(0, 2).toUpperCase()
-                        : 'ORG'}
-                    </Text>
-                  </View>
+                  {/* 🆕 使用学校logo组件 */}
+                  {activity.organizer?.schoolId ? (
+                    <SchoolLogo
+                      schoolId={activity.organizer.schoolId}
+                      size={48}
+                      showFallback={true}
+                    />
+                  ) : (
+                    <View style={styles.hostAvatar}>
+                      <Text style={styles.hostAvatarText}>
+                        {activity.organizer?.name
+                          ? activity.organizer.name.substring(0, 2).toUpperCase()
+                          : 'ORG'}
+                      </Text>
+                    </View>
+                  )}
                   <View style={styles.hostInfo}>
                     <Text style={styles.hostName}>
                       {activity.organizer?.name || t('activityDetail.official_activity', '官方活动')}
@@ -865,6 +865,7 @@ export const ActivityDetailScreen: React.FC = () => {
                     <RichTextRenderer
                       html={activity.detail}
                       contentWidth={screenWidth - theme.spacing[4] * 4}
+                      darkBackground={true}
                     />
                   ) : (
                     <Text style={styles.detailsPlaceholder}>

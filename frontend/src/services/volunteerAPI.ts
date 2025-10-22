@@ -10,6 +10,8 @@ import { timeService } from '../utils/UnifiedTimeService';
 import { apiCache } from './apiCache';
 import { getApiUrl } from '../utils/environment';
 import { getUserPermissionLevel } from '../types/userPermissions';
+// 导入时区工具
+import { getTimeOffsetFromBeijing } from '../utils/timezoneHelper';
 
 // 保留旧的导入以支持向后兼容（将逐步废弃）
 // 移除旧时间系统，统一使用UnifiedTimeService
@@ -332,8 +334,8 @@ export const getVolunteerHours = async (filters?: {
 
 /**
  * 志愿者签到/签退 - 严格按照接口文档第12条
- * 签到(type=1): userId + type + startTime + operateUserId + operateLegalName
- * 签退(type=2): userId + type + endTime + operateUserId + operateLegalName + id(记录ID) + remark(工作描述)
+ * 签到(type=1): userId + type + startTime + operateUserId + operateLegalName + timeOffset
+ * 签退(type=2): userId + type + endTime + operateUserId + operateLegalName + id(记录ID) + remark(工作描述) + timeOffset
  */
 export const volunteerSignRecord = async (
   userId: number,
@@ -345,6 +347,7 @@ export const volunteerSignRecord = async (
   recordId?: number,         // 签退时需要
   remark?: string,           // 签退时的工作描述（最多100字）
   autoApprovalStatus?: 1,    // 🆕 自动审核状态（1=自动审核通过）
+  timeOffset?: number,       // 🆕 时区偏移（与北京时间的时差，单位：小时）
 ): Promise<APIResponse> => {
   try {
     const token = await getCurrentToken();
@@ -377,10 +380,23 @@ export const volunteerSignRecord = async (
     const form = new URLSearchParams();
     form.append('userId', String(userId));
     form.append('type', String(type));
-    
+
     // 操作用户信息 - 必需参数
     form.append('operateUserId', String(operateUserId));
     form.append('operateLegalName', operateLegalName);
+
+    // 🆕 时区偏移参数（如果提供）
+    if (timeOffset !== undefined) {
+      form.append('timeOffset', String(timeOffset));
+      if (__DEV__) {
+        console.log('⏰ [TIMEZONE] 添加时区偏移参数:', {
+          timeOffset,
+          description: timeOffset === 0 ? '与北京时间相同' :
+                      timeOffset > 0 ? `比北京时间快${timeOffset}小时` :
+                      `比北京时间慢${Math.abs(timeOffset)}小时`
+        });
+      }
+    }
     
     // 签到(type=1)需要 startTime
     if (type === 1) {
@@ -583,7 +599,8 @@ export const smartVolunteerSignOut = async (
   operateLegalName: string,
   endTime: string,
   recordId: number,
-  remark?: string
+  remark?: string,
+  timeOffset?: number // 🆕 时区偏移
 ): Promise<APIResponse> => {
   try {
     console.log('🧠 [SMART-SIGNOUT] ========== 开始智能签退流程 ==========');
@@ -694,7 +711,8 @@ export const smartVolunteerSignOut = async (
       recordId,
       remark,
       autoApprovalStatus: shouldAutoApprove ? 1 : undefined,
-      willAutoApprove: shouldAutoApprove
+      willAutoApprove: shouldAutoApprove,
+      timeOffset
     });
 
     const result = await volunteerSignRecord(
@@ -706,7 +724,8 @@ export const smartVolunteerSignOut = async (
       endTime,
       recordId,
       remark,
-      shouldAutoApprove ? 1 : undefined // 条件满足时传递status=1
+      shouldAutoApprove ? 1 : undefined, // 条件满足时传递status=1
+      timeOffset // 🆕 时区偏移
     );
 
     console.log('📥 [API-RESPONSE] 签退API返回结果:', {
@@ -989,6 +1008,9 @@ export const performVolunteerCheckIn = async (
       throw new Error(errorMsg);
     }
     
+    // 🆕 获取时区偏移
+    const timeOffset = getTimeOffsetFromBeijing();
+
     const result = await volunteerSignRecord(
       userId,
       1, // 签到
@@ -996,7 +1018,10 @@ export const performVolunteerCheckIn = async (
       operateLegalName,
       currentTime, // startTime
       undefined, // endTime
-      undefined  // recordId
+      undefined, // recordId
+      undefined, // remark
+      undefined, // autoApprovalStatus
+      timeOffset // 🆕 时区偏移
     );
 
     if (__DEV__) {
@@ -1337,7 +1362,10 @@ export const performVolunteerCheckOut = async (
 
       // 🕐 统一策略：使用本地时间格式
       const actualTimeString = timeService.formatLocalTime(currentTime);
-      
+
+      // 🆕 获取时区偏移
+      const overtimeTimeOffset = getTimeOffsetFromBeijing();
+
       const overtimeResult = await volunteerSignRecord(
         userId,
         2, // 签退
@@ -1346,7 +1374,9 @@ export const performVolunteerCheckOut = async (
         undefined, // startTime
         actualTimeString, // 使用实际时间，不限制
         lastRecord.id, // recordId - 关键参数
-        remark // 传递工作描述
+        remark, // 传递工作描述
+        undefined, // autoApprovalStatus
+        overtimeTimeOffset // 🆕 时区偏移
       );
       
       // 添加超时提示但允许正常签退
@@ -1369,19 +1399,24 @@ export const performVolunteerCheckOut = async (
     // 🕐 统一策略：使用本地时间格式
     const normalTimeString = timeService.formatLocalTime(currentTime);
 
+    // 🆕 获取时区偏移
+    const timeOffset = getTimeOffsetFromBeijing();
+
     console.log('📅 [VOLUNTEER-CHECKOUT] 生成标准化签退时间:', {
-      formattedTime: normalTimeString
+      formattedTime: normalTimeString,
+      timeOffset
     });
-    
+
     console.log('🚀 [VOLUNTEER-CHECKOUT] 准备调用正常签退API:', {
       userId,
       type: 2,
       operateUserId,
       operateLegalName,
       endTime: normalTimeString,
-      recordId: lastRecord.id
+      recordId: lastRecord.id,
+      timeOffset
     });
-    
+
     // 🆕 使用智能签退，自动判断审核状态
     const result = await smartVolunteerSignOut(
       userId,
@@ -1389,7 +1424,8 @@ export const performVolunteerCheckOut = async (
       operateLegalName,
       normalTimeString, // endTime
       lastRecord.id, // recordId
-      remark // 传递工作描述
+      remark, // 传递工作描述
+      timeOffset // 🆕 时区偏移
     );
     
     console.log('📋 [VOLUNTEER-CHECKOUT] 签退API返回结果:', result);
@@ -1439,7 +1475,10 @@ export const forceResetVolunteerStatus = async (
     const currentTime = new Date();
     const endTime = timeService.formatLocalTime(currentTime);
 
-    console.log('📅 [FORCE-RESET] 使用重置时间:', endTime);
+    // 🆕 获取时区偏移
+    const timeOffset = getTimeOffsetFromBeijing();
+
+    console.log('📅 [FORCE-RESET] 使用重置时间:', endTime, '时区偏移:', timeOffset);
 
     const result = await volunteerSignRecord(
       userId,
@@ -1449,7 +1488,9 @@ export const forceResetVolunteerStatus = async (
       undefined, // startTime
       endTime,
       recordId,
-      `【管理员重置】长期签到状态异常，强制重置（操作人：${operateLegalName}）`
+      `【管理员重置】长期签到状态异常，强制重置（操作人：${operateLegalName}）`,
+      undefined, // autoApprovalStatus
+      timeOffset // 🆕 时区偏移
     );
 
     console.log('📊 [FORCE-RESET] 重置结果:', {
@@ -1638,7 +1679,10 @@ export const autoCheckoutOvertimeUsers = async (
             const autoSignOutTime = new Date(signInTime.getTime() + 12 * 60 * 60 * 1000);
             // 🕐 使用北京时间格式（修复时区混淆）
             const autoTimeString = timeService.formatLocalTime(autoSignOutTime);
-            
+
+            // 🆕 获取时区偏移
+            const autoTimeOffset = getTimeOffsetFromBeijing();
+
             const autoResult = await volunteerSignRecord(
               record.userId,
               2, // 签退
@@ -1646,7 +1690,10 @@ export const autoCheckoutOvertimeUsers = async (
               operateLegalName,
               undefined,
               autoTimeString, // 设置为12小时后的时间
-              record.id
+              record.id,
+              undefined, // remark
+              undefined, // autoApprovalStatus
+              autoTimeOffset // 🆕 时区偏移
             );
             
             if (autoResult.code === 200) {
@@ -1718,6 +1765,9 @@ export const performTimeEntry = async (
       remark
     });
 
+    // 🆕 获取时区偏移
+    const timeOffset = getTimeOffsetFromBeijing();
+
     // 第一步：调用签到接口（type=1）
     const checkInResult = await volunteerSignRecord(
       userId,
@@ -1726,7 +1776,10 @@ export const performTimeEntry = async (
       operateLegalName,
       startTime, // 提供开始时间
       undefined,
-      undefined
+      undefined,
+      undefined, // remark
+      undefined, // autoApprovalStatus
+      timeOffset // 🆕 时区偏移
     );
 
     if (checkInResult.code !== 200) {
@@ -1815,7 +1868,8 @@ export const performTimeEntry = async (
       endTime, // 提供结束时间
       recordId, // 使用第一步返回的记录ID
       remark, // 包含【补录】前缀的工作描述
-      shouldAutoApprove ? 1 : undefined // 符合条件时自动审核通过
+      shouldAutoApprove ? 1 : undefined, // 符合条件时自动审核通过
+      timeOffset // 🆕 时区偏移
     );
 
     if (checkOutResult.code !== 200) {

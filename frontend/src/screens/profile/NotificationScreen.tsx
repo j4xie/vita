@@ -75,7 +75,8 @@ const SettingRow: React.FC<SettingRowProps> = ({
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
-      paddingHorizontal: 16,
+      paddingLeft: 16,
+      paddingRight: hasSwitch ? 24 : 16,
       paddingVertical: 12,
       minHeight: 54,
       borderBottomWidth: Platform.select({
@@ -116,6 +117,8 @@ const SettingRow: React.FC<SettingRowProps> = ({
     settingRowRight: {
       flexDirection: 'row',
       alignItems: 'center',
+      flexShrink: 0,
+      minWidth: hasSwitch ? 51 : undefined,
     },
     settingValue: {
       fontSize: 15,
@@ -180,9 +183,9 @@ const SettingRow: React.FC<SettingRowProps> = ({
           <Switch
             value={switchValue}
             onValueChange={handleSwitchChange}
-            trackColor={{ 
-              false: isDarkMode ? '#39393d' : '#767577', 
-              true: theme.colors.primary 
+            trackColor={{
+              false: isDarkMode ? '#39393d' : '#767577',
+              true: theme.colors.primary
             }}
             thumbColor={Platform.OS === 'ios' ? undefined : '#ffffff'}
             ios_backgroundColor={isDarkMode ? '#39393d' : '#767577'}

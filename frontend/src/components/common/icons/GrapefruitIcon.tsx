@@ -229,12 +229,12 @@ export const GrapefruitIcon: React.FC<GrapefruitIconProps> = ({
         )}
       </AnimatedSvg>
 
-      {/* AI标识 - 移动到左边，隐藏时可见 */}
+      {/* AI标识 - 移动到右边，半隐藏时可见 */}
       <View
         style={{
           position: 'absolute',
           bottom: 8,
-          left: 8,
+          right: 8, // 改为右侧定位
           backgroundColor: 'rgba(255, 255, 255, 0.97)',
           borderRadius: 10,
           paddingHorizontal: 6,

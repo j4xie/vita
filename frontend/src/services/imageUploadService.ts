@@ -24,18 +24,22 @@ interface UploadResult {
  */
 export const uploadAvatar = async (imageUri: string, userId: number): Promise<UploadResult> => {
   try {
+    console.log('🚀 [Upload] Starting avatar upload:', { imageUri, userId });
+
     // 创建FormData用于文件上传
     const formData = new FormData();
-    
-    // 生成唯一文件名
-    const fileName = `avatars/user_${userId}_${Date.now()}.jpg`;
-    
-    // 根据平台处理图片文件
+
+    // ✅ 修复：React Native文件上传正确格式
+    // - 保留完整URI（包括file://前缀）
+    // - 使用简单文件名（不包含路径）
+    // - type必须精确匹配MIME类型
     const imageFile = {
-      uri: Platform.OS === 'ios' ? imageUri.replace('file://', '') : imageUri,
-      type: 'image/jpeg',
-      name: fileName,
+      uri: imageUri,  // ✅ 保持完整URI，React Native需要file://前缀
+      type: 'image/jpeg',  // MIME类型
+      name: 'avatar.jpg',  // ✅ 简单文件名，后端会处理路径
     } as any;
+
+    console.log('📦 [Upload] FormData file object:', imageFile);
 
     // 根据API文档，只需要传递file参数
     formData.append('file', imageFile);
@@ -47,34 +51,45 @@ export const uploadAvatar = async (imageUri: string, userId: number): Promise<Up
     // - 参数: multipart/form-data 包含 file (MultipartFile)
     // - 返回: {code: 200, data: {url: "文件URL"}}
 
-    const response = await fetch(`${getApiUrl()}/file/upload`, {
+    const apiUrl = `${getApiUrl()}/file/upload`;
+    console.log('🌐 [Upload] Uploading to:', apiUrl);
+
+    const response = await fetch(apiUrl, {
       method: 'POST',
       body: formData,
-      // 不要手动设置Content-Type，让浏览器自动设置multipart/form-data的boundary
+      // ⚠️ 重要：不要手动设置Content-Type
+      // React Native会自动设置正确的multipart/form-data boundary
     });
 
+    console.log('📡 [Upload] Response status:', response.status);
+
     if (!response.ok) {
-      throw new Error(`Upload failed: ${response.status}`);
+      const errorText = await response.text();
+      console.error('❌ [Upload] HTTP error:', { status: response.status, body: errorText });
+      throw new Error(`Upload failed with status ${response.status}: ${errorText}`);
     }
 
     const result = await response.json();
-    
-    if (result.code === 200) {
+    console.log('✅ [Upload] API response:', result);
+
+    if (result.code === 200 && result.data?.url) {
+      console.log('🎉 [Upload] Upload successful! URL:', result.data.url);
       return {
         success: true,
         url: result.data.url,
       };
     } else {
+      console.error('❌ [Upload] API returned error:', result);
       return {
         success: false,
-        error: result.msg || 'Upload failed',
+        error: result.msg || 'Upload failed - no URL returned',
       };
     }
   } catch (error) {
-    console.error('Avatar upload error:', error);
+    console.error('💥 [Upload] Exception during upload:', error);
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Upload failed',
+      error: error instanceof Error ? error.message : 'Upload failed with unknown error',
     };
   }
 };

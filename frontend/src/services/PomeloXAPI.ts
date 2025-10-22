@@ -924,19 +924,6 @@ class PomeloXAPI {
   }
 
   /**
-   * 志愿者签到签退
-   */
-  async volunteerSignRecord(data: {
-    userId: number;
-    type: number;
-  }): Promise<ApiResponse> {
-    return this.request('/app/hour/signRecord', {
-      method: 'POST',
-      body: JSON.stringify(data),
-    });
-  }
-
-  /**
    * 查看志愿者最后签到记录
    */
   async getLastVolunteerRecord(userId: number): Promise<ApiResponse<{
