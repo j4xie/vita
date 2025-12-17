@@ -1,5 +1,5 @@
 # 统一 www 到不带 www（SEO 建议）
-https://www.americanpromotioncompany.com/* https://americanpromotioncompany.com/:splat 301
+https://www.pomelo-x.com/* https://pomelo-x.com/:splat 301
 
 # 英文页面目录无斜杠自动加斜杠
 /en   /en/   301

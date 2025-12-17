@@ -55,6 +55,7 @@ export const ForgotPasswordScreen: React.FC = () => {
   const [phone, setPhone] = useState('');
   const [areaCode, setAreaCode] = useState('+86'); // 默认中国区号
   const [verificationCode, setVerificationCode] = useState('');
+  const [bizId, setBizId] = useState(''); // 保存发送验证码返回的bizId
   const [loading, setLoading] = useState(false);
   const [verifyLoading, setVerifyLoading] = useState(false);
   const [codeSent, setCodeSent] = useState(false);
@@ -189,9 +190,10 @@ export const ForgotPasswordScreen: React.FC = () => {
       });
 
       if (String(result.code) === "OK" && (result as any).bizId) {
-        console.log('✅ [App-ForgotPassword] 验证码发送成功');
+        console.log('✅ [App-ForgotPassword] 验证码发送成功, bizId:', (result as any).bizId);
 
         if (isMounted.current) {
+          setBizId((result as any).bizId); // 保存bizId用于后续重置密码
           setCodeSent(true);
           startCountdown();
         }
@@ -263,7 +265,8 @@ export const ForgotPasswordScreen: React.FC = () => {
       navigation.navigate('SetNewPassword', {
         phone: phone || '',
         areaCode: apiAreaCode || '',
-        verificationCode: verificationCode || ''
+        verificationCode: verificationCode || '',
+        bizId: bizId || '', // 传递真实的bizId
       });
 
       // 触觉反馈

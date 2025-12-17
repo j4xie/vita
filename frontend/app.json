@@ -66,7 +66,9 @@
         "NSCameraUsageDescription": "This app needs access to your camera to let you take photos for your profile.",
         "NSLocationWhenInUseUsageDescription": "This app needs access to your location to automatically detect your region for appropriate privacy policy content.",
         "NSLocationUsageDescription": "This app needs access to your location to automatically detect your region for appropriate privacy policy content.",
-        "NSLocationAlwaysAndWhenInUseUsageDescription": "This app needs access to your location to automatically detect your region for appropriate privacy policy content."
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "This app needs access to your location to automatically detect your region for appropriate privacy policy content.",
+        "NSMicrophoneUsageDescription": "This app needs access to your microphone for voice input in the AI form filling feature.",
+        "NSSpeechRecognitionUsageDescription": "This app uses speech recognition to convert your voice to text for filling forms."
       }
     },
     "android": {

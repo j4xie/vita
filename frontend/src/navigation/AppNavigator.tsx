@@ -24,9 +24,15 @@ import { shouldShowTabBar, mustHideTabBar } from '../config/tabBarConfig';
 import { ActivityListScreen } from '../screens/activities/ActivityListScreen';
 import { ActivityDetailScreen } from '../screens/activities/ActivityDetailScreen';
 import { ActivityRegistrationFormScreen } from '../screens/activities/ActivityRegistrationFormScreen';
+import { AIFormFillerScreen } from '../screens/activities/AIFormFillerScreen';
 import { PointsMallHomeScreen } from '../screens/rewards/PointsMallHomeScreen';
 import { PointsMallListScreen } from '../screens/rewards/PointsMallListScreen';
 import { PointsMallDetailScreen } from '../screens/rewards/PointsMallDetailScreen';
+import { OrderConfirmScreen } from '../screens/rewards/OrderConfirmScreen';
+import { PaymentResultScreen } from '../screens/rewards/PaymentResultScreen';
+import { AddressListScreen } from '../screens/rewards/AddressListScreen';
+import { AddressEditScreen } from '../screens/rewards/AddressEditScreen';
+import { AddressSelectScreen } from '../screens/rewards/AddressSelectScreen';
 import { LoginScreen } from '../screens/auth/LoginScreen';
 import { ForgotPasswordScreen } from '../screens/auth/ForgotPasswordScreen';
 import { SetNewPasswordScreen } from '../screens/auth/SetNewPasswordScreen';
@@ -292,12 +298,46 @@ const RewardsNavigator = () => {
           headerShown: false,
         }}
       />
+      <RewardsStack.Screen
+        name="OrderConfirm"
+        component={OrderConfirmScreen}
+        options={{
+          headerShown: false,
+        }}
+      />
+      <RewardsStack.Screen
+        name="PaymentResult"
+        component={PaymentResultScreen}
+        options={{
+          headerShown: false,
+        }}
+      />
+      {/* 地址管理相关页面 */}
+      <RewardsStack.Screen
+        name="AddressList"
+        component={AddressListScreen}
+        options={{
+          headerShown: false,
+        }}
+      />
+      <RewardsStack.Screen
+        name="AddressEdit"
+        component={AddressEditScreen}
+        options={{
+          headerShown: false,
+        }}
+      />
+      <RewardsStack.Screen
+        name="AddressSelect"
+        component={AddressSelectScreen}
+        options={{
+          headerShown: false,
+        }}
+      />
       {/* TODO: 添加更多积分商城相关页面
         - MyPoints (我的积分)
         - ExchangeOrders (兑换记录)
         - Favorites (我的收藏)
-        - Checkout (确认兑换)
-        - ShippingAddress (收货地址)
         - MyOrders (我的订单)
       */}
     </RewardsStack.Navigator>
@@ -389,6 +429,14 @@ const HomeNavigator = () => {
           ...pageTransitions.slideFromRight,
         }}
       />
+      <MainStack.Screen
+        name="AIFormFiller"
+        component={AIFormFillerScreen}
+        options={{
+          ...pageTransitions.slideFromRight,
+          headerShown: false,
+        }}
+      />
     </MainStack.Navigator>
   );
 };
@@ -465,11 +513,26 @@ const ProfileNavigator = () => {
         }}
       />
       */}
-      <ProfileStack.Screen 
-        name="Notifications" 
+      <ProfileStack.Screen
+        name="Notifications"
         component={NotificationScreen}
         options={{
           title: t('navigation.headers.notifications'),
+        }}
+      />
+      {/* 地址管理 - 从个人中心访问 */}
+      <ProfileStack.Screen
+        name="AddressList"
+        component={AddressListScreen}
+        options={{
+          headerShown: false,
+        }}
+      />
+      <ProfileStack.Screen
+        name="AddressEdit"
+        component={AddressEditScreen}
+        options={{
+          headerShown: false,
         }}
       />
       <ProfileStack.Screen 

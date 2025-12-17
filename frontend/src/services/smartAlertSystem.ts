@@ -109,14 +109,14 @@ class SmartAlertSystem {
     try {
       const activityDate = new Date(activity.startTime || activity.createdAt);
       const reminderTime = new Date(activityDate.getTime() - 60 * 60 * 1000); // 提前1小时
-      
+
       // 只安排未来的提醒
       if (reminderTime <= new Date()) {
         return;
       }
 
       const alertId = `activity_reminder_${activity.id}`;
-      
+
       const scheduledAlert: ScheduledAlert = {
         id: alertId,
         title: '🎯 活动即将开始！',
@@ -240,7 +240,7 @@ class SmartAlertSystem {
       if (saved) {
         const alerts = JSON.parse(saved);
         // 过滤过期的提醒
-        this.scheduledAlerts = alerts.filter((alert: any) => 
+        this.scheduledAlerts = alerts.filter((alert: any) =>
           new Date(alert.scheduledTime) > new Date()
         );
         await this.saveScheduledAlerts();
@@ -339,7 +339,7 @@ class SmartAlertSystem {
     // 清空列表
     this.scheduledAlerts = [];
     await this.saveScheduledAlerts();
-    
+
     console.log('✅ 已清除所有定时提醒');
   }
 
@@ -361,22 +361,23 @@ export const smartAlertSystem = new SmartAlertSystem();
 // === 便捷调用方法 ===
 
 // 活动报名成功提醒
-export const notifyRegistrationSuccess = async (activityName: string) => {
+export const notifyRegistrationSuccess = async (activityName: string | number) => {
+  const name = typeof activityName === 'number' ? '活动' : activityName;
   await smartAlertSystem.showSuccessAlert(
     '🎉 报名成功！',
-    `您已成功报名「${activityName}」，期待您的参与！`
+    `您已成功报名「${name}」，期待您的参与！`
   );
 };
 
 // 🌍 志愿者签到成功提醒（支持国际化）
 export const notifyVolunteerCheckIn = async (location?: string) => {
   const isEnglish = i18n.language === 'en-US';
-  
+
   const title = isEnglish ? '✅ Volunteer Check-in Successful' : '✅ 志愿者签到成功';
-  const message = isEnglish 
+  const message = isEnglish
     ? `Check-in successful${location ? `, location: ${location}` : ''}, keep up the good work!`
     : `签到成功${location ? `，地点：${location}` : ''}，加油！`;
-  
+
   await smartAlertSystem.showSuccessAlert(title, message);
 };
 
@@ -385,18 +386,18 @@ export const notifyVolunteerCheckOut = async (duration: string) => {
   // 🚀 安全检查 - 支持中英文时长格式
   const isEnglish = i18n.language === 'en-US';
   let safeDuration;
-  
+
   if (!duration || duration === 'NaN分钟' || duration === 'NaN minutes') {
     safeDuration = isEnglish ? 'unknown duration' : '未知时长';
   } else {
     safeDuration = duration;
   }
-  
+
   const title = isEnglish ? '✅ Volunteer Check-out Successful' : '✅ 志愿者签退成功';
-  const message = isEnglish 
+  const message = isEnglish
     ? `Volunteer service duration: ${safeDuration}, thank you for your contribution!`
     : `本次志愿服务时长：${safeDuration}，感谢您的付出！`;
-  
+
   await smartAlertSystem.showSuccessAlert(title, message);
 };
 
@@ -409,7 +410,7 @@ export const scheduleActivityReminder = (activity: any) =>
 
 // 获取和保存设置
 export const getAlertSettings = () => smartAlertSystem.getSettings();
-export const saveAlertSettings = (settings: Partial<AlertSettings>) => 
+export const saveAlertSettings = (settings: Partial<AlertSettings>) =>
   smartAlertSystem.saveSettings(settings);
 
 // 初始化

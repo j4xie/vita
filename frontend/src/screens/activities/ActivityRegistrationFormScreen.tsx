@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   View,
   Text,
@@ -19,7 +19,11 @@ import { theme } from '../../theme';
 import { useUser } from '../../context/UserContext';
 import { pomeloXAPI } from '../../services/PomeloXAPI';
 import { useTabBarVerification } from '../../hooks/useTabBarStateGuard';
+import { DynamicFormRenderer } from '../../components/activity/DynamicFormRenderer';
 import { LiquidSuccessModal } from '../../components/modals/LiquidSuccessModal';
+import { FormModeSelector } from '../../components/activity/FormModeSelector';
+import formAutoFill from '../../utils/formAutoFill';
+import { FormField } from '../../hooks/useAIFormFilling';
 
 interface RegistrationFormData {
   legalName: string;
@@ -29,6 +33,8 @@ interface RegistrationFormData {
   schoolName: string;
 }
 
+// ... (keep usage of RegisterFormData and other existing logic as fallback)
+
 export const ActivityRegistrationFormScreen: React.FC = () => {
   const { t } = useTranslation();
   const navigation = useNavigation<any>();
@@ -36,6 +42,10 @@ export const ActivityRegistrationFormScreen: React.FC = () => {
   const { user } = useUser();
   const activity = route.params?.activity;
 
+  // Mode Selection State
+  const [modeSelected, setModeSelected] = useState(false);
+
+  // Static Form State
   const [formData, setFormData] = useState<RegistrationFormData>({
     legalName: '',
     nickName: '',
@@ -46,6 +56,26 @@ export const ActivityRegistrationFormScreen: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Partial<RegistrationFormData>>({});
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+
+  // Parse form schema from modelContent
+  const formSchema: FormField[] = useMemo(() => {
+    if (!activity?.modelContent) return [];
+    try {
+      const parsed = JSON.parse(activity.modelContent);
+      return parsed.fields || [];
+    } catch {
+      return [];
+    }
+  }, [activity?.modelContent]);
+
+  // Calculate auto-fill data and recommendation
+  const { remainingFields, autoFilledLabels } = useMemo(() => {
+    return formAutoFill.getAutoFillData(formSchema, user);
+  }, [formSchema, user]);
+
+  const { recommend: recommendAI } = useMemo(() => {
+    return formAutoFill.shouldRecommendAI(formSchema, user);
+  }, [formSchema, user]);
 
   // 🛡️ TabBar状态守护：确保报名表单页面TabBar始终隐藏
   useTabBarVerification('ActivityRegistrationForm', { debugLogs: false });
@@ -63,7 +93,13 @@ export const ActivityRegistrationFormScreen: React.FC = () => {
     }
   }, [user]);
 
+  // Dynamic Form Logic
+  const hasDynamicForm = !!activity?.modelContent;
+
   const validateForm = (): boolean => {
+    // Only validate static form if dynamic form is NOT present
+    if (hasDynamicForm) return true;
+
     const newErrors: Partial<RegistrationFormData> = {};
 
     if (!formData.legalName.trim()) {
@@ -85,122 +121,103 @@ export const ActivityRegistrationFormScreen: React.FC = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = async () => {
+  const handleStaticSubmit = async () => {
     if (!validateForm()) return;
 
     setLoading(true);
     try {
-      // 🔧 修复用户ID获取逻辑
       if (!user || !user.id) {
-        console.error('❌ [报名] 用户未登录或无有效ID:', { user: !!user, userId: user?.id });
-        Alert.alert(
-          t('activities.registration.failed_title'),
-          '用户身份验证失败，请重新登录'
-        );
+        Alert.alert(t('activities.registration.failed_title'), '用户身份验证失败，请重新登录');
         return;
       }
 
       const activityIdInt = parseInt(activity.id);
       const userIdInt = parseInt(user.id);
-      
-      // 验证解析结果
+
       if (isNaN(activityIdInt) || isNaN(userIdInt) || userIdInt <= 0) {
-        console.error('❌ [报名] ID解析失败:', { 
-          activityId: activity.id, 
-          activityIdInt, 
-          userId: user.id, 
-          userIdInt 
-        });
-        Alert.alert(
-          t('activities.registration.failed_title'),
-          '参数解析失败，请重试'
-        );
+        Alert.alert(t('activities.registration.failed_title'), '参数解析失败，请重试');
         return;
       }
-      
-      console.log('🚀 [报名] 开始调用后端API:', {
-        activityId: activityIdInt,
-        userId: userIdInt,
-        activityTitle: activity.title,
-        apiUrl: `/app/activity/enroll?activityId=${activityIdInt}&userId=${userIdInt}`,
-        timestamp: new Date().toISOString(),
-        userInfo: {
-          userName: user.userName,
-          legalName: user.legalName,
-          formData: {
-            legalName: formData.legalName,
-            nickName: formData.nickName,
-            phone: formData.phone,
-            email: formData.email
-          }
-        }
-      });
 
-      // 调用现有的报名接口
       const result = await pomeloXAPI.enrollActivity(activityIdInt, userIdInt);
-      
-      console.log('✅ [报名] 后端API响应:', {
-        result,
-        success: result.code === 200 && result.data > 0,
-        code: result.code,
-        data: result.data,
-        hasData: !!result.data,
-        message: result.msg,
-        timestamp: new Date().toISOString()
-      });
 
-      // 🔧 根据API文档修复：只有当 code=200 且 data>0 时才算成功
       if (result.code === 200 && result.data != null && result.data > 0) {
-        console.log('🎉 [报名] 报名成功，显示成功提示');
-        
-        // 显示液态玻璃成功提示
         setShowSuccessModal(true);
       } else {
-        console.error('❌ [报名] 报名失败:', {
-          code: result.code,
-          message: result.msg,
-          data: result.data
-        });
-        
-        Alert.alert(
-          t('activities.registration.failed_title'),
-          result.msg || t('activities.registration.failed_message')
-        );
+        Alert.alert(t('activities.registration.failed_title'), result.msg || t('activities.registration.failed_message'));
       }
     } catch (error: any) {
-      console.error('💥 [报名] API调用异常:', {
-        error: error.message || error,
-        stack: error.stack,
-        timestamp: new Date().toISOString()
-      });
-      
-      // 检查是否是已存在的错误（从错误消息中判断）
       const isAlreadyEnrolled = error.message && error.message.includes('报名信息已存在');
-      
-      Alert.alert(
-        t('activities.registration.failed_title'),
-        isAlreadyEnrolled ? error.message.replace('活动报名失败: ', '') : t('common.network_error')
-      );
+      Alert.alert(t('activities.registration.failed_title'), isAlreadyEnrolled ? error.message.replace('活动报名失败: ', '') : t('common.network_error'));
     } finally {
       setLoading(false);
     }
   };
 
+
+  const handleDynamicSubmit = async (dynamicFormData: any) => {
+    setLoading(true);
+    try {
+      if (!user || !user.id) {
+        Alert.alert(t('activities.registration.failed_title'), '用户身份验证失败，请重新登录');
+        return;
+      }
+
+      const activityIdInt = parseInt(activity.id);
+      const userIdInt = parseInt(user.id);
+
+      if (isNaN(activityIdInt) || isNaN(userIdInt) || userIdInt <= 0) {
+        Alert.alert(t('activities.registration.failed_title'), '参数解析失败，请重试');
+        return;
+      }
+
+      const result = await pomeloXAPI.submitActivityRegistration(activityIdInt, userIdInt, dynamicFormData);
+
+      if (result.code === 200 && result.data != null && Number(result.data) > 0) {
+        setShowSuccessModal(true);
+      } else {
+        Alert.alert(t('activities.registration.failed_title'), result.msg || t('activities.registration.failed_message'));
+      }
+    } catch (error: any) {
+      Alert.alert(t('activities.registration.failed_title'), error.message || t('common.upload_failed'));
+    } finally {
+      setLoading(false);
+    }
+  }
+
   const handleBack = () => {
-    navigation.goBack();
+    if (modeSelected && hasDynamicForm) {
+      // If mode was selected, go back to mode selection
+      setModeSelected(false);
+    } else {
+      navigation.goBack();
+    }
+  };
+
+  // Handle AI mode selection - navigate to AIFormFillerScreen
+  const handleSelectAIMode = () => {
+    navigation.navigate('AIFormFiller', {
+      activity,
+      formSchema,
+    });
+  };
+
+  // Handle traditional mode selection - show the form
+  const handleSelectTraditionalMode = () => {
+    setModeSelected(true);
   };
 
   const handleSuccessModalClose = () => {
     setShowSuccessModal(false);
-    
+
     // ✅ 发送报名成功事件，使用统一的事件格式
     console.log('📡 [报名] 发送activityRegistrationChanged事件:', { activityId: activity.id });
-    DeviceEventEmitter.emit('activityRegistrationChanged', { 
+    DeviceEventEmitter.emit('activityRegistrationChanged', {
       activityId: activity.id,
       action: 'register',
       timestamp: Date.now()
     });
-    
+
     // ✅ 返回活动详情页面
     console.log('🔙 [报名] 返回活动详情页面');
     navigation.goBack();
@@ -237,105 +254,130 @@ export const ActivityRegistrationFormScreen: React.FC = () => {
           </View>
         </View>
 
-        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-          <ScrollView 
-            style={styles.scrollView} 
-            showsVerticalScrollIndicator={false}
-            keyboardShouldPersistTaps="handled"
-            keyboardDismissMode="on-drag"
-          >
-          <View style={styles.form}>
-            <Text style={styles.formTitle}>{t('activities.registration.personal_info')}</Text>
-            <Text style={styles.formSubtitle}>{t('activities.registration.form_subtitle')}</Text>
+        {hasDynamicForm && !modeSelected ? (
+          <FormModeSelector
+            onSelectAI={handleSelectAIMode}
+            onSelectTraditional={handleSelectTraditionalMode}
+            recommendAI={recommendAI}
+            autoFilledCount={autoFilledLabels.length}
+            remainingCount={remainingFields.length}
+          />
+        ) : (
+          <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+            <ScrollView
+              style={styles.scrollView}
+              showsVerticalScrollIndicator={false}
+              keyboardShouldPersistTaps="handled"
+              keyboardDismissMode="on-drag"
+            >
+              <View style={styles.form}>
+                <Text style={styles.formTitle}>
+                  {t('activities.registration.registration_info') || '报名信息'}
+                </Text>
+                <Text style={styles.formSubtitle}>{t('activities.registration.form_subtitle')}</Text>
 
-            {/* Legal Name */}
-            <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>{t('auth.register.form.legal_name_label')}</Text>
-              <TextInput
-                style={[styles.input, errors.legalName && styles.inputError]}
-                value={formData.legalName}
-                onChangeText={(value) => updateFormField('legalName', value)}
-                placeholder={t('auth.register.form.legal_name_placeholder')}
-                placeholderTextColor={theme.colors.text.disabled}
-              />
-              {errors.legalName && <Text style={styles.errorText}>{errors.legalName}</Text>}
-            </View>
+                {hasDynamicForm ? (
+                  <DynamicFormRenderer
+                    modelContent={activity.modelContent}
+                    onSubmit={handleDynamicSubmit}
+                    submitLabel={t('activities.registration.submit_button')}
+                    loading={loading}
+                  />
+                ) : (
+                <>
+                  {/* Legal Name */}
+                  <View style={styles.inputGroup}>
+                    <Text style={styles.inputLabel}>{t('auth.register.form.legal_name_label')}</Text>
+                    <TextInput
+                      style={[styles.input, errors.legalName && styles.inputError]}
+                      value={formData.legalName}
+                      onChangeText={(value) => updateFormField('legalName', value)}
+                      placeholder={t('auth.register.form.legal_name_placeholder')}
+                      placeholderTextColor={theme.colors.text.disabled}
+                    />
+                    {errors.legalName && <Text style={styles.errorText}>{errors.legalName}</Text>}
+                  </View>
 
-            {/* Nickname */}
-            <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>{t('auth.register.form.nickname_label')}</Text>
-              <TextInput
-                style={[styles.input, errors.nickName && styles.inputError]}
-                value={formData.nickName}
-                onChangeText={(value) => updateFormField('nickName', value)}
-                placeholder={t('auth.register.form.nickname_placeholder')}
-                placeholderTextColor={theme.colors.text.disabled}
-              />
-              {errors.nickName && <Text style={styles.errorText}>{errors.nickName}</Text>}
-            </View>
+                  {/* Nickname */}
+                  <View style={styles.inputGroup}>
+                    <Text style={styles.inputLabel}>{t('auth.register.form.nickname_label')}</Text>
+                    <TextInput
+                      style={[styles.input, errors.nickName && styles.inputError]}
+                      value={formData.nickName}
+                      onChangeText={(value) => updateFormField('nickName', value)}
+                      placeholder={t('auth.register.form.nickname_placeholder')}
+                      placeholderTextColor={theme.colors.text.disabled}
+                    />
+                    {errors.nickName && <Text style={styles.errorText}>{errors.nickName}</Text>}
+                  </View>
 
-            {/* Phone */}
-            <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>{t('auth.register.form.phone_label')}</Text>
-              <TextInput
-                style={[styles.input, errors.phone && styles.inputError]}
-                value={formData.phone}
-                onChangeText={(value) => updateFormField('phone', value)}
-                placeholder={t('auth.register.form.phone_placeholder')}
-                placeholderTextColor={theme.colors.text.disabled}
-                keyboardType="phone-pad"
-              />
-              {errors.phone && <Text style={styles.errorText}>{errors.phone}</Text>}
-            </View>
+                  {/* Phone */}
+                  <View style={styles.inputGroup}>
+                    <Text style={styles.inputLabel}>{t('auth.register.form.phone_label')}</Text>
+                    <TextInput
+                      style={[styles.input, errors.phone && styles.inputError]}
+                      value={formData.phone}
+                      onChangeText={(value) => updateFormField('phone', value)}
+                      placeholder={t('auth.register.form.phone_placeholder')}
+                      placeholderTextColor={theme.colors.text.disabled}
+                      keyboardType="phone-pad"
+                    />
+                    {errors.phone && <Text style={styles.errorText}>{errors.phone}</Text>}
+                  </View>
 
-            {/* Email */}
-            <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>{t('auth.register.form.email_label')}</Text>
-              <TextInput
-                style={[styles.input, errors.email && styles.inputError]}
-                value={formData.email}
-                onChangeText={(value) => updateFormField('email', value)}
-                placeholder={t('auth.register.form.email_placeholder')}
-                placeholderTextColor={theme.colors.text.disabled}
-                keyboardType="email-address"
-                autoCapitalize="none"
-              />
-              {errors.email && <Text style={styles.errorText}>{errors.email}</Text>}
-            </View>
+                  {/* Email */}
+                  <View style={styles.inputGroup}>
+                    <Text style={styles.inputLabel}>{t('auth.register.form.email_label')}</Text>
+                    <TextInput
+                      style={[styles.input, errors.email && styles.inputError]}
+                      value={formData.email}
+                      onChangeText={(value) => updateFormField('email', value)}
+                      placeholder={t('auth.register.form.email_placeholder')}
+                      placeholderTextColor={theme.colors.text.disabled}
+                      keyboardType="email-address"
+                      autoCapitalize="none"
+                    />
+                    {errors.email && <Text style={styles.errorText}>{errors.email}</Text>}
+                  </View>
 
-            {/* School */}
-            <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>{t('auth.register.form.school_label')}</Text>
-              <TextInput
-                style={[styles.input, errors.schoolName && styles.inputError]}
-                value={formData.schoolName}
-                onChangeText={(value) => updateFormField('schoolName', value)}
-                placeholder={t('auth.register.form.school_placeholder')}
-                placeholderTextColor={theme.colors.text.disabled}
-                editable={false}
-              />
-            </View>
+                  {/* School */}
+                  <View style={styles.inputGroup}>
+                    <Text style={styles.inputLabel}>{t('auth.register.form.school_label')}</Text>
+                    <TextInput
+                      style={[styles.input, errors.schoolName && styles.inputError]}
+                      value={formData.schoolName}
+                      onChangeText={(value) => updateFormField('schoolName', value)}
+                      placeholder={t('auth.register.form.school_placeholder')}
+                      placeholderTextColor={theme.colors.text.disabled}
+                      editable={false}
+                    />
+                  </View>
 
-            <Text style={styles.note}>
-              {t('activities.registration.info_note')}
-            </Text>
-          </View>
-          </ScrollView>
-        </TouchableWithoutFeedback>
+                  <Text style={styles.note}>
+                    {t('activities.registration.info_note')}
+                  </Text>
+                </>
+              )}
+              </View>
+            </ScrollView>
+          </TouchableWithoutFeedback>
+        )}
       </View>
 
-      {/* Fixed Submit Button */}
-      <View style={styles.fixedBottomContainer}>
+      {/* Fixed Submit Button - Only show generic submit if Static Form */}
+      {!hasDynamicForm && (
+        <View style={styles.fixedBottomContainer}>
           <TouchableOpacity
             style={[styles.submitButton, loading && styles.submitButtonDisabled]}
-            onPress={handleSubmit}
+            onPress={handleStaticSubmit}
             disabled={loading}
           >
             <Text style={styles.submitButtonText}>
               {loading ? t('common.loading') : t('activities.registration.submit_button')}
             </Text>
           </TouchableOpacity>
-      </View>
+        </View>
+      )}
 
       {/* 液态玻璃成功提示模态框 */}
       <LiquidSuccessModal

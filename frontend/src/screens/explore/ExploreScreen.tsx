@@ -5,7 +5,6 @@ import {
   ScrollView,
   TouchableOpacity,
   StyleSheet,
-  SafeAreaView,
   TextInput,
   Image,
   Dimensions,
@@ -13,6 +12,7 @@ import {
   DeviceEventEmitter,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTranslation } from 'react-i18next';
@@ -40,7 +40,7 @@ export const ExploreScreen: React.FC = () => {
   const [activities, setActivities] = useState<FrontendActivity[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchLoading, setSearchLoading] = useState(false);
-  
+
   // 功能未实现提示
   const { showFeature, FeatureModal } = useUnimplementedFeature();
 
@@ -71,12 +71,12 @@ export const ExploreScreen: React.FC = () => {
     console.log('🎧 注册活动状态变化事件监听器');
     const subscription = DeviceEventEmitter.addListener('activityRegistrationChanged', (eventData: any) => {
       console.log('🔄 [EVENT] 收到活动状态变化事件:', eventData);
-      
+
       // 使用防抖机制避免频繁刷新
       if (refreshTimeoutRef.current) {
         clearTimeout(refreshTimeoutRef.current);
       }
-      
+
       refreshTimeoutRef.current = setTimeout(() => {
         console.log('🔄 [REFRESH] 刷新探索页面活动数据（状态变化触发）');
         loadActivities(searchText.trim() || undefined, true); // 强制刷新获取最新状态
@@ -95,7 +95,7 @@ export const ExploreScreen: React.FC = () => {
   // 搜索防抖效果
   useEffect(() => {
     console.log('🔍 [SEARCH-EFFECT] 搜索文本变化:', { searchText, trimmed: searchText.trim() });
-    
+
     const timeoutId = setTimeout(() => {
       if (searchText.trim()) {
         console.log('🔍 [SEARCH-EFFECT] 执行搜索:', searchText.trim());
@@ -228,59 +228,59 @@ export const ExploreScreen: React.FC = () => {
 
     const query = searchText.toLowerCase().trim();
     console.log('🔍 开始前端过滤:', { searchText, query, totalActivities: activities.length });
-    
+
     const filtered = activities.filter(activity => {
       const title = activity.title.toLowerCase();
       const location = activity.location.toLowerCase();
       const matches = title.includes(query) || location.includes(query);
-      
-      console.log(`🔍 活动过滤:`, { 
-        title: activity.title, 
-        location: activity.location, 
-        matches 
+
+      console.log(`🔍 活动过滤:`, {
+        title: activity.title,
+        location: activity.location,
+        matches
       });
-      
+
       return matches;
     });
-    
+
     console.log('🔍 过滤结果:', {
       searchQuery: query,
       originalCount: activities.length,
       filteredCount: filtered.length,
       filteredActivities: filtered.map(a => a.title)
     });
-    
+
     return filtered;
   };
 
   // 排序搜索结果
   const getSortedActivities = (): FrontendActivity[] => {
     const filtered = getFilteredActivities();
-    
+
     if (!searchText.trim()) {
       // 无搜索时按时间排序（即将开始的优先）
       return filtered.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
     }
 
     const query = searchText.toLowerCase().trim();
-    
+
     // 有搜索时按相关性排序
     return filtered.sort((a, b) => {
       const aTitle = a.title.toLowerCase();
       const bTitle = b.title.toLowerCase();
-      
+
       // 完全匹配的优先
       const aExactMatch = aTitle === query;
       const bExactMatch = bTitle === query;
       if (aExactMatch && !bExactMatch) return -1;
       if (!aExactMatch && bExactMatch) return 1;
-      
+
       // 开头匹配的优先
       const aStartsWith = aTitle.startsWith(query);
       const bStartsWith = bTitle.startsWith(query);
       if (aStartsWith && !bStartsWith) return -1;
       if (!aStartsWith && bStartsWith) return 1;
-      
+
       // 其他按时间排序
       return new Date(a.date).getTime() - new Date(b.date).getTime();
     });
@@ -295,9 +295,11 @@ export const ExploreScreen: React.FC = () => {
 
   // School data removed - feature not implemented
 
+  const insets = useSafeAreaInsets();
+
   return (
-    <SafeAreaView style={styles.container}>
-      <ScrollView 
+    <View style={styles.container}>
+      <ScrollView
         style={styles.scrollView}
         refreshControl={
           <RefreshControl
@@ -308,38 +310,39 @@ export const ExploreScreen: React.FC = () => {
             title={t('common.loading')}
           />
         }
+        contentContainerStyle={{ paddingBottom: insets.bottom }}
       >
         {/* Header */}
         <LinearGradient
           colors={['rgba(248, 250, 255, 0.95)', 'rgba(240, 247, 255, 0.85)']}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
-          style={styles.header}
+          style={[styles.header, { paddingTop: theme.spacing[3] + insets.top }]}
         >
           <View style={styles.headerContent}>
             <Text style={styles.headerTitle}>{t('explore.title')}</Text>
             <Text style={styles.headerSubtitle}>{t('explore.subtitle')}</Text>
           </View>
-          
+
           {/* Search Status */}
           {searchText.trim() && (
             <View style={styles.searchStatusContainer}>
               <View style={styles.searchStatusContent}>
-                <Ionicons 
-                  name={searchLoading ? "hourglass-outline" : "search"} 
-                  size={16} 
-                  color={theme.colors.primary} 
+                <Ionicons
+                  name={searchLoading ? "hourglass-outline" : "search"}
+                  size={16}
+                  color={theme.colors.primary}
                 />
                 <Text style={styles.searchStatusText}>
-                  {searchLoading 
+                  {searchLoading
                     ? t('explore.searching', { query: searchText.trim() })
-                    : t('explore.searchResults', { 
-                        query: searchText.trim(), 
-                        count: getFilteredActivities().length 
-                      })
+                    : t('explore.searchResults', {
+                      query: searchText.trim(),
+                      count: getFilteredActivities().length
+                    })
                   }
                 </Text>
-                <TouchableOpacity 
+                <TouchableOpacity
                   onPress={() => {
                     setSearchText('');
                     // 通知TabBar清空搜索
@@ -397,15 +400,15 @@ export const ExploreScreen: React.FC = () => {
                     colors={['rgba(255, 107, 53, 0.1)', 'rgba(255, 71, 87, 0.05)']} // PomeloX 橙红渐变
                     style={styles.categoryCardGradient}
                   >
-                  <View style={styles.categoryIcon}>
-                    <Ionicons 
-                      name={category.icon as any} 
-                      size={24} 
-                      color={theme.colors.primary} 
-                    />
-                  </View>
-                  <Text style={styles.categoryName}>{category.name}</Text>
-                  <Text style={styles.categoryCount}>{t('explore.activities_count', { count: category.count })}</Text>
+                    <View style={styles.categoryIcon}>
+                      <Ionicons
+                        name={category.icon as any}
+                        size={24}
+                        color={theme.colors.primary}
+                      />
+                    </View>
+                    <Text style={styles.categoryName}>{category.name}</Text>
+                    <Text style={styles.categoryCount}>{t('explore.activities_count', { count: category.count })}</Text>
                   </LinearGradient>
                 </TouchableOpacity>
               </View>
@@ -429,7 +432,7 @@ export const ExploreScreen: React.FC = () => {
               </TouchableOpacity>
             )}
           </View>
-          
+
           {/* Loading state */}
           {(loading || searchLoading) && (
             <View style={styles.loadingState}>
@@ -438,7 +441,7 @@ export const ExploreScreen: React.FC = () => {
               </Text>
             </View>
           )}
-          
+
           {/* Activities List */}
           {!loading && !searchLoading && (() => {
             const filteredAndSorted = getSortedActivities();
@@ -449,7 +452,7 @@ export const ExploreScreen: React.FC = () => {
                   过滤结果: {filteredAndSorted.length}个活动 (原始:{activities.length})
                   {filteredAndSorted.length > 0 && ` - 显示: ${filteredAndSorted.map(a => a.title).join(', ')}`}
                 </Text>
-                
+
                 {filteredAndSorted.length > 0 ? (
                   <View style={styles.activitiesList}>
                     {filteredAndSorted.map((activity) => (
@@ -462,26 +465,26 @@ export const ExploreScreen: React.FC = () => {
                   </View>
                 ) : (
                   <View style={styles.emptyState}>
-                    <Ionicons 
-                      name={searchText.trim() ? "search-outline" : "calendar-outline"} 
-                      size={48} 
-                      color={theme.colors.text.disabled} 
+                    <Ionicons
+                      name={searchText.trim() ? "search-outline" : "calendar-outline"}
+                      size={48}
+                      color={theme.colors.text.disabled}
                       style={styles.emptyIcon}
                     />
                     <Text style={styles.emptyText}>
-                      {searchText.trim() 
+                      {searchText.trim()
                         ? t('explore.noSearchResults', { query: searchText.trim() })
                         : (t('explore.no_activities_available') || '暂无活动数据')
                       }
                     </Text>
                     <Text style={styles.emptySubtext}>
-                      {searchText.trim() 
+                      {searchText.trim()
                         ? '尝试其他搜索词或浏览所有活动'
                         : (t('explore.coming_soon') || '更多功能即将上线')
                       }
                     </Text>
                     {searchText.trim() && (
-                      <TouchableOpacity 
+                      <TouchableOpacity
                         style={styles.clearSearchBtn}
                         onPress={() => {
                           setSearchText('');
@@ -500,10 +503,10 @@ export const ExploreScreen: React.FC = () => {
           })()}
         </View>
       </ScrollView>
-      
+
       {/* 功能未实现提示组件 */}
       <FeatureModal />
-    </SafeAreaView>
+    </View>
   );
 };
 
@@ -515,7 +518,7 @@ const styles = StyleSheet.create({
   scrollView: {
     flex: 1,
   },
-  
+
   // Header
   header: {
     paddingHorizontal: theme.spacing[4],
@@ -554,7 +557,7 @@ const styles = StyleSheet.create({
     fontSize: theme.typography.fontSize.base,
     color: theme.colors.text.primary,
   },
-  
+
   // Search Status
   searchStatusContainer: {
     marginTop: theme.spacing[3],
@@ -667,7 +670,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     marginTop: theme.spacing[3],
   },
-  
+
   // Shadow容器 - 解决LinearGradient阴影冲突 (Categories)
   categoryCardShadowContainer: {
     width: (screenWidth - theme.spacing[4] * 2 - theme.spacing[3]) / 2,
@@ -678,7 +681,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: theme.liquidGlass.card.border,
   },
-  
+
   categoryCard: {
     width: '100%',
     borderRadius: theme.borderRadius.lg + 2,

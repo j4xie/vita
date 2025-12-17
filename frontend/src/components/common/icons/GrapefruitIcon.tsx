@@ -1,14 +1,14 @@
 import React from 'react';
 import { View, Text } from 'react-native';
-import Svg, { 
-  Circle, 
-  Ellipse, 
-  Path, 
-  G, 
-  Defs, 
-  RadialGradient, 
+import Svg, {
+  Circle,
+  Ellipse,
+  Path,
+  G,
+  Defs,
+  RadialGradient,
   Stop,
-  LinearGradient as SvgLinearGradient 
+  LinearGradient as SvgLinearGradient
 } from 'react-native-svg';
 import Animated, {
   useSharedValue,
@@ -30,25 +30,25 @@ interface GrapefruitIconProps {
   isPressed?: boolean;
 }
 
-export const GrapefruitIcon: React.FC<GrapefruitIconProps> = ({ 
-  size = 30, 
+export const GrapefruitIcon: React.FC<GrapefruitIconProps> = ({
+  size = 30,
   isThinking = false,
-  isPressed = false 
+  isPressed = false
 }) => {
   const breathingScale = useSharedValue(1);
   const pulseOpacity = useSharedValue(0.8);
   const rotationValue = useSharedValue(0);
-  
+
   // 流畅呼吸动画
   React.useEffect(() => {
     breathingScale.value = withRepeat(
       withSequence(
-        withTiming(1.06, { 
-          duration: 2000, 
+        withTiming(1.06, {
+          duration: 2000,
           easing: Easing.bezier(0.4, 0, 0.2, 1) // Material Design 标准缓动
         }),
-        withTiming(0.94, { 
-          duration: 2000, 
+        withTiming(0.94, {
+          duration: 2000,
           easing: Easing.bezier(0.4, 0, 0.2, 1) // 确保往返一致
         })
       ),
@@ -61,12 +61,12 @@ export const GrapefruitIcon: React.FC<GrapefruitIconProps> = ({
   React.useEffect(() => {
     pulseOpacity.value = withRepeat(
       withSequence(
-        withTiming(1, { 
-          duration: 2500, 
+        withTiming(1, {
+          duration: 2500,
           easing: Easing.bezier(0.25, 0.1, 0.25, 1) // 更柔和的缓动
         }),
-        withTiming(0.7, { 
-          duration: 2500, 
+        withTiming(0.7, {
+          duration: 2500,
           easing: Easing.bezier(0.25, 0.1, 0.25, 1) // 一致的缓动曲线
         })
       ),
@@ -79,7 +79,7 @@ export const GrapefruitIcon: React.FC<GrapefruitIconProps> = ({
   React.useEffect(() => {
     if (isThinking) {
       rotationValue.value = withRepeat(
-        withTiming(360, { 
+        withTiming(360, {
           duration: 4000, // 延长到4秒，更温和
           easing: Easing.bezier(0.4, 0, 0.6, 1) // 更流畅的缓动
         }),
@@ -87,7 +87,7 @@ export const GrapefruitIcon: React.FC<GrapefruitIconProps> = ({
         false
       );
     } else {
-      rotationValue.value = withTiming(0, { 
+      rotationValue.value = withTiming(0, {
         duration: 800,
         easing: Easing.bezier(0.25, 0.1, 0.25, 1) // 柔和停止
       });
@@ -116,6 +116,12 @@ export const GrapefruitIcon: React.FC<GrapefruitIconProps> = ({
     opacity: pulseOpacity.value,
   }));
 
+  // Juice drop animation props - moved outside conditional to fix hooks rule violation
+  const animatedJuiceDropProps = useAnimatedProps(() => ({
+    cy: interpolate(rotationValue.value % 60, [0, 30, 60], [39, 41, 39]),
+    opacity: interpolate(rotationValue.value % 60, [0, 30, 60], [0.7, 0.3, 0.7]),
+  }));
+
   return (
     <View style={{ width: size, height: size, alignItems: 'center', justifyContent: 'center' }}>
       <AnimatedSvg
@@ -131,7 +137,7 @@ export const GrapefruitIcon: React.FC<GrapefruitIconProps> = ({
             <Stop offset="70%" stopColor="#FFB399" stopOpacity="1" />
             <Stop offset="100%" stopColor="#FF8A65" stopOpacity="1" />
           </RadialGradient>
-          
+
           {/* 果肉渐变 - 温暖橙色调 */}
           <RadialGradient id="pulpGradient" cx="0.5" cy="0.5" r="0.6">
             <Stop offset="0%" stopColor="#FFF3E0" stopOpacity="0.9" />
@@ -168,7 +174,7 @@ export const GrapefruitIcon: React.FC<GrapefruitIconProps> = ({
             fill="url(#pulpGradient)"
             animatedProps={animatedPulseProps}
           />
-          
+
           {/* 分割线 */}
           <Path
             d="M 22 4 L 22 40"
@@ -220,11 +226,7 @@ export const GrapefruitIcon: React.FC<GrapefruitIconProps> = ({
             cy="39"
             r="1.8"
             fill="#FF6B35"
-            opacity="0.7"
-            animatedProps={useAnimatedProps(() => ({
-              cy: interpolate(rotationValue.value % 60, [0, 30, 60], [39, 41, 39]),
-              opacity: interpolate(rotationValue.value % 60, [0, 30, 60], [0.7, 0.3, 0.7]),
-            }))}
+            animatedProps={animatedJuiceDropProps}
           />
         )}
       </AnimatedSvg>
@@ -233,28 +235,32 @@ export const GrapefruitIcon: React.FC<GrapefruitIconProps> = ({
       <View
         style={{
           position: 'absolute',
-          bottom: 8,
-          left: 8,
-          backgroundColor: 'rgba(255, 255, 255, 0.97)',
-          borderRadius: 10,
-          paddingHorizontal: 6,
-          paddingVertical: 3,
+          bottom: 5,
+          right: 5,
+          backgroundColor: '#FFFFFF',
+          borderRadius: 6,
+          paddingHorizontal: 3,
+          paddingVertical: 1,
           borderWidth: 1,
-          borderColor: 'rgba(255, 255, 255, 0.85)',
+          borderColor: '#E5E5EA',
           shadowColor: '#000',
-          shadowOffset: { width: 0, height: 2.5 },
-          shadowOpacity: 0.18,
-          shadowRadius: 3.5,
+          shadowOffset: { width: 0, height: 1 },
+          shadowOpacity: 0.1,
+          shadowRadius: 2,
+          elevation: 2,
+          minWidth: 14,
+          alignItems: 'center',
+          justifyContent: 'center',
         }}
       >
         <Text
           style={{
-            fontSize: 10,
-            fontWeight: '900',
-            color: 'rgba(0, 0, 0, 0.82)',
+            fontSize: 8,
+            fontWeight: '800',
+            color: '#FF6B35',
             textAlign: 'center',
-            lineHeight: 11,
           }}
+          numberOfLines={1}
         >
           AI
         </Text>

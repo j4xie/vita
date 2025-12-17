@@ -13,13 +13,10 @@ interface BenefitsCarouselProps {
 }
 
 /**
- * BenefitsCarousel - 会员权益横向轮播
- *
- * 参考截图中的Member Benefits横向滚动卡片
- * - 圆形图标
- * - 黑色线条图标
- * - 标题在下方
- * - 白色卡片背景
+ * BenefitsCarousel - Member Benefits Horizontal Scroll
+ * 
+ * Updated for Dark Luxury Theme:
+ * - High contrast Gold on Dark icons
  */
 export const BenefitsCarousel: React.FC<BenefitsCarouselProps> = ({ benefits }) => {
   return (
@@ -32,7 +29,7 @@ export const BenefitsCarousel: React.FC<BenefitsCarouselProps> = ({ benefits }) 
         {benefits.map((benefit) => (
           <View key={benefit.id} style={styles.benefitCard}>
             <View style={styles.iconCircle}>
-              <Ionicons name={benefit.icon as any} size={20} color="#1A1A1A" />
+              <Ionicons name={benefit.icon as any} size={24} color="#D4AF37" />
             </View>
             <Text style={styles.benefitTitle} numberOfLines={2}>
               {benefit.title}
@@ -46,41 +43,34 @@ export const BenefitsCarousel: React.FC<BenefitsCarouselProps> = ({ benefits }) 
 
 const styles = StyleSheet.create({
   container: {
-    marginBottom: 16,
+    // Removed bottom margin to let parent control spacing
   },
 
   scrollContent: {
-    paddingHorizontal: 16,
-    gap: 8,
+    paddingHorizontal: 16, // Consistent padding
+    gap: 16,
   },
 
   benefitCard: {
-    width: 70,
+    width: 72,
     alignItems: 'center',
   },
 
   iconCircle: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: '#FFFFFF',
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: '#1A1A1A', // Dark circle for high contrast
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 5,
-    borderWidth: 1.5,
-    borderColor: '#E5E5EA',
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 4,
-    elevation: 2,
+    marginBottom: 8,
   },
 
   benefitTitle: {
-    fontSize: 9,
+    fontSize: 11,
     fontWeight: '500',
-    color: '#1A1A1A',
+    color: '#4A4A4A',
     textAlign: 'center',
-    lineHeight: 12,
+    lineHeight: 14,
   },
 });

@@ -6,7 +6,6 @@ import {
   ScrollView,
   TouchableOpacity,
   StyleSheet,
-  SafeAreaView,
   Dimensions,
   Alert,
   Keyboard,
@@ -39,13 +38,13 @@ export const ActivityDetailScreen: React.FC = () => {
   const navigation = useNavigation<any>();
   const route = useRoute<any>();
   const insets = useSafeAreaInsets();
-  
+
   const darkModeSystem = useAllDarkModeStyles();
   const { isDarkMode, styles: dmStyles, gradients: dmGradients, blur: dmBlur, icons: dmIcons } = darkModeSystem;
-  
+
   // activity 现在使用 useState 进行管理
   const { user, isAuthenticated } = useUser();
-  
+
   const [isRegistered, setIsRegistered] = useState(false);
   const [registrationStatus, setRegistrationStatus] = useState<'upcoming' | 'registered' | 'checked_in'>('upcoming');
   const [loading, setLoading] = useState(false);
@@ -79,13 +78,13 @@ export const ActivityDetailScreen: React.FC = () => {
         return maxAttendees > 0 ? `${registeredCount}/${maxAttendees}` : `${registeredCount}`;
       })()
     });
-    
+
     // 🔧 优先通过API验证状态，而不是依赖可能过时的缓存数据
     const verifyInitialStatus = async () => {
       // 🔧 修复用户ID获取逻辑，支持多种字段名
       const userId = user?.id || user?.userId;
       const activityId = activity.id;
-      
+
       if (!userId || !activityId) {
         // 未登录或无活动ID时，使用传入的status作为备选
         if (activity.status === 'registered' || activity.status === 'checked_in') {
@@ -99,12 +98,12 @@ export const ActivityDetailScreen: React.FC = () => {
         }
         return;
       }
-      
+
       try {
         // 🔧 增强用户ID和活动ID验证
         const parsedUserId = parseInt(String(userId));
         const parsedActivityId = parseInt(String(activityId));
-        
+
         if (isNaN(parsedUserId) || isNaN(parsedActivityId) || parsedUserId <= 0 || parsedActivityId <= 0) {
           console.warn('⚠️ [初始化] ID解析失败，跳过状态验证:', {
             userId,
@@ -114,19 +113,19 @@ export const ActivityDetailScreen: React.FC = () => {
           });
           return;
         }
-        
+
         console.log('🔍 [初始化] 验证活动最新报名状态:', {
           activityId: parsedActivityId,
           userId: parsedUserId,
           userIdSource: user?.id ? 'user.id' : 'user.userId'
         });
-        
+
         const signInfo = await pomeloXAPI.getSignInfo(parsedActivityId, parsedUserId);
-        
+
         if (signInfo.code === 200) {
           const latestStatus = signInfo.data;
           let newStatus: 'upcoming' | 'registered' | 'checked_in';
-          
+
           switch (latestStatus) {
             case -1:
               newStatus = 'registered';
@@ -140,7 +139,7 @@ export const ActivityDetailScreen: React.FC = () => {
               newStatus = 'upcoming';
               setIsRegistered(false);
           }
-          
+
           setRegistrationStatus(newStatus);
           console.log('✅ [初始化] API验证状态完成:', {
             signInfo: latestStatus,
@@ -173,7 +172,7 @@ export const ActivityDetailScreen: React.FC = () => {
         }
       }
     };
-    
+
     verifyInitialStatus();
   }, [activity.id, user?.id, user?.userId]); // 🔧 添加user?.userId到依赖项，确保用户状态变化时重新验证
 
@@ -185,14 +184,14 @@ export const ActivityDetailScreen: React.FC = () => {
         // 🔧 修复用户ID获取逻辑，支持多种字段名
         const userId = user?.id || user?.userId;
         const activityId = activity.id;
-        
+
         if (!userId || !activityId) return;
-        
+
         try {
           // 🔧 增强ID验证逻辑
           const parsedUserId = parseInt(String(userId));
           const parsedActivityId = parseInt(String(activityId));
-          
+
           if (isNaN(parsedUserId) || isNaN(parsedActivityId) || parsedUserId <= 0 || parsedActivityId <= 0) {
             console.warn('⚠️ [页面焦点] ID解析失败，跳过状态验证:', {
               userId,
@@ -202,19 +201,19 @@ export const ActivityDetailScreen: React.FC = () => {
             });
             return;
           }
-          
+
           console.log('🔍 [页面焦点] 重新验证活动报名状态:', {
             activityId: parsedActivityId,
             userId: parsedUserId,
             userIdSource: user?.id ? 'user.id' : 'user.userId'
           });
-        
+
           const signInfo = await pomeloXAPI.getSignInfo(parsedActivityId, parsedUserId);
-          
+
           if (signInfo.code === 200) {
             const latestStatus = signInfo.data;
             let newStatus: 'upcoming' | 'registered' | 'checked_in';
-            
+
             switch (latestStatus) {
               case -1:
                 newStatus = 'registered';
@@ -228,7 +227,7 @@ export const ActivityDetailScreen: React.FC = () => {
                 newStatus = 'upcoming';
                 setIsRegistered(false);
             }
-            
+
             setRegistrationStatus(newStatus);
             console.log('✅ [页面焦点] 状态验证完成:', {
               signInfo: latestStatus,
@@ -244,13 +243,13 @@ export const ActivityDetailScreen: React.FC = () => {
           console.warn('⚠️ [页面焦点] 验证失败:', error);
         }
       };
-      
+
       verifyOnFocus();
     };
 
     // 监听页面焦点事件
     const unsubscribe = navigation.addListener('focus', handleFocus);
-    
+
     return unsubscribe;
   }, [navigation, activity.id, user?.id, user?.userId]); // 🔧 添加user?.userId到依赖项
 
@@ -283,9 +282,9 @@ export const ActivityDetailScreen: React.FC = () => {
 
     // 检查活动是否已结束
     if (isActivityEnded()) {
-      setErrorModalData({ 
-        title: t('activityDetail.activity_ended') || '活动已结束', 
-        message: t('activityDetail.cannot_register_ended_activity') || '已结束的活动无法报名' 
+      setErrorModalData({
+        title: t('activityDetail.activity_ended') || '活动已结束',
+        message: t('activityDetail.cannot_register_ended_activity') || '已结束的活动无法报名'
       });
       setShowErrorModal(true);
       return;
@@ -311,14 +310,14 @@ export const ActivityDetailScreen: React.FC = () => {
 
     try {
       console.log('开始活动签到流程:', { activityId: activity.id, activityName: activity.name });
-      
+
       // 生成唯一的回调ID
       const callbackId = `activity_signin_${Date.now()}`;
-      
+
       // 注册回调函数到导航状态，添加防御性错误处理
       let parentNavigator;
       let state;
-      
+
       try {
         parentNavigator = (navigation as any).getParent();
         if (parentNavigator && typeof parentNavigator.getState === 'function') {
@@ -327,7 +326,7 @@ export const ActivityDetailScreen: React.FC = () => {
       } catch (error) {
         console.warn('⚠️ [QR-SCANNER] 获取导航状态失败，使用备用方案:', error);
       }
-      
+
       // 如果无法获取导航状态，使用备用方案
       if (!state) {
         console.log('🔄 [QR-SCANNER] 使用备用回调存储方案');
@@ -337,26 +336,26 @@ export const ActivityDetailScreen: React.FC = () => {
         }
         state = { qrScannerCallbacks: global.qrScannerCallbacks };
       }
-      
+
       if (!state.qrScannerCallbacks) {
         state.qrScannerCallbacks = {};
       }
-      
+
       if (state.qrScannerCallbacks) {
-          state.qrScannerCallbacks[callbackId] = {
+        state.qrScannerCallbacks[callbackId] = {
           onScanSuccess: async (scannedData: string) => {
             // 扫码成功后的处理
             console.log('扫码成功，开始签到:', scannedData);
-            
+
             try {
               setLoading(true);
-              
+
               // 🔧 修复签到用户ID验证逻辑
               if (!user || !user.id) {
                 console.error('❌ [签到] 用户未登录或无有效ID:', { user: !!user, userId: user?.id });
-                setErrorModalData({ 
-                  title: t('activityDetail.checkin_failed') || '签到失败', 
-                  message: '用户身份验证失败，请重新登录' 
+                setErrorModalData({
+                  title: t('activityDetail.checkin_failed') || '签到失败',
+                  message: '用户身份验证失败，请重新登录'
                 });
                 setShowErrorModal(true);
                 return;
@@ -364,23 +363,23 @@ export const ActivityDetailScreen: React.FC = () => {
 
               const activityIdInt = parseInt(activity.id);
               const userIdInt = parseInt(user.id);
-              
+
               // 验证解析结果
               if (isNaN(activityIdInt) || isNaN(userIdInt) || userIdInt <= 0) {
-                console.error('❌ [签到] ID解析失败:', { 
-                  activityId: activity.id, 
-                  activityIdInt, 
-                  userId: user.id, 
-                  userIdInt 
+                console.error('❌ [签到] ID解析失败:', {
+                  activityId: activity.id,
+                  activityIdInt,
+                  userId: user.id,
+                  userIdInt
                 });
-                setErrorModalData({ 
-                  title: t('activityDetail.checkin_failed') || '签到失败', 
-                  message: '参数解析失败，请重试' 
+                setErrorModalData({
+                  title: t('activityDetail.checkin_failed') || '签到失败',
+                  message: '参数解析失败，请重试'
                 });
                 setShowErrorModal(true);
                 return;
               }
-              
+
               console.log('🚀 [签到] 开始调用后端API:', {
                 activityId: activityIdInt,
                 userId: userIdInt,
@@ -391,32 +390,32 @@ export const ActivityDetailScreen: React.FC = () => {
                   legalName: user.legalName
                 }
               });
-              
+
               // 调用活动签到API
               const result = await pomeloXAPI.signInActivity(activityIdInt, userIdInt);
-              
+
               console.log('✅ [签到] 后端API响应:', {
                 result,
                 success: result.code === 200,
                 hasData: !!result.data,
                 timestamp: new Date().toISOString()
               });
-              
+
               if (result.code === 200 && result.data && result.data > 0) {
                 setRegistrationStatus('checked_in');
-                
+
                 // 发送签到成功事件，更新活动列表
                 DeviceEventEmitter.emit('activitySignedIn', { activityId: activity.id });
-                
+
                 // 显示签到成功弹窗
                 setShowCheckinSuccessModal(true);
-                
+
                 // 返回活动详情页面
                 navigation.goBack();
               } else {
                 // 详细的错误处理
                 let errorMessage = result.msg || t('activityDetail.checkin_failed_message');
-                
+
                 if (result.code === 500) {
                   if (errorMessage.includes('已签到')) {
                     errorMessage = t('activityDetail.already_checked_in');
@@ -429,18 +428,18 @@ export const ActivityDetailScreen: React.FC = () => {
                     errorMessage = t('activityDetail.checkin_failed_message');
                   }
                 }
-                
-                setErrorModalData({ 
-                  title: t('activityDetail.checkin_failed') || '签到失败', 
-                  message: errorMessage 
+
+                setErrorModalData({
+                  title: t('activityDetail.checkin_failed') || '签到失败',
+                  message: errorMessage
                 });
                 setShowErrorModal(true);
               }
             } catch (error) {
               console.error('Activity sign in error:', error);
-              setErrorModalData({ 
-                title: t('activityDetail.checkin_failed') || '签到失败', 
-                message: t('common.network_error') || '网络错误' 
+              setErrorModalData({
+                title: t('activityDetail.checkin_failed') || '签到失败',
+                message: t('common.network_error') || '网络错误'
               });
               setShowErrorModal(true);
             } finally {
@@ -454,9 +453,9 @@ export const ActivityDetailScreen: React.FC = () => {
           onScanError: (error: string) => {
             // 扫码失败的处理
             console.error('扫码失败:', error);
-            setErrorModalData({ 
-              title: t('activityDetail.scan_failed') || '扫码失败', 
-              message: t('activityDetail.scan_failed_message') || '扫码失败，请重试' 
+            setErrorModalData({
+              title: t('activityDetail.scan_failed') || '扫码失败',
+              message: t('activityDetail.scan_failed_message') || '扫码失败，请重试'
             });
             setShowErrorModal(true);
             // 清理回调函数
@@ -466,7 +465,7 @@ export const ActivityDetailScreen: React.FC = () => {
           }
         };
       }
-      
+
       // 导航到扫码页面，只传递序列化参数
       navigation.navigate('QRScanner', {
         purpose: 'activity_signin', // 扫码目的：活动签到
@@ -475,9 +474,9 @@ export const ActivityDetailScreen: React.FC = () => {
       });
     } catch (error) {
       console.error('打开扫码页面失败:', error);
-      setErrorModalData({ 
-        title: t('activityDetail.open_scanner_failed') || '打开扫码失败', 
-        message: t('activityDetail.open_scanner_failed_message') || '打开扫码失败，请重试' 
+      setErrorModalData({
+        title: t('activityDetail.open_scanner_failed') || '打开扫码失败',
+        message: t('activityDetail.open_scanner_failed_message') || '打开扫码失败，请重试'
       });
       setShowErrorModal(true);
     }
@@ -493,7 +492,7 @@ export const ActivityDetailScreen: React.FC = () => {
           currentRegisteredCount: activity.registeredCount,
           currentAttendees: activity.attendees
         });
-        
+
         // ✅ 根据不同的操作类型更新状态
         switch (data.action) {
           case 'register':
@@ -514,7 +513,7 @@ export const ActivityDetailScreen: React.FC = () => {
               };
             });
             break;
-            
+
           case 'cancel_registration':
             setRegistrationStatus('upcoming');
             setIsRegistered(false);
@@ -533,17 +532,17 @@ export const ActivityDetailScreen: React.FC = () => {
               };
             });
             break;
-            
+
           case 'checkin_success':
             setRegistrationStatus('checked_in');
             setIsRegistered(true);
             console.log('✅ [ActivityDetail] 签到成功，更新状态为已签到');
             break;
-            
+
           default:
             console.log('🔍 [ActivityDetail] 未知的活动状态变化类型:', data.action);
         }
-        
+
         // ✅ 延迟获取后端最新数据确保同步
         setTimeout(async () => {
           console.log('🔄 [ActivityDetail] 延迟获取最新活动数据');
@@ -622,7 +621,7 @@ export const ActivityDetailScreen: React.FC = () => {
 
           if (statusResponse.code === 200) {
             const newStatus = statusResponse.data === -1 ? 'registered' :
-                             statusResponse.data === 1 ? 'checked_in' : 'upcoming';
+              statusResponse.data === 1 ? 'checked_in' : 'upcoming';
 
             console.log('📊 [refreshActivityFromAPI] 报名状态验证:', {
               signInfo: statusResponse.data,
@@ -712,20 +711,11 @@ export const ActivityDetailScreen: React.FC = () => {
     }
   };
 
-  // Mock价格数据 - 等待后端API支持
-  const getMockPrice = () => {
-    // 基于活动ID生成Mock价格：1/3免费，2/3付费
-    const activityIdNum = parseInt(activity.id) || 0;
-    const isFree = activityIdNum % 3 === 0;
-
-    return {
-      isFree,
-      price: isFree ? null : 25,
-      currency: 'USD',
-    };
+  // 活动价格数据（从后端获取）
+  const priceData = {
+    isFree: !activity.price || activity.price === 0,
+    price: activity.price || 0,
   };
-
-  const mockPriceData = getMockPrice();
 
   return (
     <>
@@ -739,7 +729,7 @@ export const ActivityDetailScreen: React.FC = () => {
           colors={['rgba(0, 0, 0, 0.45)', 'rgba(0, 0, 0, 0.65)']}
           style={styles.gradientOverlay}
         >
-          <SafeAreaView style={styles.container}>
+          <View style={styles.container}>
             {/* 固定在顶部的返回按钮 */}
             <View style={[styles.fixedHeader, { top: insets.top }]}>
               <TouchableOpacity
@@ -769,7 +759,7 @@ export const ActivityDetailScreen: React.FC = () => {
 
                   {/* 价格/免费标签 */}
                   <View style={styles.priceTagContainer}>
-                    {mockPriceData.isFree ? (
+                    {priceData.isFree ? (
                       <View style={styles.freeTag}>
                         <Text style={styles.freeTagText}>
                           {t('activityDetail.free') || 'Free'}
@@ -778,7 +768,7 @@ export const ActivityDetailScreen: React.FC = () => {
                     ) : (
                       <View style={styles.paidTag}>
                         <Text style={styles.paidTagText}>
-                          ${mockPriceData.price}
+                          ${priceData.price}
                         </Text>
                       </View>
                     )}
@@ -874,7 +864,7 @@ export const ActivityDetailScreen: React.FC = () => {
                 </View>
               </View>
             </ScrollView>
-          </SafeAreaView>
+          </View>
         </LinearGradient>
       </ImageBackground>
 
@@ -1149,7 +1139,7 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing[2],
     ...theme.shadows.sm,
   },
-  
+
   infoCard: {
     flexDirection: 'row',
     backgroundColor: 'transparent',
@@ -1182,7 +1172,7 @@ const styles = StyleSheet.create({
     color: theme.colors.text.primary,
     fontWeight: theme.typography.fontWeight.medium,
   },
-  
+
   // V1.1 规范: 信息卡暗层增强对比度
   infoCardOverlay: {
     position: 'absolute',
@@ -1277,13 +1267,13 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 4,
   },
-  
+
   // 立即签到状态按钮 - 绿色
   checkInButton: {
     backgroundColor: theme.colors.checkedIn, // 立即签到使用绿色
     shadowColor: theme.colors.checkedIn,
   },
-  
+
   registerButton: {
     backgroundColor: 'transparent',
     paddingVertical: theme.spacing[4],
@@ -1294,7 +1284,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#6B7280', // Activity Ended 使用灰色
     shadowColor: '#6B7280',
   },
-  
+
   // Activity Ended 按钮禁用状态
   activityEndedButton: {
     backgroundColor: '#6B7280', // 灰色背景

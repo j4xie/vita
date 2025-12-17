@@ -4,7 +4,6 @@ import {
   Text,
   TouchableOpacity,
   StyleSheet,
-  SafeAreaView,
   ScrollView,
   Alert,
   ActionSheetIOS,
@@ -37,20 +36,20 @@ export const ProfileScreen: React.FC = () => {
   const insets = useSafeAreaInsets();
   const themeContext = useThemeContext();
   const isDarkMode = themeContext.isDarkMode;
-  
+
   // Accessibility states
   const [isReduceMotionEnabled, setIsReduceMotionEnabled] = useState(false);
   const [isScreenReaderEnabled, setIsScreenReaderEnabled] = useState(false);
-  
+
   // Debug modal state
   const [showPermissionDebug, setShowPermissionDebug] = useState(false);
   const [debugTapCount, setDebugTapCount] = useState(0);
-  
+
   // Region states
   const [currentRegion, setCurrentRegion] = useState<UserRegionCode>('china');
   const [regionLoading, setRegionLoading] = useState(false);
   const [showRegionModal, setShowRegionModal] = useState(false);
-  
+
   useEffect(() => {
     const checkAccessibility = async () => {
       const [reduceMotion, screenReader] = await Promise.all([
@@ -83,7 +82,7 @@ export const ProfileScreen: React.FC = () => {
     if (Platform.OS === 'ios' && !isReduceMotionEnabled) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
     }
-    
+
     if (Platform.OS === 'ios') {
       ActionSheetIOS.showActionSheetWithOptions(
         {
@@ -110,12 +109,12 @@ export const ProfileScreen: React.FC = () => {
       );
     }
   };
-  
+
   const performLogout = async () => {
     try {
       // 使用 UserContext 的 logout 方法来正确清理所有状态
       await logout();
-      
+
       // 在状态清理后，重置导航到认证页面
       navigation.reset({
         index: 0,
@@ -132,17 +131,17 @@ export const ProfileScreen: React.FC = () => {
       Haptics.selectionAsync();
     }
   };
-  
+
   // Handle edit profile
   const handleEditProfile = () => {
     triggerHaptic();
     Alert.alert(
-      t('common.feature_developing'), 
+      t('common.feature_developing'),
       '个人资料编辑功能正在开发中，请等待后续版本更新。',
       [{ text: t('common.got_it') }]
     );
   };
-  
+
   // Handle language selection
   const handleLanguagePress = () => {
     triggerHaptic();
@@ -162,7 +161,7 @@ export const ProfileScreen: React.FC = () => {
       await UserRegionPreferences.updateCurrentRegion(newRegion);
       setCurrentRegion(newRegion);
       setShowRegionModal(false);
-      
+
       // 显示成功提示
       Alert.alert(
         t('common.success'),
@@ -190,7 +189,7 @@ export const ProfileScreen: React.FC = () => {
       return newCount;
     });
   };
-  
+
   // Group 1: Account & Security
   const accountSecurityItems = [
     {
@@ -212,7 +211,7 @@ export const ProfileScreen: React.FC = () => {
       },
     },
   ];
-  
+
   // Group 2: Notifications & General
   const notificationsGeneralItems = [
     {
@@ -248,7 +247,7 @@ export const ProfileScreen: React.FC = () => {
       },
     },
   ];
-  
+
   // Group 3: About & Support
   const aboutSupportItems = [
     {
@@ -291,7 +290,7 @@ export const ProfileScreen: React.FC = () => {
       activeOpacity={0.6}
       accessibilityRole="button"
       accessibilityLabel={
-        item.value 
+        item.value
           ? `${item.title}, ${item.value}`
           : item.title
       }
@@ -305,7 +304,7 @@ export const ProfileScreen: React.FC = () => {
           color={isDarkMode ? theme.colors.primary : theme.colors.primary}
           style={styles.menuIcon}
         />
-        <Text 
+        <Text
           style={[
             styles.menuItemText,
             isDarkMode && styles.menuItemTextDark
@@ -319,7 +318,7 @@ export const ProfileScreen: React.FC = () => {
       </View>
       <View style={styles.menuItemRight}>
         {item.value && (
-          <Text 
+          <Text
             style={[
               styles.menuItemValue,
               isDarkMode && styles.menuItemValueDark
@@ -340,7 +339,7 @@ export const ProfileScreen: React.FC = () => {
       </View>
     </TouchableOpacity>
   );
-  
+
   const renderGroup = (title: string, items: any[]) => (
     <View style={styles.groupContainer}>
       <Text style={[
@@ -353,7 +352,7 @@ export const ProfileScreen: React.FC = () => {
         styles.listContainer,
         styles.listContainerGlass
       ]}>
-        {items.map((item, index) => 
+        {items.map((item, index) =>
           renderMenuItem(item, index === items.length - 1)
         )}
       </View>
@@ -365,22 +364,24 @@ export const ProfileScreen: React.FC = () => {
       styles.container,
       isDarkMode && styles.containerDark
     ]}>
-      <SafeAreaView style={styles.safeArea}>
-        <ScrollView 
-          style={styles.scrollView} 
-          contentContainerStyle={[
-            styles.contentContainer,
-            { paddingBottom: 56 + 12 + insets.bottom } // NavBar height + spacing + safe area
-          ]}
-          showsVerticalScrollIndicator={false}
-          onScroll={() => {}} // Explicit empty handler to prevent propagation issues
-          scrollEventThrottle={16}
-        >
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={[
+          styles.contentContainer,
+          {
+            paddingTop: 20 + insets.top, // Original padding + safe area top
+            paddingBottom: 56 + 12 + insets.bottom // NavBar height + spacing + safe area
+          }
+        ]}
+        showsVerticalScrollIndicator={false}
+        onScroll={() => { }} // Explicit empty handler to prevent propagation issues
+        scrollEventThrottle={16}
+      >
         {/* 🌙 Dark Mode Debug Component - 临时调试 - 已注释以修复渲染错误 */}
         {/* <DarkModeTest /> */}
-        
+
         {/* Avatar Card - Clickable for Edit Profile */}
-        <TouchableOpacity 
+        <TouchableOpacity
           style={[
             styles.avatarCard,
             styles.avatarCardGlass
@@ -407,8 +408,8 @@ export const ProfileScreen: React.FC = () => {
               styles.userName,
               isDarkMode && styles.userNameDark
             ]}
-            allowFontScaling={true}
-            maxFontSizeMultiplier={1.4}
+              allowFontScaling={true}
+              maxFontSizeMultiplier={1.4}
             >
               {t('profile.username')}
             </Text>
@@ -416,8 +417,8 @@ export const ProfileScreen: React.FC = () => {
               styles.userEmail,
               isDarkMode && styles.userEmailDark
             ]}
-            allowFontScaling={true}
-            maxFontSizeMultiplier={1.3}
+              allowFontScaling={true}
+              maxFontSizeMultiplier={1.3}
             >
               user@example.com
             </Text>
@@ -431,13 +432,13 @@ export const ProfileScreen: React.FC = () => {
 
         {/* Account & Security Group */}
         {renderGroup(t('profile.sections.accountSecurity'), accountSecurityItems)}
-        
+
         {/* Notifications & General Group */}
         {renderGroup(t('profile.sections.notificationsGeneral'), notificationsGeneralItems)}
-        
+
         {/* About & Support Group */}
         {renderGroup(t('profile.sections.aboutSupport'), aboutSupportItems)}
-        
+
         {/* Logout Row */}
         <View style={styles.logoutContainer}>
           <TouchableOpacity
@@ -472,28 +473,27 @@ export const ProfileScreen: React.FC = () => {
             styles.versionText,
             isDarkMode && styles.versionTextDark
           ]}
-          allowFontScaling={true}
-          maxFontSizeMultiplier={1.2}
+            allowFontScaling={true}
+            maxFontSizeMultiplier={1.2}
           >
             PomeloX v1.0.24
           </Text>
         </View>
-        </ScrollView>
-      </SafeAreaView>
-      
+      </ScrollView>
+
       {/* Permission Debug Modal */}
-      <PermissionDebugModal 
+      <PermissionDebugModal
         visible={showPermissionDebug}
         onClose={() => setShowPermissionDebug(false)}
       />
-      
+
       {/* Region Switch Modal */}
       <RegionSwitchModal
         visible={showRegionModal}
         onClose={() => setShowRegionModal(false)}
         onRegionChanged={handleRegionChange}
       />
-    </View>
+    </View >
   );
 };
 
@@ -506,15 +506,13 @@ const styles = StyleSheet.create({
   containerDark: {
     backgroundColor: '#000000', // iOS systemBackground dark
   },
-  
-  safeArea: {
-    flex: 1,
-  },
-  
+
+  // Removed safeArea style as it is no longer needed
+
   scrollView: {
     flex: 1,
   },
-  
+
   contentContainer: {
     paddingHorizontal: 16, // Match ProfileHomeScreen layout approach
     paddingTop: 20,
@@ -544,7 +542,7 @@ const styles = StyleSheet.create({
   avatarCardDark: {
     backgroundColor: '#1c1c1e', // iOS secondarySystemGroupedBackground dark
   },
-  
+
   avatar: {
     width: 56,
     height: 56,
@@ -557,11 +555,11 @@ const styles = StyleSheet.create({
   avatarDark: {
     backgroundColor: theme.colors.primary,
   },
-  
+
   avatarInfo: {
     flex: 1,
   },
-  
+
   userName: {
     fontSize: 17, // iOS body text size
     fontWeight: '600', // iOS semibold
@@ -571,7 +569,7 @@ const styles = StyleSheet.create({
   userNameDark: {
     color: '#ffffff', // iOS label dark
   },
-  
+
   userEmail: {
     fontSize: 15, // iOS callout size
     color: '#8e8e93', // iOS secondaryLabel
@@ -584,7 +582,7 @@ const styles = StyleSheet.create({
   groupContainer: {
     marginBottom: 24, // 20-24pt group spacing
   },
-  
+
   groupTitle: {
     fontSize: 13, // iOS footnote size
     fontWeight: '400',
@@ -635,17 +633,17 @@ const styles = StyleSheet.create({
   menuItemLast: {
     borderBottomWidth: 0, // No separator for last item
   },
-  
+
   menuItemLeft: {
     flexDirection: 'row',
     alignItems: 'center',
     flex: 1,
   },
-  
+
   menuIcon: {
     marginRight: 12, // 12pt spacing between icon and text
   },
-  
+
   menuItemText: {
     fontSize: 17, // iOS body text
     fontWeight: '400',
@@ -655,12 +653,12 @@ const styles = StyleSheet.create({
   menuItemTextDark: {
     color: '#ffffff', // iOS label dark
   },
-  
+
   menuItemRight: {
     flexDirection: 'row',
     alignItems: 'center',
   },
-  
+
   menuItemValue: {
     fontSize: 15, // iOS callout
     color: '#8e8e93', // iOS secondaryLabel
@@ -669,7 +667,7 @@ const styles = StyleSheet.create({
   menuItemValueDark: {
     color: '#8e8e93', // iOS secondaryLabel dark
   },
-  
+
   chevron: {
     // Standard iOS chevron styling
   },
@@ -679,7 +677,7 @@ const styles = StyleSheet.create({
     marginTop: 24,
     marginBottom: 24,
   },
-  
+
   logoutItem: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -703,11 +701,11 @@ const styles = StyleSheet.create({
   logoutItemDark: {
     backgroundColor: '#1c1c1e', // iOS secondarySystemGroupedBackground dark
   },
-  
+
   logoutIcon: {
     marginRight: 12,
   },
-  
+
   logoutText: {
     fontSize: 17,
     fontWeight: '400',
@@ -720,7 +718,7 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     marginTop: 8,
   },
-  
+
   versionText: {
     fontSize: 12, // iOS caption1
     color: '#8e8e93', // iOS secondaryLabel
@@ -729,14 +727,14 @@ const styles = StyleSheet.create({
   versionTextDark: {
     color: '#8e8e93', // iOS secondaryLabel dark
   },
-  
+
   // V2.0 L1玻璃样式
   avatarCardGlass: {
     backgroundColor: LIQUID_GLASS_LAYERS.L1.background.light,
     borderWidth: LIQUID_GLASS_LAYERS.L1.border.width,
     borderColor: LIQUID_GLASS_LAYERS.L1.border.color.light,
   },
-  
+
   listContainerGlass: {
     backgroundColor: LIQUID_GLASS_LAYERS.L1.background.light,
     borderWidth: LIQUID_GLASS_LAYERS.L1.border.width,

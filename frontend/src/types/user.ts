@@ -14,7 +14,9 @@ export interface BaseUserInfo {
   legalName?: string;
   nickName?: string;
   email?: string;
+  emailVerified?: boolean; // 邮箱是否已验证
   alternateEmail?: string;  // 第二邮箱/工作邮箱/学校邮箱
+  alternateEmailVerified?: boolean; // 第二邮箱是否已验证
   phonenumber?: string;
   avatarUrl?: string;
   studentId?: string;
@@ -77,6 +79,7 @@ export interface FrontendUser extends BaseUserInfo {
   areaCode?: string; // 区号
   sex?: string; // 性别
   postCode?: string; // 岗位代码
+  points?: number; // 用户积分
 }
 
 /**

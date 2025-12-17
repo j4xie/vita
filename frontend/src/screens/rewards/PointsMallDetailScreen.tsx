@@ -106,8 +106,8 @@ export const PointsMallDetailScreen: React.FC = () => {
       return;
     }
 
-    // 检查积分是否足够
-    const userPoints = user?.points || 0; // TODO: 从用户信息获取实际积分
+    // 检查积分是否足够（从用户信息获取）
+    const userPoints = user?.points || 0;
     if (userPoints < product.pointsPrice) {
       Alert.alert(
         t('rewards.mall.insufficient_points', '积分不足'),
@@ -116,22 +116,13 @@ export const PointsMallDetailScreen: React.FC = () => {
       return;
     }
 
-    // 跳转到确认兑换页（暂时用Alert替代）
-    Alert.alert(
-      t('rewards.mall.confirm_exchange', '确认兑换'),
-      t('rewards.mall.confirm_exchange_desc', `确认使用 ${product.pointsPrice} 积分兑换此商品？`),
-      [
-        { text: t('common.cancel', '取消'), style: 'cancel' },
-        {
-          text: t('common.confirm', '确认'),
-          onPress: () => {
-            // TODO: 跳转到CheckoutScreen
-            console.log('TODO: Navigate to Checkout');
-          },
-        },
-      ]
-    );
-  }, [product, user, t]);
+    // 跳转到订单确认页面
+    navigation.navigate('OrderConfirm', {
+      product: product,
+      quantity: 1,
+      selectedVariants: selectedVariantId ? { variant: selectedVariantId } : {},
+    });
+  }, [product, user, t, navigation, selectedVariantId]);
 
   // 库存状态
   const getStockText = () => {

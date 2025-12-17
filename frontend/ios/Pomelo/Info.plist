@@ -108,14 +108,18 @@
     <string>The app accesses your camera to let you take photos.</string>
     <key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
     <string>This app needs access to your location to automatically detect your region for appropriate privacy policy content.</string>
+    <key>NSLocationAlwaysUsageDescription</key>
+    <string>Allow $(PRODUCT_NAME) to access your location</string>
     <key>NSLocationUsageDescription</key>
     <string>This app needs access to your location to automatically detect your region for appropriate privacy policy content.</string>
     <key>NSLocationWhenInUseUsageDescription</key>
     <string>This app needs access to your location to automatically detect your region for appropriate privacy policy content.</string>
     <key>NSMicrophoneUsageDescription</key>
-    <string>Allow $(PRODUCT_NAME) to access your microphone</string>
+    <string>This app needs access to your microphone for voice input in the AI form filling feature.</string>
     <key>NSPhotoLibraryUsageDescription</key>
     <string>The app accesses your photos to let you share them.</string>
+    <key>NSSpeechRecognitionUsageDescription</key>
+    <string>This app uses speech recognition to convert your voice to text for filling forms.</string>
     <key>UILaunchStoryboardName</key>
     <string>SplashScreen</string>
     <key>UIRequiredDeviceCapabilities</key>

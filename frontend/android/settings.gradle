@@ -21,7 +21,7 @@ extensions.configure(com.facebook.react.ReactSettingsExtension) { ex ->
   }
 }
 
-rootProject.name = 'PomeloX App'
+rootProject.name = '西柚Pomelo'
 
 dependencyResolutionManagement {
   versionCatalogs {

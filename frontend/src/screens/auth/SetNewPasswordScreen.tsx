@@ -27,6 +27,7 @@ interface RouteParams {
   phone: string;
   areaCode: string;
   verificationCode: string;
+  bizId: string; // 发送验证码时返回的bizId
 }
 
 const SetNewPasswordScreenComponent: React.FC = () => {
@@ -112,7 +113,7 @@ const SetNewPasswordScreenComponent: React.FC = () => {
       const result = await pomeloXAPI.resetPassword({
         phonenumber: params.phone,
         verCode: params.verificationCode,
-        bizId: 'temp_biz_id', // 这里需要从前一步传递真实的bizId
+        bizId: params.bizId, // 使用前一步传递的真实bizId
         password: newPassword,
         areaCode: params.areaCode,
       });

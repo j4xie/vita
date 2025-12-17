@@ -92,7 +92,7 @@ export interface FrontendUser {
   isActive: boolean;
   lastLoginTime: string;
   createTime: string;
-  
+
   // 🆕 保留原始权限字段供权限检查系统使用
   admin?: boolean;
   role?: any;
@@ -118,7 +118,7 @@ export interface FrontendUser {
     key: string;
     isAdmin: boolean;
   }[];
-  
+
   // 权限标识
   permissions: {
     isAdmin: boolean;
@@ -130,11 +130,12 @@ export interface FrontendUser {
     isOrganizer?: boolean;
     canAccessVolunteerFeatures?: boolean;
   };
-  
+
   // 兼容字段
   name?: string; // 与legalName相同
   verified?: boolean;
   area?: 'zh' | 'en'; // 地域选择
+  points?: number; // 积分
 }
 
 /**
@@ -229,12 +230,12 @@ export const adaptUserInfo = (backendUser: BackendUserInfo): FrontendUser => {
     isActive: backendUser.status === '0', // "0"表示正常状态
     lastLoginTime: formatDateTime(backendUser.loginDate),
     createTime: formatDateTime(backendUser.createTime),
-    
+
     // 🆕 保留原始权限字段供权限检查系统使用
     admin: backendUser.admin,
     role: role,
     post: (backendUser as any).post,
-    
+
     // 学校信息 - 处理deptId为null的情况
     school: {
       id: backendUser.deptId ? backendUser.deptId.toString() : '0',
@@ -247,7 +248,7 @@ export const adaptUserInfo = (backendUser: BackendUserInfo): FrontendUser => {
       deptName: backendUser.dept?.deptName || '未设置学校',
     },
     deptId: backendUser.deptId || 0, // 兼容字段
-    
+
     // 角色信息 - 使用安全的roles数组
     roles: safeRoles.map(role => ({
       id: role.roleId,
@@ -255,18 +256,21 @@ export const adaptUserInfo = (backendUser: BackendUserInfo): FrontendUser => {
       key: role.roleKey,  // 后端返回的字段是roleKey
       isAdmin: role.admin,
     })),
-    
+
     // 权限解析
     permissions: {
       ...permissions,
       isOrganizer: permissions.isPartAdmin, // 兼容字段
       canAccessVolunteerFeatures: permissions.canManageVolunteers, // 兼容字段
     },
-    
+
     // 兼容字段
     name: backendUser.legalName,
     verified: true, // 默认已验证
     area: (backendUser.area as 'zh' | 'en') || 'zh', // 地域字段，默认中国
+
+    // 积分 (Added to fix type error)
+    points: (backendUser as any).points || 0,
   };
 };
 
@@ -320,11 +324,11 @@ export const getUserRoleText = (user: FrontendUser, language: 'zh' | 'en' = 'zh'
   if (user.permissions.isAdmin) {
     return language === 'zh' ? '超级管理员' : 'Super Admin';
   }
-  
+
   if (user.permissions.isPartAdmin) {
     return language === 'zh' ? '分管理员' : 'Partial Admin';
   }
-  
+
   return language === 'zh' ? '普通用户' : 'User';
 };
 
@@ -342,7 +346,7 @@ export const getUserAvatar = (user: FrontendUser): string => {
   if (user.avatar && user.avatar.trim() !== '') {
     return user.avatar;
   }
-  
+
   // 返回默认头像，根据性别区分
   switch (user.gender) {
     case 'male':

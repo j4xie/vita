@@ -19,14 +19,14 @@ const fetchWithRetry = async (url: string, options: RequestInit, maxRetries: num
       return response;
     } catch (error: any) {
       console.warn(`⚠️ 第${i + 1}次请求失败:`, error.message);
-      
+
       // 基本重试逻辑：非中止错误且未达到最大重试次数
       const shouldRetry = !error.message.includes('AbortError') && i < maxRetries - 1;
-      
+
       if (!shouldRetry) {
         throw error;
       }
-      
+
       // 简单的重试延迟
       await new Promise(resolve => setTimeout(resolve, 500 * (i + 1)));
     }
@@ -96,11 +96,11 @@ interface SMSResponse {
 
 class PomeloXAPI {
   private async request<T = any>(
-    endpoint: string, 
+    endpoint: string,
     options: RequestInit = {}
   ): Promise<ApiResponse<T>> {
     const token = await getCurrentToken(); // 使用统一的token获取函数
-    
+
     const headers: Record<string, string> = {
       'Accept': 'application/json',
       'Content-Type': 'application/json',
@@ -130,7 +130,7 @@ class PomeloXAPI {
   }
 
   // 公开接口（无需认证）
-  
+
   /**
    * 获取验证码图片
    */
@@ -152,11 +152,11 @@ class PomeloXAPI {
         'Accept': 'application/json',
       },
     });
-    
+
     if (!response.ok) {
       throw new Error('发送验证码失败');
     }
-    
+
     return response.json();
   }
 
@@ -171,11 +171,11 @@ class PomeloXAPI {
         'Content-Type': 'application/json',
       },
     });
-    
+
     if (!response.ok) {
       throw new Error(`HTTP ${response.status}: 获取学校列表失败`);
     }
-    
+
     return response.json();
   }
 
@@ -190,7 +190,7 @@ class PomeloXAPI {
       deptIdType: typeof data.deptId,
       areaCode: data.areaCode
     });
-    
+
     // 使用form-urlencoded格式
     const formData = new URLSearchParams();
     formData.append('userName', data.userName);
@@ -200,7 +200,7 @@ class PomeloXAPI {
     formData.append('phonenumber', data.phonenumber);
     formData.append('email', data.email);
     formData.append('sex', data.sex);
-    
+
     // 只有提供deptId时才添加，不传则用户默认角色为common
     if (data.deptId) {
       formData.append('deptId', data.deptId);
@@ -208,24 +208,24 @@ class PomeloXAPI {
     } else {
       console.log('⚠️ deptId为空，用户将没有学校关联');
     }
-    
+
     // 新增：添加areaCode参数支持
     if (data.areaCode) {
       formData.append('areaCode', data.areaCode);
       console.log('✅ areaCode已添加到请求:', data.areaCode);
     }
-    
+
     if (data.verCode) formData.append('verCode', data.verCode);
     if (data.invCode) formData.append('invCode', data.invCode);
     if (data.bizId) formData.append('bizId', data.bizId);
     if (data.orgId) formData.append('orgId', data.orgId);
     if (data.area) formData.append('area', data.area);
-    
+
     console.log('🌐 发送到后端的最终参数:', [...formData.entries()].reduce((acc, [key, value]) => {
       acc[key] = key === 'password' ? '[HIDDEN]' : value;
       return acc;
     }, {} as any));
-    
+
     const response = await fetchWithRetry(`${getBaseUrl()}/app/user/add`, {
       method: 'POST',
       headers: {
@@ -234,11 +234,11 @@ class PomeloXAPI {
       },
       body: formData.toString(),
     });
-    
+
     if (!response.ok) {
       throw new Error(`HTTP ${response.status}: 注册失败`);
     }
-    
+
     return response.json();
   }
 
@@ -250,19 +250,19 @@ class PomeloXAPI {
     token: string;
   }>> {
     console.log('🔐 PomeloXAPI.login 调用参数:', { userName: data.userName, password: '[HIDDEN]', areaCode: data.areaCode });
-    
+
     // 使用form-urlencoded格式，不是JSON
     const formData = new URLSearchParams();
     formData.append('username', data.userName);
     formData.append('password', data.password);
-    
+
     // 新增：添加areaCode参数支持
     if (data.areaCode) {
       formData.append('areaCode', data.areaCode);
     }
-    
+
     console.log('📝 发送到后端的参数:', { username: data.userName, password: '[HIDDEN]', areaCode: data.areaCode });
-    
+
     const response = await fetchWithRetry(`${getBaseUrl()}/app/login`, {
       method: 'POST',
       headers: {
@@ -271,11 +271,11 @@ class PomeloXAPI {
       },
       body: formData.toString(),
     });
-    
+
     if (!response.ok) {
       throw new Error(`HTTP ${response.status}: 登录失败`);
     }
-    
+
     const result = await response.json();
 
     // 保存token - 使用统一的键名
@@ -432,7 +432,7 @@ class PomeloXAPI {
     } else {
       cleanAreaCode = data.areaCode.replace('+', '');
     }
-    
+
     // 构建form-data格式的请求体
     const formData = new URLSearchParams();
     formData.append('phonenumber', data.phonenumber);
@@ -448,11 +448,11 @@ class PomeloXAPI {
       },
       body: formData.toString(),
     });
-    
+
     if (!response.ok) {
       throw new Error('重置密码失败');
     }
-    
+
     return response.json();
   }
 
@@ -590,7 +590,7 @@ class PomeloXAPI {
   }>> {
     // 构建查询参数
     const queryParams = new URLSearchParams();
-    
+
     // 🔧 userId现在是可选参数 - 支持访客模式
     if (params.userId) {
       queryParams.append('userId', params.userId.toString());
@@ -598,7 +598,7 @@ class PomeloXAPI {
     } else {
       console.log('👤 访客模式活动列表');
     }
-    
+
     if (params.pageNum) queryParams.append('pageNum', params.pageNum.toString());
     if (params.pageSize) queryParams.append('pageSize', params.pageSize.toString());
     if (params.name) queryParams.append('name', params.name);
@@ -606,40 +606,40 @@ class PomeloXAPI {
     if (params.categoryId) queryParams.append('categoryId', params.categoryId.toString());
     if (params.startTime) queryParams.append('startTime', params.startTime);
     if (params.endTime) queryParams.append('endTime', params.endTime);
-    
+
     const queryString = queryParams.toString();
     const endpoint = queryString ? `/app/activity/list?${queryString}` : '/app/activity/list';
-    
+
     // 🔧 灵活的token处理 - 支持访客模式
     const token = await getCurrentToken();
     const isGuestMode = !params.userId || !token;
-    
-    console.log(`🔐 活动列表API调用:`, { 
+
+    console.log(`🔐 活动列表API调用:`, {
       endpoint: `${getBaseUrl()}${endpoint}`,
       mode: isGuestMode ? '访客模式' : '个性化模式',
       hasToken: !!token,
       hasUserId: !!params.userId,
       tokenPreview: token ? `${token.substring(0, 20)}...` : 'null'
     });
-    
+
     // 🔧 简化网络请求，移除AbortController超时机制
     const headers: Record<string, string> = {
       'Accept': 'application/json',
       'Content-Type': 'application/json',
       'User-Agent': 'PomeloX/1.0.0 (iOS)',
     };
-    
+
     // 只有在个性化模式下才添加认证头
     if (!isGuestMode && token) {
       headers['Authorization'] = `Bearer ${token}`;
     }
-    
-    console.log(`🌐 发起网络请求:`, { 
+
+    console.log(`🌐 发起网络请求:`, {
       url: `${getBaseUrl()}${endpoint}`,
       method: 'GET',
       mode: isGuestMode ? '访客模式' : '个性化模式'
     });
-    
+
     let response;
     try {
       // 🔧 简化的网络请求配置
@@ -648,20 +648,20 @@ class PomeloXAPI {
         headers,
         // 移除AbortController，让系统处理超时
       };
-      
+
       console.log('📡 发起网络请求:', { url: `${getBaseUrl()}${endpoint}` });
-      
+
       response = await fetchWithRetry(`${getBaseUrl()}${endpoint}`, fetchOptions, 3);
-      
+
       console.log(`✅ API响应成功: ${response.status}`);
-      
+
     } catch (fetchError: any) {
       console.error(`❌ 网络请求失败:`, {
         name: fetchError.name,
         message: fetchError.message,
         cause: fetchError.cause
       });
-      
+
       // 根据错误类型提供更具体的错误信息
       if (fetchError.name === 'AbortError') {
         throw new Error('请求超时，请检查网络连接');
@@ -673,37 +673,37 @@ class PomeloXAPI {
         throw new Error(`网络错误: ${fetchError.message}`);
       }
     }
-    
+
     if (!response.ok) {
       const errorText = await response.text();
       console.error(`HTTP ${response.status} 错误:`, errorText);
       throw new Error(`HTTP ${response.status}: 获取活动列表失败`);
     }
-    
+
     const result = await response.json();
-    
+
     // 🚨 处理后端SQL查询错误的fallback机制
     if (result.code === 500 && result.msg?.includes('Subquery returns more than 1 row')) {
       console.warn('⚠️ [FALLBACK] 个性化活动列表查询失败，fallback到基础列表:', result.msg);
-      
+
       // Fallback: 调用不带userId的基础活动列表
-      const fallbackEndpoint = '/app/activity/list' + 
-        (params.pageNum || params.pageSize || params.name || params.categoryId || params.startTime || params.endTime 
+      const fallbackEndpoint = '/app/activity/list' +
+        (params.pageNum || params.pageSize || params.name || params.categoryId || params.startTime || params.endTime
           ? '?' + new URLSearchParams(Object.fromEntries(Object.entries({
-              pageNum: params.pageNum?.toString(),
-              pageSize: params.pageSize?.toString(), 
-              name: params.name,
-              categoryId: params.categoryId?.toString(),
-              startTime: params.startTime,
-              endTime: params.endTime
-            }).filter(([_, v]) => v !== undefined))) 
+            pageNum: params.pageNum?.toString(),
+            pageSize: params.pageSize?.toString(),
+            name: params.name,
+            categoryId: params.categoryId?.toString(),
+            startTime: params.startTime,
+            endTime: params.endTime
+          }).filter(([_, v]) => v !== undefined)))
           : '');
-      
+
       const fallbackResponse = await fetchWithRetry(`${getBaseUrl()}${fallbackEndpoint}`, {
         method: 'GET',
         headers: headers,
       });
-      
+
       if (fallbackResponse.ok) {
         const fallbackResult = await fallbackResponse.json();
         console.log('✅ [FALLBACK] 基础活动列表获取成功，无个性化数据');
@@ -712,7 +712,7 @@ class PomeloXAPI {
         throw new Error('Fallback API also failed');
       }
     }
-    
+
     console.log('📥 活动列表API响应:', {
       code: result.code,
       msg: result.msg,
@@ -723,7 +723,7 @@ class PomeloXAPI {
       hasPersonalizedData: result.rows?.some((activity: any) => activity.signStatus !== undefined),
       hasRegisterCountData: result.rows?.some((activity: any) => activity.registerCount !== undefined)
     });
-    
+
     // 详细记录每个活动的完整数据（仅前3个）
     if (result.rows && result.rows.length > 0) {
       const sampleActivities = result.rows.slice(0, 3);
@@ -737,7 +737,7 @@ class PomeloXAPI {
         type: activity.type
       })));
     }
-    
+
     return result;
   }
 
@@ -749,11 +749,11 @@ class PomeloXAPI {
       // 🔧 参数验证和类型转换
       const validActivityId = Number(activityId);
       const validUserId = Number(userId);
-      
+
       if (!validActivityId || !validUserId || validActivityId <= 0 || validUserId <= 0) {
         throw new Error(`参数无效: activityId=${activityId}, userId=${userId}`);
       }
-      
+
       const action = isCancel ? '取消报名' : '报名';
       console.log(`🌐 [PomeloXAPI] 发起活动${action}请求:`, {
         originalParams: { activityId, userId, isCancel },
@@ -762,14 +762,14 @@ class PomeloXAPI {
         method: 'GET',
         timestamp: new Date().toISOString()
       });
-      
+
       // 构建请求URL，根据isCancel参数决定是否添加isCancel=1
       const url = `/app/activity/enroll?activityId=${validActivityId}&userId=${validUserId}${isCancel ? '&isCancel=1' : ''}`;
-      
+
       const response = await this.request(url, {
         method: 'GET',
       });
-      
+
       console.log(`📡 [PomeloXAPI] 活动${action}响应:`, {
         response,
         success: response.code === 200 && response.data > 0,
@@ -781,7 +781,7 @@ class PomeloXAPI {
 
       // 🔧 根据API文档修复：只有当 code=200 且 data>0 时才算真正成功
       const isActuallySuccessful = response.code === 200 && response.data != null && response.data > 0;
-      
+
       if (!isActuallySuccessful) {
         console.error(`❌ [PomeloXAPI] 活动${action}失败:`, {
           code: response.code,
@@ -795,26 +795,8 @@ class PomeloXAPI {
       // 操作成功后的处理
       if (isActuallySuccessful) {
         if (!isCancel) {
-          // 报名成功后发送本地通知
-          try {
-            const activityResponse = await this.getActivityList({ 
-              pageNum: 1, 
-              pageSize: 10, 
-              userId: userId 
-            });
-            const activity = activityResponse.data?.rows?.find((a: any) => a.id === activityId);
-            
-            if (activity) {
-              // 发送即时成功通知
-              await notifyRegistrationSuccess(activity.name);
-              
-              // 安排活动提醒
-              await scheduleActivityReminder(activity);
-            }
-          } catch (notificationError) {
-            console.error('发送报名通知失败:', notificationError);
-            // 不影响报名流程
-          }
+          // 通知系统
+          await notifyRegistrationSuccess(validActivityId);
 
           // 发送报名事件 - 使用React Native事件
           DeviceEventEmitter.emit('activityRegistered', { activityId, userId });
@@ -825,12 +807,46 @@ class PomeloXAPI {
       }
 
       return response;
-    } catch (error) {
-      console.error(`❌ [PomeloXAPI] 活动${isCancel ? '取消报名' : '报名'}失败:`, error);
+    } catch (error: any) {
+      console.error(`💥 [PomeloXAPI] 活动${isCancel ? '取消报名' : '报名'}异常:`, error);
       throw error;
     }
   }
 
+  /**
+   * 提交活动报名表单 (动态表单)
+   * @param activityId 活动ID
+   * @param userId 用户ID
+   * @param formData 表单数据
+   */
+  async submitActivityRegistration(activityId: number, userId: number, formData: any): Promise<ApiResponse<number>> {
+    try {
+      console.log('📝 [PomeloXAPI] 提交活动报名表单:', { activityId, userId, formData });
+
+      // 将formData转为JSON字符串并URL编码，使用GET方式提交
+      const formDataStr = encodeURIComponent(JSON.stringify(formData));
+      const url = `/app/activity/enroll?activityId=${activityId}&userId=${userId}&formData=${formDataStr}`;
+
+      const response = await this.request(url, {
+        method: 'GET',
+      });
+
+      if (response.code === 200 && response.data != null && Number(response.data) > 0) {
+        // 成功，触发相关的通知逻辑
+        try {
+          await notifyRegistrationSuccess(activityId);
+          DeviceEventEmitter.emit('activityRegistered', { activityId, userId });
+        } catch (e) {
+          console.warn('⚠️ [PomeloXAPI] 通知失败:', e);
+        }
+      }
+
+      return response;
+    } catch (error) {
+      console.error('💥 [PomeloXAPI] 提交报名表单失败:', error);
+      throw error;
+    }
+  }
   /**
    * 活动签到
    */
@@ -982,17 +998,17 @@ class PomeloXAPI {
     const queryParams = new URLSearchParams();
     if (userId) queryParams.append('userId', userId.toString());
     if (signStatus !== undefined) queryParams.append('signStatus', signStatus.toString());
-    
+
     const queryString = queryParams.toString();
     const endpoint = queryString ? `/app/activity/userActivitylist?${queryString}` : '/app/activity/userActivitylist';
-    
+
     console.log('🔍 getUserActivityList API调用详情:', {
       userId,
       signStatus,
       queryString,
       endpoint: `${getBaseUrl()}${endpoint}`
     });
-    
+
     return this.request(endpoint, {
       method: 'GET',
     });

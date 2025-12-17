@@ -4,7 +4,6 @@ import {
   Text,
   TouchableOpacity,
   StyleSheet,
-  SafeAreaView,
   ScrollView,
   Platform,
   Alert,
@@ -16,6 +15,7 @@ import { Ionicons } from '@expo/vector-icons';
 import QRCode from 'react-native-qrcode-svg';
 import { useTranslation } from 'react-i18next';
 import { useNavigation } from '@react-navigation/native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 
 import { theme } from '../../theme';
@@ -31,6 +31,7 @@ const qrSize = Math.min(screenWidth * 0.50, 220);
 export const PersonalQRScreen: React.FC = () => {
   const { t } = useTranslation();
   const navigation = useNavigation();
+  const insets = useSafeAreaInsets();
   const themeContext = useTheme();
   const isDarkMode = themeContext.isDarkMode;
   const { user, isAuthenticated } = useUser();
@@ -151,15 +152,12 @@ export const PersonalQRScreen: React.FC = () => {
       flex: 1,
       backgroundColor: isDarkMode ? '#000000' : '#F5F5F5',
     },
-    safeArea: {
-      flex: 1,
-    },
     header: {
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
       paddingHorizontal: 16,
-      paddingVertical: 12,
+      paddingBottom: 12, // Changed from paddingVertical to just bottom, top added dynamically
       backgroundColor: isDarkMode ? '#1C1C1E' : '#FFFFFF',
       borderBottomWidth: StyleSheet.hairlineWidth,
       borderBottomColor: isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.06)',
@@ -362,126 +360,105 @@ export const PersonalQRScreen: React.FC = () => {
 
   return (
     <View style={styles.container}>
-      <SafeAreaView style={styles.safeArea}>
-        {/* Header */}
-        <View style={styles.header}>
-          <View style={{ width: 32 }} />
-          <Text style={styles.headerTitle}>
-            {t('common.brand.name') === 'Pomelo' ? 'My QR Code' : '我的二维码'}
-          </Text>
+      {/* Header with explicit safe area padding */}
+      <View style={[
+        styles.header,
+        {
+          paddingTop: insets.top + 12, // Add safe area + original padding
+          zIndex: 10
+        }
+      ]}>
+        <View style={{ width: 32 }} />
+        <Text style={styles.headerTitle}>
+          {t('common.brand.name') === 'Pomelo' ? 'My QR Code' : '我的二维码'}
+        </Text>
+        <TouchableOpacity
+          style={styles.closeButton}
+          onPress={handleClose}
+          activeOpacity={0.7}
+          hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }}
+        >
+          <Ionicons
+            name="close"
+            size={24}
+            color={isDarkMode ? '#FFFFFF' : '#000000'}
+          />
+        </TouchableOpacity>
+      </View>
+
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={[
+          styles.contentContainer,
+          { paddingBottom: insets.bottom + 32 }
+        ]}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* 用户信息卡片 */}
+        <View style={styles.userInfoCard}>
+          <View style={styles.avatar}>
+            <Ionicons name="person" size={36} color="#9CA3AF" />
+          </View>
+          <Text style={styles.userName}>{userData.legalName}</Text>
+
+          {/* 用户ID */}
           <TouchableOpacity
-            style={styles.closeButton}
-            onPress={handleClose}
+            style={styles.userIdContainer}
+            onPress={handleCopyUserId}
             activeOpacity={0.7}
           >
+            <Text style={styles.userId}>
+              {userData.userId.length > 12
+                ? `${userData.userId.substring(0, 6)}...${userData.userId.substring(
+                  userData.userId.length - 6
+                )}`
+                : userData.userId}
+            </Text>
             <Ionicons
-              name="close"
-              size={24}
-              color={isDarkMode ? '#FFFFFF' : '#000000'}
+              name="copy-outline"
+              size={14}
+              color={isDarkMode ? '#9CA3AF' : '#6B7280'}
             />
           </TouchableOpacity>
+
+          {/* 组织和学校信息 */}
+          {(userData.currentOrganization || userData.school) && (
+            <View style={styles.organizationInfo}>
+              {userData.currentOrganization && userData.school ? (
+                <Text style={styles.organizationText}>
+                  {userData.currentOrganization.displayNameZh} •{' '}
+                  {userData.school.name}
+                </Text>
+              ) : userData.currentOrganization ? (
+                <Text style={styles.organizationText}>
+                  {userData.currentOrganization.displayNameZh}
+                </Text>
+              ) : (
+                <Text style={styles.organizationText}>
+                  {userData.school?.name}
+                </Text>
+              )}
+
+              {/* 职位信息 */}
+              {userData.position && (
+                <View style={styles.positionBadge}>
+                  <Text style={styles.positionText}>
+                    {userData.position.displayName}
+                  </Text>
+                </View>
+              )}
+            </View>
+          )}
         </View>
 
-        <ScrollView
-          style={styles.scrollView}
-          contentContainerStyle={styles.contentContainer}
-          showsVerticalScrollIndicator={false}
-        >
-          {/* 用户信息卡片 */}
-          <View style={styles.userInfoCard}>
-            <View style={styles.avatar}>
-              <Ionicons name="person" size={36} color="#9CA3AF" />
-            </View>
-            <Text style={styles.userName}>{userData.legalName}</Text>
+        {/* 二维码卡片 */}
+        <View style={styles.qrCodeCard}>
+          <View style={styles.qrCodeWrapper}>
+            {(() => {
+              try {
+                const qrContent = generateQRContent();
 
-            {/* 用户ID */}
-            <TouchableOpacity
-              style={styles.userIdContainer}
-              onPress={handleCopyUserId}
-              activeOpacity={0.7}
-            >
-              <Text style={styles.userId}>
-                {userData.userId.length > 12
-                  ? `${userData.userId.substring(0, 6)}...${userData.userId.substring(
-                      userData.userId.length - 6
-                    )}`
-                  : userData.userId}
-              </Text>
-              <Ionicons
-                name="copy-outline"
-                size={14}
-                color={isDarkMode ? '#9CA3AF' : '#6B7280'}
-              />
-            </TouchableOpacity>
-
-            {/* 组织和学校信息 */}
-            {(userData.currentOrganization || userData.school) && (
-              <View style={styles.organizationInfo}>
-                {userData.currentOrganization && userData.school ? (
-                  <Text style={styles.organizationText}>
-                    {userData.currentOrganization.displayNameZh} •{' '}
-                    {userData.school.name}
-                  </Text>
-                ) : userData.currentOrganization ? (
-                  <Text style={styles.organizationText}>
-                    {userData.currentOrganization.displayNameZh}
-                  </Text>
-                ) : (
-                  <Text style={styles.organizationText}>
-                    {userData.school?.name}
-                  </Text>
-                )}
-
-                {/* 职位信息 */}
-                {userData.position && (
-                  <View style={styles.positionBadge}>
-                    <Text style={styles.positionText}>
-                      {userData.position.displayName}
-                    </Text>
-                  </View>
-                )}
-              </View>
-            )}
-          </View>
-
-          {/* 二维码卡片 */}
-          <View style={styles.qrCodeCard}>
-            <View style={styles.qrCodeWrapper}>
-              {(() => {
-                try {
-                  const qrContent = generateQRContent();
-
-                  if (!qrContent || qrContent.length < 5) {
-                    return (
-                      <View
-                        style={[
-                          styles.qrCodePlaceholder,
-                          { width: qrSize, height: qrSize },
-                        ]}
-                      >
-                        <Ionicons
-                          name="qr-code-outline"
-                          size={qrSize * 0.5}
-                          color="#9CA3AF"
-                        />
-                        <Text style={styles.placeholderText}>
-                          {t('common.brand.name') === 'Pomelo' ? 'Error' : '错误'}
-                        </Text>
-                      </View>
-                    );
-                  }
-
-                  return (
-                    <QRCode
-                      value={qrContent}
-                      size={qrSize}
-                      backgroundColor="#FFFFFF"
-                      color="#000000"
-                      quietZone={10}
-                    />
-                  );
-                } catch (error) {
-                  console.error('QR码渲染失败:', error);
+                if (!qrContent || qrContent.length < 5) {
                   return (
                     <View
                       style={[
@@ -500,91 +477,120 @@ export const PersonalQRScreen: React.FC = () => {
                     </View>
                   );
                 }
-              })()}
-            </View>
 
-            <Text style={styles.descriptionText}>
-              {t('common.brand.name') === 'Pomelo'
-                ? 'Share your QR code to quickly show your identity information'
-                : '分享二维码给他人，快速展示我的身份信息'}
-            </Text>
-            <Text style={styles.networkInfoText}>
-              {t('common.brand.name') === 'Pomelo'
-                ? 'Visible to all organization members'
-                : '支持组织内所有成员查看'}
-            </Text>
+                return (
+                  <QRCode
+                    value={qrContent}
+                    size={qrSize}
+                    backgroundColor="#FFFFFF"
+                    color="#000000"
+                    quietZone={10}
+                  />
+                );
+              } catch (error) {
+                console.error('QR码渲染失败:', error);
+                return (
+                  <View
+                    style={[
+                      styles.qrCodePlaceholder,
+                      { width: qrSize, height: qrSize },
+                    ]}
+                  >
+                    <Ionicons
+                      name="qr-code-outline"
+                      size={qrSize * 0.5}
+                      color="#9CA3AF"
+                    />
+                    <Text style={styles.placeholderText}>
+                      {t('common.brand.name') === 'Pomelo' ? 'Error' : '错误'}
+                    </Text>
+                  </View>
+                );
+              }
+            })()}
           </View>
 
-          {/* 操作按钮 */}
-          <View style={styles.actionsContainer}>
-            {/* 扫描他人二维码 */}
-            <TouchableOpacity
-              style={[styles.actionButton, styles.primaryActionButton]}
-              onPress={handleScanOthers}
-              activeOpacity={0.7}
-            >
-              <Ionicons
-                name="scan-outline"
-                size={20}
-                color="#FFFFFF"
-                style={styles.actionButtonIcon}
-              />
-              <Text
-                style={[
-                  styles.actionButtonText,
-                  styles.primaryActionButtonText,
-                ]}
-              >
-                {t('common.brand.name') === 'Pomelo' ? 'Scan QR code' : '扫描他人二维码'}
-              </Text>
-            </TouchableOpacity>
+          <Text style={styles.descriptionText}>
+            {t('common.brand.name') === 'Pomelo'
+              ? 'Share your QR code to quickly show your identity information'
+              : '分享二维码给他人，快速展示我的身份信息'}
+          </Text>
+          <Text style={styles.networkInfoText}>
+            {t('common.brand.name') === 'Pomelo'
+              ? 'Visible to all organization members'
+              : '支持组织内所有成员查看'}
+          </Text>
+        </View>
 
-            {/* 分享二维码 */}
-            <TouchableOpacity
-              style={styles.actionButton}
-              onPress={handleShareQRCode}
-              activeOpacity={0.7}
-            >
-              <Ionicons
-                name="share-outline"
-                size={20}
-                color={isDarkMode ? '#FFFFFF' : '#000000'}
-                style={styles.actionButtonIcon}
-              />
-              <Text style={styles.actionButtonText}>
-                {t('common.brand.name') === 'Pomelo' ? 'Share QR code' : '分享二维码'}
-              </Text>
-            </TouchableOpacity>
-
-            {/* 保存到相册 */}
-            <TouchableOpacity
+        {/* 操作按钮 */}
+        <View style={styles.actionsContainer}>
+          {/* 扫描他人二维码 */}
+          <TouchableOpacity
+            style={[styles.actionButton, styles.primaryActionButton]}
+            onPress={handleScanOthers}
+            activeOpacity={0.7}
+          >
+            <Ionicons
+              name="scan-outline"
+              size={20}
+              color="#FFFFFF"
+              style={styles.actionButtonIcon}
+            />
+            <Text
               style={[
-                styles.actionButton,
-                isSaving && styles.disabledButton,
+                styles.actionButtonText,
+                styles.primaryActionButtonText,
               ]}
-              onPress={handleSaveToAlbum}
-              disabled={isSaving}
-              activeOpacity={0.7}
             >
-              <Ionicons
-                name={isSaving ? 'hourglass-outline' : 'download-outline'}
-                size={20}
-                color={isDarkMode ? '#FFFFFF' : '#000000'}
-                style={styles.actionButtonIcon}
-              />
-              <Text style={styles.actionButtonText}>
-                {isSaving
-                  ? t('common.brand.name') === 'Pomelo'
-                    ? 'Saving...'
-                    : '保存中...'
-                  : t('common.brand.name') === 'Pomelo'
+              {t('common.brand.name') === 'Pomelo' ? 'Scan QR code' : '扫描他人二维码'}
+            </Text>
+          </TouchableOpacity>
+
+          {/* 分享二维码 */}
+          <TouchableOpacity
+            style={styles.actionButton}
+            onPress={handleShareQRCode}
+            activeOpacity={0.7}
+          >
+            <Ionicons
+              name="share-outline"
+              size={20}
+              color={isDarkMode ? '#FFFFFF' : '#000000'}
+              style={styles.actionButtonIcon}
+            />
+            <Text style={styles.actionButtonText}>
+              {t('common.brand.name') === 'Pomelo' ? 'Share QR code' : '分享二维码'}
+            </Text>
+          </TouchableOpacity>
+
+          {/* 保存到相册 */}
+          <TouchableOpacity
+            style={[
+              styles.actionButton,
+              isSaving && styles.disabledButton,
+            ]}
+            onPress={handleSaveToAlbum}
+            disabled={isSaving}
+            activeOpacity={0.7}
+          >
+            <Ionicons
+              name={isSaving ? 'hourglass-outline' : 'download-outline'}
+              size={20}
+              color={isDarkMode ? '#FFFFFF' : '#000000'}
+              style={styles.actionButtonIcon}
+            />
+            <Text style={styles.actionButtonText}>
+              {isSaving
+                ? t('common.brand.name') === 'Pomelo'
+                  ? 'Saving...'
+                  : '保存中...'
+                : t('common.brand.name') === 'Pomelo'
                   ? 'Save to album'
                   : '保存到相册'}
-              </Text>
-            </TouchableOpacity>
-          </View>
-        </ScrollView>
-      </SafeAreaView>
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
     </View>
   );
 };

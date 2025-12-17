@@ -647,6 +647,12 @@ export const ProfileHomeScreen: React.FC = () => {
       onPress: () => navigation.navigate('Notifications'),
     },
     {
+      id: 'address',
+      title: t('profile.menuItems.address', '收货地址'),
+      icon: 'location-outline' as keyof typeof Ionicons.glyphMap,
+      onPress: () => navigation.navigate('AddressList'),
+    },
+    {
       id: 'general',
       title: t('profile.menuItems.general'),
       icon: 'settings-outline' as keyof typeof Ionicons.glyphMap,

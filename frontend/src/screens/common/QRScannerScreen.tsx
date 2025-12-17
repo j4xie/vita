@@ -1058,7 +1058,7 @@ export const QRScannerScreen: React.FC = () => {
       if (!currentOrganization) return;
 
       // 检查是否已经有该商家的会员卡
-      const existingCards = await membershipCardService.getCardsByUserId('current_user_id'); // TODO: 获取真实用户ID
+      const existingCards = await membershipCardService.getCardsByUserId(user?.userId || '');
       const existingCard = existingCards.find(card => 
         card.merchantId === merchantId && 
         card.organizationId === currentOrganization.id
@@ -1089,7 +1089,7 @@ export const QRScannerScreen: React.FC = () => {
 
       // 创建新的会员卡
       const newCard = await membershipCardService.createMembershipCard({
-        userId: 'current_user_id', // TODO: 获取真实用户ID
+        userId: user?.userId || '',
         organizationId: currentOrganization.id,
         merchantId,
         cardType: 'merchant'

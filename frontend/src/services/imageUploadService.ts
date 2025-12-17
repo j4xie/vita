@@ -26,10 +26,10 @@ export const uploadAvatar = async (imageUri: string, userId: number): Promise<Up
   try {
     // 创建FormData用于文件上传
     const formData = new FormData();
-    
+
     // 生成唯一文件名
     const fileName = `avatars/user_${userId}_${Date.now()}.jpg`;
-    
+
     // 根据平台处理图片文件
     const imageFile = {
       uri: Platform.OS === 'ios' ? imageUri.replace('file://', '') : imageUri,
@@ -58,7 +58,7 @@ export const uploadAvatar = async (imageUri: string, userId: number): Promise<Up
     }
 
     const result = await response.json();
-    
+
     if (result.code === 200) {
       return {
         success: true,
@@ -72,6 +72,58 @@ export const uploadAvatar = async (imageUri: string, userId: number): Promise<Up
     }
   } catch (error) {
     console.error('Avatar upload error:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Upload failed',
+    };
+  }
+};
+
+/**
+ * 通用媒体上传 (支持图片和视频)
+ * @param fileUri 文件URI
+ * @param type 文件类型 ('image' | 'video')
+ * @returns 上传结果
+ */
+export const uploadMedia = async (fileUri: string, type: 'image' | 'video' = 'image'): Promise<UploadResult> => {
+  try {
+    const formData = new FormData();
+    const extension = type === 'video' ? 'mp4' : 'jpg';
+    const mimeType = type === 'video' ? 'video/mp4' : 'image/jpeg';
+    const fileName = `uploads/${type}_${Date.now()}.${extension}`;
+
+    const file = {
+      uri: Platform.OS === 'ios' ? fileUri.replace('file://', '') : fileUri,
+      type: mimeType,
+      name: fileName,
+    } as any;
+
+    formData.append('file', file);
+
+    const response = await fetch(`${getApiUrl()}/file/upload`, {
+      method: 'POST',
+      body: formData,
+    });
+
+    if (!response.ok) {
+      throw new Error(`Upload failed: ${response.status}`);
+    }
+
+    const result = await response.json();
+
+    if (result.code === 200) {
+      return {
+        success: true,
+        url: result.data.url, // 根据文档，返回结构应该是 {code: 200, data: {url: "..."}}
+      };
+    } else {
+      return {
+        success: false,
+        error: result.msg || 'Upload failed',
+      };
+    }
+  } catch (error) {
+    console.error('Media upload error:', error);
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Upload failed',

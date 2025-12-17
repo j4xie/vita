@@ -81,6 +81,7 @@
     "expo-image-picker": "~16.0.6",
     "expo-linear-gradient": "~14.0.2",
     "expo-location": "~18.0.10",
+    "expo-speech-recognition": "^3.0.1",
     "expo-status-bar": "~2.0.1",
     "expo-updates": "~0.27.4",
     "i18next": "^23.15.2",

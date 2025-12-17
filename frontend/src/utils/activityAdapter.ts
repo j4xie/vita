@@ -23,6 +23,8 @@ export interface BackendActivity {
   categoryId?: number;
   registerCount?: number; // 活动已报名人数
   timeZone?: string; // 活动时区
+  price?: number; // 活动价格（0表示免费）
+  modelContent?: string; // 动态表单模板内容
 }
 
 // 前端活动数据接口
@@ -50,6 +52,8 @@ export interface FrontendActivity {
   detail?: string;
   enabled?: boolean;
   timeZone?: string; // 活动时区
+  price?: number; // 活动价格（0或undefined表示免费）
+  modelContent?: string; // 动态表单模板内容
 }
 
 // 🚀 性能优化：预编译状态映射表
@@ -385,6 +389,8 @@ export const adaptActivity = (
     detail: backendActivity.detail,
     enabled: backendActivity.enabled === 1,
     timeZone: backendActivity.timeZone,
+    price: backendActivity.price,
+    modelContent: backendActivity.modelContent, // 🔧 保留动态表单模板内容
   };
 };
 

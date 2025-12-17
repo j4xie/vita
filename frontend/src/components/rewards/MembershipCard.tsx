@@ -1,319 +1,286 @@
-import React from 'react';
-import { View, Text, StyleSheet, Dimensions } from 'react-native';
+import React, { useEffect, useRef } from 'react';
+import { View, Text, StyleSheet, Dimensions, Animated, Easing, Platform } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import Svg, { Path, Circle, G, Defs, LinearGradient as SvgLinearGradient, Stop } from 'react-native-svg';
+import Svg, { Path, Circle, Defs, LinearGradient as SvgLinearGradient, Stop, Pattern, Rect, G } from 'react-native-svg';
 import { MembershipInfo, MembershipTier } from '../../types/pointsMall';
-import { TIER_COLORS, TIER_NAMES_EN } from '../../utils/membershipTierCalculator';
+import { TIER_COLORS, TIER_NAMES_EN, getNextTierPoints, getTierProgress } from '../../utils/membershipTierCalculator';
+import { useTranslation } from 'react-i18next';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
-const CARD_WIDTH = SCREEN_WIDTH * 0.9;
-const CARD_HEIGHT = 200;
-const SIDEBAR_WIDTH = 50;
+const CARD_WIDTH = SCREEN_WIDTH - 32;
+const CARD_HEIGHT = 240; // Increased height to prevent text cutoff
 
 interface MembershipCardProps {
   membershipInfo: MembershipInfo;
 }
 
 /**
- * MembershipCard - 高端3D会员卡组件
- *
- * 1:1还原Shangri-La POLARIS会员卡设计：
- * - 深海色渐变背景
- * - 左侧装饰边栏（竖排Diamond文字）
- * - 优雅的贝塞尔曲线波浪
- * - 金色双圈logo
- * - 散落的星星装饰
- * - 衬线字体标题
+ * Dark Luxury Membership Card
+ * 
+ * Aesthetic: High-end fashion brand membership.
+ * Colors: Deep Bronze, Black, Gold.
+ * Texture: Visible monogram pattern.
  */
 export const MembershipCard: React.FC<MembershipCardProps> = ({ membershipInfo }) => {
-  const colors = TIER_COLORS[membershipInfo.tier];
+  const { t } = useTranslation();
+
+  // Luxury Dark Palette
+  const getLuxuryColors = (tier: MembershipTier) => {
+    switch (tier) {
+      case MembershipTier.BRONZE:
+        return { gradient: ['#5D4037', '#3E2723', '#1A120B'] }; // Deep Bronze -> Coffee -> Black
+      case MembershipTier.SILVER:
+        return { gradient: ['#757575', '#424242', '#212121'] }; // Deep Silver -> Dark Grey -> Black
+      case MembershipTier.GOLD:
+        return { gradient: ['#C6A355', '#8D6E63', '#3E2723'] }; // Gold -> Bronze -> Dark
+      case MembershipTier.DIAMOND:
+        return { gradient: ['#263238', '#102027', '#000000'] }; // Blue Black -> Black
+      default:
+        return { gradient: ['#5D4037', '#3E2723', '#1A120B'] };
+    }
+  };
+
+  const colors = getLuxuryColors(membershipInfo.tier);
   const tierNameEn = TIER_NAMES_EN[membershipInfo.tier].toUpperCase();
-  const isDiamond = membershipInfo.tier === MembershipTier.DIAMOND;
-  const accentColor = isDiamond ? '#D4AF37' : '#FFFFFF'; // 钻石用金色，其他用白色
+  const progress = getTierProgress(membershipInfo.points);
+  const nextTierPoints = getNextTierPoints(membershipInfo.points);
+
+  const progressAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.timing(progressAnim, {
+      toValue: progress,
+      duration: 2000,
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: false,
+    }).start();
+  }, [progress]);
+
+  // Always light text on dark cards
+  const textColor = '#FFFFFF';
+  const subTextColor = 'rgba(255, 255, 255, 0.6)';
+  const accentColor = '#D4AF37'; // Gold accent for progress bar
 
   return (
     <View style={styles.container}>
-      {/* 左侧装饰边栏 */}
-      <View style={styles.sidebar}>
-        {/* 竖排文字 */}
-        <Text
-          style={[
-            styles.sidebarText,
-            { color: accentColor },
-          ]}
-        >
-          {tierNameEn}
-        </Text>
-
-        {/* 装饰波浪纹理 */}
-        <Svg width={SIDEBAR_WIDTH} height={CARD_HEIGHT} style={styles.sidebarSvg}>
-          <Path
-            d={`M ${SIDEBAR_WIDTH / 2},0 Q ${SIDEBAR_WIDTH * 0.3},50 ${SIDEBAR_WIDTH / 2},100 T ${SIDEBAR_WIDTH / 2},${CARD_HEIGHT}`}
-            stroke={`${accentColor}40`}
-            strokeWidth={1.5}
-            fill="none"
-          />
-          <Path
-            d={`M ${SIDEBAR_WIDTH * 0.7},20 Q ${SIDEBAR_WIDTH * 0.4},70 ${SIDEBAR_WIDTH * 0.7},120 T ${SIDEBAR_WIDTH * 0.7},${CARD_HEIGHT}`}
-            stroke={`${accentColor}20`}
-            strokeWidth={1}
-            fill="none"
-          />
-        </Svg>
-      </View>
-
-      {/* 主卡片 */}
       <LinearGradient
         colors={colors.gradient as any}
-        locations={colors.gradient.length === 3 ? [0, 0.5, 1] : [0, 1]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={styles.card}
       >
-        {/* SVG装饰层 */}
-        <Svg
-          width={CARD_WIDTH - SIDEBAR_WIDTH}
-          height={CARD_HEIGHT}
-          style={styles.decorationSvg}
-        >
-          {/* 优雅的波浪曲线 - 横跨卡片中部 */}
-          <Path
-            d={`
-              M 0,${CARD_HEIGHT * 0.5}
-              Q ${(CARD_WIDTH - SIDEBAR_WIDTH) * 0.25},${CARD_HEIGHT * 0.4}
-              ${(CARD_WIDTH - SIDEBAR_WIDTH) * 0.5},${CARD_HEIGHT * 0.5}
-              T ${CARD_WIDTH - SIDEBAR_WIDTH},${CARD_HEIGHT * 0.5}
-            `}
-            stroke="rgba(255, 255, 255, 0.4)"
-            strokeWidth={1.5}
-            fill="none"
-          />
+        {/* Monogram Pattern Texture */}
+        <View style={styles.textureContainer}>
+          <Svg width={CARD_WIDTH} height={CARD_HEIGHT} style={styles.svg}>
+            <Defs>
+              <Pattern id="monogram" x="0" y="0" width="30" height="30" patternUnits="userSpaceOnUse">
+                {/* Interlocking Circles Pattern */}
+                <Circle cx="15" cy="15" r="10" stroke="white" strokeWidth="0.5" fill="none" opacity="0.1" />
+                <Circle cx="0" cy="0" r="10" stroke="white" strokeWidth="0.5" fill="none" opacity="0.1" />
+                <Circle cx="30" cy="0" r="10" stroke="white" strokeWidth="0.5" fill="none" opacity="0.1" />
+                <Circle cx="0" cy="30" r="10" stroke="white" strokeWidth="0.5" fill="none" opacity="0.1" />
+                <Circle cx="30" cy="30" r="10" stroke="white" strokeWidth="0.5" fill="none" opacity="0.1" />
+              </Pattern>
+              <SvgLinearGradient id="goldSheen" x1="0" y1="0" x2="1" y2="1">
+                <Stop offset="0" stopColor="#D4AF37" stopOpacity="0.2" />
+                <Stop offset="0.5" stopColor="#D4AF37" stopOpacity="0.0" />
+                <Stop offset="1" stopColor="#D4AF37" stopOpacity="0.2" />
+              </SvgLinearGradient>
+            </Defs>
 
-          {/* 第二条波浪线（更柔和） */}
-          <Path
-            d={`
-              M 0,${CARD_HEIGHT * 0.55}
-              Q ${(CARD_WIDTH - SIDEBAR_WIDTH) * 0.3},${CARD_HEIGHT * 0.48}
-              ${(CARD_WIDTH - SIDEBAR_WIDTH) * 0.6},${CARD_HEIGHT * 0.55}
-              T ${CARD_WIDTH - SIDEBAR_WIDTH},${CARD_HEIGHT * 0.55}
-            `}
-            stroke="rgba(255, 255, 255, 0.2)"
-            strokeWidth={1}
-            fill="none"
-          />
+            {/* Pattern Fill */}
+            <Rect x="0" y="0" width={CARD_WIDTH} height={CARD_HEIGHT} fill="url(#monogram)" />
 
-          {/* 星星装饰点 */}
-          <Circle cx={(CARD_WIDTH - SIDEBAR_WIDTH) * 0.15} cy={50} r={2} fill="rgba(255, 255, 255, 0.6)" />
-          <Circle cx={(CARD_WIDTH - SIDEBAR_WIDTH) * 0.25} cy={30} r={1.5} fill="rgba(255, 255, 255, 0.5)" />
-          <Circle cx={(CARD_WIDTH - SIDEBAR_WIDTH) * 0.35} cy={65} r={1} fill="rgba(255, 255, 255, 0.4)" />
-          <Circle cx={(CARD_WIDTH - SIDEBAR_WIDTH) * 0.75} cy={45} r={2.5} fill={`${accentColor}60`} />
-          <Circle cx={(CARD_WIDTH - SIDEBAR_WIDTH) * 0.85} cy={70} r={1.5} fill={`${accentColor}40`} />
-        </Svg>
-
-        {/* 金色圆环logo - 中央 */}
-        <Svg
-          width={70}
-          height={70}
-          style={styles.centerLogo}
-        >
-          {/* 外圈 */}
-          <Circle
-            cx={35}
-            cy={35}
-            r={30}
-            stroke={accentColor}
-            strokeWidth={1.5}
-            fill="none"
-            opacity={0.8}
-          />
-          {/* 内圈 */}
-          <Circle
-            cx={35}
-            cy={35}
-            r={22}
-            stroke={accentColor}
-            strokeWidth={1}
-            fill="none"
-            opacity={0.5}
-          />
-          {/* 中心装饰 - PomeloX标志 */}
-          <Circle
-            cx={35}
-            cy={35}
-            r={12}
-            fill={accentColor}
-            opacity={0.25}
-          />
-          {/* 中心点 */}
-          <Circle
-            cx={35}
-            cy={35}
-            r={4}
-            fill={accentColor}
-            opacity={0.6}
-          />
-        </Svg>
-
-        {/* 卡片文字内容 */}
-        <View style={styles.cardContent}>
-          {/* 顶部区域 */}
-          <View style={styles.topSection}>
-            <Text style={styles.topLeftText}>POMELOX CIRCLE</Text>
-            <Text style={styles.topRightText}>{tierNameEn}</Text>
-          </View>
-
-          {/* 底部用户信息 */}
-          <View style={styles.bottomSection}>
-            <View style={styles.userInfo}>
-              {membershipInfo.nickName && (
-                <Text style={styles.nickName}>{membershipInfo.nickName.toUpperCase()}</Text>
-              )}
-              <Text style={styles.legalName}>{membershipInfo.legalName}</Text>
-            </View>
-            <View style={styles.pointsInfo}>
-              <Text style={styles.pointsValue}>{membershipInfo.points}</Text>
-              <Text style={styles.pointsLabel}>POINTS</Text>
-            </View>
-          </View>
+            {/* Gold Sheen Overlay */}
+            <Rect x="0" y="0" width={CARD_WIDTH} height={CARD_HEIGHT} fill="url(#goldSheen)" />
+          </Svg>
         </View>
-      </LinearGradient>
-    </View>
+
+        {/* Content Layer */}
+        <View style={styles.content}>
+          <View style={styles.headerRow}>
+            <View style={styles.brandContainer}>
+              <Text style={[styles.brandLabel, { color: subTextColor }]}>POMELOX</Text>
+              <View style={styles.brandLine} />
+            </View>
+            <View style={styles.monogramBadge}>
+              <Text style={styles.monogramText}>
+                {(() => {
+                  const name = membershipInfo.nickName || membershipInfo.legalName || 'P';
+                  const hasChinese = /[\u4e00-\u9fa5]/.test(name);
+                  if (hasChinese) {
+                    return name.charAt(0);
+                  }
+                  return name.charAt(0).toUpperCase();
+                })()}
+              </Text>
+            </View>
+          </View>
+
+
+          {/* Center Tier Name */}
+          <View style={styles.centerSection}>
+            <Text style={[styles.tierTitle, { color: textColor }]}>{tierNameEn}</Text>
+            <Text style={[styles.tierSubtitle, { color: accentColor }]}>MEMBER PRIVILEGES</Text>
+          </View>
+
+          {/* Bottom Info */}
+          <View style={styles.footerRow}>
+            <View>
+              <Text style={[styles.pointsValue, { color: textColor }]}>
+                {membershipInfo.points.toLocaleString()}
+              </Text>
+              <Text style={[styles.pointsLabel, { color: subTextColor }]}>
+                {t('rewards.menu.points', 'Points Balance')}
+              </Text>
+            </View>
+
+            {/* Circular Progress or Bar */}
+            <View style={styles.progressContainer}>
+              <View style={styles.progressBarBg}>
+                <Animated.View
+                  style={[
+                    styles.progressBarFill,
+                    {
+                      backgroundColor: accentColor,
+                      width: progressAnim.interpolate({
+                        inputRange: [0, 100],
+                        outputRange: ['0%', '100%']
+                      })
+                    }
+                  ]}
+                />
+              </View>
+              <Text style={[styles.progressText, { color: subTextColor }]}>
+                {Math.floor(progress)}% to Next Tier
+              </Text>
+            </View>
+          </View>
+        </View >
+      </LinearGradient >
+    </View >
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    width: SCREEN_WIDTH * 0.9,
+    width: CARD_WIDTH,
     height: CARD_HEIGHT,
-    flexDirection: 'row',
+    borderRadius: 24,
+    marginVertical: 24,
     alignSelf: 'center',
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.35,
-    shadowRadius: 20,
-    elevation: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 16 },
+    shadowOpacity: 0.4,
+    shadowRadius: 24,
+    elevation: 16,
   },
-
-  // 左侧边栏
-  sidebar: {
-    width: SIDEBAR_WIDTH,
-    height: CARD_HEIGHT,
-    backgroundColor: 'rgba(0, 0, 0, 0.15)',
-    borderTopLeftRadius: 20,
-    borderBottomLeftRadius: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-    overflow: 'hidden',
-  },
-
-  sidebarText: {
-    fontSize: 14,
-    fontWeight: '700',
-    letterSpacing: 2,
-    transform: [{ rotate: '90deg' }],
-    opacity: 0.9,
-  },
-
-  sidebarSvg: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-  },
-
-  // 主卡片
   card: {
     flex: 1,
-    height: CARD_HEIGHT,
-    borderTopRightRadius: 20,
-    borderBottomRightRadius: 20,
-    overflow: 'visible',
-    position: 'relative',
+    borderRadius: 24,
+    overflow: 'hidden',
   },
-
-  decorationSvg: {
+  textureContainer: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  svg: {
     position: 'absolute',
-    top: 0,
-    left: 0,
   },
-
-  // 中央金色logo
-  centerLogo: {
-    position: 'absolute',
-    top: CARD_HEIGHT / 2 - 35,
-    left: (CARD_WIDTH - SIDEBAR_WIDTH) / 2 - 35,
-    opacity: 0.9,
-  },
-
-  cardContent: {
+  content: {
     flex: 1,
-    padding: 16,
-    paddingLeft: 20,
+    padding: 24, // Reduced padding to give more space
     justifyContent: 'space-between',
   },
-
-  // 顶部文字
-  topSection: {
+  headerRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'flex-start',
+    alignItems: 'center',
   },
-
-  topLeftText: {
-    color: 'rgba(255, 255, 255, 0.9)',
-    fontSize: 11,
-    fontWeight: '600',
-    letterSpacing: 1.5,
-  },
-
-  topRightText: {
-    color: 'rgba(255, 255, 255, 0.9)',
-    fontSize: 11,
-    fontWeight: '600',
-    letterSpacing: 1.5,
-  },
-
-  // 底部用户信息
-  bottomSection: {
+  brandContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-end',
+    alignItems: 'center',
+    gap: 8,
   },
-
-  userInfo: {
-    flex: 1,
-  },
-
-  nickName: {
-    color: '#FFFFFF',
-    fontSize: 16,
+  brandLabel: {
+    fontSize: 12,
     fontWeight: '700',
-    letterSpacing: 0.8,
-    marginBottom: 3,
+    letterSpacing: 3,
+    textTransform: 'uppercase',
   },
-
-  legalName: {
-    color: 'rgba(255, 255, 255, 0.85)',
-    fontSize: 13,
-    fontWeight: '500',
+  brandLine: {
+    width: 20,
+    height: 1,
+    backgroundColor: 'rgba(255,255,255,0.3)',
   },
-
-  // 积分信息
-  pointsInfo: {
+  monogramBadge: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(212, 175, 55, 0.5)', // Gold border
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(0,0,0,0.2)',
+  },
+  monogramText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#D4AF37',
+    fontFamily: Platform.OS === 'ios' ? 'Didot' : 'serif',
+  },
+  centerSection: {
+    alignItems: 'center',
+    paddingVertical: 10,
+  },
+  tierTitle: {
+    fontSize: 30, // Slightly smaller to fit better
+    fontWeight: '400',
+    letterSpacing: 2,
+    fontFamily: Platform.OS === 'ios' ? 'Didot' : 'serif',
+    textAlign: 'center',
+    marginBottom: 4,
+  },
+  tierSubtitle: {
+    fontSize: 10,
+    fontWeight: '700',
+    letterSpacing: 3,
+    textTransform: 'uppercase',
+  },
+  footerRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'flex-end',
   },
-
   pointsValue: {
-    color: '#FFFFFF',
-    fontSize: 24,
-    fontWeight: '700',
-    letterSpacing: 0.5,
-  },
-
-  pointsLabel: {
-    color: 'rgba(255, 255, 255, 0.75)',
-    fontSize: 9,
+    fontSize: 40, // Reduced from 48 to fit better
     fontWeight: '600',
-    letterSpacing: 1.2,
+    letterSpacing: 0.5,
+    fontFamily: Platform.OS === 'ios' ? 'Didot' : 'serif',
+    lineHeight: 48, // Ensure line height doesn't clip
+  },
+  pointsLabel: {
+    fontSize: 10,
+    fontWeight: '500',
+    letterSpacing: 1,
+    textTransform: 'uppercase',
     marginTop: 2,
   },
+  progressContainer: {
+    width: 100,
+    alignItems: 'flex-end',
+    marginBottom: 6, // Align with text baseline
+  },
+  progressBarBg: {
+    width: '100%',
+    height: 2,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    marginBottom: 6,
+  },
+  progressBarFill: {
+    height: '100%',
+  },
+  progressText: {
+    fontSize: 9,
+    letterSpacing: 0.5,
+  }
 });
