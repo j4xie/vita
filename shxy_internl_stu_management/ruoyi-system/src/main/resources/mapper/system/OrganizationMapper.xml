@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.OrganizationMapper">
+    
+    <resultMap type="Organization" id="OrganizationResult">
+        <result property="id"    column="id"    />
+        <result property="name"    column="name"    />
+        <result property="createTime"    column="create_time"    />
+    </resultMap>
+
+    <sql id="selectOrganizationVo">
+        select id, name, create_time from organization
+    </sql>
+
+    <select id="selectOrganizationList" parameterType="Organization" resultMap="OrganizationResult">
+        <include refid="selectOrganizationVo"/>
+        <where>  
+            <if test="name != null  and name != ''"> and name like concat('%', #{name}, '%')</if>
+        </where>
+    </select>
+    
+    <select id="selectOrganizationById" parameterType="Long" resultMap="OrganizationResult">
+        <include refid="selectOrganizationVo"/>
+        where id = #{id}
+    </select>
+
+    <insert id="insertOrganization" parameterType="Organization" useGeneratedKeys="true" keyProperty="id">
+        insert into organization
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="name != null">name,</if>
+            <if test="createTime != null">create_time,</if>
+         </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="name != null">#{name},</if>
+            <if test="createTime != null">#{createTime},</if>
+         </trim>
+    </insert>
+
+    <update id="updateOrganization" parameterType="Organization">
+        update organization
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="name != null">name = #{name},</if>
+            <if test="createTime != null">create_time = #{createTime},</if>
+        </trim>
+        where id = #{id}
+    </update>
+
+    <delete id="deleteOrganizationById" parameterType="Long">
+        delete from organization where id = #{id}
+    </delete>
+
+    <delete id="deleteOrganizationByIds" parameterType="String">
+        delete from organization where id in 
+        <foreach item="id" collection="array" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+</mapper>

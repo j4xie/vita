@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.SysUserLevelMapper">
+    
+    <resultMap type="SysUserLevel" id="SysUserLevelResult">
+        <result property="id"    column="id"    />
+        <result property="levelName"    column="level_name"    />
+        <result property="logo"    column="logo"    />
+        <result property="memberBenefits"    column="member_benefits"    />
+        <result property="isUpgrade"    column="is_upgrade"    />
+        <result property="limitValue"    column="limit_value"    />
+        <result property="limitType"    column="limit_type"    />
+        <result property="pointRate"    column="point_rate"    />
+        <result property="acquisitionMethodType"    column="acquisition_method_type"    />
+        <result property="acquisitionMethod"    column="acquisition_method"    />
+        <result property="createTime"    column="create_time"    />
+        <result property="createByUserId"    column="create_by_user_id"    />
+        <result property="createByName"    column="create_by_name"    />
+        <result property="updateTime"    column="update_time"    />
+        <result property="updateByName"    column="update_by_name"    />
+    </resultMap>
+
+    <sql id="selectSysUserLevelVo">
+        select id, level_name, logo, member_benefits, is_upgrade, limit_value, limit_type, point_rate, acquisition_method_type, acquisition_method, create_time, create_by_user_id, create_by_name, update_time, update_by_name from sys_user_level
+    </sql>
+
+    <select id="selectSysUserLevelList" parameterType="SysUserLevel" resultMap="SysUserLevelResult">
+        <include refid="selectSysUserLevelVo"/>
+        <where>  
+            <if test="levelName != null  and levelName != ''"> and level_name like concat('%', #{levelName}, '%')</if>
+            <if test="logo != null "> and logo = #{logo}</if>
+            <if test="memberBenefits != null  and memberBenefits != ''"> and member_benefits = #{memberBenefits}</if>
+            <if test="isUpgrade != null "> and is_upgrade = #{isUpgrade}</if>
+            <if test="limitValue != null "> and limit_value = #{limitValue}</if>
+            <if test="limitType != null "> and limit_type = #{limitType}</if>
+            <if test="pointRate != null "> and point_rate = #{pointRate}</if>
+            <if test="acquisitionMethodType != null "> and acquisition_method_type = #{acquisitionMethodType}</if>
+            <if test="acquisitionMethod != null "> and acquisition_method = #{acquisitionMethod}</if>
+            <if test="createByUserId != null "> and create_by_user_id = #{createByUserId}</if>
+            <if test="createByName != null  and createByName != ''"> and create_by_name like concat('%', #{createByName}, '%')</if>
+            <if test="updateByName != null "> and update_by_name like concat('%', #{updateByName}, '%')</if>
+        </where>
+    </select>
+    
+    <select id="selectSysUserLevelById" parameterType="Long" resultMap="SysUserLevelResult">
+        <include refid="selectSysUserLevelVo"/>
+        where id = #{id}
+    </select>
+
+    <insert id="insertSysUserLevel" parameterType="SysUserLevel" useGeneratedKeys="true" keyProperty="id">
+        insert into sys_user_level
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="levelName != null">level_name,</if>
+            <if test="logo != null">logo,</if>
+            <if test="memberBenefits != null">member_benefits,</if>
+            <if test="isUpgrade != null">is_upgrade,</if>
+            <if test="limitValue != null">limit_value,</if>
+            <if test="limitType != null">limit_type,</if>
+            <if test="pointRate != null">point_rate,</if>
+            <if test="acquisitionMethodType != null">acquisition_method_type,</if>
+            <if test="acquisitionMethod != null">acquisition_method,</if>
+            <if test="createTime != null">create_time,</if>
+            <if test="createByUserId != null">create_by_user_id,</if>
+            <if test="createByName != null">create_by_name,</if>
+            <if test="updateTime != null">update_time,</if>
+            <if test="updateByName != null">update_by_name,</if>
+         </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="levelName != null">#{levelName},</if>
+            <if test="logo != null">#{logo},</if>
+            <if test="memberBenefits != null">#{memberBenefits},</if>
+            <if test="isUpgrade != null">#{isUpgrade},</if>
+            <if test="limitValue != null">#{limitValue},</if>
+            <if test="limitType != null">#{limitType},</if>
+            <if test="pointRate != null">#{pointRate},</if>
+            <if test="acquisitionMethodType != null">#{acquisitionMethodType},</if>
+            <if test="acquisitionMethod != null">#{acquisitionMethod},</if>
+            <if test="createTime != null">#{createTime},</if>
+            <if test="createByUserId != null">#{createByUserId},</if>
+            <if test="createByName != null">#{createByName},</if>
+            <if test="updateTime != null">#{updateTime},</if>
+            <if test="updateByName != null">#{updateByName},</if>
+         </trim>
+    </insert>
+
+    <update id="updateSysUserLevel" parameterType="SysUserLevel">
+        update sys_user_level
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="levelName != null">level_name = #{levelName},</if>
+            <if test="logo != null">logo = #{logo},</if>
+            <if test="memberBenefits != null">member_benefits = #{memberBenefits},</if>
+            <if test="isUpgrade != null">is_upgrade = #{isUpgrade},</if>
+            <if test="limitValue != null">limit_value = #{limitValue},</if>
+            <if test="limitType != null">limit_type = #{limitType},</if>
+            <if test="pointRate != null">point_rate = #{pointRate},</if>
+            <if test="acquisitionMethodType != null">acquisition_method_type = #{acquisitionMethodType},</if>
+            <if test="acquisitionMethod != null">acquisition_method = #{acquisitionMethod},</if>
+            <if test="createTime != null">create_time = #{createTime},</if>
+            <if test="createByUserId != null">create_by_user_id = #{createByUserId},</if>
+            <if test="createByName != null">create_by_name = #{createByName},</if>
+            <if test="updateTime != null">update_time = #{updateTime},</if>
+            <if test="updateByName != null">update_by_name = #{updateByName},</if>
+        </trim>
+        where id = #{id}
+    </update>
+
+    <delete id="deleteSysUserLevelById" parameterType="Long">
+        delete from sys_user_level where id = #{id}
+    </delete>
+
+    <delete id="deleteSysUserLevelByIds" parameterType="String">
+        delete from sys_user_level where id in 
+        <foreach item="id" collection="array" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+</mapper>

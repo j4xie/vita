@@ -1,0 +1,954 @@
+{
+	"info": {
+		"_postman_id": "8845266e-74b3-4027-9371-50d1d77a8fbd",
+		"name": "留学生APP接口",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "用户注册",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"url": {
+					"raw": "http://localhost/dev-api/app/user/add?userName=test15&legalName=测试用户15&nickName=testuser15&password=123456&phonenumber=15500155222&email=test15@test.com&sex=0&deptId=211&verCode=&invCode=PIWKWW92&bizId=&orgId=5&areaCode=86&identity=1&area",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"path": [
+						"dev-api",
+						"app",
+						"user",
+						"add"
+					],
+					"query": [
+						{
+							"key": "userName",
+							"value": "test15",
+							"description": "用户名，登录用。数字字母混合。长度6~20"
+						},
+						{
+							"key": "legalName",
+							"value": "测试用户15",
+							"description": "法定姓名。长度50"
+						},
+						{
+							"key": "nickName",
+							"value": "testuser15",
+							"description": "英文名。长度50"
+						},
+						{
+							"key": "password",
+							"value": "123456",
+							"description": "密码。长度6~20"
+						},
+						{
+							"key": "phonenumber",
+							"value": "15500155222",
+							"description": "手机号"
+						},
+						{
+							"key": "email",
+							"value": "test15@test.com",
+							"description": "邮箱"
+						},
+						{
+							"key": "sex",
+							"value": "0",
+							"description": "性别  0-男 1-女 2-未知"
+						},
+						{
+							"key": "deptId",
+							"value": "211",
+							"description": "学校id"
+						},
+						{
+							"key": "verCode",
+							"value": "",
+							"description": "手机验证码"
+						},
+						{
+							"key": "invCode",
+							"value": "PIWKWW92",
+							"description": "邀请码"
+						},
+						{
+							"key": "bizId",
+							"value": "",
+							"description": "短信验证码接口返回的字段"
+						},
+						{
+							"key": "orgId",
+							"value": "5",
+							"description": "组织id"
+						},
+						{
+							"key": "areaCode",
+							"value": "86",
+							"description": "国际电话区号，例 86、1等"
+						},
+						{
+							"key": "identity",
+							"value": "1",
+							"description": "1-学生   2-家长"
+						},
+						{
+							"key": "area",
+							"value": null
+						}
+					]
+				}
+			},
+			"response": [
+				{
+					"name": "用户注册",
+					"originalRequest": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{测试环境}}/app/user/add?userName=test0019&legalName=测试用户0019&nickName=testtest0019&password=123456&phonenumber=&email=&sex=2&deptId=&verCode=&invCode=Y7MW5HBV&bizId=&orgId=1",
+							"host": [
+								"{{测试环境}}"
+							],
+							"path": [
+								"app",
+								"user",
+								"add"
+							],
+							"query": [
+								{
+									"key": "userName",
+									"value": "test0019",
+									"description": "用户名，登录用。数字字母混合。长度6~20"
+								},
+								{
+									"key": "legalName",
+									"value": "测试用户0019",
+									"description": "法定姓名。长度50"
+								},
+								{
+									"key": "nickName",
+									"value": "testtest0019",
+									"description": "英文名。长度50"
+								},
+								{
+									"key": "password",
+									"value": "123456",
+									"description": "密码。长度6~20"
+								},
+								{
+									"key": "phonenumber",
+									"value": "",
+									"description": "手机号"
+								},
+								{
+									"key": "email",
+									"value": "",
+									"description": "邮箱"
+								},
+								{
+									"key": "sex",
+									"value": "2",
+									"description": "性别  0-男 1-女 2-未知"
+								},
+								{
+									"key": "deptId",
+									"value": "",
+									"description": "学校id"
+								},
+								{
+									"key": "verCode",
+									"value": "",
+									"description": "手机验证码"
+								},
+								{
+									"key": "invCode",
+									"value": "Y7MW5HBV",
+									"description": "邀请码"
+								},
+								{
+									"key": "bizId",
+									"value": "",
+									"description": "短信验证码接口返回的字段"
+								},
+								{
+									"key": "orgId",
+									"value": "1",
+									"description": "组织id"
+								}
+							]
+						}
+					},
+					"_postman_previewlanguage": "Text",
+					"header": [],
+					"cookie": [],
+					"body": "{\r\n    \"msg\": \"操作成功\",\r\n    \"code\": 200\r\n}"
+				}
+			]
+		},
+		{
+			"name": "测试接口",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"url": {
+					"raw": "{{测试环境}}/test",
+					"host": [
+						"{{测试环境}}"
+					],
+					"path": [
+						"test"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "用户登录",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"url": {
+					"raw": "{{本地环境}}/app/login?username=admin&password=123456",
+					"host": [
+						"{{本地环境}}"
+					],
+					"path": [
+						"app",
+						"login"
+					],
+					"query": [
+						{
+							"key": "username",
+							"value": "admin"
+						},
+						{
+							"key": "password",
+							"value": "123456"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "根据userId获取用户信息",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "authorization",
+						"value": "Bearer eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJhZG1pbiIsImxvZ2luX3VzZXJfa2V5IjoiOWZjM2M5OTctNzM3YS00NzFjLThmMzktY2UyYzg0Y2Y0OGQzIn0.SA2BBl6iGg65-IzkunRHlkTZxK9-NG5rZLFMZgfmMwWfZm_Gy_AhzvMAIFFUhM-St3zUUSzdC-DJN5frnoBNrw",
+						"type": "default"
+					}
+				],
+				"url": {
+					"raw": "{{测试环境}}/app/user/info?userId=102",
+					"host": [
+						"{{测试环境}}"
+					],
+					"path": [
+						"app",
+						"user",
+						"info"
+					],
+					"query": [
+						{
+							"key": "userId",
+							"value": "102"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "登录短信验证码",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost/dev-api/sms/vercodeSms?phoneNum=18221568871&areaCode=1",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"path": [
+						"dev-api",
+						"sms",
+						"vercodeSms"
+					],
+					"query": [
+						{
+							"key": "phoneNum",
+							"value": "18221568871"
+						},
+						{
+							"key": "areaCode",
+							"value": "1"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "获取活动列表接口",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost/dev-api/app/activity/list?userId=103",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"path": [
+						"dev-api",
+						"app",
+						"activity",
+						"list"
+					],
+					"query": [
+						{
+							"key": "pageNum",
+							"value": "1",
+							"disabled": true
+						},
+						{
+							"key": "pageSize",
+							"value": "10",
+							"disabled": true
+						},
+						{
+							"key": "userId",
+							"value": "103"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "查看用户是否报名该活动",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{测试环境}}/app/activity/getSignInfo?activityId=8&userId=100",
+					"host": [
+						"{{测试环境}}"
+					],
+					"path": [
+						"app",
+						"activity",
+						"getSignInfo"
+					],
+					"query": [
+						{
+							"key": "activityId",
+							"value": "8"
+						},
+						{
+							"key": "userId",
+							"value": "100"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "活动签到接口",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{测试环境}}/app/activity/signIn?activityId=9&userId=100",
+					"host": [
+						"{{测试环境}}"
+					],
+					"path": [
+						"app",
+						"activity",
+						"signIn"
+					],
+					"query": [
+						{
+							"key": "activityId",
+							"value": "9"
+						},
+						{
+							"key": "userId",
+							"value": "100"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "查询学校列表",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{测试环境}}/app/dept/list",
+					"host": [
+						"{{测试环境}}"
+					],
+					"path": [
+						"app",
+						"dept",
+						"list"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "活动报名接口",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost/dev-api/app/activity/enroll?activityId=20&userId=102&isCancel=1",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"path": [
+						"dev-api",
+						"app",
+						"activity",
+						"enroll"
+					],
+					"query": [
+						{
+							"key": "activityId",
+							"value": "20"
+						},
+						{
+							"key": "userId",
+							"value": "102"
+						},
+						{
+							"key": "isCancel",
+							"value": "1",
+							"description": "取消报名传1，报名不传"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "管理员&志愿者用用--志愿者打卡记录列表",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "authorization",
+						"value": "Bearer eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJhZG1pbiIsImxvZ2luX3VzZXJfa2V5IjoiYTUwZTkwYmItYzExMi00MDI2LTk3NWQtNWZlOWUwMDBiODg3In0.znK8CO8CIL1YUG8877Jl3n-8vXNlQCEHpGWB__pdyHb_VdVasMysyyNXRy7P46amx3h_TdBJ80iLLirI_zmsPA",
+						"type": "default"
+					}
+				],
+				"url": {
+					"raw": "{{测试环境}}/app/hour/recordList?userId=103",
+					"host": [
+						"{{测试环境}}"
+					],
+					"path": [
+						"app",
+						"hour",
+						"recordList"
+					],
+					"query": [
+						{
+							"key": "userId",
+							"value": "103",
+							"description": "查个人的记录才需要传此参数"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "管理员用--志愿者工时列表",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "authorization",
+						"value": "Bearer eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJ0ZXN0MDAxIiwibG9naW5fdXNlcl9rZXkiOiI2N2EwNzY4NC1kM2I1LTQ3YjgtOWI0Yy1kMWFjMmJjNWU4ZDAifQ.cDytqD_ylJwVIrmGm6GR4EoeVglGClcj3bYb6lEbx9Q4SBCzNEUH66AWNQpxyhUaOO-QvYGatlr8E0Bf9KDcKQ",
+						"type": "default"
+					}
+				],
+				"url": {
+					"raw": "{{测试环境}}/app/hour/hourList",
+					"host": [
+						"{{测试环境}}"
+					],
+					"path": [
+						"app",
+						"hour",
+						"hourList"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "管理员用-给志愿者签到、签退",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "authorization",
+						"value": "Bearer eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJ0ZXN0MDAxIiwibG9naW5fdXNlcl9rZXkiOiJkNmI4YWY1NC1iOWI1LTQ5YTYtOGMzNi1lMmFhZDk0OWJiYTAifQ.hizkig_5ZRcApix3RwBGBPMgcRzDqeQOgyv-Gp3FN0yRrJdxzD5NRAENHpIJi1kQZ9E6Vc-uxObZ5KVM-vLhHA",
+						"type": "default"
+					}
+				],
+				"url": {
+					"raw": "http://localhost/dev-api/app/hour/signRecord?userId=103&startTime=2025-08-18 12:11:23&endTime=2025-08-18 12:18:02&type=2&operateUserId=102&operateLegalName=管理员&id=18",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"path": [
+						"dev-api",
+						"app",
+						"hour",
+						"signRecord"
+					],
+					"query": [
+						{
+							"key": "userId",
+							"value": "103",
+							"description": "志愿者userId"
+						},
+						{
+							"key": "startTime",
+							"value": "2025-08-18 12:11:23",
+							"description": "签到时间"
+						},
+						{
+							"key": "endTime",
+							"value": "2025-08-18 12:18:02",
+							"description": "签退时间"
+						},
+						{
+							"key": "type",
+							"value": "2",
+							"description": "1 签到       2 签退"
+						},
+						{
+							"key": "operateUserId",
+							"value": "102",
+							"description": "操作人的用户id"
+						},
+						{
+							"key": "operateLegalName",
+							"value": "管理员",
+							"description": "操作人法定姓名"
+						},
+						{
+							"key": "id",
+							"value": "18",
+							"description": "签到记录的id"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "管理员-查看志愿者是否签到",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "authorization",
+						"value": "Bearer eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJ0ZXN0MDAxIiwibG9naW5fdXNlcl9rZXkiOiI2NTgyN2EzNy0zNTI5LTRlOTgtYWZkMi1lOWRmNTU0ZjZiM2MifQ.QYLH6ghOK-yFG5OoYXXcaxsLnw6mLluIB7wOzMxQocBhZ0TajrllXssEvf3CDRpNW0mOif9dmOvkNLpbOOlKTw",
+						"type": "default"
+					}
+				],
+				"url": {
+					"raw": "{{测试环境}}/app/hour/lastRecordList?userId=103",
+					"host": [
+						"{{测试环境}}"
+					],
+					"path": [
+						"app",
+						"hour",
+						"lastRecordList"
+					],
+					"query": [
+						{
+							"key": "userId",
+							"value": "103"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "查询已生成的邀请码",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"url": {
+					"raw": "{{测试环境}}/app/invitation/invInfo?userId=101",
+					"host": [
+						"{{测试环境}}"
+					],
+					"path": [
+						"app",
+						"invitation",
+						"invInfo"
+					],
+					"query": [
+						{
+							"key": "userId",
+							"value": "101"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "生成邀请码接口",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"url": {
+					"raw": "{{测试环境}}/app/invitation/addInv?userId=101",
+					"host": [
+						"{{测试环境}}"
+					],
+					"path": [
+						"app",
+						"invitation",
+						"addInv"
+					],
+					"query": [
+						{
+							"key": "userId",
+							"value": "101"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "重新生成邀请码接口",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"url": {
+					"raw": "{{测试环境}}/app/invitation/resetInv?userId=101&id=1",
+					"host": [
+						"{{测试环境}}"
+					],
+					"path": [
+						"app",
+						"invitation",
+						"resetInv"
+					],
+					"query": [
+						{
+							"key": "userId",
+							"value": "101"
+						},
+						{
+							"key": "id",
+							"value": "1"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "组织列表查询",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{测试环境}}/app/organization/list",
+					"host": [
+						"{{测试环境}}"
+					],
+					"path": [
+						"app",
+						"organization",
+						"list"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "获取和当前用户相关的活动列表",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost/dev-api/app/activity/userActivitylist?userId=103&signStatus=-1",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"path": [
+						"dev-api",
+						"app",
+						"activity",
+						"userActivitylist"
+					],
+					"query": [
+						{
+							"key": "userId",
+							"value": "103"
+						},
+						{
+							"key": "signStatus",
+							"value": "-1"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "志愿者--获取个人总工时",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "authorization",
+						"value": "Bearer eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJhZG1pbiIsImxvZ2luX3VzZXJfa2V5IjoiYTUwZTkwYmItYzExMi00MDI2LTk3NWQtNWZlOWUwMDBiODg3In0.znK8CO8CIL1YUG8877Jl3n-8vXNlQCEHpGWB__pdyHb_VdVasMysyyNXRy7P46amx3h_TdBJ80iLLirI_zmsPA",
+						"type": "default"
+					}
+				],
+				"url": {
+					"raw": "http://localhost/dev-api/app/hour/userHour?userId=103",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"path": [
+						"dev-api",
+						"app",
+						"hour",
+						"userHour"
+					],
+					"query": [
+						{
+							"key": "userId",
+							"value": "103"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "重置密码",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"url": {
+					"raw": "http://localhost/dev-api/app/resetPwd?invCode=&verCode=&bizId&password&phonenumber",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"path": [
+						"dev-api",
+						"app",
+						"resetPwd"
+					],
+					"query": [
+						{
+							"key": "invCode",
+							"value": "",
+							"description": "邀请码"
+						},
+						{
+							"key": "verCode",
+							"value": "",
+							"description": "手机验证码，6位"
+						},
+						{
+							"key": "bizId",
+							"value": null,
+							"description": "短信验证码接口返回的字段bizId"
+						},
+						{
+							"key": "password",
+							"value": null,
+							"description": "密码。长度6~20"
+						},
+						{
+							"key": "phonenumber",
+							"value": null,
+							"description": "手机号"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "用户注销",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost/dev-api/app/user/logoff?userId=103",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"path": [
+						"dev-api",
+						"app",
+						"user",
+						"logoff"
+					],
+					"query": [
+						{
+							"key": "userId",
+							"value": "103",
+							"description": "用户id"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "重置密码接口",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"url": {
+					"raw": "http://localhost/dev-api/app/resetPwd?phonenumber=18221568871&verCode=507851&bizId=273615857389010811%5E0&password=111111&areaCode=86",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"path": [
+						"dev-api",
+						"app",
+						"resetPwd"
+					],
+					"query": [
+						{
+							"key": "phonenumber",
+							"value": "18221568871",
+							"description": "用户手机号"
+						},
+						{
+							"key": "verCode",
+							"value": "507851"
+						},
+						{
+							"key": "bizId",
+							"value": "273615857389010811%5E0"
+						},
+						{
+							"key": "password",
+							"value": "111111"
+						},
+						{
+							"key": "areaCode",
+							"value": "86"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "测试用-校验短信验证码",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"url": {
+					"raw": "http://localhost/dev-api/sms/check?phoneNum=12262410752&bizId=692141757403426042&areaCode=1",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"path": [
+						"dev-api",
+						"sms",
+						"check"
+					],
+					"query": [
+						{
+							"key": "phoneNum",
+							"value": "12262410752"
+						},
+						{
+							"key": "bizId",
+							"value": "692141757403426042"
+						},
+						{
+							"key": "areaCode",
+							"value": "1"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "校验邀请码是否可用",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost/dev-api/app/invitation/checkInviteCode?inviteCode=PIWKWW921",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"path": [
+						"dev-api",
+						"app",
+						"invitation",
+						"checkInviteCode"
+					],
+					"query": [
+						{
+							"key": "inviteCode",
+							"value": "PIWKWW921"
+						}
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"variable": [
+		{
+			"key": "本地环境",
+			"value": "http://localhost/dev-api"
+		},
+		{
+			"key": "测试环境",
+			"value": "http://106.14.165.234:8085"
+		},
+		{
+			"key": "正式环境",
+			"value": "https://www.vitaglobal.icu"
+		}
+	]
+}

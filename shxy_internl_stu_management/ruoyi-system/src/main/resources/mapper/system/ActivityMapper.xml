@@ -1,0 +1,234 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.ActivityMapper">
+    
+    <resultMap type="Activity" id="ActivityResult">
+        <result property="id"    column="id"    />
+        <result property="name"    column="name"    />
+        <result property="icon"    column="icon"    />
+        <result property="startTime"    column="start_time"    />
+        <result property="endTime"    column="end_time"    />
+        <result property="address"    column="address"    />
+        <result property="enrollment"    column="enrollment"    />
+        <result property="detail"    column="detail"    />
+        <result property="signStartTime"    column="sign_start_time"    />
+        <result property="signEndTime"    column="sign_end_time"    />
+        <result property="timeZone"    column="time_zone"    />
+        <result property="price"    column="price"    />
+        <result property="point"    column="point"    />
+        <result property="actType"    column="act_type"    />
+        <result property="modelId"    column="model_id"    />
+        <result property="modelName"    column="model_name"    />
+        <result property="modelContent"    column="model_content"    />
+        <result property="status"    column="status"    />
+        <result property="enabled"    column="enabled"    />
+        <result property="createTime"    column="create_time"    />
+        <result property="updateTime"    column="update_time"    />
+        <result property="createUserId"    column="create_user_id"    />
+        <result property="createName"    column="create_name"    />
+        <result property="createNickName"    column="create_nick_name"    />
+        <result property="signStatus"    column="sign_status"    />
+        <result property="type"    column="type"    />
+        <result property="registerCount"    column="register_count"    />
+        <result property="deptId"    column="dept_id"    />
+        <result property="deptName"    column="dept_name"    />
+    </resultMap>
+
+    <sql id="selectActivityVo">
+        select act.id, act.name, act.icon, act.start_time, act.end_time, act.address, act.enrollment, act.detail, act.sign_start_time, act.sign_end_time, act.time_zone, act.price, act.point, act.act_type,
+               act.model_id, act.model_name, act.model_content, act.status, act.enabled, act.create_time, act.update_time, act.create_user_id, act.create_name, act.create_nick_name, d.dept_id,
+               (SELECT count(1) from activity_ex_user aeu WHERE aeu.activity_id = act.id) as register_count,
+               CASE
+                   WHEN d.parent_id > 1 THEN CONCAT((select ind.dept_name from sys_dept ind where ind.dept_id = d.parent_id), '(',d.dept_name,')')
+                   ELSE d.dept_name
+                   end as dept_name
+        from activity act
+        left join sys_user u on u.user_id = act.create_user_id
+        left join sys_dept d on u.dept_id = d.dept_id
+    </sql>
+
+    <select id="selectActivityList" parameterType="Activity" resultMap="ActivityResult">
+        <include refid="selectActivityVo"/>
+        where 1=1
+        <if test="name != null  and name != ''"> and act.name like concat('%', #{name}, '%')</if>
+        <if test="icon != null  and icon != ''"> and act.icon = #{icon}</if>
+        <if test="startTime != null "> and act.start_time = #{startTime}</if>
+        <if test="endTime != null "> and act.end_time = #{endTime}</if>
+        <if test="address != null  and address != ''"> and act.address = #{address}</if>
+        <if test="enrollment != null  and enrollment != ''"> and act.enrollment = #{enrollment}</if>
+        <if test="detail != null  and detail != ''"> and act.detail = #{detail}</if>
+        <if test="signStartTime != null "> and act.sign_start_time = #{signStartTime}</if>
+        <if test="signEndTime != null "> and act.sign_end_time = #{signEndTime}</if>
+        <if test="timeZone != null "> and act.time_zone = #{timeZone}</if>
+        <if test="actType != null "> and act.act_type = #{actType}</if>
+        <if test="modelId != null "> and act.model_id = #{modelId}</if>
+        <if test="status != null "> and act.status = #{status}</if>
+        <if test="enabled != null "> and act.enabled = #{enabled}</if>
+        <if test="createUserId != null "> and act.create_user_id = #{createUserId}</if>
+        <if test="createName != null "> and act.create_name = #{createName}</if>
+        <if test="createNickName != null "> and act.create_nick_name = #{createNickName}</if>
+        <!-- 数据范围过滤 -->
+        ${params.dataScope}
+        order by act.create_time desc
+    </select>
+
+    <select id="selectActivityListForApp" parameterType="Activity" resultMap="ActivityResult">
+        select act.id, act.name, act.icon, act.start_time, act.end_time, act.address, act.enrollment, act.detail, act.sign_start_time, act.sign_end_time, act.time_zone, act.status, act.price, act.point, act.act_type, act.model_id, act.model_name, act.model_content,
+               act.enabled, act.create_time, act.update_time, act.create_user_id, act.create_name, act.create_nick_name, d.dept_id,
+        (SELECT count(1) from activity_ex_user aeu WHERE aeu.activity_id = act.id) as register_count,
+        COALESCE((select sign_status from activity_ex_user aeu where act.id = aeu.activity_id and aeu.user_id = #{userId}), 0) as sign_status,
+        CASE
+        WHEN 0 > DATEDIFF(NOW(), act.start_time) THEN -1
+        WHEN DATEDIFF(NOW(), act.start_time) >= 0 and 0 > DATEDIFF(NOW(), act.end_time) THEN 1
+        ELSE 2
+        end as type,
+        CASE
+        WHEN d.parent_id > 1 THEN CONCAT((select ind.dept_name from sys_dept ind where ind.dept_id = d.parent_id), '(',d.dept_name,')')
+        ELSE d.dept_name
+        end as dept_name
+        from activity act
+        left join sys_user u on u.user_id = act.create_user_id
+        left join sys_dept d on u.dept_id = d.dept_id
+        <where>
+            <if test="name != null  and name != ''"> and act.name like concat('%', #{name}, '%')</if>
+            <if test="icon != null  and icon != ''"> and act.icon = #{icon}</if>
+            <if test="startTime != null "> and act.start_time = #{startTime}</if>
+            <if test="endTime != null "> and act.end_time = #{endTime}</if>
+            <if test="address != null  and address != ''"> and act.address = #{address}</if>
+            <if test="enrollment != null  and enrollment != ''"> and act.enrollment = #{enrollment}</if>
+            <if test="detail != null  and detail != ''"> and act.detail = #{detail}</if>
+            <if test="signStartTime != null "> and act.sign_start_time = #{signStartTime}</if>
+            <if test="signEndTime != null "> and act.sign_end_time = #{signEndTime}</if>
+            <if test="timeZone != null "> and act.time_zone = #{timeZone}</if>
+            <if test="actType != null "> and act.act_type = #{actType}</if>
+            <if test="modelId != null "> and act.model_id = #{modelId}</if>
+            <if test="status != null "> and act.status = #{status}</if>
+            <if test="enabled != null "> and act.enabled = #{enabled}</if>
+            <if test="createUserId != null "> and act.create_user_id = #{createUserId}</if>
+            <if test="createName != null "> and act.create_name = #{createName}</if>
+            <if test="createNickName != null "> and act.create_nick_name = #{createNickName}</if>
+        </where>
+        order by act.create_time desc
+    </select>
+
+    <select id="selectActivityListByUser" parameterType="Activity" resultMap="ActivityResult">
+        select act.id, act.name, act.icon, act.start_time, act.end_time, act.address, act.enrollment, act.detail, act.sign_start_time, act.sign_end_time, act.time_zone, act.price, act.point, act.act_type, act.model_id, act.model_name, act.model_content, act.status,
+        act.enabled, act.create_time, act.update_time, act.create_user_id,
+        act.create_name, act.create_nick_name, aeu.sign_status,
+        (SELECT count(1) from activity_ex_user aeu WHERE aeu.activity_id = act.id) as register_count,
+        CASE
+        WHEN 0 > DATEDIFF(NOW(), act.start_time) THEN -1
+        WHEN DATEDIFF(NOW(), act.start_time) >= 0 and 0 > DATEDIFF(NOW(), act.end_time) THEN 1
+        ELSE 2
+        end as type
+        from activity_ex_user aeu
+        LEFT JOIN activity act on aeu.activity_id = act.id
+        <where>
+            <if test="userId != null "> and aeu.user_id = #{userId}</if>
+            <if test="signStatus != null "> and aeu.sign_status = #{signStatus}</if>
+        </where>
+        order by act.create_time desc
+    </select>
+    
+    <select id="selectActivityById" parameterType="Long" resultMap="ActivityResult">
+        <include refid="selectActivityVo"/>
+        where act.id = #{id}
+    </select>
+
+    <insert id="insertActivity" parameterType="Activity" useGeneratedKeys="true" keyProperty="id">
+        insert into activity
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="name != null">name,</if>
+            <if test="icon != null">icon,</if>
+            <if test="startTime != null">start_time,</if>
+            <if test="endTime != null">end_time,</if>
+            <if test="address != null">address,</if>
+            <if test="enrollment != null">enrollment,</if>
+            <if test="detail != null">detail,</if>
+            <if test="signStartTime != null">sign_start_time,</if>
+            <if test="signEndTime != null">sign_end_time,</if>
+            <if test="timeZone != null">time_zone,</if>
+            <if test="price != null">price,</if>
+            <if test="point != null">point,</if>
+            <if test="actType != null">act_type,</if>
+            <if test="modelId != null">model_id,</if>
+            <if test="modelName != null">model_name,</if>
+            <if test="modelContent != null">model_content,</if>
+            <if test="status != null">status,</if>
+            <if test="enabled != null">enabled,</if>
+            <if test="createTime != null">create_time,</if>
+            <if test="updateTime != null">update_time,</if>
+            <if test="createUserId != null">create_user_id,</if>
+            <if test="createName != null">create_name,</if>
+            <if test="createNickName != null">create_nick_name,</if>
+         </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="name != null">#{name},</if>
+            <if test="icon != null">#{icon},</if>
+            <if test="startTime != null">#{startTime},</if>
+            <if test="endTime != null">#{endTime},</if>
+            <if test="address != null">#{address},</if>
+            <if test="enrollment != null">#{enrollment},</if>
+            <if test="detail != null">#{detail},</if>
+            <if test="signStartTime != null">#{signStartTime},</if>
+            <if test="signEndTime != null">#{signEndTime},</if>
+            <if test="timeZone != null">#{timeZone},</if>
+            <if test="price != null">#{price},</if>
+            <if test="point != null">#{point},</if>
+            <if test="actType != null">#{actType},</if>
+            <if test="modelId != null">#{modelId},</if>
+            <if test="modelName != null">#{modelName},</if>
+            <if test="modelContent != null">#{modelContent},</if>
+            <if test="status != null">#{status},</if>
+            <if test="enabled != null">#{enabled},</if>
+            <if test="createTime != null">#{createTime},</if>
+            <if test="updateTime != null">#{updateTime},</if>
+            <if test="createUserId != null">#{createUserId},</if>
+            <if test="createName != null">#{createName},</if>
+            <if test="createNickName != null">#{createNickName},</if>
+         </trim>
+    </insert>
+
+    <update id="updateActivity" parameterType="Activity">
+        update activity
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="name != null">name = #{name},</if>
+            <if test="icon != null">icon = #{icon},</if>
+            <if test="startTime != null">start_time = #{startTime},</if>
+            <if test="endTime != null">end_time = #{endTime},</if>
+            <if test="address != null">address = #{address},</if>
+            <if test="enrollment != null">enrollment = #{enrollment},</if>
+            <if test="detail != null">detail = #{detail},</if>
+            <if test="signStartTime != null">sign_start_time = #{signStartTime},</if>
+            <if test="signEndTime != null">sign_end_time = #{signEndTime},</if>
+            <if test="timeZone != null">time_zone = #{timeZone},</if>
+            <if test="price != null">price = #{price},</if>
+            <if test="point != null">point = #{point},</if>
+            <if test="actType != null">act_type = #{actType},</if>
+            <if test="modelId != null">model_id = #{modelId},</if>
+            <if test="modelName != null">model_name = #{modelName},</if>
+            <if test="modelContent != null">model_content = #{modelContent},</if>
+            <if test="status != null">status = #{status},</if>
+            <if test="enabled != null">enabled = #{enabled},</if>
+            <if test="createTime != null">create_time = #{createTime},</if>
+            <if test="updateTime != null">update_time = #{updateTime},</if>
+            <if test="createUserId != null">create_user_id = #{createUserId},</if>
+            <if test="createName != null">create_name = #{createName},</if>
+            <if test="createNickName != null">create_nick_name = #{createNickName},</if>
+        </trim>
+        where id = #{id}
+    </update>
+
+    <delete id="deleteActivityById" parameterType="Long">
+        delete from activity where id = #{id}
+    </delete>
+
+    <delete id="deleteActivityByIds" parameterType="String">
+        delete from activity where id in 
+        <foreach item="id" collection="array" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+</mapper>

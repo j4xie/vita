@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.SysUserExLevelMapper">
+    
+    <resultMap type="SysUserExLevel" id="SysUserExLevelResult">
+        <result property="id"    column="id"    />
+        <result property="userId"    column="user_id"    />
+        <result property="levelId"    column="level_id"    />
+        <result property="validityType"    column="validity_type"    />
+        <result property="status"    column="status"    />
+        <result property="validityStartTime"    column="validity_start_time"    />
+        <result property="validityEndTime"    column="validity_end_time"    />
+        <result property="createTime"    column="create_time"    />
+    </resultMap>
+
+    <sql id="selectSysUserExLevelVo">
+        select id, user_id, level_id, validity_type, status, validity_start_time, validity_end_time, create_time from sys_user_ex_level
+    </sql>
+
+    <select id="selectSysUserExLevelList" parameterType="SysUserExLevel" resultMap="SysUserExLevelResult">
+        <include refid="selectSysUserExLevelVo"/>
+        <where>  
+            <if test="userId != null "> and user_id = #{userId}</if>
+            <if test="levelId != null "> and level_id = #{levelId}</if>
+            <if test="validityType != null "> and validity_type = #{validityType}</if>
+            <if test="status != null "> and status = #{status}</if>
+            <if test="validityStartTime != null "> and validity_start_time = #{validityStartTime}</if>
+            <if test="validityEndTime != null "> and validity_end_time = #{validityEndTime}</if>
+        </where>
+    </select>
+    
+    <select id="selectSysUserExLevelById" parameterType="Long" resultMap="SysUserExLevelResult">
+        <include refid="selectSysUserExLevelVo"/>
+        where id = #{id}
+    </select>
+
+    <insert id="insertSysUserExLevel" parameterType="SysUserExLevel" useGeneratedKeys="true" keyProperty="id">
+        insert into sys_user_ex_level
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="userId != null">user_id,</if>
+            <if test="levelId != null">level_id,</if>
+            <if test="validityType != null">validity_type,</if>
+            <if test="status != null">status,</if>
+            <if test="validityStartTime != null">validity_start_time,</if>
+            <if test="validityEndTime != null">validity_end_time,</if>
+            create_time
+         </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="userId != null">#{userId},</if>
+            <if test="levelId != null">#{levelId},</if>
+            <if test="validityType != null">#{validityType},</if>
+            <if test="status != null">#{status},</if>
+            <if test="validityStartTime != null">#{validityStartTime},</if>
+            <if test="validityEndTime != null">#{validityEndTime},</if>
+            sysdate()
+         </trim>
+    </insert>
+
+    <update id="updateSysUserExLevel" parameterType="SysUserExLevel">
+        update sys_user_ex_level
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="userId != null">user_id = #{userId},</if>
+            <if test="levelId != null">level_id = #{levelId},</if>
+            <if test="validityType != null">validity_type = #{validityType},</if>
+            <if test="status != null">status = #{status},</if>
+            <if test="validityStartTime != null">validity_start_time = #{validityStartTime},</if>
+            <if test="validityEndTime != null">validity_end_time = #{validityEndTime},</if>
+            <if test="createTime != null">create_time = #{createTime},</if>
+        </trim>
+        where id = #{id}
+    </update>
+
+    <delete id="deleteSysUserExLevelById" parameterType="Long">
+        delete from sys_user_ex_level where id = #{id}
+    </delete>
+
+    <delete id="deleteSysUserExLevelByIds" parameterType="String">
+        delete from sys_user_ex_level where id in 
+        <foreach item="id" collection="array" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+</mapper>

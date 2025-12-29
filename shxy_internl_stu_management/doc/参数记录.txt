@@ -1,0 +1,14 @@
+测试环境-管理端地址：http://106.14.165.234:8085/static/web/index.html
+测试环境-接口url：http://106.14.165.234:8085
+测试环境H5地址：http://106.14.165.234:8086
+
+
+正式环境-管理端地址：https://www.vitaglobal.icu/static/web/index.html
+正式环境-接口url：https://www.vitaglobal.icu
+正式环境H5地址：https://web.vitaglobal.icu
+
+
+
+gmail
+liujibinwolf6699@gmail.com
+Liujibin_83695469

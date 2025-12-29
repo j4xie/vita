@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.UserExMerchantAuditLogMapper">
+    
+    <resultMap type="UserExMerchantAuditLog" id="UserExMerchantAuditLogResult">
+        <result property="id"    column="id"    />
+        <result property="merchantId"    column="merchant_id"    />
+        <result property="operatStatus"    column="operat_status"    />
+        <result property="operatName"    column="operat_name"    />
+        <result property="operateRemark"    column="operate_remark"    />
+        <result property="operateByUserId"    column="operate_by_user_id"    />
+        <result property="operateByName"    column="operate_by_name"    />
+        <result property="operateTime"    column="operate_time"    />
+    </resultMap>
+
+    <sql id="selectUserExMerchantAuditLogVo">
+        select id, merchant_id, operat_status, operat_name, operate_remark, operate_by_user_id, operate_by_name, operate_time from user_ex_merchant_audit_log
+    </sql>
+
+    <select id="selectUserExMerchantAuditLogList" parameterType="UserExMerchantAuditLog" resultMap="UserExMerchantAuditLogResult">
+        <include refid="selectUserExMerchantAuditLogVo"/>
+        <where>  
+            <if test="merchantId != null "> and merchant_id = #{merchantId}</if>
+            <if test="operatStatus != null "> and operat_status = #{operatStatus}</if>
+            <if test="operatName != null  and operatName != ''"> and operat_name like concat('%', #{operatName}, '%')</if>
+            <if test="operateRemark != null  and operateRemark != ''"> and operate_remark = #{operateRemark}</if>
+            <if test="operateByUserId != null "> and operate_by_user_id = #{operateByUserId}</if>
+            <if test="operateByName != null  and operateByName != ''"> and operate_by_name like concat('%', #{operateByName}, '%')</if>
+            <if test="operateTime != null "> and operate_time = #{operateTime}</if>
+        </where>
+    </select>
+    
+    <select id="selectUserExMerchantAuditLogById" parameterType="Long" resultMap="UserExMerchantAuditLogResult">
+        <include refid="selectUserExMerchantAuditLogVo"/>
+        where id = #{id}
+    </select>
+
+    <insert id="insertUserExMerchantAuditLog" parameterType="UserExMerchantAuditLog" useGeneratedKeys="true" keyProperty="id">
+        insert into user_ex_merchant_audit_log
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="merchantId != null">merchant_id,</if>
+            <if test="operatStatus != null">operat_status,</if>
+            <if test="operatName != null">operat_name,</if>
+            <if test="operateRemark != null">operate_remark,</if>
+            <if test="operateByUserId != null">operate_by_user_id,</if>
+            <if test="operateByName != null">operate_by_name,</if>
+            <if test="operateTime != null">operate_time,</if>
+         </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="merchantId != null">#{merchantId},</if>
+            <if test="operatStatus != null">#{operatStatus},</if>
+            <if test="operatName != null">#{operatName},</if>
+            <if test="operateRemark != null">#{operateRemark},</if>
+            <if test="operateByUserId != null">#{operateByUserId},</if>
+            <if test="operateByName != null">#{operateByName},</if>
+            <if test="operateTime != null">#{operateTime},</if>
+         </trim>
+    </insert>
+
+    <update id="updateUserExMerchantAuditLog" parameterType="UserExMerchantAuditLog">
+        update user_ex_merchant_audit_log
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="merchantId != null">merchant_id = #{merchantId},</if>
+            <if test="operatStatus != null">operat_status = #{operatStatus},</if>
+            <if test="operatName != null">operat_name = #{operatName},</if>
+            <if test="operateRemark != null">operate_remark = #{operateRemark},</if>
+            <if test="operateByUserId != null">operate_by_user_id = #{operateByUserId},</if>
+            <if test="operateByName != null">operate_by_name = #{operateByName},</if>
+            <if test="operateTime != null">operate_time = #{operateTime},</if>
+        </trim>
+        where id = #{id}
+    </update>
+
+    <delete id="deleteUserExMerchantAuditLogById" parameterType="Long">
+        delete from user_ex_merchant_audit_log where id = #{id}
+    </delete>
+
+    <delete id="deleteUserExMerchantAuditLogByIds" parameterType="String">
+        delete from user_ex_merchant_audit_log where id in 
+        <foreach item="id" collection="array" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+</mapper>

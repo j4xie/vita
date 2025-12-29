@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.CouponVerifyLogMapper">
+    
+    <resultMap type="CouponVerifyLog" id="CouponVerifyLogResult">
+        <result property="id"    column="id"    />
+        <result property="userCouponId"    column="user_coupon_id"    />
+        <result property="remark"    column="remark"    />
+        <result property="couponName"    column="coupon_name"    />
+        <result property="couponNo"    column="coupon_no"    />
+        <result property="userId"    column="user_id"    />
+        <result property="legalName"    column="legal_name"    />
+        <result property="verifyById"    column="verify_by_id"    />
+        <result property="verifyMerchantName"    column="verify_merchant_name"    />
+        <result property="createTime"    column="create_time"    />
+    </resultMap>
+
+    <sql id="selectCouponVerifyLogVo">
+        select cvl.id, cvl.user_coupon_id, cvl.remark, cvl.coupon_name, cvl.coupon_no, cvl.user_id,
+               cvl.verify_by_id, cvl.verify_merchant_name, cvl.create_time, su.legal_name
+        from coupon_verify_log cvl
+        left join sys_user su on cvl.user_id = su.user_id
+    </sql>
+
+    <select id="selectCouponVerifyLogList" parameterType="CouponVerifyLog" resultMap="CouponVerifyLogResult">
+        <include refid="selectCouponVerifyLogVo"/>
+        <where>  
+            <if test="userCouponId != null "> and cvl.user_coupon_id = #{userCouponId}</if>
+            <if test="couponName != null "> and cvl.coupon_name = #{couponName}</if>
+            <if test="couponNo != null "> and cvl.coupon_no = #{couponNo}</if>
+            <if test="userId != null "> and cvl.user_id = #{userId}</if>
+            <if test="verifyById != null "> and cvl.verify_by_id = #{verifyById}</if>
+            <if test="verifyMerchantName != null "> and cvl.verify_merchant_name = #{verifyMerchantName}</if>
+        </where>
+    </select>
+    
+    <select id="selectCouponVerifyLogById" parameterType="Long" resultMap="CouponVerifyLogResult">
+        <include refid="selectCouponVerifyLogVo"/>
+        where cvl.id = #{id}
+    </select>
+
+    <select id="selectCouponVerifyLogByUserCouponId" parameterType="Long" resultMap="CouponVerifyLogResult">
+        <include refid="selectCouponVerifyLogVo"/>
+        where cvl.user_coupon_id = #{userCouponId}
+    </select>
+
+    <insert id="insertCouponVerifyLog" parameterType="CouponVerifyLog" useGeneratedKeys="true" keyProperty="id">
+        insert into coupon_verify_log
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="userCouponId != null">user_coupon_id,</if>
+            <if test="remark != null">remark,</if>
+            <if test="couponName != null">coupon_name,</if>
+            <if test="couponNo != null">coupon_no,</if>
+            <if test="userId != null">user_id,</if>
+            <if test="verifyById != null">verify_by_id,</if>
+            <if test="verifyMerchantName != null">verify_merchant_name,</if>
+            <if test="createTime != null">create_time,</if>
+         </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="userCouponId != null">#{userCouponId},</if>
+            <if test="remark != null">#{remark},</if>
+            <if test="couponName != null">#{couponName},</if>
+            <if test="couponNo != null">#{couponNo},</if>
+            <if test="userId != null">#{userId},</if>
+            <if test="verifyById != null">#{verifyById},</if>
+            <if test="verifyMerchantName != null">#{verifyMerchantName},</if>
+            <if test="createTime != null">#{createTime},</if>
+         </trim>
+    </insert>
+
+    <update id="updateCouponVerifyLog" parameterType="CouponVerifyLog">
+        update coupon_verify_log
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="userCouponId != null">user_coupon_id = #{userCouponId},</if>
+            <if test="remark != null">remark = #{remark},</if>
+            <if test="couponName != null">coupon_name = #{couponName},</if>
+            <if test="couponNo != null">coupon_no = #{couponNo},</if>
+            <if test="userId != null">user_id = #{userId},</if>
+            <if test="verifyById != null">verify_by_id = #{verifyById},</if>
+            <if test="verifyMerchantName != null">verify_merchant_name = #{verifyMerchantName},</if>
+            <if test="createTime != null">create_time = #{createTime},</if>
+        </trim>
+        where id = #{id}
+    </update>
+
+    <delete id="deleteCouponVerifyLogById" parameterType="Long">
+        delete from coupon_verify_log where id = #{id}
+    </delete>
+
+    <delete id="deleteCouponVerifyLogByIds" parameterType="String">
+        delete from coupon_verify_log where id in 
+        <foreach item="id" collection="array" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+</mapper>

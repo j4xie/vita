@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.ActivityExUserMapper">
+    
+    <resultMap type="ActivityExUser" id="ActivityExUserResult">
+        <result property="activityId"    column="activity_id"    />
+        <result property="userId"    column="user_id"    />
+        <result property="signStatus"    column="sign_status"    />
+        <result property="modelFormInfo"    column="model_form_info"    />
+        <result property="status"    column="status"    />
+        <result property="createTime"    column="create_time"    />
+    </resultMap>
+
+    <resultMap type="ActivityExUserVo" id="ActivityExUserVoResult">
+        <result property="activityId"    column="activity_id"    />
+        <result property="userId"    column="user_id"    />
+        <result property="signStatus"    column="sign_status"    />
+        <result property="modelFormInfo"    column="model_form_info"    />
+        <result property="status"    column="status"    />
+        <result property="legalName"    column="legal_name"    />
+        <result property="nickName"    column="nick_name"    />
+        <result property="phonenumber"    column="phonenumber"    />
+        <result property="email"    column="email"    />
+        <result property="activityName"    column="activity_name"    />
+        <result property="createTime"    column="create_time"    />
+    </resultMap>
+
+    <sql id="selectActivityExUserVo">
+        select activity_id, user_id, sign_status, model_form_info, status from activity_ex_user
+    </sql>
+
+    <select id="selectActivityExUserVoList" parameterType="ActivityExUserVo" resultMap="ActivityExUserVoResult">
+        select aeu.sign_status, aeu.model_form_info, aeu.status, su.legal_name, su.nick_name, su.phonenumber, su.email, act.name as activity_name, aeu.create_time from activity_ex_user aeu
+        LEFT JOIN sys_user su on aeu.user_id = su.user_id
+        LEFT JOIN activity act on aeu.activity_id = act.id
+        <where>
+            <if test="activityId != null "> and aeu.activity_id = #{activityId}</if>
+            <if test="userId != null "> and aeu.user_id = #{userId}</if>
+            <if test="status != null "> and aeu.status = #{status}</if>
+        </where>
+    </select>
+
+    <select id="selectActivityExUserList" parameterType="ActivityExUser" resultMap="ActivityExUserResult">
+        <include refid="selectActivityExUserVo"/>
+        <where>  
+            <if test="activityId != null "> and activity_id = #{activityId}</if>
+            <if test="userId != null "> and user_id = #{userId}</if>
+            <if test="signStatus != null "> and sign_status = #{signStatus}</if>
+            <if test="status != null "> and status = #{status}</if>
+            <if test="createTime != null "> and create_time = #{createTime}</if>
+        </where>
+    </select>
+    
+    <select id="selectActivityExUserByActivityId" parameterType="Long" resultMap="ActivityExUserResult">
+        <include refid="selectActivityExUserVo"/>
+        where activity_id = #{activityId}
+    </select>
+
+    <insert id="insertActivityExUser" parameterType="ActivityExUser">
+        insert into activity_ex_user
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="activityId != null">activity_id,</if>
+            <if test="userId != null">user_id,</if>
+            <if test="signStatus != null">sign_status,</if>
+            <if test="modelFormInfo != null">model_form_info,</if>
+            <if test="status != null">status,</if>
+            create_time
+         </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="activityId != null">#{activityId},</if>
+            <if test="userId != null">#{userId},</if>
+            <if test="signStatus != null">#{signStatus},</if>
+            <if test="modelFormInfo != null">#{modelFormInfo},</if>
+            <if test="status != null">#{status},</if>
+            sysdate()
+         </trim>
+    </insert>
+
+    <update id="updateActivityExUser" parameterType="ActivityExUser">
+        update activity_ex_user
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="signStatus != null">sign_status = #{signStatus},</if>
+            <if test="modelFormInfo != null">model_form_info = #{modelFormInfo},</if>
+            <if test="status != null">status = #{status},</if>
+        </trim>
+        where activity_id = #{activityId} and user_id = #{userId}
+    </update>
+
+    <delete id="deleteActivityExUserByActivityId" parameterType="Long">
+        delete from activity_ex_user where activity_id = #{activityId}
+    </delete>
+
+    <delete id="deleteActivityRegist" parameterType="Long">
+        delete from activity_ex_user where activity_id = #{activityId} and user_id = #{userId}
+    </delete>
+
+    <delete id="deleteActivityExUserByActivityIds" parameterType="String">
+        delete from activity_ex_user where activity_id in 
+        <foreach item="activityId" collection="array" open="(" separator="," close=")">
+            #{activityId}
+        </foreach>
+    </delete>
+</mapper>

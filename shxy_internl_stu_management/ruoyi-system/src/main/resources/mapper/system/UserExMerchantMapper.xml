@@ -1,0 +1,202 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.UserExMerchantMapper">
+    
+    <resultMap type="UserExMerchant" id="UserExMerchantResult">
+        <result property="id"    column="id"    />
+        <result property="userId"    column="user_id"    />
+        <result property="merchantName"    column="merchant_name"    />
+        <result property="merchantEnName"    column="merchant_en_name"    />
+        <result property="logo"    column="logo"    />
+        <result property="shopImg"    column="shop_img"    />
+        <result property="merchantDesc"    column="merchant_desc"    />
+        <result property="merchantAddress"    column="merchant_address"    />
+        <result property="ein"    column="ein"    />
+        <result property="legalPerCard"    column="legal_per_card"    />
+        <result property="merchantType"    column="merchant_type"    />
+        <result property="accountName"    column="account_name"    />
+        <result property="bankAccount"    column="bank_account"    />
+        <result property="openingBank"    column="opening_bank"    />
+        <result property="ssn"    column="ssn"    />
+        <result property="rn"    column="rn"    />
+        <result property="acHolderName"    column="ac_holder_name"    />
+        <result property="zipcode"    column="zipcode"    />
+        <result property="businessLicense"    column="business_license"    />
+        <result property="permitLicense"    column="permit_license"    />
+        <result property="principalType"    column="principal_type"    />
+        <result property="deptId"    column="dept_id"    />
+        <result property="deptName"    column="dept_name"    />
+        <result property="status"    column="status"    />
+        <result property="longitude"    column="longitude"    />
+        <result property="latitude"    column="latitude"    />
+        <result property="createById"    column="create_by_id"    />
+        <result property="createByName"    column="create_by_name"    />
+        <result property="createTime"    column="create_time"    />
+        <result property="updateTime"    column="update_time"    />
+        <result property="userName"    column="user_name"    />
+        <result property="legalName"    column="legal_name"    />
+        <result property="password"    column="password"    />
+    </resultMap>
+
+    <sql id="selectUserExMerchantVo">
+        select uem.id, uem.user_id, uem.merchant_name, uem.merchant_en_name, uem.logo, uem.shop_img, uem.merchant_desc,
+               uem.merchant_address, uem.ein, uem.legal_per_card, uem.merchant_type, uem.account_name, uem.bank_account, uem.opening_bank, uem.ssn, uem.rn, uem.ac_holder_name, uem.zipcode, uem.business_license,
+               uem.permit_license, uem.principal_type, uem.dept_id, uem.status, uem.longitude, uem.latitude, uem.create_by_id, uem.create_by_name, uem.create_time, uem.update_time, su.user_name,
+               su.legal_name, su.password, su.phonenumber, su.email,
+               (select sd.dept_name from sys_dept sd where sd.dept_id = uem.dept_id) as dept_name
+        from user_ex_merchant uem
+        left join sys_user su on su.user_id = uem.user_id
+    </sql>
+
+    <select id="selectUserExMerchantList" parameterType="UserExMerchant" resultMap="UserExMerchantResult">
+        <include refid="selectUserExMerchantVo"/>
+        <where>  
+            <if test="userId != null "> and uem.user_id = #{userId}</if>
+            <if test="merchantName != null  and merchantName != ''"> and uem.merchant_name like concat('%', #{merchantName}, '%')</if>
+            <if test="merchantEnName != null  and merchantEnName != ''"> and uem.merchant_en_name like concat('%', #{merchantEnName}, '%')</if>
+            <if test="logo != null  and logo != ''"> and uem.logo = #{logo}</if>
+            <if test="shopImg != null  and shopImg != ''"> and uem.shop_img = #{shopImg}</if>
+            <if test="merchantDesc != null  and merchantDesc != ''"> and uem.merchant_desc = #{merchantDesc}</if>
+            <if test="merchantAddress != null  and merchantAddress != ''"> and uem.merchant_address = #{merchantAddress}</if>
+            <if test="ein != null  and ein != ''"> and uem.ein = #{ein}</if>
+            <if test="legalPerCard != null  and legalPerCard != ''"> and uem.legal_per_card = #{legalPerCard}</if>
+            <if test="merchantType != null "> and uem.merchant_type = #{merchantType}</if>
+            <if test="accountName != null  and accountName != ''"> and uem.account_name like concat('%', #{accountName}, '%')</if>
+            <if test="bankAccount != null  and bankAccount != ''"> and uem.bank_account = #{bankAccount}</if>
+            <if test="openingBank != null  and openingBank != ''"> and uem.opening_bank = #{openingBank}</if>
+            <if test="ssn != null  and ssn != ''"> and uem.ssn = #{ssn}</if>
+            <if test="rn != null  and rn != ''"> and uem.rn = #{rn}</if>
+            <if test="acHolderName != null  and acHolderName != ''"> and uem.ac_holder_name = #{acHolderName}</if>
+            <if test="zipcode != null  and zipcode != ''"> and uem.zipcode = #{zipcode}</if>
+            <if test="businessLicense != null  and businessLicense != ''"> and uem.business_license = #{businessLicense}</if>
+            <if test="permitLicense != null  and permitLicense != ''"> and uem.permit_license = #{permitLicense}</if>
+            <if test="principalType != null  and principalType != ''"> and uem.principal_type = #{principalType}</if>
+            <if test="deptId != null  and deptId != ''"> and uem.dept_id = #{deptId}</if>
+            <if test="status != null "> and uem.status = #{status}</if>
+            <if test="createById != null  and createById != ''"> and uem.create_by_id = #{createById}</if>
+        </where>
+        order by uem.create_time desc
+    </select>
+    
+    <select id="selectUserExMerchantById" parameterType="Long" resultMap="UserExMerchantResult">
+        <include refid="selectUserExMerchantVo"/>
+        where uem.id = #{id}
+    </select>
+
+    <select id="selectUserExMerchantByUserId" parameterType="Long" resultMap="UserExMerchantResult">
+        <include refid="selectUserExMerchantVo"/>
+        where uem.user_id = #{userId}
+    </select>
+
+    <insert id="insertUserExMerchant" parameterType="UserExMerchant" useGeneratedKeys="true" keyProperty="id">
+        insert into user_ex_merchant
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="userId != null">user_id,</if>
+            <if test="merchantName != null">merchant_name,</if>
+            <if test="merchantEnName != null">merchant_en_name,</if>
+            <if test="logo != null">logo,</if>
+            <if test="shopImg != null">shop_img,</if>
+            <if test="merchantDesc != null">merchant_desc,</if>
+            <if test="merchantAddress != null">merchant_address,</if>
+            <if test="ein != null">ein,</if>
+            <if test="legalPerCard != null">legal_per_card,</if>
+            <if test="merchantType != null">merchant_type,</if>
+            <if test="accountName != null">account_name,</if>
+            <if test="bankAccount != null">bank_account,</if>
+            <if test="openingBank != null">opening_bank,</if>
+            <if test="ssn != null">ssn,</if>
+            <if test="rn != null">rn,</if>
+            <if test="acHolderName != null">ac_holder_name,</if>
+            <if test="zipcode != null">zipcode,</if>
+            <if test="businessLicense != null">business_license,</if>
+            <if test="permitLicense != null">permit_license,</if>
+            <if test="principalType != null">principal_type,</if>
+            <if test="deptId != null">dept_id,</if>
+            <if test="status != null">status,</if>
+            <if test="longitude != null">longitude,</if>
+            <if test="latitude != null">latitude,</if>
+            <if test="createById != null">create_by_id,</if>
+            <if test="createByName != null">create_by_name,</if>
+            <if test="createTime != null">create_time,</if>
+            <if test="updateTime != null">update_time,</if>
+         </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="userId != null">#{userId},</if>
+            <if test="merchantName != null">#{merchantName},</if>
+            <if test="merchantEnName != null">#{merchantEnName},</if>
+            <if test="logo != null">#{logo},</if>
+            <if test="shopImg != null">#{shopImg},</if>
+            <if test="merchantDesc != null">#{merchantDesc},</if>
+            <if test="merchantAddress != null">#{merchantAddress},</if>
+            <if test="ein != null">#{ein},</if>
+            <if test="legalPerCard != null">#{legalPerCard},</if>
+            <if test="merchantType != null">#{merchantType},</if>
+            <if test="accountName != null">#{accountName},</if>
+            <if test="bankAccount != null">#{bankAccount},</if>
+            <if test="openingBank != null">#{openingBank},</if>
+            <if test="ssn != null">#{ssn},</if>
+            <if test="rn != null">#{rn},</if>
+            <if test="acHolderName != null">#{acHolderName},</if>
+            <if test="zipcode != null">#{zipcode},</if>
+            <if test="businessLicense != null">#{businessLicense},</if>
+            <if test="permitLicense != null">#{permitLicense},</if>
+            <if test="principalType != null">#{principalType},</if>
+            <if test="deptId != null">#{deptId},</if>
+            <if test="status != null">#{status},</if>
+            <if test="longitude != null">#{longitude},</if>
+            <if test="latitude != null">#{latitude},</if>
+            <if test="createById != null">#{createById},</if>
+            <if test="createByName != null">#{createByName},</if>
+            <if test="createTime != null">#{createTime},</if>
+            <if test="updateTime != null">#{updateTime},</if>
+         </trim>
+    </insert>
+
+    <update id="updateUserExMerchant" parameterType="UserExMerchant">
+        update user_ex_merchant
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="userId != null">user_id = #{userId},</if>
+            <if test="merchantName != null">merchant_name = #{merchantName},</if>
+            <if test="merchantEnName != null">merchant_en_name = #{merchantEnName},</if>
+            <if test="logo != null">logo = #{logo},</if>
+            <if test="shopImg != null">shop_img = #{shopImg},</if>
+            <if test="merchantDesc != null">merchant_desc = #{merchantDesc},</if>
+            <if test="merchantAddress != null">merchant_address = #{merchantAddress},</if>
+            <if test="ein != null">ein = #{ein},</if>
+            <if test="legalPerCard != null">legal_per_card = #{legalPerCard},</if>
+            <if test="merchantType != null">merchant_type = #{merchantType},</if>
+            <if test="accountName != null">account_name = #{accountName},</if>
+            <if test="bankAccount != null">bank_account = #{bankAccount},</if>
+            <if test="openingBank != null">opening_bank = #{openingBank},</if>
+            <if test="ssn != null">ssn = #{ssn},</if>
+            <if test="rn != null">rn = #{rn},</if>
+            <if test="acHolderName != null">ac_holder_name = #{acHolderName},</if>
+            <if test="zipcode != null">zipcode = #{zipcode},</if>
+            <if test="businessLicense != null">business_license = #{businessLicense},</if>
+            <if test="permitLicense != null">permit_license = #{permitLicense},</if>
+            <if test="principalType != null">principal_type = #{principalType},</if>
+            <if test="deptId != null">dept_id = #{deptId},</if>
+            <if test="status != null">status = #{status},</if>
+            <if test="longitude != null">longitude = #{longitude},</if>
+            <if test="latitude != null">latitude = #{latitude},</if>
+            <if test="createById != null">create_by_id = #{createById},</if>
+            <if test="createByName != null">create_by_name = #{createByName},</if>
+            <if test="createTime != null">create_time = #{createTime},</if>
+            <if test="updateTime != null">update_time = #{updateTime},</if>
+        </trim>
+        where id = #{id}
+    </update>
+
+    <delete id="deleteUserExMerchantById" parameterType="Long">
+        delete from user_ex_merchant where id = #{id}
+    </delete>
+
+    <delete id="deleteUserExMerchantByIds" parameterType="String">
+        delete from user_ex_merchant where id in 
+        <foreach item="id" collection="array" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+</mapper>

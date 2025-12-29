@@ -1,0 +1,192 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.SysOrderMapper">
+    
+    <resultMap type="SysOrder" id="SysOrderResult">
+        <result property="id"    column="id"    />
+        <result property="title"    column="title"    />
+        <result property="goodsId"    column="goods_id"    />
+        <result property="activityId"    column="activity_id"    />
+        <result property="addrId"    column="addr_id"    />
+        <result property="orderNo"    column="order_no"    />
+        <result property="orderStatus"    column="order_status"    />
+        <result property="orderType"    column="order_type"    />
+        <result property="payMode"    column="pay_mode"    />
+        <result property="orderDesc"    column="order_desc"    />
+        <result property="price"    column="price"    />
+        <result property="num"    column="num"    />
+        <result property="receivingName"    column="receiving_name"    />
+        <result property="receivingMobile"    column="receiving_mobile"    />
+        <result property="receivingAddress"    column="receiving_address"    />
+        <result property="intAreaCode"    column="int_area_code"    />
+        <result property="longitude"    column="longitude"    />
+        <result property="latitude"    column="latitude"    />
+        <result property="trackingNumber"    column="tracking_number"    />
+        <result property="logisticsCompany"    column="logistics_company"    />
+        <result property="remark"    column="remark"    />
+        <result property="cancelReason"    column="cancel_reason"    />
+        <result property="payChannel"    column="pay_channel"    />
+        <result property="orderStr"    column="order_str"    />
+        <result property="createById"    column="create_by_id"    />
+        <result property="createByName"    column="create_by_name"    />
+        <result property="createTime"    column="create_time"    />
+        <result property="payTime"    column="pay_time"    />
+        <result property="refundTime"    column="refund_time"    />
+        <result property="cancelTime"    column="cancel_time"    />
+    </resultMap>
+
+    <sql id="selectSysOrderVo">
+        select id, title, goods_id, activity_id, addr_id, order_no, order_status, order_type, pay_mode, order_desc, price, num,
+               receiving_name, receiving_mobile, receiving_address, int_area_code, longitude, latitude, tracking_number, logistics_company, remark, cancel_reason,
+               pay_channel, order_str, create_by_id, create_by_name, create_time, pay_time, refund_time, cancel_time from sys_order
+    </sql>
+
+    <select id="selectSysOrderList" parameterType="SysOrder" resultMap="SysOrderResult">
+        <include refid="selectSysOrderVo"/>
+        <where>
+            <if test="title != null "> and title like concat('%', #{title}, '%')</if>
+            <if test="goodsId != null "> and goods_id = #{goodsId}</if>
+            <if test="activityId != null "> and activity_id = #{activityId}</if>
+            <if test="addrId != null "> and addr_id = #{addrId}</if>
+            <if test="orderNo != null  and orderNo != ''"> and order_no = #{orderNo}</if>
+            <if test="orderStatus != null "> and order_status = #{orderStatus}</if>
+            <if test="orderType != null "> and order_type = #{orderType}</if>
+            <if test="payMode != null "> and pay_mode = #{payMode}</if>
+            <if test="orderDesc != null  and orderDesc != ''"> and order_desc = #{orderDesc}</if>
+            <if test="price != null "> and price = #{price}</if>
+            <if test="num != null "> and num = #{num}</if>
+            <if test="receivingName != null "> and receiving_name = #{receivingName}</if>
+            <if test="receivingMobile != null "> and receiving_mobile = #{receivingMobile}</if>
+            <if test="receivingAddress != null "> and receiving_address = #{receivingAddress}</if>
+            <if test="trackingNumber != null "> and tracking_number = #{trackingNumber}</if>
+            <if test="logisticsCompany != null "> and logistics_company = #{logisticsCompany}</if>
+            <if test="payChannel != null "> and pay_channel = #{payChannel}</if>
+            <if test="createById != null "> and create_by_id = #{createById}</if>
+            <if test="createByName != null  and createByName != ''"> and create_by_name like concat('%', #{createByName}, '%')</if>
+            <if test="payTime != null "> and pay_time = #{payTime}</if>
+            <if test="refundTime != null "> and refund_time = #{refundTime}</if>
+            <if test="cancelTime != null "> and cancel_time = #{cancelTime}</if>
+            <if test="currentTime != null "> and #{currentTime} >= create_time</if>
+        </where>
+    </select>
+    
+    <select id="selectSysOrderById" parameterType="Long" resultMap="SysOrderResult">
+        <include refid="selectSysOrderVo"/>
+        where id = #{id}
+    </select>
+
+    <insert id="insertSysOrder" parameterType="SysOrder" useGeneratedKeys="true" keyProperty="id">
+        insert into sys_order
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="title != null">title,</if>
+            <if test="goodsId != null">goods_id,</if>
+            <if test="activityId != null">activity_id,</if>
+            <if test="addrId != null">addr_id,</if>
+            <if test="orderNo != null">order_no,</if>
+            <if test="orderStatus != null">order_status,</if>
+            <if test="orderType != null">order_type,</if>
+            <if test="payMode != null">pay_mode,</if>
+            <if test="orderDesc != null">order_desc,</if>
+            <if test="price != null">price,</if>
+            <if test="num != null">num,</if>
+            <if test="receivingName != null">receiving_name,</if>
+            <if test="receivingMobile != null">receiving_mobile,</if>
+            <if test="receivingAddress != null">receiving_address,</if>
+            <if test="intAreaCode != null">int_area_code,</if>
+            <if test="longitude != null">longitude,</if>
+            <if test="latitude != null">latitude,</if>
+            <if test="trackingNumber != null">tracking_number,</if>
+            <if test="logisticsCompany != null">logistics_company,</if>
+            <if test="remark != null">remark,</if>
+            <if test="cancelReason != null">cancel_reason,</if>
+            <if test="payChannel != null">pay_channel,</if>
+            <if test="orderStr != null">order_str,</if>
+            <if test="createById != null">create_by_id,</if>
+            <if test="createByName != null">create_by_name,</if>
+            <if test="createTime != null">create_time,</if>
+            <if test="payTime != null">pay_time,</if>
+            <if test="refundTime != null">refund_time,</if>
+            <if test="cancelTime != null">cancel_time,</if>
+         </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="title != null">#{title},</if>
+            <if test="goodsId != null">#{goodsId},</if>
+            <if test="activityId != null">#{activityId},</if>
+            <if test="addrId != null">#{addrId},</if>
+            <if test="orderNo != null">#{orderNo},</if>
+            <if test="orderStatus != null">#{orderStatus},</if>
+            <if test="orderType != null">#{orderType},</if>
+            <if test="payMode != null">#{payMode},</if>
+            <if test="orderDesc != null">#{orderDesc},</if>
+            <if test="price != null">#{price},</if>
+            <if test="num != null">#{num},</if>
+            <if test="receivingName != null">#{receivingName},</if>
+            <if test="receivingMobile != null">#{receivingMobile},</if>
+            <if test="receivingAddress != null">#{receivingAddress},</if>
+            <if test="intAreaCode != null">#{intAreaCode},</if>
+            <if test="longitude != null">#{longitude},</if>
+            <if test="latitude != null">#{latitude},</if>
+            <if test="trackingNumber != null">#{trackingNumber},</if>
+            <if test="logisticsCompany != null">#{logisticsCompany},</if>
+            <if test="remark != null">#{remark},</if>
+            <if test="cancelReason != null">#{cancelReason},</if>
+            <if test="payChannel != null">#{payChannel},</if>
+            <if test="orderStr != null">#{orderStr},</if>
+            <if test="createById != null">#{createById},</if>
+            <if test="createByName != null">#{createByName},</if>
+            <if test="createTime != null">#{createTime},</if>
+            <if test="payTime != null">#{payTime},</if>
+            <if test="refundTime != null">#{refundTime},</if>
+            <if test="cancelTime != null">#{cancelTime},</if>
+         </trim>
+    </insert>
+
+    <update id="updateSysOrder" parameterType="SysOrder">
+        update sys_order
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="title != null">title = #{title},</if>
+            <if test="goodsId != null">goods_id = #{goodsId},</if>
+            <if test="activityId != null">activity_id = #{activityId},</if>
+            <if test="addrId != null">addr_id = #{addrId},</if>
+            <if test="orderNo != null">order_no = #{orderNo},</if>
+            <if test="orderStatus != null">order_status = #{orderStatus},</if>
+            <if test="orderType != null">order_type = #{orderType},</if>
+            <if test="payMode != null">pay_mode = #{payMode},</if>
+            <if test="orderDesc != null">order_desc = #{orderDesc},</if>
+            <if test="price != null">price = #{price},</if>
+            <if test="num != null">num = #{num},</if>
+            <if test="receivingName != null">receiving_name = #{receivingName},</if>
+            <if test="receivingMobile != null">receiving_mobile = #{receivingMobile},</if>
+            <if test="receivingAddress != null">receiving_address = #{receivingAddress},</if>
+            <if test="intAreaCode != null">int_area_code = #{intAreaCode},</if>
+            <if test="longitude != null">longitude = #{longitude},</if>
+            <if test="latitude != null">latitude = #{latitude},</if>
+            <if test="trackingNumber != null">tracking_number = #{trackingNumber},</if>
+            <if test="logisticsCompany != null">logistics_company = #{logisticsCompany},</if>
+            <if test="remark != null">remark = #{remark},</if>
+            <if test="cancelReason != null">cancel_reason = #{cancelReason},</if>
+            <if test="payChannel != null">pay_channel = #{payChannel},</if>
+            <if test="orderStr != null">order_str = #{orderStr},</if>
+            <if test="createById != null">create_by_id = #{createById},</if>
+            <if test="createByName != null">create_by_name = #{createByName},</if>
+            <if test="createTime != null">create_time = #{createTime},</if>
+            <if test="payTime != null">pay_time = #{payTime},</if>
+            <if test="refundTime != null">refund_time = #{refundTime},</if>
+            <if test="cancelTime != null">cancel_time = #{cancelTime},</if>
+        </trim>
+        where id = #{id}
+    </update>
+
+    <delete id="deleteSysOrderById" parameterType="Long">
+        delete from sys_order where id = #{id}
+    </delete>
+
+    <delete id="deleteSysOrderByIds" parameterType="String">
+        delete from sys_order where id in 
+        <foreach item="id" collection="array" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+</mapper>

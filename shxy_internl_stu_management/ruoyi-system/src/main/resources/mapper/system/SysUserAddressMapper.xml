@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.SysUserAddressMapper">
+    
+    <resultMap type="SysUserAddress" id="SysUserAddressResult">
+        <result property="id"    column="id"    />
+        <result property="name"    column="name"    />
+        <result property="intAreaCode"    column="int_area_code"    />
+        <result property="mobile"    column="mobile"    />
+        <result property="address"    column="address"    />
+        <result property="detailAddr"    column="detail_addr"    />
+        <result property="longitude"    column="longitude"    />
+        <result property="latitude"    column="latitude"    />
+        <result property="isDefault"    column="is_default"    />
+        <result property="createById"    column="create_by_id"    />
+        <result property="createByName"    column="create_by_name"    />
+        <result property="createTime"    column="create_time"    />
+        <result property="updateTime"    column="update_time"    />
+    </resultMap>
+
+    <sql id="selectSysUserAddressVo">
+        select id, name, int_area_code, mobile, address, detail_addr, longitude, latitude, is_default, create_by_id, create_by_name,
+               create_time, update_time from sys_user_address
+    </sql>
+
+    <select id="selectSysUserAddressList" parameterType="SysUserAddress" resultMap="SysUserAddressResult">
+        <include refid="selectSysUserAddressVo"/>
+        <where>  
+            <if test="name != null  and name != ''"> and name like concat('%', #{name}, '%')</if>
+            <if test="intAreaCode != null  and intAreaCode != ''"> and int_area_code = #{intAreaCode}</if>
+            <if test="mobile != null  and mobile != ''"> and mobile = #{mobile}</if>
+            <if test="address != null  and address != ''"> and address = #{address}</if>
+            <if test="detailAddr != null  and detailAddr != ''"> and detail_addr = #{detailAddr}</if>
+            <if test="longitude != null  and longitude != ''"> and longitude = #{longitude}</if>
+            <if test="latitude != null  and latitude != ''"> and latitude = #{latitude}</if>
+            <if test="isDefault != null "> and is_default = #{isDefault}</if>
+            <if test="createById != null "> and create_by_id = #{createById}</if>
+            <if test="createByName != null "> and create_by_name = #{createByName}</if>
+        </where>
+    </select>
+    
+    <select id="selectSysUserAddressById" parameterType="Long" resultMap="SysUserAddressResult">
+        <include refid="selectSysUserAddressVo"/>
+        where id = #{id}
+    </select>
+
+    <insert id="insertSysUserAddress" parameterType="SysUserAddress" useGeneratedKeys="true" keyProperty="id">
+        insert into sys_user_address
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="name != null">name,</if>
+            <if test="intAreaCode != null">int_area_code,</if>
+            <if test="mobile != null">mobile,</if>
+            <if test="address != null">address,</if>
+            <if test="detailAddr != null">detail_addr,</if>
+            <if test="longitude != null">longitude,</if>
+            <if test="latitude != null">latitude,</if>
+            <if test="isDefault != null">is_default,</if>
+            <if test="createById != null">create_by_id,</if>
+            <if test="createByName != null">create_by_name,</if>
+            create_time
+         </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="name != null">#{name},</if>
+            <if test="intAreaCode != null">#{intAreaCode},</if>
+            <if test="mobile != null">#{mobile},</if>
+            <if test="address != null">#{address},</if>
+            <if test="detailAddr != null">#{detailAddr},</if>
+            <if test="longitude != null">#{longitude},</if>
+            <if test="latitude != null">#{latitude},</if>
+            <if test="isDefault != null">#{isDefault},</if>
+            <if test="createById != null">#{createById},</if>
+            <if test="createByName != null">#{createByName},</if>
+            sysdate()
+         </trim>
+    </insert>
+
+    <update id="updateSysUserAddress" parameterType="SysUserAddress">
+        update sys_user_address
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="name != null">name = #{name},</if>
+            <if test="intAreaCode != null">int_area_code = #{intAreaCode},</if>
+            <if test="mobile != null">mobile = #{mobile},</if>
+            <if test="address != null">address = #{address},</if>
+            <if test="detailAddr != null">detail_addr = #{detailAddr},</if>
+            <if test="longitude != null">longitude = #{longitude},</if>
+            <if test="latitude != null">latitude = #{latitude},</if>
+            <if test="isDefault != null">is_default = #{isDefault},</if>
+            <if test="createById != null">create_by_id = #{createById},</if>
+            <if test="createByName != null">create_by_name = #{createByName},</if>
+            update_time = sysdate()
+        </trim>
+        where id = #{id}
+    </update>
+
+    <update id="updateAddressToUnDefault" parameterType="SysUserAddress">
+        update sys_user_address
+            set is_default = -1, update_time = sysdate()
+        where create_by_id = #{createById}
+    </update>
+
+    <delete id="deleteSysUserAddressById" parameterType="Long">
+        delete from sys_user_address where id = #{id}
+    </delete>
+
+    <delete id="deleteSysUserAddressByIds" parameterType="String">
+        delete from sys_user_address where id in 
+        <foreach item="id" collection="array" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+</mapper>
