@@ -142,8 +142,8 @@ xss:
 #--------------------------短信--------------------------
 aliyun:
   sms:
-    accessKeyId: LTAI5tHgScX34ksVpt1rXmDD
-    accessKeySecret: X2Y7kWhmH4cVCLUWeBz0z9y7oQH0p4
+    accessKeyId: --
+    accessKeySecret: --
     product: Dysmsapi
     domain: dysmsapi.aliyuncs.com
     regionId: cn-hangzhou
