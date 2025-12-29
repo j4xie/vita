@@ -139,27 +139,3 @@ xss:
   urlPatterns: /system/*,/monitor/*,/tool/*
 
 
-#--------------------------短信--------------------------
-aliyun:
-  sms:
-    accessKeyId: --
-    accessKeySecret: --
-    product: Dysmsapi
-    domain: dysmsapi.aliyuncs.com
-    regionId: cn-hangzhou
-    signName: 上海西柚智联科技
-    dateFormat: yyyyMMdd
-    endpointName: cn-hangzhou
-    loginVerifyTemplate: SMS_493200020 #短信验证码模板
-
-#-------------------------Cloudflare 文件上传------------
-cloud:
-  aws:
-    s3:
-      endpoint: https://7ff7cc2e7bc3af46147d5c7df18062db.r2.cloudflarestorage.com  # 替换为实际accountID
-      bucket-name: vitaimage              # 替换为实际存储桶名
-      cdn-domain: image.americanpromotioncompany.com                      # 替换为自定义域名
-      region: auto                                       # 自动识别区域
-      credentials:
-        access-key: 66d48d1ef195b2626b2df708d076fb39                      # 替换为API访问密钥
-        secret-key: 530f2735dbaa29b143d53800faa1aad93ef4d86f1f00cff7de3104d01d679ff2
