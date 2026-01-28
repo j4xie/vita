@@ -15,6 +15,11 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <result property="pointRate"    column="point_rate"    />
         <result property="acquisitionMethodType"    column="acquisition_method_type"    />
         <result property="acquisitionMethod"    column="acquisition_method"    />
+        <result property="periodOfValidityType"    column="period_of_validity_type"    />
+        <result property="validityStartTime"    column="validity_start_time"    />
+        <result property="validityEndTime"    column="validity_end_time"    />
+        <result property="validityNum"    column="validity_num"    />
+        <result property="validityType"    column="validity_type"    />
         <result property="createTime"    column="create_time"    />
         <result property="createByUserId"    column="create_by_user_id"    />
         <result property="createByName"    column="create_by_name"    />
@@ -23,7 +28,8 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     </resultMap>
 
     <sql id="selectSysUserLevelVo">
-        select id, level_name, logo, member_benefits, is_upgrade, limit_value, limit_type, point_rate, acquisition_method_type, acquisition_method, create_time, create_by_user_id, create_by_name, update_time, update_by_name from sys_user_level
+        select id, level_name, logo, member_benefits, is_upgrade, limit_value, limit_type, point_rate, acquisition_method_type, acquisition_method,
+               period_of_validity_type, validity_start_time, validity_end_time, validity_num, validity_type, create_time, create_by_user_id, create_by_name, update_time, update_by_name from sys_user_level
     </sql>
 
     <select id="selectSysUserLevelList" parameterType="SysUserLevel" resultMap="SysUserLevelResult">
@@ -61,6 +67,11 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="pointRate != null">point_rate,</if>
             <if test="acquisitionMethodType != null">acquisition_method_type,</if>
             <if test="acquisitionMethod != null">acquisition_method,</if>
+            period_of_validity_type,
+            validity_start_time,
+            validity_end_time,
+            validity_num,
+            validity_type,
             <if test="createTime != null">create_time,</if>
             <if test="createByUserId != null">create_by_user_id,</if>
             <if test="createByName != null">create_by_name,</if>
@@ -77,6 +88,11 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="pointRate != null">#{pointRate},</if>
             <if test="acquisitionMethodType != null">#{acquisitionMethodType},</if>
             <if test="acquisitionMethod != null">#{acquisitionMethod},</if>
+            #{periodOfValidityType},
+            #{validityStartTime},
+            #{validityEndTime},
+            #{validityNum},
+            #{validityType},
             <if test="createTime != null">#{createTime},</if>
             <if test="createByUserId != null">#{createByUserId},</if>
             <if test="createByName != null">#{createByName},</if>
@@ -97,6 +113,11 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="pointRate != null">point_rate = #{pointRate},</if>
             <if test="acquisitionMethodType != null">acquisition_method_type = #{acquisitionMethodType},</if>
             <if test="acquisitionMethod != null">acquisition_method = #{acquisitionMethod},</if>
+            period_of_validity_type = #{periodOfValidityType},
+            validity_start_time = #{validityStartTime},
+            validity_end_time = #{validityEndTime},
+            validity_num = #{validityNum},
+            validity_type = #{validityType},
             <if test="createTime != null">create_time = #{createTime},</if>
             <if test="createByUserId != null">create_by_user_id = #{createByUserId},</if>
             <if test="createByName != null">create_by_name = #{createByName},</if>

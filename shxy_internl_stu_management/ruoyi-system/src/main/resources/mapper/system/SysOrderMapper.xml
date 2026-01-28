@@ -70,11 +70,17 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="cancelTime != null "> and cancel_time = #{cancelTime}</if>
             <if test="currentTime != null "> and #{currentTime} >= create_time</if>
         </where>
+        order by create_time desc
     </select>
     
     <select id="selectSysOrderById" parameterType="Long" resultMap="SysOrderResult">
         <include refid="selectSysOrderVo"/>
         where id = #{id}
+    </select>
+
+    <select id="selectSysOrderByOrderNo" parameterType="Long" resultMap="SysOrderResult">
+        <include refid="selectSysOrderVo"/>
+        where order_no = #{orderNo}
     </select>
 
     <insert id="insertSysOrder" parameterType="SysOrder" useGeneratedKeys="true" keyProperty="id">

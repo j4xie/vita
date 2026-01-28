@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.UserLevelExEquityMapper">
+    
+    <resultMap type="UserLevelExEquity" id="UserLevelExEquityResult">
+        <result property="levelId"    column="level_id"    />
+        <result property="equityId"    column="equity_id"    />
+        <result property="equName"    column="equ_name"    />
+        <result property="equTag"    column="equ_tag"    />
+        <result property="equSort"    column="equ_sort"    />
+        <result property="createTime"    column="create_time"    />
+    </resultMap>
+
+    <sql id="selectUserLevelExEquityVo">
+        select level_id, equity_id, equ_name, equ_tag, equ_sort, create_time from user_level_ex_equity
+    </sql>
+
+    <select id="selectUserLevelExEquityList" parameterType="UserLevelExEquity" resultMap="UserLevelExEquityResult">
+        <include refid="selectUserLevelExEquityVo"/>
+        <where>  
+            <if test="levelId != null "> and level_id = #{levelId}</if>
+            <if test="equityId != null "> and equity_id = #{equityId}</if>
+            <if test="equName != null  and equName != ''"> and equ_name like concat('%', #{equName}, '%')</if>
+            <if test="equTag != null  and equTag != ''"> and equ_tag = #{equTag}</if>
+            <if test="equSort != null "> and equ_sort = #{equSort}</if>
+        </where>
+        order by equ_sort asc
+    </select>
+    
+    <select id="selectUserLevelExEquityByLevelId" parameterType="Long" resultMap="UserLevelExEquityResult">
+        <include refid="selectUserLevelExEquityVo"/>
+        where level_id = #{levelId}
+    </select>
+
+    <insert id="insertUserLevelExEquity" parameterType="UserLevelExEquity">
+        insert into user_level_ex_equity
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="levelId != null">level_id,</if>
+            <if test="equityId != null">equity_id,</if>
+            <if test="equName != null">equ_name,</if>
+            <if test="equTag != null">equ_tag,</if>
+            <if test="equSort != null">equ_sort,</if>
+            <if test="createTime != null">create_time,</if>
+         </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="levelId != null">#{levelId},</if>
+            <if test="equityId != null">#{equityId},</if>
+            <if test="equName != null">#{equName},</if>
+            <if test="equTag != null">#{equTag},</if>
+            <if test="equSort != null">#{equSort},</if>
+            <if test="createTime != null">#{createTime},</if>
+         </trim>
+    </insert>
+
+    <update id="updateUserLevelExEquity" parameterType="UserLevelExEquity">
+        update user_level_ex_equity
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="equityId != null">equity_id = #{equityId},</if>
+            <if test="equName != null">equ_name = #{equName},</if>
+            <if test="equTag != null">equ_tag = #{equTag},</if>
+            <if test="equSort != null">equ_sort = #{equSort},</if>
+            <if test="createTime != null">create_time = #{createTime},</if>
+        </trim>
+        where level_id = #{levelId}
+    </update>
+
+    <delete id="deleteUserLevelExEquityByLevelId" parameterType="Long">
+        delete from user_level_ex_equity where level_id = #{levelId}
+    </delete>
+
+    <delete id="deleteUserLevelExEquityByLevelIds" parameterType="String">
+        delete from user_level_ex_equity where level_id in 
+        <foreach item="levelId" collection="array" open="(" separator="," close=")">
+            #{levelId}
+        </foreach>
+    </delete>
+</mapper>

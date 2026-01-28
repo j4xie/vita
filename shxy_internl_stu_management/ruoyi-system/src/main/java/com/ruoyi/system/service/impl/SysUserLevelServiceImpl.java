@@ -2,6 +2,10 @@ package com.ruoyi.system.service.impl;
 
 import java.util.List;
 import com.ruoyi.common.utils.DateUtils;
+import com.ruoyi.system.domain.EquityData;
+import com.ruoyi.system.domain.UserLevelExEquity;
+import com.ruoyi.system.mapper.EquityDataMapper;
+import com.ruoyi.system.mapper.UserLevelExEquityMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import com.ruoyi.system.mapper.SysUserLevelMapper;
@@ -20,6 +24,12 @@ public class SysUserLevelServiceImpl implements ISysUserLevelService
     @Autowired
     private SysUserLevelMapper sysUserLevelMapper;
 
+    @Autowired
+    private UserLevelExEquityMapper userLevelExEquityMapper;
+
+    @Autowired
+    private EquityDataMapper equityDataMapper;
+
     /**
      * 查询会员等级
      * 
@@ -29,7 +39,20 @@ public class SysUserLevelServiceImpl implements ISysUserLevelService
     @Override
     public SysUserLevel selectSysUserLevelById(Long id)
     {
-        return sysUserLevelMapper.selectSysUserLevelById(id);
+        SysUserLevel sysUserLevel = sysUserLevelMapper.selectSysUserLevelById(id);
+
+        UserLevelExEquity userLevelExEquity = new UserLevelExEquity();
+        userLevelExEquity.setLevelId(sysUserLevel.getId());
+        List<UserLevelExEquity> userLevelExEquityList = userLevelExEquityMapper.selectUserLevelExEquityList(userLevelExEquity);
+        sysUserLevel.setUserLevelExEquityList(userLevelExEquityList);
+
+        Long[] equids = new Long[userLevelExEquityList.size()];
+        for(int j = 0; j < userLevelExEquityList.size(); j++){
+            equids[j] =  userLevelExEquityList.get(j).getEquityId();
+        }
+        sysUserLevel.setEquids(equids);
+
+        return sysUserLevel;
     }
 
     /**
@@ -41,7 +64,25 @@ public class SysUserLevelServiceImpl implements ISysUserLevelService
     @Override
     public List<SysUserLevel> selectSysUserLevelList(SysUserLevel sysUserLevel)
     {
-        return sysUserLevelMapper.selectSysUserLevelList(sysUserLevel);
+
+        List<SysUserLevel> sysUserLevelList = sysUserLevelMapper.selectSysUserLevelList(sysUserLevel);
+        for(int i = 0; i < sysUserLevelList.size(); i++){
+            UserLevelExEquity userLevelExEquity = new UserLevelExEquity();
+            userLevelExEquity.setLevelId(sysUserLevelList.get(i).getId());
+            List<UserLevelExEquity> userLevelExEquityList = userLevelExEquityMapper.selectUserLevelExEquityList(userLevelExEquity);
+            sysUserLevelList.get(i).setUserLevelExEquityList(userLevelExEquityList);
+
+            Long[] equids = new Long[userLevelExEquityList.size()];
+            //String memberBenefits = "";
+            for(int j = 0; j < userLevelExEquityList.size(); j++){
+                equids[j] =  userLevelExEquityList.get(j).getEquityId();
+                //memberBenefits = memberBenefits + "\n" + userLevelExEquityList.get(j).getEquName();
+            }
+            //sysUserLevelList.get(i).setMemberBenefits(memberBenefits);
+            sysUserLevelList.get(i).setEquids(equids);
+        }
+
+        return sysUserLevelList;
     }
 
     /**
@@ -54,7 +95,24 @@ public class SysUserLevelServiceImpl implements ISysUserLevelService
     public int insertSysUserLevel(SysUserLevel sysUserLevel)
     {
         sysUserLevel.setCreateTime(DateUtils.getNowDate());
-        return sysUserLevelMapper.insertSysUserLevel(sysUserLevel);
+        int count = sysUserLevelMapper.insertSysUserLevel(sysUserLevel);
+        if(count > 0){
+            if(sysUserLevel.getEquids().length > 0){
+                for(int i = 0;i < sysUserLevel.getEquids().length; i++){
+                    EquityData equityData = equityDataMapper.selectEquityDataById(sysUserLevel.getEquids()[i]);
+
+                    UserLevelExEquity userLevelExEquity =  new UserLevelExEquity();
+                    userLevelExEquity.setLevelId(sysUserLevel.getId());
+                    userLevelExEquity.setEquityId(equityData.getId());
+                    userLevelExEquity.setEquName(equityData.getEquName());
+                    userLevelExEquity.setEquTag(equityData.getEquTag());
+                    userLevelExEquity.setEquSort(equityData.getEquSort());
+                    userLevelExEquity.setCreateTime(DateUtils.getNowDate());
+                    userLevelExEquityMapper.insertUserLevelExEquity(userLevelExEquity);
+                }
+            }
+        }
+        return count;
     }
 
     /**
@@ -67,7 +125,28 @@ public class SysUserLevelServiceImpl implements ISysUserLevelService
     public int updateSysUserLevel(SysUserLevel sysUserLevel)
     {
         sysUserLevel.setUpdateTime(DateUtils.getNowDate());
-        return sysUserLevelMapper.updateSysUserLevel(sysUserLevel);
+        int count = sysUserLevelMapper.updateSysUserLevel(sysUserLevel);
+
+        if(count > 0){
+            userLevelExEquityMapper.deleteUserLevelExEquityByLevelId(sysUserLevel.getId());
+
+            if(sysUserLevel.getEquids().length > 0){
+                for(int i = 0;i < sysUserLevel.getEquids().length; i++){
+                    EquityData equityData = equityDataMapper.selectEquityDataById(sysUserLevel.getEquids()[i]);
+
+                    UserLevelExEquity userLevelExEquity =  new UserLevelExEquity();
+                    userLevelExEquity.setLevelId(sysUserLevel.getId());
+                    userLevelExEquity.setEquityId(equityData.getId());
+                    userLevelExEquity.setEquName(equityData.getEquName());
+                    userLevelExEquity.setEquTag(equityData.getEquTag());
+                    userLevelExEquity.setEquSort(equityData.getEquSort());
+                    userLevelExEquity.setCreateTime(DateUtils.getNowDate());
+                    userLevelExEquityMapper.insertUserLevelExEquity(userLevelExEquity);
+                }
+            }
+        }
+
+        return count;
     }
 
     /**

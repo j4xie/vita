@@ -142,6 +142,17 @@ public class UserExMerchant extends BaseEntity
 
     private String createByName;
 
+    /** 权重排行 */
+    private int weightLevel;
+
+    public int getWeightLevel() {
+        return weightLevel;
+    }
+
+    public void setWeightLevel(int weightLevel) {
+        this.weightLevel = weightLevel;
+    }
+
     public String getLongitude() {
         return longitude;
     }

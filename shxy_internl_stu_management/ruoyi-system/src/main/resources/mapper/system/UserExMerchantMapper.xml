@@ -38,13 +38,14 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <result property="userName"    column="user_name"    />
         <result property="legalName"    column="legal_name"    />
         <result property="password"    column="password"    />
+        <result property="weightLevel"    column="weight_level"    />
     </resultMap>
 
     <sql id="selectUserExMerchantVo">
         select uem.id, uem.user_id, uem.merchant_name, uem.merchant_en_name, uem.logo, uem.shop_img, uem.merchant_desc,
                uem.merchant_address, uem.ein, uem.legal_per_card, uem.merchant_type, uem.account_name, uem.bank_account, uem.opening_bank, uem.ssn, uem.rn, uem.ac_holder_name, uem.zipcode, uem.business_license,
                uem.permit_license, uem.principal_type, uem.dept_id, uem.status, uem.longitude, uem.latitude, uem.create_by_id, uem.create_by_name, uem.create_time, uem.update_time, su.user_name,
-               su.legal_name, su.password, su.phonenumber, su.email,
+               su.legal_name, su.password, su.phonenumber, su.email, uem.weight_level,
                (select sd.dept_name from sys_dept sd where sd.dept_id = uem.dept_id) as dept_name
         from user_ex_merchant uem
         left join sys_user su on su.user_id = uem.user_id
@@ -76,8 +77,9 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="deptId != null  and deptId != ''"> and uem.dept_id = #{deptId}</if>
             <if test="status != null "> and uem.status = #{status}</if>
             <if test="createById != null  and createById != ''"> and uem.create_by_id = #{createById}</if>
+            <if test="weightLevel != null  and weightLevel != ''"> and uem.weight_level = #{weightLevel}</if>
         </where>
-        order by uem.create_time desc
+        order by uem.create_time desc, uem.weight_level desc
     </select>
     
     <select id="selectUserExMerchantById" parameterType="Long" resultMap="UserExMerchantResult">
@@ -121,6 +123,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="createByName != null">create_by_name,</if>
             <if test="createTime != null">create_time,</if>
             <if test="updateTime != null">update_time,</if>
+            <if test="weightLevel != null">weight_level,</if>
          </trim>
         <trim prefix="values (" suffix=")" suffixOverrides=",">
             <if test="userId != null">#{userId},</if>
@@ -151,6 +154,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="createByName != null">#{createByName},</if>
             <if test="createTime != null">#{createTime},</if>
             <if test="updateTime != null">#{updateTime},</if>
+            <if test="weightLevel != null">#{weightLevel},</if>
          </trim>
     </insert>
 
@@ -185,6 +189,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="createByName != null">create_by_name = #{createByName},</if>
             <if test="createTime != null">create_time = #{createTime},</if>
             <if test="updateTime != null">update_time = #{updateTime},</if>
+            <if test="weightLevel != null">weight_level = #{weightLevel},</if>
         </trim>
         where id = #{id}
     </update>

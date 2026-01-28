@@ -11,6 +11,7 @@ import com.ruoyi.common.utils.poi.ExcelUtil;
 import com.ruoyi.system.domain.*;
 import com.ruoyi.system.pay.AlipayUtils;
 import com.ruoyi.system.service.*;
+import org.apache.http.util.TextUtils;
 import org.aspectj.weaver.loadtime.Aj;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -235,6 +236,42 @@ public class AppOrderController extends BaseController
                     }
                 }
             }
+            return toAjax(count);
+        } catch (Exception e) {
+            //强制事务回滚
+            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+            AjaxResult ajaxResult = AjaxResult.error();
+            ajaxResult.put("msg", "报名失败");
+            return ajaxResult;
+        }
+    }
+
+
+    /**
+     * 支付完回调接口
+     */
+    @PreAuthorize("@ss.hasPermi('system:role:client')")
+    @Transactional(rollbackFor = Exception.class)
+    @PostMapping("/notifyUrl")
+    public AjaxResult notifyUrl(SysOrder sysOrder)
+    {
+        try{
+            int count = 0;
+            if(null == sysOrder || TextUtils.isEmpty(sysOrder.getOrderNo())){
+                AjaxResult ajaxResult = AjaxResult.error();
+                ajaxResult.put("msg", "回调参数缺失");
+                return ajaxResult;
+            }
+
+            SysOrder sysOrderDTO =  sysOrderService.selectSysOrderByOrderNo(sysOrder.getOrderNo());
+            if(null == sysOrderDTO){
+                AjaxResult ajaxResult = AjaxResult.error();
+                ajaxResult.put("msg", "订单不存在");
+                return ajaxResult;
+            }
+
+
+
             return toAjax(count);
         } catch (Exception e) {
             //强制事务回滚

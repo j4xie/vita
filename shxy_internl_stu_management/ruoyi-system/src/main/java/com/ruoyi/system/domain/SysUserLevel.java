@@ -2,6 +2,8 @@ package com.ruoyi.system.domain;
 
 import java.math.BigDecimal;
 import java.util.Date;
+import java.util.List;
+
 import com.fasterxml.jackson.annotation.JsonFormat;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
@@ -31,6 +33,9 @@ public class SysUserLevel extends BaseEntity
     @Excel(name = "会员权益")
     private String memberBenefits;
 
+    /** 权益id，用逗号拼接 */
+    private Long [] equids;
+
     /** 是否可以自动升级到该等级（1-可以    -1-不可以） */
     @Excel(name = "是否可以自动升级到该等级", readConverterExp = "1=-可以,-=1-不可以")
     private Long isUpgrade;
@@ -54,6 +59,34 @@ public class SysUserLevel extends BaseEntity
      */
     private String acquisitionMethod;
 
+
+    /**
+     * 有效期类型
+     * 1-固定起止日期     2-领取之后时长     3-永久
+     */
+    private int periodOfValidityType;
+
+    /**
+     * 有效期开始时间
+     */
+    private Date validityStartTime;
+
+    /**
+     * 有效期结束时间
+     */
+    private Date validityEndTime;
+
+    /**
+     * 领取之后有效时长
+     */
+    private int validityNum;
+
+    /**
+     * 有效时长单位   1-天   2-月    3-年
+     */
+    private int validityType;
+
+
     /** 创建者user_id */
     @Excel(name = "创建者user_id")
     private Long createByUserId;
@@ -65,6 +98,56 @@ public class SysUserLevel extends BaseEntity
     /** 更新人legal_name */
     @Excel(name = "更新人legal_name")
     private String updateByName;
+
+    private List<UserLevelExEquity> userLevelExEquityList;
+
+    public List<UserLevelExEquity> getUserLevelExEquityList() {
+        return userLevelExEquityList;
+    }
+
+    public void setUserLevelExEquityList(List<UserLevelExEquity> userLevelExEquityList) {
+        this.userLevelExEquityList = userLevelExEquityList;
+    }
+
+    public int getPeriodOfValidityType() {
+        return periodOfValidityType;
+    }
+
+    public void setPeriodOfValidityType(int periodOfValidityType) {
+        this.periodOfValidityType = periodOfValidityType;
+    }
+
+    public Date getValidityStartTime() {
+        return validityStartTime;
+    }
+
+    public void setValidityStartTime(Date validityStartTime) {
+        this.validityStartTime = validityStartTime;
+    }
+
+    public Date getValidityEndTime() {
+        return validityEndTime;
+    }
+
+    public void setValidityEndTime(Date validityEndTime) {
+        this.validityEndTime = validityEndTime;
+    }
+
+    public int getValidityNum() {
+        return validityNum;
+    }
+
+    public void setValidityNum(int validityNum) {
+        this.validityNum = validityNum;
+    }
+
+    public int getValidityType() {
+        return validityType;
+    }
+
+    public void setValidityType(int validityType) {
+        this.validityType = validityType;
+    }
 
     public String getAcquisitionMethod() {
         return acquisitionMethod;
@@ -186,6 +269,14 @@ public class SysUserLevel extends BaseEntity
 
     public void setAcquisitionMethodType(String acquisitionMethodType) {
         this.acquisitionMethodType = acquisitionMethodType;
+    }
+
+    public Long[] getEquids() {
+        return equids;
+    }
+
+    public void setEquids(Long[] equids) {
+        this.equids = equids;
     }
 
     @Override

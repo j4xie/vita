@@ -51,6 +51,17 @@ public class SysOrderServiceImpl implements ISysOrderService
     }
 
     /**
+     * 查询订单
+     *
+     * @param orderNo 订单编号
+     * @return 订单
+     */
+    @Override
+    public SysOrder selectSysOrderByOrderNo(String orderNo) {
+        return sysOrderMapper.selectSysOrderByOrderNo(orderNo);
+    }
+
+    /**
      * 查询订单列表
      * 
      * @param sysOrder 订单

@@ -20,6 +20,13 @@ public interface SysOrderMapper
     public SysOrder selectSysOrderById(Long id);
 
     /**
+     * 查询订单
+     *
+     * @param orderNo 订单编号
+     * @return 订单
+     */
+    public SysOrder selectSysOrderByOrderNo(String orderNo);
+    /**
      * 查询订单列表
      * 
      * @param sysOrder 订单

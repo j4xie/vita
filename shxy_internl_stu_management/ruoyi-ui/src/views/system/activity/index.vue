@@ -280,6 +280,20 @@
             </el-form-item>
           </el-col>
           <el-col :span="12">
+            <el-form-item label="相关学校" prop="deptIdArr">
+              <el-select v-model="form.deptIdArr" multiple clearable placeholder="请选择">
+                <el-option
+                  v-for="item in schoolList"
+                  :key="item.deptId"
+                  :label="item.deptName"
+                  :value="item.deptId">
+                </el-option>
+              </el-select>
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-row>
+          <el-col :span="12">
             <el-form-item label="展示图" prop="icon">
               <el-upload
                 class="avatar-uploader"
@@ -294,6 +308,7 @@
               </el-upload>
             </el-form-item>
           </el-col>
+          <el-col :span="12"></el-col>
         </el-row>
         <el-form-item label="活动详情" prop="detail">
           
@@ -332,7 +347,7 @@
 </template>
 
 <script>
-import { listActivity, getActivity, delActivity, addActivity, updateActivity, listModel } from "@/api/system/activity"
+import { listActivity, getActivity, delActivity, addActivity, updateActivity, listModel, listSchool } from "@/api/system/activity"
 import {quillEditor} from 'vue-quill-editor'
 import 'quill/dist/quill.core.css'
 import 'quill/dist/quill.snow.css'
@@ -360,6 +375,7 @@ export default {
       total: 0,
       // 活动表格数据
       activityList: [],
+      schoolList: [],
       // 弹出层标题
       title: "",
       // 是否显示弹出层
@@ -401,6 +417,9 @@ export default {
         point: [
           { required: true, message: "请输入参与活动可得积分", trigger: "blur" },
           { pattern: /^\d+(\.\d{1,2})?$/, message: "积分格式不正确", trigger: "blur" }
+        ],
+        deptIdArr: [
+          { required: true, message: "请选择学校" }
         ],
       },
       actTypeList: [
@@ -537,6 +556,7 @@ export default {
   created() {
     this.getList()
     this.getModelList();
+    this.getSchoolList();
   },
   methods: {
     getSimpleDate(date) {
@@ -567,6 +587,12 @@ export default {
         this.modelList = response.rows
       })
     },
+    getSchoolList(){
+      listSchool({}).then(response => {
+        console.log("学校列表", response)
+        this.schoolList = response.data
+      })
+    },
     // 取消按钮
     cancel() {
       this.open = false
@@ -589,6 +615,8 @@ export default {
         enabled: null,
         createTime: null,
         updateTime: null,
+        deptIds: null,
+        deptIdArr: []
       }
       this.signTime = null
       this.actTime = null
@@ -631,11 +659,24 @@ export default {
         this.open = true
         this.title = "修改活动"
         this.imageUrl = this.form.icon
+        var _tempDeptArr = this.form.deptIds ? this.form.deptIds.split(",") : []
+        if(_tempDeptArr.length > 0){
+          for(var i = 0;i < _tempDeptArr.length; i++){
+            _tempDeptArr[i] = parseInt(_tempDeptArr[i])
+          }
+        }
+        this.$set(this.form, "deptIdArr", _tempDeptArr)
+        //this.form.deptIdArr = _tempDeptArr
       })
     },
     /** 提交按钮 */
     submitForm() {
       this.$refs["form"].validate(valid => {
+        if(this.form.deptIdArr && this.form.deptIdArr.length > 0){
+            this.form.deptIds = this.form.deptIdArr.join(',')
+        }
+        console.log("result=",this.form);
+        //return false;
         if (valid) {
           console.log(this.actTime)
           console.log(this.signTime)

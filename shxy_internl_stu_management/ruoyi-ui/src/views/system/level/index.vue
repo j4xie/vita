@@ -69,7 +69,13 @@
           <img :src="scope.row.logo" style="height: 80px;"/>
         </template>
       </el-table-column>
-      <el-table-column label="会员权益" align="center" prop="memberBenefits" />
+      <el-table-column label="会员权益" align="center" width="500" prop="memberBenefits">
+        <template slot-scope="scope">
+          <div v-for="item in scope.row.userLevelExEquityList" :key="item.equityId">
+            <span>{{item.equName}}</span>
+          </div>
+        </template>
+      </el-table-column>
       <el-table-column label="是否可自动升级" align="center" prop="isUpgrade">
         <template slot-scope="scope">
           <span v-if="scope.row.isUpgrade == 1">是</span>
@@ -127,7 +133,15 @@
           <el-input v-model="form.levelName" placeholder="请输入等级名称" />
         </el-form-item>
         <el-form-item label="会员权益" prop="memberBenefits">
-          <el-input v-model="form.memberBenefits" type="textarea" placeholder="请输入内容"/>
+          <el-select v-model="form.equids" multiple placeholder="请选择" style="width: 100%;">
+            <el-option
+              v-for="item in equList"
+              :key="item.id"
+              :label="item.equName"
+              :value="item.id">
+            </el-option>
+          </el-select>
+          <!-- <el-input v-model="form.memberBenefits" type="textarea" placeholder="请输入内容"/> -->
         </el-form-item>
         <el-form-item label="是否自动升级" prop="isUpgrade">
           <el-radio-group v-model="form.isUpgrade">
@@ -154,6 +168,31 @@
             <el-option :key="'buy_get'" :label="'购买获得'" :value="'buy_get'"></el-option>
           </el-select>
         </el-form-item>
+        <el-form-item label="有效期类型" prop="periodOfValidityType" v-if="form.acquisitionMethodType == 'buy_get'">
+          <el-radio-group v-model="form.periodOfValidityType" @change="periodOfValidityTypeChange">
+            <el-radio :key="1" :label="1">固定日期</el-radio>
+            <el-radio :key="2" :label="2">领取之后</el-radio>
+            <el-radio :key="3" :label="3">永久</el-radio>
+          </el-radio-group>
+        </el-form-item>
+        <el-form-item label="固定日期" v-if="form.acquisitionMethodType == 'buy_get' && form.periodOfValidityType == 1">
+          <el-date-picker
+            v-model="form.validityDate"
+            type="daterange"
+            range-separator="至"
+            start-placeholder="开始日期"
+            end-placeholder="结束日期">
+          </el-date-picker>
+        </el-form-item>
+        <el-form-item label="领取后" v-if="form.acquisitionMethodType == 'buy_get' && form.periodOfValidityType == 2">
+          <el-input-number v-model="form.validityNum" @change="handleChange" :min="1" :max="400" label="描述文字" style="width: 150px;"></el-input-number>
+          <el-select v-model="form.validityType" placeholder="请选择" style="width: 80px; margin-left: 20px;">
+            <el-option :key="1" label="天" :value="1"></el-option>
+            <el-option :key="2" label="月" :value="2"></el-option>
+            <el-option :key="3" label="年" :value="3"></el-option>
+          </el-select>
+          内有效
+        </el-form-item>
         <el-form-item label="说明获取资格" prop="acquisitionMethod" v-if="form.acquisitionMethodType == -1">
           <el-input v-model="form.acquisitionMethod" type="textarea" placeholder="请输入获取资格"/>
         </el-form-item>
@@ -168,6 +207,7 @@
 
 <script>
 import { listLevel, getLevel, delLevel, addLevel, updateLevel } from "@/api/system/level"
+import { listData } from "@/api/system/equ_data"
 import BigFileUpload from '../../../components/BigFileUpload/index.vue'
 
 export default {
@@ -191,6 +231,7 @@ export default {
       total: 0,
       // 会员等级表格数据
       levelList: [],
+      equList: [],
       // 弹出层标题
       title: "",
       // 是否显示弹出层
@@ -207,7 +248,7 @@ export default {
         pointRate: null,
         createByUserId: null,
         createByName: null,
-        updateByName: null
+        updateByName: null,
       },
       // 表单参数
       form: {},
@@ -216,9 +257,9 @@ export default {
         levelName: [
           { required: true, message: "等级名称不能为空", trigger: "blur" },
         ],
-        memberBenefits: [
+        /* memberBenefits: [
           { required: true, message: "会员权益不能为空", trigger: "blur" },
-        ],
+        ], */
         limitValue: [
           { required: true, message: "升级门槛不能为空", trigger: "blur" },
           { pattern: /^([0-9][0-9]*)+(.[0-9]{1,2})?$/, message: "升级门槛只能为大于等于0的数字", trigger: "blur" }
@@ -234,12 +275,22 @@ export default {
         ],
         acquisitionMethodType: [
           { required: true, message: "请选择获取方式", trigger: "blur" },
+        ],
+        periodOfValidityType: [
+          { required: true, message: "请选择有效期类型", trigger: "blur" },
+        ],
+        validityDate: [
+          { required: true, message: "请选择固定有效期", trigger: "blur" },
+        ],
+        validityNum: [
+          { required: true, message: "请选择有效时长", trigger: "blur" },
         ]
       }
     }
   },
   created() {
     this.getList()
+    this.getEquList();
   },
   methods: {
     /** 查询会员等级列表 */
@@ -249,6 +300,12 @@ export default {
         this.levelList = response.rows
         this.total = response.total
         this.loading = false
+      })
+    },
+    /** 查询核心权益列表 */
+    getEquList() {
+      listData({}).then(response => {
+        this.equList = response.rows
       })
     },
     // 取消按钮
@@ -262,6 +319,7 @@ export default {
         id: null,
         levelName: null,
         memberBenefits: null,
+        equids: [],
         isUpgrade: -1,
         limitValue: null,
         limitType: 1,
@@ -270,7 +328,10 @@ export default {
         createByUserId: null,
         createByName: null,
         updateTime: null,
-        updateByName: null
+        updateByName: null,
+        periodOfValidityType: 1,
+        validityNum: 1,
+        validityType: 1
       }
       this.resetForm("form")
     },
@@ -304,6 +365,19 @@ export default {
         this.form = response.data
         this.open = true
         this.title = "修改会员等级"
+        if(!this.form.periodOfValidityType || this.form.periodOfValidityType < 0){
+          this.$set(this.form, 'periodOfValidityType', 1)
+        }
+        if(!this.form.validityNum || this.form.validityNum < 0){
+          this.$set(this.form, 'validityNum', 1)
+        }
+        if(!this.form.validityType || this.form.validityType < 0){
+          this.$set(this.form, 'validityType', 1)
+        }
+        if(this.form.validityStartTime && this.form.validityEndTime){
+          this.$set(this.form, 'validityDate', [new Date(this.form.validityStartTime), new Date(this.form.validityEndTime)] )
+
+        }
       })
     },
     /** 提交按钮 */
@@ -319,6 +393,36 @@ export default {
             this.form.acquisitionMethod = "购买获得"
           }
 
+          if(this.form.validityDate != null && this.form.validityDate.length == 2){
+            this.form.validityStartTime = this.form.validityDate[0]
+            this.form.validityEndTime = this.form.validityDate[1]
+            if(this.form.validityEndTime){
+              console.log(this.form.validityEndTime.toLocaleString());
+              var _str = this.form.validityEndTime.toLocaleString().substring(0,10) + " 23:59:59"
+              this.form.validityEndTime = new Date(_str)
+            }
+          }
+
+          if(this.form.acquisitionMethodType == 'buy_get'){
+            if(this.form.periodOfValidityType == 1){
+              this.form.validityNum = -10
+              this.form.validityType = -10
+            }else if(this.form.periodOfValidityType == 2){
+              this.form.validityStartTime = null
+              this.form.validityEndTime = null
+            }else if(this.form.periodOfValidityType == 3){
+              this.form.validityStartTime = null
+              this.form.validityEndTime = null
+              this.form.validityNum = -10
+              this.form.validityType = -10
+            }
+          }else{
+            this.form.periodOfValidityType = -10
+            this.form.validityStartTime = null
+            this.form.validityEndTime = null
+            this.form.validityNum = -10
+            this.form.validityType = -10
+          }
 
           if (this.form.id != null) {
             updateLevel(this.form).then(response => {
@@ -356,6 +460,17 @@ export default {
       console.log("图片上传回执")
       this.form.logo = _url
     },
+    periodOfValidityTypeChange(value){
+      console.log(value);
+      if(value == 1){
+
+      }else if(value == 2){
+
+      }
+    },
+    handleChange(value) {
+      console.log(value);
+    }
   }
 }
 </script>

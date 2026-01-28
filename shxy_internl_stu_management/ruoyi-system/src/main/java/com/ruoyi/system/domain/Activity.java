@@ -2,11 +2,14 @@ package com.ruoyi.system.domain;
 
 import java.math.BigDecimal;
 import java.util.Date;
+import java.util.List;
+
 import com.fasterxml.jackson.annotation.JsonFormat;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
 import com.ruoyi.common.annotation.Excel;
 import com.ruoyi.common.core.domain.BaseEntity;
+import org.apache.http.util.TextUtils;
 
 /**
  * 活动对象 activity
@@ -126,6 +129,18 @@ public class Activity extends BaseEntity
 
     /** 部门名称 */
     private String deptName;
+
+    // 相关的学校id
+    private String deptIds;
+
+
+    public String getDeptIds() {
+        return deptIds;
+    }
+
+    public void setDeptIds(String deptIds) {
+        this.deptIds = deptIds;
+    }
 
     public String getModelName() {
         return modelName;

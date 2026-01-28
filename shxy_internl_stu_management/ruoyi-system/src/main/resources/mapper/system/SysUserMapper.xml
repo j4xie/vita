@@ -34,6 +34,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <result property="alternateEmail"        column="alternate_email"          />
         <result property="levelId"        column="level_id"          />
         <result property="levelName"        column="level_name"          />
+        <result property="referUserId"        column="refer_user_id"          />
         <association property="dept"     javaType="SysDept"         resultMap="deptResult" />
         <association  property="role"    javaType="SysRole"  resultMap="RoleResult" />
         <collection  property="roles"    javaType="java.util.List"  resultMap="RoleResult" />
@@ -67,7 +68,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     </resultMap>
 	
 	<sql id="selectUserVo">
-        select u.user_id, u.dept_id, u.user_name, u.legal_name, u.nick_name, u.email, u.is_email_verify, u.avatar, u.phonenumber, u.password, u.sex, u.status, u.del_flag, u.login_ip, u.login_date, u.pwd_update_date, u.create_by, u.create_time, u.remark, u.org_id, u.area, u.is_merchant, u.identity, u.int_area_code, u.alternate_email,
+        select u.user_id, u.dept_id, u.user_name, u.legal_name, u.nick_name, u.email, u.is_email_verify, u.avatar, u.phonenumber, u.password, u.sex, u.status, u.del_flag, u.login_ip, u.login_date, u.pwd_update_date, u.create_by, u.create_time, u.remark, u.org_id, u.area, u.is_merchant, u.identity, u.int_area_code, u.alternate_email, u.refer_user_id,
         d.dept_id, d.parent_id, d.ancestors, d.dept_name, d.order_num, d.leader, d.status as dept_status,
         r.role_id, r.role_name, r.role_key, r.role_sort, r.data_scope, r.status as role_status, sul.id as level_id, sul.level_name
         from sys_user u
@@ -79,7 +80,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     </sql>
     
     <select id="selectUserList" parameterType="SysUser" resultMap="SysUserResult">
-		select u.user_id, u.dept_id, u.legal_name, u.nick_name, u.user_name, u.email, u.is_email_verify, u.avatar, u.phonenumber, u.sex, u.status, u.del_flag, u.login_ip, u.login_date, u.create_by, u.create_time, u.remark, u.org_id, u.area, u.identity, u.is_merchant, u.int_area_code, u.alternate_email, d.dept_name, d.leader, d.parent_id from sys_user u
+		select u.user_id, u.dept_id, u.legal_name, u.nick_name, u.user_name, u.email, u.is_email_verify, u.avatar, u.phonenumber, u.sex, u.status, u.del_flag, u.login_ip, u.login_date, u.create_by, u.create_time, u.remark, u.org_id, u.area, u.identity, u.is_merchant, u.int_area_code, u.alternate_email, u.refer_user_id, d.dept_name, d.leader, d.parent_id from sys_user u
 		left join sys_dept d on u.dept_id = d.dept_id
 		where u.del_flag = '0' and u.user_id > 1 and u.is_merchant = -1
 		<if test="userId != null and userId != 0">
@@ -96,6 +97,9 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 		</if>
         <if test="isEmailVerify != null and isEmailVerify != ''">
             AND u.is_email_verify = #{isEmailVerify}
+        </if>
+        <if test="referUserId != null and referUserId != ''">
+            AND u.refer_user_id = #{referUserId}
         </if>
 		<if test="status != null and status != ''">
 			AND u.status = #{status}
@@ -122,7 +126,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 
     <select id="selectUserListForApp" parameterType="SysUser" resultMap="SysUserResult">
         select u.user_id, u.dept_id, u.legal_name, u.nick_name, u.user_name, u.email, u.is_email_verify, u.avatar, u.phonenumber, u.sex, u.status, u.del_flag, u.login_ip, u.login_date,
-               u.create_by, u.create_time, u.remark, u.org_id, u.area, u.int_area_code, u.identity, u.alternate_email, d.dept_name, d.leader, d.parent_id, sul.id as level_id, sul.level_name
+               u.create_by, u.create_time, u.remark, u.org_id, u.area, u.int_area_code, u.identity, u.alternate_email, u.refer_user_id, d.dept_name, d.leader, d.parent_id, sul.id as level_id, sul.level_name
         from sys_user u
         left join sys_dept d on u.dept_id = d.dept_id
         left join sys_user_role ur on u.user_id = ur.user_id
@@ -144,6 +148,9 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         </if>
         <if test="isEmailVerify != null and isEmailVerify != ''">
             AND u.is_email_verify = #{isEmailVerify}
+        </if>
+        <if test="referUserId != null and referUserId != ''">
+            AND u.refer_user_id = #{referUserId}
         </if>
         <if test="status != null and status != ''">
             AND u.status = #{status}
@@ -169,7 +176,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     </select>
 	
 	<select id="selectAllocatedList" parameterType="SysUser" resultMap="SysUserResult">
-	    select distinct u.user_id, u.dept_id, u.user_name, u.legal_name, u.nick_name, u.email, u.is_email_verify, u.phonenumber, u.status, u.create_time, u.area, u.is_merchant, u.identity, u.alternate_email
+	    select distinct u.user_id, u.dept_id, u.user_name, u.legal_name, u.nick_name, u.email, u.is_email_verify, u.phonenumber, u.status, u.create_time, u.area, u.is_merchant, u.identity, u.alternate_email, u.refer_user_id
 	    from sys_user u
 			 left join sys_dept d on u.dept_id = d.dept_id
 			 left join sys_user_role ur on u.user_id = ur.user_id
@@ -189,7 +196,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 	</select>
 	
 	<select id="selectUnallocatedList" parameterType="SysUser" resultMap="SysUserResult">
-	    select distinct u.user_id, u.dept_id, u.user_name, u.legal_name, u.nick_name, u.email, u.is_email_verify, u.phonenumber, u.status, u.create_time, u.area, u.is_merchant, u.identity, u.int_area_code, u.alternate_email
+	    select distinct u.user_id, u.dept_id, u.user_name, u.legal_name, u.nick_name, u.email, u.is_email_verify, u.phonenumber, u.status, u.create_time, u.area, u.is_merchant, u.identity, u.int_area_code, u.alternate_email, u.refer_user_id
 	    from sys_user u
 			 left join sys_dept d on u.dept_id = d.dept_id
 			 left join sys_user_role ur on u.user_id = ur.user_id
@@ -268,6 +275,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="areaCode != null and areaCode != ''">int_area_code,</if>
             <if test="identity != null and identity != ''">identity,</if>
             <if test="alternateEmail != null and alternateEmail != ''">alternate_email,</if>
+            <if test="referUserId != null and referUserId != ''">refer_user_id,</if>
  			create_time
  		)values(
  			<if test="userId != null and userId != ''">#{userId},</if>
@@ -292,6 +300,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="areaCode != null and areaCode != ''">#{areaCode},</if>
             <if test="identity != null and identity != ''">#{identity},</if>
             <if test="alternateEmail != null and alternateEmail != ''">#{alternateEmail},</if>
+            <if test="referUserId != null and referUserId != ''">#{referUserId},</if>
  			sysdate()
  		)
 	</insert>
@@ -320,6 +329,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="areaCode != null and areaCode != ''">int_area_code = #{areaCode},</if>
             <if test="identity != null and identity != ''">identity = #{identity},</if>
             <if test="alternateEmail != null and alternateEmail != ''">alternate_email = #{alternateEmail},</if>
+            <if test="referUserId != null and referUserId != ''">refer_user_id = #{referUserId},</if>
  			update_time = sysdate()
  		</set>
  		where user_id = #{userId}

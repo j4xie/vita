@@ -61,3 +61,12 @@ export function listModel(query) {
     params: query
   })
 }
+
+// 学校列表
+export function listSchool(query) {
+  return request({
+    url: '/system/dept/schoolList',
+    method: 'get',
+    params: query
+  })
+}

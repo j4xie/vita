@@ -143,6 +143,17 @@ public class SysUser extends BaseEntity
 
     private String levelName;
 
+    /** 推荐人userId */
+    private Long referUserId;
+
+    public Long getReferUserId() {
+        return referUserId;
+    }
+
+    public void setReferUserId(Long referUserId) {
+        this.referUserId = referUserId;
+    }
+
     public Long getLevelId() {
         return levelId;
     }
