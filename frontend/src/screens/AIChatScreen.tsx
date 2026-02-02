@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import {
   View,
   Text,
@@ -18,6 +18,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import Markdown from 'react-native-markdown-display';
 
 import { ChatMessage } from '../types/ai';
 import { apiService } from '../services/api';
@@ -244,6 +245,80 @@ export const AIChatScreen: React.FC<Props> = ({ navigation, route }) => {
     }
   };
 
+  // AI消息的Markdown样式
+  const aiMarkdownStyles = useMemo(() => ({
+    body: {
+      fontSize: 16,
+      lineHeight: 22,
+      color: '#1d1d1f',
+    },
+    heading1: {
+      fontSize: 20,
+      fontWeight: '700' as const,
+      color: '#1d1d1f',
+      marginTop: 8,
+      marginBottom: 4,
+    },
+    heading2: {
+      fontSize: 18,
+      fontWeight: '600' as const,
+      color: '#1d1d1f',
+      marginTop: 6,
+      marginBottom: 3,
+    },
+    heading3: {
+      fontSize: 16,
+      fontWeight: '600' as const,
+      color: '#1d1d1f',
+      marginTop: 4,
+      marginBottom: 2,
+    },
+    strong: {
+      fontWeight: '600' as const,
+      color: '#1d1d1f',
+    },
+    em: {
+      fontStyle: 'italic' as const,
+    },
+    bullet_list: {
+      marginTop: 4,
+      marginBottom: 4,
+    },
+    ordered_list: {
+      marginTop: 4,
+      marginBottom: 4,
+    },
+    list_item: {
+      marginTop: 2,
+      marginBottom: 2,
+    },
+    code_inline: {
+      backgroundColor: 'rgba(0,0,0,0.05)',
+      borderRadius: 4,
+      paddingHorizontal: 4,
+      fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
+      fontSize: 14,
+    },
+    fence: {
+      backgroundColor: 'rgba(0,0,0,0.05)',
+      borderRadius: 8,
+      padding: 8,
+      marginTop: 4,
+      marginBottom: 4,
+    },
+    code_block: {
+      fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
+      fontSize: 13,
+    },
+    link: {
+      color: '#007AFF',
+    },
+    paragraph: {
+      marginTop: 0,
+      marginBottom: 4,
+    },
+  }), []);
+
   // 渲染消息项
   const renderMessage = ({ item, index }: { item: ChatMessage; index: number }) => {
     const isUser = item.role === 'user';
@@ -269,10 +344,20 @@ export const AIChatScreen: React.FC<Props> = ({ navigation, route }) => {
             isUser ? styles.userBubble : styles.aiBubble,
           ]}
         >
-          <Text style={[styles.messageText, isUser ? styles.userText : styles.aiText]}>
-            {displayContent}
-            {showCursor && <Text style={styles.cursor}>▊</Text>}
-          </Text>
+          {isUser ? (
+            // 用户消息：纯文本
+            <Text style={[styles.messageText, styles.userText]}>
+              {displayContent}
+            </Text>
+          ) : (
+            // AI消息：Markdown渲染
+            <View style={styles.markdownContainer}>
+              <Markdown style={aiMarkdownStyles}>
+                {displayContent}
+              </Markdown>
+              {showCursor && <Text style={styles.cursor}>▊</Text>}
+            </View>
+          )}
         </View>
       </TouchableOpacity>
     );
@@ -592,6 +677,12 @@ const styles = StyleSheet.create({
     color: '#F9A889',
     fontWeight: 'bold',
     marginLeft: 2,
+  },
+  // Markdown容器
+  markdownContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'flex-end',
   },
 });
 

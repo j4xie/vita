@@ -87,3 +87,7 @@ web-build/
 
 # Flipper
 ios/Pods/
+
+# pomelox_qwen_ai
+pomelox_qwen_ai/data/
+pomelox_qwen_ai/.env
