@@ -134,6 +134,26 @@ public class SysOrder extends BaseEntity
     /** 当前时间 */
     private Date currentTime;
 
+    private String clientSecret;
+
+    private String paymentIntentId;
+
+    public String getClientSecret() {
+        return clientSecret;
+    }
+
+    public void setClientSecret(String clientSecret) {
+        this.clientSecret = clientSecret;
+    }
+
+    public String getPaymentIntentId() {
+        return paymentIntentId;
+    }
+
+    public void setPaymentIntentId(String paymentIntentId) {
+        this.paymentIntentId = paymentIntentId;
+    }
+
     public Date getCurrentTime() {
         return currentTime;
     }

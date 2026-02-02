@@ -35,12 +35,14 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <result property="payTime"    column="pay_time"    />
         <result property="refundTime"    column="refund_time"    />
         <result property="cancelTime"    column="cancel_time"    />
+        <result property="clientSecret"    column="client_secret"    />
+        <result property="paymentIntentId"    column="payment_intent_id"    />
     </resultMap>
 
     <sql id="selectSysOrderVo">
         select id, title, goods_id, activity_id, addr_id, order_no, order_status, order_type, pay_mode, order_desc, price, num,
                receiving_name, receiving_mobile, receiving_address, int_area_code, longitude, latitude, tracking_number, logistics_company, remark, cancel_reason,
-               pay_channel, order_str, create_by_id, create_by_name, create_time, pay_time, refund_time, cancel_time from sys_order
+               pay_channel, order_str, create_by_id, create_by_name, create_time, pay_time, refund_time, cancel_time, client_secret, payment_intent_id from sys_order
     </sql>
 
     <select id="selectSysOrderList" parameterType="SysOrder" resultMap="SysOrderResult">
@@ -115,6 +117,8 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="payTime != null">pay_time,</if>
             <if test="refundTime != null">refund_time,</if>
             <if test="cancelTime != null">cancel_time,</if>
+            <if test="clientSecret != null">client_secret,</if>
+            <if test="paymentIntentId != null">payment_intent_id,</if>
          </trim>
         <trim prefix="values (" suffix=")" suffixOverrides=",">
             <if test="title != null">#{title},</if>
@@ -146,6 +150,8 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="payTime != null">#{payTime},</if>
             <if test="refundTime != null">#{refundTime},</if>
             <if test="cancelTime != null">#{cancelTime},</if>
+            <if test="clientSecret != null">#{clientSecret},</if>
+            <if test="paymentIntentId != null">#{paymentIntentId},</if>
          </trim>
     </insert>
 
@@ -181,6 +187,8 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="payTime != null">pay_time = #{payTime},</if>
             <if test="refundTime != null">refund_time = #{refundTime},</if>
             <if test="cancelTime != null">cancel_time = #{cancelTime},</if>
+            <if test="clientSecret != null">client_secret = #{clientSecret},</if>
+            <if test="paymentIntentId != null">payment_intent_id = #{paymentIntentId},</if>
         </trim>
         where id = #{id}
     </update>

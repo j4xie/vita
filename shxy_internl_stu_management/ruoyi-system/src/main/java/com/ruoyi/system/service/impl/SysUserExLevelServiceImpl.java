@@ -38,6 +38,17 @@ public class SysUserExLevelServiceImpl implements ISysUserExLevelService
     }
 
     /**
+     * 根据userId查询用户对应会员等级
+     * @param userId
+     * @return
+     */
+    @Override
+    public SysUserExLevel selectSysUserExLevelByUserId(Long userId)
+    {
+        return sysUserExLevelMapper.selectSysUserExLevelByUserId(userId);
+    }
+
+    /**
      * 查询用户对应会员等级列表
      * 
      * @param sysUserExLevel 用户对应会员等级

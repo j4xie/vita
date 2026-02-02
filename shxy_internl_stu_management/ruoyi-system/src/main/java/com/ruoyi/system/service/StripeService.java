@@ -4,6 +4,7 @@ import com.stripe.Stripe;
 import com.stripe.exception.StripeException;
 import com.stripe.model.Charge;
 import com.stripe.model.Customer;
+import com.stripe.model.PaymentIntent;
 import com.stripe.model.Refund;
 import com.stripe.model.Subscription;
 import com.stripe.param.CustomerCreateParams;
@@ -67,6 +68,25 @@ public class StripeService {
     public Charge recoverFromChargeFailure(Exception e) {
         // 记录日志、发送警报或执行其他恢复操作
         return null;
+    }
+
+    public PaymentIntent createPaymentIntent(Integer amount, String currency, String customerId, String description) throws StripeException {
+        Stripe.apiKey = apiKey;
+        
+        Map<String, Object> params = new HashMap<>();
+        params.put("amount", amount);
+        params.put("currency", currency);
+        params.put("description", description);
+        
+        // 如果提供了客户ID，则关联到特定客户
+        if (customerId != null && !customerId.isEmpty()) {
+            params.put("customer", customerId);
+        }
+        
+        // 设置自动确认支付意图
+        params.put("automatic_payment_methods", Map.of("enabled", true));
+        
+        return PaymentIntent.create(params);
     }
 
 }

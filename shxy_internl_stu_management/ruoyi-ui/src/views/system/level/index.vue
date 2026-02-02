@@ -71,8 +71,8 @@
       </el-table-column>
       <el-table-column label="会员权益" align="center" width="500" prop="memberBenefits">
         <template slot-scope="scope">
-          <div v-for="item in scope.row.userLevelExEquityList" :key="item.equityId">
-            <span>{{item.equName}}</span>
+          <div v-for="item in scope.row.userLevelExEquityList" :key="item.equityId" style="border-bottom: 1px solid #EEEEEE;">
+            {{item.equName}}
           </div>
         </template>
       </el-table-column>
@@ -166,6 +166,7 @@
             <el-option :key="'register_get'" :label="'注册即得'" :value="'register_get'"></el-option>
             <el-option :key="'verify_email_get'" :label="'认证邮箱即得'" :value="'verify_email_get'"></el-option>
             <el-option :key="'buy_get'" :label="'购买获得'" :value="'buy_get'"></el-option>
+            <el-option :key="'grant_get'" :label="'内部授予'" :value="'grant_get'"></el-option>
           </el-select>
         </el-form-item>
         <el-form-item label="有效期类型" prop="periodOfValidityType" v-if="form.acquisitionMethodType == 'buy_get'">
@@ -391,6 +392,8 @@ export default {
             this.form.acquisitionMethod = "认证邮箱即可获得"
           }else if(this.form.acquisitionMethodType == "buy_get"){
             this.form.acquisitionMethod = "购买获得"
+          }else if(this.form.acquisitionMethodType == "grant_get"){
+            this.form.acquisitionMethod = "内部授予获得"
           }
 
           if(this.form.validityDate != null && this.form.validityDate.length == 2){

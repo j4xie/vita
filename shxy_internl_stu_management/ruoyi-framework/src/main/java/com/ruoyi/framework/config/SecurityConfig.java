@@ -119,7 +119,7 @@ public class SecurityConfig
                                 "/app/hour/lastRecordList", "/file/upload", "/app/organization/list",
                                 "/app/invitation/invInfo", "/app/invitation/addInv", "/app/invitation/resetInv",
                                 "/app/activity/userActivitylist", "/app/post/list", "/app/user/logoff", "/app/resetPwd",
-                                "/app/invitation/checkInviteCode", "/app/user/edit", "/email/vercodeEmail").permitAll()
+                                "/app/invitation/checkInviteCode", "/app/user/edit", "/email/vercodeEmail", "/stripePay/create-payment-intent").permitAll()
                     // 静态资源，可匿名访问
                     .antMatchers(HttpMethod.GET, "/", "/*.html", "/**/*.html", "/**/*.css", "c/*.js", "/profile/**").permitAll()
                     .antMatchers("/swagger-ui.html", "/swagger-resources/**", "/webjars/**", "/*/api-docs", "/druid/**", "/static/**").permitAll()

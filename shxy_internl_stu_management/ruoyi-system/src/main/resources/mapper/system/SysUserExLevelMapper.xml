@@ -36,6 +36,11 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         where id = #{id}
     </select>
 
+    <select id="selectSysUserExLevelByUserId" parameterType="Long" resultMap="SysUserExLevelResult">
+        <include refid="selectSysUserExLevelVo"/>
+        where user_id = #{userId} and status = 1
+    </select>
+
     <insert id="insertSysUserExLevel" parameterType="SysUserExLevel" useGeneratedKeys="true" keyProperty="id">
         insert into sys_user_ex_level
         <trim prefix="(" suffix=")" suffixOverrides=",">

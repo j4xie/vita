@@ -46,7 +46,17 @@ public class SysUserExLevel extends BaseEntity
     @Excel(name = "有效期结束时间", width = 30, dateFormat = "yyyy-MM-dd")
     private Date validityEndTime;
 
-    public void setId(Long id) 
+    private SysUserLevel sysUserLevel;
+
+    public SysUserLevel getSysUserLevel() {
+        return sysUserLevel;
+    }
+
+    public void setSysUserLevel(SysUserLevel sysUserLevel) {
+        this.sysUserLevel = sysUserLevel;
+    }
+
+    public void setId(Long id)
     {
         this.id = id;
     }

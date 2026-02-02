@@ -20,6 +20,13 @@ public interface ISysUserExLevelService
     public SysUserExLevel selectSysUserExLevelById(Long id);
 
     /**
+     * 根据userId查询用户对应会员等级
+     * @param userId
+     * @return
+     */
+    public SysUserExLevel selectSysUserExLevelByUserId(Long userId);
+
+    /**
      * 查询用户对应会员等级列表
      * 
      * @param sysUserExLevel 用户对应会员等级

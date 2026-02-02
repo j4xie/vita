@@ -11,11 +11,15 @@ import com.ruoyi.common.utils.poi.ExcelUtil;
 import com.ruoyi.system.domain.*;
 import com.ruoyi.system.pay.AlipayUtils;
 import com.ruoyi.system.service.*;
+import com.stripe.exception.StripeException;
+import com.stripe.model.PaymentIntent;
 import org.apache.http.util.TextUtils;
 import org.aspectj.weaver.loadtime.Aj;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.interceptor.TransactionAspectSupport;
@@ -53,6 +57,9 @@ public class AppOrderController extends BaseController
 
     @Autowired
     private IActivityService activityService;
+
+    @Autowired
+    private StripeService stripeService;
 
     /**
      * 查询订单列表
@@ -195,6 +202,37 @@ public class AppOrderController extends BaseController
                             log.error("创建订单过程中发生未预期的异常", e);
                             return AjaxResult.error("创建订单过程中发生未预期的异常: " + e.getMessage());
                         }
+                    }else if(sysOrder.getPayChannel() == 2){// Stripe支付
+                        try {
+                            Integer amount = ((sysOrder.getPrice()).multiply(BigDecimal.valueOf(100))).intValue();
+                            String currency = "usd";
+                            String customerId = "";//"cus_"+getUserId();
+                            String description = sysOrder.getTitle();
+
+                            if (amount == null || amount <= 0) {
+                                return AjaxResult.success(ResponseEntity.badRequest().body("Amount must be greater than 0"));
+                            }
+
+                            // 创建支付意图
+                            PaymentIntent paymentIntent = stripeService.createPaymentIntent(amount, currency, customerId, description);
+
+                            Map<String, Object> response = new HashMap<>();
+                            response.put("client_secret", paymentIntent.getClientSecret());
+                            response.put("payment_intent_id", paymentIntent.getId());
+                            response.put("status", paymentIntent.getStatus());
+
+                            log.info("Stripe订单创建成功，商户订单号: {}", sysOrder.getOrderNo());
+
+                            SysOrder sysOrderDTO = new SysOrder();
+                            sysOrderDTO.setId(sysOrder.getId());
+                            sysOrderDTO.setClientSecret(paymentIntent.getClientSecret());
+                            sysOrderDTO.setPaymentIntentId(paymentIntent.getId());
+                            sysOrderService.updateSysOrder(sysOrderDTO);
+
+                            return AjaxResult.success(ResponseEntity.ok(response));
+                        } catch (StripeException e) {
+                            return AjaxResult.success(ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage()));
+                        }
                     }
                 }else if(sysOrder.getOrderType() == 3){
                     //购买会员等级
@@ -232,6 +270,37 @@ public class AppOrderController extends BaseController
                         } catch (Exception e) {
                             log.error("创建订单过程中发生未预期的异常", e);
                             return AjaxResult.error("创建订单过程中发生未预期的异常: " + e.getMessage());
+                        }
+                    }else if(sysOrder.getPayChannel() == 2){// Stripe支付
+                        try {
+                            Integer amount = ((sysOrder.getPrice()).multiply(BigDecimal.valueOf(100))).intValue();
+                            String currency = "usd";
+                            String customerId = "";//""cus_"+getUserId();
+                            String description = sysOrder.getTitle();
+
+                            if (amount == null || amount <= 0) {
+                                return AjaxResult.success(ResponseEntity.badRequest().body("Amount must be greater than 0"));
+                            }
+
+                            // 创建支付意图
+                            PaymentIntent paymentIntent = stripeService.createPaymentIntent(amount, currency, customerId, description);
+
+                            Map<String, Object> response = new HashMap<>();
+                            response.put("client_secret", paymentIntent.getClientSecret());
+                            response.put("payment_intent_id", paymentIntent.getId());
+                            response.put("status", paymentIntent.getStatus());
+
+                            log.info("Stripe订单创建成功，商户订单号: {}", sysOrder.getOrderNo());
+
+                            SysOrder sysOrderDTO = new SysOrder();
+                            sysOrderDTO.setId(sysOrder.getId());
+                            sysOrderDTO.setClientSecret(paymentIntent.getClientSecret());
+                            sysOrderDTO.setPaymentIntentId(paymentIntent.getId());
+                            sysOrderService.updateSysOrder(sysOrderDTO);
+
+                            return AjaxResult.success(ResponseEntity.ok(response));
+                        } catch (StripeException e) {
+                            return AjaxResult.success(ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage()));
                         }
                     }
                 }

@@ -183,6 +183,13 @@
                 <version>${kaptcha.version}</version>
             </dependency>
 
+            <!-- Gson library for JSON processing -->
+            <dependency>
+                <groupId>com.google.code.gson</groupId>
+                <artifactId>gson</artifactId>
+                <version>2.10.1</version>
+            </dependency>
+
             <!-- 定时任务-->
             <dependency>
                 <groupId>com.ruoyi</groupId>
