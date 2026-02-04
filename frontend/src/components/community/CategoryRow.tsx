@@ -9,6 +9,8 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { MerchantCard } from '../cards/MerchantCard';
+import { ActivityCard } from '../cards/ActivityCard';
+import { SmallActivityCard } from '../cards/SmallActivityCard';
 
 interface CategoryRowProps {
   category: {
@@ -18,24 +20,46 @@ interface CategoryRowProps {
     iconColor?: string;
     merchants: any[];
   };
+  variant?: 'merchant' | 'activity' | 'smallActivity';
   onMerchantPress: (merchantId: string) => void;
   onViewMore?: () => void;
 }
 
 const CategoryRowComponent: React.FC<CategoryRowProps> = ({
   category,
+  variant = 'merchant',
   onMerchantPress,
   onViewMore,
 }) => {
   const { t } = useTranslation();
 
-  // 渲染商家卡片
-  const renderMerchant = ({ item }: { item: any }) => (
-    <MerchantCard
-      merchant={item}
-      onPress={() => onMerchantPress(item.id)}
-    />
-  );
+  // 渲染商家卡片或活动卡片
+  const renderItem = ({ item }: { item: any }) => {
+    switch (variant) {
+      case 'activity':
+        return (
+          <ActivityCard
+            activity={item}
+            onPress={() => onMerchantPress(item.id)}
+          />
+        );
+      case 'smallActivity':
+        return (
+          <SmallActivityCard
+            activity={item}
+            onPress={() => onMerchantPress(item.id)}
+          />
+        );
+      case 'merchant':
+      default:
+        return (
+          <MerchantCard
+            merchant={item}
+            onPress={() => onMerchantPress(item.id)}
+          />
+        );
+    }
+  };
 
   return (
     <View style={styles.container}>
@@ -72,7 +96,7 @@ const CategoryRowComponent: React.FC<CategoryRowProps> = ({
       {/* 横向滚动卡片列表 */}
       <FlatList
         data={category.merchants}
-        renderItem={renderMerchant}
+        renderItem={renderItem}
         keyExtractor={item => item.id}
         horizontal
         showsHorizontalScrollIndicator={false}

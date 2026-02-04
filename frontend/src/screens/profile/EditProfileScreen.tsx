@@ -145,34 +145,7 @@ export const EditProfileScreen: React.FC = () => {
   const insets = useSafeAreaInsets();
   const { user, refreshUserInfo } = useUser();
 
-  // 检查用户是否有权限访问第二邮箱功能（内部成员：staff、管理员）
-  // 同时检查 role 对象和 roles 数组，因为后端可能返回任一格式
-  const canUseAlternateEmail =
-    // 检查 roles 数组
-    (user?.roles?.some(role =>
-      role.key && ['manage', 'part_manage', 'staff'].includes(role.key)
-    )) ||
-    // 检查单个 role 对象
-    (user?.role?.roleKey && ['manage', 'part_manage', 'staff'].includes(user.role.roleKey)) ||
-    false;
-
-  // 检测是否首次填写（有权限但还没有第二邮箱）
-  const isFirstTimeAlternateEmail = canUseAlternateEmail && !user?.alternateEmail;
-
-  // 如果用户未登录，返回登录页面
-  if (!user) {
-    Alert.alert(
-      t('auth.login_required'),
-      t('auth.login_required_message'),
-      [
-        {
-          text: t('alerts.go_login'),
-          onPress: () => navigation.navigate('Login' as never),
-        },
-      ]
-    );
-    return null;
-  }
+  // ALL HOOKS MUST BE CALLED BEFORE ANY CONDITIONAL RETURNS (Rules of Hooks)
 
   // Form state - 扩展字段支持
   const [formData, setFormData] = useState({
@@ -190,18 +163,6 @@ export const EditProfileScreen: React.FC = () => {
   // 原始数据状态 - 用于检测变化
   const [originalData, setOriginalData] = useState(null);
 
-  // 判断第一邮箱是否是工作邮箱（@chineseunion.org）
-  const isWorkEmail = formData.email?.toLowerCase().endsWith('@chineseunion.org');
-
-  // 动态确定第二邮箱的标签和占位符
-  const alternateEmailLabel = isWorkEmail
-    ? t('profile.edit.schoolEmail', '学校邮箱')
-    : t('profile.edit.workEmail', '工作邮箱');
-
-  const alternateEmailPlaceholder = isWorkEmail
-    ? t('profile.edit.schoolEmailPlaceholder', '请输入学校邮箱')
-    : t('profile.edit.workEmailPlaceholder', '请输入工作邮箱');
-
   // 是否有更改
   const [hasChanges, setHasChanges] = useState(false);
 
@@ -213,6 +174,31 @@ export const EditProfileScreen: React.FC = () => {
   const saveButtonOpacity = useSharedValue(0);
   const saveButtonTranslateY = useSharedValue(50);
 
+  // 检查用户是否有权限访问第二邮箱功能（内部成员：staff、管理员）
+  // 同时检查 role 对象和 roles 数组，因为后端可能返回任一格式
+  const canUseAlternateEmail =
+    // 检查 roles 数组
+    (user?.roles?.some(role =>
+      role.key && ['manage', 'part_manage', 'staff'].includes(role.key)
+    )) ||
+    // 检查单个 role 对象
+    (user?.role?.roleKey && ['manage', 'part_manage', 'staff'].includes(user.role.roleKey)) ||
+    false;
+
+  // 检测是否首次填写（有权限但还没有第二邮箱）
+  const isFirstTimeAlternateEmail = canUseAlternateEmail && !user?.alternateEmail;
+
+  // 判断第一邮箱是否是工作邮箱（@chineseunion.org）
+  const isWorkEmail = formData.email?.toLowerCase().endsWith('@chineseunion.org');
+
+  // 动态确定第二邮箱的标签和占位符
+  const alternateEmailLabel = isWorkEmail
+    ? t('profile.edit.schoolEmail', '学校邮箱')
+    : t('profile.edit.workEmail', '工作邮箱');
+
+  const alternateEmailPlaceholder = isWorkEmail
+    ? t('profile.edit.schoolEmailPlaceholder', '请输入学校邮箱')
+    : t('profile.edit.workEmailPlaceholder', '请输入工作邮箱');
 
   // 加载最新用户数据
   useEffect(() => {
@@ -343,6 +329,30 @@ export const EditProfileScreen: React.FC = () => {
 
     return unsubscribe;
   }, [navigation, isFirstTimeAlternateEmail, formData.alternateEmail, isWorkEmail, t]);
+
+  // 动画样式 - must be called before any conditional return
+  const animatedSaveButtonStyle = useAnimatedStyle(() => {
+    return {
+      opacity: saveButtonOpacity.value,
+      transform: [{ translateY: saveButtonTranslateY.value }],
+    };
+  });
+
+  // 如果用户未登录，返回登录页面
+  // NOTE: This early return MUST come AFTER all hooks are called (Rules of Hooks)
+  if (!user) {
+    Alert.alert(
+      t('auth.login_required'),
+      t('auth.login_required_message'),
+      [
+        {
+          text: t('alerts.go_login'),
+          onPress: () => navigation.navigate('Login' as never),
+        },
+      ]
+    );
+    return null;
+  }
 
   const handleChangeAvatar = async () => {
     try {
@@ -582,14 +592,6 @@ export const EditProfileScreen: React.FC = () => {
       return newData;
     });
   };
-
-  // 动画样式
-  const animatedSaveButtonStyle = useAnimatedStyle(() => {
-    return {
-      opacity: saveButtonOpacity.value,
-      transform: [{ translateY: saveButtonTranslateY.value }],
-    };
-  });
 
   const styles = StyleSheet.create({
     container: {

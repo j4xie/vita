@@ -42,20 +42,21 @@ export const VolunteerManagementCard: React.FC<VolunteerManagementCardProps> = (
       accessibilityLabel={t('profile.volunteer.management')}
     >
       <View style={styles.contentRow}>
-        <View style={styles.iconContainer}>
+        <View style={[styles.iconContainer, { backgroundColor: isDarkMode ? 'rgba(249, 168, 137, 0.2)' : 'rgba(249, 168, 137, 0.1)' }]}>
           <Ionicons
             name="people-outline"
-            size={24}
-            color={isDarkMode ? '#FFFFFF' : '#000000'}
+            size={22}
+            color="#F9A889"
           />
         </View>
         <Text style={[styles.title, { color: isDarkMode ? '#FFFFFF' : '#000000' }]}>
           {t('profile.volunteer.management')}
         </Text>
         <Ionicons
-          name="chevron-forward"
-          size={20}
-          color={isDarkMode ? '#48484A' : '#C6C6C8'}
+          name="arrow-forward"
+          size={18}
+          color={isDarkMode ? '#9CA3AF' : '#6B7280'}
+          style={{ transform: [{ rotate: '-45deg' }] }}
         />
       </View>
     </TouchableOpacity>
@@ -64,16 +65,15 @@ export const VolunteerManagementCard: React.FC<VolunteerManagementCardProps> = (
 
 const styles = StyleSheet.create({
   container: {
-    borderRadius: 12,
-    padding: 20,
-    marginBottom: 16,
-    marginTop: -8,
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 20,
     ...Platform.select({
       ios: {
         shadowColor: '#000000',
-        shadowOffset: { width: 0, height: 1 },
+        shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.05,
-        shadowRadius: 4,
+        shadowRadius: 8,
       },
       android: {
         elevation: 2,
@@ -85,10 +85,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   iconContainer: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
     marginRight: 12,
   },
   title: {
-    fontSize: 17,
+    fontSize: 16,
     fontWeight: '600',
     flex: 1,
   },

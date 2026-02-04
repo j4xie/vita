@@ -684,29 +684,28 @@ class PomeloXAPI {
 
     // 🚨 处理后端SQL查询错误的fallback机制
     if (result.code === 500 && result.msg?.includes('Subquery returns more than 1 row')) {
-      console.warn('⚠️ [FALLBACK] 个性化活动列表查询失败，fallback到基础列表:', result.msg);
+      console.warn('⚠️ [FALLBACK] 个性化活动列表查询失败，立即 fallback 到基础列表');
 
       // Fallback: 调用不带userId的基础活动列表
-      const fallbackEndpoint = '/app/activity/list' +
-        (params.pageNum || params.pageSize || params.name || params.categoryId || params.startTime || params.endTime
-          ? '?' + new URLSearchParams(Object.fromEntries(Object.entries({
-            pageNum: params.pageNum?.toString(),
-            pageSize: params.pageSize?.toString(),
-            name: params.name,
-            categoryId: params.categoryId?.toString(),
-            startTime: params.startTime,
-            endTime: params.endTime
-          }).filter(([_, v]) => v !== undefined)))
-          : '');
+      const fallbackParams = new URLSearchParams();
+      if (params.pageNum) fallbackParams.append('pageNum', params.pageNum.toString());
+      if (params.pageSize) fallbackParams.append('pageSize', params.pageSize.toString());
+      if (params.name) fallbackParams.append('name', params.name);
+      if (params.categoryId) fallbackParams.append('categoryId', params.categoryId.toString());
+      if (params.startTime) fallbackParams.append('startTime', params.startTime);
+      if (params.endTime) fallbackParams.append('endTime', params.endTime);
 
-      const fallbackResponse = await fetchWithRetry(`${getBaseUrl()}${fallbackEndpoint}`, {
+      const fallbackEndpoint = `/app/activity/list?${fallbackParams.toString()}`;
+
+      // 🔧 Fallback 请求不再使用重试，直接获取
+      const fallbackResponse = await fetch(`${getBaseUrl()}${fallbackEndpoint}`, {
         method: 'GET',
         headers: headers,
       });
 
       if (fallbackResponse.ok) {
         const fallbackResult = await fallbackResponse.json();
-        console.log('✅ [FALLBACK] 基础活动列表获取成功，无个性化数据');
+        console.log('✅ [FALLBACK] 基础活动列表获取成功');
         return fallbackResult;
       } else {
         throw new Error('Fallback API also failed');

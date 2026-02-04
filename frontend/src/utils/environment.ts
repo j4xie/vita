@@ -190,12 +190,12 @@ class EnvironmentManager {
   }
 
   /**
-   * 获取图片CDN URL
+   * 获取图片CDN URL (Cloudflare R2)
+   * 美国用户加载速度 <100ms
    */
   getImagesCdnUrl(): string {
-    return this.currentEnv === 'development'
-      ? 'https://test-pub-578670e517644aad94f4f68695b605b9.r2.dev'
-      : 'https://pub-578670e517644aad94f4f68695b605b9.r2.dev';
+    // 统一使用 vitaimage bucket
+    return 'https://pub-9281f44aadcf48da8a2c7ac3df13f475.r2.dev';
   }
 
   /**

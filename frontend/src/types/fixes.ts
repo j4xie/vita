@@ -2,9 +2,9 @@
 // They are only for TypeScript type checking
 
 // Re-export specific types from fixes.d.ts
+// Note: UserPermissions is already exported from './user', don't re-export to avoid conflicts
 export type {
   LegacyPermissions,
-  UserPermissions,
 } from './fixes.d';
 
 export { fromLegacyPermissions } from './fixes.d';

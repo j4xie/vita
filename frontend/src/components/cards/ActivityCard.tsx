@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useMemo } from 'react';
 import {
   View,
   Text,
@@ -21,6 +21,7 @@ import { useTheme } from '../../context/ThemeContext';
 import EventTracker, { analytics, Events } from '../../analytics/EventTracker';
 import { useSmartGesture } from '../../hooks/useSmartGesture';
 import { useCardPress } from '../../hooks/useCardPress';
+import { useSchoolLogos, getLogoByDeptIdSync } from '../../hooks/useSchoolLogos';
 
 const { width: screenWidth } = Dimensions.get('window');
 const cardWidth = screenWidth - theme.spacing.lg * 2; // 使用语义化间距
@@ -55,6 +56,9 @@ interface ActivityCardProps {
       avatar?: string;
       verified?: boolean;
     };
+    // 🔧 学校信息字段
+    deptId?: number;
+    deptName?: string;
   } | null;
   onPress: () => void;
   onFavorite?: () => void;
@@ -91,17 +95,29 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({
   const { t } = useTranslation();
   // v1.2 性能降级策略
   const { getLiquidGlassConfig, getOptimizedStyles, isPerformanceDegraded } = usePerformanceDegradation();
-  
+
   // 🌙 Dark Mode Support - 使用全局样式管理器
   const darkModeStyles = useAllDarkModeStyles();
   const { isDarkMode, styles: dmStyles, gradients: dmGradients, icons: dmIcons } = darkModeStyles;
-  // 确保activity对象存在
-  if (!activity || typeof activity !== 'object') {
-    return null;
-  }
-  
+
+  // 🔧 使用 hook 监听缓存加载状态
+  const { loading: schoolsLoading } = useSchoolLogos();
+
+  // ========== ALL HOOKS MUST BE CALLED BEFORE ANY EARLY RETURNS ==========
+  // 基础动画值
+  const scaleAnim = useRef(new Animated.Value(1)).current;
+  const opacityAnim = useRef(new Animated.Value(1)).current;
+  const translateYAnim = useRef(new Animated.Value(0)).current;
+
+  // 滑动手势相关状态
+  const [swipeDirection, setSwipeDirection] = useState<'left' | 'right' | null>(null);
+  const [isSwipeActive, setIsSwipeActive] = useState(false);
+  const translateXAnim = useRef(new Animated.Value(0)).current;
+  const actionOpacityAnim = useRef(new Animated.Value(0)).current;
+
   // 提前进行所有数据转换，避免在render中出现类型错误
-  const safeActivity = {
+  // Use safe defaults when activity is null/undefined
+  const safeActivity = activity && typeof activity === 'object' ? {
     id: safeString(activity.id),
     title: safeString(activity.title, 'Activity'),
     location: safeString(activity.location, 'TBD'),
@@ -112,22 +128,193 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({
     attendees: safeNumber(activity.attendees, 0),
     maxAttendees: safeNumber(activity.maxAttendees, 0),
     status: safeString(activity.status, 'available'),
+    category: activity.category || 'unknown',
     organizer: activity.organizer ? {
       name: safeString(activity.organizer.name, 'Organizer'),
       avatar: safeString(activity.organizer.avatar),
       verified: Boolean(activity.organizer.verified)
-    } : null
+    } : null,
+    // 🔧 学校信息
+    deptId: safeNumber(activity.deptId, 0),
+    deptName: safeString(activity.deptName, ''),
+  } : {
+    id: '',
+    title: 'Activity',
+    location: 'TBD',
+    date: '',
+    endDate: undefined,
+    time: 'TBD',
+    image: '',
+    attendees: 0,
+    maxAttendees: 0,
+    status: 'available',
+    category: 'unknown',
+    organizer: null,
+    deptId: 0,
+    deptName: '',
   };
-  // 基础动画值
-  const scaleAnim = useRef(new Animated.Value(1)).current;
-  const opacityAnim = useRef(new Animated.Value(1)).current;
-  const translateYAnim = useRef(new Animated.Value(0)).current;
-  
-  // 滑动手势相关状态
-  const [swipeDirection, setSwipeDirection] = useState<'left' | 'right' | null>(null);
-  const [isSwipeActive, setIsSwipeActive] = useState(false);
-  const translateXAnim = useRef(new Animated.Value(0)).current;
-  const actionOpacityAnim = useRef(new Animated.Value(0)).current;
+
+  // V1.1 规范: 滑动手势处理函数 - MUST be defined before useSmartGesture hook
+  const resetSwipe = () => {
+    Animated.parallel([
+      Animated.spring(translateXAnim, {
+        toValue: 0,
+        ...SWIPE_CONFIG.SPRING_CONFIG,
+        useNativeDriver: true,
+      }),
+      Animated.timing(actionOpacityAnim, {
+        toValue: 0,
+        duration: SWIPE_CONFIG.ANIMATION_DURATION,
+        useNativeDriver: true,
+      }),
+    ]).start(() => {
+      setIsSwipeActive(false);
+      setSwipeDirection(null);
+    });
+  };
+
+  const revealActions = (direction: 'left' | 'right') => {
+    const translateValue = direction === 'left' ? -SWIPE_CONFIG.REVEAL_WIDTH : SWIPE_CONFIG.REVEAL_WIDTH;
+    setIsSwipeActive(true);
+    setSwipeDirection(direction);
+
+    Animated.parallel([
+      Animated.spring(translateXAnim, {
+        toValue: translateValue,
+        ...SWIPE_CONFIG.SPRING_CONFIG,
+        useNativeDriver: true,
+      }),
+      Animated.timing(actionOpacityAnim, {
+        toValue: 1,
+        duration: SWIPE_CONFIG.ANIMATION_DURATION,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  };
+
+  // 优质的卡片按压动画 - iOS风格体验 - MUST be defined before useCardPress hook
+  const handlePressIn = () => {
+    Animated.parallel([
+      Animated.spring(scaleAnim, {
+        toValue: 0.98,
+        tension: 200,
+        friction: 8,
+        useNativeDriver: true,
+      }),
+      Animated.timing(opacityAnim, {
+        toValue: 0.95,
+        duration: 150,
+        useNativeDriver: true,
+      }),
+      Animated.timing(translateYAnim, {
+        toValue: 2, // 轻微向下移动2px增强按压感
+        duration: 150,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  };
+
+  const handlePressOut = () => {
+    Animated.parallel([
+      Animated.spring(scaleAnim, {
+        toValue: 1,
+        tension: 200,
+        friction: 8,
+        useNativeDriver: true,
+      }),
+      Animated.timing(opacityAnim, {
+        toValue: 1,
+        duration: 200,
+        useNativeDriver: true,
+      }),
+      Animated.spring(translateYAnim, {
+        toValue: 0, // 弹回原位
+        tension: 200,
+        friction: 8,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  };
+
+  // v1.2: 卡片点击事件追踪
+  const handleCardPress = () => {
+    analytics.trackActivityEvent('press', safeActivity.id, {
+      title: safeActivity.title,
+      category: safeActivity.category,
+      status: safeActivity.status,
+      attendees: safeActivity.attendees,
+      maxAttendees: safeActivity.maxAttendees,
+    });
+    onPress?.();
+  };
+
+  // 使用简单的卡片点击检测 - 不干扰滚动
+  const cardGesture = useCardPress({
+    onPress: handleCardPress,
+    onPressIn: handlePressIn,
+    onPressOut: handlePressOut,
+  }, {
+    maxMoveThreshold: 15,      // 15px 内的移动仍视为点击
+    maxTimeThreshold: 400,     // 400ms 内视为点击
+    enableHaptics: true,
+    debug: false,
+  });
+
+  // 水平滑动检测 - 仅用于ActivityCard的滑动操作
+  const swipeGesture = useSmartGesture({
+    onSwipeStart: (direction) => {
+      if (direction === 'horizontal') {
+        setIsSwipeActive(true);
+      }
+    },
+    onSwipeEnd: (direction, distance) => {
+      if (direction === 'horizontal' && distance > SWIPE_CONFIG.THRESHOLD) {
+        const swipeDir = distance > 0 ? 'right' : 'left';
+        revealActions(swipeDir);
+      } else {
+        resetSwipe();
+      }
+    },
+  }, {
+    swipeThreshold: 8,         // 更低的阈值，优先捕获滑动
+    velocityThreshold: 0.3,    // 更低的速度阈值
+    timeThreshold: 200,        // 更短的时间阈值，快速响应
+    enableHaptics: false,      // 关闭触觉反馈，避免冲突
+    debug: false,
+  });
+
+  // 🔧 同步获取学校 logo - 当缓存加载完成后重新计算
+  const schoolLogoUrl = useMemo(() => {
+    const presetAvatar = activity?.organizer?.avatar;
+    const deptId = activity?.deptId;
+
+    // 如果预设 avatar 是有效的 logo URL，直接使用
+    const isFallback = !presetAvatar ||
+      presetAvatar.includes('ui-avatars.com') ||
+      presetAvatar.includes('americanpromotioncompany.com');
+
+    if (!isFallback) {
+      return presetAvatar;
+    }
+
+    // 缓存加载完成后，尝试获取真实 logo
+    if (!schoolsLoading && deptId) {
+      const cachedLogo = getLogoByDeptIdSync(deptId);
+      if (cachedLogo) {
+        return cachedLogo;
+      }
+    }
+
+    return null;
+  }, [activity?.organizer?.avatar, activity?.deptId, schoolsLoading]);
+
+  // ========== EARLY RETURN AFTER ALL HOOKS ==========
+  // 确保activity对象存在 - must be AFTER all hooks to comply with rules-of-hooks
+  if (!activity || typeof activity !== 'object') {
+    return null;
+  }
+
+  // Helper functions that don't need to be before hooks
   const formatDate = (dateString: string): string => {
     try {
       if (!dateString || typeof dateString !== 'string') {
@@ -191,138 +378,8 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({
   const availableSpots = Math.max(0, safeActivity.maxAttendees - safeActivity.attendees);
   const isAlmostFull = availableSpots <= 5 && availableSpots > 0;
 
-  // 优质的卡片按压动画 - iOS风格体验
-  const handlePressIn = () => {
-    Animated.parallel([
-      Animated.spring(scaleAnim, {
-        toValue: 0.98,
-        tension: 200,
-        friction: 8,
-        useNativeDriver: true,
-      }),
-      Animated.timing(opacityAnim, {
-        toValue: 0.95,
-        duration: 150,
-        useNativeDriver: true,
-      }),
-      Animated.timing(translateYAnim, {
-        toValue: 2, // 轻微向下移动2px增强按压感
-        duration: 150,
-        useNativeDriver: true,
-      }),
-    ]).start();
-  };
-
-  const handlePressOut = () => {
-    Animated.parallel([
-      Animated.spring(scaleAnim, {
-        toValue: 1,
-        tension: 200,
-        friction: 8,
-        useNativeDriver: true,
-      }),
-      Animated.timing(opacityAnim, {
-        toValue: 1,
-        duration: 200,
-        useNativeDriver: true,
-      }),
-      Animated.spring(translateYAnim, {
-        toValue: 0, // 弹回原位
-        tension: 200,
-        friction: 8,
-        useNativeDriver: true,
-      }),
-    ]).start();
-  };
-
-  // v1.2: 卡片点击事件追踪
-  const handleCardPress = () => {
-    analytics.trackActivityEvent('press', safeActivity.id, {
-      title: safeActivity.title,
-      category: activity.category || 'unknown',
-      status: safeActivity.status,
-      attendees: safeActivity.attendees,
-      maxAttendees: safeActivity.maxAttendees,
-    });
-    onPress?.();
-  };
-
-
   const handleRegisterPress = () => {
     onRegister?.();
-  };
-
-  // 使用简单的卡片点击检测 - 不干扰滚动
-  const cardGesture = useCardPress({
-    onPress: handleCardPress,
-    onPressIn: handlePressIn,
-    onPressOut: handlePressOut,
-  }, {
-    maxMoveThreshold: 15,      // 15px 内的移动仍视为点击
-    maxTimeThreshold: 400,     // 400ms 内视为点击
-    enableHaptics: true,
-    debug: false,
-  });
-
-  // 水平滑动检测 - 仅用于ActivityCard的滑动操作
-  const swipeGesture = useSmartGesture({
-    onSwipeStart: (direction) => {
-      if (direction === 'horizontal') {
-        setIsSwipeActive(true);
-      }
-    },
-    onSwipeEnd: (direction, distance) => {
-      if (direction === 'horizontal' && distance > SWIPE_CONFIG.THRESHOLD) {
-        const swipeDirection = distance > 0 ? 'right' : 'left';
-        revealActions(swipeDirection);
-      } else {
-        resetSwipe();
-      }
-    },
-  }, {
-    swipeThreshold: 8,         // 更低的阈值，优先捕获滑动
-    velocityThreshold: 0.3,    // 更低的速度阈值
-    timeThreshold: 200,        // 更短的时间阈值，快速响应
-    enableHaptics: false,      // 关闭触觉反馈，避免冲突
-    debug: false,
-  });
-
-  // V1.1 规范: 滑动手势处理
-  const resetSwipe = () => {
-    Animated.parallel([
-      Animated.spring(translateXAnim, {
-        toValue: 0,
-        ...SWIPE_CONFIG.SPRING_CONFIG,
-        useNativeDriver: true,
-      }),
-      Animated.timing(actionOpacityAnim, {
-        toValue: 0,
-        duration: SWIPE_CONFIG.ANIMATION_DURATION,
-        useNativeDriver: true,
-      }),
-    ]).start(() => {
-      setIsSwipeActive(false);
-      setSwipeDirection(null);
-    });
-  };
-
-  const revealActions = (direction: 'left' | 'right') => {
-    const translateValue = direction === 'left' ? -SWIPE_CONFIG.REVEAL_WIDTH : SWIPE_CONFIG.REVEAL_WIDTH;
-    setIsSwipeActive(true);
-    setSwipeDirection(direction);
-    
-    Animated.parallel([
-      Animated.spring(translateXAnim, {
-        toValue: translateValue,
-        ...SWIPE_CONFIG.SPRING_CONFIG,
-        useNativeDriver: true,
-      }),
-      Animated.timing(actionOpacityAnim, {
-        toValue: 1,
-        duration: SWIPE_CONFIG.ANIMATION_DURATION,
-        useNativeDriver: true,
-      }),
-    ]).start();
   };
 
   // 移除了原有的PanResponder，使用新的智能手势检测系统
@@ -480,12 +537,22 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({
           start={{ x: 0, y: 0 }}
           end={{ x: 0, y: 1 }}
         >
-          {/* Top Row - Status & Favorite */}
+          {/* Top Row - Status & School Logo */}
           <View style={styles.topRow}>
             <View style={[styles.statusBadge, { backgroundColor: statusConfig.color }]}>
               <Text style={styles.statusText}>{statusConfig.text}</Text>
             </View>
-            
+
+            {/* School Logo Badge - Right Aligned */}
+            {schoolLogoUrl && (
+              <View style={styles.schoolBadgeTop}>
+                <Image
+                  source={{ uri: schoolLogoUrl }}
+                  style={styles.schoolLogoTop}
+                  resizeMode="contain"
+                />
+              </View>
+            )}
           </View>
 
           {/* Bottom Content */}
@@ -494,9 +561,9 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({
             {safeActivity.organizer && (
               <View style={styles.organizerRow}>
                 {safeActivity.organizer.avatar && (
-                  <Image 
-                    source={{ uri: safeActivity.organizer.avatar }} 
-                    style={styles.organizerAvatar} 
+                  <Image
+                    source={{ uri: safeActivity.organizer.avatar }}
+                    style={styles.organizerAvatar}
                   />
                 )}
                 <Text style={styles.organizerName}>
@@ -507,7 +574,7 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({
                 )}
               </View>
             )}
-            
+
             {/* Activity Title - 🌙 Dark Mode适配 */}
             <Text style={dmStyles.text.title} numberOfLines={2}>
               {safeActivity.title}
@@ -677,7 +744,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   
-  // Top Row (Status & Favorite)
+  // Top Row (Status & School Logo)
   topRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -693,6 +760,21 @@ const styles = StyleSheet.create({
     color: theme.colors.text.inverse,
     fontSize: theme.typography.fontSize.xs,
     fontWeight: theme.typography.fontWeight.semibold,
+  },
+  schoolBadgeTop: {
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    borderRadius: 50,
+    padding: theme.spacing.xs,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  schoolLogoTop: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
   },
   
   // Overlay Content

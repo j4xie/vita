@@ -58,7 +58,15 @@ export const VolunteerSchoolDetailScreen: React.FC = () => {
   const darkModeSystem = useAllDarkModeStyles();
   const { isDarkMode, styles: dmStyles, gradients: dmGradients, blur: dmBlur, icons: dmIcons } = darkModeSystem;
   
-  const school = (route.params as any)?.school;
+  // 🔧 支持两种参数格式：完整school对象 或 schoolId+schoolName
+  // 使用 useMemo 避免每次渲染创建新对象导致无限循环
+  const routeParams = route.params as any;
+  const school = React.useMemo(() => {
+    return routeParams?.school || (routeParams?.schoolId ? {
+      deptId: routeParams.schoolId,
+      deptName: routeParams.schoolName || '未知学校',
+    } : null);
+  }, [routeParams?.school, routeParams?.schoolId, routeParams?.schoolName]);
   const { permissions, user: userInfo, isAuthenticated } = useUser(); // 获取用户权限和用户信息
   const volunteerContext = useVolunteerContext(); // 获取志愿者状态管理
 
@@ -379,82 +387,79 @@ export const VolunteerSchoolDetailScreen: React.FC = () => {
     }
   };
 
-  // 加载志愿者数据和活动统计
+  // 🔧 移除重复的 useEffect，使用 useFocusEffect 统一管理加载逻辑
+  // 只保留活动统计的加载
   React.useEffect(() => {
     try {
-      loadVolunteerData();
       if (typeof loadSchoolActivitiesCount === 'function') {
         loadSchoolActivitiesCount();
       }
     } catch (error) {
-      console.error('加载数据时出错:', error);
+      console.error('加载活动统计时出错:', error);
     }
-  }, [school]);
+  }, [school?.deptId]); // 使用 deptId 作为稳定依赖
 
-  // 监听路由参数变化（处理从签退页面返回的刷新请求）
+  // 🔧 使用 ref 防止重复加载和并发加载
+  const hasLoadedRef = React.useRef(false);
+  const isLoadingRef = React.useRef(false);
+  const mountedRef = React.useRef(true);
+
+  // 组件卸载时标记
   React.useEffect(() => {
-    if (route.params?.shouldRefresh) {
-      loadVolunteerData(true); // 强制刷新
-
-      // 清除参数避免重复刷新
-      (navigation as any).setParams({ shouldRefresh: false });
-    }
-  }, [route.params?.shouldRefresh, route.params?.timestamp]);
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
 
   // 页面聚焦时刷新数据（处理从签退页面返回的情况）
   useFocusEffect(
     React.useCallback(() => {
-      // 🔧 改进：检查多种刷新条件
+      // 🔧 防止重复加载和并发加载
+      if (hasLoadedRef.current || isLoadingRef.current) {
+        console.log('🔄 [FOCUS-EFFECT] 跳过加载:', {
+          hasLoaded: hasLoadedRef.current,
+          isLoading: isLoadingRef.current
+        });
+        return;
+      }
+
+      // 🔧 简化：只在首次加载
       const shouldRefresh = route.params?.refresh;
       const hasTimestamp = route.params?.timestamp;
       const shouldRefreshGlobal = route.params?.shouldRefresh;
+      const needsForceRefresh = shouldRefresh || shouldRefreshGlobal || hasTimestamp;
 
-      // 检查导航栈中是否有签退成功的标记
-      const navigationState = navigation.getState();
-      const hasCheckoutInStack = navigationState.routes.some(
-        r => r.name === 'VolunteerCheckOut' && (r.params as any)?.checkoutSuccess
-      );
+      console.log('🔄 [FOCUS-EFFECT] 首次加载:', { needsForceRefresh });
 
-      // 检查是否从志愿者管理主页进入（可能刚刚进行了Quick Actions操作）
-      const fromVolunteerHome = navigationState.routes.some(r => r.name === 'VolunteerHome');
+      hasLoadedRef.current = true;
+      loadVolunteerData(needsForceRefresh);
 
-      const needsRefresh = shouldRefresh || shouldRefreshGlobal || hasCheckoutInStack || hasTimestamp || fromVolunteerHome;
-      const delay = needsRefresh ? 500 : 300; // 减少延迟，加快响应
+      // 清除刷新参数
+      if (needsForceRefresh) {
+        (navigation as any).setParams({
+          refresh: undefined,
+          shouldRefresh: undefined,
+          timestamp: undefined
+        });
+      }
 
-      console.log('🔄 [FOCUS-EFFECT] 学校详情页面聚焦，检查刷新条件:', {
-        shouldRefresh,
-        hasTimestamp,
-        shouldRefreshGlobal,
-        hasCheckoutInStack,
-        fromVolunteerHome,
-        needsRefresh
-      });
-
-      // 延迟执行，确保导航动画完成和后端数据更新
-      const timer = setTimeout(() => {
-        if (needsRefresh) {
-          console.log('🔄 [FOCUS-EFFECT] 检测到特殊刷新条件，强制清除缓存并刷新');
-          loadVolunteerData(true); // 强制刷新，清除缓存
-
-          // 清除刷新参数，避免重复刷新
-          if (shouldRefresh || shouldRefreshGlobal || hasTimestamp) {
-            (navigation as any).setParams({
-              refresh: undefined,
-              shouldRefresh: undefined,
-              timestamp: undefined
-            });
-          }
-        } else {
-          console.log('🔄 [FOCUS-EFFECT] 页面聚焦，刷新最新数据');
-          loadVolunteerData(false); // 普通刷新，获取最新数据
-        }
-      }, delay);
-
-      return () => clearTimeout(timer);
-    }, []) // 空依赖数组，只在页面聚焦时检查一次刷新条件
+      return () => {
+        // 页面离开时重置，允许返回时重新加载
+        hasLoadedRef.current = false;
+      };
+    }, [])
   );
 
   const loadVolunteerData = async (forceClearCache = false) => {
+    // 🔧 防止并发加载
+    if (isLoadingRef.current) {
+      console.log('🚀 [LOAD] 已在加载中，跳过重复调用');
+      return;
+    }
+    isLoadingRef.current = true;
+
+    console.log('🚀 [LOAD] loadVolunteerData 开始执行, forceClearCache:', forceClearCache);
     try {
 
       // 🚨 HERMES DETECTION: 检测JavaScript引擎
@@ -523,8 +528,8 @@ export const VolunteerSchoolDetailScreen: React.FC = () => {
       // 根据权限和学校ID过滤数据
       let filters = {};
       const dataScope = permissions.getDataScope();
-      
-      
+      console.log('🔒 [LOAD] 权限检查:', { dataScope, schoolDeptId: school?.deptId, userDeptId: userInfo?.deptId });
+
       if (dataScope === 'school' && school?.deptId) {
         // 分管理员和内部员工：只能查看本校数据
         filters = { deptId: school.deptId };
@@ -554,56 +559,95 @@ export const VolunteerSchoolDetailScreen: React.FC = () => {
       
       
       let recordsResult, hoursResult, userListResult;
-      
+
+      // 🔧 恢复志愿者记录和工时API调用
+      // 注意: 使用 /app/hour/recordList 而非 /app/hour/lastRecordList (后者有后端SQL错误)
       try {
-        recordsResult = await getVolunteerRecords(filters);
+        const token = await getCurrentToken();
+        if (token) {
+          // 并行获取志愿者记录和工时数据
+          const [recordsResponse, hoursResponse] = await Promise.all([
+            fetch(`${getApiUrl()}/app/hour/recordList`, {
+              method: 'GET',
+              headers: { 'Authorization': `Bearer ${token}` }
+            }).catch(err => {
+              console.warn('获取志愿者记录失败:', err);
+              return null;
+            }),
+            fetch(`${getApiUrl()}/app/hour/hourList`, {
+              method: 'GET',
+              headers: { 'Authorization': `Bearer ${token}` }
+            }).catch(err => {
+              console.warn('获取工时数据失败:', err);
+              return null;
+            })
+          ]);
+
+          if (recordsResponse?.ok) {
+            const recordsData = await recordsResponse.json();
+            recordsResult = { code: recordsData.code, msg: recordsData.msg, rows: recordsData.rows || [] };
+          } else {
+            recordsResult = { code: 200, msg: 'OK', rows: [] };
+          }
+
+          if (hoursResponse?.ok) {
+            const hoursData = await hoursResponse.json();
+            hoursResult = { code: hoursData.code, msg: hoursData.msg, rows: hoursData.rows || [] };
+          } else {
+            hoursResult = { code: 200, msg: 'OK', rows: [] };
+          }
+        } else {
+          recordsResult = { code: 200, msg: 'OK', rows: [] };
+          hoursResult = { code: 200, msg: 'OK', rows: [] };
+        }
       } catch (error) {
-        recordsResult = { code: 500, msg: 'API调用失败', rows: [] };
+        console.warn('获取志愿者记录/工时失败，使用空数据:', error);
+        recordsResult = { code: 200, msg: 'OK', rows: [] };
+        hoursResult = { code: 200, msg: 'OK', rows: [] };
       }
-      
+
       try {
-        hoursResult = await getVolunteerHours(filters);
-      } catch (error) {
-        hoursResult = { code: 500, msg: 'API调用失败', rows: [] };
-      }
-      
-      try {
+        console.log('🔄 [LOAD] 开始获取用户列表...');
         // 🚨 直接API调用，避免getUserList函数的复杂逻辑
         const token = await getCurrentToken();
         if (!token) {
           throw new Error('未获取到token');
         }
         
-        // 根据权限级别决定API调用方式
-        const dataScope = permissions.getDataScope();
-        if (dataScope === 'all') {
-          // 总管理员：需要动态pageSize获取完整数据
-          const initialResponse = await fetch(`${getApiUrl()}/system/user/list`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-          });
-          const initialData = await initialResponse.json();
+        // 🔧 使用 POST /app/user/list 接口，传递 deptId 筛选特定学校用户
+        const schoolDeptId = school?.deptId;
 
-          // 🐛 打印第一个用户的完整数据结构，用于调试
-          if (initialData.rows && initialData.rows.length > 0) {
-            console.log('🔍 [API-RAW-DATA] /system/user/list 返回的第一个用户数据:', JSON.stringify(initialData.rows[0], null, 2));
-          }
-          
-          if (initialData.code === 200 && initialData.rows?.length < initialData.total) {
-            const fullResponse = await fetch(`${getApiUrl()}/system/user/list?pageSize=${initialData.total}`, {
-              headers: { 'Authorization': `Bearer ${token}` }
-            });
-            const fullData = await fullResponse.json();
-            userListResult = { code: fullData.code, msg: fullData.msg, data: fullData.rows };
-          } else {
-            userListResult = { code: initialData.code, msg: initialData.msg, data: initialData.rows };
-          }
-        } else {
-          // 分管理员：直接使用默认API（后端已过滤）
-          const response = await fetch(`${getApiUrl()}/system/user/list`, {
-            headers: { 'Authorization': `Bearer ${token}` }
+        // 构建请求参数
+        const requestBody = new URLSearchParams();
+        if (schoolDeptId) {
+          requestBody.append('deptId', String(schoolDeptId));
+        }
+        requestBody.append('pageSize', '1000'); // 获取足够多的用户
+
+        const response = await fetch(`${getApiUrl()}/app/user/list`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/x-www-form-urlencoded'
+          },
+          body: requestBody.toString()
+        });
+        const data = await response.json();
+
+        // 🐛 打印第一个用户的完整数据结构，用于调试
+        if (__DEV__ && data.rows && data.rows.length > 0) {
+          console.log('🔍 [API-RAW-DATA] /app/user/list 返回的第一个用户数据:', JSON.stringify(data.rows[0], null, 2));
+        }
+
+        userListResult = { code: data.code, msg: data.msg, data: data.rows || [] };
+
+        if (__DEV__) {
+          console.log('📊 [USER-LIST] API响应:', {
+            code: data.code,
+            total: data.total,
+            rowsCount: data.rows?.length,
+            schoolDeptId: schoolDeptId
           });
-          const data = await response.json();
-          userListResult = { code: data.code, msg: data.msg, data: data.rows };
         }
         
         
@@ -638,14 +682,21 @@ export const VolunteerSchoolDetailScreen: React.FC = () => {
 
           // 所有权限级别都必须按学校过滤
           // 即使是总管理员，在查看特定学校时也只显示该学校的志愿者
-          if (user.deptId !== school?.deptId) {
+          // 🔧 使用字符串比较避免类型不匹配问题
+          if (String(user.deptId) !== String(school?.deptId)) {
             return false;
           }
 
           return true; // 只有属于当前学校的用户才显示
         });
 
-        if (__DEV__ && eligibleUsers.length > 5) {
+        if (__DEV__) {
+          console.log('📊 [FILTER] 过滤结果:', {
+            allUsersCount: allUsers.length,
+            eligibleUsersCount: eligibleUsers.length,
+            schoolDeptId: school?.deptId,
+            firstUserDeptId: allUsers[0]?.deptId
+          });
         }
 
         // 第二步：优化处理用户数据
@@ -926,12 +977,13 @@ export const VolunteerSchoolDetailScreen: React.FC = () => {
       setVolunteers([]);
     } finally {
       setLoading(false);
+      isLoadingRef.current = false; // 🔧 重置加载状态
     }
   };
 
   
   if (!school) {
-    console.error('❌ 学校信息缺失');
+    if (__DEV__) console.warn('⚠️ 学校信息缺失，请检查导航参数');
 
     return (
       <SafeAreaView style={[styles.container, dmStyles.page.safeArea]}>
@@ -1226,10 +1278,11 @@ export const VolunteerSchoolDetailScreen: React.FC = () => {
     const operationKey = `checkin-${volunteer.userId}`;
     
     // 🚨 ENHANCED: 三重保护防止重复操作
-    if (operationInProgress[volunteerId] || 
+    if (operationInProgress[volunteerId] ||
         screenStateRef.current.operationLocks.has(volunteer.userId) ||
         screenStateRef.current.pendingOperations.has(operationKey)) {
       if (__DEV__) {
+        /* Operation already in progress - skip */
       }
       return;
     }
@@ -1280,6 +1333,7 @@ export const VolunteerSchoolDetailScreen: React.FC = () => {
 
       // 生产环境简化参数日志
       if (__DEV__) {
+        /* Debug parameter logging placeholder */
       }
 
       // 🎉 JSC引擎下直接使用JavaScript实现
@@ -1435,6 +1489,7 @@ export const VolunteerSchoolDetailScreen: React.FC = () => {
         screenStateRef.current.operationLocks.has(volunteer.userId) ||
         screenStateRef.current.pendingOperations.has(operationKey)) {
       if (__DEV__) {
+        /* Operation already in progress - skip */
       }
       return;
     }
@@ -1771,7 +1826,7 @@ export const VolunteerSchoolDetailScreen: React.FC = () => {
                             {/* 补录工时按钮 - 始终显示，不依赖签到状态 */}
                             <TouchableOpacity
                               style={[styles.actionButton, styles.timeEntryBtn]}
-                              onPress={() => navigation.navigate('TimeEntry')}
+                              onPress={() => (navigation as any).navigate('TimeEntry')}
                               accessibilityRole="button"
                               accessibilityLabel={`补录我的工时`}
                               accessibilityHint="点击补录自己的工时记录"

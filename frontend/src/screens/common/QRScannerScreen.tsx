@@ -440,7 +440,7 @@ export const QRScannerScreen: React.FC = () => {
       }
 
       // 检查用户报名状态
-      const signInfo = await pomeloXAPI.getSignInfo(activityId, parseInt(user.userId));
+      const signInfo = await pomeloXAPI.getSignInfo(activityId, parseInt(String(user.userId)));
       
       if (signInfo.code === 200) {
         switch (signInfo.data) {
@@ -564,7 +564,7 @@ export const QRScannerScreen: React.FC = () => {
     console.log('🔄 [QR签到] 开始执行签到操作');
     
     try {
-      const result = await pomeloXAPI.signInActivity(activityId, parseInt(user?.id || '0'));
+      const result = await pomeloXAPI.signInActivity(activityId, parseInt(String(user?.id || '0')));
       
       if (result.code === 200) {
         // 签到成功
@@ -661,7 +661,7 @@ export const QRScannerScreen: React.FC = () => {
         setIsProcessing(true);
 
         try {
-          const userResponse = await pomeloXAPI.getUserInfo(parseInt(parsedUser.userId));
+          const userResponse = await pomeloXAPI.getUserInfo(parseInt(String(parsedUser.userId)));
 
           if (userResponse.code === 200 && userResponse.data) {
             console.log('✅ [QR扫描-短ID] 用户信息查询成功');
@@ -740,7 +740,7 @@ export const QRScannerScreen: React.FC = () => {
       
       try {
         // ✅ 使用现有的用户信息API (零后端改动)
-        const userResponse = await pomeloXAPI.getUserInfo(parseInt(hashResult.userId!));
+        const userResponse = await pomeloXAPI.getUserInfo(parseInt(String(hashResult.userId!)));
         
         if (userResponse.code === 200 && userResponse.data) {
           console.log('✅ [QR哈希扫描] 用户信息查询成功');
@@ -1058,7 +1058,7 @@ export const QRScannerScreen: React.FC = () => {
       if (!currentOrganization) return;
 
       // 检查是否已经有该商家的会员卡
-      const existingCards = await membershipCardService.getCardsByUserId(user?.userId || '');
+      const existingCards = await membershipCardService.getCardsByUserId(String(user?.userId || ''));
       const existingCard = existingCards.find(card => 
         card.merchantId === merchantId && 
         card.organizationId === currentOrganization.id
@@ -1089,7 +1089,7 @@ export const QRScannerScreen: React.FC = () => {
 
       // 创建新的会员卡
       const newCard = await membershipCardService.createMembershipCard({
-        userId: user?.userId || '',
+        userId: String(user?.userId || ''),
         organizationId: currentOrganization.id,
         merchantId,
         cardType: 'merchant'
@@ -1300,11 +1300,8 @@ export const QRScannerScreen: React.FC = () => {
         <Ionicons name="camera-outline" size={64} color={theme.colors.text.disabled} />
         <Text style={styles.message}>{t('qr.camera.no_permission')}</Text>
         <Text style={styles.submessage}>{t('qr.camera.permission_instruction')}</Text>
-        <TouchableOpacity style={[styles.button, { marginBottom: theme.spacing[2] }]} onPress={requestPermission}>
+        <TouchableOpacity style={styles.button} onPress={requestPermission}>
           <Text style={styles.buttonText}>{t('qr.camera.request_permission_button')}</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.button} onPress={handleBack}>
-          <Text style={styles.buttonText}>{t('common.back')}</Text>
         </TouchableOpacity>
       </View>
     );

@@ -49,7 +49,10 @@ export const CORE_COLORS = {
     primary: 'rgba(255, 255, 255, 0.30)',
     secondary: 'rgba(209, 213, 219, 0.50)',
     divider: 'rgba(255, 255, 255, 0.12)',
-  }
+  },
+
+  // 卡片背景色
+  card: '#FFFFFF',
 } as const;
 
 // v1.1 间距系统 - 核心常量

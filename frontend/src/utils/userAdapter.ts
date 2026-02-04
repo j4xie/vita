@@ -1,6 +1,7 @@
 // 用户数据适配器 - 转换后端用户数据到前端格式
 
 import { timeService } from './UnifiedTimeService';
+import { PermissionLevel } from '../types/userPermissions';
 
 // 后端用户数据接口（完整结构）
 export interface BackendUserInfo {
@@ -79,7 +80,7 @@ export interface BackendUserInfo {
 // 前端用户数据接口（简化格式）
 export interface FrontendUser {
   id: string;
-  userId?: string; // 兼容字段，与id相同
+  userId: number | string; // 用户ID（required to match types/user.ts）
   userName: string;
   legalName: string;
   nickName: string;
@@ -136,6 +137,20 @@ export interface FrontendUser {
   verified?: boolean;
   area?: 'zh' | 'en'; // 地域选择
   points?: number; // 积分
+
+  // 兼容types/user.ts FrontendUser接口所需的字段
+  permissionLevel: PermissionLevel;
+  isAdmin: boolean; // 顶层isAdmin字段（与permissions.isAdmin一致）
+  status: 'active' | 'inactive' | 'pending';
+  department?: {
+    deptId: number;
+    deptName: string;
+    parentId?: number;
+    ancestors?: string;
+    status?: string;
+    engName?: string;
+    aprName?: string;
+  };
 }
 
 /**
@@ -166,6 +181,27 @@ const parsePermissions = (roles: BackendUserInfo['roles'] | [], isAdmin: boolean
     canManageVolunteers: isAdmin || hasRole('part_manage'),
     canManageInvitations: isAdmin || hasRole('part_manage'),
   };
+};
+
+/**
+ * 从角色数组计算权限级别
+ * @param roles 角色数组
+ * @param isAdmin 是否为管理员
+ * @returns 权限级别
+ */
+const getPermissionLevelFromRoles = (roles: BackendUserInfo['roles'] | [], isAdmin: boolean): PermissionLevel => {
+  if (isAdmin) return 'manage';
+
+  const safeRoles = Array.isArray(roles) ? roles : [];
+
+  // 按权限优先级检查
+  for (const role of safeRoles) {
+    if (role.roleKey === 'manage') return 'manage';
+    if (role.roleKey === 'part_manage') return 'part_manage';
+    if (role.roleKey === 'staff') return 'staff';
+  }
+
+  return 'common';
 };
 
 /**
@@ -271,6 +307,18 @@ export const adaptUserInfo = (backendUser: BackendUserInfo): FrontendUser => {
 
     // 积分 (Added to fix type error)
     points: (backendUser as any).points || 0,
+
+    // 兼容types/user.ts FrontendUser接口所需的字段
+    permissionLevel: getPermissionLevelFromRoles(safeRoles, backendUser.admin),
+    isAdmin: permissions.isAdmin, // 顶层isAdmin，与permissions.isAdmin一致
+    status: backendUser.status === '0' ? 'active' : 'inactive', // "0"表示正常状态
+    department: backendUser.dept ? {
+      deptId: backendUser.dept.deptId,
+      deptName: backendUser.dept.deptName,
+      parentId: backendUser.dept.parentId,
+      ancestors: backendUser.dept.ancestors,
+      status: backendUser.dept.status,
+    } : undefined,
   };
 };
 

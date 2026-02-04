@@ -29,6 +29,7 @@ import { performTimeEntry, getPersonalVolunteerRecords } from '../../services/vo
 import { timeService } from '../../utils/UnifiedTimeService';
 import { SafeAlert } from '../../utils/SafeAlert';
 import { LoaderOne } from '../ui/LoaderOne';
+import { CalendarPicker } from '../ui/CalendarPicker';
 
 interface VolunteerTimeEntryModalProps {
   visible: boolean;
@@ -656,11 +657,11 @@ export const VolunteerTimeEntryModal: React.FC<VolunteerTimeEntryModalProps> = (
                         };
 
                         // 直接导航到日历选择页面（作为Modal显示在当前Modal之上）
-                        navigation.navigate('CalendarSelection' as never, {
+                        (navigation as any).navigate('CalendarSelection', {
                           selectedDate: formatDateToString(selectedDate),
                           minDate: formatDateToString(getMinSelectableDate()),
                           maxDate: formatDateToString(getMaxSelectableDate()),
-                        } as never);
+                        });
                       }}
                     >
                       <Ionicons name="calendar-outline" size={20} color={theme.colors.primary} />

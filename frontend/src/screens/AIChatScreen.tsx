@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import {
   View,
   Text,
@@ -8,8 +8,10 @@ import {
   StyleSheet,
   KeyboardAvoidingView,
   Platform,
-  ActivityIndicator,
   Dimensions,
+  Linking,
+  NativeScrollEvent,
+  NativeSyntheticEvent,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
@@ -17,14 +19,23 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import Markdown from 'react-native-markdown-display';
 
 import { ChatMessage } from '../types/ai';
-import { apiService } from '../services/api';
-import { theme } from '../theme';
-import { useUser } from '../context/UserContext';
+import { SessionMetadata } from '../types/chat';
+import { sendMessage as sendChatMessage } from '../services/chatAPI';
 import { ThinkingIndicator } from '../components/ai/ThinkingIndicator';
+import { ChatHistoryBottomSheet } from '../components/ai/ChatHistoryBottomSheet';
+import {
+  initializeSessionStorage,
+  saveSessionMessages,
+  loadSessionMessages,
+  deleteSessionById,
+  clearAllSessions,
+  setCurrentSessionId,
+  generateSessionId,
+  loadAllSessions,
+} from '../utils/sessionStorage';
 
 type Props = NativeStackScreenProps<any, 'AIChat'>;
 
@@ -68,60 +79,97 @@ const getRandomQuestions = () => {
 export const AIChatScreen: React.FC<Props> = ({ navigation, route }) => {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
-  const { user } = useUser();
   const flatListRef = useRef<FlatList>(null);
 
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputText, setInputText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [isStreaming, setIsStreaming] = useState(false);
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [suggestedQuestions, setSuggestedQuestions] = useState(() => getRandomQuestions());
 
-  // 流式传输状态
-  const [streamingMessageIndex, setStreamingMessageIndex] = useState<number | null>(null);
-  const [streamingText, setStreamingText] = useState('');
+  // 多会话管理状态
+  const [sessions, setSessions] = useState<SessionMetadata[]>([]);
+  const [historyVisible, setHistoryVisible] = useState(false);
+
+  // 打字机效果状态
+  const [typingMessageIndex, setTypingMessageIndex] = useState<number | null>(null);
+  const [typingText, setTypingText] = useState('');
+  const typingIntervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  // AbortController ref - 用于中断AI思考
   const abortControllerRef = useRef<AbortController | null>(null);
+
+  // 滚动状态 - 用于判断是否自动滚动
+  // 基于滚动位置而不是时间，这样用户向上查看历史消息时不会被打断
+  const isAtBottomRef = useRef(true);
+  const scrollPositionRef = useRef({ contentHeight: 0, containerHeight: 0, offset: 0 });
 
   // 从路由参数获取初始消息
   const initialMessage = route.params?.initialMessage as string | undefined;
 
-  // 清理流式传输
+  // 清理定时器和中断请求
   useEffect(() => {
     return () => {
-      if (abortControllerRef.current) {
-        abortControllerRef.current.abort();
+      if (typingIntervalRef.current) {
+        clearInterval(typingIntervalRef.current);
       }
+      abortControllerRef.current?.abort();
     };
   }, []);
 
-  // 终止流式传输
-  const stopStreaming = useCallback(() => {
-    if (abortControllerRef.current) {
-      abortControllerRef.current.abort();
-      abortControllerRef.current = null;
-    }
-    setIsStreaming(false);
-    setIsLoading(false);
+  // 打字机效果函数（前5秒逐字显示，超过5秒一次性显示剩余）
+  const startTypingEffect = (messageIndex: number, fullText: string) => {
+    setTypingMessageIndex(messageIndex);
+    setTypingText('');
 
-    // 保留已接收的内容
-    if (streamingMessageIndex !== null && streamingText) {
-      setMessages(prev => {
-        const updated = [...prev];
-        if (updated[streamingMessageIndex]) {
-          updated[streamingMessageIndex] = {
-            ...updated[streamingMessageIndex],
-            content: streamingText + ' [已终止]',
-          };
+    let charIndex = 0;
+    let lastScrollTime = 0;
+    const startTime = Date.now();
+
+    typingIntervalRef.current = setInterval(() => {
+      if (charIndex < fullText.length) {
+        // 超过5秒，直接显示剩余全部文字
+        if (Date.now() - startTime >= 5000) {
+          setTypingText(fullText);
+          if (typingIntervalRef.current) {
+            clearInterval(typingIntervalRef.current);
+          }
+          setTypingMessageIndex(null);
+          setTypingText('');
+          if (isAtBottomRef.current) {
+            flatListRef.current?.scrollToEnd({ animated: false });
+          }
+          return;
         }
-        return updated;
-      });
-    }
 
-    setStreamingMessageIndex(null);
-    setStreamingText('');
-  }, [streamingMessageIndex, streamingText]);
+        setTypingText(fullText.slice(0, charIndex + 1));
+        charIndex++;
+        // 只在用户在底部时自动滚动，且限制滚动频率
+        const now = Date.now();
+        if (isAtBottomRef.current && now - lastScrollTime > 100) {
+          lastScrollTime = now;
+          flatListRef.current?.scrollToEnd({ animated: false });
+        }
+      } else {
+        // 打字完成
+        if (typingIntervalRef.current) {
+          clearInterval(typingIntervalRef.current);
+        }
+        setTypingMessageIndex(null);
+        setTypingText('');
+      }
+    }, 2); // 2ms 每个字符（极速打字）
+  };
+
+  // 跳过打字效果，直接显示全文
+  const skipTyping = () => {
+    if (typingIntervalRef.current) {
+      clearInterval(typingIntervalRef.current);
+    }
+    setTypingMessageIndex(null);
+    setTypingText('');
+  };
 
   // 加载保存的会话
   useEffect(() => {
@@ -135,157 +183,223 @@ export const AIChatScreen: React.FC<Props> = ({ navigation, route }) => {
     }
   }, [initialMessage]);
 
-  // 加载会话
+  // 加载会话（每次进入都是新会话，历史记录仅通过历史按钮访问）
   const loadSession = async () => {
     try {
-      const savedSessionId = await AsyncStorage.getItem('@ai_session_id');
-      const savedMessages = await AsyncStorage.getItem('@ai_messages');
+      // 先执行迁移并加载会话列表（只显示有消息的会话）
+      const { sessions: loadedSessions } = await initializeSessionStorage();
+      setSessions(loadedSessions.filter(s => s.messageCount > 0));
 
-      if (savedSessionId) {
-        setSessionId(savedSessionId);
-      }
-      if (savedMessages) {
-        setMessages(JSON.parse(savedMessages));
-      }
+      // 每次进入都创建新会话（不自动加载上一个会话）
+      const newSessionId = generateSessionId();
+      setSessionId(newSessionId);
+      setMessages([]);
+      await setCurrentSessionId(newSessionId);
     } catch (error) {
       console.error('Load session error:', error);
     }
   };
 
-  // 保存会话
+  // 保存会话（使用新的多会话存储）
   const saveSession = async (newMessages: ChatMessage[], newSessionId?: string) => {
     try {
-      await AsyncStorage.setItem('@ai_messages', JSON.stringify(newMessages));
-      if (newSessionId) {
-        await AsyncStorage.setItem('@ai_session_id', newSessionId);
+      // 只保存有消息的会话
+      if (newMessages.length === 0) return;
+
+      const currentId = newSessionId || sessionId || generateSessionId();
+      await saveSessionMessages(currentId, newMessages);
+
+      if (newSessionId && newSessionId !== sessionId) {
+        await setCurrentSessionId(newSessionId);
+        setSessionId(newSessionId);
       }
+
+      // 刷新会话列表（只显示有消息的会话）
+      const updatedSessions = await loadAllSessions();
+      setSessions(updatedSessions.filter(s => s.messageCount > 0));
     } catch (error) {
       console.error('Save session error:', error);
     }
   };
 
-  // 发送消息（使用流式传输）
+  // 中断AI思考
+  const handleStopThinking = () => {
+    abortControllerRef.current?.abort();
+  };
+
+  // 发送消息
   const sendMessage = async (messageText?: string) => {
     const text = messageText || inputText.trim();
     if (!text) return;
 
+    // 中断上一个进行中的请求
+    abortControllerRef.current?.abort();
+
     setInputText('');
     setError(null);
-    setIsLoading(true);
-    setIsStreaming(true);
-    setStreamingText('');
+
+    // 创建新的 AbortController
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
 
     // 添加用户消息
     const userMessage: ChatMessage = {
+      id: `user_${Date.now()}`,
       role: 'user',
       content: text,
-      timestamp: new Date().toISOString(),
+      timestamp: Date.now(),
     };
 
-    // 添加空的AI消息占位
-    const aiPlaceholder: ChatMessage = {
-      role: 'assistant',
-      content: '',
-      timestamp: new Date().toISOString(),
-    };
-
-    const newMessages = [...messages, userMessage, aiPlaceholder];
+    const newMessages = [...messages, userMessage];
     setMessages(newMessages);
-    const aiMessageIndex = newMessages.length - 1;
-    setStreamingMessageIndex(aiMessageIndex);
+    setIsLoading(true);
 
     // 滚动到底部
     setTimeout(() => {
       flatListRef.current?.scrollToEnd({ animated: true });
     }, 100);
 
-    // 累积的内容
-    let accumulatedContent = '';
+    try {
+      // 调用AI API (使用chatAPI获取元数据)
+      const response = await sendChatMessage(text, controller.signal);
 
-    // 使用流式API
-    // dept_id 默认使用用户的 deptId，如果没有则使用1（默认部门）
-    const deptId = user?.deptId || 1;
-    abortControllerRef.current = apiService.sendAIMessageStream(
-      {
-        message: text,
-        session_id: sessionId || undefined,
-        user_id: user?.userId?.toString(),
-        dept_id: deptId,
-      },
-      // onChunk - 收到新内容块
-      (chunk: string) => {
-        accumulatedContent += chunk;
-        setStreamingText(accumulatedContent);
+      // 添加AI回复（包含元数据）
+      const aiMessage: ChatMessage = {
+        id: `ai_${Date.now()}`,
+        role: 'assistant',
+        content: response.reply,
+        timestamp: Date.now(),
+        metadata: {
+          sourceType: response.sourceType as 'web_search' | 'knowledge_base' | 'general' | undefined,
+          ragScore: response.ragScore,
+          schoolId: response.schoolId,
+          webSources: response.webSources,
+        },
+      };
 
-        // 实时更新消息内容
-        setMessages(prev => {
-          const updated = [...prev];
-          if (updated[aiMessageIndex]) {
-            updated[aiMessageIndex] = {
-              ...updated[aiMessageIndex],
-              content: accumulatedContent,
-            };
-          }
-          return updated;
-        });
+      const updatedMessages = [...newMessages, aiMessage];
+      setMessages(updatedMessages);
+      setSessionId(response.session_id);
 
-        // 自动滚动
-        flatListRef.current?.scrollToEnd({ animated: true });
-      },
-      // onStart - 收到session_id
-      (newSessionId: string) => {
-        setSessionId(newSessionId);
-      },
-      // onDone - 流式传输完成
-      async (fullContent: string, messageCount: number) => {
-        setIsStreaming(false);
-        setIsLoading(false);
-        setStreamingMessageIndex(null);
-        setStreamingText('');
-        abortControllerRef.current = null;
+      // 启动打字机效果
+      const messageIndex = updatedMessages.length - 1;
+      startTypingEffect(messageIndex, response.reply);
 
-        // 确保最终内容正确
-        setMessages(prev => {
-          const updated = [...prev];
-          if (updated[aiMessageIndex]) {
-            updated[aiMessageIndex] = {
-              ...updated[aiMessageIndex],
-              content: fullContent,
-            };
-          }
-          return updated;
-        });
-
-        // 保存会话
-        const finalMessages = [...messages, userMessage, {
-          role: 'assistant' as const,
-          content: fullContent,
-          timestamp: new Date().toISOString(),
-        }];
-        await saveSession(finalMessages, sessionId || undefined);
-      },
-      // onError - 发生错误
-      (errorMessage: string) => {
-        setIsStreaming(false);
-        setIsLoading(false);
-        setStreamingMessageIndex(null);
-        setStreamingText('');
-        abortControllerRef.current = null;
-        setError(errorMessage || t('ai.errorMessage'));
-
-        // 移除空的AI消息
-        setMessages(prev => prev.slice(0, -1));
+      // 保存会话
+      await saveSession(updatedMessages, response.session_id);
+    } catch (err: any) {
+      // 用户主动取消 - 添加中断提示消息
+      if (err.message === 'USER_CANCELLED') {
+        const interruptedMessage: ChatMessage = {
+          id: `ai_interrupted_${Date.now()}`,
+          role: 'assistant',
+          content: t('ai.interruptedMessage'),
+          timestamp: Date.now(),
+        };
+        const updatedMessages = [...newMessages, interruptedMessage];
+        setMessages(updatedMessages);
+        await saveSession(updatedMessages);
+      } else {
+        console.error('Send message error:', err);
+        setError(err.message || t('ai.errorMessage'));
       }
-    );
+    } finally {
+      setIsLoading(false);
+      abortControllerRef.current = null;
+    }
   };
 
-  // 新建对话
+  // 新建对话（保存当前会话后创建新会话）
   const startNewChat = async () => {
+    // 中断进行中的请求
+    abortControllerRef.current?.abort();
+    abortControllerRef.current = null;
+    setIsLoading(false);
+
+    // 如果当前有消息，保存当前会话（只保存有消息的会话）
+    if (messages.length > 0 && sessionId) {
+      await saveSessionMessages(sessionId, messages);
+    }
+
+    // 创建新会话
+    const newSessionId = generateSessionId();
     setMessages([]);
-    setSessionId(null);
+    setSessionId(newSessionId);
     setError(null);
-    setSuggestedQuestions(getRandomQuestions()); // 刷新引导问题
-    await AsyncStorage.multiRemove(['@ai_session_id', '@ai_messages']);
+    setSuggestedQuestions(getRandomQuestions());
+    await setCurrentSessionId(newSessionId);
+
+    // 刷新会话列表（只显示有消息的会话）
+    const updatedSessions = await loadAllSessions();
+    setSessions(updatedSessions.filter(s => s.messageCount > 0));
+  };
+
+  // 切换到指定会话
+  const handleSelectSession = async (targetSessionId: string) => {
+    // 中断进行中的请求
+    abortControllerRef.current?.abort();
+    abortControllerRef.current = null;
+    setIsLoading(false);
+
+    // 保存当前会话（只保存有消息的会话）
+    if (messages.length > 0 && sessionId) {
+      await saveSessionMessages(sessionId, messages);
+    }
+
+    // 加载目标会话
+    const targetMessages = await loadSessionMessages(targetSessionId);
+    setMessages(targetMessages);
+    setSessionId(targetSessionId);
+    setError(null);
+    await setCurrentSessionId(targetSessionId);
+
+    // 刷新会话列表（只显示有消息的会话）
+    const updatedSessions = await loadAllSessions();
+    setSessions(updatedSessions.filter(s => s.messageCount > 0));
+  };
+
+  // 删除指定会话
+  const handleDeleteSession = async (targetSessionId: string) => {
+    await deleteSessionById(targetSessionId);
+
+    // 如果删除的是当前会话，切换到最新会话或创建新会话
+    if (targetSessionId === sessionId) {
+      const updatedSessions = await loadAllSessions();
+      const validSessions = updatedSessions.filter(s => s.messageCount > 0);
+      setSessions(validSessions);
+
+      if (validSessions.length > 0) {
+        const latestSession = validSessions[0];
+        const latestMessages = await loadSessionMessages(latestSession.sessionId);
+        setMessages(latestMessages);
+        setSessionId(latestSession.sessionId);
+        await setCurrentSessionId(latestSession.sessionId);
+      } else {
+        // 没有会话了，创建新会话
+        const newSessionId = generateSessionId();
+        setMessages([]);
+        setSessionId(newSessionId);
+        await setCurrentSessionId(newSessionId);
+      }
+    } else {
+      // 只刷新会话列表（只显示有消息的会话）
+      const updatedSessions = await loadAllSessions();
+      setSessions(updatedSessions.filter(s => s.messageCount > 0));
+    }
+  };
+
+  // 清空所有会话
+  const handleClearAll = async () => {
+    await clearAllSessions();
+
+    // 创建新会话
+    const newSessionId = generateSessionId();
+    setMessages([]);
+    setSessionId(newSessionId);
+    setSessions([]);
+    setError(null);
+    setSuggestedQuestions(getRandomQuestions());
+    await setCurrentSessionId(newSessionId);
   };
 
   // 点击引导问题
@@ -371,15 +485,36 @@ export const AIChatScreen: React.FC<Props> = ({ navigation, route }) => {
     },
   }), []);
 
+  // 获取来源类型标签文本
+  const getSourceTypeLabel = (sourceType: string) => {
+    const labels: Record<string, string> = {
+      web_search: t('ai.sourceType.web_search'),
+      knowledge_base: t('ai.sourceType.knowledge_base'),
+      general: t('ai.sourceType.general'),
+    };
+    return labels[sourceType] || sourceType;
+  };
+
+  // 打开来源链接
+  const openSourceUrl = (url: string) => {
+    Linking.openURL(url).catch((err) => {
+      console.error('无法打开链接:', err);
+    });
+  };
+
   // 渲染消息项
   const renderMessage = ({ item, index }: { item: ChatMessage; index: number }) => {
     const isUser = item.role === 'user';
-    const isLastMessage = index === messages.length - 1;
-    const isCurrentlyStreaming = streamingMessageIndex === index && isStreaming;
+    const isTyping = typingMessageIndex === index;
 
-    // 显示流式内容或完整内容
-    const displayContent = item.content || '';
-    const showCursor = isCurrentlyStreaming;
+    // 显示打字效果或完整内容
+    const displayContent = isTyping && typingText ? typingText : item.content;
+    const showCursor = isTyping && displayContent.length < item.content.length;
+
+    // 获取元数据
+    const metadata = item.metadata;
+    const hasMetadata = !isUser && metadata && (metadata.sourceType || metadata.ragScore !== undefined);
+    const webSources = metadata?.webSources || [];
 
     return (
       <View
@@ -388,28 +523,83 @@ export const AIChatScreen: React.FC<Props> = ({ navigation, route }) => {
           isUser ? styles.userMessageContainer : styles.aiMessageContainer,
         ]}
       >
-        <View
-          style={[
-            styles.messageBubble,
-            isUser ? styles.userBubble : styles.aiBubble,
-          ]}
+        <TouchableOpacity
+          onPress={isTyping ? skipTyping : undefined}
+          activeOpacity={isTyping ? 0.7 : 1}
         >
-          {isUser ? (
-            // 用户消息：纯文本
-            <Text style={[styles.messageText, styles.userText]}>
-              {displayContent}
-            </Text>
-          ) : (
-            // AI消息：Markdown渲染
-            <View style={styles.markdownContainer}>
-              <Markdown style={aiMarkdownStyles}>
-                {displayContent + (showCursor ? ' ▊' : '')}
-              </Markdown>
+          <View
+            style={[
+              styles.messageBubble,
+              isUser ? styles.userBubble : styles.aiBubble,
+            ]}
+          >
+            {isUser ? (
+              <Text style={[styles.messageText, styles.userText]}>
+                {displayContent}
+              </Text>
+            ) : (
+              <View style={styles.markdownContainer}>
+                <Markdown style={aiMarkdownStyles}>
+                  {displayContent}
+                </Markdown>
+                {showCursor && <Text style={styles.cursor}>▊</Text>}
+              </View>
+            )}
+          </View>
+        </TouchableOpacity>
+
+        {/* AI消息元数据标签 */}
+        {hasMetadata && !isTyping && (
+          <View style={styles.metadataContainer}>
+            {/* 来源类型和相关性 */}
+            <View style={styles.metadataRow}>
+              {metadata.sourceType && (
+                <View style={styles.metadataTag}>
+                  <Ionicons name="globe-outline" size={14} color="#007AFF" />
+                  <Text style={styles.metadataText}>
+                    {getSourceTypeLabel(metadata.sourceType)}
+                  </Text>
+                </View>
+              )}
+              {metadata.ragScore !== undefined && metadata.ragScore > 0 && (
+                <View style={styles.metadataTag}>
+                  <Text style={styles.metadataText}>
+                    {t('ai.relevance')}: {Math.round(metadata.ragScore * 100)}%
+                  </Text>
+                </View>
+              )}
             </View>
-          )}
-        </View>
+
+            {/* 来源链接 */}
+            {webSources.length > 0 && (
+              <View style={styles.sourcesContainer}>
+                <Ionicons name="link-outline" size={14} color="#8e8e93" />
+                <Text style={styles.sourcesLabel}>{t('ai.sources')}:</Text>
+                {webSources.slice(0, 3).map((source, idx) => (
+                  <TouchableOpacity
+                    key={idx}
+                    onPress={() => openSourceUrl(source.url)}
+                    style={styles.sourceLink}
+                  >
+                    <Text style={styles.sourceLinkText} numberOfLines={1}>
+                      {source.siteName || source.title}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+                {webSources.length > 3 && (
+                  <Text style={styles.moreSourcesText}>+{webSources.length - 3}</Text>
+                )}
+              </View>
+            )}
+          </View>
+        )}
       </View>
     );
+  };
+
+  // 刷新引导问题
+  const refreshSuggestedQuestions = () => {
+    setSuggestedQuestions(getRandomQuestions());
   };
 
   // 渲染空状态
@@ -439,6 +629,16 @@ export const AIChatScreen: React.FC<Props> = ({ navigation, route }) => {
           </TouchableOpacity>
         ))}
       </View>
+
+      {/* 换一批按钮 */}
+      <TouchableOpacity
+        style={styles.refreshButton}
+        onPress={refreshSuggestedQuestions}
+        activeOpacity={0.7}
+      >
+        <Ionicons name="refresh-outline" size={18} color="#8e8e93" />
+        <Text style={styles.refreshButtonText}>{t('ai.refreshQuestions')}</Text>
+      </TouchableOpacity>
     </View>
   );
 
@@ -459,12 +659,25 @@ export const AIChatScreen: React.FC<Props> = ({ navigation, route }) => {
 
         <Text style={styles.headerTitle}>{t('ai.title')}</Text>
 
-        <TouchableOpacity
-          style={styles.headerButton}
-          onPress={startNewChat}
-        >
-          <Ionicons name="create-outline" size={24} color="#1d1d1f" />
-        </TouchableOpacity>
+        <View style={styles.headerRight}>
+          {/* 历史记录按钮 - 始终显示 */}
+          <TouchableOpacity
+            style={styles.headerButton}
+            onPress={() => setHistoryVisible(true)}
+          >
+            <Ionicons name="time-outline" size={24} color="#1d1d1f" />
+          </TouchableOpacity>
+
+          {/* 新建对话按钮 - 只在有消息时显示 */}
+          {messages.length > 0 && (
+            <TouchableOpacity
+              style={styles.headerButton}
+              onPress={startNewChat}
+            >
+              <Ionicons name="create-outline" size={24} color="#1d1d1f" />
+            </TouchableOpacity>
+          )}
+        </View>
       </View>
 
       {/* 消息列表 */}
@@ -478,7 +691,26 @@ export const AIChatScreen: React.FC<Props> = ({ navigation, route }) => {
           messages.length === 0 && styles.messageListEmpty,
         ]}
         ListEmptyComponent={renderEmptyState}
-        onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
+        scrollEventThrottle={100}
+        onScroll={(event: NativeSyntheticEvent<NativeScrollEvent>) => {
+          // 检测是否在底部附近（50像素内算作在底部）
+          const { contentSize, layoutMeasurement, contentOffset } = event.nativeEvent;
+          const isBottom = contentOffset.y >= contentSize.height - layoutMeasurement.height - 50;
+          isAtBottomRef.current = isBottom;
+
+          // 保存滚动位置以便调试
+          scrollPositionRef.current = {
+            contentHeight: contentSize.height,
+            containerHeight: layoutMeasurement.height,
+            offset: contentOffset.y,
+          };
+        }}
+        onContentSizeChange={() => {
+          // 只在用户在底部或未开始滚动时自动滚动到底部
+          if (isAtBottomRef.current) {
+            flatListRef.current?.scrollToEnd({ animated: false });
+          }
+        }}
       />
 
       {/* 加载指示器 - Grok风格 */}
@@ -511,18 +743,15 @@ export const AIChatScreen: React.FC<Props> = ({ navigation, route }) => {
               maxLength={500}
               editable={!isLoading}
               onSubmitEditing={() => sendMessage()}
-              blurOnSubmit={false}
             />
-            {/* 流式传输中显示终止按钮，否则显示发送按钮 */}
-            {isStreaming ? (
+            {isLoading ? (
               <TouchableOpacity
-                style={styles.stopButton}
-                onPress={stopStreaming}
-                activeOpacity={0.7}
+                style={styles.sendButton}
+                onPress={handleStopThinking}
               >
                 <LinearGradient
-                  colors={['#FF6B6B', '#EE5A5A']}
-                  style={styles.stopButtonGradient}
+                  colors={['#FF6B35', '#FF8F65']}
+                  style={styles.sendButtonGradient}
                 >
                   <Ionicons name="stop" size={20} color="#ffffff" />
                 </LinearGradient>
@@ -531,14 +760,14 @@ export const AIChatScreen: React.FC<Props> = ({ navigation, route }) => {
               <TouchableOpacity
                 style={[
                   styles.sendButton,
-                  (!inputText.trim() || isLoading) && styles.sendButtonDisabled,
+                  !inputText.trim() && styles.sendButtonDisabled,
                 ]}
                 onPress={() => sendMessage()}
-                disabled={!inputText.trim() || isLoading}
+                disabled={!inputText.trim()}
               >
                 <LinearGradient
                   colors={
-                    inputText.trim() && !isLoading
+                    inputText.trim()
                       ? ['rgba(249, 168, 137, 1)', 'rgba(255, 180, 162, 1)']
                       : ['rgba(200, 200, 200, 0.5)', 'rgba(220, 220, 220, 0.5)']
                   }
@@ -547,7 +776,7 @@ export const AIChatScreen: React.FC<Props> = ({ navigation, route }) => {
                   <Ionicons
                     name="send"
                     size={20}
-                    color={inputText.trim() && !isLoading ? '#ffffff' : '#8e8e93'}
+                    color={inputText.trim() ? '#ffffff' : '#8e8e93'}
                   />
                 </LinearGradient>
               </TouchableOpacity>
@@ -555,6 +784,17 @@ export const AIChatScreen: React.FC<Props> = ({ navigation, route }) => {
           </LinearGradient>
         </BlurView>
       </View>
+
+      {/* 历史记录 BottomSheet */}
+      <ChatHistoryBottomSheet
+        visible={historyVisible}
+        onClose={() => setHistoryVisible(false)}
+        sessions={sessions}
+        currentSessionId={sessionId}
+        onSelectSession={handleSelectSession}
+        onDeleteSession={handleDeleteSession}
+        onClearAll={handleClearAll}
+      />
     </KeyboardAvoidingView>
   );
 };
@@ -578,6 +818,10 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     justifyContent: 'center',
+    alignItems: 'center',
+  },
+  headerRight: {
+    flexDirection: 'row',
     alignItems: 'center',
   },
   headerTitle: {
@@ -641,6 +885,21 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     justifyContent: 'center',
     gap: 12,
+    marginBottom: 24,
+  },
+  refreshButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 20,
+    backgroundColor: '#f5f5f5',
+    gap: 6,
+  },
+  refreshButtonText: {
+    fontSize: 14,
+    color: '#8e8e93',
+    fontWeight: '500',
   },
   suggestionCard: {
     width: (SCREEN_WIDTH - 60) / 2,
@@ -737,24 +996,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  // 终止按钮
-  stopButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    overflow: 'hidden',
-    shadowColor: '#FF6B6B',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 4,
-  },
-  stopButtonGradient: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  // 流式光标
+  // 打字机光标
   cursor: {
     color: '#F9A889',
     fontWeight: 'bold',
@@ -762,7 +1004,55 @@ const styles = StyleSheet.create({
   },
   // Markdown容器
   markdownContainer: {
-    flex: 1,
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'flex-end',
+  },
+  // 元数据容器
+  metadataContainer: {
+    marginTop: 6,
+    paddingLeft: 4,
+  },
+  metadataRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    gap: 12,
+  },
+  metadataTag: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  metadataText: {
+    fontSize: 12,
+    color: '#8e8e93',
+  },
+  // 来源链接
+  sourcesContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    marginTop: 4,
+    gap: 4,
+  },
+  sourcesLabel: {
+    fontSize: 12,
+    color: '#8e8e93',
+    marginLeft: 4,
+  },
+  sourceLink: {
+    maxWidth: 100,
+  },
+  sourceLinkText: {
+    fontSize: 12,
+    color: '#007AFF',
+    textDecorationLine: 'underline',
+  },
+  moreSourcesText: {
+    fontSize: 12,
+    color: '#8e8e93',
+    marginLeft: 4,
   },
 });
 

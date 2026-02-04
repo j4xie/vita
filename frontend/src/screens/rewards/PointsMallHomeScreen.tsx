@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -6,285 +6,252 @@ import {
   StyleSheet,
   TouchableOpacity,
   RefreshControl,
-  Platform,
   StatusBar,
   Dimensions,
-  Animated,
+  ImageBackground,
   Alert,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useTranslation } from 'react-i18next';
-import { MembershipTier } from '../../types/pointsMall';
-import { BenefitsCarousel } from '../../components/rewards/BenefitsCarousel';
 import { useUser } from '../../context/UserContext';
-import { calculateTier, getNextTierPoints, generateMembershipInfo } from '../../utils/membershipTierCalculator';
-import { MembershipCard } from '../../components/rewards/MembershipCard';
+import { calculateTier, getNextTierPoints } from '../../utils/membershipTierCalculator';
 import { theme } from '../../theme';
 
-const SCREEN_WIDTH = Dimensions.get('window').width;
+const { width: screenWidth } = Dimensions.get('window');
 
-/**
- * PointsMallHomeScreen - Dark Luxury Edition
- * 
- * Design Updates:
- * - Sticky Header with Fade Animation
- * - Fixed z-index layering (Header > Card > Background)
- */
+// Mock Data for Benefits
+const BENEFITS = [
+  { id: '1', title: 'Merchant\nCoupons', icon: 'gift-outline' },
+  { id: '2', title: 'Platform\nCoupons', icon: 'ticket-outline' },
+  { id: '3', title: 'Points\nMall', icon: 'storefront-outline' },
+  { id: '4', title: 'Group\nBuy', icon: 'people-outline' },
+];
+
+// Mock Data for Services (Bottom Section)
+const SERVICES = [
+  { id: '1', title: 'Points\nBalance', subtitle: '0 Points', icon: 'wallet-outline' },
+  { id: '2', title: 'My\nCoupons', subtitle: 'View Active', icon: 'pricetag-outline' },
+  { id: '3', title: 'Refer\nFriends', subtitle: 'Earn', icon: 'share-social-outline' },
+];
+
+// Login Prompt Perks Preview Data
+const PERKS_PREVIEW = [
+  { id: '1', titleKey: 'rewards.loginPrompt.perks.points', icon: 'star-outline' },
+  { id: '2', titleKey: 'rewards.loginPrompt.perks.coupons', icon: 'ticket-outline' },
+  { id: '3', titleKey: 'rewards.loginPrompt.perks.rewards', icon: 'gift-outline' },
+  { id: '4', titleKey: 'rewards.loginPrompt.perks.discounts', icon: 'pricetag-outline' },
+];
+
+// Login Prompt Section Component
+interface LoginPromptSectionProps {
+  onLogin: () => void;
+  t: (key: string) => string;
+}
+
+const LoginPromptSection: React.FC<LoginPromptSectionProps> = React.memo(({ onLogin, t }) => {
+  return (
+    <View style={loginPromptStyles.container}>
+      {/* Hero Section */}
+      <View style={loginPromptStyles.heroSection}>
+        <View style={loginPromptStyles.iconCircle}>
+          <Ionicons name="gift-outline" size={48} color="#D4AF37" />
+        </View>
+
+        <Text style={loginPromptStyles.title}>
+          {t('rewards.loginPrompt.title')}
+        </Text>
+
+        <Text style={loginPromptStyles.description}>
+          {t('rewards.loginPrompt.description')}
+        </Text>
+
+        {/* Login Button */}
+        <TouchableOpacity onPress={onLogin} activeOpacity={0.8}>
+          <LinearGradient
+            colors={['#A67C52', '#EEDC82', '#A67C52']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={loginPromptStyles.loginButton}
+          >
+            <Text style={loginPromptStyles.loginButtonText}>
+              {t('rewards.loginPrompt.button')}
+            </Text>
+            <Ionicons name="arrow-forward" size={18} color="#FFF" />
+          </LinearGradient>
+        </TouchableOpacity>
+      </View>
+
+      {/* Perks Preview Section */}
+      <View style={loginPromptStyles.perksSection}>
+        <View style={loginPromptStyles.dividerContainer}>
+          <View style={loginPromptStyles.dividerLine} />
+          <Text style={loginPromptStyles.dividerText}>
+            {t('rewards.loginPrompt.perksPreview')}
+          </Text>
+          <View style={loginPromptStyles.dividerLine} />
+        </View>
+
+        <View style={loginPromptStyles.perksGrid}>
+          {PERKS_PREVIEW.map((perk) => (
+            <View key={perk.id} style={loginPromptStyles.perkItem}>
+              <View style={loginPromptStyles.perkIconCircle}>
+                <Ionicons name={perk.icon as any} size={24} color="#D4AF37" />
+              </View>
+              <Text style={loginPromptStyles.perkText}>{t(perk.titleKey)}</Text>
+            </View>
+          ))}
+        </View>
+      </View>
+    </View>
+  );
+});
+
 export const PointsMallHomeScreen: React.FC = () => {
   const { t } = useTranslation();
   const navigation = useNavigation<any>();
   const insets = useSafeAreaInsets();
   const { user } = useUser();
-
-  // State
   const [refreshing, setRefreshing] = useState(false);
 
-  // Animation
-  const scrollY = useRef(new Animated.Value(0)).current;
-
-  // User Data
   const userPoints = user?.points || 0;
-  const currentTier = calculateTier(userPoints);
-  const membershipInfo = generateMembershipInfo(user || {}, userPoints);
+  // Simple Tier Logic for Display
+  const currentTier = 'BRONZE MEMBER'; // Default
+  const nextTierPoints = 100;
+  const progressPercent = Math.min((userPoints / nextTierPoints) * 100, 100);
 
-  // Benefits Data
-  const benefits = [
-    { id: '1', icon: 'gift-outline', title: t('rewards.benefits.merchant_coupon') },
-    { id: '2', icon: 'ticket-outline', title: t('rewards.benefits.platform_coupon') },
-    { id: '3', icon: 'storefront-outline', title: t('rewards.benefits.points_mall') },
-    { id: '4', icon: 'people-outline', title: t('rewards.benefits.group_buy') },
-    { id: '5', icon: 'restaurant-outline', title: t('rewards.benefits.free_meal'), redCardOnly: true },
-    { id: '6', icon: 'sparkles', title: t('rewards.benefits.exclusive_coupon'), redCardOnly: true },
-    { id: '7', icon: 'trending-up', title: t('rewards.benefits.points_boost'), redCardOnly: true },
-  ];
-
-  const handleRefresh = useCallback(() => {
+  const onRefresh = useCallback(() => {
     setRefreshing(true);
     setTimeout(() => setRefreshing(false), 1000);
   }, []);
 
-  // Header Animation Interpolation
-  const headerOpacity = scrollY.interpolate({
-    inputRange: [0, 100],
-    outputRange: [0, 1],
-    extrapolate: 'clamp',
-  });
-
-  // Handlers for missing features
-  const handleViewAllBenefits = () => {
-    Alert.alert(
-      t('common.coming_soon', 'Coming Soon'),
-      t('rewards.benefits.more_coming', 'More member benefits are on the way!')
-    );
-  };
-
-  const handleMyCoupons = () => {
-    // API exists (couponAPI.ts) but screen is missing
-    Alert.alert(
-      t('common.coming_soon', 'Coming Soon'),
-      t('rewards.menu.coupons_coming', 'My Coupons screen is under development.')
-    );
-  };
-
-  const handleReferFriends = () => {
-    Alert.alert(
-      t('common.coming_soon', 'Coming Soon'),
-      t('rewards.menu.referral_coming', 'Referral feature is under development.')
-    );
+  const handleBenefitPress = (id: string) => {
+    if (id === '3') { // Points Mall
+      navigation.navigate('PointsMallList');
+    } else {
+      Alert.alert('Coming Soon', 'This feature is under development.');
+    }
   };
 
   return (
     <View style={styles.container}>
       <StatusBar barStyle="light-content" />
 
-      {/* 1. Fixed Background Decoration (Lowest Layer) */}
-      <View style={styles.darkHeaderBg} />
-
-      {/* 2. Sticky Header (Highest Layer) */}
-      <Animated.View
-        style={[
-          styles.headerContainer,
-          {
-            paddingTop: insets.top,
-            backgroundColor: headerOpacity.interpolate({
-              inputRange: [0, 1],
-              outputRange: ['rgba(18, 18, 18, 0)', 'rgba(18, 18, 18, 1)']
-            })
-          }
-        ]}
-      >
-        <View style={styles.headerContent}>
-          <View style={styles.headerLeft}>
-            <TouchableOpacity
-              style={styles.backButton}
-              onPress={() => {
-                const parent = navigation.getParent();
-                if (parent) parent.navigate('Explore');
-              }}
-              activeOpacity={0.7}
-            >
-              <Ionicons name="chevron-back" size={24} color="#FFFFFF" />
-            </TouchableOpacity>
-            <Text style={styles.headerTitle}>{t('rewards.title', 'Membership')}</Text>
-          </View>
-
+      {/* Dark Header Background */}
+      <View style={styles.darkHeaderBg}>
+        <View style={[styles.header, { marginTop: insets.top }]}>
+          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.iconBtn}>
+            <Ionicons name="chevron-back" size={24} color="#FFF" />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Membership</Text>
+          <TouchableOpacity style={styles.iconBtn}>
+            <Ionicons name="notifications-outline" size={24} color="#FFF" />
+          </TouchableOpacity>
         </View>
-      </Animated.View>
+      </View>
 
-      {/* 3. Scrollable Content (Middle Layer) */}
-      <Animated.ScrollView
+      <ScrollView
         style={styles.scrollView}
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={{
-          paddingTop: 100, // Push content down to reveal background
-          paddingBottom: insets.bottom + 40
-        }}
-        onScroll={Animated.event(
-          [{ nativeEvent: { contentOffset: { y: scrollY } } }],
-          { useNativeDriver: false }
-        )}
-        scrollEventThrottle={16}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor="#D4AF37" />
-        }
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#D4AF37" />}
+        contentContainerStyle={{ paddingBottom: 100 }}
       >
-        {/* Card Container */}
+        {/* Show Login Prompt or Membership Content based on user state */}
+        {!user ? (
+          <LoginPromptSection onLogin={() => navigation.navigate('Login')} t={t} />
+        ) : (
+          <>
+        {/* Membership Card */}
         <View style={styles.cardContainer}>
-          <MembershipCard membershipInfo={membershipInfo} />
+          <LinearGradient
+            colors={['#A67C52', '#EEDC82', '#A67C52']} // Gold Gradient
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.membershipCard}
+          >
+            {/* Pattern Overlay (Optional) */}
+            <View style={styles.cardPattern} />
+
+            <View style={styles.cardTop}>
+              <Text style={styles.cardBrand}>POMELOX  ::::::::::</Text>
+            </View>
+
+            <View style={styles.cardMiddle}>
+              <Text style={styles.tierText}>{currentTier}</Text>
+            </View>
+
+            <View style={styles.cardBottom}>
+              <View>
+                <Text style={styles.pointsValue}>{userPoints}</Text>
+                <Text style={styles.pointsLabel}>POINTS</Text>
+              </View>
+              <View style={styles.progressSection}>
+                <View style={styles.progressBarBg}>
+                  <View style={[styles.progressBarFill, { width: `${progressPercent}%` }]} />
+                </View>
+                <Text style={styles.progressText}>{Math.round(progressPercent)}% to Next Tier</Text>
+              </View>
+            </View>
+          </LinearGradient>
         </View>
 
         {/* Member Benefits */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>{t('rewards.benefits.title')}</Text>
-            <TouchableOpacity onPress={handleViewAllBenefits}>
-              <Text style={styles.seeAllText}>{t('common.see_all', 'View All')}</Text>
+            <Text style={styles.sectionTitle}>MEMBER BENEFITS</Text>
+            <TouchableOpacity>
+              <Text style={styles.seeAllText}>VIEW ALL</Text>
             </TouchableOpacity>
           </View>
-          <View style={styles.benefitsContainer}>
-            <BenefitsCarousel benefits={benefits} />
+
+          <View style={styles.benefitsGrid}>
+            {BENEFITS.map((item) => (
+              <TouchableOpacity key={item.id} style={styles.benefitItem} onPress={() => handleBenefitPress(item.id)}>
+                <View style={styles.benefitIconContainer}>
+                  <Ionicons name={item.icon as any} size={24} color="#D4AF37" />
+                </View>
+                <Text style={styles.benefitText}>{item.title}</Text>
+              </TouchableOpacity>
+            ))}
           </View>
         </View>
 
-        {/* Services Grid */}
+        {/* Privileges & Services */}
         <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>{t('rewards.menu.services', 'Privileges & Services')}</Text>
-          </View>
+          <Text style={styles.sectionTitle}>PRIVILEGES & SERVICES</Text>
 
-          <View style={styles.menuGrid}>
-            {/* Points Mall - Featured */}
-            <TouchableOpacity
-              style={[styles.gridItem, styles.gridItemFeatured]}
-              onPress={() => navigation.navigate('PointsMallList')}
-              activeOpacity={0.8}
-            >
-              <View style={styles.gridContent}>
-                <View style={[styles.iconContainer, { backgroundColor: '#FFF9E5' }]}>
-                  <Ionicons name="storefront" size={22} color="#D4AF37" />
-                </View>
-                <View style={styles.gridTextContainer}>
-                  <Text style={styles.gridTitle}>{t('rewards.menu.points_mall')}</Text>
-                  <Text style={styles.gridSubtitle}>{t('rewards.menu.redeem_rewards', 'Exclusive Rewards')}</Text>
-                </View>
-              </View>
-              <Ionicons name="chevron-forward" size={16} color="#C7C7CC" />
-            </TouchableOpacity>
+          {/* Big Banner Button */}
+          <TouchableOpacity style={styles.mallBanner} onPress={() => navigation.navigate('PointsMallList')}>
+            <View style={styles.mallIconCircle}>
+              <Ionicons name="storefront-outline" size={24} color="#000" />
+            </View>
+            <View style={styles.mallTextContent}>
+              <Text style={styles.mallTitle}>Points Mall</Text>
+              <Text style={styles.mallSubtitle}>Exclusive Rewards</Text>
+            </View>
+            <View style={styles.arrowCircle}>
+              <Ionicons name="arrow-forward" size={16} color="#000" style={{ transform: [{ rotate: '-45deg' }] }} />
+            </View>
+          </TouchableOpacity>
 
-            {/* Points Balance */}
-            <TouchableOpacity style={styles.gridItem} activeOpacity={0.8}>
-              <View style={styles.gridContent}>
-                <View style={[styles.iconContainer, { backgroundColor: '#F8F8F8' }]}>
-                  <Ionicons name="wallet-outline" size={22} color="#1A1A1A" />
+          {/* Services Row */}
+          <View style={styles.servicesRow}>
+            {SERVICES.map((item) => (
+              <TouchableOpacity key={item.id} style={styles.serviceCard}>
+                <View style={styles.serviceIconCircle}>
+                  <Ionicons name={item.icon as any} size={24} color="#8E8E93" />
                 </View>
-                <View style={styles.gridTextContainer}>
-                  <Text style={styles.gridTitle}>{t('rewards.menu.points_balance')}</Text>
-                  <Text style={styles.gridSubtitle}>{userPoints} {t('rewards.menu.points')}</Text>
-                </View>
-              </View>
-            </TouchableOpacity>
-
-            {/* My Coupons */}
-            <TouchableOpacity
-              style={styles.gridItem}
-              activeOpacity={0.8}
-              onPress={handleMyCoupons}
-            >
-              <View style={styles.gridContent}>
-                <View style={[styles.iconContainer, { backgroundColor: '#F8F8F8' }]}>
-                  <Ionicons name="ticket-outline" size={22} color="#1A1A1A" />
-                </View>
-                <View style={styles.gridTextContainer}>
-                  <Text style={styles.gridTitle}>{t('rewards.menu.my_coupons')}</Text>
-                  <Text style={styles.gridSubtitle}>{t('rewards.menu.view_coupons', 'View Active')}</Text>
-                </View>
-              </View>
-            </TouchableOpacity>
-
-            {/* Refer Friends */}
-            <TouchableOpacity
-              style={styles.gridItem}
-              activeOpacity={0.8}
-              onPress={handleReferFriends}
-            >
-              <View style={styles.gridContent}>
-                <View style={[styles.iconContainer, { backgroundColor: '#F8F8F8' }]}>
-                  <Ionicons name="share-social-outline" size={22} color="#1A1A1A" />
-                </View>
-                <View style={styles.gridTextContainer}>
-                  <Text style={styles.gridTitle}>{t('rewards.menu.refer_friends')}</Text>
-                  <Text style={styles.gridSubtitle}>{t('rewards.menu.earn_points')}</Text>
-                </View>
-              </View>
-            </TouchableOpacity>
+                <Text style={styles.serviceTitle}>{item.title}</Text>
+                {item.subtitle && <Text style={styles.serviceSubtitle}>{item.subtitle}</Text>}
+              </TouchableOpacity>
+            ))}
           </View>
         </View>
-
-        {/* Exclusive Tasks - Diamond Only */}
-        {currentTier === MembershipTier.DIAMOND && (
-          <View style={styles.section}>
-            <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>{t('rewards.menu.exclusive_tasks', 'Diamond Privileges')}</Text>
-              <View style={styles.diamondBadge}>
-                <Ionicons name="diamond" size={10} color="#FFFFFF" />
-                <Text style={styles.diamondBadgeText}>VIP</Text>
-              </View>
-            </View>
-
-            <View style={styles.listContainer}>
-              <TouchableOpacity style={styles.listItem} activeOpacity={0.7}>
-                <View style={styles.listItemLeft}>
-                  <View style={[styles.listIcon, { backgroundColor: '#1A1A1A' }]}>
-                    <Ionicons name="create-outline" size={18} color="#D4AF37" />
-                  </View>
-                  <View>
-                    <Text style={styles.listItemTitle}>{t('rewards.menu.review_tasks')}</Text>
-                    <Text style={styles.listItemSubtitle}>{t('rewards.menu.red_card_exclusive')}</Text>
-                  </View>
-                </View>
-                <Ionicons name="chevron-forward" size={20} color="#C7C7CC" />
-              </TouchableOpacity>
-
-              <View style={styles.separator} />
-
-              <TouchableOpacity style={styles.listItem} activeOpacity={0.7}>
-                <View style={styles.listItemLeft}>
-                  <View style={[styles.listIcon, { backgroundColor: '#1A1A1A' }]}>
-                    <Ionicons name="restaurant-outline" size={18} color="#D4AF37" />
-                  </View>
-                  <View>
-                    <Text style={styles.listItemTitle}>{t('rewards.menu.free_meal_signup')}</Text>
-                    <Text style={styles.listItemSubtitle}>{t('rewards.menu.red_card_exclusive')}</Text>
-                  </View>
-                </View>
-                <Ionicons name="chevron-forward" size={20} color="#C7C7CC" />
-              </TouchableOpacity>
-            </View>
-          </View>
+          </>
         )}
-      </Animated.ScrollView>
+
+      </ScrollView>
     </View>
   );
 };
@@ -292,241 +259,352 @@ export const PointsMallHomeScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FDFCF8',
+    backgroundColor: '#FFF5F2', // Pinkish background
   },
-
-  // 1. Background Decoration
   darkHeaderBg: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    height: 280,
-    backgroundColor: '#121212',
-    borderBottomLeftRadius: 32,
-    borderBottomRightRadius: 32,
-    zIndex: 0, // Behind everything
+    backgroundColor: '#111', // Dark background for the top part
+    paddingBottom: 60, // Extend behind the card
+    borderBottomLeftRadius: 30, // Rounded bottom
+    borderBottomRightRadius: 30,
   },
-
-  // 2. Sticky Header
-  headerContainer: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    zIndex: 100, // On top of everything
-  },
-
-  headerContent: {
+  header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 20,
-    paddingBottom: 16,
+    paddingVertical: 10,
   },
-
-  headerLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-
-  backButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255,255,255,0.1)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-
   headerTitle: {
+    color: '#FFF',
     fontSize: 20,
-    fontWeight: '600',
-    color: '#FFFFFF',
-    letterSpacing: 0.5,
+    fontWeight: 'bold',
   },
-
-  iconButton: {
+  iconBtn: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: 'rgba(255,255,255,0.1)',
+    backgroundColor: '#222',
     alignItems: 'center',
     justifyContent: 'center',
   },
 
-  // 3. Scroll Content
   scrollView: {
-    flex: 1,
-    zIndex: 1, // Above background, below header
+    marginTop: -40, // Pull up over the dark header
   },
-
   cardContainer: {
+    paddingHorizontal: 20,
     marginBottom: 24,
   },
-
-  // Sections
-  section: {
-    marginBottom: 32,
-    paddingHorizontal: 20,
+  membershipCard: {
+    borderRadius: 20,
+    padding: 24,
+    height: 200, // Fixed height
+    justifyContent: 'space-between',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 5,
+  },
+  cardPattern: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    // Add customized pattern logic here if needed
+  },
+  cardTop: {},
+  cardBrand: {
+    color: 'rgba(255,255,255,0.8)',
+    fontSize: 12,
+    letterSpacing: 2,
+    fontWeight: '600',
+  },
+  cardMiddle: {
+    flex: 1,
+    justifyContent: 'center',
+  },
+  tierText: {
+    fontSize: 28, // Large serif font
+    fontWeight: '400',
+    color: '#FFF',
+    letterSpacing: 1,
+    fontFamily: 'Georgia', // Using system serif font as fallback
+  },
+  cardBottom: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    justifyContent: 'space-between',
+  },
+  pointsValue: {
+    fontSize: 32,
+    fontWeight: '400',
+    color: '#FFF',
+  },
+  pointsLabel: {
+    fontSize: 10,
+    color: 'rgba(255,255,255,0.8)',
+    letterSpacing: 2,
+    marginTop: 4,
+  },
+  progressSection: {
+    width: 120,
+    alignItems: 'flex-end',
+  },
+  progressBarBg: {
+    width: '100%',
+    height: 4,
+    backgroundColor: 'rgba(255,255,255,0.3)',
+    borderRadius: 2,
+    marginBottom: 6,
+  },
+  progressBarFill: {
+    height: '100%',
+    backgroundColor: '#FFF',
+    borderRadius: 2,
+  },
+  progressText: {
+    color: '#FFF',
+    fontSize: 10,
+    fontWeight: '600',
   },
 
+  // Benefits
+  section: {
+    paddingHorizontal: 20,
+    marginBottom: 24,
+  },
   sectionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 16,
   },
-
   sectionTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#1A1A1A',
-    letterSpacing: 0.5,
-  },
-
-  seeAllText: {
-    fontSize: 13,
-    color: '#D4AF37', // Gold
-    fontWeight: '600',
-  },
-
-  // Benefits
-  benefitsContainer: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 20,
-    paddingVertical: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.03,
-    shadowRadius: 12,
-    elevation: 2,
-  },
-
-  // Grid Menu
-  menuGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 12,
-  },
-
-  gridItem: {
-    width: '48%', // 2 columns
-    backgroundColor: '#FFFFFF',
-    borderRadius: 20,
-    padding: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.03,
-    shadowRadius: 12,
-    elevation: 2,
-    minHeight: 80,
-  },
-
-  gridItemFeatured: {
-    width: '100%', // Full width for featured item
-    marginBottom: 4,
-    borderWidth: 1,
-    borderColor: 'rgba(212, 175, 55, 0.2)', // Subtle gold border
-  },
-
-  gridContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    flex: 1,
-  },
-
-  iconContainer: {
-    width: 44,
-    height: 44,
-    borderRadius: 14,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-
-  gridTextContainer: {
-    flex: 1,
-  },
-
-  gridTitle: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: '#1A1A1A',
-    marginBottom: 2,
-  },
-
-  gridSubtitle: {
-    fontSize: 11,
+    fontSize: 12,
+    fontWeight: 'bold',
     color: '#8E8E93',
-    fontWeight: '500',
+    letterSpacing: 1,
+    marginBottom: 12,
   },
-
-  // List Container for Exclusive Tasks
-  listContainer: {
-    backgroundColor: '#121212', // Dark luxury background for VIP section
-    borderRadius: 20,
-    overflow: 'hidden',
+  seeAllText: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: '#D4AF37',
+    letterSpacing: 1,
   },
-
-  listItem: {
+  benefitsGrid: {
     flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'space-between',
+    backgroundColor: '#FFF',
+    borderRadius: 20,
     padding: 20,
   },
-
-  listItemLeft: {
-    flexDirection: 'row',
+  benefitItem: {
     alignItems: 'center',
-    gap: 16,
+    width: 70,
+  },
+  benefitIconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: '#000', // Black circle
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 8,
+  },
+  benefitText: {
+    fontSize: 11,
+    color: '#1A1A1A',
+    textAlign: 'center',
+    fontWeight: '600',
+    lineHeight: 14,
   },
 
-  listIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+  // Privileges
+  mallBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFF',
+    borderRadius: 40, // Pill shape
+    padding: 12,
+    paddingRight: 20,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: '#D4AF37', // Gold border
+  },
+  mallIconCircle: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: '#FFF9E6', // Light gold
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 16,
+  },
+  mallTextContent: {
+    flex: 1,
+  },
+  mallTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#000',
+  },
+  mallSubtitle: {
+    fontSize: 12,
+    color: '#8E8E93',
+  },
+  arrowCircle: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#F5F5F5',
     alignItems: 'center',
     justifyContent: 'center',
   },
 
-  listItemTitle: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: '#FFFFFF', // White text on dark bg
+  servicesRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 12,
   },
-
-  listItemSubtitle: {
-    fontSize: 12,
-    color: 'rgba(255,255,255,0.6)',
-    marginTop: 2,
+  serviceCard: {
+    flex: 1,
+    backgroundColor: '#FFF',
+    borderRadius: 20,
+    padding: 16,
+    alignItems: 'center',
+    minHeight: 140,
+    justifyContent: 'center',
   },
-
-  separator: {
-    height: 1,
-    backgroundColor: 'rgba(255,255,255,0.1)',
-    marginLeft: 76,
+  serviceIconCircle: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: '#F5F5F5',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 12,
   },
+  serviceTitle: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#000',
+    textAlign: 'center',
+    marginBottom: 4,
+  },
+  serviceSubtitle: {
+    fontSize: 11,
+    color: '#8E8E93',
+    textAlign: 'center',
+  },
+});
 
-  diamondBadge: {
+// Login Prompt Styles
+const loginPromptStyles = StyleSheet.create({
+  container: {
+    paddingHorizontal: 20,
+    paddingTop: 10,
+  },
+  heroSection: {
+    backgroundColor: '#FFF',
+    borderRadius: 24,
+    padding: 32,
+    alignItems: 'center',
+    marginBottom: 24,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  iconCircle: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: 'rgba(212, 175, 55, 0.15)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 24,
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#1A1A1A',
+    textAlign: 'center',
+    marginBottom: 12,
+  },
+  description: {
+    fontSize: 14,
+    color: '#666',
+    textAlign: 'center',
+    lineHeight: 22,
+    marginBottom: 28,
+    paddingHorizontal: 16,
+  },
+  loginButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#1A1A1A',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 8,
-    gap: 4,
+    justifyContent: 'center',
+    paddingVertical: 14,
+    paddingHorizontal: 36,
+    borderRadius: 28,
+    gap: 8,
   },
-
-  diamondBadgeText: {
-    color: '#D4AF37', // Gold text
-    fontSize: 10,
-    fontWeight: '700',
+  loginButtonText: {
+    color: '#FFF',
+    fontSize: 16,
+    fontWeight: 'bold',
     letterSpacing: 0.5,
-  }
-
+  },
+  perksSection: {
+    backgroundColor: '#FFF',
+    borderRadius: 24,
+    padding: 24,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  dividerContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 24,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: '#E5E5E5',
+  },
+  dividerText: {
+    paddingHorizontal: 16,
+    fontSize: 12,
+    color: '#8E8E93',
+    fontWeight: '600',
+    letterSpacing: 0.5,
+  },
+  perksGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+  },
+  perkItem: {
+    width: '48%',
+    alignItems: 'center',
+    paddingVertical: 16,
+  },
+  perkIconCircle: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: '#000',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 12,
+  },
+  perkText: {
+    fontSize: 13,
+    color: '#1A1A1A',
+    fontWeight: '600',
+    textAlign: 'center',
+  },
 });

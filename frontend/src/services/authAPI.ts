@@ -156,10 +156,9 @@ export const getUserInfo = async (token?: string, userId?: number): Promise<APIR
       }
     }
 
-    // 构建URL，根据截图，需要userId参数
-    const url = targetUserId 
-      ? `${getBaseUrl()}/app/user/info?userId=${targetUserId}`
-      : `${getBaseUrl()}/app/user/info`;
+    // 🔧 修复：使用 /getInfo 接口获取完整用户信息（包含roles和role对象）
+    // /app/user/info 接口不返回用户数据，只返回 {code:200, msg:操作成功}
+    const url = `${getBaseUrl()}/getInfo`;
 
     const response = await fetch(url, {
       method: 'GET',
@@ -179,9 +178,16 @@ export const getUserInfo = async (token?: string, userId?: number): Promise<APIR
 
     const data = await response.json();
 
-    // 保存用户信息到本地
-    if (data.code === 200 && data.data) {
-      await AsyncStorage.setItem(STORAGE_KEYS.USER_INFO, JSON.stringify(data.data));
+    // 🔧 /getInfo 返回的数据结构是 { code, user, roles, permissions }
+    // 需要转换为标准的 { code, data } 格式以兼容现有代码
+    if (data.code === 200 && data.user) {
+      // 将 user 转换为 data 字段，保持兼容性
+      const normalizedData = {
+        ...data,
+        data: data.user,
+      };
+      await AsyncStorage.setItem(STORAGE_KEYS.USER_INFO, JSON.stringify(data.user));
+      return normalizedData;
     }
 
     return data;
@@ -390,6 +396,20 @@ export const getCurrentUserId = async (): Promise<number | null> => {
     return userIdStr ? parseInt(userIdStr, 10) : null;
   } catch (error) {
     console.error('获取用户ID失败:', error);
+    return null;
+  }
+};
+
+/**
+ * 获取当前用户的部门ID (deptId)
+ * @returns 部门ID
+ */
+export const getCurrentDeptId = async (): Promise<number | null> => {
+  try {
+    const userInfo = await getStoredUserInfo();
+    return userInfo?.deptId ?? null;
+  } catch (error) {
+    console.error('获取部门ID失败:', error);
     return null;
   }
 };

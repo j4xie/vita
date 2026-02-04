@@ -9,7 +9,7 @@ import { ScrollView } from 'react-native';
 import { UserPermissions } from './user';
 import { SimpleRoleInfo, UserRoleInfo } from './userPermissions';
 
-export { UserPermissions };
+// Note: UserPermissions is already exported from './user', no need to re-export
 
 /**
  * API fixes are available through fixes.ts

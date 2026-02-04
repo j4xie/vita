@@ -15,11 +15,14 @@ import { timeManager, validateDeviceTime } from './src/services/timeManager';
 import { theme } from './src/theme';
 import initI18next, { i18n } from './src/utils/i18n';
 import volunteerAutoCheckoutService from './src/services/volunteerAutoCheckoutService';
+import { preloadSchoolData } from './src/hooks/useSchoolLogos';
 
 // TextEncoder polyfill for react-native-qrcode-svg
 global.TextEncoder = TextEncoder;
 global.TextDecoder = TextDecoder;
 
+// 🚀 尽早开始预加载学校数据（不等待，让缓存尽早可用）
+preloadSchoolData().catch(() => {});
 
 // 开发环境导入测试工具
 if (__DEV__) {
@@ -121,14 +124,17 @@ export default function App() {
           console.error('[LOCATION] 权限检查失败:', error);
         }
 
-        // 7. 启动地理检测预检测（后台运行，不阻塞启动）
+        // 7. 学校数据已在模块加载时开始预加载，这里只记录状态
+        console.log('[SCHOOLS] ✅ 学校数据预加载已在模块加载时启动');
+
+        // 8. 启动地理检测预检测（后台运行，不阻塞启动）
         console.log('[REGION] 启动地理检测预检测...');
         RegionDetectionService.preDetect().then(() => {
           console.log('[REGION] ✅ 地理检测预检测完成，结果已缓存');
         }).catch((error) => {
           console.warn('[REGION] ⚠️ 地理检测预检测失败，不影响主流程:', error.message);
         });
-        
+
         setIsI18nReady(true);
       } catch (error) {
         console.error('[ERROR] 应用初始化失败:', error);

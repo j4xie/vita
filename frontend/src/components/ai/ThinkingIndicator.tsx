@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -14,7 +14,7 @@ import Animated, {
 import { useTranslation } from 'react-i18next';
 
 interface ThinkingIndicatorProps {
-  estimatedTime?: number; // 预计等待时间（秒）
+  estimatedTime?: number; // 预计等待时间（秒）- 不再使用，保留兼容性
 }
 
 export const ThinkingIndicator: React.FC<ThinkingIndicatorProps> = ({
@@ -24,6 +24,23 @@ export const ThinkingIndicator: React.FC<ThinkingIndicatorProps> = ({
   const rotation = useSharedValue(0);
   const pulseScale = useSharedValue(1);
   const textOpacity = useSharedValue(0.6);
+
+  // 实时计时器状态
+  const [elapsedTime, setElapsedTime] = useState(0);
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
+
+  // 实时计时器
+  useEffect(() => {
+    timerRef.current = setInterval(() => {
+      setElapsedTime((prev) => prev + 1);
+    }, 1000);
+
+    return () => {
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     // 旋转动画 - 橙色加载圈
@@ -97,11 +114,10 @@ export const ThinkingIndicator: React.FC<ThinkingIndicatorProps> = ({
               <Animated.Text style={[styles.thinkingText, textStyle]}>
                 {t('ai.thinking')}
               </Animated.Text>
-              <Text style={styles.timeText}>({estimatedTime}s)</Text>
+              <Text style={styles.timeText}>({elapsedTime}s)</Text>
             </View>
 
-            {/* 提示文字 */}
-            <Text style={styles.tapHint}>Tap to read my mind</Text>
+            {/* 提示文字 - removed hardcoded English, not needed here */}
           </View>
         </LinearGradient>
       </BlurView>
@@ -170,12 +186,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#8e8e93',
     fontWeight: '500',
-  },
-  tapHint: {
-    fontSize: 12,
-    color: '#8e8e93',
-    fontStyle: 'italic',
-    marginLeft: 8,
   },
 });
 

@@ -1,202 +1,109 @@
-# PomeloX 产品需求文档 (PRD)
+# PRD: SmartFab Food Platform
 
-## 1. 项目概述
-本文档定义 PomeloX Phase 0 的核心产品需求，专注于校园活动管理和报名平台的核心功能验证，作为产品、设计和开发团队的5周冲刺基准。
+| Version | Date | Author | Status |
+| :--- | :--- | :--- | :--- |
+| 1.0 | 2026-01-07 | SmartFab AI | Draft |
 
-**Phase 0 产品目标:**
-- **核心功能验证:** 用户注册-活动展示-报名管理的完整闭环
-- **9月获客准备:** 为9月中旬的大批获客机会提供稳定可用的产品
-- **用户需求验证:** 通过真实使用数据验证校园活动管理的市场需求
+## 1. Product Overview
+SmartFab Food is an AI+IoT driven SaaS platform for the food production industry, targeting 50-500 person enterprises. It bridges the gap between physical production (IoT devices, cameras) and digital management (ERP, planning) using Generative AI as the interface.
 
-**产品定位:** 专为海外中国学生组织打造的活动管理和报名平台，解决活动信息分散、报名流程复杂、数据管理混乱的痛点。
+**Target Users**: Food Processing Plants, Agricultural Co-ops, Aquaculture Farms.
 
-## 2. Phase 0 核心功能模块
+## 2. User Roles & Personas
+1.  **Factory Director (Admin)**: Oversees all ops. Cares about cost, efficiency, and safety.
+    *   *Need*: "I need a single dashboard to see if we are making money today."
+2.  **Production Manager**: Schedules lines, assigns workers.
+    *   *Need*: "I need to know if we can meet the Friday deadline."
+3.  **Quality Inspector**: Checks raw materials and finished goods.
+    *   *Need*: "I need to quickly log defects without slowing down the line."
+4.  **Warehouse Keeper**: Manages inventory, FIFO.
+    *   *Need*: "Tell me which pallet to use next so it doesn't expire."
+5.  **Line Operator**: Operates machinery, reports output.
+    *   *Need*: "Big buttons, simple instructions. Don't make me type."
+6.  **Maintenance Tech**: Fixes machines.
+    *   *Need*: "Alert me *before* the machine breaks."
+7.  **Sales/Procurement**: Inputs orders, buys materials.
+8.  **Consumer (End User)**: Scans QR code for traceability.
 
-### 2.1 用户注册与认证系统
-- **用户群体:** 学生组织管理者 + 参与活动的学生用户
-- **核心功能:** 
-  - Gmail邮箱注册验证
-  - 用户登录/登出
-  - 基础用户资料管理
-- **技术实现:**
-  - Gmail SMTP邮件验证（开发阶段）
-  - Gmail API邮件服务（生产环境）
-  - JWT Token认证
-  - PostgreSQL用户数据存储
-- **验收标准:** 用户可以通过邮箱完成注册并收到确认邮件
+## 3. Core Functional Requirements (MoSCoW)
 
-### 2.2 活动发布与管理系统
-- **用户群体:** 学生组织管理者
-- **核心功能:**
-  - 活动信息发布（图片+文字）
-  - 活动列表展示（卡片形式）
-  - 活动详情页面
-  - 活动状态管理（发布/下架/已结束）
-- **技术实现:**
-  - 图片上传和存储（Cloudflare R2/AWS S3）
-  - 响应式卡片组件设计
-  - 活动数据结构化存储
-  - 管理员权限控制
-- **验收标准:** 管理员可以发布带图片的活动，用户可以在列表中浏览活动详情
+### Must Have (P0)
+*   **Production Management Center**: Production planning, Batch tracking, Cost recording.
+*   **Material & Warehouse**: Batch entry (15 fields), FIFO logic, Stock/Inventory management.
+*   **IoT Integration**: MQTT Service for scales, Thermometer integration.
+*   **Quality & Traceability**: Quality checks (Inbound/Process/Outbound), Bi-directional Traceability, QR Code generation.
+*   **AI System**: DashScope connection, NLP for command execution ("Change output to 200").
+*   **User Management**: RBAC (8 roles), Multi-factory support.
 
-### 2.3 活动报名系统
-- **用户群体:** 参与活动的学生用户
-- **核心功能:**
-  - 一键报名/取消报名
-  - 报名名额限制和实时显示
-  - 报名状态跟踪
-  - 报名成功邮件通知
-- **技术实现:**
-  - Redis分布式锁防止超额报名
-  - 报名状态实时更新
-  - 邮件通知集成
-  - 报名数据持久化
-- **验收标准:** 用户可以成功报名活动，收到确认邮件，管理员可以看到报名人数变化
+### Should Have (P1)
+*   **AI Cost Analysis**: 5-dimension drill-down.
+*   **Visual Counting**: YOLO integration for product counting.
+*   **Equipment Lifecycle**: Maintenance logs, Status monitoring.
+*   **Mobile App/H5**: For operators and moving staff (GPS clock-in).
+*   **Reporting**: 13 standard reports + Export.
 
-### 2.4 CRM客户管理系统
-- **用户群体:** 学生组织管理者
-- **核心功能:**
-  - 报名用户信息管理
-  - 按活动查看报名名单
-  - 报名数据导出（Excel格式）
-  - 用户报名历史记录
-- **技术实现:**
-  - 报名数据关联存储
-  - Excel文件生成和下载
-  - 数据查询和筛选功能
-  - 简单的统计分析
-- **验收标准:** 管理员可以查看任意活动的报名名单，并导出Excel文件
+### Could Have (P2)
+*   **Virtual Scale Simulator**: For testing/training.
+*   **AI Multi-turn Dialogue**: For complex queries.
+*   **Blueprint/Template System**: Fast onboarding for new factories.
+*   **Hikvision ISAPI**: Advanced security alerts (Intrusion detection).
 
-### 2.5 邮件通知系统
-- **用户群体:** 所有用户
-- **核心功能:**
-  - 注册验证邮件
-  - 报名成功确认邮件
-  - 活动提醒邮件（可选）
-- **技术实现:**
-  - Gmail SMTP服务集成
-  - HTML邮件模板设计
-  - 邮件发送队列管理
-  - 发送状态跟踪
-- **验收标准:** 用户在关键操作后能及时收到相应邮件通知
+### Won't Have (MVP)
+*   Custom hardware manufacturing (we use off-the-shelf).
+*   Full financial accounting (we export to Finance ERP).
 
-## 3. 技术架构与实现方案
+## 4. Key Task Flows
 
-### 3.1 技术栈选择
-- **前端:** React Native + Expo (iOS/Android)
-- **后端:** FastAPI + Python
-- **数据库:** PostgreSQL + Redis (缓存和分布式锁)
-- **邮件服务:** Gmail SMTP/API + SendGrid备用
-- **文件存储:** Cloudflare R2 或 AWS S3
-- **部署:** Docker + 云服务
+### 4.1. Order to Production (The "Happy Path")
+1.  **Sales** enters Order #1001 for 5000 units of "Spicy Sauce".
+2.  **AI/Planner** analyzes stock. Detects raw material "Chili" is sufficient but "Bottle caps" low.
+3.  **Procurement** orders caps.
+4.  **Manager** creates Production Plan. AI suggests Line 2 (optimized for Sauce).
+5.  **Warehouse** receives "Pick List" (FIFO enabled). Scans Batch A of Chili.
+6.  **Operator** sees "Start Job" on tablet.
+7.  **IoT Scale** records ingredient weights automatically.
+8.  **Process**: Mixing -> Cooking (Temp sensors logging to cloud) -> Bottling.
+9.  **Visual Counter** counts 5000 bottles.
+10. **Quality** creates "Finished Good Inspection". Pass.
+11. **Warehouse** puts away finished goods.
+12. **System** generates Traceability QR.
 
-### 3.2 系统架构设计
-```
-用户端 (React Native)
-    ↓
-API网关 (FastAPI)
-    ↓
-业务逻辑层 (Python)
-    ↓
-数据存储层 (PostgreSQL + Redis)
-    ↓
-外部服务 (Gmail, 文件存储)
-```
+### 4.2. Emergency Intervention
+1.  **AI Monitor** detects "Oven Temp" rising above threshold on Line 1.
+2.  **System** sends Push Notification to **Maintenance Tech**.
+3.  **Tech** acknowledges, fixes, logs "Filter Change".
+4.  **AI** updates "Equipment Health Score".
 
-## 4. Phase 0 开发计划（5周冲刺）
+## 5. Data Structures (Core Entities)
 
-### 4.1 开发时间线
+### `ProductBatch`
+*   `id`: UUID
+*   `batch_code`: string (e.g., "20260115-A-001")
+*   `product_id`: User -> Product
+*   `status`: enum (Planned, InProgress, QualityCheck, Completed, Released)
+*   `created_at`: timestamp
+*   `expiry_date`: timestamp
+*   `line_id`: ID
+*   `meta`: JSON (AI analysis tags)
 
-| 周次 | 日期 | 主要功能 | 交付物 | 验收标准 |
-|------|------|----------|--------|-----------|
-| **W1** | 8/7-8/13 | 基础架构+用户系统 | 用户注册登录+邮件验证 | 用户可以通过Gmail完成注册 |
-| **W2** | 8/14-8/20 | 活动管理系统 | 活动发布+列表展示 | 管理员可以发布带图片的活动 |
-| **W3** | 8/21-8/27 | 报名功能 | 报名流程+名额管理 | 用户可以成功报名并收到确认邮件 |
-| **W4** | 8/28-9/3 | CRM后台 | 数据管理+导出功能 | 管理员可以查看和导出报名数据 |
-| **W5** | 9/4-9/10 | 测试优化 | 压力测试+Bug修复 | 系统稳定运行，准备9月获客 |
+### `TraceabilityRecord`
+*   `id`: UUID
+*   `batch_id`: FK
+*   `stage`: enum (Raw, Process, Pack, Ship)
+*   `actor_id`: UserID
+*   `timestamp`: timestamp
+*   `iot_data_snapshot`: JSON (Temp, Weight, ImageURL)
+*   `geo_location`: string
 
-### 4.2 关键里程碑
-- **8月20日:** 内测版本上线，核心功能可用
-- **9月1日:** 正式版本发布，系统稳定
-- **9月15日:** 支持大规模获客活动
+### `IoTDevice`
+*   `id`: UUID
+*   `type`: enum (Scale, Camera, Sensor, Printer)
+*   `protocol`: enum (MQTT, ISAPI, HTTP)
+*   `status`: enum (Online, Offline, Error)
+*   `config`: JSON (Thresholds, IP, Topic)
 
-## 5. 数据模型设计
-
-### 5.1 核心数据表
-
-**用户表 (users)**
-- id, email, password_hash, user_type, created_at
-- is_verified, profile_data
-
-**活动表 (events)**
-- id, title, description, image_url, creator_id
-- start_time, location, max_participants, current_participants
-- status, created_at
-
-**报名表 (registrations)**
-- id, user_id, event_id, status, registered_at
-- user_info (JSON), notes
-
-**邮件日志表 (email_logs)**
-- id, recipient, subject, content, sent_at, status
-
-## 6. 用户体验设计
-
-### 6.1 核心用户流程
-
-**学生用户流程:**
-1. 邮箱注册 → 验证邮箱 → 完善资料
-2. 浏览活动列表 → 查看活动详情 → 一键报名
-3. 收到确认邮件 → 参加活动
-
-**管理员流程:**
-1. 登录管理后台 → 创建活动 → 上传活动图片
-2. 发布活动 → 监控报名情况
-3. 查看报名名单 → 导出Excel数据
-
-### 6.2 关键界面设计
-- **活动卡片:** 封面图 + 标题 + 时间地点 + 报名按钮
-- **活动详情:** 大图展示 + 详细描述 + 报名表单
-- **管理后台:** 简洁的列表 + 表单 + 数据导出
-
-## 7. Phase 0 成功指标
-
-### 7.1 核心指标
-- **用户注册:** 200+ 注册用户
-- **活动参与:** 50+ 用户完成报名
-- **系统稳定性:** 99%+ 可用时间
-- **邮件到达率:** 95%+ 成功送达
-
-### 7.2 用户反馈收集
-- App内简单反馈表单
-- 邮件回复收集建议
-- 用户行为数据分析
-- 管理员使用体验调研
-
-## 8. 风险控制
-
-### 8.1 技术风险
-- **邮件发送失败:** Gmail API + SendGrid双重备份
-- **高并发报名:** Redis分布式锁 + 数据库事务
-- **图片存储:** CDN + 多地备份
-
-### 8.2 业务风险
-- **用户获取困难:** 配合9月活动推广
-- **功能不满足需求:** 快速迭代响应用户反馈
-- **系统故障:** 监控告警 + 快速修复机制
-
-## 9. 后续发展规划
-
-### 9.1 Phase 1 扩展功能
-- 推送通知系统
-- 多语言支持
-- 支付功能集成
-- 更多学校覆盖
-
-### 9.2 长期愿景
-- 发展为完整的留学生服务平台
-- 集成AI问答、安心计划等差异化功能
-- 建立留学生生态闭环
-
-这个Phase 0 PRD为PomeloX的核心功能开发提供了具体的实施指导。
-
+## 6. Non-Functional Requirements
+*   **Reliability**: Offline mode for handhelds (sync when online).
+*   **Performance**: Traceability query < 3 seconds.
+*   **Scalability**: Support 1000+ IoT messages/second per tenant.
+*   **Accessibility**: High contrast mode for factory floor (bad lighting).

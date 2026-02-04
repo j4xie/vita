@@ -1,5 +1,6 @@
 // 活动数据适配器 - 转换后端数据到前端格式
 import { getCategoryName } from '../data/activityCategories';
+import { getLogoByDeptIdSync, getSchoolLogoSync, getSchoolNameByDeptIdSync } from '../hooks/useSchoolLogos';
 
 // 后端活动数据接口 - 🔧 更新字段映射以匹配实际API
 export interface BackendActivity {
@@ -25,6 +26,9 @@ export interface BackendActivity {
   timeZone?: string; // 活动时区
   price?: number; // 活动价格（0表示免费）
   modelContent?: string; // 动态表单模板内容
+  deptId?: number; // 🔧 创建者所属部门ID（通常是总部223）
+  deptIds?: string | number; // 🔧 活动所属学校ID（正确的学校ID）
+  deptName?: string; // 🔧 活动所属学校名称
 }
 
 // 前端活动数据接口
@@ -46,6 +50,9 @@ export interface FrontendActivity {
     avatar?: string;
     verified?: boolean;
   };
+  // 扁平化的组织者字段（供 GridActivityCard 使用）
+  organizerName?: string;
+  organizerAvatar?: string;
   // 额外信息
   registrationStartTime?: string;
   registrationEndTime?: string;
@@ -54,6 +61,9 @@ export interface FrontendActivity {
   timeZone?: string; // 活动时区
   price?: number; // 活动价格（0或undefined表示免费）
   modelContent?: string; // 动态表单模板内容
+  // 🆕 学校信息
+  deptId?: number; // 活动所属学校ID
+  deptName?: string; // 活动所属学校名称
 }
 
 // 🚀 性能优化：预编译状态映射表
@@ -71,10 +81,10 @@ const ACTIVITY_TYPE_MAP = new Map<number, 'available' | 'ended'>([
  * ✅ 增强容错的报名状态转换函数 - 支持备用状态
  */
 const convertRegistrationStatus = (
-  signStatus?: number | null, 
+  signStatus?: number | null,
   fallbackStatus?: 'registered' | 'checked_in' | 'available'
 ): 'available' | 'registered' | 'checked_in' => {
-  
+
   // ✅ 如果API返回失败或空值，使用备用状态
   if (signStatus === null || signStatus === undefined) {
     if (fallbackStatus === 'registered' || fallbackStatus === 'checked_in') {
@@ -87,10 +97,10 @@ const convertRegistrationStatus = (
     }
     return 'available';
   }
-  
+
   // ✅ 正常映射逻辑
   const result = REGISTRATION_STATUS_MAP.get(signStatus) ?? 'available';
-  
+
   // 详细的映射日志
   console.log(`🔄 [STATUS-MAP] signStatus映射:`, {
     输入signStatus: signStatus,
@@ -100,7 +110,7 @@ const convertRegistrationStatus = (
     映射结果: result,
     映射表: Object.fromEntries(REGISTRATION_STATUS_MAP.entries())
   });
-  
+
   return result;
 };
 
@@ -304,66 +314,39 @@ const parseDateTime = (dateTimeString: string): { date: string; time: string } =
  */
 // 🚀 性能优化：批量适配活动数据
 export const adaptActivity = (
-  backendActivity: BackendActivity, 
+  backendActivity: BackendActivity,
   language: 'zh' | 'en' = 'zh'
 ): FrontendActivity => {
   // 快速解析时间（使用缓存）
   const { date, time } = parseDateTime(backendActivity.startTime);
   const { date: endDate } = parseDateTime(backendActivity.endTime);
-  
+
   // 实时计算活动状态，确保准确性
   const calculateRealTimeStatus = (): 'available' | 'ended' | 'registered' | 'checked_in' => {
     // ✅ 第一优先级：用户的报名/签到状态（增强容错处理）
     if (backendActivity.signStatus !== undefined && backendActivity.signStatus !== null) {
-      const status = convertRegistrationStatus(backendActivity.signStatus);
-      console.log(`🎯 [ADAPTER] 活动${backendActivity.id}使用用户报名状态:`, {
-        原始signStatus: backendActivity.signStatus,
-        转换后状态: status,
-        映射逻辑: 'signStatus: -1->registered, 1->checked_in, others->available'
-      });
-      return status;
+      return convertRegistrationStatus(backendActivity.signStatus);
     }
-    
-    // ✅ 如果API返回的signStatus为空，但有备用状态，使用备用状态
-    // 这里可以根据具体业务需求添加备用逻辑
-    
+
     // 第二优先级：基于当前时间实时计算活动状态
     const now = new Date();
-    const activityEnd = new Date(backendActivity.endTime);
-    
-    let timeBasedStatus: 'available' | 'ended';
+    const activityEnd = new Date(backendActivity.endTime.replace(/-/g, '/'));
+
     if (activityEnd.getTime() < now.getTime()) {
-      timeBasedStatus = 'ended'; // 已结束
+      return 'ended';
     } else {
-      timeBasedStatus = 'available'; // 可报名（包括未开始和进行中）
+      return 'available';
     }
-    
-    console.log(`🕐 [ADAPTER] 活动${backendActivity.id}使用时间计算状态:`, {
-      状态: timeBasedStatus,
-      结束时间: backendActivity.endTime,
-      当前时间: now.toISOString(),
-      signStatus: backendActivity.signStatus
-    });
-    
-    return timeBasedStatus;
   };
-  
+
   const activityStatus = calculateRealTimeStatus();
-  
+
   // 🔧 修复活动名称获取逻辑，支持多种字段名
   const activityTitle = backendActivity.activityName || backendActivity.name || `活动${backendActivity.id}`;
-    
-  // 🚀 详细调试报名人数数据映射
-  console.log(`🔄 [ADAPTER] 活动${backendActivity.id}[${activityTitle}]数据详情:`, {
-    enrollment: backendActivity.enrollment,
-    registerCount: backendActivity.registerCount,
-    registerCountType: typeof backendActivity.registerCount,
-    hasRegisterCount: backendActivity.registerCount !== undefined,
-    timeZone: backendActivity.timeZone,
-    signStatus: backendActivity.signStatus,
-    计算状态: activityStatus,
-    willUseValue: backendActivity.registerCount ?? 0,
-  });
+
+  // 🔧 获取活动所属学校名称 - 优先通过 deptIds 查表获取真实学校名
+  const activitySchoolId = backendActivity.deptIds ? parseInt(String(backendActivity.deptIds), 10) : undefined;
+  const schoolName = getSchoolNameByDeptIdSync(activitySchoolId) || backendActivity.deptName || '官方活动';
 
   return {
     id: backendActivity.id.toString(),
@@ -373,24 +356,34 @@ export const adaptActivity = (
     endDate,
     time,
     image: backendActivity.icon,
-    attendees: backendActivity.registerCount ?? 0, // 使用真实的报名人数，null时为0
-    maxAttendees: backendActivity.enrollment || 0, // 保持真实的enrollment值，0表示无限制
-    registeredCount: backendActivity.registerCount ?? 0, // 已报名人数，支持undefined/null
+    attendees: backendActivity.registerCount ?? 0,
+    maxAttendees: backendActivity.enrollment || 0,
+    registeredCount: backendActivity.registerCount ?? 0,
     status: activityStatus,
-    category: backendActivity.categoryId 
+    category: backendActivity.categoryId
       ? getCategoryName(backendActivity.categoryId, language)
       : undefined,
     organizer: {
-      name: '官方活动', // 暂时使用通用名称
+      name: schoolName,
+      avatar: getSchoolLogoSync(activityTitle, backendActivity.address) ||
+              getLogoByDeptIdSync(activitySchoolId || backendActivity.deptId) ||
+              'https://image.americanpromotioncompany.com/2026/01/05/275c7520-5b3f-4717-9800-dc80dac2f82a.png',
       verified: true,
     },
+    organizerName: schoolName,
+    organizerAvatar: getSchoolLogoSync(activityTitle, backendActivity.address) ||
+                    getLogoByDeptIdSync(activitySchoolId || backendActivity.deptId) ||
+                    'https://image.americanpromotioncompany.com/2026/01/05/275c7520-5b3f-4717-9800-dc80dac2f82a.png',
     registrationStartTime: backendActivity.signStartTime,
     registrationEndTime: backendActivity.signEndTime,
     detail: backendActivity.detail,
     enabled: backendActivity.enabled === 1,
     timeZone: backendActivity.timeZone,
     price: backendActivity.price,
-    modelContent: backendActivity.modelContent, // 🔧 保留动态表单模板内容
+    modelContent: backendActivity.modelContent,
+    // 🔧 学校信息 - 优先使用deptIds（活动所属学校），fallback到deptId（创建者部门）
+    deptId: backendActivity.deptIds ? parseInt(String(backendActivity.deptIds), 10) : backendActivity.deptId,
+    deptName: backendActivity.deptName,
   };
 };
 
@@ -399,42 +392,42 @@ export const adaptActivity = (
  */
 const smartSortActivities = (activities: FrontendActivity[]): FrontendActivity[] => {
   const now = new Date();
-  
+
   return activities.sort((a, b) => {
     const aStart = new Date(a.date + ' ' + a.time);
     const bStart = new Date(b.date + ' ' + b.time);
     const aEnd = a.endDate ? new Date(a.endDate + ' 23:59:59') : aStart;
     const bEnd = b.endDate ? new Date(b.endDate + ' 23:59:59') : bStart;
-    
+
     // 计算到活动开始的小时数
     const aHoursToStart = (aStart.getTime() - now.getTime()) / (1000 * 60 * 60);
     const bHoursToStart = (bStart.getTime() - now.getTime()) / (1000 * 60 * 60);
-    
+
     // 判断活动是否已结束
     const aEnded = aEnd.getTime() < now.getTime();
     const bEnded = bEnd.getTime() < now.getTime();
-    
+
     // 已结束的活动排在最后
     if (aEnded && !bEnded) return 1;
     if (!aEnded && bEnded) return -1;
     if (aEnded && bEnded) return parseInt(b.id) - parseInt(a.id); // 已结束的按发布时间排序
-    
+
     // 第一层：24小时内的紧急活动（优先级最高）
     const aUrgent = aHoursToStart >= 0 && aHoursToStart <= 24;
     const bUrgent = bHoursToStart >= 0 && bHoursToStart <= 24;
-    
+
     if (aUrgent && !bUrgent) return -1;
     if (!aUrgent && bUrgent) return 1;
     if (aUrgent && bUrgent) return aHoursToStart - bHoursToStart;
-    
+
     // 第二层：7天内的即将开始活动
     const aUpcoming = aHoursToStart >= 0 && aHoursToStart <= 168; // 7*24h
     const bUpcoming = bHoursToStart >= 0 && bHoursToStart <= 168;
-    
+
     if (aUpcoming && !bUpcoming) return -1;
     if (!aUpcoming && bUpcoming) return 1;
     if (aUpcoming && bUpcoming) return aHoursToStart - bHoursToStart;
-    
+
     // 第三层：其他活动按ID倒序排序(代表发布时间)
     return parseInt(b.id) - parseInt(a.id);
   });
@@ -495,11 +488,11 @@ export const canRegisterForActivity = (activity: FrontendActivity): boolean => {
   if (!activity.registrationStartTime || !activity.registrationEndTime) {
     return true; // 如果没有报名时间限制，默认可以报名
   }
-  
+
   const now = new Date();
   const registrationStart = new Date(activity.registrationStartTime);
   const registrationEnd = new Date(activity.registrationEndTime);
-  
+
   return now >= registrationStart && now <= registrationEnd;
 };
 
@@ -507,7 +500,7 @@ export const canRegisterForActivity = (activity: FrontendActivity): boolean => {
  * 获取活动状态文本
  */
 export const getActivityStatusText = (
-  activity: FrontendActivity, 
+  activity: FrontendActivity,
   t: (key: string) => string
 ): string => {
   switch (activity.status) {
@@ -516,8 +509,8 @@ export const getActivityStatusText = (
     case 'checked_in':
       return t('activities.status.checked_in');
     case 'available':
-      return canRegisterForActivity(activity) 
-        ? t('activities.status.available') 
+      return canRegisterForActivity(activity)
+        ? t('activities.status.available')
         : t('activities.status.registration_closed');
     default:
       return '';
@@ -533,15 +526,15 @@ export const formatActivityDateWithTimezone = (
 ): string => {
   // 获取时区缩写 - 传递活动日期用于夏令时检测
   const timezoneAbbrev = getTimezoneAbbreviation(activity.timeZone, activity.date, language);
-  
+
   // 格式化日期
   const formatSingleDate = (dateStr: string) => {
     const [year, month, day] = dateStr.split('-');
     return { year: parseInt(year), month: parseInt(month), day: parseInt(day) };
   };
-  
+
   const start = formatSingleDate(activity.date);
-  
+
   // 构建日期显示
   let dateDisplay = '';
   if (activity.endDate && activity.endDate !== activity.date) {
@@ -552,7 +545,7 @@ export const formatActivityDateWithTimezone = (
     // 单日活动: 09/11
     dateDisplay = `${start.month.toString().padStart(2, '0')}/${start.day.toString().padStart(2, '0')}`;
   }
-  
+
   // 添加时间（如果不是00:00）
   const formatTime = (timeStr: string) => {
     if (!timeStr || timeStr === '00:00') return '';
@@ -562,11 +555,11 @@ export const formatActivityDateWithTimezone = (
     const ampm = hour24 >= 12 ? 'PM' : 'AM';
     return ` ${hour12}:${minutes}${ampm}`;
   };
-  
+
   const timeDisplay = formatTime(activity.time) || '';
-  
+
   // 组合时区前缀 + 日期 + 时间
-  return timezoneAbbrev 
+  return timezoneAbbrev
     ? `${timezoneAbbrev} ${dateDisplay}${timeDisplay}`
     : `${dateDisplay}${timeDisplay}`;
 };

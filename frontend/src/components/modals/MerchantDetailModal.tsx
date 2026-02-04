@@ -57,7 +57,7 @@ export const MerchantDetailModal: React.FC<MerchantDetailModalProps> = ({
     try {
       const merchantCoupons = await couponAPI.getMerchantCoupons(
         parseInt(merchant.id),
-        parseInt(user.userId)
+        parseInt(String(user.userId))
       );
       setCoupons(merchantCoupons);
       console.log('🎫 [MerchantDetail] 加载到优惠券:', merchantCoupons.length);
@@ -86,7 +86,7 @@ export const MerchantDetailModal: React.FC<MerchantDetailModalProps> = ({
               const result = await couponAPI.writeOffCoupon({
                 couponId,
                 merchantId: parseInt(merchant.id),
-                userId: parseInt(user.userId),
+                userId: parseInt(String(user.userId)),
               });
 
               if (result.code === 200) {

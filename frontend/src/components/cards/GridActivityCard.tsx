@@ -76,68 +76,27 @@ const GridActivityCardComponent: React.FC<GridActivityCardProps> = ({
   const [imageLoading, setImageLoading] = useState(true);
   const [imageError, setImageError] = useState(false);
 
-  // 流畅动画系统
+  // 流畅动画系统 - ALL HOOKS MUST BE CALLED BEFORE ANY EARLY RETURNS
   const scale = useSharedValue(1);
   const shimmerX = useSharedValue(-200);
   const borderGlow = useSharedValue(0);
   const elevationScale = useSharedValue(1);
 
-  if (!activity) {
-    return null;
-  }
-
   // 动态计算卡片高度以精确匹配1200:675图片比例
-  const screenWidth = Dimensions.get('window').width;
-  const containerWidth = screenWidth - 8; // 减去waterfallContainer的paddingHorizontal: 4 (左右共8px)
+  const currentScreenWidth = Dimensions.get('window').width;
+  const containerWidth = currentScreenWidth - 8; // 减去waterfallContainer的paddingHorizontal: 4 (左右共8px)
   const cardWidth = containerWidth * 0.48; // 瀑布流布局，每列占48%
   const imageHeight = cardWidth * (675 / 1200); // 精确的图片高度
   const infoHeight = 90; // 底部信息区固定高度
   const cardHeight = imageHeight + infoHeight; // 动态卡片总高度，消除留白
 
-  // 调试日志
-  console.log('🎨 [GridActivityCard] 卡片尺寸计算:', {
-    screenWidth,
-    containerWidth,
-    cardWidth,
-    imageHeight,
-    infoHeight,
-    cardHeight,
-    aspectRatio: 1200 / 675
-  });
-  
-  // 获取活动状态标签 - 优先显示报名状态，其次是时间紧急程度
-  const getActivityLabel = () => {
-    // 第一优先级：用户的报名/签到状态
-    if (activity.status === 'registered') {
-      return { type: 'registered', label: t('activities.status.registered', '已报名') };
-    }
-    if (activity.status === 'checked_in') {
-      return { type: 'checked_in', label: t('activities.status.checked_in', '已签到') };
-    }
-    
-    // 第二优先级：时间紧急程度
-    const now = new Date();
-    const activityStart = new Date(activity.date + ' ' + activity.time);
-    const hoursToStart = (activityStart.getTime() - now.getTime()) / (1000 * 60 * 60);
-    
-    if (hoursToStart >= 0 && hoursToStart <= 24) {
-      return { type: 'today', label: t('activities.urgency.today', '今日开始') };
-    } else if (hoursToStart >= 0 && hoursToStart <= 168) {
-      return { type: 'upcoming', label: t('activities.urgency.upcoming', '即将开始') };
-    }
-    
-    return null; // 不显示标签
-  };
-  
-  const activityLabel = getActivityLabel();
-
   // 手势开始动画
-  const handleGestureStart = () => {
+  const handleGestureStart = React.useCallback(() => {
     scale.value = withTiming(0.96, {
       duration: 150,
       easing: Easing.out(Easing.quad),
     });
-    
+
     borderGlow.value = withTiming(1, {
       duration: 200,
       easing: Easing.out(Easing.circle),
@@ -147,10 +106,10 @@ const GridActivityCardComponent: React.FC<GridActivityCardProps> = ({
       duration: 150,
       easing: Easing.out(Easing.quad),
     });
-  };
+  }, [scale, borderGlow, elevationScale]);
 
   // 手势结束恢复动画
-  const handleGestureEnd = () => {
+  const handleGestureEnd = React.useCallback(() => {
     scale.value = withSpring(1, {
       damping: 15,
       mass: 1,
@@ -166,12 +125,14 @@ const GridActivityCardComponent: React.FC<GridActivityCardProps> = ({
       damping: 15,
       stiffness: 150,
     });
-  };
+  }, [scale, borderGlow, elevationScale]);
 
-  // 卡片点击检测
+  // 卡片点击检测 - MUST BE CALLED UNCONDITIONALLY
   const cardPress = useCardPress({
     onPress: () => {
-      onPress();
+      if (activity) {
+        onPress();
+      }
     },
     onPressIn: handleGestureStart,
     onPressOut: handleGestureEnd,
@@ -183,42 +144,22 @@ const GridActivityCardComponent: React.FC<GridActivityCardProps> = ({
   });
 
   // 边缘光效动画
-  const triggerShimmer = () => {
+  const triggerShimmer = React.useCallback(() => {
     shimmerX.value = -200;
     shimmerX.value = withTiming(400, {
       duration: 800,
       easing: Easing.out(Easing.quad),
     });
-  };
+  }, [shimmerX]);
 
-  // 组件挂载时触发光效
+  // 组件挂载时触发光效 - MUST BE CALLED UNCONDITIONALLY
   React.useEffect(() => {
+    if (!activity) return; // Guard inside effect, not before hook call
     const timer = setTimeout(triggerShimmer, Math.random() * 1000 + 500);
     return () => clearTimeout(timer);
-  }, []);
+  }, [activity, triggerShimmer]);
 
-  // 格式化日期区间显示 - 更紧凑的格式
-  const formatDateRange = () => {
-    const formatSingleDate = (dateStr: string) => {
-      const [year, month, day] = dateStr.split('-');
-      return { month: parseInt(month), day: parseInt(day) };
-    };
-    
-    const start = formatSingleDate(activity.date);
-    
-    // 构建日期显示 - 网格布局使用更简短格式
-    let dateDisplay = '';
-    if (activity.endDate && activity.endDate !== activity.date) {
-      const end = formatSingleDate(activity.endDate);
-      dateDisplay = `${start.month}/${start.day}-${end.month}/${end.day}`;
-    } else {
-      dateDisplay = `${start.month}/${start.day}`;
-    }
-    
-    return String(dateDisplay || '');
-  };
-
-  // 动画样式定义
+  // 动画样式定义 - ALL useAnimatedStyle HOOKS MUST BE CALLED UNCONDITIONALLY
   const animatedContainerStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],
   }));
@@ -240,6 +181,69 @@ const GridActivityCardComponent: React.FC<GridActivityCardProps> = ({
     shadowOpacity: borderGlow.value * 0.3,
     shadowRadius: borderGlow.value * 12,
   }));
+
+  // EARLY RETURN - AFTER ALL HOOKS HAVE BEEN CALLED
+  if (!activity) {
+    return null;
+  }
+
+  // 调试日志
+  console.log('🎨 [GridActivityCard] 卡片尺寸计算:', {
+    screenWidth: currentScreenWidth,
+    containerWidth,
+    cardWidth,
+    imageHeight,
+    infoHeight,
+    cardHeight,
+    aspectRatio: 1200 / 675
+  });
+
+  // 获取活动状态标签 - 优先显示报名状态，其次是时间紧急程度
+  const getActivityLabel = () => {
+    // 第一优先级：用户的报名/签到状态
+    if (activity.status === 'registered') {
+      return { type: 'registered', label: t('activities.status.registered', '已报名') };
+    }
+    if (activity.status === 'checked_in') {
+      return { type: 'checked_in', label: t('activities.status.checked_in', '已签到') };
+    }
+
+    // 第二优先级：时间紧急程度
+    const now = new Date();
+    const activityStart = new Date(activity.date + ' ' + activity.time);
+    const hoursToStart = (activityStart.getTime() - now.getTime()) / (1000 * 60 * 60);
+
+    if (hoursToStart >= 0 && hoursToStart <= 24) {
+      return { type: 'today', label: t('activities.urgency.today', '今日开始') };
+    } else if (hoursToStart >= 0 && hoursToStart <= 168) {
+      return { type: 'upcoming', label: t('activities.urgency.upcoming', '即将开始') };
+    }
+
+    return null; // 不显示标签
+  };
+
+  const activityLabel = getActivityLabel();
+
+  // 格式化日期区间显示 - 更紧凑的格式
+  const formatDateRange = () => {
+    const formatSingleDate = (dateStr: string) => {
+      const [year, month, day] = dateStr.split('-');
+      return { month: parseInt(month), day: parseInt(day) };
+    };
+
+    const start = formatSingleDate(activity.date);
+
+    // 构建日期显示 - 网格布局使用更简短格式
+    let dateDisplay = '';
+    if (activity.endDate && activity.endDate !== activity.date) {
+      const end = formatSingleDate(activity.endDate);
+      dateDisplay = `${start.month}/${start.day}-${end.month}/${end.day}`;
+    } else {
+      dateDisplay = `${start.month}/${start.day}`;
+    }
+
+    return String(dateDisplay || '');
+  };
 
   return (
     <Animated.View style={[styles.container, { height: cardHeight }, animatedContainerStyle, animatedShadowStyle]}>

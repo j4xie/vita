@@ -109,14 +109,24 @@ class PositionService {
       const isEnglish = currentLanguage === 'en-US';
 
       // 🚨 新逻辑：只基于roleKey判断，移除用户名fallback
-      const roles = userData?.roles || [];
-      if (!Array.isArray(roles) || roles.length === 0) {
-        console.log('❌ [POSITION-SERVICE] 用户无roles信息，不显示');
-        return null;
+      // 🔧 兼容两种后端返回格式：roles数组 或 role对象
+      let roles = userData?.roles || [];
+      let roleKey: string | undefined;
+
+      if (Array.isArray(roles) && roles.length > 0) {
+        // 格式1: roles数组（字段名为key）
+        const primaryRole = roles[0];
+        roleKey = primaryRole?.key || primaryRole?.roleKey;
+      } else if (userData?.role) {
+        // 格式2: 单个role对象（字段名为roleKey）
+        roleKey = userData.role.roleKey;
+        console.log('🔍 [POSITION-SERVICE] 使用role对象:', roleKey);
       }
 
-      const primaryRole = roles[0];
-      const roleKey = primaryRole?.key;
+      if (!roleKey) {
+        console.log('❌ [POSITION-SERVICE] 用户无有效角色信息，不显示');
+        return null;
+      }
 
       // 只有manage/part_manage/staff用户才显示
       if (!['manage', 'part_manage', 'staff'].includes(roleKey)) {

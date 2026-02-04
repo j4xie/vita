@@ -4,16 +4,17 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
-  Image,
+  Dimensions,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { OptimizedImage } from '../common/OptimizedImage';
 import { LoaderOne } from '../ui/LoaderOne';
 
-const CARD_WIDTH = 280;
-const CARD_HEIGHT = 360;
-const IMAGE_HEIGHT = 200;
+const { width } = Dimensions.get('window');
+const CARD_WIDTH = 260; // Slightly narrower for better carousel feel
+const CARD_HEIGHT = 340;
+const IMAGE_HEIGHT = 180;
 
 interface MerchantCardProps {
   merchant: {
@@ -40,9 +41,9 @@ export const MerchantCard: React.FC<MerchantCardProps> = ({
     <TouchableOpacity
       style={styles.container}
       onPress={onPress}
-      activeOpacity={0.95}
+      activeOpacity={0.92}
     >
-      {/* 顶部图片区域 */}
+      {/* Top Image Section */}
       <View style={styles.imageContainer}>
         {merchant.image && !imageError ? (
           <>
@@ -65,6 +66,13 @@ export const MerchantCard: React.FC<MerchantCardProps> = ({
                 <LoaderOne size="small" color="#999" />
               </View>
             )}
+
+            {/* Category Tag Overlay */}
+            {merchant.category && (
+              <View style={styles.categoryBadge}>
+                <Text style={styles.categoryText}>{merchant.category}</Text>
+              </View>
+            )}
           </>
         ) : (
           <View style={styles.imagePlaceholder}>
@@ -73,39 +81,35 @@ export const MerchantCard: React.FC<MerchantCardProps> = ({
         )}
       </View>
 
-      {/* 底部信息区 - 白色背景 */}
+      {/* Bottom Info Section */}
       <View style={styles.infoContainer}>
-        {/* 商家名称 */}
+        {/* Title */}
         <Text style={styles.title} numberOfLines={2}>
           {merchant.name}
         </Text>
 
-        {/* Earn 标签 + Q logo + 数字选择器 */}
-        <View style={styles.earnContainer}>
-          <View style={styles.earnBadge}>
-            <Text style={styles.earnText}>{t('community.earn', 'Earn')}</Text>
-          </View>
-
-          <View style={styles.qPointsContainer}>
-            <View style={styles.qLogo}>
-              <Text style={styles.qLogoText}>Q</Text>
-            </View>
-            <Text style={styles.pointsNumber}>{merchant.earnPoints || 1}</Text>
-            <Ionicons name="chevron-down" size={16} color="#666" />
-          </View>
-        </View>
-
-        {/* 地址 */}
+        {/* Address */}
         <Text style={styles.location} numberOfLines={1}>
           {merchant.location}
         </Text>
 
-        {/* 价格 */}
-        {merchant.price && (
-          <Text style={styles.price} numberOfLines={1}>
-            {merchant.price}
-          </Text>
-        )}
+        {/* Footer Row: Rewards & Price */}
+        <View style={styles.footerRow}>
+          {/* Reward Pill */}
+          <View style={styles.rewardPill}>
+            <View style={styles.rewardIconBg}>
+              <Text style={styles.rewardIconText}>Q</Text>
+            </View>
+            <Text style={styles.rewardText}>
+              Earn {merchant.earnPoints || 1}
+            </Text>
+          </View>
+
+          {/* Price */}
+          {merchant.price && (
+            <Text style={styles.price}>{merchant.price}</Text>
+          )}
+        </View>
       </View>
     </TouchableOpacity>
   );
@@ -116,39 +120,37 @@ const styles = StyleSheet.create({
     width: CARD_WIDTH,
     height: CARD_HEIGHT,
     backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    marginRight: 12,
+    borderRadius: 20, // More rounded
+    marginRight: 16,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 3,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 6,
+    borderWidth: 1,
+    borderColor: 'rgba(0,0,0,0.03)',
   },
 
-  // 图片区域
+  // Image Section
   imageContainer: {
     width: '100%',
     height: IMAGE_HEIGHT,
     backgroundColor: '#F5F5F5',
-    borderTopLeftRadius: 16,
-    borderTopRightRadius: 16,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
     overflow: 'hidden',
+    position: 'relative',
   },
-
   image: {
     width: '100%',
     height: '100%',
   },
-
   loadingContainer: {
-    position: 'absolute',
-    width: '100%',
-    height: '100%',
+    ...StyleSheet.absoluteFillObject,
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: '#F5F5F5',
   },
-
   imagePlaceholder: {
     width: '100%',
     height: '100%',
@@ -156,92 +158,83 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: '#F5F5F5',
   },
-
-  // 底部信息区 - 白色背景
-  infoContainer: {
-    flex: 1,
-    padding: 12,
-    paddingTop: 14,
-    backgroundColor: '#FFFFFF',
-    borderBottomLeftRadius: 16,
-    borderBottomRightRadius: 16,
-  },
-
-  // 商家名称
-  title: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: '#1A1A1A',
-    lineHeight: 20,
-    marginBottom: 10,
-  },
-
-  // Earn 容器
-  earnContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 10,
-  },
-
-  // Earn 标签
-  earnBadge: {
-    backgroundColor: '#D4A054',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 6,
-    marginRight: 8,
-  },
-
-  earnText: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: '#FFFFFF',
-  },
-
-  // Q Points 容器
-  qPointsContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  categoryBadge: {
+    position: 'absolute',
+    top: 12,
+    left: 12,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    // backdropFilter removed as it is not supported in RN
     paddingHorizontal: 10,
     paddingVertical: 4,
-    borderWidth: 1,
-    borderColor: '#E5E5E5',
     borderRadius: 8,
-    gap: 6,
   },
-
-  // Q Logo
-  qLogo: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    backgroundColor: '#FF6B6B',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-
-  qLogoText: {
+  categoryText: {
+    color: '#FFF',
     fontSize: 10,
-    fontWeight: '700',
-    color: '#FFFFFF',
+    fontFamily: 'Poppins-Medium',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
 
-  pointsNumber: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#1A1A1A',
+  // Info Section
+  infoContainer: {
+    flex: 1,
+    padding: 16,
+    justifyContent: 'space-between',
   },
-
-  // 地址
+  title: {
+    fontFamily: 'Poppins-Bold',
+    fontSize: 17,
+    color: '#000',
+    lineHeight: 22,
+    marginBottom: 4,
+  },
   location: {
+    fontFamily: 'Poppins-Regular',
     fontSize: 12,
-    color: '#666',
-    marginBottom: 6,
+    color: '#8E8E93',
+    marginBottom: 12,
   },
 
-  // 价格
+  // Footer
+  footerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  rewardPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFF9F0', // Light Gold/Cream
+    paddingRight: 10,
+    paddingLeft: 4,
+    paddingVertical: 4,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#F5E6D3',
+  },
+  rewardIconBg: {
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    backgroundColor: '#FF7763', // Brand Primary
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 6,
+  },
+  rewardIconText: {
+    color: '#FFF',
+    fontSize: 10,
+    fontFamily: 'Poppins-Bold',
+  },
+  rewardText: {
+    color: '#D4A054', // Gold text
+    fontSize: 12,
+    fontFamily: 'Poppins-SemiBold',
+  },
   price: {
-    fontSize: 11,
-    color: '#999',
+    fontFamily: 'Poppins-Medium',
+    fontSize: 12,
+    color: '#C7C7CC',
   },
 });

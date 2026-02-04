@@ -134,7 +134,7 @@ const SettingRow: React.FC<SettingRowProps> = ({
         <View style={rowStyles.iconBackground}>
           <Ionicons
             name={icon}
-            size={22}
+            size={20}
             color={isDarkMode ? '#F9A889' : '#F9A889'}
           />
         </View>
@@ -180,7 +180,7 @@ export const ProfileHomeScreen: React.FC = () => {
   const isDarkMode = themeContext.isDarkMode;
   const insets = useSafeAreaInsets();
   const { user, isAuthenticated, logout, permissions } = useUser();
-  
+
   // 身份二维码状态
   const [showIdentityQR, setShowIdentityQR] = useState(false);
 
@@ -212,13 +212,13 @@ export const ProfileHomeScreen: React.FC = () => {
 
   // 退出登录确认模态框状态
   const [showLogoutModal, setShowLogoutModal] = useState(false);
-  
+
   // V2.0 获取分层配置
   const { getLayerConfig } = usePerformanceDegradation();
   const L1Config = getLayerConfig('L1', isDarkMode);
-  
+
   // 移除未使用的userStats变量
-  
+
   // VIP状态 - 无权益暂时隐藏
   const hasVipBenefits = false; // 有权益才显示
   const membershipStatus = hasVipBenefits ? 'vip' : 'free';
@@ -310,7 +310,7 @@ export const ProfileHomeScreen: React.FC = () => {
       );
       return;
     }
-    
+
     if (Platform.OS === 'ios') {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
@@ -380,7 +380,7 @@ export const ProfileHomeScreen: React.FC = () => {
       // 静默处理未登录状态，避免不必要的控制台警告
       return;
     }
-    
+
     try {
       setIsLoadingStats(true);
       console.log('📊 正在加载活动统计，用户信息:', {
@@ -402,13 +402,13 @@ export const ProfileHomeScreen: React.FC = () => {
   const loadVolunteerStats = async () => {
     // 获取用户ID，支持不同的字段名，并转换为数字
     const userIdString = user?.userId || user?.id;
-    const userIdToUse = userIdString ? parseInt(userIdString, 10) : undefined;
-    
+    const userIdToUse = userIdString ? parseInt(String(userIdString), 10) : undefined;
+
     if (!isAuthenticated || !userIdToUse || isNaN(userIdToUse)) {
       // 未登录或无有效用户ID，静默处理
       return;
     }
-    
+
     // 🆕 权限检查：只有staff及以上权限才能访问志愿者功能
     if (!permissions.hasVolunteerManagementAccess()) {
       // 普通用户不显示志愿者统计，设置为默认值
@@ -418,26 +418,26 @@ export const ProfileHomeScreen: React.FC = () => {
       });
       return;
     }
-    
+
     try {
       setIsLoadingVolunteerStats(true);
-      
+
       // 🆕 使用接口19：个人工时统计API - 仅限staff及以上权限
       try {
         const personalResponse = await getPersonalVolunteerHours(userIdToUse);
-        
+
         if (personalResponse.code === 200 && personalResponse.data) {
           const totalMinutes = personalResponse.data.totalMinutes || 0;
-          
+
           // 数据验证：确保totalMinutes是合法数字
           const validMinutes = typeof totalMinutes === 'number' && !isNaN(totalMinutes) && totalMinutes >= 0 ? totalMinutes : 0;
           const hours = Math.floor(validMinutes / 60);
-          
+
           setVolunteerStats({
             volunteerHours: hours,
             points: 0, // 积分接口暂无，保持为0
           });
-          
+
           console.log('✅ [PERSONAL-HOURS] 个人工时统计加载成功:', { totalMinutes: validMinutes, hours });
           return;
         } else {
@@ -445,33 +445,33 @@ export const ProfileHomeScreen: React.FC = () => {
         }
       } catch (personalError: any) {
         console.log('ℹ️ [PERSONAL-HOURS] 个人工时API无数据或调用失败，使用管理员API:', personalError.message);
-        
+
         // Fallback: 使用原来的管理员工时API（向后兼容）
         const response = await getVolunteerHours({ userId: userIdToUse });
-        
+
         if (response.code === 200 && response.rows) {
           // 增强的类型验证
           const volunteerData = Array.isArray(response.rows) ? response.rows as VolunteerHours[] : [];
-          
+
           // 计算当前用户的总工时，增加数据验证
-          const userHours = volunteerData.find(v => 
-            v && 
-            typeof v === 'object' && 
-            typeof v.userId === 'number' && 
+          const userHours = volunteerData.find(v =>
+            v &&
+            typeof v === 'object' &&
+            typeof v.userId === 'number' &&
             v.userId === userIdToUse
           );
-          
+
           const totalMinutes = userHours?.totalMinutes || 0;
-          
+
           // 数据验证：确保totalMinutes是合法数字
           const validMinutes = typeof totalMinutes === 'number' && !isNaN(totalMinutes) && totalMinutes >= 0 ? totalMinutes : 0;
           const hours = Math.floor(validMinutes / 60);
-          
+
           setVolunteerStats({
             volunteerHours: hours,
             points: 0, // 积分接口暂无，保持为0
           });
-          
+
           console.log('🔍 ✅ 志愿者统计加载成功(fallback):', { totalMinutes: validMinutes, hours });
         } else {
           console.log('🔍 志愿者统计无数据或接口失败:', response.msg || '未知错误');
@@ -519,7 +519,7 @@ export const ProfileHomeScreen: React.FC = () => {
   useEffect(() => {
     console.log('🔄 [PROFILE-INIT] 页面首次加载，获取统计数据');
     const userIdString = user?.userId || user?.id;
-    const userIdToUse = userIdString ? parseInt(userIdString, 10) : undefined;
+    const userIdToUse = userIdString ? parseInt(String(userIdString), 10) : undefined;
     if (isAuthenticated && userIdToUse && !isNaN(userIdToUse)) {
       loadActivityStats();
       loadVolunteerStats();
@@ -532,7 +532,7 @@ export const ProfileHomeScreen: React.FC = () => {
     useCallback(() => {
       console.log('📱 [PROFILE-FOCUS] 页面获得焦点，刷新统计数据');
       const userIdString = user?.userId || user?.id;
-      const userIdToUse = userIdString ? parseInt(userIdString, 10) : undefined;
+      const userIdToUse = userIdString ? parseInt(String(userIdString), 10) : undefined;
       if (isAuthenticated && userIdToUse && !isNaN(userIdToUse)) {
         // ✅ 清空缓存，确保获取最新数据
         apiCache.clearByPattern('userInfo:');
@@ -555,7 +555,7 @@ export const ProfileHomeScreen: React.FC = () => {
         userId: user?.id,
         timestamp: new Date().toISOString()
       });
-      
+
       if (isAuthenticated) {
         console.log('🔄 [ProfileHome] 开始刷新活动统计数据');
         loadActivityStats();
@@ -583,7 +583,7 @@ export const ProfileHomeScreen: React.FC = () => {
 
     // 导航到历史记录页面
     const userIdString = user?.userId || user?.id;
-    const userIdToUse = userIdString ? parseInt(userIdString, 10) : undefined;
+    const userIdToUse = userIdString ? parseInt(String(userIdString), 10) : undefined;
 
     if (userIdToUse && !isNaN(userIdToUse)) {
       navigation.navigate('VolunteerHistory', {
@@ -602,11 +602,11 @@ export const ProfileHomeScreen: React.FC = () => {
       是否Staff: permissions.isStaff(),
       志愿者小时: volunteerStats?.volunteerHours
     });
-    
+
     if (Platform.OS === 'ios') {
       Haptics.selectionAsync();
     }
-    
+
     // 所有有志愿者权限的用户都跳转到志愿者管理页面
     navigation.navigate('VolunteerHome');
   }, [user, permissions, volunteerStats, navigation]);
@@ -625,7 +625,7 @@ export const ProfileHomeScreen: React.FC = () => {
     try {
       // 使用 UserContext 的 logout 方法来正确清理所有状态
       await logout();
-      
+
       // 在状态清理后，重置导航到认证页面
       navigation.reset({
         index: 0,
@@ -671,7 +671,7 @@ export const ProfileHomeScreen: React.FC = () => {
       flex: 1,
       backgroundColor: isDarkMode ? '#000000' : '#F5F5F5', // 浅灰背景
     },
-    
+
     // V2.0 背景层设计 - 避免与容器冲突
     backgroundLayer: {
       position: 'absolute',
@@ -696,9 +696,9 @@ export const ProfileHomeScreen: React.FC = () => {
       flex: 1,
     },
     contentContainer: {
-      paddingHorizontal: 16,
-      paddingTop: 20,
-      paddingBottom: 56 + 12 + insets.bottom - 20, // Tab bar height + margin + safe area - 20px向上调整
+      paddingHorizontal: 20,
+      paddingTop: 10,
+      paddingBottom: 56 + 12 + insets.bottom,
     },
 
     // 访客卡片样式
@@ -739,12 +739,11 @@ export const ProfileHomeScreen: React.FC = () => {
 
     // 统计卡片网格样式
     statsGrid: {
-      marginBottom: 16,
+      marginBottom: 20,
     },
     statsRow: {
       flexDirection: 'row',
-      marginBottom: 12,
-      gap: 6,
+      gap: 10,
     },
     statCardWrapper: {
       flex: 1,
@@ -754,23 +753,22 @@ export const ProfileHomeScreen: React.FC = () => {
     },
     listContainer: {
       backgroundColor: isDarkMode ? '#2C2C2E' : '#FFFFFF',
-      borderRadius: 12,
-      marginTop: 0,
-      marginBottom: 8,
+      borderRadius: 16,
+      marginBottom: 16,
       overflow: 'hidden',
       ...Platform.select({
         ios: {
           shadowColor: '#000000',
-          shadowOffset: { width: 0, height: 1 },
+          shadowOffset: { width: 0, height: 2 },
           shadowOpacity: 0.05,
-          shadowRadius: 4,
+          shadowRadius: 8,
         },
         android: {
           elevation: 2,
         },
       }),
     },
-    
+
     // 小红书风格个人信息卡
     personalInfoShadowContainer: {
       backgroundColor: '#FFFFFF',
@@ -784,22 +782,24 @@ export const ProfileHomeScreen: React.FC = () => {
       elevation: 2,
       overflow: 'hidden',
     },
-    
+
     // 我的活动区 - 美团风格
     activitySection: {
       marginVertical: 8, // 恢复原来的间距
     },
     sectionTitle: {
-      fontSize: 18,
+      fontSize: 14,
       fontWeight: '600',
-      color: isDarkMode ? '#FFFFFF' : '#000000',
-      marginBottom: 12,
+      color: isDarkMode ? '#FFFFFF' : '#6B7280',
+      marginBottom: 8,
       marginLeft: 4,
+      textTransform: 'uppercase',
+      letterSpacing: 0.5,
     },
     // 区域标题头部
     sectionHeader: {
       flexDirection: 'row',
-      alignItems: 'center', 
+      alignItems: 'center',
       justifyContent: 'space-between',
       marginBottom: 12,
       marginHorizontal: 4,
@@ -809,7 +809,7 @@ export const ProfileHomeScreen: React.FC = () => {
       color: '#6B7280', // 中性灰色
       fontWeight: '500',
     },
-    
+
     activityContainer: {
       backgroundColor: 'rgba(255, 255, 255, 0.85)', // L1玻璃背景
       borderRadius: 20, // 20pt圆角统一
@@ -848,7 +848,7 @@ export const ProfileHomeScreen: React.FC = () => {
       justifyContent: 'center',
       marginBottom: 8,
     },
-    
+
     // 列间分隔线
     activitySeparator: {
       width: 1,
@@ -869,7 +869,7 @@ export const ProfileHomeScreen: React.FC = () => {
       fontWeight: '600',
       color: isDarkMode ? '#FFFFFF' : '#000000',
     },
-    
+
     // 会员卡L1玻璃设计
     membershipSection: {
       marginVertical: 8, // 恢复原来的间距
@@ -988,7 +988,7 @@ export const ProfileHomeScreen: React.FC = () => {
       color: '#374151',
       marginLeft: 6,
     },
-    
+
     // 核心服务区 - 2x2网格
     servicesSection: {
       marginVertical: 8,
@@ -1030,7 +1030,7 @@ export const ProfileHomeScreen: React.FC = () => {
       fontSize: 12,
       color: '#666',
     },
-    
+
     // 快捷工具网格 - 2x3网格
     toolsSection: {
       marginVertical: 8,
@@ -1067,7 +1067,7 @@ export const ProfileHomeScreen: React.FC = () => {
       color: '#000',
       textAlign: 'center',
     },
-    
+
     // 设置区域
     settingsSection: {
       marginTop: 12, // 🔧 增加上边距，与"我的活动"→"我的会员"间距保持一致
@@ -1081,7 +1081,7 @@ export const ProfileHomeScreen: React.FC = () => {
       paddingHorizontal: 4,
       marginBottom: 2, // 🔧 从8减少到2，缩短标题与卡片的距离
     },
-    
+
     // V2.0 中性写评价按钮
     writeReviewButtonL2: {
       backgroundColor: 'rgba(107, 114, 128, 0.15)', // 中性灰色背景
@@ -1100,7 +1100,7 @@ export const ProfileHomeScreen: React.FC = () => {
       color: '#374151', // 深灰色文字
       marginLeft: 4,
     },
-    
+
     // V2.0 评价卡片列表样式
     reviewList: {
       // 列表容器
@@ -1160,7 +1160,7 @@ export const ProfileHomeScreen: React.FC = () => {
       color: '#9CA3AF',
       marginLeft: 'auto',
     },
-    
+
     // 空状态样式
     emptyStateContainer: {
       alignItems: 'center',
@@ -1180,7 +1180,7 @@ export const ProfileHomeScreen: React.FC = () => {
       color: '#9CA3AF',
       textAlign: 'center',
     },
-    
+
     // Logout section styles
     logoutSection: {
       marginTop: 8, // 适当的上边距
@@ -1212,7 +1212,7 @@ export const ProfileHomeScreen: React.FC = () => {
       fontWeight: '600',
       color: isDarkMode ? '#FF453A' : '#DC2626',
     },
-    
+
   });
 
   return (
@@ -1222,7 +1222,7 @@ export const ProfileHomeScreen: React.FC = () => {
           style={styles.scrollView}
           contentContainerStyle={styles.contentContainer}
           showsVerticalScrollIndicator={false}
-          onScroll={() => {}} // Explicit empty handler to prevent propagation issues
+          onScroll={() => { }} // Explicit empty handler to prevent propagation issues
           scrollEventThrottle={16}
         >
           {/* 个人信息卡片 - 仅登录用户显示 */}
@@ -1259,7 +1259,9 @@ export const ProfileHomeScreen: React.FC = () => {
                 <StatCard
                   label={t('profile.volunteer_hours_short')}
                   value={isAuthenticated && user?.id ? volunteerStats.volunteerHours : '--'}
-                  showArrow={true}
+                  icon="time-outline"
+                  iconColor="#FF6B35"
+                  iconBackgroundColor="rgba(255, 107, 53, 0.1)"
                   onPress={isAuthenticated && user?.id ? handleVolunteerHoursPress : handleUnauthenticatedPress}
                 />
               </View>
@@ -1267,7 +1269,9 @@ export const ProfileHomeScreen: React.FC = () => {
                 <StatCard
                   label={t('profile.not_participated')}
                   value={isAuthenticated && user?.id ? activityStats.notParticipated : '--'}
-                  showArrow={true}
+                  icon="document-text-outline"
+                  iconColor="#4A90E2"
+                  iconBackgroundColor="rgba(74, 144, 226, 0.1)"
                   onPress={isAuthenticated && user?.id ? handleNotCheckedInPress : handleUnauthenticatedPress}
                 />
               </View>
@@ -1275,7 +1279,9 @@ export const ProfileHomeScreen: React.FC = () => {
                 <StatCard
                   label={t('profile.participated')}
                   value={isAuthenticated && user?.id ? activityStats.participated : '--'}
-                  showArrow={true}
+                  icon="checkmark-circle-outline"
+                  iconColor="#FF6B6B"
+                  iconBackgroundColor="rgba(255, 107, 107, 0.1)"
                   onPress={isAuthenticated && user?.id ? handleCheckedInPress : handleUnauthenticatedPress}
                 />
               </View>
@@ -1354,50 +1360,50 @@ export const ProfileHomeScreen: React.FC = () => {
               <Text style={styles.sectionTitle}>{t('profile.settings_and_help', '设置与帮助')}</Text>
             </View>
             <View style={styles.listContainer}>
-            {(settingItems || []).map((item, index) => (
-              <SettingRow
-                key={item.id}
-                title={item.title}
-                icon={item.icon}
-                onPress={item.onPress}
-                badgeCount={item.badgeCount}
-                isLast={index === settingItems.length - 1}
-              />
-            ))}
+              {(settingItems || []).map((item, index) => (
+                <SettingRow
+                  key={item.id}
+                  title={item.title}
+                  icon={item.icon}
+                  onPress={item.onPress}
+                  badgeCount={item.badgeCount}
+                  isLast={index === settingItems.length - 1}
+                />
+              ))}
             </View>
           </View>
 
           {/* Logout Button - 只有登录用户才显示 */}
           {isAuthenticated && (
             <View style={styles.logoutSection}>
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={styles.logoutButton}
                 onPress={handleLogout}
                 activeOpacity={0.7}
               >
-                <Ionicons 
-                  name="log-out-outline" 
-                  size={20} 
-                  color="#DC2626" 
+                <Ionicons
+                  name="log-out-outline"
+                  size={20}
+                  color="#DC2626"
                   style={styles.logoutIcon}
                 />
                 <Text style={styles.logoutText}>{t('profile.account.logout')}</Text>
               </TouchableOpacity>
-              
+
             </View>
           )}
-          
+
           {/* 未登录时显示登录按钮 */}
           {!isAuthenticated && (
             <View style={styles.logoutSection}>
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={[styles.logoutButton, { borderColor: theme.colors.primary }]}
                 onPress={() => navigation.navigate('Login')}
                 activeOpacity={0.7}
               >
-                <Ionicons 
-                  name="log-in-outline" 
-                  size={20} 
+                <Ionicons
+                  name="log-in-outline"
+                  size={20}
                   color={theme.colors.primary}
                   style={styles.logoutIcon}
                 />

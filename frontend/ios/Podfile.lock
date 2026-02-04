@@ -14,7 +14,7 @@ PODS:
   - EXJSONUtils (0.14.0)
   - EXManifests (0.15.8):
     - ExpoModulesCore
-  - Expo (52.0.47):
+  - Expo (52.0.48):
     - ExpoModulesCore
   - expo-dev-client (5.0.20):
     - EXManifests
@@ -1879,7 +1879,7 @@ PODS:
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
     - Yoga
-  - RNLocalize (3.5.1):
+  - RNLocalize (3.6.1):
     - React-Core
   - RNReanimated (3.16.7):
     - DoubleConversion
@@ -2330,7 +2330,7 @@ SPEC CHECKSUMS:
   EXImageLoader: e5da974e25b13585c196b658a440720c075482d5
   EXJSONUtils: 01fc7492b66c234e395dcffdd5f53439c5c29c93
   EXManifests: a19d50504b8826546a4782770317bc83fffec87d
-  Expo: 1687edb10c76b0c0f135306d6ae245379f50ed54
+  Expo: 3889933926fade17d8607f449c57b87c4022433f
   expo-dev-client: db44302cdbe0ec55b0ef1849c9a23a76dec6dbac
   expo-dev-launcher: 7fce0956aaa7f44742edf09f9d1420a4906a54c7
   expo-dev-menu: db64396698d88d0b65490467801eb8299c3f04b4
@@ -2419,7 +2419,7 @@ SPEC CHECKSUMS:
   RNDateTimePicker: 818460dc31b0dc5ec58289003e27dd8d022fb79c
   RNFastImage: 462a183c4b0b6b26fdfd639e1ed6ba37536c3b87
   RNGestureHandler: 5f6ac390363304cc91c18f064d5426c9a0cc117c
-  RNLocalize: 60ebbb668e46d3b9f276aaf2db8ae5353b84e514
+  RNLocalize: 0a9ffe84f0d25cf2fb0abacd4d7491a06e78ced2
   RNReanimated: b4130128f9ea5f1d6005fe3f5b6f94b7112d2613
   RNScreens: d34484f307f9b897625807d83c1613691f7aab84
   RNSVG: 8542aa11770b27563714bbd8494a8436385fc85f

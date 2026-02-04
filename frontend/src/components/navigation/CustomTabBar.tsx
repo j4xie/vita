@@ -45,10 +45,10 @@ interface CustomTabBarProps extends BottomTabBarProps {
   // 可以添加额外的自定义属性
 }
 
-export const CustomTabBar: React.FC<CustomTabBarProps> = ({ 
-  state, 
-  descriptors, 
-  navigation 
+export const CustomTabBar: React.FC<CustomTabBarProps> = ({
+  state,
+  descriptors,
+  navigation
 }) => {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
@@ -80,14 +80,14 @@ export const CustomTabBar: React.FC<CustomTabBarProps> = ({
   const highlightGain = useSharedValue(1);
   const rainbowGain = useSharedValue(1);
   const whiteRingOpacity = useSharedValue(0);
-  
+
   // 手势状态
   const [isDragging, setIsDragging] = useState(false);
   const [previewTabIndex, setPreviewTabIndex] = useState(-1);
   const longPressRef = useRef(null);
   const panRef = useRef(null);
   const watchdogTimer = useRef<NodeJS.Timeout | null>(null);
-  
+
   // Check accessibility preferences
   useEffect(() => {
     AccessibilityInfo.isReduceMotionEnabled().then(setIsReduceMotionEnabled);
@@ -109,7 +109,7 @@ export const CustomTabBar: React.FC<CustomTabBarProps> = ({
     highlightGain.value = withTiming(1, { duration: 180 });
     rainbowGain.value = withTiming(1, { duration: 180 });
     whiteRingOpacity.value = withTiming(0, { duration: 180 });
-    
+
     runOnJS(() => {
       setIsDragging(false);
       setPreviewTabIndex(-1);
@@ -138,27 +138,27 @@ export const CustomTabBar: React.FC<CustomTabBarProps> = ({
     },
     onActive: (event) => {
       console.log('🫧 长按成功，进入拖拽模式');
-      
+
       // 计算初始位置 (UI线程)
       const screenWidth = Dimensions.get('window').width;
       const tabBarWidth = screenWidth - 32;
       const tabWidth = tabBarWidth / 5;
       const currentIndex = targetTabIndex.value;
       const initialCenterX = tabWidth * currentIndex + tabWidth / 2;
-      
+
       // 显示拖拽气泡
       dragBubbleVisible.value = 1;
       bubbleX.value = initialCenterX - 39; // 78pt宽度的一半
-      
+
       // 1.06倍放大 + 高亮增强 (150ms)
       bubbleScale.value = withTiming(1.06, { duration: 150 });
       highlightGain.value = withTiming(1.2, { duration: 150 });
       rainbowGain.value = withTiming(1.2, { duration: 150 });
       whiteRingOpacity.value = withTiming(1, { duration: 150 });
-      
+
       // 启动看门狗
       runOnJS(startWatchdog)();
-      
+
       // 触觉反馈
       runOnJS(() => {
         if (Platform.OS === 'ios') {
@@ -188,31 +188,31 @@ export const CustomTabBar: React.FC<CustomTabBarProps> = ({
     },
     onActive: (event) => {
       if (dragBubbleVisible.value === 0) return;
-      
+
       // 立即解构，避免事件复用错误
       const translationX = event.translationX;
-      
+
       // 计算目标Tab (目标-跟随者模型)
       const screenWidth = Dimensions.get('window').width;
       const tabBarWidth = screenWidth - 32;
       const tabWidth = tabBarWidth / 5;
       const currentIndex = targetTabIndex.value;
       const currentCenterX = tabWidth * currentIndex + tabWidth / 2;
-      
+
       // 计算新的目标Tab
       const newTargetX = currentCenterX + translationX;
       const newTargetIndex = Math.round(newTargetX / tabWidth);
       const clampedIndex = Math.max(0, Math.min(newTargetIndex, 4));
-      
+
       // 目标位置 (磁吸中心)
       const targetBubbleX = tabWidth * clampedIndex + tabWidth / 2 - 39;
-      
+
       // 弹簧追随 (粘滞感) - damping:21, stiffness:240
       bubbleX.value = withSpring(targetBubbleX, {
         damping: 21,
         stiffness: 240,
       });
-      
+
       // 预览反馈
       if (clampedIndex !== targetTabIndex.value) {
         targetTabIndex.value = clampedIndex;
@@ -254,16 +254,16 @@ export const CustomTabBar: React.FC<CustomTabBarProps> = ({
   // 高光扫过动画
   const triggerHighlightSweep = useCallback(() => {
     if (isReduceMotionEnabled) return;
-    
+
     highlightSweepX.value = -100;
     highlightOpacity.value = 0;
-    
+
     // 扫光从左至右，时长 250ms
     highlightSweepX.value = withTiming(400, {
       duration: 250,
       easing: Easing.out(Easing.quad),
     });
-    
+
     highlightOpacity.value = withSequence(
       withTiming(0.08, { duration: 80 }), // 淡入
       withTiming(0.08, { duration: 90 }), // 保持
@@ -271,20 +271,23 @@ export const CustomTabBar: React.FC<CustomTabBarProps> = ({
     );
   }, [isReduceMotionEnabled]);
 
-  // 每个Tab的动画值
-  const tabScales = useRef(
-    Array.from({ length: 5 }, () => useSharedValue(1))
-  ).current;
-  
+  // 每个Tab的动画值 - 必须在顶层调用所有hooks
+  const tabScale0 = useSharedValue(1);
+  const tabScale1 = useSharedValue(1);
+  const tabScale2 = useSharedValue(1);
+  const tabScale3 = useSharedValue(1);
+  const tabScale4 = useSharedValue(1);
+  const tabScales = useRef([tabScale0, tabScale1, tabScale2, tabScale3, tabScale4]).current;
+
   // Tab点击处理 - 增强动画反馈
   const handleTabPress = useCallback((route: any, isFocused: boolean) => {
     console.log('🔥 Tab clicked:', route.name, 'isFocused:', isFocused);
-    
+
     const tabIndex = state.routes.findIndex(r => r.key === route.key);
-    
+
     // 触发高光扫过
     triggerHighlightSweep();
-    
+
     // 增强的点击反馈动画
     if (!isFocused && tabIndex >= 0 && tabIndex < tabScales.length) {
       // 当前Tab的弹跳动画
@@ -294,7 +297,7 @@ export const CustomTabBar: React.FC<CustomTabBarProps> = ({
         withTiming(1.0, { duration: 150, easing: Easing.out(Easing.cubic) })
       );
     }
-    
+
     // 全局TabBar轻微震动效果
     if (!isFocused) {
       tabBarTranslateY.value = withSequence(
@@ -302,7 +305,7 @@ export const CustomTabBar: React.FC<CustomTabBarProps> = ({
         withSpring(0, { damping: 15, stiffness: 300 })
       );
     }
-    
+
     // iOS Haptic反馈
     if (Platform.OS === 'ios') {
       try {
@@ -311,7 +314,7 @@ export const CustomTabBar: React.FC<CustomTabBarProps> = ({
         console.warn('Haptics not available:', error);
       }
     }
-    
+
     const event = navigation.emit({
       type: 'tabPress',
       target: route.key,
@@ -320,7 +323,7 @@ export const CustomTabBar: React.FC<CustomTabBarProps> = ({
 
     if (!isFocused && !event.defaultPrevented) {
       console.log('🚀 Navigating to:', route.name);
-      
+
       // Tab切换触觉反馈
       try {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -328,7 +331,7 @@ export const CustomTabBar: React.FC<CustomTabBarProps> = ({
         console.warn('Haptics not available:', error);
       }
       console.log('🔥 Tab切换:', route.name);
-      
+
       navigation.navigate(route.name, route.params);
     } else if (isFocused && route.name === 'Explore') {
       console.log('📜 Scroll to top and refresh');
@@ -350,9 +353,9 @@ export const CustomTabBar: React.FC<CustomTabBarProps> = ({
       // 🔍 获取当前页面路由名
       const currentRoute = state.routes[state.index];
       const currentRouteName = currentRoute?.name || 'unknown';
-      
+
       console.log('⌨️ [KEYBOARD] 键盘弹出，当前页面:', currentRouteName);
-      
+
       // 🛡️ 只有在应该显示TabBar的页面才隐藏TabBar（避免在已隐藏的页面重复操作）
       if (shouldShowTabBar(currentRouteName)) {
         console.log('⌨️ [KEYBOARD] 隐藏TabBar');
@@ -361,14 +364,14 @@ export const CustomTabBar: React.FC<CustomTabBarProps> = ({
         console.log('⌨️ [KEYBOARD] 页面已隐藏TabBar，无需处理');
       }
     };
-    
+
     const keyboardWillHide = () => {
       // 🔍 获取当前页面路由名
       const currentRoute = state.routes[state.index];
       const currentRouteName = currentRoute?.name || 'unknown';
-      
+
       console.log('⌨️ [KEYBOARD] 键盘收起，当前页面:', currentRouteName);
-      
+
       // 🛡️ 只有在应该显示TabBar的页面才恢复TabBar
       if (shouldShowTabBar(currentRouteName)) {
         console.log('⌨️ [KEYBOARD] 恢复TabBar');
@@ -377,7 +380,7 @@ export const CustomTabBar: React.FC<CustomTabBarProps> = ({
         console.log('⌨️ [KEYBOARD] 页面应隐藏TabBar，保持隐藏状态');
       }
     };
-    
+
     const showSubscription = Keyboard.addListener(
       Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
       keyboardWillShow
@@ -386,7 +389,7 @@ export const CustomTabBar: React.FC<CustomTabBarProps> = ({
       Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide',
       keyboardWillHide
     );
-    
+
     return () => {
       showSubscription?.remove();
       hideSubscription?.remove();
@@ -465,7 +468,7 @@ export const CustomTabBar: React.FC<CustomTabBarProps> = ({
     borderColor: `rgba(255, 255, 255, ${whiteRingOpacity.value})`,
     shadowOpacity: whiteRingOpacity.value * 0.12,
   }));
-  
+
   // TabBar 容器动画样式
   const tabBarContainerAnimatedStyle = useAnimatedStyle(() => ({
     transform: [
@@ -480,10 +483,10 @@ export const CustomTabBar: React.FC<CustomTabBarProps> = ({
   // 🚨 检查tabBarStyle.display，如果设置为none则不渲染TabBar
   const tabBarStyle = descriptors[currentRoute?.key]?.options?.tabBarStyle;
   const shouldHideByStyle = tabBarStyle && typeof tabBarStyle === 'object' && 'display' in tabBarStyle && tabBarStyle.display === 'none';
-  
+
   // 🛡️ 双重保护：使用实际焦点路由名称检查是否应该显示TabBar
   const shouldShowByConfig = shouldShowTabBar(focusedRouteName);
-  
+
   console.log('🔍 [CUSTOM-TABBAR] TabBar渲染检查:', {
     tabRouteName: currentRoute?.name,
     focusedRouteName,
@@ -492,7 +495,7 @@ export const CustomTabBar: React.FC<CustomTabBarProps> = ({
     finalDecision: shouldHideByStyle ? 'style-hide' : (shouldShowByConfig ? 'show' : 'config-hide'),
     tabBarStyle
   });
-  
+
   // 🚨 最终决策：样式隐藏 OR 配置不允许显示 = 隐藏
   if (shouldHideByStyle || !shouldShowByConfig) {
     console.log('🚫 [CUSTOM-TABBAR] TabBar隐藏 -', shouldHideByStyle ? 'Style隐藏' : `配置不允许显示(${focusedRouteName})`);
@@ -501,8 +504,8 @@ export const CustomTabBar: React.FC<CustomTabBarProps> = ({
 
   return (
     <Animated.View style={[
-      styles.container, 
-      { bottom: insets.bottom - 7 }, // 再往下移动5px (从-2改为-7)
+      styles.container,
+      { bottom: insets.bottom - 6 },
       animatedTabBarStyle,
       isFilterOpen && styles.hidden
     ]}>
@@ -514,23 +517,23 @@ export const CustomTabBar: React.FC<CustomTabBarProps> = ({
           style={styles.blurBackground}
           tint="light"
         />
-        
+
         {/* 顶部高光分隔线 */}
-        <LinearGradient 
+        <LinearGradient
           colors={[Glass.hairlineFrom, Glass.hairlineTo]}
-          start={{ x: 0, y: 0 }} 
-          end={{ x: 0, y: 1 }} 
+          start={{ x: 0, y: 0 }}
+          end={{ x: 0, y: 1 }}
           style={styles.hairline}
         />
-        
+
         {/* 白系叠色渐变 */}
-        <LinearGradient 
+        <LinearGradient
           colors={[Glass.overlayTop, Glass.overlayBottom]}
-          start={{ x: 0, y: 0 }} 
+          start={{ x: 0, y: 0 }}
           end={{ x: 0, y: 1 }}
           style={styles.overlay}
         />
-        
+
         {/* 高光扫过效果 */}
         <Animated.View style={[styles.sweepHighlight, highlightSweepAnimatedStyle]} pointerEvents="none">
           <LinearGradient
@@ -551,79 +554,79 @@ export const CustomTabBar: React.FC<CustomTabBarProps> = ({
           {/* 4个普通Tab + 中间占位符 */}
           <View style={styles.normalTabsContainer}>
             {state.routes.map((route, index) => {
-            if (!route || !route.key) return null;
+              if (!route || !route.key) return null;
 
-            const descriptor = descriptors[route.key];
-            if (!descriptor) return null;
+              const descriptor = descriptors[route.key];
+              if (!descriptor) return null;
 
-            const { options } = descriptor;
-            const isFocused = state.index === index;
+              const { options } = descriptor;
+              const isFocused = state.index === index;
 
-            // 🎯 Rewards Tab - 渲染占位符，实际按钮在外部浮动渲染
-            if (route.name === 'Rewards') {
-              return <View key={route.key} style={styles.centerPlaceholder} />;
-            }
+              // 🎯 Rewards Tab - 渲染占位符，实际按钮在外部浮动渲染
+              if (route.name === 'Rewards') {
+                return <View key={route.key} style={styles.centerPlaceholder} />;
+              }
 
-            // 普通Tab渲染
-            const iconName = getIconName(route.name, isFocused);
-            const label = getTabLabel(route.name);
+              // 普通Tab渲染
+              const iconName = getIconName(route.name, isFocused);
+              const label = getTabLabel(route.name);
 
-            // 简化Tab动画，避免scale错误
-            const tabAnimatedStyle = { transform: [{ scale: 1 }] };
+              // 简化Tab动画，避免scale错误
+              const tabAnimatedStyle = { transform: [{ scale: 1 }] };
 
-            return (
-              <Animated.View
-                key={route.key}
-                style={[styles.tabContainer, tabAnimatedStyle]}
-              >
-                {/* 移除选中气泡背景 */}
-
-                {/* 触摸区域 - 拖拽时禁用点击 */}
-                <TouchableOpacity
-                  accessibilityRole="tab"
-                  accessibilityState={isFocused ? { selected: true } : {}}
-                  accessibilityLabel={`${label}${isFocused ? ', selected' : ''}`}
-                  onPress={() => handleTabPress(route, isFocused)}
-                  disabled={isDragging} // 拖拽时禁用点击
-                  style={styles.tabTouchable}
-                  activeOpacity={0.7}
+              return (
+                <Animated.View
+                  key={route.key}
+                  style={[styles.tabContainer, tabAnimatedStyle]}
                 >
-                  <View style={styles.tabContent}>
-                    {/* 图标 - 简化动画避免scale错误 */}
-                    <View style={styles.iconContainer}>
-                      <Ionicons
-                        name={iconName}
-                        size={isFocused ? 20 : 18}
-                        color={isFocused ? '#007AFF' : '#000000'}
-                        style={styles.tabIcon}
-                      />
-                    </View>
+                  {/* 移除选中气泡背景 */}
 
-                    {/* 文字 - 简化避免动画错误 */}
-                    <Text
-                      style={[
-                        styles.tabLabel,
-                        {
-                          color: isFocused ? '#007AFF' : '#000000',
-                          opacity: isFocused ? 1.0 : 0.7,
-                          fontWeight: isFocused ? '600' : '500',
-                        }
-                      ]}
-                      numberOfLines={1}
-                      adjustsFontSizeToFit={true}
-                      minimumFontScale={0.7}
-                      allowFontScaling={true}
-                    >
-                      {label}
-                    </Text>
-                  </View>
-                </TouchableOpacity>
-              </Animated.View>
-            );
-          })}
+                  {/* 触摸区域 - 拖拽时禁用点击 */}
+                  <TouchableOpacity
+                    accessibilityRole="tab"
+                    accessibilityState={isFocused ? { selected: true } : {}}
+                    accessibilityLabel={`${label}${isFocused ? ', selected' : ''}`}
+                    onPress={() => handleTabPress(route, isFocused)}
+                    disabled={isDragging} // 拖拽时禁用点击
+                    style={styles.tabTouchable}
+                    activeOpacity={0.7}
+                  >
+                    <View style={styles.tabContent}>
+                      {/* 图标 - 简化动画避免scale错误 */}
+                      <View style={styles.iconContainer}>
+                        <Ionicons
+                          name={iconName}
+                          size={isFocused ? 20 : 18}
+                          color={isFocused ? '#FF8A72' : '#8C8C8C'}
+                          style={styles.tabIcon}
+                        />
+                      </View>
+
+                      {/* 文字 - 简化避免动画错误 */}
+                      <Text
+                        style={[
+                          styles.tabLabel,
+                          {
+                            color: isFocused ? '#FF8A72' : '#8C8C8C',
+                            opacity: isFocused ? 1.0 : 0.9,
+                            fontWeight: isFocused ? '600' : '500',
+                          }
+                        ]}
+                        numberOfLines={1}
+                        adjustsFontSizeToFit={true}
+                        minimumFontScale={0.7}
+                        allowFontScaling={true}
+                      >
+                        {label}
+                      </Text>
+                    </View>
+                  </TouchableOpacity>
+                </Animated.View>
+              );
+            })}
           </View>
         </Animated.View>
-        
+
         {/* 边框层 */}
         <View style={styles.borderLayer} pointerEvents="none" />
       </View>
@@ -656,14 +659,14 @@ const styles = StyleSheet.create({
     position: 'absolute',
     left: 16,
     right: 16,
-    height: 66,
+    height: 62,
     zIndex: 999,
     backgroundColor: 'transparent', // 恢复透明背景保持玻璃效果
     shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 4 }, // Reduced from 8 to 4
-    shadowOpacity: 0.08, // Reduced from 0.15 to 0.08
-    shadowRadius: 8, // Reduced from 16 to 8
-    elevation: 4, // Reduced from 8 to 4
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.06,
+    shadowRadius: 6,
+    elevation: 3,
   },
 
   liquidGlassContainer: {
@@ -709,7 +712,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between', // 恢复为space-between，让Tab居中
     backgroundColor: 'transparent',
-    paddingVertical: 6, // 从8pt减到6pt，优化垂直分布
+    paddingVertical: 4,
     paddingHorizontal: 8, // 给搜索按钮留出空间
     height: '100%',
     position: 'absolute',
@@ -740,7 +743,7 @@ const styles = StyleSheet.create({
 
   // 图标容器 - 5-tab布局优化间距
   iconContainer: {
-    marginBottom: 3, // 5-tab布局：减小到3pt以节省空间
+    marginBottom: 2,
     // transform在JSX中动态设置
   },
 
@@ -748,8 +751,8 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 6, // 从8pt减到6pt
-    paddingVertical: 12, // 从8pt增加到12pt，增加垂直空间
+    paddingHorizontal: 6,
+    paddingVertical: 10,
     minHeight: 48,
     minWidth: 44,
   },
@@ -757,8 +760,8 @@ const styles = StyleSheet.create({
   tabContent: {
     alignItems: 'center',
     justifyContent: 'center', // 改回center，使用marginBottom控制间距
-    height: 46, // 5-tab布局：减小高度以适配更紧凑的设计
-    paddingVertical: 4, // 5-tab布局：减小垂直内边距
+    height: 44,
+    paddingVertical: 3,
   },
 
   tabIcon: {
@@ -766,10 +769,10 @@ const styles = StyleSheet.create({
   },
 
   tabLabel: {
-    fontSize: Platform.OS === 'ios' && (Dimensions.get('window').width >= 768) ? 24 : 10, // 5-tab布局：手机端10pt，iPad保持24pt
+    fontSize: Platform.OS === 'ios' && (Dimensions.get('window').width >= 768) ? 24 : 9,
     fontWeight: '500', // Medium字重
     textAlign: 'center',
-    lineHeight: Platform.OS === 'ios' && (Dimensions.get('window').width >= 768) ? 30 : 13, // 5-tab布局：手机端13pt行高
+    lineHeight: Platform.OS === 'ios' && (Dimensions.get('window').width >= 768) ? 30 : 12,
     // transform和color在JSX中动态设置
   },
 

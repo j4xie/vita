@@ -120,8 +120,7 @@ export const TermsScreen: React.FC = () => {
 7. 争议解决
 
 如有争议，建议通过以下方式解决：
-• 发送邮件至：info@americanpromotioncompany.com
-• 通过应用内客服系统联系
+• info@chineseunion.org
 • 协商不成的，可向有管辖权的人民法院提起诉讼
 
 8. 条款变更
@@ -130,8 +129,7 @@ export const TermsScreen: React.FC = () => {
 
 9. 联系方式
 
-技术支持：info@americanpromotioncompany.com
-法律事务：dev@americanpromotioncompany.com
+技术支持：info@chineseunion.org
 客服时间：周一至周五 9:00-18:00 (北京时间)
 
 ---
@@ -220,8 +218,7 @@ export const TermsScreen: React.FC = () => {
 9. 联系我们
 
 如有隐私相关问题，请联系：
-• 邮箱：info@americanpromotioncompany.com
-• 数据保护负责人：dev@americanpromotioncompany.com
+• info@chineseunion.org
 • 客服时间：周一至周五 9:00-18:00 (北京时间)
 
 10. 政策更新

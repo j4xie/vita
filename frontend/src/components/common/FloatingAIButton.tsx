@@ -25,7 +25,6 @@ import Animated, {
   withRepeat,
   withSequence,
   withSpring,
-  interpolate,
   Easing,
 } from 'react-native-reanimated';
 import { usePerformanceDegradation } from '../../hooks/usePerformanceDegradation';
@@ -40,7 +39,12 @@ export const FloatingAIButton: React.FC<FloatingAIButtonProps> = ({
 }) => {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<NativeStackNavigationProp<any>>();
-  const { user } = useUser();
+  const { user, permissionLevel } = useUser();
+
+  // 权限检查：仅允许 总管理员/分管理员/内部员工 使用 AI 功能
+  const AI_ALLOWED_ROLES = ['manage', 'part_manage', 'staff'];
+  const hasAIAccess = AI_ALLOWED_ROLES.includes(permissionLevel);
+
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
   const [isAnyModalOpen, setIsAnyModalOpen] = useState(false);
   const [isPressed, setIsPressed] = useState(false);
@@ -317,18 +321,10 @@ export const FloatingAIButton: React.FC<FloatingAIButtonProps> = ({
     ] as any,
   }));
 
-  const particleAnimatedStyle = (index: number) => useAnimatedStyle(() => ({
-    opacity: interpolate(
-      particleProgress.value,
-      [0, 0.5, 1],
-      [0, 0.6, 0]
-    ),
-    transform: [
-      { translateY: interpolate(particleProgress.value, [0, 1], [0, -30]) },
-      { translateX: interpolate(particleProgress.value, [0, 1], [0, index === 0 ? -20 : index === 1 ? 20 : 0]) },
-      { scale: 0.5 + index * 0.2 },
-    ] as any,
-  }));
+  // 无权限时不显示 AI 按钮
+  if (!hasAIAccess) {
+    return null;
+  }
 
   return (
     <>

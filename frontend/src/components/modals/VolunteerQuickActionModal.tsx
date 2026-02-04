@@ -64,7 +64,7 @@ const VolunteerQuickActionModalComponent: React.FC<VolunteerQuickActionModalProp
   const loadVolunteerStatus = useCallback(async () => {
     setLoading(true);
     try {
-      const response = await getLastVolunteerRecord(parseInt(userData.userId));
+      const response = await getLastVolunteerRecord(parseInt(String(userData.userId)));
       
       if (response.code === 200 && response.data) {
         setCurrentRecord(response.data);
@@ -97,9 +97,9 @@ const VolunteerQuickActionModalComponent: React.FC<VolunteerQuickActionModalProp
       const startTime = timeService.formatLocalTime(new Date());
       
       const response = await volunteerSignRecord(
-        parseInt(userData.userId),
+        parseInt(String(userData.userId)),
         1, // 签到
-        parseInt(user.userId),
+        parseInt(String(user.userId)),
         user.legalName,
         startTime
       );
@@ -169,9 +169,9 @@ const VolunteerQuickActionModalComponent: React.FC<VolunteerQuickActionModalProp
       const endTime = timeService.formatLocalTime(new Date());
       
       const response = await volunteerSignRecord(
-        parseInt(userData.userId),
+        parseInt(String(userData.userId)),
         2, // 签退
-        parseInt(user.userId),
+        parseInt(String(user.userId)),
         user.legalName,
         undefined, // 签到时间不需要
         endTime,

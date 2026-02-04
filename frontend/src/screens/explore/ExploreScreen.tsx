@@ -1,511 +1,388 @@
-import React, { useState, useCallback, useRef } from 'react';
+import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import {
   View,
   Text,
   ScrollView,
   TouchableOpacity,
   StyleSheet,
-  TextInput,
-  Image,
+  StatusBar,
   Dimensions,
   RefreshControl,
-  DeviceEventEmitter,
+  Animated,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useTranslation } from 'react-i18next';
-import { theme } from '../../theme';
-import { ActivityCard } from '../../components/cards/ActivityCard';
-import { useUnimplementedFeature } from '../../components/common/UnimplementedFeature';
 import { pomeloXAPI } from '../../services/PomeloXAPI';
 import { adaptActivityList, FrontendActivity } from '../../utils/activityAdapter';
 import { useUser } from '../../context/UserContext';
+import { FeaturedActivityCard } from '../../components/cards/FeaturedActivityCard';
+import { SmallActivityCard } from '../../components/cards/SmallActivityCard';
+import { ActivityFilterModal, ActivityFilterOptions } from '../../components/modals/ActivityFilterModal';
+import { ActivitySearchModal } from '../../components/modals/ActivitySearchModal';
 
 const { width: screenWidth } = Dimensions.get('window');
 
-// Mock data removed - using real data from APIs
-// Real categories - moved to component render to access t() function
+// Design Colors from Figma/Screenshot
+const COLORS = {
+  bg: '#FDF4EF', // Warm beige background
+  headerBg: '#FDF4EF', // Same as page background
+  primary: '#FF8A72', // Soft coral
+  textMain: '#111111',
+  textSecondary: '#8C8C8C',
+  filterActiveBg: '#FF8A72',
+  filterActiveText: '#FFFFFF',
+  filterInactiveBg: '#FFFFFF',
+  filterInactiveText: '#8C8C8C',
+};
+
+const FilterTab = ({ label, active, onPress }: { label: string; active: boolean; onPress: () => void }) => (
+  <TouchableOpacity
+    style={[
+      styles.filterTab,
+      active ? styles.filterTabActive : styles.filterTabInactive
+    ]}
+    onPress={onPress}
+    activeOpacity={0.8}
+  >
+    <Text style={[
+      styles.filterTabText,
+      active ? styles.filterTabTextActive : styles.filterTabTextInactive
+    ]}>
+      {label}
+    </Text>
+  </TouchableOpacity>
+);
+
+// Card dimensions for scroll calculation (must match FeaturedActivityCard)
+const CARD_WIDTH = screenWidth * 0.85;
+const CARD_MARGIN = 16; // marginRight in FeaturedActivityCard
+const SNAP_INTERVAL = CARD_WIDTH + CARD_MARGIN;
 
 export const ExploreScreen: React.FC = () => {
   const { t } = useTranslation();
   const navigation = useNavigation<any>();
-  const { user } = useUser(); // 🆕 新增用户上下文
-  const [selectedSchool, setSelectedSchool] = useState('all');
-  const [selectedCategory, setSelectedCategory] = useState('all'); // 🆕 添加分类状态管理
-
-  const [searchText, setSearchText] = useState('');
-  const [refreshing, setRefreshing] = useState(false);
+  const { user } = useUser();
+  const insets = useSafeAreaInsets();
+  const [selectedCategory, setSelectedCategory] = useState<'all' | 'available' | 'ended'>('all');
   const [activities, setActivities] = useState<FrontendActivity[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchLoading, setSearchLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+  const scrollX = React.useRef(new Animated.Value(0)).current;
 
-  // 功能未实现提示
-  const { showFeature, FeatureModal } = useUnimplementedFeature();
-
-  // 加载活动数据
+  // #region agent log
   useEffect(() => {
-    loadActivities();
-  }, []);
-
-  // 防抖定时器引用
-  const refreshTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-
-  // 监听来自CustomTabBar的搜索事件
-  useEffect(() => {
-    console.log('🎧 注册搜索事件监听器');
-    const subscription = DeviceEventEmitter.addListener('searchTextChanged', (text: string) => {
-      console.log('🔍 [EVENT] 收到搜索事件:', { receivedText: text, currentSearchText: searchText });
-      setSearchText(text);
+    const listenerId = scrollX.addListener((value) => {
+      if (Math.round(value.value) % 50 === 0) { // Log every 50px to avoid flooding
+        fetch('http://127.0.0.1:7242/ingest/cb8adb4d-6adc-47b5-b326-06c6fae7db0d',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'ExploreScreen.tsx:75',message:'scrollX value change',data:{value:value.value},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'A'})}).catch(()=>{});
+      }
     });
-
-    return () => {
-      console.log('🎧 移除搜索事件监听器');
-      subscription.remove();
-    };
+    return () => scrollX.removeListener(listenerId);
   }, []);
+  // #endregion
 
-  // 监听活动注册状态变化事件
-  useEffect(() => {
-    console.log('🎧 注册活动状态变化事件监听器');
-    const subscription = DeviceEventEmitter.addListener('activityRegistrationChanged', (eventData: any) => {
-      console.log('🔄 [EVENT] 收到活动状态变化事件:', eventData);
+  // Filter and Search modal states
+  const [filterModalVisible, setFilterModalVisible] = useState(false);
+  const [searchModalVisible, setSearchModalVisible] = useState(false);
+  const [activeFilters, setActiveFilters] = useState<ActivityFilterOptions>({
+    priceRange: 'all',
+    activityTypes: [],
+    availability: 'all',
+    location: { type: 'all' },
+  });
 
-      // 使用防抖机制避免频繁刷新
-      if (refreshTimeoutRef.current) {
-        clearTimeout(refreshTimeoutRef.current);
-      }
+  useEffect(() => { loadActivities(); }, []);
 
-      refreshTimeoutRef.current = setTimeout(() => {
-        console.log('🔄 [REFRESH] 刷新探索页面活动数据（状态变化触发）');
-        loadActivities(searchText.trim() || undefined, true); // 强制刷新获取最新状态
-      }, 500); // 500ms防抖延迟
-    });
-
-    return () => {
-      console.log('🎧 移除活动状态变化事件监听器');
-      subscription.remove();
-      if (refreshTimeoutRef.current) {
-        clearTimeout(refreshTimeoutRef.current);
-      }
-    };
-  }, [searchText]);
-
-  // 搜索防抖效果
-  useEffect(() => {
-    console.log('🔍 [SEARCH-EFFECT] 搜索文本变化:', { searchText, trimmed: searchText.trim() });
-
-    const timeoutId = setTimeout(() => {
-      if (searchText.trim()) {
-        console.log('🔍 [SEARCH-EFFECT] 执行搜索:', searchText.trim());
-        loadActivities(searchText.trim());
-      } else {
-        console.log('🔍 [SEARCH-EFFECT] 搜索为空，加载所有活动');
-        loadActivities(); // 搜索为空时加载所有活动
-      }
-    }, 300); // 300ms防抖
-
-    return () => {
-      console.log('🔍 [SEARCH-EFFECT] 清除防抖定时器');
-      clearTimeout(timeoutId);
-    };
-  }, [searchText]);
-
-  const loadActivities = async (searchQuery?: string, forceRefresh: boolean = false) => {
+  const loadActivities = async (forceRefresh: boolean = false) => {
+    const startTime = Date.now();
     try {
-      if (searchQuery) {
-        setSearchLoading(true);
-      } else {
-        setLoading(true);
-      }
-
-      console.log('🔍 加载活动数据:', { searchQuery, forceRefresh });
-
-      // 🔧 支持访客模式浏览 - userId可选
+      setLoading(true);
       const isLoggedIn = !!(user?.id);
+      const params: any = { pageNum: 1, pageSize: 20, userId: isLoggedIn ? parseInt(user.id) : undefined };
+      if (forceRefresh) params._t = Date.now();
+      
+      console.log('🚀 [PERF] 开始获取活动列表...', { params });
+      const result = await pomeloXAPI.getActivityList(params);
+      const fetchEndTime = Date.now();
+      console.log(`⏱️ [PERF] API 请求耗时: ${fetchEndTime - startTime}ms`);
 
-      // 🔄 强制刷新时添加时间戳防止缓存
-      const requestParams: any = {
-        pageNum: 1,
-        pageSize: 20,
-        userId: isLoggedIn ? parseInt(user.id) : undefined, // 🔧 可选参数
-        name: searchQuery, // 使用name字段进行搜索
-      };
+      const responseData = result.data || result;
+      const rows = (responseData as any).rows || [];
+      const total = (responseData as any).total || 0;
+      
+      const adaptStartTime = Date.now();
+      const adapted = adaptActivityList({ total, rows, code: result.code, msg: result.msg }, 'zh', forceRefresh);
+      const adaptEndTime = Date.now();
+      console.log(`⏱️ [PERF] 数据适配耗时: ${adaptEndTime - adaptStartTime}ms`);
 
-      if (forceRefresh) {
-        requestParams._t = Date.now(); // 添加时间戳防止API缓存
-      }
-
-      const result = await pomeloXAPI.getActivityList(requestParams);
-
-      console.log('🌍 Explore模式:', {
-        mode: isLoggedIn ? '个性化浏览' : '访客浏览',
-        searchQuery,
-        forceRefresh
-      });
-
-      console.log('📊 活动数据响应:', {
-        code: result.code,
-        total: result.data?.total || 0,
-        activitiesCount: result.data?.rows?.length || 0,
-        timestamp: new Date().toISOString()
-      });
-
-      const adaptedData = adaptActivityList({
-        total: result.data?.total || 0,
-        rows: result.data?.rows || [],
-        code: result.code,
-        msg: result.msg
-      }, 'zh', forceRefresh);
-
-      if (adaptedData.success) {
-        setActivities(adaptedData.activities);
-        console.log('✅ 活动数据加载成功:', {
-          searchQuery,
-          forceRefresh,
-          totalActivities: adaptedData.activities.length,
-          activities: adaptedData.activities.map(a => ({
-            id: a.id,
-            title: a.title,
-            location: a.location,
-            date: a.date,
-            endDate: a.endDate,
-            displayDate: a.endDate && a.endDate !== a.date
-              ? `${a.date}-${a.endDate}`
-              : a.date
-          }))
-        });
-      } else {
-        console.warn('⚠️ 活动数据加载失败:', adaptedData.message);
-        setActivities([]);
-      }
-    } catch (error) {
-      console.error('❌ 加载活动数据错误:', error);
+      if (adapted.success) setActivities(adapted.activities);
+    } catch (e) {
+      console.error('❌ [PERF] 加载失败:', e);
       setActivities([]);
     } finally {
       setLoading(false);
-      setSearchLoading(false);
+      console.log(`🏁 [PERF] 整个加载流程总耗时: ${Date.now() - startTime}ms`);
     }
   };
 
-  // Real categories using translations
-  const realCategories = [
-    { id: 'all', name: t('filters.categories.all') || '全部活动', icon: 'apps-outline', count: 0 },
-    { id: 'upcoming', name: t('filters.status.available') || '可报名', icon: 'time-outline', count: 0 },
-    { id: 'ended', name: t('filters.status.ended') || '已结束', icon: 'checkmark-circle-outline', count: 0 },
-  ];
-
-  // Handle refresh - 🔄 强制刷新，清除缓存
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    try {
-      console.log('🔄 [REFRESH] 用户下拉刷新，强制获取最新数据');
-      await loadActivities(searchText.trim() || undefined, true); // 强制刷新标志
-    } catch (error) {
-      console.error('刷新活动数据失败:', error);
-    } finally {
-      setRefreshing(false);
-    }
-  }, [searchText]);
+    await loadActivities(true);
+    setRefreshing(false);
+  }, []);
 
-  // Handle school selection
-  const handleSchoolSelect = (schoolId: string) => {
-    setSelectedSchool(schoolId);
-  };
+  // Apply filters using useMemo for performance
+  const filteredList = useMemo(() => {
+    const now = new Date();
+    return activities.filter(a => {
+      // 1. 严格对齐适配器的结束时间计算逻辑
+      // 如果有 endDate，取 endDate 的当天 23:59:59
+      // 如果没有，取 date 的当天 23:59:59
+      const endDateStr = a.endDate || a.date;
+      const activityEndTime = endDateStr ? new Date(`${endDateStr.replace(/-/g, '/')} 23:59:59`) : null;
+      
+      const isActivityEnded = activityEndTime && activityEndTime < now;
 
-  // Handle activity press
-  const handleActivityPress = (activity: FrontendActivity) => {
+      // 根据活动时间区分 Available 和 Ended
+      if (selectedCategory === 'available' && isActivityEnded) return false;
+      if (selectedCategory === 'ended' && !isActivityEnded) return false;
+
+      // 2. 弹窗内的可用性筛选也同步逻辑
+      if (activeFilters.availability === 'available' && isActivityEnded) return false;
+      
+      // 3. 价格筛选逻辑
+      if (activeFilters.priceRange !== 'all') {
+        const price = a.price || 0;
+        switch (activeFilters.priceRange) {
+          case 'free': if (price !== 0) return false; break;
+          case 'under10': if (price >= 10 || price === 0) return false; break;
+          case '10to30': if (price < 10 || price > 30) return false; break;
+          case '30to50': if (price < 30 || price > 50) return false; break;
+          case '50plus': if (price <= 50) return false; break;
+        }
+      }
+
+      // 4. 类型筛选逻辑
+      if (activeFilters.activityTypes.length > 0) {
+        const activityCategory = a.category?.toLowerCase() || '';
+        if (!activeFilters.activityTypes.some(t => activityCategory.includes(t))) return false;
+      }
+
+      // 5. 地点筛选逻辑
+      if (activeFilters.location.type !== 'all') {
+        const activityLocation = (a.location || '').toLowerCase();
+        const filterValue = (activeFilters.location.value || '').toLowerCase();
+
+        switch (activeFilters.location.type) {
+          case 'current':
+          case 'school':
+            // 匹配地点值
+            if (filterValue && !activityLocation.includes(filterValue)) return false;
+            break;
+          case 'city':
+            // 根据城市ID匹配城市名
+            const cityMap: Record<string, string[]> = {
+              'los_angeles': ['los angeles', 'la', 'california', 'ca'],
+              'new_york': ['new york', 'ny', 'nyc', 'manhattan', 'brooklyn'],
+              'san_francisco': ['san francisco', 'sf', 'bay area'],
+              'boston': ['boston', 'ma', 'massachusetts'],
+            };
+            const cityKeywords = cityMap[filterValue] || [];
+            if (cityKeywords.length > 0 && !cityKeywords.some(kw => activityLocation.includes(kw))) {
+              return false;
+            }
+            break;
+        }
+      }
+
+      return true;
+    });
+  }, [activities, selectedCategory, activeFilters]);
+
+  // Check if any filters are active (for button highlight)
+  const hasActiveFilters = useMemo(() => {
+    return (
+      activeFilters.priceRange !== 'all' ||
+      activeFilters.activityTypes.length > 0 ||
+      activeFilters.availability !== 'all' ||
+      activeFilters.location.type !== 'all'
+    );
+  }, [activeFilters]);
+
+  // Handle filter apply
+  const handleApplyFilters = useCallback((filters: ActivityFilterOptions) => {
+    setActiveFilters(filters);
+  }, []);
+
+  // Handle activity selection from search
+  const handleSelectActivity = useCallback((activity: FrontendActivity) => {
+    setSearchModalVisible(false);
     navigation.navigate('ActivityDetail', { activity });
-  };
-
-  // 前端搜索过滤（确保搜索结果准确）
-  const getFilteredActivities = (): FrontendActivity[] => {
-    if (!searchText.trim()) {
-      console.log('🔍 无搜索文本，返回所有活动:', activities.length);
-      return activities; // 无搜索文本，返回所有活动
-    }
-
-    const query = searchText.toLowerCase().trim();
-    console.log('🔍 开始前端过滤:', { searchText, query, totalActivities: activities.length });
-
-    const filtered = activities.filter(activity => {
-      const title = activity.title.toLowerCase();
-      const location = activity.location.toLowerCase();
-      const matches = title.includes(query) || location.includes(query);
-
-      console.log(`🔍 活动过滤:`, {
-        title: activity.title,
-        location: activity.location,
-        matches
-      });
-
-      return matches;
-    });
-
-    console.log('🔍 过滤结果:', {
-      searchQuery: query,
-      originalCount: activities.length,
-      filteredCount: filtered.length,
-      filteredActivities: filtered.map(a => a.title)
-    });
-
-    return filtered;
-  };
-
-  // 排序搜索结果
-  const getSortedActivities = (): FrontendActivity[] => {
-    const filtered = getFilteredActivities();
-
-    if (!searchText.trim()) {
-      // 无搜索时按时间排序（即将开始的优先）
-      return filtered.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-    }
-
-    const query = searchText.toLowerCase().trim();
-
-    // 有搜索时按相关性排序
-    return filtered.sort((a, b) => {
-      const aTitle = a.title.toLowerCase();
-      const bTitle = b.title.toLowerCase();
-
-      // 完全匹配的优先
-      const aExactMatch = aTitle === query;
-      const bExactMatch = bTitle === query;
-      if (aExactMatch && !bExactMatch) return -1;
-      if (!aExactMatch && bExactMatch) return 1;
-
-      // 开头匹配的优先
-      const aStartsWith = aTitle.startsWith(query);
-      const bStartsWith = bTitle.startsWith(query);
-      if (aStartsWith && !bStartsWith) return -1;
-      if (!aStartsWith && bStartsWith) return 1;
-
-      // 其他按时间排序
-      return new Date(a.date).getTime() - new Date(b.date).getTime();
-    });
-  };
-
-  // Handle category press
-  const handleCategoryPress = (categoryId: string) => {
-    // 显示功能未实现提示
-    const categoryName = realCategories.find(c => c.id === categoryId)?.name || t('explore.category_fallback');
-    showFeature(categoryName, t('explore.category_developing_message', { category: categoryName }));
-  };
-
-  // School data removed - feature not implemented
-
-  const insets = useSafeAreaInsets();
+  }, [navigation]);
 
   return (
     <View style={styles.container}>
+      <StatusBar barStyle="dark-content" backgroundColor={COLORS.headerBg} />
+
+      {/* Header Area - Custom Background Color */}
+      <View style={[styles.headerContainer, { paddingTop: insets.top }]}>
+        <View style={styles.headerTopRow}>
+          {/* Greeting: Mixed Style */}
+          <View style={styles.greetingContainer}>
+            <Text style={styles.greetingHi}>Hi, </Text>
+            <Text style={styles.greetingName}>{user?.nickName || user?.userName || ''}</Text>
+          </View>
+
+          <View style={styles.headerIcons}>
+            {/* Scan Icon - White Circle Button */}
+            <TouchableOpacity
+              style={styles.circleIconButton}
+              onPress={() => navigation.navigate('QRScanner', { purpose: 'scan' })}
+            >
+              <Ionicons name="scan-outline" size={18} color="#8C8C8C" />
+            </TouchableOpacity>
+
+            {/* Search Icon - White Circle Button */}
+            <TouchableOpacity
+              style={styles.circleIconButton}
+              onPress={() => setSearchModalVisible(true)}
+            >
+              <Ionicons name="search-outline" size={18} color="#8C8C8C" />
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        {/* Title BEST FOR YOU - IBM Plex Mono */}
+        <Text style={styles.sectionTitle}>BEST FOR YOU</Text>
+      </View>
+
       <ScrollView
-        style={styles.scrollView}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={onRefresh}
-            colors={[theme.colors.primary]}
-            tintColor={theme.colors.primary}
-            title={t('common.loading')}
-          />
-        }
-        contentContainerStyle={{ paddingBottom: insets.bottom }}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: 100 }}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[COLORS.primary]} />}
+        style={{ backgroundColor: COLORS.bg }}
       >
-        {/* Header */}
-        <LinearGradient
-          colors={['rgba(248, 250, 255, 0.95)', 'rgba(240, 247, 255, 0.85)']}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={[styles.header, { paddingTop: theme.spacing[3] + insets.top }]}
+        {/* Featured Carousel */}
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.carouselContent}
+          decelerationRate="fast"
+          snapToInterval={SNAP_INTERVAL}
+          snapToAlignment="start"
+          onScroll={Animated.event(
+            [{ nativeEvent: { contentOffset: { x: scrollX } } }],
+            { 
+              useNativeDriver: false,
+              listener: (event: any) => {
+                // #region agent log
+                fetch('http://127.0.0.1:7242/ingest/cb8adb4d-6adc-47b5-b326-06c6fae7db0d',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'ExploreScreen.tsx:212',message:'onScroll triggered',data:{x:event.nativeEvent.contentOffset.x},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'A'})}).catch(()=>{});
+                // #endregion
+              }
+            }
+          )}
+          scrollEventThrottle={16}
         >
-          <View style={styles.headerContent}>
-            <Text style={styles.headerTitle}>{t('explore.title')}</Text>
-            <Text style={styles.headerSubtitle}>{t('explore.subtitle')}</Text>
-          </View>
-
-          {/* Search Status */}
-          {searchText.trim() && (
-            <View style={styles.searchStatusContainer}>
-              <View style={styles.searchStatusContent}>
-                <Ionicons
-                  name={searchLoading ? "hourglass-outline" : "search"}
-                  size={16}
-                  color={theme.colors.primary}
-                />
-                <Text style={styles.searchStatusText}>
-                  {searchLoading
-                    ? t('explore.searching', { query: searchText.trim() })
-                    : t('explore.searchResults', {
-                      query: searchText.trim(),
-                      count: getFilteredActivities().length
-                    })
-                  }
-                </Text>
-                <TouchableOpacity
-                  onPress={() => {
-                    setSearchText('');
-                    // 通知TabBar清空搜索
-                    DeviceEventEmitter.emit('searchTextChanged', '');
-                  }}
-                  style={styles.clearSearchButton}
-                >
-                  <Ionicons name="close-circle" size={18} color={theme.colors.text.secondary} />
-                </TouchableOpacity>
-              </View>
-            </View>
-          )}
-
-          {/* Search Bar - 保留现有搜索框但隐藏，TabBar搜索优先 */}
-          <View style={[styles.searchContainer, { display: 'none' }]}>
-            <Ionicons name="search" size={20} color={theme.colors.text.disabled} />
-            <TextInput
-              style={styles.searchInput}
-              placeholder={t('placeholders.searchSchoolsAndActivities')}
-              value={searchText}
-              onChangeText={setSearchText}
-              placeholderTextColor={theme.colors.text.disabled}
+          {activities.slice(0, 5).map((item) => (
+            <FeaturedActivityCard
+              key={item.id}
+              activity={item}
+              onPress={() => navigation.navigate('ActivityDetail', { activity: item })}
             />
-            {searchText.length > 0 && (
-              <TouchableOpacity onPress={() => setSearchText('')}>
-                <Ionicons name="close-circle" size={20} color={theme.colors.text.disabled} />
-              </TouchableOpacity>
-            )}
-          </View>
-        </LinearGradient>
+          ))}
+        </ScrollView>
 
-        {/* School Selection - Feature Not Available */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>{t('explore.choose_school')}</Text>
-          <View style={styles.emptyState}>
-            <Text style={styles.emptyText}>{t('explore.school_selection_unavailable') || '学校选择功能暂未开放'}</Text>
-          </View>
-        </View>
-
-        {/* Activity Categories */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>{t('explore.activity_categories')}</Text>
-          <View style={styles.categoriesGrid}>
-            {realCategories.map((category) => (
-              // Shadow容器 - 使用solid background优化阴影渲染
-              <View
-                key={category.id}
-                style={styles.categoryCardShadowContainer}
-              >
-                <TouchableOpacity
-                  style={styles.categoryCard}
-                  onPress={() => handleCategoryPress(category.id)}
-                >
-                  <LinearGradient
-                    colors={['rgba(255, 107, 53, 0.1)', 'rgba(255, 71, 87, 0.05)']} // PomeloX 橙红渐变
-                    style={styles.categoryCardGradient}
-                  >
-                    <View style={styles.categoryIcon}>
-                      <Ionicons
-                        name={category.icon as any}
-                        size={24}
-                        color={theme.colors.primary}
-                      />
-                    </View>
-                    <Text style={styles.categoryName}>{category.name}</Text>
-                    <Text style={styles.categoryCount}>{t('explore.activities_count', { count: category.count })}</Text>
-                  </LinearGradient>
-                </TouchableOpacity>
-              </View>
-            ))}
+        {/* Multi-Colored Scroll Indicator */}
+        <View style={styles.scrollIndicatorContainer}>
+          <View style={styles.scrollIndicatorTrack}>
+            <Animated.View 
+              style={[
+                styles.scrollIndicatorFill,
+                {
+                  transform: [{
+                    translateX: scrollX.interpolate({
+                      // Input: from 0 to the maximum scrollable width of the carousel
+                      inputRange: [0, Math.max(1, (activities.slice(0, 5).length - 1) * SNAP_INTERVAL)],
+                      // Output: from 0 to (trackWidth - fillWidth)
+                      outputRange: [0, (screenWidth - 40) - 80], // Adjusted for 80px fill width
+                      extrapolate: 'clamp',
+                    })
+                  }]
+                }
+              ]} 
+            />
           </View>
         </View>
 
-        {/* Activities List */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>
-              {searchText.trim() ? `"${searchText}"的搜索结果` : t('explore.recommended_activities')}
-            </Text>
-            {/* 调试信息显示 */}
-            <Text style={{ fontSize: 10, color: 'red' }}>
-              DEBUG: searchText="{searchText}" activities={activities.length}
-            </Text>
-            {!searchText.trim() && (
-              <TouchableOpacity onPress={() => showFeature(t('explore.recommended_activities'), t('explore.features.recommendations_developing'))}>
-                <Text style={styles.seeMoreText}>{t('explore.view_more')}</Text>
-              </TouchableOpacity>
-            )}
-          </View>
+        {/* Horizontal Separator */}
+        <View style={styles.sectionSeparator} />
 
-          {/* Loading state */}
-          {(loading || searchLoading) && (
-            <View style={styles.loadingState}>
-              <Text style={styles.loadingText}>
-                {searchText.trim() ? '搜索中...' : t('common.loading')}
-              </Text>
-            </View>
+        {/* ACTIVITIES Section Title */}
+        <Text style={styles.activitiesSectionTitle}>ACTIVITIES</Text>
+
+        {/* Filters Section - 新设计 */}
+        <View style={styles.filterSection}>
+          {/* Filter Icon Button */}
+          <TouchableOpacity
+            style={[
+              styles.filterIconButton,
+              hasActiveFilters && styles.filterIconButtonActive
+            ]}
+            onPress={() => setFilterModalVisible(true)}
+          >
+            <Ionicons
+              name={hasActiveFilters ? "filter" : "filter-outline"}
+              size={20}
+              color={hasActiveFilters ? "#FFFFFF" : COLORS.primary}
+            />
+          </TouchableOpacity>
+
+          {/* Vertical Divider */}
+          <View style={styles.filterDivider} />
+
+          {/* Filter Tabs - 均匀分布 */}
+          <View style={styles.filterTabsRow}>
+            <FilterTab label="All" active={selectedCategory === 'all'} onPress={() => setSelectedCategory('all')} />
+            <FilterTab label="Available" active={selectedCategory === 'available'} onPress={() => setSelectedCategory('available')} />
+            <FilterTab label="Ended" active={selectedCategory === 'ended'} onPress={() => setSelectedCategory('ended')} />
+          </View>
+        </View>
+
+        {/* Vertical List */}
+        <View style={styles.listContainer}>
+          {loading ? (
+            <Text style={styles.emptyText}>Loading...</Text>
+          ) : (
+            filteredList.map((item) => (
+              <SmallActivityCard
+                key={item.id}
+                activity={item}
+                onPress={() => navigation.navigate('ActivityDetail', { activity: item })}
+              />
+            ))
           )}
-
-          {/* Activities List */}
-          {!loading && !searchLoading && (() => {
-            const filteredAndSorted = getSortedActivities();
-            return (
-              <View>
-                {/* 调试过滤结果 */}
-                <Text style={{ fontSize: 10, color: 'blue', padding: 5 }}>
-                  过滤结果: {filteredAndSorted.length}个活动 (原始:{activities.length})
-                  {filteredAndSorted.length > 0 && ` - 显示: ${filteredAndSorted.map(a => a.title).join(', ')}`}
-                </Text>
-
-                {filteredAndSorted.length > 0 ? (
-                  <View style={styles.activitiesList}>
-                    {filteredAndSorted.map((activity) => (
-                      <ActivityCard
-                        key={activity.id}
-                        activity={activity}
-                        onPress={() => handleActivityPress(activity)}
-                      />
-                    ))}
-                  </View>
-                ) : (
-                  <View style={styles.emptyState}>
-                    <Ionicons
-                      name={searchText.trim() ? "search-outline" : "calendar-outline"}
-                      size={48}
-                      color={theme.colors.text.disabled}
-                      style={styles.emptyIcon}
-                    />
-                    <Text style={styles.emptyText}>
-                      {searchText.trim()
-                        ? t('explore.noSearchResults', { query: searchText.trim() })
-                        : (t('explore.no_activities_available') || '暂无活动数据')
-                      }
-                    </Text>
-                    <Text style={styles.emptySubtext}>
-                      {searchText.trim()
-                        ? '尝试其他搜索词或浏览所有活动'
-                        : (t('explore.coming_soon') || '更多功能即将上线')
-                      }
-                    </Text>
-                    {searchText.trim() && (
-                      <TouchableOpacity
-                        style={styles.clearSearchBtn}
-                        onPress={() => {
-                          setSearchText('');
-                          DeviceEventEmitter.emit('searchTextChanged', '');
-                        }}
-                      >
-                        <Text style={styles.clearSearchBtnText}>
-                          {t('explore.clearSearch')}
-                        </Text>
-                      </TouchableOpacity>
-                    )}
-                  </View>
-                )}
-              </View>
-            );
-          })()}
+          {!loading && filteredList.length === 0 && (
+            <Text style={styles.emptyText}>{t('explore.noActivities', 'No activities found')}</Text>
+          )}
         </View>
       </ScrollView>
 
-      {/* 功能未实现提示组件 */}
-      <FeatureModal />
+      {/* Filter Modal */}
+      <ActivityFilterModal
+        visible={filterModalVisible}
+        onClose={() => setFilterModalVisible(false)}
+        onApply={handleApplyFilters}
+        initialFilters={activeFilters}
+      />
+
+      {/* Search Modal */}
+      <ActivitySearchModal
+        visible={searchModalVisible}
+        onClose={() => setSearchModalVisible(false)}
+        onSelectActivity={handleSelectActivity}
+        activities={activities}
+      />
     </View>
   );
 };
@@ -513,206 +390,179 @@ export const ExploreScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: theme.colors.background.secondary,
+    backgroundColor: COLORS.bg,
   },
-  scrollView: {
-    flex: 1,
+  headerContainer: {
+    paddingHorizontal: 20,
+    paddingBottom: 20,
+    backgroundColor: COLORS.headerBg, // Light tint
+    borderBottomLeftRadius: 0,
+    borderBottomRightRadius: 0,
   },
-
-  // Header
-  header: {
-    paddingHorizontal: theme.spacing[4],
-    paddingTop: theme.spacing[3],
-    paddingBottom: theme.spacing[4],
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(248, 250, 255, 0.5)',
-  },
-  headerContent: {
-    marginBottom: theme.spacing[4],
-  },
-  headerTitle: {
-    fontSize: theme.typography.fontSize['2xl'],
-    fontWeight: theme.typography.fontWeight.bold,
-    color: theme.colors.text.primary,
-  },
-  headerSubtitle: {
-    fontSize: theme.typography.fontSize.sm,
-    color: theme.colors.text.secondary,
-    marginTop: theme.spacing[1],
-  },
-  searchContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: theme.colors.background.secondary,
-    paddingHorizontal: theme.spacing[3],
-    paddingVertical: theme.spacing[2],
-    borderRadius: theme.borderRadius.lg + 2,
-    borderWidth: 1,
-    borderColor: 'rgba(248, 250, 255, 0.8)',
-    ...theme.shadows.sm,
-  },
-  searchInput: {
-    flex: 1,
-    marginLeft: theme.spacing[2],
-    fontSize: theme.typography.fontSize.base,
-    color: theme.colors.text.primary,
-  },
-
-  // Search Status
-  searchStatusContainer: {
-    marginTop: theme.spacing[3],
-    backgroundColor: 'rgba(66, 153, 225, 0.1)',
-    borderRadius: theme.borderRadius.md,
-    borderWidth: 1,
-    borderColor: 'rgba(66, 153, 225, 0.2)',
-  },
-  searchStatusContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: theme.spacing[3],
-    paddingVertical: theme.spacing[2],
-  },
-  searchStatusText: {
-    flex: 1,
-    fontSize: theme.typography.fontSize.sm,
-    color: theme.colors.primary,
-    marginLeft: theme.spacing[2],
-    fontWeight: theme.typography.fontWeight.medium,
-  },
-  clearSearchButton: {
-    padding: theme.spacing[1],
-    marginLeft: theme.spacing[2],
-  },
-
-  // Sections
-  section: {
-    paddingHorizontal: theme.spacing[4],
-    paddingVertical: theme.spacing[4],
-  },
-  sectionHeader: {
+  headerTopRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: theme.spacing[3],
+    marginBottom: 18,
+    marginTop: 6,
+  },
+  greetingContainer: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+  },
+  greetingHi: {
+    fontFamily: 'Poppins-Medium',
+    fontSize: 32,
+    color: '#9B9B9B',
+  },
+  greetingName: {
+    fontFamily: 'Poppins-Bold',
+    fontSize: 32,
+    color: COLORS.textMain,
+  },
+  headerIcons: {
+    flexDirection: 'row',
+  },
+  circleIconButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#FFFFFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginLeft: 12,
+    // Soft shadow
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 3,
+    elevation: 1,
   },
   sectionTitle: {
-    fontSize: theme.typography.fontSize.lg,
-    fontWeight: theme.typography.fontWeight.semibold,
-    color: theme.colors.text.primary,
+    fontFamily: 'IBM Plex Mono',
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#A0A0A0',
+    letterSpacing: 2,
+    marginBottom: 4,
+    textTransform: 'uppercase',
   },
-  seeMoreText: {
-    fontSize: theme.typography.fontSize.sm,
-    color: theme.colors.primary,
-    fontWeight: theme.typography.fontWeight.medium,
+  carouselContent: {
+    paddingLeft: (screenWidth - screenWidth * 0.85) / 2,
+    paddingRight: (screenWidth - screenWidth * 0.85) / 2,
+    paddingBottom: 12,
+    paddingTop: 8,
   },
-
-  // Loading state
-  loadingState: {
-    paddingVertical: theme.spacing[6],
+  scrollIndicatorContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
     alignItems: 'center',
+    marginTop: 10,
+    marginBottom: 12,
+    paddingHorizontal: 20,
   },
-  loadingText: {
-    fontSize: theme.typography.fontSize.base,
-    color: theme.colors.text.secondary,
-    textAlign: 'center',
+  scrollIndicatorTrack: {
+    height: 2,
+    width: screenWidth - 40, // Full width minus padding
+    backgroundColor: '#F3E9E3',
+    borderRadius: 2,
+    overflow: 'hidden',
   },
-
-  // Activities list
-  activitiesList: {
-    gap: theme.spacing[3],
+  scrollIndicatorFill: {
+    height: '100%',
+    width: 80, // Increased from 40 to 80 (double the length)
+    backgroundColor: COLORS.primary,
+    borderRadius: 2,
   },
-  activityCard: {
-    marginBottom: theme.spacing[3],
+  sectionSeparator: {
+    height: 1,
+    backgroundColor: '#E9E2DD',
+    marginHorizontal: 20,
+    marginBottom: 16,
   },
-
-  // Empty state
-  emptyState: {
-    padding: theme.spacing[6],
+  activitiesSectionTitle: {
+    fontFamily: 'Poppins-SemiBold',
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#A0A0A0',
+    letterSpacing: 1.2,
+    marginLeft: 20,
+    marginTop: 8,
+    marginBottom: 10,
+    textTransform: 'uppercase',
+  },
+  filterSection: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    marginVertical: 2,
+    marginBottom: 14,
+  },
+  filterIconButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#EFE6E0',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: theme.colors.background.primary,
-    borderRadius: theme.borderRadius.lg,
-    margin: theme.spacing[2],
+  },
+  filterIconButtonActive: {
+    backgroundColor: '#FF8A72',
+    borderColor: '#FF8A72',
+  },
+  filterDivider: {
+    width: 1,
+    height: 22,
+    backgroundColor: '#E6DED8',
+    marginHorizontal: 12,
+  },
+  filterTabsRow: {
+    flex: 1,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginLeft: 4,
+  },
+  filterScroll: {
+    flexGrow: 0,
+  },
+  filterTab: {
+    flex: 1,
+    paddingVertical: 8,
+    borderRadius: 18,
+    marginHorizontal: 4,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  filterTabActive: {
+    backgroundColor: COLORS.filterActiveBg,
+    borderWidth: 0,
+  },
+  filterTabInactive: {
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E6DED8',
+  },
+  filterTabText: {
+    fontFamily: 'Poppins-Bold',
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  filterTabTextActive: {
+    color: COLORS.filterActiveText,
+  },
+  filterTabTextInactive: {
+    color: COLORS.filterInactiveText,
+  },
+  listContainer: {
+    paddingHorizontal: 20,
   },
   emptyText: {
-    fontSize: theme.typography.fontSize.base,
-    color: theme.colors.text.secondary,
     textAlign: 'center',
-    marginBottom: theme.spacing[1],
-  },
-  emptySubtext: {
-    fontSize: theme.typography.fontSize.sm,
-    color: theme.colors.text.disabled,
-    textAlign: 'center',
-  },
-  emptyIcon: {
-    marginBottom: theme.spacing[3],
-    alignSelf: 'center',
-  },
-  clearSearchBtn: {
-    marginTop: theme.spacing[4],
-    backgroundColor: theme.colors.primary,
-    paddingHorizontal: theme.spacing[4],
-    paddingVertical: theme.spacing[2],
-    borderRadius: theme.borderRadius.md,
-    alignSelf: 'center',
-  },
-  clearSearchBtnText: {
-    color: 'white',
-    fontSize: theme.typography.fontSize.sm,
-    fontWeight: theme.typography.fontWeight.medium,
-  },
-
-  // Categories
-  categoriesGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-    marginTop: theme.spacing[3],
-  },
-
-  // Shadow容器 - 解决LinearGradient阴影冲突 (Categories)
-  categoryCardShadowContainer: {
-    width: (screenWidth - theme.spacing[4] * 2 - theme.spacing[3]) / 2,
-    marginBottom: theme.spacing[3],
-    borderRadius: theme.borderRadius.lg + 2,
-    backgroundColor: theme.liquidGlass.card.background, // solid background用于阴影优化
-    ...theme.shadows.xs,
-    borderWidth: 1,
-    borderColor: theme.liquidGlass.card.border,
-  },
-
-  categoryCard: {
-    width: '100%',
-    borderRadius: theme.borderRadius.lg + 2,
-    overflow: 'hidden',
-    // 移除阴影，由categoryCardShadowContainer处理
-  },
-  categoryCardGradient: {
-    padding: theme.spacing[4],
-    alignItems: 'center',
-    minHeight: 120,
-    justifyContent: 'center',
-  },
-  categoryIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: theme.borderRadius.full,
-    backgroundColor: 'rgba(255, 107, 53, 0.1)', // PomeloX 橙色
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: theme.spacing[2],
-  },
-  categoryName: {
-    fontSize: theme.typography.fontSize.base,
-    fontWeight: theme.typography.fontWeight.semibold,
-    color: theme.colors.text.primary,
-    marginBottom: theme.spacing[1],
-    textAlign: 'center',
-  },
-  categoryCount: {
-    fontSize: theme.typography.fontSize.xs,
-    color: theme.colors.text.secondary,
-    textAlign: 'center',
+    color: COLORS.textSecondary,
+    marginTop: 20,
+    fontFamily: 'Poppins-Regular',
   },
 });

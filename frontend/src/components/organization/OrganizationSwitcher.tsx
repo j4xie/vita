@@ -3,7 +3,7 @@
  * 不使用SVG，避免渲染错误
  */
 
-import React, { useCallback, useState, useEffect } from 'react';
+import React, { useCallback, useState, useEffect, useMemo } from 'react';
 import {
   View,
   Pressable,
@@ -22,6 +22,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { BlurView } from 'expo-blur';
 import * as Haptics from 'expo-haptics';
+import { useTranslation } from 'react-i18next';
 
 import { Organization, OrganizationSwitcherProps } from '../../types/organization';
 
@@ -56,22 +57,23 @@ export const OrganizationSwitcher: React.FC<OrganizationSwitcherProps> = ({
   organizations,
   disabled = false,
 }) => {
-  
+  // ALL HOOKS MUST BE AT THE TOP - before any conditional returns
+  const { t } = useTranslation();
   const [isExpanded, setIsExpanded] = useState(false);
   const expandScale = useSharedValue(0);
   const overlayOpacity = useSharedValue(0);
   const breatheOpacity = useSharedValue(0.6); // 呼吸动画的透明度
 
-  // 安全检查
-  if (!organizations || organizations.length === 0) {
-    console.log('No organizations to display');
-    return null;
-  }
-
-  const displayOrg = currentOrganization || organizations[0];
+  // Memoize displayOrg to use in callbacks
+  const displayOrg = useMemo(() => {
+    return currentOrganization || (organizations && organizations.length > 0 ? organizations[0] : null);
+  }, [currentOrganization, organizations]);
 
   // 呼吸动画效果 - 增强可发现性
   useEffect(() => {
+    // Skip if no organizations
+    if (!organizations || organizations.length === 0) return;
+
     // 每3秒一次的微妙呼吸动画
     const startBreathe = () => {
       breatheOpacity.value = withRepeat(
@@ -83,13 +85,13 @@ export const OrganizationSwitcher: React.FC<OrganizationSwitcherProps> = ({
 
     const timer = setTimeout(startBreathe, 2000); // 2秒后开始
     return () => clearTimeout(timer);
-  }, [breatheOpacity]);
+  }, [breatheOpacity, organizations]);
 
   const handleExpand = useCallback(() => {
     if (disabled) return;
 
     console.log('Expanding organization switcher');
-    
+
     if (Platform.OS === 'ios') {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     }
@@ -107,13 +109,13 @@ export const OrganizationSwitcher: React.FC<OrganizationSwitcherProps> = ({
 
   const handleOrganizationSelect = useCallback((org: Organization) => {
     console.log('Organization selected:', org.name);
-    
+
     if (Platform.OS === 'ios') {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     }
 
     handleCollapse();
-    
+
     setTimeout(() => {
       onOrganizationChange(org.id);
     }, 200);
@@ -132,6 +134,12 @@ export const OrganizationSwitcher: React.FC<OrganizationSwitcherProps> = ({
   const breatheStyle = useAnimatedStyle(() => ({
     opacity: breatheOpacity.value,
   }));
+
+  // 安全检查 - AFTER all hooks
+  if (!organizations || organizations.length === 0 || !displayOrg) {
+    console.log('No organizations to display');
+    return null;
+  }
 
   return (
     <View style={styles.container}>

@@ -8,6 +8,7 @@ import {
   ScrollView,
   Alert,
   Platform,
+  ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
@@ -451,7 +452,7 @@ const ActivitySelectionModalComponent: React.FC<ActivitySelectionModalProps> = (
                 accessibilityState={{ disabled: !selectedActivity || processing }}
               >
                 {processing ? (
-                  <LoaderOne size="small" color="#FFFFFF" />
+                  <ActivityIndicator size="small" color="#FFFFFF" />
                 ) : (
                   <>
                     <Ionicons name="checkmark-circle" size={16} color="#FFFFFF" />

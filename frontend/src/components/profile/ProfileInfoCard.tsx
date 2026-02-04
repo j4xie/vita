@@ -49,64 +49,56 @@ export const ProfileInfoCard: React.FC<ProfileInfoCardProps> = ({
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: isDarkMode ? '#2C2C2E' : '#FFFFFF' }]}>
-      <View style={styles.contentRow}>
-        {/* Left side: User info */}
-        <View style={styles.infoSection}>
-          <Text style={[styles.userName, { color: isDarkMode ? '#FFFFFF' : '#000000' }]}>
-            {userName}
-          </Text>
-          {school && (
-            <Text style={[styles.school, { color: isDarkMode ? '#9CA3AF' : '#6B7280' }]}>
-              {school}
-            </Text>
-          )}
-          {position && (
-            <Text style={[styles.position, { color: isDarkMode ? '#9CA3AF' : '#6B7280' }]}>
-              {position}
-            </Text>
-          )}
-        </View>
-
-        {/* Right side: Avatar */}
+    <View style={styles.container}>
+      {/* Main Info Row */}
+      <View style={styles.headerRow}>
+        {/* Left: Avatar */}
         <View style={styles.avatarContainer}>
           {avatarUrl ? (
             <Image source={{ uri: avatarUrl }} style={styles.avatar} />
           ) : (
             <View style={[styles.avatarPlaceholder, { backgroundColor: isDarkMode ? '#3C3C3E' : '#E5E7EB' }]}>
-              <Ionicons name="person" size={40} color={isDarkMode ? '#9CA3AF' : '#6B7280'} />
+              {/* If it's a manager/admin, we could show a first character like in Figma, or stick to icon */}
+              <Text style={[styles.avatarText, { color: isDarkMode ? '#FFFFFF' : '#000000' }]}>
+                {userName?.charAt(0) || '管'}
+              </Text>
             </View>
           )}
         </View>
-      </View>
 
-      {/* Bottom buttons */}
-      <View style={styles.buttonRow}>
-        <TouchableOpacity
-          style={[styles.button, { borderColor: isDarkMode ? '#48484A' : '#D1D5DB' }]}
-          onPress={handleEditPress}
-          activeOpacity={0.7}
-          accessibilityRole="button"
-          accessibilityLabel={t('profile.edit_profile')}
-        >
-          <Ionicons name="create-outline" size={20} color={isDarkMode ? '#FFFFFF' : '#000000'} />
-          <Text style={[styles.buttonText, { color: isDarkMode ? '#FFFFFF' : '#000000' }]}>
-            {t('profile.edit_profile')}
+        {/* Middle: User Info & Badges */}
+        <View style={styles.infoSection}>
+          <Text style={[styles.userName, { color: isDarkMode ? '#FFFFFF' : '#000000' }]}>
+            {userName}
           </Text>
-        </TouchableOpacity>
 
-        <TouchableOpacity
-          style={[styles.button, { borderColor: isDarkMode ? '#48484A' : '#D1D5DB' }]}
-          onPress={handleQRCodePress}
-          activeOpacity={0.7}
-          accessibilityRole="button"
-          accessibilityLabel={t('profile.qr_code')}
-        >
-          <Ionicons name="qr-code-outline" size={20} color={isDarkMode ? '#FFFFFF' : '#000000'} />
-          <Text style={[styles.buttonText, { color: isDarkMode ? '#FFFFFF' : '#000000' }]}>
-            {t('profile.qr_code')}
-          </Text>
-        </TouchableOpacity>
+          <View style={styles.badgeRow}>
+            {school && (
+              <View style={[styles.badge, { backgroundColor: isDarkMode ? '#3C3C3E' : '#F3F4F6' }]}>
+                <Text style={[styles.badgeText, { color: isDarkMode ? '#9CA3AF' : '#6B7280' }]}>
+                  {school}
+                </Text>
+              </View>
+            )}
+            {position && (
+              <View style={[styles.badge, { backgroundColor: isDarkMode ? '#3C3C3E' : '#F3F4F6' }]}>
+                <Text style={[styles.badgeText, { color: isDarkMode ? '#9CA3AF' : '#6B7280' }]}>
+                  {position}
+                </Text>
+              </View>
+            )}
+          </View>
+        </View>
+
+        {/* Right: Action Icons */}
+        <View style={styles.actionsSection}>
+          <TouchableOpacity onPress={handleQRCodePress} style={styles.iconButton}>
+            <Ionicons name="scan-outline" size={20} color={isDarkMode ? '#FFFFFF' : '#9CA3AF'} />
+          </TouchableOpacity>
+          <TouchableOpacity onPress={handleEditPress} style={styles.iconButton}>
+            <Ionicons name="create-outline" size={20} color={isDarkMode ? '#FFFFFF' : '#9CA3AF'} />
+          </TouchableOpacity>
+        </View>
       </View>
     </View>
   );
@@ -114,82 +106,70 @@ export const ProfileInfoCard: React.FC<ProfileInfoCardProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    borderRadius: 12,
-    padding: 18,
+    paddingVertical: 12,
     marginBottom: 16,
-    ...Platform.select({
-      ios: {
-        shadowColor: '#000000',
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.05,
-        shadowRadius: 4,
-      },
-      android: {
-        elevation: 2,
-      },
-    }),
   },
-  contentRow: {
+  headerRow: {
     flexDirection: 'row',
+    alignItems: 'center',
     justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: 16,
+  },
+  avatarContainer: {
+    width: 64,
+    height: 64,
+    marginRight: 16,
+  },
+  avatar: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+  },
+  avatarPlaceholder: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  avatarText: {
+    fontSize: 24,
+    fontWeight: '700',
   },
   infoSection: {
     flex: 1,
-    paddingRight: 12,
+    justifyContent: 'center',
   },
   userName: {
-    fontSize: 22,
+    fontSize: 24,
     fontWeight: '700',
-    marginBottom: 4,
-    lineHeight: 28,
+    marginBottom: 6,
   },
-  school: {
-    fontSize: 14,
-    fontWeight: '400',
-    marginBottom: 2,
-    lineHeight: 19,
-  },
-  position: {
-    fontSize: 14,
-    fontWeight: '400',
-    lineHeight: 19,
-  },
-  avatarContainer: {
-    width: 80,
-    height: 80,
-  },
-  avatar: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-  },
-  avatarPlaceholder: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  buttonRow: {
+  badgeRow: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: 8,
   },
-  button: {
-    flex: 1,
+  badge: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  badgeText: {
+    fontSize: 12,
+    fontWeight: '500',
+  },
+  actionsSection: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 10,
-    paddingHorizontal: 12,
-    borderRadius: 8,
-    borderWidth: 1,
-    gap: 6,
+    gap: 12,
   },
-  buttonText: {
-    fontSize: 13,
-    fontWeight: '600',
+  iconButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(0, 0, 0, 0.05)',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });
 

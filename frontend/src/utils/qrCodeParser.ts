@@ -223,7 +223,7 @@ export const getQRCodeType = (content: string): string => {
   try {
     const data = JSON.parse(content);
     if (data.merchantId) return 'merchant';
-  } catch {}
+  } catch { /* ignore JSON parse error */ }
   
   return 'unknown';
 };

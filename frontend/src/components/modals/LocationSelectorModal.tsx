@@ -287,7 +287,7 @@ export const LocationSelectorModal: React.FC<LocationSelectorModalProps> = ({
     // 触感反馈
     try {
       await Haptics.selectionAsync();
-    } catch (e) {}
+    } catch (e) { /* ignore haptics error */ }
 
     if (suggestion.type === 'gps') {
       // GPS定位

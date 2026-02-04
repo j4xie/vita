@@ -83,6 +83,8 @@ class MerchantAPI {
       console.log('🏪 [MerchantAPI] 获取商家列表:', url);
 
       const token = await getCurrentToken();
+      console.log('🔐 [MerchantAPI] Token状态:', token ? `有效 (前20字符: ${token.substring(0, 20)}...)` : '❌ 无Token');
+
       const response = await fetch(url, {
         method: 'GET',
         headers: {
@@ -157,22 +159,54 @@ class MerchantAPI {
   }
 
   /**
-   * 按学校获取商家
+   * 获取所有商家（不按学校筛选）
    */
-  async getMerchantsBySchool(deptId: number): Promise<Merchant[]> {
+  async getAllMerchants(): Promise<Merchant[]> {
     try {
-      const response = await this.getMerchantList({ deptId });
+      const response = await this.getMerchantList({ pageSize: 100 });
 
       if (response.code === 200) {
-        // 处理可能的两种数据格式
         const merchants = response.data || response.rows || [];
+        console.log('🏪 [MerchantAPI] 获取所有商家数量:', merchants.length);
         return Array.isArray(merchants) ? merchants : [];
       }
 
       return [];
     } catch (error) {
-      console.error('❌ [MerchantAPI] 按学校获取商家失败:', error);
+      console.error('❌ [MerchantAPI] 获取所有商家失败:', error);
       return [];
+    }
+  }
+
+  /**
+   * 按学校获取商家
+   * 如果按学校筛选无结果，则返回所有商家
+   */
+  async getMerchantsBySchool(deptId: number): Promise<Merchant[]> {
+    try {
+      // 先尝试按学校筛选
+      const response = await this.getMerchantList({ deptId });
+
+      if (response.code === 200) {
+        const merchants = response.data || response.rows || [];
+        const result = Array.isArray(merchants) ? merchants : [];
+
+        // 如果按学校筛选有结果，返回筛选结果
+        if (result.length > 0) {
+          console.log(`🏪 [MerchantAPI] 学校 ${deptId} 商家数量:`, result.length);
+          return result;
+        }
+
+        // 如果没有结果，获取所有商家
+        console.log(`🏪 [MerchantAPI] 学校 ${deptId} 无商家，获取全部商家`);
+        return await this.getAllMerchants();
+      }
+
+      return [];
+    } catch (error) {
+      console.error('❌ [MerchantAPI] 按学校获取商家失败:', error);
+      // 出错时也尝试获取所有商家
+      return await this.getAllMerchants();
     }
   }
 }

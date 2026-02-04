@@ -481,11 +481,11 @@ export const TimeEntryScreen: React.FC = () => {
                 return `${year}-${month}-${day}`;
               };
 
-              navigation.navigate('CalendarSelection' as never, {
+              (navigation as any).navigate('CalendarSelection', {
                 selectedDate: formatDateToString(selectedDate),
                 minDate: formatDateToString(getMinSelectableDate()),
                 maxDate: formatDateToString(getMaxSelectableDate()),
-              } as never);
+              });
             }}
           >
             <Ionicons name="calendar" size={24} color={theme.colors.primary} />

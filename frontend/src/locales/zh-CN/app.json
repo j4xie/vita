@@ -10,7 +10,7 @@
       "localizedResources": {
         "CFBundleDisplayName": "西柚Pomelo",
         "CFBundleName": "西柚Pomelo",
-        "NSCameraUsageDescription": "此应用需要访问摄像头来扫描二维码",
+        "NSCameraUsageDescription": "此应用使用您的摄像头扫描二维码，用于活动签到、活动报名和会员身份验证。",
         "NSMicrophoneUsageDescription": "此应用需要访问麦克风来录制音频",
         "NSPhotoLibraryUsageDescription": "此应用需要访问相册来上传照片"
       }

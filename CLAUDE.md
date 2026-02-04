@@ -348,6 +348,38 @@ apiKey: 'rbxLQQr0qDBvwcbOxZt9VVPJvy3mIDVN'
 已配置IP: 52.124.34.249
 ```
 
+## 🖥️ **服务器SSH访问配置 (2025年1月更新)**
+
+### **服务器信息**
+
+| 环境 | IP地址 | 用途 | SSH密钥 |
+|------|--------|------|---------|
+| **测试服务器** | 106.14.165.234 | 测试环境API (8085)、宝塔面板 | `~/.ssh/id_rsa` |
+| **生产服务器** | 101.132.17.37 | 生产环境API (vitaglobal.icu) | `~/.ssh/id_ed25519_prod` |
+
+### **SSH连接命令**
+```bash
+# 测试服务器
+ssh root@106.14.165.234
+
+# 生产服务器 (必须使用ED25519密钥)
+ssh -i ~/.ssh/id_ed25519_prod root@101.132.17.37
+```
+
+### **数据库访问**
+```bash
+# 测试环境数据库
+mysql -u test_inter_stu_center -p'4hFjHxnm6MrLWT2b' -h 106.14.165.234 test_inter_stu_center
+
+# 生产环境数据库 (在生产服务器上执行)
+mysql -u inter_stu_center -p'66nx7ywet3jcPZxt' inter_stu_center
+```
+
+### **重要说明**
+- **生产服务器只接受ED25519密钥**，RSA密钥无法连接
+- **DNS解析**: `www.vitaglobal.icu` → 101.132.17.37 (生产)
+- **数据库表名**: `sys_dept` (部门/学校信息)
+
 ### **Bundle大小优化经验**
 - **字体文件**: 不在JS bundle内，是独立assets加载
 - **JS Bundle**: 3MB主要是React Native Web + 组件代码

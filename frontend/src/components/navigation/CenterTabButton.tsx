@@ -1,7 +1,6 @@
 import React from 'react';
 import { TouchableOpacity, View, StyleSheet, Platform } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -28,7 +27,7 @@ import * as Haptics from 'expo-haptics';
 interface CenterTabButtonProps {
   focused: boolean;
   onPress: () => void;
-  icon?: keyof typeof Ionicons.glyphMap;
+  icon?: string;
   badge?: number;
 }
 
@@ -78,12 +77,15 @@ export const CenterTabButton: React.FC<CenterTabButtonProps> = ({
   };
 
   // 按钮动画样式
-  const buttonAnimatedStyle = useAnimatedStyle(() => ({
-    transform: [
-      { scale: scale.value },
-      { rotate: `${rotation.value}deg` as any },
-    ],
-  }));
+  const buttonAnimatedStyle = useAnimatedStyle(() => {
+    'worklet';
+    return {
+      transform: [
+        { scale: scale.value },
+        { rotate: `${rotation.value}deg` },
+      ] as const,
+    };
+  });
 
   // 发光动画样式
   const glowAnimatedStyle = useAnimatedStyle(() => ({
@@ -95,14 +97,9 @@ export const CenterTabButton: React.FC<CenterTabButtonProps> = ({
 
   return (
     <View style={styles.container}>
-      {/* 外发光层 */}
+      {/* 外发光层 - subtle black glow */}
       <Animated.View style={[styles.glowContainer, glowAnimatedStyle]}>
-        <LinearGradient
-          colors={['rgba(255, 107, 107, 0.4)', 'rgba(255, 142, 83, 0.4)']}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.glowGradient}
-        />
+        <View style={styles.glowView} />
       </Animated.View>
 
       {/* 主按钮 */}
@@ -111,20 +108,15 @@ export const CenterTabButton: React.FC<CenterTabButtonProps> = ({
         onPress={handlePress}
         style={[styles.button, buttonAnimatedStyle, { transform: [{ scale: focusedScale }] }]}
       >
-        {/* 渐变背景 */}
-        <LinearGradient
-          colors={['#FF6B6B', '#FF8E53']}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.gradient}
-        >
+        {/* 纯黑色背景 */}
+        <View style={styles.solidBackground}>
           {/* 白色边框 */}
           <View style={styles.border}>
-            {/* 图标 */}
-            <Ionicons
-              name={focused ? icon : `${icon}-outline` as any}
-              size={26}
-              color="#FFFFFF"
+            {/* Crown 图标 */}
+            <MaterialCommunityIcons
+              name="crown"
+              size={24}
+              color="#FF8A72"
             />
 
             {/* Badge 通知点 */}
@@ -134,7 +126,7 @@ export const CenterTabButton: React.FC<CenterTabButtonProps> = ({
               </View>
             )}
           </View>
-        </LinearGradient>
+        </View>
       </AnimatedTouchableOpacity>
     </View>
   );
@@ -159,10 +151,11 @@ const styles = StyleSheet.create({
     borderRadius: 35,
   },
 
-  glowGradient: {
+  glowView: {
     width: '100%',
     height: '100%',
     borderRadius: 35,
+    backgroundColor: 'rgba(0, 0, 0, 0.08)',
   },
 
   // 主按钮
@@ -170,26 +163,27 @@ const styles = StyleSheet.create({
     width: 60,
     height: 60,
     borderRadius: 30,
-    shadowColor: '#FF6B6B',
+    shadowColor: '#000000',
     shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.3,
+    shadowOpacity: 0.2,
     shadowRadius: 12,
     elevation: 8,
   },
 
-  // 渐变背景
-  gradient: {
+  // 纯黑色背景
+  solidBackground: {
     width: '100%',
     height: '100%',
     borderRadius: 30,
     padding: 2.5,
+    backgroundColor: '#1A1A1A',
   },
 
   // 白色边框 + 内容区
   border: {
     flex: 1,
     borderRadius: 27.5,
-    borderWidth: 2.5,
+    borderWidth: 2,
     borderColor: '#FFFFFF',
     backgroundColor: 'transparent',
     alignItems: 'center',

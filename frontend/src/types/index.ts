@@ -15,34 +15,8 @@ export * from './organization';
 export * from './fixes';
 // Note: .d.ts files are not exported here as they shouldn't be imported at runtime
 
-// Re-export commonly used types for convenience
-export type {
-  BaseUserInfo,
-  FrontendUser,
-  BackendUserInfo,
-  UserPermissions,
-  UserContextData,
-} from './user';
-
-export type {
-  PermissionLevel,
-  UserRoleInfo,
-  SimpleRoleInfo,
-} from './userPermissions';
-
-// Re-export utility functions
-export {
-  // User utilities
-  hasPermission,
-  getUserPrimaryRole,
-  isBackendUser,
-  isFrontendUser,
-} from './user';
-
-export {
-  // Permission utilities
-  getUserPermissionLevel,
-} from './userPermissions';
+// Note: Types and utilities are already exported via 'export * from' statements above
+// No need for re-exports which would cause duplicate export errors
 
 // Note: API utility functions should be imported from their actual implementation files
 // not from .d.ts declaration files

@@ -136,7 +136,7 @@ export const PointsMallDetailScreen: React.FC = () => {
     }
     if (product.stock <= 5) {
       return {
-        text: t('rewards.mall.low_stock', { count: product.stock }, `Only ${product.stock} left`),
+        text: t('rewards.mall.low_stock', { count: product.stock, defaultValue: `Only ${product.stock} left` }),
         color: '#FF9500',
       };
     }
@@ -219,7 +219,7 @@ export const PointsMallDetailScreen: React.FC = () => {
           {/* 市场价对比 */}
           {product.marketPrice && (
             <Text style={styles.marketPrice}>
-              {t('rewards.mall.market_price', { price: product.marketPrice }, `Market Price $${product.marketPrice}`)}
+              {t('rewards.mall.market_price', { price: product.marketPrice, defaultValue: `Market Price $${product.marketPrice}` })}
             </Text>
           )}
 

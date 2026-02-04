@@ -21,7 +21,6 @@ import { VolunteerProvider } from '../context/VolunteerContext';
 import { shouldShowTabBar, mustHideTabBar } from '../config/tabBarConfig';
 
 // Screens
-import { ActivityListScreen } from '../screens/activities/ActivityListScreen';
 import { ActivityDetailScreen } from '../screens/activities/ActivityDetailScreen';
 import { ActivityRegistrationFormScreen } from '../screens/activities/ActivityRegistrationFormScreen';
 import { AIFormFillerScreen } from '../screens/activities/AIFormFillerScreen';
@@ -68,7 +67,7 @@ import { ExploreScreen } from '../screens/explore/ExploreScreen';
 import { ConsultingScreen } from '../screens/consulting/ConsultingScreen';
 import { CommunityScreen } from '../screens/community/CommunityScreen';
 import { CommunityEventsScreen } from '../screens/community/CommunityEventsScreen';
-import { SchoolMerchantsScreen } from '../screens/community/SchoolMerchantsScreen';
+// import { SchoolMerchantsScreen } from '../screens/community/SchoolMerchantsScreen'; // TODO: Create this screen
 import { WellbeingScreen } from '../screens/wellbeing/WellbeingScreen';
 import { SearchScreen } from '../screens/search/SearchScreen';
 import { VolunteerHomeScreen } from '../screens/volunteer/VolunteerHomeScreen';
@@ -97,7 +96,7 @@ const Tab = createBottomTabNavigator();
 // Auth Stack Navigator
 const AuthNavigator = () => {
   const { t } = useTranslation();
-  
+
   return (
     <AuthStack.Navigator
       {...({ id: "auth" } as any)}
@@ -121,29 +120,29 @@ const AuthNavigator = () => {
       }}
     >
       <AuthStack.Screen name="Login" component={LoginScreen} />
-      <AuthStack.Screen 
-        name="ForgotPassword" 
+      <AuthStack.Screen
+        name="ForgotPassword"
         component={ForgotPasswordScreen}
         options={{
           ...pageTransitions.slideFromRight,
         }}
       />
-      <AuthStack.Screen 
-        name="SetNewPassword" 
+      <AuthStack.Screen
+        name="SetNewPassword"
         component={SetNewPasswordScreen}
         options={{
           ...pageTransitions.slideFromRight,
         }}
       />
-      <AuthStack.Screen 
-        name="RegisterChoice" 
+      <AuthStack.Screen
+        name="RegisterChoice"
         component={RegisterChoiceScreen}
         options={{
           ...pageTransitions.slideFromBottom,
         }}
       />
-      <AuthStack.Screen 
-        name="IdentityChoice" 
+      <AuthStack.Screen
+        name="IdentityChoice"
         component={IdentityChoiceScreen}
         options={{
           ...pageTransitions.slideFromRight,
@@ -191,15 +190,15 @@ const AuthNavigator = () => {
           ...pageTransitions.slideFromRight,
         }}
       />
-      <AuthStack.Screen 
-        name="Verification" 
+      <AuthStack.Screen
+        name="Verification"
         component={VerificationScreen}
         options={{
           ...pageTransitions.slideFromRight,
         }}
       />
-      <AuthStack.Screen 
-        name="Terms" 
+      <AuthStack.Screen
+        name="Terms"
         component={TermsScreen}
         options={({ route }) => ({
           headerShown: true,
@@ -280,9 +279,6 @@ const RewardsNavigator = () => {
       <RewardsStack.Screen
         name="RewardsHome"
         component={PointsMallHomeScreen}
-        options={{
-          tabBarStyle: { display: 'flex' }, // 强制显示TabBar
-        }}
       />
       <RewardsStack.Screen
         name="PointsMallList"
@@ -376,10 +372,12 @@ const CommunityNavigator = () => {
         name="CommunityEvents"
         component={CommunityEventsScreen}
       />
+      {/* TODO: SchoolMerchantsScreen not yet implemented
       <CommunityStack.Screen
         name="SchoolMerchants"
         component={SchoolMerchantsScreen}
       />
+      */}
     </CommunityStack.Navigator>
   );
 };
@@ -408,15 +406,15 @@ const HomeNavigator = () => {
         },
       }}
     >
-      <MainStack.Screen 
-        name="ActivityList" 
-        component={ActivityListScreen}
+      <MainStack.Screen
+        name="ActivityList"
+        component={ExploreScreen}
         options={{
           ...pageTransitions.fade,
         }}
       />
-      <MainStack.Screen 
-        name="ActivityDetail" 
+      <MainStack.Screen
+        name="ActivityDetail"
         component={ActivityDetailScreen}
         options={{
           ...pageTransitions.slideFromRight,
@@ -464,7 +462,7 @@ const QRScannerScreenWithProvider = () => {
 // Profile Stack Navigator
 const ProfileNavigator = () => {
   const { t } = useTranslation();
-  
+
   return (
     <ProfileStack.Navigator
       {...({ id: "profile" } as any)}
@@ -497,8 +495,8 @@ const ProfileNavigator = () => {
         },
       }}
     >
-      <ProfileStack.Screen 
-        name="ProfileHome" 
+      <ProfileStack.Screen
+        name="ProfileHome"
         component={ProfileHomeScreen}
         options={{
           headerShown: false, // Hide header for home screen
@@ -535,29 +533,29 @@ const ProfileNavigator = () => {
           headerShown: false,
         }}
       />
-      <ProfileStack.Screen 
-        name="General" 
+      <ProfileStack.Screen
+        name="General"
         component={GeneralScreen}
         options={{
           title: t('navigation.headers.general'),
         }}
       />
-      <ProfileStack.Screen 
-        name="AboutSupport" 
+      <ProfileStack.Screen
+        name="AboutSupport"
         component={AboutSupportScreen}
         options={{
           title: t('navigation.headers.aboutSupport'),
         }}
       />
-      <ProfileStack.Screen 
-        name="LanguageSelection" 
+      <ProfileStack.Screen
+        name="LanguageSelection"
         component={LanguageSelectionScreen}
         options={{
           title: t('navigation.headers.language'),
         }}
       />
-      <ProfileStack.Screen 
-        name="EditProfile" 
+      <ProfileStack.Screen
+        name="EditProfile"
         component={EditProfileScreen}
         options={{
           title: t('navigation.headers.edit_profile'),
@@ -671,152 +669,152 @@ const TabNavigator = () => {
       <GlobalTouchHandler>
         <View style={{ flex: 1 }}>
           <Tab.Navigator
-          {...({ id: "main-tab" } as any)}
-          tabBar={(props) => <CustomTabBar {...props} />}
-          screenOptions={{
-            headerShown: false,
-            tabBarStyle: { display: 'none' },
-            tabBarActiveTintColor: theme.colors.primary,
-            tabBarInactiveTintColor: theme.colors.text.tertiary,
-          }}
-          screenListeners={{
-            state: (e) => {
-              // 监听Tab切换事件
-              const state = e.data.state;
-              if (state && state.index !== undefined && state.routes) {
-                const currentRoute = state.routes[state.index];
-                if (currentRoute && currentRoute.name) {
-                  console.log('📱 [TAB-NAVIGATOR] Tab切换到:', currentRoute.name);
-                  setCurrentTab(currentRoute.name);
+            {...({ id: "main-tab" } as any)}
+            tabBar={(props) => <CustomTabBar {...props} />}
+            screenOptions={{
+              headerShown: false,
+              tabBarStyle: { display: 'none' },
+              tabBarActiveTintColor: theme.colors.primary,
+              tabBarInactiveTintColor: theme.colors.text.tertiary,
+            }}
+            screenListeners={{
+              state: (e) => {
+                // 监听Tab切换事件
+                const state = e.data.state;
+                if (state && state.index !== undefined && state.routes) {
+                  const currentRoute = state.routes[state.index];
+                  if (currentRoute && currentRoute.name) {
+                    console.log('📱 [TAB-NAVIGATOR] Tab切换到:', currentRoute.name);
+                    setCurrentTab(currentRoute.name);
+                  }
                 }
-              }
-            },
-          }}
-        >
-        {/* 探索 - 所有用户都可以访问 */}
-        <Tab.Screen
-          name="Explore"
-          component={HomeNavigator}
-          options={({ route }) => {
-            const routeName = getFocusedRouteNameFromRoute(route) ?? 'ActivityList';
-
-            // 🛡️ 双重保护：先检查是否必须隐藏，再检查是否应该显示
-            const mustHide = mustHideTabBar(routeName);
-            const shouldShow = !mustHide && shouldShowTabBar(routeName);
-
-            console.log('📱 [TAB-CONTROL] Explore Tab:', {
-              routeName,
-              mustHide,
-              shouldShow,
-              finalDisplay: shouldShow ? 'flex' : 'none'
-            });
-
-            return {
-              tabBarStyle: {
-                display: shouldShow ? 'flex' : 'none',
               },
-            };
-          }}
-        />
+            }}
+          >
+            {/* 探索 - 所有用户都可以访问 */}
+            <Tab.Screen
+              name="Explore"
+              component={HomeNavigator}
+              options={({ route }) => {
+                const routeName = getFocusedRouteNameFromRoute(route) ?? 'ActivityList';
 
-        {/* 社区 - 商家内容与活动 */}
-        <Tab.Screen
-          name="Community"
-          component={CommunityNavigator}
-          options={({ route }) => {
-            const routeName = getFocusedRouteNameFromRoute(route) ?? 'CommunityHome';
-            const mustHide = mustHideTabBar(routeName);
-            const shouldShow = !mustHide && shouldShowTabBar(routeName);
+                // 🛡️ 双重保护：先检查是否必须隐藏，再检查是否应该显示
+                const mustHide = mustHideTabBar(routeName);
+                const shouldShow = !mustHide && shouldShowTabBar(routeName);
 
-            console.log('📱 [TAB-CONTROL] Community Tab:', { routeName, mustHide, shouldShow });
+                console.log('📱 [TAB-CONTROL] Explore Tab:', {
+                  routeName,
+                  mustHide,
+                  shouldShow,
+                  finalDisplay: shouldShow ? 'flex' : 'none'
+                });
 
-            return {
-              tabBarStyle: {
-                display: shouldShow ? 'flex' : 'none',
-              },
-            };
-          }}
-        />
+                return {
+                  tabBarStyle: {
+                    display: shouldShow ? 'flex' : 'none',
+                  },
+                };
+              }}
+            />
 
-        {/* 会员 - 积分商城·优惠券·会员系统 (中心突出Tab) */}
-        <Tab.Screen
-          name="Rewards"
-          component={RewardsNavigator}
-          options={({ route }) => {
-            const routeName = getFocusedRouteNameFromRoute(route) ?? 'RewardsHome';
+            {/* 社区 - 商家内容与活动 */}
+            <Tab.Screen
+              name="Community"
+              component={CommunityNavigator}
+              options={({ route }) => {
+                const routeName = getFocusedRouteNameFromRoute(route) ?? 'CommunityHome';
+                const mustHide = mustHideTabBar(routeName);
+                const shouldShow = !mustHide && shouldShowTabBar(routeName);
 
-            console.log('📱 [TAB-CONTROL] Rewards Tab:', {
-              routeName,
-              forcedDisplay: 'flex'
-            });
+                console.log('📱 [TAB-CONTROL] Community Tab:', { routeName, mustHide, shouldShow });
 
-            // 强制显示TabBar - 会员中心应该始终显示TabBar
-            return {
-              tabBarStyle: {
-                display: 'flex',
-              },
-            };
-          }}
-        />
+                return {
+                  tabBarStyle: {
+                    display: shouldShow ? 'flex' : 'none',
+                  },
+                };
+              }}
+            />
 
-        {/* 安心 - 所有用户都可以访问，内部根据权限显示不同功能 */}
-        <Tab.Screen
-          name="Wellbeing"
-          component={WellbeingNavigator}
-          options={({ route }) => {
-            const routeName = getFocusedRouteNameFromRoute(route) ?? 'WellbeingHome';
+            {/* 会员 - 积分商城·优惠券·会员系统 (中心突出Tab) */}
+            <Tab.Screen
+              name="Rewards"
+              component={RewardsNavigator}
+              options={({ route }) => {
+                const routeName = getFocusedRouteNameFromRoute(route) ?? 'RewardsHome';
 
-            // 🛡️ 双重保护：防止意外显示TabBar
-            const mustHide = mustHideTabBar(routeName);
-            const shouldShow = !mustHide && shouldShowTabBar(routeName);
+                console.log('📱 [TAB-CONTROL] Rewards Tab:', {
+                  routeName,
+                  forcedDisplay: 'flex'
+                });
 
-            console.log('📱 [TAB-CONTROL] Wellbeing Tab:', {
-              routeName,
-              mustHide,
-              shouldShow,
-              finalDisplay: shouldShow ? 'flex' : 'none'
-            });
+                // 强制显示TabBar - 会员中心应该始终显示TabBar
+                return {
+                  tabBarStyle: {
+                    display: 'flex',
+                  },
+                };
+              }}
+            />
 
-            return {
-              tabBarStyle: {
-                display: shouldShow ? 'flex' : 'none',
-              },
-            };
-          }}
-        />
+            {/* 安心 - 所有用户都可以访问，内部根据权限显示不同功能 */}
+            <Tab.Screen
+              name="Wellbeing"
+              component={WellbeingNavigator}
+              options={({ route }) => {
+                const routeName = getFocusedRouteNameFromRoute(route) ?? 'WellbeingHome';
 
-        {/* 个人 - 所有用户都可以访问 */}
-        <Tab.Screen
-          name="Profile"
-          component={ProfileNavigator}
-          options={({ route }) => {
-            const routeName = getFocusedRouteNameFromRoute(route) ?? 'ProfileHome';
+                // 🛡️ 双重保护：防止意外显示TabBar
+                const mustHide = mustHideTabBar(routeName);
+                const shouldShow = !mustHide && shouldShowTabBar(routeName);
 
-            // 🛡️ 关键保护：Profile子页面绝对不能显示TabBar
-            const mustHide = mustHideTabBar(routeName);
-            const shouldShow = !mustHide && shouldShowTabBar(routeName);
+                console.log('📱 [TAB-CONTROL] Wellbeing Tab:', {
+                  routeName,
+                  mustHide,
+                  shouldShow,
+                  finalDisplay: shouldShow ? 'flex' : 'none'
+                });
 
-            console.log('📱 [TAB-CONTROL] Profile Tab:', {
-              routeName,
-              mustHide,
-              shouldShow,
-              finalDisplay: shouldShow ? 'flex' : 'none'
-            });
+                return {
+                  tabBarStyle: {
+                    display: shouldShow ? 'flex' : 'none',
+                  },
+                };
+              }}
+            />
 
-            return {
-              tabBarStyle: {
-                display: shouldShow ? 'flex' : 'none',
-              },
-            };
-          }}
-        />
-        </Tab.Navigator>
+            {/* 个人 - 所有用户都可以访问 */}
+            <Tab.Screen
+              name="Profile"
+              component={ProfileNavigator}
+              options={({ route }) => {
+                const routeName = getFocusedRouteNameFromRoute(route) ?? 'ProfileHome';
 
-        {/* 全局悬浮AI助手按钮 */}
-        <ErrorBoundary>
-          <FloatingAIButton />
-        </ErrorBoundary>
-      </View>
+                // 🛡️ 关键保护：Profile子页面绝对不能显示TabBar
+                const mustHide = mustHideTabBar(routeName);
+                const shouldShow = !mustHide && shouldShowTabBar(routeName);
+
+                console.log('📱 [TAB-CONTROL] Profile Tab:', {
+                  routeName,
+                  mustHide,
+                  shouldShow,
+                  finalDisplay: shouldShow ? 'flex' : 'none'
+                });
+
+                return {
+                  tabBarStyle: {
+                    display: shouldShow ? 'flex' : 'none',
+                  },
+                };
+              }}
+            />
+          </Tab.Navigator>
+
+          {/* 全局悬浮AI助手按钮 */}
+          <ErrorBoundary>
+            <FloatingAIButton />
+          </ErrorBoundary>
+        </View>
       </GlobalTouchHandler>
     </FilterProvider>
   );
@@ -862,177 +860,177 @@ export const AppNavigator = () => {
         <ThemeProvider>
           <VolunteerProvider>
             <NavigationContainer>
-        <RootStack.Navigator
-          {...({ id: "root" } as any)}
-          screenOptions={{
-            headerShown: false,
-          }}
-        >
-          {/* Main Tab Navigator (default) */}
-          <RootStack.Screen name="Main" component={TabNavigator} />
-          
-          {/* Auth Stack */}
-          <RootStack.Screen 
-            name="Auth" 
-            component={AuthNavigator}
-            options={{
-              headerShown: false,
-            }}
-          />
-          
-          {/* Global Screens */}
-          <RootStack.Screen 
-            name="QRScanner" 
-            component={QRScannerScreenWithProvider}
-            options={{
-              presentation: 'modal',
-            }}
-          />
-          
-          <RootStack.Screen
-            name="QRScanResult"
-            component={QRScanResultScreen}
-            options={{
-              headerShown: false,
-              ...pageTransitions.slideFromRight,
-            }}
-          />
-          
-          {/* Search Screen - 独立搜索页面 */}
-          <RootStack.Screen
-            name="Search"
-            component={SearchScreen}
-            options={{
-              ...pageTransitions.slideFromRight,
-            }}
-          />
+              <RootStack.Navigator
+                {...({ id: "root" } as any)}
+                screenOptions={{
+                  headerShown: false,
+                }}
+              >
+                {/* Main Tab Navigator (default) */}
+                <RootStack.Screen name="Main" component={TabNavigator} />
 
-          {/* Calendar Selection Screen - 日历选择页面 */}
-          <RootStack.Screen
-            name="CalendarSelection"
-            component={CalendarSelectionScreen}
-            options={{
-              presentation: 'modal',
-              ...pageTransitions.slideFromBottom,
-            }}
-          />
+                {/* Auth Stack */}
+                <RootStack.Screen
+                  name="Auth"
+                  component={AuthNavigator}
+                  options={{
+                    headerShown: false,
+                  }}
+                />
 
-          {/* Time Entry Screen - 时间补录页面 */}
-          <RootStack.Screen
-            name="TimeEntry"
-            component={TimeEntryScreen}
-            options={{
-              presentation: 'modal',
-              ...pageTransitions.slideFromBottom,
-            }}
-          />
-          
-          
-          {/* Global Auth Screens - 可以从任何地方访问的认证页面 */}
-          <RootStack.Screen 
-            name="Login" 
-            component={LoginScreen}
-            options={{
-              ...pageTransitions.slideFromRight,
-            }}
-          />
-          <RootStack.Screen 
-            name="ForgotPassword" 
-            component={ForgotPasswordScreen}
-            options={{
-              ...pageTransitions.slideFromRight,
-            }}
-          />
-          <RootStack.Screen 
-            name="SetNewPassword" 
-            component={SetNewPasswordScreen}
-            options={{
-              ...pageTransitions.slideFromRight,
-            }}
-          />
-          <RootStack.Screen 
-            name="RegisterChoice" 
-            component={RegisterChoiceScreen}
-            options={{
-              ...pageTransitions.slideFromBottom,
-            }}
-          />
-          <RootStack.Screen 
-            name="IdentityChoice" 
-            component={IdentityChoiceScreen}
-            options={{
-              ...pageTransitions.slideFromRight,
-            }}
-          />
-          <RootStack.Screen
-            name="ParentInvitationRegister"
-            component={ParentInvitationRegisterScreen}
-            options={{
-              ...pageTransitions.slideFromRight,
-            }}
-          />
-          <RootStack.Screen
-            name="ParentNormalRegisterStep1"
-            component={ParentNormalRegisterStep1Screen}
-            options={{
-              ...pageTransitions.slideFromRight,
-            }}
-          />
-          <RootStack.Screen
-            name="ParentNormalRegisterStep2"
-            component={ParentNormalRegisterStep2Screen}
-            options={{
-              ...pageTransitions.slideFromRight,
-            }}
-          />
-          <RootStack.Screen
-            name="StudentInvitationRegister"
-            component={StudentInvitationRegisterScreen}
-            options={{
-              ...pageTransitions.slideFromRight,
-            }}
-          />
-          <RootStack.Screen
-            name="StudentNormalRegisterStep1"
-            component={StudentNormalRegisterStep1Screen}
-            options={{
-              ...pageTransitions.slideFromRight,
-            }}
-          />
-          <RootStack.Screen
-            name="StudentNormalRegisterStep2"
-            component={StudentNormalRegisterStep2Screen}
-            options={{
-              ...pageTransitions.slideFromRight,
-            }}
-          />
-          <RootStack.Screen 
-            name="Verification" 
-            component={VerificationScreen}
-            options={{
-              ...pageTransitions.slideFromRight,
-            }}
-          />
-          
-          {/* Legal Screens */}
-          <RootStack.Screen
-            name="Terms"
-            component={TermsScreen}
-            options={{
-              ...pageTransitions.slideFromRight,
-            }}
-          />
+                {/* Global Screens */}
+                <RootStack.Screen
+                  name="QRScanner"
+                  component={QRScannerScreenWithProvider}
+                  options={{
+                    presentation: 'modal',
+                  }}
+                />
 
-          {/* AI Chat Screen */}
-          <RootStack.Screen
-            name="AIChat"
-            component={AIChatScreen}
-            options={{
-              ...pageTransitions.slideFromRight,
-            }}
-          />
+                <RootStack.Screen
+                  name="QRScanResult"
+                  component={QRScanResultScreen}
+                  options={{
+                    headerShown: false,
+                    ...pageTransitions.slideFromRight,
+                  }}
+                />
 
-        </RootStack.Navigator>
+                {/* Search Screen - 独立搜索页面 */}
+                <RootStack.Screen
+                  name="Search"
+                  component={SearchScreen}
+                  options={{
+                    ...pageTransitions.slideFromRight,
+                  }}
+                />
+
+                {/* Calendar Selection Screen - 日历选择页面 */}
+                <RootStack.Screen
+                  name="CalendarSelection"
+                  component={CalendarSelectionScreen}
+                  options={{
+                    presentation: 'modal',
+                    ...pageTransitions.slideFromBottom,
+                  }}
+                />
+
+                {/* Time Entry Screen - 时间补录页面 */}
+                <RootStack.Screen
+                  name="TimeEntry"
+                  component={TimeEntryScreen}
+                  options={{
+                    presentation: 'modal',
+                    ...pageTransitions.slideFromBottom,
+                  }}
+                />
+
+
+                {/* Global Auth Screens - 可以从任何地方访问的认证页面 */}
+                <RootStack.Screen
+                  name="Login"
+                  component={LoginScreen}
+                  options={{
+                    ...pageTransitions.slideFromRight,
+                  }}
+                />
+                <RootStack.Screen
+                  name="ForgotPassword"
+                  component={ForgotPasswordScreen}
+                  options={{
+                    ...pageTransitions.slideFromRight,
+                  }}
+                />
+                <RootStack.Screen
+                  name="SetNewPassword"
+                  component={SetNewPasswordScreen}
+                  options={{
+                    ...pageTransitions.slideFromRight,
+                  }}
+                />
+                <RootStack.Screen
+                  name="RegisterChoice"
+                  component={RegisterChoiceScreen}
+                  options={{
+                    ...pageTransitions.slideFromBottom,
+                  }}
+                />
+                <RootStack.Screen
+                  name="IdentityChoice"
+                  component={IdentityChoiceScreen}
+                  options={{
+                    ...pageTransitions.slideFromRight,
+                  }}
+                />
+                <RootStack.Screen
+                  name="ParentInvitationRegister"
+                  component={ParentInvitationRegisterScreen}
+                  options={{
+                    ...pageTransitions.slideFromRight,
+                  }}
+                />
+                <RootStack.Screen
+                  name="ParentNormalRegisterStep1"
+                  component={ParentNormalRegisterStep1Screen}
+                  options={{
+                    ...pageTransitions.slideFromRight,
+                  }}
+                />
+                <RootStack.Screen
+                  name="ParentNormalRegisterStep2"
+                  component={ParentNormalRegisterStep2Screen}
+                  options={{
+                    ...pageTransitions.slideFromRight,
+                  }}
+                />
+                <RootStack.Screen
+                  name="StudentInvitationRegister"
+                  component={StudentInvitationRegisterScreen}
+                  options={{
+                    ...pageTransitions.slideFromRight,
+                  }}
+                />
+                <RootStack.Screen
+                  name="StudentNormalRegisterStep1"
+                  component={StudentNormalRegisterStep1Screen}
+                  options={{
+                    ...pageTransitions.slideFromRight,
+                  }}
+                />
+                <RootStack.Screen
+                  name="StudentNormalRegisterStep2"
+                  component={StudentNormalRegisterStep2Screen}
+                  options={{
+                    ...pageTransitions.slideFromRight,
+                  }}
+                />
+                <RootStack.Screen
+                  name="Verification"
+                  component={VerificationScreen}
+                  options={{
+                    ...pageTransitions.slideFromRight,
+                  }}
+                />
+
+                {/* Legal Screens */}
+                <RootStack.Screen
+                  name="Terms"
+                  component={TermsScreen}
+                  options={{
+                    ...pageTransitions.slideFromRight,
+                  }}
+                />
+
+                {/* AI Chat Screen */}
+                <RootStack.Screen
+                  name="AIChat"
+                  component={AIChatScreen}
+                  options={{
+                    ...pageTransitions.slideFromRight,
+                  }}
+                />
+
+              </RootStack.Navigator>
             </NavigationContainer>
           </VolunteerProvider>
         </ThemeProvider>
