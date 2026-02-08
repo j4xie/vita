@@ -74,60 +74,54 @@ export const AIChatScreen: React.FC<Props> = ({ navigation, route }) => {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputText, setInputText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isStreaming, setIsStreaming] = useState(false);
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [suggestedQuestions, setSuggestedQuestions] = useState(() => getRandomQuestions());
 
-  // 打字机效果状态
-  const [typingMessageIndex, setTypingMessageIndex] = useState<number | null>(null);
-  const [typingText, setTypingText] = useState('');
-  const typingIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  // 流式传输状态
+  const [streamingMessageIndex, setStreamingMessageIndex] = useState<number | null>(null);
+  const [streamingText, setStreamingText] = useState('');
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   // 从路由参数获取初始消息
   const initialMessage = route.params?.initialMessage as string | undefined;
 
-  // 清理打字机定时器
+  // 清理流式传输
   useEffect(() => {
     return () => {
-      if (typingIntervalRef.current) {
-        clearInterval(typingIntervalRef.current);
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
       }
     };
   }, []);
 
-  // 打字机效果函数
-  const startTypingEffect = (messageIndex: number, fullText: string) => {
-    setTypingMessageIndex(messageIndex);
-    setTypingText('');
-
-    let charIndex = 0;
-    typingIntervalRef.current = setInterval(() => {
-      if (charIndex < fullText.length) {
-        setTypingText(fullText.slice(0, charIndex + 1));
-        charIndex++;
-        // 自动滚动
-        setTimeout(() => {
-          flatListRef.current?.scrollToEnd({ animated: true });
-        }, 10);
-      } else {
-        // 打字完成
-        if (typingIntervalRef.current) {
-          clearInterval(typingIntervalRef.current);
-        }
-        setTypingMessageIndex(null);
-        setTypingText('');
-      }
-    }, 40); // 40ms 每个字符
-  };
-
-  // 跳过打字效果，直接显示全文
-  const skipTyping = () => {
-    if (typingIntervalRef.current) {
-      clearInterval(typingIntervalRef.current);
+  // 终止流式传输
+  const stopStreaming = useCallback(() => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+      abortControllerRef.current = null;
     }
-    setTypingMessageIndex(null);
-    setTypingText('');
-  };
+    setIsStreaming(false);
+    setIsLoading(false);
+
+    // 保留已接收的内容
+    if (streamingMessageIndex !== null && streamingText) {
+      setMessages(prev => {
+        const updated = [...prev];
+        if (updated[streamingMessageIndex]) {
+          updated[streamingMessageIndex] = {
+            ...updated[streamingMessageIndex],
+            content: streamingText + ' [已终止]',
+          };
+        }
+        return updated;
+      });
+    }
+
+    setStreamingMessageIndex(null);
+    setStreamingText('');
+  }, [streamingMessageIndex, streamingText]);
 
   // 加载保存的会话
   useEffect(() => {
@@ -170,13 +164,16 @@ export const AIChatScreen: React.FC<Props> = ({ navigation, route }) => {
     }
   };
 
-  // 发送消息
+  // 发送消息（使用流式传输）
   const sendMessage = async (messageText?: string) => {
     const text = messageText || inputText.trim();
     if (!text) return;
 
     setInputText('');
     setError(null);
+    setIsLoading(true);
+    setIsStreaming(true);
+    setStreamingText('');
 
     // 添加用户消息
     const userMessage: ChatMessage = {
@@ -185,46 +182,101 @@ export const AIChatScreen: React.FC<Props> = ({ navigation, route }) => {
       timestamp: new Date().toISOString(),
     };
 
-    const newMessages = [...messages, userMessage];
+    // 添加空的AI消息占位
+    const aiPlaceholder: ChatMessage = {
+      role: 'assistant',
+      content: '',
+      timestamp: new Date().toISOString(),
+    };
+
+    const newMessages = [...messages, userMessage, aiPlaceholder];
     setMessages(newMessages);
-    setIsLoading(true);
+    const aiMessageIndex = newMessages.length - 1;
+    setStreamingMessageIndex(aiMessageIndex);
 
     // 滚动到底部
     setTimeout(() => {
       flatListRef.current?.scrollToEnd({ animated: true });
     }, 100);
 
-    try {
-      // 调用AI API
-      const response = await apiService.sendAIMessage({
+    // 累积的内容
+    let accumulatedContent = '';
+
+    // 使用流式API
+    // dept_id 默认使用用户的 deptId，如果没有则使用1（默认部门）
+    const deptId = user?.deptId || 1;
+    abortControllerRef.current = apiService.sendAIMessageStream(
+      {
         message: text,
         session_id: sessionId || undefined,
         user_id: user?.userId?.toString(),
-      });
+        dept_id: deptId,
+      },
+      // onChunk - 收到新内容块
+      (chunk: string) => {
+        accumulatedContent += chunk;
+        setStreamingText(accumulatedContent);
 
-      // 添加AI回复
-      const aiMessage: ChatMessage = {
-        role: 'assistant',
-        content: response.reply,
-        timestamp: new Date().toISOString(),
-      };
+        // 实时更新消息内容
+        setMessages(prev => {
+          const updated = [...prev];
+          if (updated[aiMessageIndex]) {
+            updated[aiMessageIndex] = {
+              ...updated[aiMessageIndex],
+              content: accumulatedContent,
+            };
+          }
+          return updated;
+        });
 
-      const updatedMessages = [...newMessages, aiMessage];
-      setMessages(updatedMessages);
-      setSessionId(response.session_id);
+        // 自动滚动
+        flatListRef.current?.scrollToEnd({ animated: true });
+      },
+      // onStart - 收到session_id
+      (newSessionId: string) => {
+        setSessionId(newSessionId);
+      },
+      // onDone - 流式传输完成
+      async (fullContent: string, messageCount: number) => {
+        setIsStreaming(false);
+        setIsLoading(false);
+        setStreamingMessageIndex(null);
+        setStreamingText('');
+        abortControllerRef.current = null;
 
-      // 启动打字机效果
-      const messageIndex = updatedMessages.length - 1;
-      startTypingEffect(messageIndex, response.reply);
+        // 确保最终内容正确
+        setMessages(prev => {
+          const updated = [...prev];
+          if (updated[aiMessageIndex]) {
+            updated[aiMessageIndex] = {
+              ...updated[aiMessageIndex],
+              content: fullContent,
+            };
+          }
+          return updated;
+        });
 
-      // 保存会话
-      await saveSession(updatedMessages, response.session_id);
-    } catch (err: any) {
-      console.error('Send message error:', err);
-      setError(err.message || t('ai.errorMessage'));
-    } finally {
-      setIsLoading(false);
-    }
+        // 保存会话
+        const finalMessages = [...messages, userMessage, {
+          role: 'assistant' as const,
+          content: fullContent,
+          timestamp: new Date().toISOString(),
+        }];
+        await saveSession(finalMessages, sessionId || undefined);
+      },
+      // onError - 发生错误
+      (errorMessage: string) => {
+        setIsStreaming(false);
+        setIsLoading(false);
+        setStreamingMessageIndex(null);
+        setStreamingText('');
+        abortControllerRef.current = null;
+        setError(errorMessage || t('ai.errorMessage'));
+
+        // 移除空的AI消息
+        setMessages(prev => prev.slice(0, -1));
+      }
+    );
   };
 
   // 新建对话
@@ -323,20 +375,18 @@ export const AIChatScreen: React.FC<Props> = ({ navigation, route }) => {
   const renderMessage = ({ item, index }: { item: ChatMessage; index: number }) => {
     const isUser = item.role === 'user';
     const isLastMessage = index === messages.length - 1;
-    const isTyping = typingMessageIndex === index;
+    const isCurrentlyStreaming = streamingMessageIndex === index && isStreaming;
 
-    // 显示打字效果或完整内容
-    const displayContent = isTyping && typingText ? typingText : item.content;
-    const showCursor = isTyping && displayContent.length < item.content.length;
+    // 显示流式内容或完整内容
+    const displayContent = item.content || '';
+    const showCursor = isCurrentlyStreaming;
 
     return (
-      <TouchableOpacity
+      <View
         style={[
           styles.messageContainer,
           isUser ? styles.userMessageContainer : styles.aiMessageContainer,
         ]}
-        onPress={isTyping ? skipTyping : undefined}
-        activeOpacity={isTyping ? 0.7 : 1}
       >
         <View
           style={[
@@ -353,13 +403,12 @@ export const AIChatScreen: React.FC<Props> = ({ navigation, route }) => {
             // AI消息：Markdown渲染
             <View style={styles.markdownContainer}>
               <Markdown style={aiMarkdownStyles}>
-                {displayContent}
+                {displayContent + (showCursor ? ' ▊' : '')}
               </Markdown>
-              {showCursor && <Text style={styles.cursor}>▊</Text>}
             </View>
           )}
         </View>
-      </TouchableOpacity>
+      </View>
     );
   };
 
@@ -464,29 +513,45 @@ export const AIChatScreen: React.FC<Props> = ({ navigation, route }) => {
               onSubmitEditing={() => sendMessage()}
               blurOnSubmit={false}
             />
-            <TouchableOpacity
-              style={[
-                styles.sendButton,
-                (!inputText.trim() || isLoading) && styles.sendButtonDisabled,
-              ]}
-              onPress={() => sendMessage()}
-              disabled={!inputText.trim() || isLoading}
-            >
-              <LinearGradient
-                colors={
-                  inputText.trim() && !isLoading
-                    ? ['rgba(249, 168, 137, 1)', 'rgba(255, 180, 162, 1)']
-                    : ['rgba(200, 200, 200, 0.5)', 'rgba(220, 220, 220, 0.5)']
-                }
-                style={styles.sendButtonGradient}
+            {/* 流式传输中显示终止按钮，否则显示发送按钮 */}
+            {isStreaming ? (
+              <TouchableOpacity
+                style={styles.stopButton}
+                onPress={stopStreaming}
+                activeOpacity={0.7}
               >
-                <Ionicons
-                  name="send"
-                  size={20}
-                  color={inputText.trim() && !isLoading ? '#ffffff' : '#8e8e93'}
-                />
-              </LinearGradient>
-            </TouchableOpacity>
+                <LinearGradient
+                  colors={['#FF6B6B', '#EE5A5A']}
+                  style={styles.stopButtonGradient}
+                >
+                  <Ionicons name="stop" size={20} color="#ffffff" />
+                </LinearGradient>
+              </TouchableOpacity>
+            ) : (
+              <TouchableOpacity
+                style={[
+                  styles.sendButton,
+                  (!inputText.trim() || isLoading) && styles.sendButtonDisabled,
+                ]}
+                onPress={() => sendMessage()}
+                disabled={!inputText.trim() || isLoading}
+              >
+                <LinearGradient
+                  colors={
+                    inputText.trim() && !isLoading
+                      ? ['rgba(249, 168, 137, 1)', 'rgba(255, 180, 162, 1)']
+                      : ['rgba(200, 200, 200, 0.5)', 'rgba(220, 220, 220, 0.5)']
+                  }
+                  style={styles.sendButtonGradient}
+                >
+                  <Ionicons
+                    name="send"
+                    size={20}
+                    color={inputText.trim() && !isLoading ? '#ffffff' : '#8e8e93'}
+                  />
+                </LinearGradient>
+              </TouchableOpacity>
+            )}
           </LinearGradient>
         </BlurView>
       </View>
@@ -672,7 +737,24 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  // 打字机光标
+  // 终止按钮
+  stopButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    overflow: 'hidden',
+    shadowColor: '#FF6B6B',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+  stopButtonGradient: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  // 流式光标
   cursor: {
     color: '#F9A889',
     fontWeight: 'bold',
@@ -680,9 +762,7 @@ const styles = StyleSheet.create({
   },
   // Markdown容器
   markdownContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    alignItems: 'flex-end',
+    flex: 1,
   },
 });
 

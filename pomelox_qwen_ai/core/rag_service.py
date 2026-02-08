@@ -3,6 +3,8 @@ RAG Service Module with Hybrid Retrieval
 Provides Retrieval-Augmented Generation functionality based on school knowledge base
 Supports hybrid retrieval: vector index (indexed=true) + database (indexed=false)
 """
+# 必须先导入 torch 以解决 Windows DLL 加载问题
+import torch  # noqa: F401
 import os
 import numpy as np
 from typing import List, Dict, Any

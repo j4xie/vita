@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, Response
 from flask_cors import CORS
 from config import Config
 import dashscope
@@ -398,6 +398,201 @@ def list_schools():
 def health_check():
     """Health check endpoint"""
     return jsonify({'status': 'healthy'})
+
+
+# ==================== 兼容前端API端点 ====================
+@app.route('/api/ai/chat', methods=['POST'])
+def api_ai_chat():
+    """
+    兼容前端调用的AI Chat端点
+    转发到/ask端点的逻辑
+    """
+    try:
+        data = request.get_json(force=True, silent=True)
+        if not data:
+            return jsonify({'error': '请求体不能为空'}), 400
+
+        # 从前端格式转换为后端格式
+        message = data.get('message', '')
+        session_id = data.get('session_id', str(uuid.uuid4()))
+        dept_id = data.get('dept_id') or data.get('deptId')
+        user_id = data.get('user_id') or data.get('userId')
+
+        if not message:
+            return jsonify({'error': '消息不能为空'}), 400
+
+        if not dept_id:
+            return jsonify({'error': 'dept_id不能为空'}), 400
+
+        # 转换为/ask端点的格式并调用
+        ask_data = {
+            'session_id': session_id,
+            'question': message,
+            'deptId': dept_id,
+            'userId': user_id
+        }
+
+        # 直接调用ask_ai的逻辑
+        dept_id = int(dept_id)
+
+        if dept_id not in Config.DEPARTMENTS:
+            return jsonify({'error': f'无效的部门ID: {dept_id}'}), 400
+
+        # 初始化会话
+        if session_id not in sessions:
+            sessions[session_id] = {
+                'dept_id': dept_id,
+                'messages': []
+            }
+
+        if sessions[session_id]['dept_id'] != dept_id:
+            sessions[session_id] = {
+                'dept_id': dept_id,
+                'messages': []
+            }
+
+        # RAG检索
+        retrieved_content, max_score, has_high_quality = retrieve(dept_id, message)
+
+        use_web_search = False
+        if not has_high_quality and Config.ENABLE_WEB_SEARCH_FALLBACK:
+            use_web_search = True
+
+        system_prompt = get_system_prompt(dept_id, retrieved_content, use_web_search)
+
+        messages = [{'role': 'system', 'content': system_prompt}]
+        messages.extend(sessions[session_id]['messages'])
+        messages.append({'role': 'user', 'content': message})
+
+        # 调用AI
+        answer, sources = call_ai_with_web_search(
+            messages,
+            enable_search=use_web_search,
+            search_strategy=Config.WEB_SEARCH_STRATEGY
+        )
+
+        # 保存会话历史
+        sessions[session_id]['messages'].append({'role': 'user', 'content': message})
+        sessions[session_id]['messages'].append({'role': 'assistant', 'content': answer})
+
+        # 返回兼容格式
+        return jsonify({
+            'session_id': session_id,
+            'response': answer,
+            'message_count': len(sessions[session_id]['messages'])
+        })
+
+    except Exception as e:
+        return jsonify({'error': f'服务器错误: {str(e)}'}), 500
+
+
+@app.route('/api/ai/chat/stream', methods=['POST'])
+def api_ai_chat_stream():
+    """
+    流式传输AI Chat端点
+    使用SSE (Server-Sent Events) 返回流式响应
+    """
+    try:
+        data = request.get_json(force=True, silent=True)
+        if not data:
+            return jsonify({'error': '请求体不能为空'}), 400
+
+        message = data.get('message', '')
+        session_id = data.get('session_id', str(uuid.uuid4()))
+        dept_id = data.get('dept_id') or data.get('deptId')
+        user_id = data.get('user_id') or data.get('userId')
+
+        if not message:
+            return jsonify({'error': '消息不能为空'}), 400
+
+        if not dept_id:
+            return jsonify({'error': 'dept_id不能为空'}), 400
+
+        dept_id = int(dept_id)
+
+        if dept_id not in Config.DEPARTMENTS:
+            return jsonify({'error': f'无效的部门ID: {dept_id}'}), 400
+
+        def generate():
+            try:
+                # 初始化会话
+                if session_id not in sessions:
+                    sessions[session_id] = {
+                        'dept_id': dept_id,
+                        'messages': []
+                    }
+
+                if sessions[session_id]['dept_id'] != dept_id:
+                    sessions[session_id] = {
+                        'dept_id': dept_id,
+                        'messages': []
+                    }
+
+                # RAG检索
+                retrieved_content, max_score, has_high_quality = retrieve(dept_id, message)
+
+                use_web_search = False
+                if not has_high_quality and Config.ENABLE_WEB_SEARCH_FALLBACK:
+                    use_web_search = True
+
+                system_prompt = get_system_prompt(dept_id, retrieved_content, use_web_search)
+
+                messages_list = [{'role': 'system', 'content': system_prompt}]
+                messages_list.extend(sessions[session_id]['messages'])
+                messages_list.append({'role': 'user', 'content': message})
+
+                # 发送开始事件
+                yield f"data: {json.dumps({'type': 'start', 'session_id': session_id})}\n\n"
+
+                # 使用DashScope流式API
+                full_content = ''
+
+                call_params = {
+                    'model': 'qwen-plus',
+                    'messages': messages_list,
+                    'result_format': 'message',
+                    'stream': True,
+                    'incremental_output': True
+                }
+
+                if use_web_search:
+                    call_params['enable_search'] = True
+
+                responses = dashscope.Generation.call(**call_params)
+
+                for response in responses:
+                    if response.status_code == 200:
+                        if response.output and response.output.choices:
+                            chunk = response.output.choices[0].message.content
+                            if chunk:
+                                full_content += chunk
+                                yield f"data: {json.dumps({'type': 'chunk', 'content': chunk})}\n\n"
+                    else:
+                        yield f"data: {json.dumps({'type': 'error', 'message': response.message})}\n\n"
+                        return
+
+                # 保存会话历史
+                sessions[session_id]['messages'].append({'role': 'user', 'content': message})
+                sessions[session_id]['messages'].append({'role': 'assistant', 'content': full_content})
+
+                # 发送完成事件
+                yield f"data: {json.dumps({'type': 'done', 'full_content': full_content, 'message_count': len(sessions[session_id]['messages'])})}\n\n"
+
+            except Exception as e:
+                yield f"data: {json.dumps({'type': 'error', 'message': str(e)})}\n\n"
+
+        return Response(
+            generate(),
+            mimetype='text/event-stream',
+            headers={
+                'Cache-Control': 'no-cache',
+                'Connection': 'keep-alive',
+                'X-Accel-Buffering': 'no'
+            }
+        )
+
+    except Exception as e:
+        return jsonify({'error': f'服务器错误: {str(e)}'}), 500
 
 
 # ==================== 会话管理API ====================
