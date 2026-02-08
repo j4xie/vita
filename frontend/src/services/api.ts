@@ -246,18 +246,16 @@ class ApiService {
 
   /**
    * Get AI Chat base URL
-   * 本地开发时使用 localhost:8085
-   * 生产环境使用云服务器地址
+   * 统一使用 pomelox_qwen_ai 服务 (端口 8087)
    */
   private getAIChatBaseUrl(): string {
-    // 在本地开发时使用 localhost
+    // 本地开发时使用 localhost
     if (__DEV__) {
-      return 'http://localhost:8085';
+      return 'http://localhost:8087';
     }
 
-    // 生产环境待部署后更新此地址
-    // 暂时也使用测试环境地址
-    return 'http://106.14.165.234:8087'; // TODO: 更新为生产环境AI Chat服务地址
+    // 生产环境使用云服务器
+    return 'http://106.14.165.234:8087';
   }
 
   /**
@@ -339,6 +337,98 @@ class ApiService {
       console.error('Reset AI Session Error:', error);
       throw new Error('重置会话失败');
     }
+  }
+
+  /**
+   * 流式传输发送消息到AI
+   * 返回AbortController用于取消请求
+   */
+  sendAIMessageStream(
+    request: ChatRequest,
+    onChunk: (content: string) => void,
+    onStart: (sessionId: string) => void,
+    onDone: (fullContent: string, messageCount: number) => void,
+    onError: (error: string) => void
+  ): AbortController {
+    const abortController = new AbortController();
+    const baseUrl = this.getAIChatBaseUrl();
+
+    const fetchStream = async () => {
+      try {
+        const response = await fetch(`${baseUrl}/api/ai/chat/stream`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(request),
+          signal: abortController.signal,
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const reader = response.body?.getReader();
+        if (!reader) {
+          throw new Error('No response body');
+        }
+
+        const decoder = new TextDecoder();
+        let buffer = '';
+
+        while (true) {
+          const { done, value } = await reader.read();
+
+          if (done) break;
+
+          buffer += decoder.decode(value, { stream: true });
+
+          // 处理SSE事件（以\n\n分隔）
+          const events = buffer.split('\n\n');
+          buffer = events.pop() || ''; // 保留未完成的部分
+
+          for (const event of events) {
+            if (!event.trim()) continue;
+
+            const lines = event.split('\n');
+            for (const line of lines) {
+              if (line.startsWith('data: ')) {
+                try {
+                  const data = JSON.parse(line.slice(6));
+
+                  switch (data.type) {
+                    case 'start':
+                      onStart(data.session_id);
+                      break;
+                    case 'chunk':
+                      onChunk(data.content);
+                      break;
+                    case 'done':
+                      onDone(data.full_content, data.message_count);
+                      break;
+                    case 'error':
+                      onError(data.message);
+                      break;
+                  }
+                } catch (e) {
+                  console.warn('Failed to parse SSE data:', line);
+                }
+              }
+            }
+          }
+        }
+      } catch (error: any) {
+        if (error.name === 'AbortError') {
+          console.log('Stream aborted by user');
+          return;
+        }
+        console.error('Stream Error:', error);
+        onError(error.message || 'AI服务暂时不可用，请稍后再试');
+      }
+    };
+
+    fetchStream();
+    return abortController;
   }
 }
 
