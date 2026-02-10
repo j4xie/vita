@@ -313,7 +313,10 @@
         "verification_code_example": "Example: 123456",
         "confirm_password_required": "Please confirm your password",
         "password_mismatch": "Passwords do not match",
-        "password_mismatch_hint": "Please ensure both passwords are exactly the same"
+        "password_mismatch_hint": "Please ensure both passwords are exactly the same",
+        "username_min_length": "Username must be at least 3 characters",
+        "password_min_length": "Password must be at least 6 characters",
+        "email_format_required": "Please enter a valid email address"
       },
       "registration": {
         "username_taken": "Username is already taken",
@@ -1302,6 +1305,45 @@
       "dateRangeTitle": "Date Range",
       "dateRangePlaceholder": "Select date range",
       "showResults": "Show {{count}} results"
+    },
+    "favorites": "FAVORITES",
+    "merchantsLabel": "MERCHANTS",
+    "nearby": "Nearby",
+    "popular": "Popular",
+    "search": {
+      "title": "Search",
+      "placeholder": "Search merchants...",
+      "results": "results",
+      "noResults": "No results found",
+      "noResultsSubtext": "Try a different search term"
+    },
+    "merchantDetail": {
+      "coupons": "Coupons",
+      "menu": "Menu",
+      "about": "About",
+      "open": "Open",
+      "closed": "Closed",
+      "fromOwners": "FROM THE OWNERS",
+      "noCoupons": "No coupons available",
+      "noMenu": "No menu items",
+      "allCategories": "All",
+      "reviews": "reviews",
+      "points": "pts",
+      "earnBadge": "Earn",
+      "website": "Website",
+      "phone": "Phone",
+      "address": "Address",
+      "hours": "Hours"
+    },
+    "coupon": {
+      "writeOffTitle": "Use Coupon",
+      "writeOffConfirm": "Confirm to use this coupon?",
+      "writeOffSuccess": "Coupon used successfully!",
+      "availableCoupons": "Available Coupons",
+      "noCoupons": "No available coupons",
+      "use": "Use",
+      "off": "OFF",
+      "pointsCost": "{{points}} pts"
     }
   },
   "wellbeing": {
@@ -2015,7 +2057,11 @@
         "airportPickup": "Airport Pickup",
         "departmentBooth": "Dept Booth",
         "meetAndGreet": "Meet & Greet"
-      }
+      },
+      "checkInTimeAbnormal": "Check-in time record abnormal",
+      "calculationError": "Calculation error",
+      "durationCalculationFailed": "Duration calculation failed",
+      "invalidUserId": "Invalid user ID"
     },
     "unknown_duration": "Unknown duration",
     "total_hours": "Total Hours",
@@ -2756,7 +2802,110 @@
           "priority_support": "Priority Support"
         }
       }
+    },
+    "order": {
+      "confirm_title": "Confirm Order",
+      "product_info": "Product Info",
+      "payment_method": "Payment Method",
+      "points_exchange": "Points Exchange",
+      "current_points": "Current Points: {{points}}",
+      "alipay_payment": "Alipay",
+      "stripe_payment": "Credit/Debit Card",
+      "stripe_payment_desc": "Visa, Mastercard, etc.",
+      "order_summary": "Order Summary",
+      "product_total": "Product Total",
+      "earn_points_label": "Points Earned",
+      "total": "Total",
+      "go_pay": "Pay Now",
+      "confirm_exchange": "Confirm Exchange",
+      "points_unit": "Points",
+      "quantity_label": "Qty: {{count}}",
+      "insufficient_points_warning": "Insufficient points, please select another payment method",
+      "product_error": "Product information error",
+      "exchange_success": "Exchange Successful!",
+      "exchange_failed": "Exchange failed, please try again later",
+      "create_order_failed": "Failed to create order, please try again later",
+      "cannot_open_payment": "Cannot open payment page, please check if Alipay is installed",
+      "add_address": "Add Shipping Address"
+    },
+    "payment": {
+      "result_title": "Payment Result",
+      "waiting": "Waiting for Payment...",
+      "waiting_alipay": "Please complete payment in Alipay",
+      "waiting_stripe": "Processing payment...",
+      "success": "Payment Successful!",
+      "success_exchange": "{{product}} redeemed successfully",
+      "success_default": "Order payment successful",
+      "cancelled": "Payment Cancelled",
+      "cancelled_desc": "You have cancelled the payment, you can try again",
+      "processing": "Payment Processing",
+      "processing_desc": "Payment may take some time, please check in Order Center later",
+      "return_home": "Return Home",
+      "retry_payment": "Retry Payment",
+      "view_orders": "View Orders",
+      "leave_temporarily": "Leave Temporarily",
+      "leave_hint": "Payment may take some time, you can check the result in Order Center later",
+      "continue_waiting": "Continue Waiting",
+      "stripe_cancelled": "Payment cancelled",
+      "stripe_failed": "Payment failed: {{error}}",
+      "stripe_unavailable": "Stripe Payment Unavailable",
+      "stripe_unavailable_desc": "The order has been created, but Stripe payment is not yet configured. Please try another payment method or contact support.",
+      "alipay_unavailable": "Alipay Payment Unavailable",
+      "alipay_unavailable_desc": "The order has been created, but Alipay payment is not yet configured. Please try another payment method or contact support."
+    },
+    "membership_level": {
+      "title": "Membership",
+      "my_membership": "My Membership",
+      "level_name": "{{name}}",
+      "view_all_benefits": "View All Benefits",
+      "points_label": "POINTS",
+      "next_tier": "{{percent}}% to Next Tier",
+      "benefits_title": "Member Benefits",
+      "valid_until": "Valid until {{date}}",
+      "no_membership": "No membership yet",
+      "upgrade_hint": "Earn more points to level up",
+      "my_cards": "My Cards",
+      "upgrade": "Upgrade"
     }
+  },
+  "membership_purchase": {
+    "title": "Membership Levels",
+    "current_level": "Current Level",
+    "purchase": "Purchase",
+    "price_tbd": "Price TBD",
+    "contact_purchase": "Contact Us",
+    "register_get": "Free on Register",
+    "buy_get": "Available for Purchase",
+    "grant_get": "By Invitation",
+    "no_levels": "No membership levels available",
+    "benefits": "Benefits",
+    "no_benefits": "No benefits available yet",
+    "purchase_confirm": "Confirm purchase {{level}} membership?",
+    "levels": {
+      "4": "Blue Card",
+      "5": "Red Card",
+      "6": "Red-Black Card",
+      "7": "Black Card"
+    },
+    "equities": {
+      "基础活动报名": "Event Registration",
+      "积分商城兑换": "Points Mall Redemption",
+      "商家优惠券": "Merchant Coupons",
+      "平台优惠券": "Platform Coupons",
+      "霸王餐活动": "Free Meal Events",
+      "种草任务": "Content Creation Tasks",
+      "VIP专属服务": "VIP Exclusive Service"
+    },
+    "benefits_desc": {
+      "5": "Merchant & platform coupons; Points mall redemption",
+      "6": "Monthly free meal event; Content creation tasks; Ad placement lottery",
+      "7": "All benefits + VIP exclusive service"
+    }
+  },
+  "activity_payment": {
+    "paid_activity": "Paid Activity",
+    "activity_fee": "Activity Fee",
+    "free_activity": "Free Activity"
   },
   "calendarSelection": {
     "title": "Select Entry Date",

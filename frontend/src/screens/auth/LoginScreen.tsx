@@ -9,7 +9,6 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
-  Alert,
   Dimensions,
   Animated,
   Image,
@@ -47,6 +46,7 @@ export const LoginScreen: React.FC = () => {
   const [errors, setErrors] = useState<{email?: string; password?: string}>({});
   const [focusedInput, setFocusedInput] = useState<string | null>(null);
   const [formValid, setFormValid] = useState(false);
+  const [loginError, setLoginError] = useState<string>('');
   
   // 动画状态
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -84,7 +84,7 @@ export const LoginScreen: React.FC = () => {
     if (!email || email.trim().length === 0) {
       newErrors.email = t('auth.errors.form_validation.email_required');
     } else if (email.length < 3) {
-      newErrors.email = '用户名至少需要3位字符';
+      newErrors.email = t('auth.errors.form_validation.username_min_length');
     } else if (email.includes('@')) {
       // 如果包含@符号，按邮箱格式验证
       const emailValidation = validateEmail(email, t);
@@ -97,7 +97,7 @@ export const LoginScreen: React.FC = () => {
     if (!password || password.trim().length === 0) {
       newErrors.password = t('auth.errors.form_validation.password_required');
     } else if (password.length < 6) {
-      newErrors.password = '密码至少需要6位字符';
+      newErrors.password = t('auth.errors.form_validation.password_min_length');
     }
 
     setErrors(newErrors);
@@ -199,17 +199,7 @@ export const LoginScreen: React.FC = () => {
         const errorInfo = parseApiError(result, 'login', t);
         console.warn('❌ 登录失败:', { code: result.code, msg: result.msg, parsedError: errorInfo.message });
 
-        Alert.alert(
-          errorInfo.title,
-          `${errorInfo.message}${errorInfo.suggestion ? '\n\n' + errorInfo.suggestion : ''}`,
-          [
-            { text: t('common.cancel'), style: 'cancel' },
-            ...(errorInfo.action ? [{
-              text: errorInfo.action,
-              onPress: () => setLoading(false)
-            }] : [])
-          ]
-        );
+        setLoginError(errorInfo.message);
       }
     } catch (error) {
       console.error('❌ 登录异常:', {
@@ -221,17 +211,7 @@ export const LoginScreen: React.FC = () => {
       // 🔧 使用新的API错误解析
       const errorInfo = parseApiError(error, 'login', t);
 
-      Alert.alert(
-        errorInfo.title,
-        `${errorInfo.message}${errorInfo.suggestion ? '\n\n' + errorInfo.suggestion : ''}`,
-        [
-          { text: t('common.cancel'), style: 'cancel' },
-          {
-            text: errorInfo.action || t('auth.errors.actions.retry'),
-            onPress: () => setLoading(false)
-          }
-        ]
-      );
+      setLoginError(errorInfo.message);
     } finally {
       setLoading(false);
     }
@@ -307,11 +287,21 @@ export const LoginScreen: React.FC = () => {
                   onChangeText={(text) => {
                     setEmail(text);
                     if (errors.email) setErrors({...errors, email: undefined});
+                    if (loginError) setLoginError('');
                     // 实时验证邮箱格式
                     setTimeout(() => validateEmailFormat(text), 500);
                   }}
                   onFocus={() => setFocusedInput('email')}
-                  onBlur={() => setFocusedInput(null)}
+                  onBlur={() => {
+                    setFocusedInput(null);
+                    // 失焦时验证邮箱格式
+                    if (email.trim().length > 0 && !email.includes('@')) {
+                      setErrors(prev => ({
+                        ...prev,
+                        email: t('auth.errors.form_validation.email_format_required')
+                      }));
+                    }
+                  }}
                   keyboardType="default"
                   autoCapitalize="none"
                   autoCorrect={false}
@@ -338,9 +328,19 @@ export const LoginScreen: React.FC = () => {
                   onChangeText={(text) => {
                     setPassword(text);
                     if (errors.password) setErrors({...errors, password: undefined});
+                    if (loginError) setLoginError('');
                   }}
                   onFocus={() => setFocusedInput('password')}
-                  onBlur={() => setFocusedInput(null)}
+                  onBlur={() => {
+                    setFocusedInput(null);
+                    // 失焦时验证密码长度
+                    if (password.length > 0 && password.length < 6) {
+                      setErrors(prev => ({
+                        ...prev,
+                        password: t('auth.errors.form_validation.password_min_length')
+                      }));
+                    }
+                  }}
                   secureTextEntry={!showPassword}
                   placeholderTextColor={theme.colors.text.disabled}
                 />
@@ -356,7 +356,7 @@ export const LoginScreen: React.FC = () => {
                 <Text style={styles.errorText}>{errors.password}</Text>
               )}
               {!errors.password && password.length > 0 && password.length < 6 && (
-                <Text style={styles.hintText}>{t('auth.errors.form_validation.password_format_hint')}</Text>
+                <Text style={styles.errorText}>{t('auth.errors.form_validation.password_format_hint')}</Text>
               )}
             </View>
 
@@ -378,6 +378,14 @@ export const LoginScreen: React.FC = () => {
                 <Text style={styles.forgotText}>{t('auth.login.forgot_password')}</Text>
               </TouchableOpacity>
             </View>
+
+                {/* Inline Login Error */}
+                {loginError ? (
+                  <View style={styles.loginErrorContainer}>
+                    <Ionicons name="alert-circle" size={16} color={theme.colors.danger} />
+                    <Text style={styles.loginErrorText}>{loginError}</Text>
+                  </View>
+                ) : null}
 
                 {/* 🚀 Dynamic Login Button - 动态交互按钮 */}
                 <Animated.View style={[
@@ -603,6 +611,23 @@ const styles = StyleSheet.create({
     fontWeight: theme.typography.fontWeight.semibold,
   },
   
+  // Inline Login Error
+  loginErrorContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(251, 84, 84, 0.08)',
+    borderRadius: theme.borderRadius.base,
+    padding: theme.spacing.md,
+    marginBottom: theme.spacing.lg,
+  },
+  loginErrorText: {
+    fontSize: theme.typography.fontSize.sm,
+    color: theme.colors.danger,
+    marginLeft: theme.spacing.sm,
+    flex: 1,
+    fontWeight: theme.typography.fontWeight.medium,
+  },
+
   // 🚀 Dynamic Login Button Shadow容器 - 增强交互版
   loginButtonShadowContainer: {
     borderRadius: theme.borderRadius.button,

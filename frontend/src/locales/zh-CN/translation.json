@@ -617,7 +617,10 @@
         "verification_code_example": "示例：123456",
         "confirm_password_required": "请确认密码",
         "password_mismatch": "两次输入的密码不一致",
-        "password_mismatch_hint": "请确保两次输入的密码完全相同"
+        "password_mismatch_hint": "请确保两次输入的密码完全相同",
+        "username_min_length": "用户名至少需要3位字符",
+        "password_min_length": "密码至少需要6位字符",
+        "email_format_required": "请输入有效的邮箱地址"
       },
       "registration": {
         "username_taken": "用户名已被使用",
@@ -1283,6 +1286,45 @@
       "dateRangeTitle": "日期范围",
       "dateRangePlaceholder": "选择日期范围",
       "showResults": "显示 {{count}} 个结果"
+    },
+    "favorites": "精选推荐",
+    "merchantsLabel": "商家列表",
+    "nearby": "附近",
+    "popular": "热门",
+    "search": {
+      "title": "搜索",
+      "placeholder": "搜索商家...",
+      "results": "条结果",
+      "noResults": "未找到结果",
+      "noResultsSubtext": "请尝试其他搜索词"
+    },
+    "merchantDetail": {
+      "coupons": "优惠券",
+      "menu": "菜单",
+      "about": "关于",
+      "open": "营业中",
+      "closed": "已关闭",
+      "fromOwners": "商家介绍",
+      "noCoupons": "暂无优惠券",
+      "noMenu": "暂无菜单",
+      "allCategories": "全部",
+      "reviews": "条评价",
+      "points": "积分",
+      "earnBadge": "赚取",
+      "website": "网站",
+      "phone": "电话",
+      "address": "地址",
+      "hours": "营业时间"
+    },
+    "coupon": {
+      "writeOffTitle": "使用优惠券",
+      "writeOffConfirm": "确认使用此优惠券？",
+      "writeOffSuccess": "优惠券使用成功！",
+      "availableCoupons": "可用优惠券",
+      "noCoupons": "暂无可用优惠券",
+      "use": "使用",
+      "off": "折",
+      "pointsCost": "{{points}} 积分"
     }
   },
   "wellbeing": {
@@ -1909,7 +1951,11 @@
         "airportPickup": "接机活动",
         "departmentBooth": "分部摆摊",
         "meetAndGreet": "见面会"
-      }
+      },
+      "checkInTimeAbnormal": "签到时间记录异常",
+      "calculationError": "计算错误",
+      "durationCalculationFailed": "时长计算失败",
+      "invalidUserId": "用户ID无效"
     },
     "checkout": {
       "checkOutSuccess": "签退成功",
@@ -2724,7 +2770,110 @@
           "priority_support": "优先客服支持"
         }
       }
+    },
+    "order": {
+      "confirm_title": "确认订单",
+      "product_info": "商品信息",
+      "payment_method": "支付方式",
+      "points_exchange": "积分兑换",
+      "current_points": "当前积分: {{points}}",
+      "alipay_payment": "支付宝支付",
+      "stripe_payment": "银行卡支付",
+      "stripe_payment_desc": "支持Visa、Mastercard等",
+      "order_summary": "订单总计",
+      "product_total": "商品总价",
+      "earn_points_label": "可获得积分",
+      "total": "总计",
+      "go_pay": "去支付",
+      "confirm_exchange": "确认兑换",
+      "points_unit": "积分",
+      "quantity_label": "数量: {{count}}",
+      "insufficient_points_warning": "积分不足，请选择其他支付方式",
+      "product_error": "商品信息错误",
+      "exchange_success": "兑换成功！",
+      "exchange_failed": "兑换失败，请稍后重试",
+      "create_order_failed": "创建订单失败，请稍后重试",
+      "cannot_open_payment": "无法打开支付页面，请检查是否安装了支付宝应用",
+      "add_address": "添加收货地址"
+    },
+    "payment": {
+      "result_title": "支付结果",
+      "waiting": "等待支付中...",
+      "waiting_alipay": "请在支付宝中完成支付",
+      "waiting_stripe": "正在处理支付...",
+      "success": "支付成功！",
+      "success_exchange": "{{product}} 兑换成功",
+      "success_default": "订单支付成功",
+      "cancelled": "支付已取消",
+      "cancelled_desc": "您已取消支付，可以重新尝试",
+      "processing": "支付处理中",
+      "processing_desc": "支付可能需要一些时间，请稍后在订单中心查看",
+      "return_home": "返回首页",
+      "retry_payment": "重新支付",
+      "view_orders": "查看订单",
+      "leave_temporarily": "暂时离开",
+      "leave_hint": "支付可能需要一些时间，您可以稍后在订单中心查看支付结果",
+      "continue_waiting": "继续等待",
+      "stripe_cancelled": "支付已取消",
+      "stripe_failed": "支付失败：{{error}}",
+      "stripe_unavailable": "Stripe 支付暂不可用",
+      "stripe_unavailable_desc": "订单已创建，但 Stripe 支付服务尚未配置。请尝试其他支付方式或联系客服。",
+      "alipay_unavailable": "支付宝支付暂不可用",
+      "alipay_unavailable_desc": "订单已创建，但支付宝支付服务尚未配置。请尝试其他支付方式或联系客服。"
+    },
+    "membership_level": {
+      "title": "会员中心",
+      "my_membership": "我的会员",
+      "level_name": "{{name}}",
+      "view_all_benefits": "查看全部权益",
+      "points_label": "积分",
+      "next_tier": "距离下一级 {{percent}}%",
+      "benefits_title": "会员权益",
+      "valid_until": "有效期至 {{date}}",
+      "no_membership": "暂无会员等级",
+      "upgrade_hint": "赚取更多积分升级会员",
+      "my_cards": "我的会员卡",
+      "upgrade": "升级会员"
     }
+  },
+  "membership_purchase": {
+    "title": "会员等级",
+    "current_level": "当前等级",
+    "purchase": "购买",
+    "price_tbd": "价格待定",
+    "contact_purchase": "联系我们",
+    "register_get": "注册即得",
+    "buy_get": "可购买",
+    "grant_get": "邀请制",
+    "no_levels": "暂无会员等级",
+    "benefits": "权益",
+    "no_benefits": "暂无权益",
+    "purchase_confirm": "确认购买 {{level}} 会员？",
+    "levels": {
+      "4": "蓝卡会员",
+      "5": "红卡会员",
+      "6": "红黑卡会员",
+      "7": "黑卡会员"
+    },
+    "equities": {
+      "基础活动报名": "基础活动报名",
+      "积分商城兑换": "积分商城兑换",
+      "商家优惠券": "商家优惠券",
+      "平台优惠券": "平台优惠券",
+      "霸王餐活动": "霸王餐活动",
+      "种草任务": "种草任务",
+      "VIP专属服务": "VIP专属服务"
+    },
+    "benefits_desc": {
+      "5": "可领商家券+平台券；可积分商城兑换商品",
+      "6": "每月1次霸王餐活动；社媒种草任务；开屏广告权益抽选",
+      "7": "全部权益 + 专属VIP服务"
+    }
+  },
+  "activity_payment": {
+    "paid_activity": "付费活动",
+    "activity_fee": "活动费用",
+    "free_activity": "免费活动"
   },
   "calendarSelection": {
     "title": "选择补录日期",
