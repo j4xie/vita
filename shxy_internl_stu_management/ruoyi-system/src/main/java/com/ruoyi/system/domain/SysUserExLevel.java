@@ -48,6 +48,16 @@ public class SysUserExLevel extends BaseEntity
 
     private SysUserLevel sysUserLevel;
 
+    private String mobile;
+
+    public String getMobile() {
+        return mobile;
+    }
+
+    public void setMobile(String mobile) {
+        this.mobile = mobile;
+    }
+
     public SysUserLevel getSysUserLevel() {
         return sysUserLevel;
     }

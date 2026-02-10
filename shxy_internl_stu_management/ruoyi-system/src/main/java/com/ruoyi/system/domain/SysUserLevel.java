@@ -86,6 +86,7 @@ public class SysUserLevel extends BaseEntity
      */
     private int validityType;
 
+    private BigDecimal price;
 
     /** 创建者user_id */
     @Excel(name = "创建者user_id")
@@ -277,6 +278,14 @@ public class SysUserLevel extends BaseEntity
 
     public void setEquids(Long[] equids) {
         this.equids = equids;
+    }
+
+    public BigDecimal getPrice() {
+        return price;
+    }
+
+    public void setPrice(BigDecimal price) {
+        this.price = price;
     }
 
     @Override

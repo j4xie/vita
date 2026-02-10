@@ -9,6 +9,7 @@ import com.ruoyi.common.core.domain.AjaxResult;
 import com.ruoyi.common.core.domain.entity.SysDept;
 import com.ruoyi.common.core.domain.entity.SysRole;
 import com.ruoyi.common.core.domain.entity.SysUser;
+import com.ruoyi.common.core.domain.entity.UserExtendsDataLog;
 import com.ruoyi.common.core.domain.model.LoginBody;
 import com.ruoyi.common.core.page.TableDataInfo;
 import com.ruoyi.common.enums.BusinessType;
@@ -65,6 +66,9 @@ public class AppSysUserController extends BaseController {
 
     @Autowired
     private IUserExtendsDataService userExtendsDataService;
+
+    @Autowired
+    private IUserExtendsDataLogService userExtendsDataLogService;
 
     /**
      * 新增用户
@@ -241,6 +245,11 @@ public class AppSysUserController extends BaseController {
             if(null != postId){
                 sysUser.setPost(postService.selectPostById(postId));
             }
+
+            //获取积分变更日志
+            List<UserExtendsDataLog> userExtendsDataLogList = userExtendsDataLogService.selectUserExtendsDataLogByUserId(userId);
+            sysUser.setUserExtendsDataLogList(userExtendsDataLogList);
+
             ajax.put(AjaxResult.DATA_TAG, sysUser);
         }
         return ajax;

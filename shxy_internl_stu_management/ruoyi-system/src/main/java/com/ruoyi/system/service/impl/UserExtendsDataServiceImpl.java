@@ -1,6 +1,8 @@
 package com.ruoyi.system.service.impl;
 
 import java.util.List;
+
+import com.ruoyi.common.core.domain.entity.UserExtendsDataLog;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import com.ruoyi.system.mapper.UserExtendsDataMapper;
@@ -52,7 +54,8 @@ public class UserExtendsDataServiceImpl implements IUserExtendsDataService
     @Override
     public int insertUserExtendsData(UserExtendsData userExtendsData)
     {
-        return userExtendsDataMapper.insertUserExtendsData(userExtendsData);
+        int count = userExtendsDataMapper.insertUserExtendsData(userExtendsData);
+        return count;
     }
 
     /**

@@ -90,8 +90,15 @@
       <el-table-column label="获取资格" align="center" prop="acquisitionMethod" />
       <el-table-column label="创建者" align="center" prop="createByName" />
       <el-table-column label="更新人" align="center" prop="updateByName" width="180"/>
-      <el-table-column label="操作" fixed="right" align="center" class-name="small-padding fixed-width" width="180">
+      <el-table-column label="操作" fixed="right" align="center" class-name="small-padding fixed-width" width="240">
         <template slot-scope="scope">
+          <el-button
+            size="mini"
+            type="text"
+            icon="el-icon-edit"
+            @click="grantGetLevel(scope.row)"
+            v-if="scope.row.acquisitionMethod == '内部授予获得'"
+          >授予会员</el-button>
           <el-button
             size="mini"
             type="text"
@@ -194,6 +201,11 @@
           </el-select>
           内有效
         </el-form-item>
+        <el-form-item label="价格" prop="price" v-if="form.acquisitionMethodType == 'buy_get'">
+          <el-input placeholder="请输入价格" v-model="form.price">
+            <template slot="append">美元</template>
+          </el-input>
+        </el-form-item>
         <el-form-item label="说明获取资格" prop="acquisitionMethod" v-if="form.acquisitionMethodType == -1">
           <el-input v-model="form.acquisitionMethod" type="textarea" placeholder="请输入获取资格"/>
         </el-form-item>
@@ -203,11 +215,25 @@
         <el-button @click="cancel">取 消</el-button>
       </div>
     </el-dialog>
+
+
+    <!-- 授予会员等级 -->
+    <el-dialog title="授予会员" :visible.sync="grantOpen" width="500px" append-to-body>
+      <el-form ref="form" :model="grantForm" :rules="rules" label-width="100px">
+        <el-form-item label="用户手机号" prop="mobile">
+          <el-input v-model="grantForm.mobile" placeholder="请输入用户手机号" />
+        </el-form-item>
+      </el-form>
+      <div slot="footer" class="dialog-footer">
+        <el-button type="primary" @click="submitFormGrant">确 定</el-button>
+        <el-button @click="cancelGrant">取 消</el-button>
+      </div>
+    </el-dialog>
   </div>
 </template>
 
 <script>
-import { listLevel, getLevel, delLevel, addLevel, updateLevel } from "@/api/system/level"
+import { listLevel, getLevel, delLevel, addLevel, updateLevel, grantLevel } from "@/api/system/level"
 import { listData } from "@/api/system/equ_data"
 import BigFileUpload from '../../../components/BigFileUpload/index.vue'
 
@@ -253,6 +279,9 @@ export default {
       },
       // 表单参数
       form: {},
+      //授权用户等级参数
+      grantForm: {},
+      grantOpen: false,
       // 表单校验
       rules: {
         levelName: [
@@ -285,7 +314,11 @@ export default {
         ],
         validityNum: [
           { required: true, message: "请选择有效时长", trigger: "blur" },
-        ]
+        ],
+        price: [
+          { required: true, message: "价格不能为空", trigger: "blur" },
+          { pattern: /^([0-9][0-9]*)+(.[0-9]{1,2})?$/, message: "价格只能为大于等于0的数字", trigger: "blur" }
+        ],
       }
     }
   },
@@ -381,6 +414,22 @@ export default {
         }
       })
     },
+    /**
+     * 授予会员
+     */
+    grantGetLevel(row){
+      this.grantForm = {
+        levelId: row.id,
+        status: 1,
+        validityType: 1,
+        mobile: ''
+      }
+      this.grantOpen = true
+    },
+    cancelGrant(){
+      this.grantForm = {}
+      this.grantOpen = false
+    },
     /** 提交按钮 */
     submitForm() {
       this.$refs["form"].validate(valid => {
@@ -425,6 +474,7 @@ export default {
             this.form.validityEndTime = null
             this.form.validityNum = -10
             this.form.validityType = -10
+            this.form.price = null
           }
 
           if (this.form.id != null) {
@@ -442,6 +492,13 @@ export default {
           }
         }
       })
+    },
+    /** 提交授予会员等级 */
+    submitFormGrant(){
+        grantLevel(this.grantForm).then(response => {
+          this.$modal.msgSuccess("授予成功")
+          this.grantOpen = false
+        })
     },
     /** 删除按钮操作 */
     handleDelete(row) {

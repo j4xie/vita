@@ -4,6 +4,7 @@ import com.alipay.api.response.AlipayTradeAppPayResponse;
 import com.ruoyi.common.annotation.Log;
 import com.ruoyi.common.core.controller.BaseController;
 import com.ruoyi.common.core.domain.AjaxResult;
+import com.ruoyi.common.core.domain.entity.UserExtendsDataLog;
 import com.ruoyi.common.core.page.TableDataInfo;
 import com.ruoyi.common.enums.BusinessType;
 import com.ruoyi.common.utils.CommonUtils;
@@ -60,6 +61,9 @@ public class AppOrderController extends BaseController
 
     @Autowired
     private StripeService stripeService;
+
+    @Autowired
+    private IUserExtendsDataLogService iUserExtendsDataLogService;
 
     /**
      * 查询订单列表
@@ -151,7 +155,16 @@ public class AppOrderController extends BaseController
                     //扣除积分
                     UserExtendsData userExtendsData = userExtendsDataService.selectUserExtendsDataByUserId(getUserId());
                     userExtendsData.setUserPoint(userExtendsData.getUserPoint().subtract(totalPointPrice));
-                    userExtendsDataService.updateUserExtendsData(userExtendsData);
+                    int pointCount = userExtendsDataService.updateUserExtendsData(userExtendsData);
+                    if(pointCount > 0){
+                        //记录积分变更日志
+                        UserExtendsDataLog userExtendsDataLog = new UserExtendsDataLog();
+                        userExtendsDataLog.setUserId(userExtendsData.getUserId());
+                        userExtendsDataLog.setExType(1L);
+                        userExtendsDataLog.setExRemark("积分兑换商品");
+                        userExtendsDataLog.setExPoint("-"+totalPointPrice);
+                        iUserExtendsDataLogService.insertUserExtendsDataLog(userExtendsDataLog);
+                    }
 
                     //减商品库存
                     MallPointGoods mallPointGoods = mallPointGoodsService.selectMallPointGoodsById(sysOrder.getGoodsId());

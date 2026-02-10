@@ -2,6 +2,9 @@ package com.ruoyi.web.controller.system;
 
 import java.util.List;
 import javax.servlet.http.HttpServletResponse;
+
+import com.ruoyi.common.core.domain.entity.SysUser;
+import com.ruoyi.system.service.ISysUserService;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -33,6 +36,9 @@ public class SysUserExLevelController extends BaseController
 {
     @Autowired
     private ISysUserExLevelService sysUserExLevelService;
+
+    @Autowired
+    private ISysUserService sysUserService;
 
     /**
      * 查询用户对应会员等级列表
@@ -100,5 +106,20 @@ public class SysUserExLevelController extends BaseController
     public AjaxResult remove(@PathVariable Long[] ids)
     {
         return toAjax(sysUserExLevelService.deleteSysUserExLevelByIds(ids));
+    }
+
+    /**
+     * 授予会员等级
+     * @param sysUserExLevel
+     * @return
+     */
+    @PreAuthorize("@ss.hasPermi('system:level:add')")
+    @Log(title = "授予会员等级", businessType = BusinessType.INSERT)
+    @PostMapping("/grantLevel")
+    public AjaxResult grantLevel(@RequestBody SysUserExLevel sysUserExLevel)
+    {
+        SysUser sysUser = sysUserService.selectUserByPhoneNumber(sysUserExLevel.getMobile());
+        sysUserExLevel.setUserId(sysUser.getUserId());
+        return toAjax(sysUserExLevelService.insertSysUserExLevel(sysUserExLevel));
     }
 }

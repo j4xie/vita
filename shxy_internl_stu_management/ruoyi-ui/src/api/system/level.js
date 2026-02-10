@@ -42,3 +42,12 @@ export function delLevel(id) {
     method: 'delete'
   })
 }
+
+// 授予会员等级
+export function grantLevel(data) {
+  return request({
+    url: '/system/userExLevel/grantLevel',
+    method: 'post',
+    data: data
+  })
+}

@@ -35,6 +35,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <result property="levelId"        column="level_id"          />
         <result property="levelName"        column="level_name"          />
         <result property="referUserId"        column="refer_user_id"          />
+        <result property="userPoint"        column="user_point"          />
         <association property="dept"     javaType="SysDept"         resultMap="deptResult" />
         <association  property="role"    javaType="SysRole"  resultMap="RoleResult" />
         <collection  property="roles"    javaType="java.util.List"  resultMap="RoleResult" />
@@ -80,8 +81,11 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     </sql>
     
     <select id="selectUserList" parameterType="SysUser" resultMap="SysUserResult">
-		select u.user_id, u.dept_id, u.legal_name, u.nick_name, u.user_name, u.email, u.is_email_verify, u.avatar, u.phonenumber, u.sex, u.status, u.del_flag, u.login_ip, u.login_date, u.create_by, u.create_time, u.remark, u.org_id, u.area, u.identity, u.is_merchant, u.int_area_code, u.alternate_email, u.refer_user_id, d.dept_name, d.leader, d.parent_id from sys_user u
+		select u.user_id, u.dept_id, u.legal_name, u.nick_name, u.user_name, u.email, u.is_email_verify, u.avatar, u.phonenumber, u.sex, u.status, u.del_flag, u.login_ip, u.login_date, u.create_by, u.create_time, u.remark, u.org_id, u.area, u.identity, u.is_merchant, u.int_area_code, u.alternate_email, u.refer_user_id, d.dept_name, d.leader, d.parent_id,
+        ued.user_point
+		from sys_user u
 		left join sys_dept d on u.dept_id = d.dept_id
+        LEFT JOIN user_extends_data ued on ued.user_id = u.user_id
 		where u.del_flag = '0' and u.user_id > 1 and u.is_merchant = -1
 		<if test="userId != null and userId != 0">
 			AND u.user_id = #{userId}
@@ -126,13 +130,14 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 
     <select id="selectUserListForApp" parameterType="SysUser" resultMap="SysUserResult">
         select u.user_id, u.dept_id, u.legal_name, u.nick_name, u.user_name, u.email, u.is_email_verify, u.avatar, u.phonenumber, u.sex, u.status, u.del_flag, u.login_ip, u.login_date,
-               u.create_by, u.create_time, u.remark, u.org_id, u.area, u.int_area_code, u.identity, u.alternate_email, u.refer_user_id, d.dept_name, d.leader, d.parent_id, sul.id as level_id, sul.level_name
+               u.create_by, u.create_time, u.remark, u.org_id, u.area, u.int_area_code, u.identity, u.alternate_email, u.refer_user_id, d.dept_name, d.leader, d.parent_id, sul.id as level_id, sul.level_name, ued.user_point
         from sys_user u
         left join sys_dept d on u.dept_id = d.dept_id
         left join sys_user_role ur on u.user_id = ur.user_id
         left join sys_role r on r.role_id = ur.role_id
         left join sys_user_ex_level suel on suel.user_id = u.user_id
         left join sys_user_level sul on sul.id = suel.level_id
+        LEFT JOIN user_extends_data ued on ued.user_id = u.user_id
         where u.del_flag = '0' and u.user_id > 1 and 5 > r.role_id
         <if test="userId != null and userId != 0">
             AND u.user_id = #{userId}

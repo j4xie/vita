@@ -113,6 +113,7 @@
                     <el-button size="mini" type="text" icon="el-icon-d-arrow-right">更多</el-button>
                     <el-dropdown-menu slot="dropdown">
                       <el-dropdown-item command="handleResetPwd" icon="el-icon-key" v-hasPermi="['system:user:resetPwd']">重置密码</el-dropdown-item>
+                      <el-dropdown-item v-if="scope.row.userPoint" command="queryPointsFun" icon="el-icon-key" v-hasPermi="['system:user:resetPwd']">积分查询</el-dropdown-item>
                       <!-- <el-dropdown-item command="handleAuthRole" icon="el-icon-circle-check" v-hasPermi="['system:user:edit']">分配角色</el-dropdown-item> -->
                     </el-dropdown-menu>
                   </el-dropdown>
@@ -283,6 +284,36 @@
         <el-button @click="upload.open = false">取 消</el-button>
       </div>
     </el-dialog>
+
+
+    <el-dialog title="积分日志" :visible.sync="showLog" width="700px" append-to-body>
+      <div style="margin-top: -25px; margin-bottom: 10px; color: #FF0000; font-size: 18px;">积分余额：{{showUserPoint}}</div>
+      <el-table
+        :data="logList"
+        border
+        style="width: 100%">
+        <el-table-column
+          prop="exRemark"
+          label="备注"
+          width="250">
+        </el-table-column>
+        <el-table-column
+          prop="exPoint"
+          label="记录"
+          width="120">
+        </el-table-column>
+        <el-table-column
+          prop="createTime"
+          label="变更时间">
+        </el-table-column>
+        <!-- <el-table-column
+          prop="operateByName"
+          label="操作人">
+        </el-table-column> -->
+      </el-table>
+    </el-dialog>
+
+
   </div>
 </template>
 
@@ -318,6 +349,9 @@ export default {
       userList: null,
       // 组织列表
       orgList: [],
+      logList: [],
+      showUserPoint: '',
+      showLog: false,
       // 弹出层标题
       title: "",
       // 所有部门树选项
@@ -548,6 +582,9 @@ export default {
         case "handleAuthRole":
           this.handleAuthRole(row)
           break
+        case "queryPointsFun":
+          this.queryPointsFun(row);
+          break;
         default:
           break
       }
@@ -600,6 +637,12 @@ export default {
             this.$modal.msgSuccess("修改成功，新密码是：" + value)
           })
         }).catch(() => {})
+    },
+    queryPointsFun(row){
+      const id = row.userId
+      this.showUserPoint = row.userPoint;
+      this.logList = row.userExtendsDataLogList
+      this.showLog = true
     },
     /** 分配角色操作 */
     handleAuthRole: function(row) {

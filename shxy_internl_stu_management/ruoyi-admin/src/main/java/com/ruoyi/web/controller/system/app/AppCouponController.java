@@ -4,6 +4,7 @@ import com.ruoyi.common.annotation.Log;
 import com.ruoyi.common.core.controller.BaseController;
 import com.ruoyi.common.core.domain.AjaxResult;
 import com.ruoyi.common.core.domain.entity.SysRole;
+import com.ruoyi.common.core.domain.entity.UserExtendsDataLog;
 import com.ruoyi.common.core.page.TableDataInfo;
 import com.ruoyi.common.enums.BusinessType;
 import com.ruoyi.common.enums.CouponType;
@@ -62,6 +63,9 @@ public class AppCouponController extends BaseController {
 
     @Autowired
     IUserExMerchantService iUserExMerchantService;
+
+    @Autowired
+    private IUserExtendsDataLogService iUserExtendsDataLogService;
 
     /**
      * 查询用户关联优惠券列表
@@ -165,17 +169,28 @@ public class AppCouponController extends BaseController {
                         if(null != point){
                             //查询会员积分信息
                             UserExtendsData userExtendsDataVo = userExtendsDataService.selectUserExtendsDataByUserId(sysUserExCouponDTO.getUserId());
+                            int count = 0;
                             if(null != userExtendsDataVo){
                                 if(null != userExtendsDataVo.getUserPoint()){
                                     userExtendsDataVo.setUserPoint(userExtendsDataVo.getUserPoint().add(point));
                                 }
-                                userExtendsDataService.updateUserExtendsData(userExtendsDataVo);
+                                count = userExtendsDataService.updateUserExtendsData(userExtendsDataVo);
                             }else{
                                 userExtendsDataVo = new UserExtendsData();
                                 userExtendsDataVo.setUserId(sysUserExCouponDTO.getUserId());
                                 userExtendsDataVo.setUserPoint(point);
-                                userExtendsDataService.insertUserExtendsData(userExtendsDataVo);
+                                count = userExtendsDataService.insertUserExtendsData(userExtendsDataVo);
                             }
+                            if(count > 0){
+                                //记录积分变更日志
+                                UserExtendsDataLog userExtendsDataLog = new UserExtendsDataLog();
+                                userExtendsDataLog.setUserId(userExtendsData.getUserId());
+                                userExtendsDataLog.setExType(1L);
+                                userExtendsDataLog.setExRemark("优惠券核销");
+                                userExtendsDataLog.setExPoint("+"+point);
+                                iUserExtendsDataLogService.insertUserExtendsDataLog(userExtendsDataLog);
+                            }
+
 
                             BigDecimal noZeros = point.stripTrailingZeros();
                             String result = noZeros.toPlainString();

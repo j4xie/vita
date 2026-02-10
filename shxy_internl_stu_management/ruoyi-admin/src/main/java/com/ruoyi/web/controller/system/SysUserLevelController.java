@@ -104,4 +104,5 @@ public class SysUserLevelController extends BaseController
     {
         return toAjax(sysUserLevelService.deleteSysUserLevelByIds(ids));
     }
+
 }

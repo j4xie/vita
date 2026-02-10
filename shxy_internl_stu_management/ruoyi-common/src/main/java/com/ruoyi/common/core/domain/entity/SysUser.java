@@ -1,8 +1,10 @@
 package com.ruoyi.common.core.domain.entity;
 
+import java.math.BigDecimal;
 import java.util.Date;
 import java.util.List;
 import javax.validation.constraints.*;
+
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
 import com.ruoyi.common.annotation.Excel;
@@ -145,6 +147,27 @@ public class SysUser extends BaseEntity
 
     /** 推荐人userId */
     private Long referUserId;
+
+    /** 用户积分 */
+    private BigDecimal userPoint;
+
+    private List<UserExtendsDataLog> userExtendsDataLogList;
+
+    public List<UserExtendsDataLog> getUserExtendsDataLogList() {
+        return userExtendsDataLogList;
+    }
+
+    public void setUserExtendsDataLogList(List<UserExtendsDataLog> userExtendsDataLogList) {
+        this.userExtendsDataLogList = userExtendsDataLogList;
+    }
+
+    public BigDecimal getUserPoint() {
+        return userPoint;
+    }
+
+    public void setUserPoint(BigDecimal userPoint) {
+        this.userPoint = userPoint;
+    }
 
     public Long getReferUserId() {
         return referUserId;
