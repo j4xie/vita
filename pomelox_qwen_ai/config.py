@@ -8,9 +8,6 @@ class Config:
     # Flask configuration
     SECRET_KEY = os.environ.get('SECRET_KEY') or 'dev-secret-key'
 
-    # Qwen API configuration
-    DASHSCOPE_API_KEY = os.environ.get('DASHSCOPE_API_KEY') or 'your-api-key-here'
-
     # Server configuration
     HOST = '0.0.0.0'
     PORT = int(os.environ.get('PORT', 8087))
@@ -76,6 +73,6 @@ class Config:
     ARCHIVE_ENABLED = True              # 是否启用定时归档
     ARCHIVE_DELETE_AFTER_INDEX = False  # 归档后是否从数据库删除 (False=保留,标记为已归档)
 
-# Set Qwen API key
-import dashscope
-dashscope.api_key = Config.DASHSCOPE_API_KEY
+# DashScope API Key getter (延迟导入)
+def get_dashscope_api_key():
+    return os.environ.get('DASHSCOPE_API_KEY') or 'your-api-key-here'

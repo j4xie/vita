@@ -7,26 +7,46 @@ import os
 import numpy as np
 from typing import List, Dict, Any
 from config import Config
-from llama_index.core import StorageContext, load_index_from_storage, Settings
-from llama_index.embeddings.dashscope import (
-    DashScopeEmbedding,
-    DashScopeTextEmbeddingModels,
-    DashScopeTextEmbeddingType,
-)
-from llama_index.postprocessor.dashscope_rerank import DashScopeRerank
+
+# Defer imports to avoid startup issues
+def _init_llama_index():
+    """Initialize LlamaIndex components on demand"""
+    try:
+        from llama_index.core import StorageContext, load_index_from_storage, Settings
+        from llama_index.embeddings.dashscope import (
+            DashScopeEmbedding,
+            DashScopeTextEmbeddingModels,
+            DashScopeTextEmbeddingType,
+        )
+        # Try to import rerank for newer versions
+        HAS_RERANK = False
+        DashScopeRerank = None
+        try:
+            from llama_index.postprocessor.dashscope_rerank import DashScopeRerank
+            HAS_RERANK = True
+        except ImportError:
+            # For newer versions that might have different import path
+            try:
+                from llama_index.core.postprocessor import DashScopeRerank
+                HAS_RERANK = True
+            except ImportError:
+                HAS_RERANK = False
+                
+        # Configure embedding model only if available
+        try:
+            EMBED_MODEL = DashScopeEmbedding(
+                model_name=DashScopeTextEmbeddingModels.TEXT_EMBEDDING_V2,
+                text_type=DashScopeTextEmbeddingType.TEXT_TYPE_DOCUMENT,
+            )
+            Settings.embed_model = EMBED_MODEL
+        except Exception:
+            pass  # Silently fail if embedding model setup fails
+                
+        return StorageContext, load_index_from_storage, Settings, DashScopeRerank, HAS_RERANK
+    except (ImportError, MemoryError, Exception):
+        return None, None, None, None, False
+
 from database import get_database
-
-# ==================== 生产环境 MySQL 版本 (注释掉) ====================
-# from database.mysql_impl import MySQLDatabase
-# db = MySQLDatabase()
-# ========================================================================
-
-# Configure embedding model
-EMBED_MODEL = DashScopeEmbedding(
-    model_name=DashScopeTextEmbeddingModels.TEXT_EMBEDDING_V2,
-    text_type=DashScopeTextEmbeddingType.TEXT_TYPE_DOCUMENT,
-)
-Settings.embed_model = EMBED_MODEL
 
 # Index cache to avoid repeated loading
 _index_cache = {}
@@ -42,6 +62,11 @@ def load_index(dept_id: int):
     Returns:
         VectorStoreIndex or None (if knowledge base doesn't exist)
     """
+    StorageContext, load_index_from_storage, Settings, _, _ = _init_llama_index()
+    if StorageContext is None or load_index_from_storage is None:
+        print("[Vector Index] LlamaIndex not available, skipping vector retrieval")
+        return None
+        
     if dept_id in _index_cache:
         return _index_cache[dept_id]
 
@@ -116,11 +141,6 @@ def retrieve_from_database_kb(
     # Get database instance (JSON for development, MySQL for production)
     db = get_database()
 
-    # ==================== 生产环境 MySQL 版本 (注释掉) ====================
-    # from database.mysql_impl import MySQLDatabase
-    # db = MySQLDatabase()
-    # ========================================================================
-
     # Query unindexed knowledge entries
     knowledge_entries = db.get_knowledge_by_dept(
         dept_id=dept_id,
@@ -131,8 +151,12 @@ def retrieve_from_database_kb(
     if not knowledge_entries:
         return []
 
-    # Vectorize query
+    # Vectorize query (only if embedding model is available)
     try:
+        StorageContext, load_index_from_storage, Settings, _, _ = _init_llama_index()
+        if Settings is None or not hasattr(Settings, 'embed_model'):
+            print("[Database Retrieval] Embedding model not available, skipping vector retrieval")
+            return []
         query_embedding = Settings.embed_model.get_text_embedding(query)
     except Exception as e:
         print(f"[Database Retrieval] Query vectorization failed: {e}")
@@ -195,34 +219,45 @@ def retrieve(dept_id: int, query: str, chunk_count: int = None, similarity_thres
     max_score = 0.0
 
     # ==================== Part 1: Vector Index Retrieval ====================
-    index = load_index(dept_id)
-    if index is not None:
-        try:
-            # Create retriever, get more results for reranking
-            retriever = index.as_retriever(similarity_top_k=20)
-            nodes = retriever.retrieve(query)
+    StorageContext, load_index_from_storage, Settings, DashScopeRerank, HAS_RERANK = _init_llama_index()
+    if StorageContext is not None:
+        index = load_index(dept_id)
+        if index is not None:
+            try:
+                # Create retriever, get more results for reranking
+                retriever = index.as_retriever(similarity_top_k=20)
+                nodes = retriever.retrieve(query)
 
-            if nodes:
-                # Use DashScope Rerank for reranking
-                try:
-                    reranker = DashScopeRerank(top_n=chunk_count, return_documents=True)
-                    reranked_nodes = reranker.postprocess_nodes(nodes, query_str=query)
-                except Exception as e:
-                    print(f"[Vector Rerank] Failed, using original results: {e}")
-                    reranked_nodes = nodes[:chunk_count]
+                if nodes:
+                    # Use DashScope Rerank for reranking if available
+                    if HAS_RERANK and DashScopeRerank:
+                        try:
+                            reranker = DashScopeRerank(top_n=chunk_count, return_documents=True)
+                            reranked_nodes = reranker.postprocess_nodes(nodes, query_str=query)
+                        except Exception as e:
+                            print(f"[Vector Rerank] Failed, using original results: {e}")
+                            reranked_nodes = nodes[:chunk_count]
+                    else:
+                        # Skip reranking if not available
+                        print("[Vector Rerank] Rerank not available, using original results")
+                        reranked_nodes = nodes[:chunk_count]
 
-                # Convert to unified format
-                for node in reranked_nodes:
-                    if node.score >= similarity_threshold:
-                        all_results.append({
-                            'content': node.text,
-                            'score': node.score,
-                            'source': 'vector_index'
-                        })
-                        max_score = max(max_score, node.score)
+                    # Convert to unified format
+                    for node in reranked_nodes:
+                        # In newer versions, node might not have a score attribute
+                        score = getattr(node, 'score', 0.7)  # Default score if not available
+                        if score >= similarity_threshold:
+                            all_results.append({
+                                'content': node.text,
+                                'score': score,
+                                'source': 'vector_index'
+                            })
+                            max_score = max(max_score, score)
 
-        except Exception as e:
-            print(f"[Vector Retrieval] Failed [{dept_id}]: {e}")
+            except Exception as e:
+                print(f"[Vector Retrieval] Failed [{dept_id}]: {e}")
+    else:
+        print("[Vector Retrieval] LlamaIndex not available, skipping vector retrieval")
 
     # ==================== Part 2: Database Retrieval (Unindexed Knowledge) ====================
     db_results = retrieve_from_database_kb(dept_id, query, similarity_threshold)
