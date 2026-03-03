@@ -84,6 +84,9 @@
     "english_name": "English Name",
     "organization": "Organization",
     "school": "School",
+    "upload_image": "Upload Image",
+    "upload_video": "Upload Video",
+    "upload_failed": "Upload failed, please try again",
     "time": {
       "hours": "{{hours}} hour(s)",
       "minutes": "{{minutes}} minute(s)",
@@ -699,6 +702,7 @@
       "language": "Language Settings",
       "edit_profile": "Edit Profile",
       "layout_selection": "Layout Selection",
+      "certificate_application": "Certificate Application",
       "privacy_policy": "Privacy Policy",
       "terms_of_service": "Terms of Service"
     }
@@ -784,8 +788,11 @@
       "registered": "Registered",
       "checked_in": "Checked In",
       "available": "Available",
-      "registration_closed": "Registration Closed"
+      "registration_closed": "Registration Closed",
+      "registration_open": "Open"
     },
+    "activity_ended": "Ended",
+    "date_tbd": "TBD",
     "cancel": "Cancel",
     "bookmark_unavailable": "Bookmark feature temporarily unavailable",
     "fetch_failed": "Failed to fetch activities",
@@ -904,10 +911,143 @@
       "notifications": "Notifications",
       "general": "General",
       "aboutSupport": "About & Support",
-      "address": "Shipping Address"
+      "address": "Shipping Address",
+      "certificate": "Certificate Application"
     },
     "volunteer": {
       "management": "Volunteer Management"
+    },
+    "certificate": {
+      "title": "Certificate Application",
+      "subtitle": "Apply for certificates and documents",
+      "no_certificates": "No Certificates Available",
+      "no_certificates_desc": "There are no certificate applications open at this time",
+      "not_application_season": "Not Open for Application",
+      "not_application_season_desc": "This certificate application is not currently open. Please check back later.",
+      "apply_now": "Apply Now",
+      "status_active": "Open for Application",
+      "status_inactive": "Not Available",
+      "deadline": "Deadline",
+      "applicants": "Applied",
+      "pvsa": {
+        "title": "PVSA Certificate Application",
+        "steps": {
+          "basic_info": "Basic Info",
+          "membership": "Membership",
+          "award": "Award Selection",
+          "review": "Review & Submit"
+        },
+        "step1": {
+          "disclaimer": "I have read and understand the terms and conditions of the PVSA certificate application",
+          "legal_name": "Legal Full Name",
+          "legal_name_placeholder": "Enter full name as shown on passport/ID",
+          "school": "School",
+          "school_placeholder": "Select your school",
+          "job_title": "Identity/Position",
+          "job_student": "Student",
+          "job_staff": "Staff",
+          "job_volunteer": "Volunteer",
+          "job_other": "Other",
+          "join_date": "Join Date",
+          "resignation_date": "Resignation Date",
+          "email": "Email",
+          "email_placeholder": "Enter email address",
+          "phone": "Phone Number",
+          "phone_placeholder": "Enter phone number",
+          "vita_member": "Do you have a Vita Member ID?",
+          "vita_member_yes": "Yes",
+          "vita_member_no": "No"
+        },
+        "step2": {
+          "member_id": "Vita Member ID",
+          "member_id_placeholder": "Enter your Vita Member ID",
+          "payment_method": "Payment Method",
+          "payment_stripe": "Stripe (Credit/Debit Card)",
+          "payment_alipay": "Alipay",
+          "mailing_option": "Mailing Option",
+          "mailing_domestic": "Domestic Shipping",
+          "mailing_international": "International Shipping",
+          "mailing_pickup": "Self Pickup",
+          "postage": "Postage Option",
+          "postage_standard": "Standard Shipping",
+          "postage_express": "Express Shipping",
+          "address": "Mailing Address",
+          "address_line1": "Address Line 1",
+          "address_line1_placeholder": "Street address",
+          "address_line2": "Address Line 2 (Optional)",
+          "address_line2_placeholder": "Apt, suite, unit, etc.",
+          "city": "City",
+          "state": "State/Province",
+          "zip_code": "ZIP/Postal Code",
+          "country": "Country/Region"
+        },
+        "step3": {
+          "award_info": "PVSA Award Information",
+          "award_info_desc": "Select the award level based on your volunteer service hours",
+          "award_level": "Award Level",
+          "bronze": "Bronze",
+          "silver": "Silver",
+          "gold": "Gold",
+          "lifetime": "Lifetime Achievement",
+          "hours_required": "{{count}} hours required",
+          "hours_unit": "hours",
+          "contribution_essay": "Contribution Essay",
+          "contribution_essay_placeholder": "Describe your volunteer experience and contributions (minimum 10 characters)",
+          "proof_upload": "Proof of Service Hours",
+          "proof_upload_desc": "Upload proof of volunteer service hours",
+          "package_selection": "Package Selection",
+          "package_basic": "Basic Package",
+          "package_standard": "Standard Package",
+          "package_premium": "Premium Package"
+        },
+        "step4": {
+          "review_title": "Application Review",
+          "review_desc": "Please review the information below carefully before submitting",
+          "section_basic": "Basic Information",
+          "section_membership": "Membership Information",
+          "section_award": "Award Information",
+          "section_package": "Package Information",
+          "edit": "Edit",
+          "terms_agree": "I confirm the above information is accurate and agree to the terms",
+          "submit": "Submit & Pay",
+          "submitting": "Submitting...",
+          "submit_pay_desc": "You will be redirected to the payment page after submission"
+        },
+        "success": {
+          "title": "Application Submitted",
+          "message": "Your PVSA certificate application has been submitted successfully. We will process it shortly.",
+          "confirm": "OK"
+        },
+        "validation": {
+          "disclaimer_required": "Please read and agree to the terms first",
+          "legal_name_required": "Please enter your legal full name",
+          "school_required": "Please select your school",
+          "job_title_required": "Please select your identity/position",
+          "join_date_required": "Please select join date",
+          "email_required": "Please enter email address",
+          "email_invalid": "Please enter a valid email address",
+          "phone_required": "Please enter phone number",
+          "member_id_required": "Please enter your Vita Member ID",
+          "payment_required": "Please select a payment method",
+          "mailing_required": "Please select a mailing option",
+          "postage_required": "Please select a postage option",
+          "address_required": "Please fill in the complete mailing address",
+          "city_required": "Please enter city",
+          "state_required": "Please enter state/province",
+          "zip_code_required": "Please enter ZIP/postal code",
+          "country_required": "Please enter country/region",
+          "award_level_required": "Please select an award level",
+          "essay_required": "Please write a contribution essay",
+          "essay_too_short": "Contribution essay must be at least 10 characters",
+          "package_required": "Please select a package",
+          "terms_required": "Please confirm information and agree to terms"
+        },
+        "navigation": {
+          "next": "Next",
+          "previous": "Previous",
+          "step_of": "Step {{current}} of {{total}}"
+        }
+      }
     },
     "organization": {
       "cu": "CU",
@@ -1103,7 +1243,17 @@
       "post_writing": "Help write a community post",
       "volunteer_guide": "How to join volunteer activities?",
       "community_tips": "How to join local community?",
-      "activity_suggest": "Suggest activities for me"
+      "activity_suggest": "Suggest activities for me",
+      "tax_filing": "How to file taxes as an international student?",
+      "credit_score": "How to build credit score in the US?",
+      "gpa_calculation": "How is GPA calculated? What's a good GPA?",
+      "course_registration": "Tips for course registration and scheduling?",
+      "dining_options": "Best dining options near campus?",
+      "chinese_grocery": "Where to find Chinese grocery stores?",
+      "health_insurance": "How to enroll in student health insurance?",
+      "mental_health": "Mental health resources for students?",
+      "phone_plan": "Best phone plans for international students?",
+      "drivers_license": "How to get a driver's license?"
     },
     "loginPrompt": {
       "title": "Login to Use AI Assistant",
@@ -1221,7 +1371,23 @@
     "subscribeNotification": "Notify me when available",
     "backToSchools": "Back to school selection",
     "studentsCount": " students",
-    "iKnow": "Got it"
+    "iKnow": "Got it",
+    "page_title": "Student Consulting",
+    "hero_title": "ChineSunion Consulting",
+    "hero_subtitle": "Comprehensive enrollment consulting and life guidance services for international students to help you adapt quickly",
+    "visit_website": "Visit Website",
+    "services_title": "Our Services",
+    "services": {
+      "academic": "Academic Consulting",
+      "academic_desc": "Course selection, major planning, academic resources",
+      "housing": "Housing Guide",
+      "housing_desc": "On/off campus housing recommendations and tips",
+      "arrival": "Airport Pickup",
+      "arrival_desc": "Free airport pickup and enrollment check-in guide",
+      "community": "Community Integration",
+      "community_desc": "Student organizations, social events, cultural exchange"
+    },
+    "contact_info": "For more information, visit chinesunion.org or contact our consulting team"
   },
   "community": {
     "title": "Student Community",
@@ -1380,7 +1546,10 @@
       "housing_support_desc": "Housing information and living environment improvement suggestions",
       "community_support": "Community Support",
       "peer_support": "Peer Support",
-      "peer_support_desc": "Connect with other students and provide mutual support"
+      "peer_support_desc": "Connect with other students and provide mutual support",
+      "student_services": "Student Services",
+      "consulting_title": "Student Consulting",
+      "consulting_desc": "Enrollment consulting, life guidance, airport pickup and more"
     },
     "volunteer": {
       "history": {
@@ -2682,7 +2851,11 @@
       "bronze": "Bronze",
       "silver": "Silver",
       "gold": "Gold",
-      "diamond": "Diamond"
+      "diamond": "Diamond",
+      "blue_card": "Blue Card",
+      "red_card": "Red Card",
+      "red_black_card": "Red-Black Card",
+      "black_card": "Black Card"
     },
     "circle": {
       "description": "Earn points\nLevel up",
@@ -2723,7 +2896,21 @@
     "coupons": {
       "title": "My Coupons",
       "my_coupons": "Coupon Center",
-      "coming_soon": "Coming Soon"
+      "coming_soon": "Coming Soon",
+      "tab_unused": "Unused",
+      "tab_used": "Used",
+      "tab_expired": "Expired",
+      "empty_unused": "No unused coupons",
+      "empty_used": "No used coupons",
+      "empty_expired": "No expired coupons",
+      "discount_amount": "${{amount}} OFF",
+      "discount_rate": "{{rate}}% OFF",
+      "min_amount": "Min. ${{amount}}",
+      "valid_period": "Valid: {{from}} - {{to}}",
+      "status_unused": "Unused",
+      "status_used": "Used",
+      "status_expired": "Expired",
+      "load_failed": "Failed to load coupons"
     },
     "mall": {
       "title": "Points Mall",

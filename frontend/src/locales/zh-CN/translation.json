@@ -82,6 +82,9 @@
     "english_name": "英文名",
     "organization": "组织",
     "school": "学校",
+    "upload_image": "上传图片",
+    "upload_video": "上传视频",
+    "upload_failed": "上传失败，请重试",
     "time": {
       "hours": "{{hours}}小时",
       "minutes": "{{minutes}}分钟",
@@ -692,6 +695,7 @@
       "language": "语言设置",
       "edit_profile": "编辑资料",
       "layout_selection": "布局选择",
+      "certificate_application": "证书申请",
       "privacy_policy": "隐私政策",
       "terms_of_service": "服务条款"
     }
@@ -778,8 +782,11 @@
       "registered": "已报名",
       "checked_in": "已签到",
       "available": "可报名",
-      "registration_closed": "报名已结束"
+      "registration_closed": "停止报名",
+      "registration_open": "开放报名"
     },
+    "activity_ended": "活动结束",
+    "date_tbd": "待定日期",
     "cancel": "取消",
     "bookmark_unavailable": "收藏功能暂时不可用",
     "fetch_failed": "获取活动失败",
@@ -881,11 +888,144 @@
       "accountSecurity": "账户与安全",
       "notifications": "通知",
       "address": "收货地址",
+      "certificate": "证书申请",
       "general": "通用",
       "aboutSupport": "关于与支持"
     },
     "volunteer": {
       "management": "志愿者管理"
+    },
+    "certificate": {
+      "title": "证书申请",
+      "subtitle": "申请各类证书和证明文件",
+      "no_certificates": "暂无可申请的证书",
+      "no_certificates_desc": "目前没有开放的证书申请项目",
+      "not_application_season": "暂未开放申请",
+      "not_application_season_desc": "该证书申请目前不在开放期，请关注后续通知",
+      "apply_now": "立即申请",
+      "status_active": "开放申请中",
+      "status_inactive": "暂未开放",
+      "deadline": "截止日期",
+      "applicants": "已申请",
+      "pvsa": {
+        "title": "PVSA证书申请",
+        "steps": {
+          "basic_info": "基本信息",
+          "membership": "会员信息",
+          "award": "奖项选择",
+          "review": "确认提交"
+        },
+        "step1": {
+          "disclaimer": "我已阅读并理解PVSA证书申请的相关条款和条件",
+          "legal_name": "法定全名",
+          "legal_name_placeholder": "请输入护照/证件上的全名",
+          "school": "学校",
+          "school_placeholder": "请选择学校",
+          "job_title": "身份/职位",
+          "job_student": "学生",
+          "job_staff": "工作人员",
+          "job_volunteer": "志愿者",
+          "job_other": "其他",
+          "join_date": "加入日期",
+          "resignation_date": "离职日期",
+          "email": "电子邮箱",
+          "email_placeholder": "请输入邮箱地址",
+          "phone": "手机号码",
+          "phone_placeholder": "请输入手机号码",
+          "vita_member": "是否拥有Vita会员ID",
+          "vita_member_yes": "是",
+          "vita_member_no": "否"
+        },
+        "step2": {
+          "member_id": "Vita会员ID",
+          "member_id_placeholder": "请输入您的Vita会员ID",
+          "payment_method": "支付方式",
+          "payment_stripe": "Stripe（银行卡/信用卡）",
+          "payment_alipay": "支付宝",
+          "mailing_option": "邮寄方式",
+          "mailing_domestic": "国内邮寄",
+          "mailing_international": "国际邮寄",
+          "mailing_pickup": "自取",
+          "postage": "邮费选项",
+          "postage_standard": "标准邮寄",
+          "postage_express": "快递",
+          "address": "收件地址",
+          "address_line1": "地址行1",
+          "address_line1_placeholder": "街道地址",
+          "address_line2": "地址行2 (选填)",
+          "address_line2_placeholder": "公寓、套房号等",
+          "city": "城市",
+          "state": "州/省",
+          "zip_code": "邮编",
+          "country": "国家/地区"
+        },
+        "step3": {
+          "award_info": "PVSA奖项信息",
+          "award_info_desc": "请根据您的志愿服务时长选择对应的奖项等级",
+          "award_level": "奖项等级",
+          "bronze": "铜奖",
+          "silver": "银奖",
+          "gold": "金奖",
+          "lifetime": "终身成就奖",
+          "hours_required": "需要 {{count}} 小时",
+          "hours_unit": "小时",
+          "contribution_essay": "贡献说明",
+          "contribution_essay_placeholder": "请描述您的志愿服务经历和贡献（至少10个字符）",
+          "proof_upload": "服务时长证明",
+          "proof_upload_desc": "上传志愿服务时长证明文件",
+          "package_selection": "套餐选择",
+          "package_basic": "基础套餐",
+          "package_standard": "标准套餐",
+          "package_premium": "豪华套餐"
+        },
+        "step4": {
+          "review_title": "申请信息确认",
+          "review_desc": "请仔细核对以下信息，确认无误后提交申请",
+          "section_basic": "基本信息",
+          "section_membership": "会员信息",
+          "section_award": "奖项信息",
+          "section_package": "套餐信息",
+          "edit": "修改",
+          "terms_agree": "我确认以上信息准确无误，并同意相关条款",
+          "submit": "提交并支付",
+          "submitting": "提交中...",
+          "submit_pay_desc": "提交申请后将跳转到支付页面"
+        },
+        "success": {
+          "title": "申请已提交",
+          "message": "您的PVSA证书申请已成功提交，我们将尽快处理",
+          "confirm": "确定"
+        },
+        "validation": {
+          "disclaimer_required": "请先阅读并同意条款",
+          "legal_name_required": "请输入法定全名",
+          "school_required": "请选择学校",
+          "job_title_required": "请选择身份/职位",
+          "join_date_required": "请选择加入日期",
+          "email_required": "请输入邮箱地址",
+          "email_invalid": "请输入有效的邮箱地址",
+          "phone_required": "请输入手机号码",
+          "member_id_required": "请输入Vita会员ID",
+          "payment_required": "请选择支付方式",
+          "mailing_required": "请选择邮寄方式",
+          "postage_required": "请选择邮费选项",
+          "address_required": "请填写完整的收件地址",
+          "city_required": "请输入城市",
+          "state_required": "请输入州/省",
+          "zip_code_required": "请输入邮编",
+          "country_required": "请输入国家/地区",
+          "award_level_required": "请选择奖项等级",
+          "essay_required": "请填写贡献说明",
+          "essay_too_short": "贡献说明至少需要10个字符",
+          "package_required": "请选择套餐",
+          "terms_required": "请确认信息并同意条款"
+        },
+        "navigation": {
+          "next": "下一步",
+          "previous": "上一步",
+          "step_of": "第{{current}}步 / 共{{total}}步"
+        }
+      }
     },
     "organization": {
       "cu": "CU",
@@ -1089,7 +1229,17 @@
       "post_writing": "帮我写一篇社区发帖文案",
       "volunteer_guide": "志愿者活动怎么参加？",
       "community_tips": "如何融入本地社区？",
-      "activity_suggest": "推荐适合我的活动"
+      "activity_suggest": "推荐适合我的活动",
+      "tax_filing": "留学生如何报税？",
+      "credit_score": "如何在美国建立信用分？",
+      "gpa_calculation": "GPA怎么算？多少算好？",
+      "course_registration": "选课注册有什么技巧？",
+      "dining_options": "学校附近有什么好吃的？",
+      "chinese_grocery": "哪里能买到中国食材？",
+      "health_insurance": "如何注册学生医疗保险？",
+      "mental_health": "学生心理健康资源有哪些？",
+      "phone_plan": "留学生适合什么手机套餐？",
+      "drivers_license": "如何考驾照？"
     },
     "loginPrompt": {
       "title": "登录后使用AI助手",
@@ -1202,7 +1352,23 @@
     "subscribeDescription": "订阅上线提醒",
     "learnMore": "了解服务内容",
     "switchSchool": "切换学校",
-    "expectedLaunch": "预计开放：{{time}}"
+    "expectedLaunch": "预计开放：{{time}}",
+    "page_title": "新生咨询",
+    "hero_title": "ChineSunion 新生咨询",
+    "hero_subtitle": "为海外留学生提供全方位的入学咨询和生活指导服务，帮助你快速适应海外学习生活",
+    "visit_website": "访问咨询网站",
+    "services_title": "咨询服务",
+    "services": {
+      "academic": "学术咨询",
+      "academic_desc": "选课指导、专业规划、学术资源等",
+      "housing": "住房指南",
+      "housing_desc": "校内外住房推荐、租房攻略",
+      "arrival": "新生接机",
+      "arrival_desc": "免费接机服务、入学报到指引",
+      "community": "社区融入",
+      "community_desc": "学生组织、社交活动、文化交流"
+    },
+    "contact_info": "更多咨询内容请访问 chinesunion.org 或联系我们的咨询顾问团队"
   },
   "community": {
     "title": "学生社区",
@@ -1361,7 +1527,10 @@
       "housing_support_desc": "住房信息和居住环境改善建议",
       "community_support": "社区支持",
       "peer_support": "同伴互助",
-      "peer_support_desc": "与其他学生建立联系和相互支持"
+      "peer_support_desc": "与其他学生建立联系和相互支持",
+      "student_services": "学生服务",
+      "consulting_title": "新生咨询",
+      "consulting_desc": "入学咨询、生活指导、新生接机等服务"
     },
     "volunteer": {
       "history": {
@@ -2650,7 +2819,11 @@
       "bronze": "Bronze",
       "silver": "Silver",
       "gold": "Gold",
-      "diamond": "Diamond"
+      "diamond": "Diamond",
+      "blue_card": "蓝卡",
+      "red_card": "红卡",
+      "red_black_card": "红黑卡",
+      "black_card": "黑卡"
     },
     "circle": {
       "description": "赚取积分\n升级等级",
@@ -2691,7 +2864,21 @@
     "coupons": {
       "title": "我的优惠券",
       "my_coupons": "优惠券中心",
-      "coming_soon": "即将上线"
+      "coming_soon": "即将上线",
+      "tab_unused": "未使用",
+      "tab_used": "已使用",
+      "tab_expired": "已过期",
+      "empty_unused": "暂无未使用的优惠券",
+      "empty_used": "暂无已使用的优惠券",
+      "empty_expired": "暂无已过期的优惠券",
+      "discount_amount": "减${{amount}}",
+      "discount_rate": "{{rate}}折",
+      "min_amount": "满${{amount}}可用",
+      "valid_period": "有效期: {{from}} - {{to}}",
+      "status_unused": "未使用",
+      "status_used": "已使用",
+      "status_expired": "已过期",
+      "load_failed": "加载优惠券失败"
     },
     "mall": {
       "title": "积分商城",
