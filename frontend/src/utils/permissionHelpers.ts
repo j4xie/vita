@@ -58,6 +58,7 @@ export function hasMinimumPermission(
     'manage': 4,
     'part_manage': 3,
     'staff': 2,
+    'merchant': 1,
     'common': 1,
     'guest': 0,
   } as const satisfies Record<PermissionLevel, number>;

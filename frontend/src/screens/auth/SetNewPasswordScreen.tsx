@@ -589,7 +589,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: theme.spacing.md,
     paddingVertical: theme.spacing[4],
     borderWidth: 1.5,
-    borderColor: 'transparent',
+    borderColor: theme.colors.border.primary,
     minHeight: 52,
   },
   inputFocused: {

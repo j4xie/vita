@@ -16,33 +16,27 @@ import { useTranslation } from 'react-i18next';
 import * as Haptics from 'expo-haptics';
 import { OptimizedImage } from '../../components/common/OptimizedImage';
 import { useUser } from '../../context/UserContext';
+import { useTheme } from '../../context/ThemeContext';
+import { theme } from '../../theme';
 import { createOrder, getOrderList, cancelOrder } from '../../services/orderAPI';
 import { Address, getDefaultAddress } from '../../services/addressAPI';
 import { useStripePayment } from '../../hooks/useStripePayment';
 import { OrderItem, productToOrderItem } from '../../types/order';
 import pomeloXAPI from '../../services/PomeloXAPI';
 
-/**
- * 订单确认页面 (通用版)
- * 支持三种订单类型：
- * 1. 积分商城 (orderType=1) — 积分兑换/支付宝/Stripe
- * 2. 活动付费 (orderType=2) — 支付宝/Stripe
- * 3. 会员购买 (orderType=3) — 支付宝/Stripe
- */
 export const OrderConfirmScreen: React.FC = () => {
   const { t } = useTranslation();
   const navigation = useNavigation<any>();
   const route = useRoute<any>();
   const insets = useSafeAreaInsets();
-  const { user } = useUser();
+  const { user, refreshUserInfo } = useUser();
+  const { isDarkMode } = useTheme();
   const { processStripePayment } = useStripePayment();
 
-  // ===== 解析路由参数，支持新旧两种格式 =====
   const orderItem: OrderItem | null = useMemo(() => {
     if (route.params?.orderItem) {
       return route.params.orderItem as OrderItem;
     }
-    // 向后兼容：旧版 product 参数自动转换
     if (route.params?.product) {
       const quantity = route.params?.quantity || 1;
       return productToOrderItem(route.params.product, quantity);
@@ -53,17 +47,13 @@ export const OrderConfirmScreen: React.FC = () => {
   const quantity = orderItem?.quantity || 1;
   const routeSelectedAddress = route.params?.selectedAddress as Address | undefined;
 
-  // PVSA flow data (passed through to PaymentResult)
   const pvsaFormData = route.params?.pvsaFormData as Record<string, string> | undefined;
   const pvsaActivityId = route.params?.pvsaActivityId as number | undefined;
   const preselectedPayment = route.params?.preselectedPayment as 'stripe' | 'alipay' | undefined;
 
-  // Detect if we're in RootStack (OrderConfirmGlobal) to use correct PaymentResult screen name
   const paymentResultScreenName = route.name === 'OrderConfirmGlobal' ? 'PaymentResultGlobal' : 'PaymentResult';
 
-  // 是否为积分商城订单
   const isPointsMall = orderItem?.orderType === '1';
-  // 是否为活动或会员订单（只支持金额支付）
   const isMoneyOnly = orderItem?.orderType === '2' || orderItem?.orderType === '3';
 
   const [loading, setLoading] = useState(false);
@@ -72,7 +62,6 @@ export const OrderConfirmScreen: React.FC = () => {
   );
   const [selectedAddress, setSelectedAddress] = useState<Address | null>(null);
 
-  // 加载默认地址或使用路由传递的地址（仅积分商城需要）
   const loadAddress = useCallback(async () => {
     if (!isPointsMall) return;
     if (routeSelectedAddress) {
@@ -96,25 +85,19 @@ export const OrderConfirmScreen: React.FC = () => {
     });
   }, [navigation, selectedAddress]);
 
-  // ===== 价格计算 =====
   const totalPoints = isPointsMall ? (orderItem?.pointsPrice || 0) * quantity : 0;
-  const totalAmount = orderItem?.price || 0; // 单位：分
+  const totalAmount = orderItem?.price || 0;
   const userPoints = user?.points || 0;
   const hasEnoughPoints = userPoints >= totalPoints;
 
-  // ===== 构建 createOrder 参数 =====
   const buildOrderParams = (payChannel?: '1' | '2') => {
     if (!orderItem) return null;
-    // 后端 price 参数统一为"元/美元"（大单位），后端内部转换为 cents/分
-    // 支付宝: 人民币元, Stripe: 美元
     let orderPrice: number;
     if (paymentMethod === 'points') {
       orderPrice = totalPoints;
     } else if (payChannel === '1') {
-      // 支付宝：优先人民币元，无则用美元价格转换
       orderPrice = orderItem.priceCNY ? orderItem.priceCNY * quantity : totalAmount / 100;
     } else {
-      // Stripe：USD cents → 转为美元（后端期望美元，内部再×100给Stripe）
       orderPrice = totalAmount / 100;
     }
     const params: any = {
@@ -130,34 +113,19 @@ export const OrderConfirmScreen: React.FC = () => {
     return params;
   };
 
-  /**
-   * 创建订单（带重试逻辑）
-   * 如果后端返回"报名失败"（用户已报名且有待支付订单），
-   * 自动取消旧订单 + 取消报名，然后重试创建
-   */
   const createOrderWithRetry = async (params: any) => {
     const response = await createOrder(params);
 
-    // 如果是活动订单且返回"报名失败"，取消旧订单+报名后重试
     if (response.code === 500 && response.msg?.includes('报名失败') && params.activityId && user?.userId) {
-      console.log('[OrderConfirm] 报名失败, canceling old orders and enrollment...');
       try {
-        // 1. 取消该活动所有待支付订单
         const orders = await getOrderList({ orderType: '2', orderStatus: '1' });
         const pendingOrders = orders.filter(
           (o) => String(o.activityId) === String(params.activityId) && o.orderStatus === 1
         );
         for (const order of pendingOrders) {
-          console.log(`[OrderConfirm] Canceling order #${order.id}`);
           await cancelOrder(String(order.id), 'auto_cancel_for_retry');
         }
-
-        // 2. 取消活动报名 (isCancel=true)
-        console.log('[OrderConfirm] Canceling enrollment for activity', params.activityId);
-        await pomeloXAPI.enrollActivity(Number(params.activityId), user.userId, true);
-
-        // 3. 重试创建订单
-        console.log('[OrderConfirm] Retrying createOrder...');
+        await pomeloXAPI.enrollActivity(Number(params.activityId), Number(user.userId), true);
         return await createOrder(params);
       } catch (retryError) {
         console.warn('[OrderConfirm] Retry logic failed:', retryError);
@@ -167,14 +135,15 @@ export const OrderConfirmScreen: React.FC = () => {
     return response;
   };
 
-  // ===== 支付宝支付 =====
   const handleAlipayPayment = async () => {
     if (!orderItem || !user) return;
     try {
       setLoading(true);
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
-      const response = await createOrderWithRetry(buildOrderParams('1')!);
+      const orderParams = buildOrderParams('1');
+      if (!orderParams) return;
+      const response = await createOrderWithRetry(orderParams);
 
       if (response.code !== 200) {
         Alert.alert(t('common.error'), response.msg || t('rewards.order.create_order_failed'));
@@ -209,14 +178,15 @@ export const OrderConfirmScreen: React.FC = () => {
     }
   };
 
-  // ===== Stripe支付 =====
   const handleStripePayment = async () => {
     if (!orderItem || !user) return;
     try {
       setLoading(true);
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
-      const response = await createOrderWithRetry(buildOrderParams('2')!);
+      const orderParams = buildOrderParams('2');
+      if (!orderParams) return;
+      const response = await createOrderWithRetry(orderParams);
 
       if (response.code !== 200) {
         Alert.alert(t('common.error'), response.msg || t('rewards.order.create_order_failed'));
@@ -260,7 +230,6 @@ export const OrderConfirmScreen: React.FC = () => {
     }
   };
 
-  // ===== 积分兑换 =====
   const handlePointsExchange = async () => {
     if (!hasEnoughPoints) {
       Alert.alert(t('rewards.mall.insufficient_points'), t('rewards.mall.insufficient_points_desc'));
@@ -274,6 +243,9 @@ export const OrderConfirmScreen: React.FC = () => {
       const response = await createOrderWithRetry(buildOrderParams()!);
 
       if (response.code === 200) {
+        refreshUserInfo().catch((e) =>
+          console.warn('[OrderConfirm] Failed to refresh user info:', e)
+        );
         Alert.alert(t('common.success'), t('rewards.order.exchange_success'), [
           { text: t('common.confirm'), onPress: () => navigation.navigate('PointsMallHome') },
         ]);
@@ -295,7 +267,6 @@ export const OrderConfirmScreen: React.FC = () => {
     else handlePointsExchange();
   };
 
-  // ===== 金额显示 =====
   const getAmountText = () => {
     if (paymentMethod === 'points') {
       return `${totalPoints} ${t('rewards.order.points_unit')}`;
@@ -303,7 +274,6 @@ export const OrderConfirmScreen: React.FC = () => {
     return `$${(totalAmount / 100).toFixed(2)}`;
   };
 
-  // ===== 商品价格显示 =====
   const getItemPriceText = () => {
     if (isPointsMall) {
       return `${orderItem?.pointsPrice || 0} ${t('rewards.order.points_unit')}`;
@@ -311,57 +281,65 @@ export const OrderConfirmScreen: React.FC = () => {
     return `$${(totalAmount / 100).toFixed(2)}`;
   };
 
+  // Dark mode helper
+  const dk = isDarkMode;
+
   if (!orderItem) {
     return (
-      <View style={styles.centerContainer}>
-        <Text>{t('rewards.order.product_error')}</Text>
+      <View style={[styles.centerContainer, dk && styles.containerDark]}>
+        <Text style={dk ? { color: '#fff' } : undefined}>{t('rewards.order.product_error')}</Text>
       </View>
     );
   }
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
+    <View style={[styles.container, dk && styles.containerDark, { paddingTop: insets.top }]}>
       {/* Header */}
-      <View style={styles.header}>
+      <View style={[styles.header, dk && styles.headerDark]}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-          <Ionicons name="chevron-back" size={24} color="#000" />
+          <Ionicons name="chevron-back" size={24} color={dk ? '#fff' : '#000'} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>{t('rewards.order.confirm_title')}</Text>
+        <Text style={[styles.headerTitle, dk && styles.textWhite]}>{t('rewards.order.confirm_title')}</Text>
         <View style={{ width: 40 }} />
       </View>
 
       <ScrollView style={styles.content}>
-        {/* 收货地址 - 仅积分商城显示 */}
+        {/* Address section - points mall only */}
         {isPointsMall && (
-          <TouchableOpacity style={styles.addressSection} onPress={handleSelectAddress}>
+          <TouchableOpacity
+            style={[styles.addressSection, dk && styles.sectionDark]}
+            onPress={handleSelectAddress}
+          >
             <View style={styles.addressLeft}>
               <Ionicons name="location-outline" size={20} color="#FF9500" style={styles.addressIcon} />
               {selectedAddress ? (
                 <View style={styles.addressInfo}>
                   <View style={styles.addressHeader}>
-                    <Text style={styles.addressName}>{selectedAddress.name}</Text>
-                    <Text style={styles.addressPhone}>
+                    <Text style={[styles.addressName, dk && styles.textWhite]}>{selectedAddress.name}</Text>
+                    <Text style={[styles.addressPhone, dk && styles.textSecondaryDark]}>
                       +{selectedAddress.intAreaCode} {selectedAddress.mobile.replace(/(\d{3})\d{4}(\d{4})/, '$1****$2')}
                     </Text>
                   </View>
-                  <Text style={styles.addressText} numberOfLines={2}>
+                  <Text style={[styles.addressText, dk && styles.textSecondaryDark]} numberOfLines={2}>
                     {selectedAddress.address}
                     {selectedAddress.detailAddr ? ` ${selectedAddress.detailAddr}` : ''}
                   </Text>
                 </View>
               ) : (
                 <View style={styles.addressInfo}>
-                  <Text style={styles.noAddressText}>{t('rewards.order.add_address')}</Text>
+                  <Text style={[styles.noAddressText, dk && styles.textSecondaryDark]}>
+                    {t('rewards.order.add_address')}
+                  </Text>
                 </View>
               )}
             </View>
-            <Ionicons name="chevron-forward" size={20} color="#C7C7CC" />
+            <Ionicons name="chevron-forward" size={20} color={dk ? '#48484A' : '#C7C7CC'} />
           </TouchableOpacity>
         )}
 
-        {/* 商品/活动/会员 信息 */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>{t('rewards.order.product_info')}</Text>
+        {/* Product info */}
+        <View style={[styles.section, dk && styles.sectionDark]}>
+          <Text style={[styles.sectionTitle, dk && styles.textWhite]}>{t('rewards.order.product_info')}</Text>
           <View style={styles.productCard}>
             {orderItem.image ? (
               <OptimizedImage
@@ -370,43 +348,51 @@ export const OrderConfirmScreen: React.FC = () => {
                 resizeMode="cover"
               />
             ) : (
-              <View style={[styles.productImage, styles.productImagePlaceholder]}>
+              <View style={[styles.productImage, styles.productImagePlaceholder, dk && { backgroundColor: '#2C2C2E' }]}>
                 <Ionicons
                   name={orderItem.orderType === '2' ? 'calendar' : orderItem.orderType === '3' ? 'star' : 'gift'}
                   size={32}
-                  color="#C7C7CC"
+                  color={dk ? '#48484A' : '#C7C7CC'}
                 />
               </View>
             )}
             <View style={styles.productInfo}>
-              <Text style={styles.productName} numberOfLines={2}>
+              <Text style={[styles.productName, dk && styles.textWhite]} numberOfLines={2}>
                 {orderItem.name}
               </Text>
               <Text style={styles.productPrice}>
                 {getItemPriceText()}
               </Text>
-              <Text style={styles.productQuantity}>
+              <Text style={[styles.productQuantity, dk && styles.textSecondaryDark]}>
                 {t('rewards.order.quantity_label', { count: quantity })}
               </Text>
             </View>
           </View>
         </View>
 
-        {/* 支付方式选择 */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>{t('rewards.order.payment_method')}</Text>
+        {/* Payment method */}
+        <View style={[styles.section, dk && styles.sectionDark]}>
+          <Text style={[styles.sectionTitle, dk && styles.textWhite]}>{t('rewards.order.payment_method')}</Text>
 
-          {/* 积分支付 - 仅积分商城显示 */}
+          {/* Points - only for points mall */}
           {isPointsMall && (
             <TouchableOpacity
-              style={[styles.paymentOption, paymentMethod === 'points' && styles.paymentOptionSelected]}
+              style={[
+                styles.paymentOption,
+                dk && styles.paymentOptionDark,
+                paymentMethod === 'points' && (dk ? styles.paymentOptionSelectedDark : styles.paymentOptionSelected),
+              ]}
               onPress={() => setPaymentMethod('points')}
+              accessibilityRole="radio"
+              accessibilityState={{ checked: paymentMethod === 'points' }}
             >
               <View style={styles.paymentOptionLeft}>
                 <Ionicons name="star" size={24} color="#FF9500" style={styles.paymentIcon} />
                 <View>
-                  <Text style={styles.paymentOptionTitle}>{t('rewards.order.points_exchange')}</Text>
-                  <Text style={styles.paymentOptionDesc}>
+                  <Text style={[styles.paymentOptionTitle, dk && styles.textWhite]}>
+                    {t('rewards.order.points_exchange')}
+                  </Text>
+                  <Text style={[styles.paymentOptionDesc, dk && styles.textSecondaryDark]}>
                     {t('rewards.order.current_points', { points: userPoints })}
                   </Text>
                 </View>
@@ -417,17 +403,28 @@ export const OrderConfirmScreen: React.FC = () => {
             </TouchableOpacity>
           )}
 
-          {/* 支付宝支付 */}
+          {/* Alipay */}
           <TouchableOpacity
-            style={[styles.paymentOption, paymentMethod === 'alipay' && styles.paymentOptionSelected]}
+            style={[
+              styles.paymentOption,
+              dk && styles.paymentOptionDark,
+              paymentMethod === 'alipay' && (dk ? styles.paymentOptionSelectedDark : styles.paymentOptionSelected),
+            ]}
             onPress={() => setPaymentMethod('alipay')}
+            accessibilityRole="radio"
+            accessibilityState={{ checked: paymentMethod === 'alipay' }}
           >
             <View style={styles.paymentOptionLeft}>
               <Ionicons name="logo-alipay" size={24} color="#1677FF" style={styles.paymentIcon} />
               <View>
-                <Text style={styles.paymentOptionTitle}>{t('rewards.order.alipay_payment')}</Text>
-                <Text style={styles.paymentOptionDesc}>
-                  {orderItem?.priceCNY ? `¥${orderItem.priceCNY * quantity}` : `$${(totalAmount / 100).toFixed(2)}`}
+                <Text style={[styles.paymentOptionTitle, dk && styles.textWhite]}>
+                  {t('rewards.order.alipay_payment')}
+                </Text>
+                <Text style={[styles.paymentOptionDesc, dk && styles.textSecondaryDark]}>
+                  {orderItem?.priceCNY
+                    ? `¥${orderItem.priceCNY * quantity}`
+                    : t('rewards.payment.price_at_checkout', { defaultValue: `$${(totalAmount / 100).toFixed(2)}` })
+                  }
                 </Text>
               </View>
             </View>
@@ -436,16 +433,24 @@ export const OrderConfirmScreen: React.FC = () => {
             </View>
           </TouchableOpacity>
 
-          {/* Stripe支付（银行卡） */}
+          {/* Stripe */}
           <TouchableOpacity
-            style={[styles.paymentOption, paymentMethod === 'stripe' && styles.paymentOptionSelected]}
+            style={[
+              styles.paymentOption,
+              dk && styles.paymentOptionDark,
+              paymentMethod === 'stripe' && (dk ? styles.paymentOptionSelectedDark : styles.paymentOptionSelected),
+            ]}
             onPress={() => setPaymentMethod('stripe')}
+            accessibilityRole="radio"
+            accessibilityState={{ checked: paymentMethod === 'stripe' }}
           >
             <View style={styles.paymentOptionLeft}>
               <Ionicons name="card-outline" size={24} color="#635BFF" style={styles.paymentIcon} />
               <View>
-                <Text style={styles.paymentOptionTitle}>{t('rewards.order.stripe_payment')}</Text>
-                <Text style={styles.paymentOptionDesc}>
+                <Text style={[styles.paymentOptionTitle, dk && styles.textWhite]}>
+                  {t('rewards.order.stripe_payment')}
+                </Text>
+                <Text style={[styles.paymentOptionDesc, dk && styles.textSecondaryDark]}>
                   {t('rewards.order.stripe_payment_desc')}
                 </Text>
               </View>
@@ -456,7 +461,7 @@ export const OrderConfirmScreen: React.FC = () => {
           </TouchableOpacity>
 
           {!hasEnoughPoints && paymentMethod === 'points' && (
-            <View style={styles.warningBox}>
+            <View style={[styles.warningBox, dk && { backgroundColor: 'rgba(255,149,0,0.15)' }]}>
               <Ionicons name="warning" size={16} color="#FF9500" />
               <Text style={styles.warningText}>
                 {t('rewards.order.insufficient_points_warning')}
@@ -465,16 +470,16 @@ export const OrderConfirmScreen: React.FC = () => {
           )}
         </View>
 
-        {/* 订单总计 */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>{t('rewards.order.order_summary')}</Text>
+        {/* Order summary */}
+        <View style={[styles.section, dk && styles.sectionDark]}>
+          <Text style={[styles.sectionTitle, dk && styles.textWhite]}>{t('rewards.order.order_summary')}</Text>
           <View style={styles.totalRow}>
-            <Text style={styles.totalLabel}>{t('rewards.order.product_total')}</Text>
-            <Text style={styles.totalValue}>{getAmountText()}</Text>
+            <Text style={[styles.totalLabel, dk && styles.textSecondaryDark]}>{t('rewards.order.product_total')}</Text>
+            <Text style={[styles.totalValue, dk && styles.textWhite]}>{getAmountText()}</Text>
           </View>
           {orderItem.earnPoints && orderItem.earnPoints > 0 && (
             <View style={styles.totalRow}>
-              <Text style={styles.totalLabel}>{t('rewards.order.earn_points_label')}</Text>
+              <Text style={[styles.totalLabel, dk && styles.textSecondaryDark]}>{t('rewards.order.earn_points_label')}</Text>
               <Text style={[styles.totalValue, styles.earnPoints]}>
                 +{orderItem.earnPoints * quantity}
               </Text>
@@ -483,12 +488,12 @@ export const OrderConfirmScreen: React.FC = () => {
         </View>
       </ScrollView>
 
-      {/* 底部确认按钮 */}
-      <View style={[styles.footer, { paddingBottom: insets.bottom + 16 }]}>
+      {/* Footer */}
+      <View style={[styles.footer, dk && styles.footerDark, { paddingBottom: insets.bottom + 16 }]}>
         <View style={styles.footerContent}>
           <View>
-            <Text style={styles.footerLabel}>{t('rewards.order.total')}</Text>
-            <Text style={styles.footerPrice}>{getAmountText()}</Text>
+            <Text style={[styles.footerLabel, dk && styles.textSecondaryDark]}>{t('rewards.order.total')}</Text>
+            <Text style={[styles.footerPrice, dk && styles.textWhite]}>{getAmountText()}</Text>
           </View>
           <TouchableOpacity
             style={[
@@ -517,6 +522,9 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#F5F5F7',
   },
+  containerDark: {
+    backgroundColor: '#000000',
+  },
   centerContainer: {
     flex: 1,
     justifyContent: 'center',
@@ -531,6 +539,10 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderBottomWidth: 0.5,
     borderBottomColor: '#E5E5EA',
+  },
+  headerDark: {
+    backgroundColor: '#000000',
+    borderBottomColor: '#38383A',
   },
   backButton: {
     width: 40,
@@ -597,6 +609,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 16,
   },
+  sectionDark: {
+    backgroundColor: '#1C1C1E',
+  },
   sectionTitle: {
     fontSize: 17,
     fontWeight: '600',
@@ -629,7 +644,7 @@ const styles = StyleSheet.create({
   },
   productPrice: {
     fontSize: 14,
-    color: '#FF9500',
+    color: theme.colors.primary,
     marginBottom: 4,
   },
   productQuantity: {
@@ -644,8 +659,17 @@ const styles = StyleSheet.create({
     borderBottomWidth: 0.5,
     borderBottomColor: '#E5E5EA',
   },
+  paymentOptionDark: {
+    borderBottomColor: '#38383A',
+  },
   paymentOptionSelected: {
-    backgroundColor: '#F5F5F7',
+    backgroundColor: '#FFF7ED',
+    marginHorizontal: -16,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+  },
+  paymentOptionSelectedDark: {
+    backgroundColor: 'rgba(255,107,53,0.1)',
     marginHorizontal: -16,
     paddingHorizontal: 16,
     borderRadius: 8,
@@ -678,13 +702,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   radioSelected: {
-    borderColor: '#007AFF',
+    borderColor: theme.colors.primary,
   },
   radioDot: {
     width: 10,
     height: 10,
     borderRadius: 5,
-    backgroundColor: '#007AFF',
+    backgroundColor: theme.colors.primary,
   },
   warningBox: {
     flexDirection: 'row',
@@ -724,6 +748,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingTop: 16,
   },
+  footerDark: {
+    backgroundColor: '#1C1C1E',
+    borderTopColor: '#38383A',
+  },
   footerContent: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -740,7 +768,7 @@ const styles = StyleSheet.create({
     color: '#000000',
   },
   confirmButton: {
-    backgroundColor: '#000000',
+    backgroundColor: theme.colors.primary,
     paddingHorizontal: 32,
     paddingVertical: 14,
     borderRadius: 22,
@@ -754,5 +782,13 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '600',
     color: '#FFFFFF',
+  },
+
+  // Dark mode text helpers
+  textWhite: {
+    color: '#FFFFFF',
+  },
+  textSecondaryDark: {
+    color: '#9CA3AF',
   },
 });

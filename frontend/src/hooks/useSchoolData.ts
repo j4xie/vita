@@ -28,7 +28,7 @@ const SCHOOL_LOGO_MAP: Record<string, string> = {
  * 3. 如果后端没有返回，根据学校缩写生成 R2 CDN URL
  */
 const buildFullLogoUrl = (logo: string | null | undefined, aprName?: string | null): string | null => {
-  const cdnUrl = getImagesCdnUrl(); // https://pub-9281f44aadcf48da8a2c7ac3df13f475.r2.dev
+  const cdnUrl = getImagesCdnUrl(); // Cloudflare R2 CDN URL (环境感知)
 
   // 1. 如果有 logo 且是完整 URL，直接返回
   if (logo && logo.startsWith('http')) {

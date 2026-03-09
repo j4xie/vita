@@ -191,48 +191,53 @@ export const PrivacyAgreementModal: React.FC<PrivacyAgreementModalProps> = ({
                 {/* 地域切换器 */}
                 {allowRegionSwitch && (
                   <View style={styles.regionSwitcher}>
-                    <Text style={styles.regionLabel}>协议版本：</Text>
+                    <Text style={[styles.regionLabel, { color: dynamicSecondaryTextColor }]}>
+                      {t('auth.register.privacy.version_label')}
+                    </Text>
                     <View style={styles.regionButtons}>
                       <TouchableOpacity
                         style={[
                           styles.regionButton,
-                          currentRegion === 'combined' && styles.regionButtonActive
+                          currentRegion === 'combined' && [styles.regionButtonActive, { backgroundColor: dynamicIconColor, borderColor: dynamicIconColor }]
                         ]}
                         onPress={() => handleRegionSwitch('combined')}
                       >
                         <Text style={[
                           styles.regionButtonText,
+                          { color: dynamicSecondaryTextColor },
                           currentRegion === 'combined' && styles.regionButtonTextActive
                         ]}>
-                          🌍 完整版协议
+                          {t('auth.register.privacy.version_combined')}
                         </Text>
                       </TouchableOpacity>
                       <TouchableOpacity
                         style={[
                           styles.regionButton,
-                          currentRegion === 'zh' && styles.regionButtonActive
+                          currentRegion === 'zh' && [styles.regionButtonActive, { backgroundColor: dynamicIconColor, borderColor: dynamicIconColor }]
                         ]}
                         onPress={() => handleRegionSwitch('zh')}
                       >
                         <Text style={[
                           styles.regionButtonText,
+                          { color: dynamicSecondaryTextColor },
                           currentRegion === 'zh' && styles.regionButtonTextActive
                         ]}>
-                          🇨🇳 中国版协议
+                          {t('auth.register.privacy.version_china')}
                         </Text>
                       </TouchableOpacity>
                       <TouchableOpacity
                         style={[
                           styles.regionButton,
-                          currentRegion === 'en' && styles.regionButtonActive
+                          currentRegion === 'en' && [styles.regionButtonActive, { backgroundColor: dynamicIconColor, borderColor: dynamicIconColor }]
                         ]}
                         onPress={() => handleRegionSwitch('en')}
                       >
                         <Text style={[
                           styles.regionButtonText,
+                          { color: dynamicSecondaryTextColor },
                           currentRegion === 'en' && styles.regionButtonTextActive
                         ]}>
-                          🇺🇸 美国版协议
+                          {t('auth.register.privacy.version_usa')}
                         </Text>
                       </TouchableOpacity>
                     </View>
@@ -290,21 +295,26 @@ export const PrivacyAgreementModal: React.FC<PrivacyAgreementModalProps> = ({
                 </Text>
 
                 {/* SMS Consent Section */}
-                <View style={styles.smsConsentBox}>
-                  <Text style={styles.smsConsentTitle}>
+                <View style={[styles.smsConsentBox, {
+                  backgroundColor: isDarkMode
+                    ? dynamicIconColor + '12'
+                    : theme.colors.primary + '08',
+                  borderLeftColor: dynamicIconColor,
+                }]}>
+                  <Text style={[styles.smsConsentTitle, { color: dynamicIconColor }]}>
                     📱 {t('auth.register.sms.consent_title')}
                   </Text>
-                  <Text style={styles.smsConsentText}>
+                  <Text style={[styles.smsConsentText, { color: dynamicTextColor }]}>
                     ✅ <Text style={styles.smsConsentBold}>{t('auth.register.sms.consent_text')}</Text> - {t('auth.register.sms.consent_description')}
                   </Text>
                   <View style={styles.smsPurposesList}>
-                    <Text style={styles.smsPurposeItem}>• {t('auth.register.sms.consent_purposes.authentication')}</Text>
-                    <Text style={styles.smsPurposeItem}>• {t('auth.register.sms.consent_purposes.notifications')}</Text>
-                    <Text style={styles.smsPurposeItem}>• {t('auth.register.sms.consent_purposes.services')}</Text>
+                    <Text style={[styles.smsPurposeItem, { color: dynamicTextColor }]}>• {t('auth.register.sms.consent_purposes.authentication')}</Text>
+                    <Text style={[styles.smsPurposeItem, { color: dynamicTextColor }]}>• {t('auth.register.sms.consent_purposes.notifications')}</Text>
+                    <Text style={[styles.smsPurposeItem, { color: dynamicTextColor }]}>• {t('auth.register.sms.consent_purposes.services')}</Text>
                   </View>
-                  <Text style={styles.smsNoticeText}>
+                  <Text style={[styles.smsNoticeText, { color: dynamicSecondaryTextColor }]}>
                     <Text style={styles.smsNoticeBold}>
-                      {t('auth.register.sms.consent_text') === '我同意接收短信' ? '注意：' : 'Notice: '}
+                      {t('auth.register.sms.notice_prefix')}
                     </Text>
                     {t('auth.register.sms.consent_notice')}
                   </Text>
@@ -371,19 +381,21 @@ const styles = StyleSheet.create({
     ...theme.shadows.lg,
   },
   header: {
-    padding: theme.spacing[6],
+    paddingHorizontal: theme.spacing[6],
+    paddingTop: theme.spacing[4],
+    paddingBottom: theme.spacing[3],
     alignItems: 'center',
     borderBottomWidth: 1,
     borderBottomColor: theme.colors.border.primary,
   },
   iconContainer: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     backgroundColor: theme.colors.primary + '15',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: theme.spacing[4],
+    marginBottom: theme.spacing[3],
   },
   title: {
     fontSize: theme.typography.fontSize['2xl'],
@@ -400,7 +412,6 @@ const styles = StyleSheet.create({
   },
   contentScrollView: {
     flex: 1,
-    maxHeight: 400, // 🚀 增加最大高度，确保有足够滚动空间
   },
   contentContainer: {
     padding: theme.spacing[6],
@@ -493,28 +504,27 @@ const styles = StyleSheet.create({
   },
   // 地域切换器样式
   regionSwitcher: {
-    marginTop: theme.spacing[4],
+    marginTop: theme.spacing[3],
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
+    gap: theme.spacing[2],
   },
   regionLabel: {
-    fontSize: theme.typography.fontSize.sm,
+    fontSize: theme.typography.fontSize.xs,
     color: theme.colors.text.secondary,
-    marginBottom: theme.spacing[2],
   },
   regionButtons: {
     flexDirection: 'row',
     gap: theme.spacing[1],
-    flexWrap: 'wrap',
-    justifyContent: 'center',
   },
   regionButton: {
-    paddingHorizontal: theme.spacing[2],
+    paddingHorizontal: theme.spacing[3],
     paddingVertical: theme.spacing[1],
-    borderRadius: theme.borderRadius.md,
+    borderRadius: 99,
     borderWidth: 1,
     borderColor: theme.colors.border.secondary,
     backgroundColor: theme.colors.background.secondary,
-    minWidth: 80,
   },
   regionButtonActive: {
     backgroundColor: theme.colors.primary,
@@ -524,29 +534,24 @@ const styles = StyleSheet.create({
     fontSize: theme.typography.fontSize.xs,
     color: theme.colors.text.secondary,
     fontWeight: theme.typography.fontWeight.medium,
-    textAlign: 'center',
   },
   regionButtonTextActive: {
     color: theme.colors.text.inverse,
   },
   // SMS Consent Styles
   smsConsentBox: {
-    backgroundColor: '#fff3cd',
     borderLeftWidth: 4,
-    borderLeftColor: '#ffc107',
     padding: theme.spacing[4],
     marginVertical: theme.spacing[4],
     borderRadius: theme.borderRadius.lg,
   },
   smsConsentTitle: {
-    fontSize: theme.typography.fontSize.lg,
+    fontSize: theme.typography.fontSize.base,
     fontWeight: theme.typography.fontWeight.bold,
-    color: '#856404',
     marginBottom: theme.spacing[3],
   },
   smsConsentText: {
     fontSize: theme.typography.fontSize.sm,
-    color: '#856404',
     lineHeight: theme.typography.fontSize.sm * theme.typography.lineHeight.relaxed,
     marginBottom: theme.spacing[2],
   },
@@ -559,13 +564,11 @@ const styles = StyleSheet.create({
   },
   smsPurposeItem: {
     fontSize: theme.typography.fontSize.sm,
-    color: '#856404',
     lineHeight: theme.typography.fontSize.sm * theme.typography.lineHeight.relaxed,
     marginBottom: theme.spacing[1],
   },
   smsNoticeText: {
     fontSize: theme.typography.fontSize.xs,
-    color: '#856404',
     lineHeight: theme.typography.fontSize.xs * theme.typography.lineHeight.relaxed,
     marginTop: theme.spacing[2],
   },

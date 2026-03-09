@@ -64,6 +64,7 @@ export interface FrontendActivity {
   // 🆕 学校信息
   deptId?: number; // 活动所属学校ID
   deptName?: string; // 活动所属学校名称
+  registeredUserAvatars?: string[]; // 已报名用户头像（后端返回时才有）
 }
 
 // 🚀 性能优化：预编译状态映射表
@@ -344,9 +345,9 @@ export const adaptActivity = (
   // 🔧 修复活动名称获取逻辑，支持多种字段名
   const activityTitle = backendActivity.activityName || backendActivity.name || `活动${backendActivity.id}`;
 
-  // 🔧 获取活动所属学校名称 - 优先通过 deptIds 查表获取真实学校名
-  const activitySchoolId = backendActivity.deptIds ? parseInt(String(backendActivity.deptIds), 10) : undefined;
-  const schoolName = getSchoolNameByDeptIdSync(activitySchoolId) || backendActivity.deptName || '官方活动';
+  // 🔧 获取活动所属学校名称 - 优先 deptIds，fallback 到 deptId，再通过 school cache 查英文名
+  const activitySchoolId = backendActivity.deptIds ? parseInt(String(backendActivity.deptIds), 10) : backendActivity.deptId;
+  const schoolName = getSchoolNameByDeptIdSync(activitySchoolId, language) || backendActivity.deptName || (language === 'en' ? 'Official Event' : '官方活动');
 
   return {
     id: backendActivity.id.toString(),

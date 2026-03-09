@@ -14,6 +14,9 @@ import {
   Modal,
   TextInput,
   ActivityIndicator,
+  Keyboard,
+  KeyboardAvoidingView,
+  TouchableWithoutFeedback,
 } from 'react-native';
 import { LoaderOne } from '../../components/ui/LoaderOne';
 import { Ionicons } from '@expo/vector-icons';
@@ -37,6 +40,7 @@ import {
   performVolunteerCheckIn,
   performVolunteerCheckOut,
   getVolunteerStatus,
+  getLocalCheckInRecord,
   VolunteerRecord
 } from '../../services/volunteerAPI';
 import { useSchoolData } from '../../hooks/useSchoolData';
@@ -131,6 +135,7 @@ export const VolunteerHomeScreen: React.FC = () => {
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [isProcessing, setIsProcessing] = useState(false);
   const [workDescription, setWorkDescription] = useState('');
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
   // Determine view mode based on permissions
@@ -199,6 +204,31 @@ export const VolunteerHomeScreen: React.FC = () => {
       }
     } catch (error) {
       console.error('Error loading volunteer status:', error);
+      // API失败时尝试从本地缓存恢复状态
+      try {
+        const userId = parseInt(String(user.userId));
+        const cachedRecord = await getLocalCheckInRecord(userId);
+        if (cachedRecord) {
+          setLastRecord(cachedRecord);
+          setVolunteerStatus('signed_in');
+          if (cachedRecord.startTime) {
+            const startTime = timeService.parseServerTime(cachedRecord.startTime);
+            if (startTime) {
+              const now = new Date();
+              const diffSeconds = Math.floor((now.getTime() - startTime.getTime()) / 1000);
+              setElapsedSeconds(Math.max(0, diffSeconds));
+            }
+          }
+          if (__DEV__) {
+            console.log('📦 [CACHE-FALLBACK] 从本地缓存恢复签到状态');
+          }
+          return;
+        }
+      } catch (cacheError) {
+        if (__DEV__) {
+          console.warn('📦 [CACHE-FALLBACK] 缓存恢复也失败:', cacheError);
+        }
+      }
       setVolunteerStatus('not_signed_in');
     }
   };
@@ -218,6 +248,21 @@ export const VolunteerHomeScreen: React.FC = () => {
       }
     };
   }, [volunteerStatus, timerModalVisible]);
+
+  // Keyboard listener effect
+  useEffect(() => {
+    const showSubscription = Keyboard.addListener('keyboardDidShow', (e) => {
+      setKeyboardHeight(e.endCoordinates.height);
+    });
+    const hideSubscription = Keyboard.addListener('keyboardDidHide', () => {
+      setKeyboardHeight(0);
+    });
+
+    return () => {
+      showSubscription.remove();
+      hideSubscription.remove();
+    };
+  }, []);
 
   // Format elapsed time
   const formatElapsedTime = (seconds: number) => {
@@ -412,110 +457,139 @@ export const VolunteerHomeScreen: React.FC = () => {
         visible={timerModalVisible}
         animationType="slide"
         transparent={true}
-        onRequestClose={() => setTimerModalVisible(false)}
+        onRequestClose={() => {
+          Keyboard.dismiss();
+          setTimerModalVisible(false);
+        }}
       >
-        <View style={styles.modalOverlay}>
-          <View style={[styles.modalContainer, { backgroundColor: isDarkMode ? '#1C1C1E' : '#FFFFFF' }]}>
-            {/* Modal Header */}
-            <View style={styles.modalHeader}>
-              <Text style={[styles.modalTitle, { color: isDarkMode ? '#FFFFFF' : '#000000' }]}>
-                {volunteerStatus === 'signed_in'
-                  ? t('volunteer.currently_volunteering') || 'Currently Volunteering'
-                  : t('volunteer.start_volunteering') || 'Start Volunteering'}
-              </Text>
-              <TouchableOpacity
-                onPress={() => setTimerModalVisible(false)}
-                style={styles.modalCloseButton}
-              >
-                <Ionicons name="close" size={24} color={isDarkMode ? '#FFFFFF' : '#000000'} />
-              </TouchableOpacity>
-            </View>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={{ flex: 1 }}
+        >
+          <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+            <View style={styles.modalOverlay}>
+              <View style={[styles.modalContainer, { backgroundColor: isDarkMode ? '#1C1C1E' : '#FFFFFF' }]}>
+                {/* Modal Header */}
+                <View style={styles.modalHeader}>
+                  <Text style={[styles.modalTitle, { color: isDarkMode ? '#FFFFFF' : '#000000' }]}>
+                    {volunteerStatus === 'signed_in'
+                      ? t('volunteer.currently_volunteering') || 'Currently Volunteering'
+                      : t('volunteer.start_volunteering') || 'Start Volunteering'}
+                  </Text>
+                  <TouchableOpacity
+                    onPress={() => {
+                      Keyboard.dismiss();
+                      setTimerModalVisible(false);
+                    }}
+                    style={styles.modalCloseButton}
+                  >
+                    <Ionicons name="close" size={24} color={isDarkMode ? '#FFFFFF' : '#000000'} />
+                  </TouchableOpacity>
+                </View>
 
-            {/* Timer Display */}
-            <View style={styles.timerContainer}>
-              <Text style={[styles.timerDisplay, { color: volunteerStatus === 'signed_in' ? '#4CAF50' : '#94A3B8' }]}>
-                {formatElapsedTime(elapsedSeconds)}
-              </Text>
-              <Text style={[styles.timerLabel, { color: isDarkMode ? '#94A3B8' : '#64748B' }]}>
-                {volunteerStatus === 'signed_in'
-                  ? t('volunteer.time_elapsed') || 'Time Elapsed'
-                  : t('volunteer.ready_to_start') || 'Ready to Start'}
-              </Text>
-            </View>
+                {/* Timer Display */}
+                <View style={styles.timerContainer}>
+                  <Text style={[styles.timerDisplay, { color: volunteerStatus === 'signed_in' ? '#4CAF50' : '#94A3B8' }]}>
+                    {formatElapsedTime(elapsedSeconds)}
+                  </Text>
+                  <Text style={[styles.timerLabel, { color: isDarkMode ? '#94A3B8' : '#64748B' }]}>
+                    {volunteerStatus === 'signed_in'
+                      ? t('volunteer.time_elapsed') || 'Time Elapsed'
+                      : t('volunteer.ready_to_start') || 'Ready to Start'}
+                  </Text>
+                </View>
 
-            {/* Sign-in Button or Sign-out Form */}
-            {volunteerStatus !== 'signed_in' ? (
-              <TouchableOpacity
-                style={[styles.signInButton, isProcessing && styles.buttonDisabled]}
-                onPress={handleSignIn}
-                disabled={isProcessing}
-              >
-                {isProcessing ? (
-                  <ActivityIndicator color="#FFFFFF" />
+                {/* Sign-in Button or Sign-out Form */}
+                {volunteerStatus !== 'signed_in' ? (
+                  <TouchableOpacity
+                    style={[styles.signInButton, isProcessing && styles.buttonDisabled]}
+                    onPress={handleSignIn}
+                    disabled={isProcessing}
+                  >
+                    {isProcessing ? (
+                      <ActivityIndicator color="#FFFFFF" />
+                    ) : (
+                      <>
+                        <Ionicons name="play" size={24} color="#FFFFFF" />
+                        <Text style={styles.signInButtonText}>{t('volunteer.start_timer') || 'Start Timer'}</Text>
+                      </>
+                    )}
+                  </TouchableOpacity>
                 ) : (
-                  <>
-                    <Ionicons name="play" size={24} color="#FFFFFF" />
-                    <Text style={styles.signInButtonText}>{t('volunteer.start_timer') || 'Start Timer'}</Text>
-                  </>
+                  <View style={styles.signOutSection}>
+                    {/* Work Description Input */}
+                    <View style={styles.inputLabelRow}>
+                      <Text style={[styles.inputLabel, { color: isDarkMode ? '#FFFFFF' : '#000000' }]}>
+                        {t('volunteer.work_description') || 'Work Description'} *
+                      </Text>
+                      {keyboardHeight > 0 && (
+                        <TouchableOpacity
+                          onPress={() => Keyboard.dismiss()}
+                          style={styles.keyboardDismissButton}
+                        >
+                          <Text style={styles.keyboardDismissText}>{t('common.done') || 'Done'}</Text>
+                        </TouchableOpacity>
+                      )}
+                    </View>
+                    <TextInput
+                      style={[
+                        styles.descriptionInput,
+                        {
+                          backgroundColor: isDarkMode ? '#2C2C2E' : '#F5F5F5',
+                          color: isDarkMode ? '#FFFFFF' : '#000000',
+                        },
+                      ]}
+                      placeholder={t('volunteer.enter_work_description') || 'Enter what you worked on...'}
+                      placeholderTextColor={isDarkMode ? '#666666' : '#999999'}
+                      value={workDescription}
+                      onChangeText={setWorkDescription}
+                      multiline
+                      numberOfLines={3}
+                      maxLength={100}
+                      returnKeyType="done"
+                      blurOnSubmit={true}
+                      onSubmitEditing={() => Keyboard.dismiss()}
+                    />
+                    <Text style={styles.characterCount}>
+                      {workDescription.length}/100
+                    </Text>
+
+                    {/* Sign Out Button */}
+                    <TouchableOpacity
+                      style={[styles.signOutButton, isProcessing && styles.buttonDisabled]}
+                      onPress={() => {
+                        Keyboard.dismiss();
+                        handleSignOut();
+                      }}
+                      disabled={isProcessing}
+                    >
+                      {isProcessing ? (
+                        <ActivityIndicator color="#FFFFFF" />
+                      ) : (
+                        <>
+                          <Ionicons name="stop" size={24} color="#FFFFFF" />
+                          <Text style={styles.signOutButtonText}>{t('volunteer.stop_timer') || 'Stop Timer'}</Text>
+                        </>
+                      )}
+                    </TouchableOpacity>
+                  </View>
                 )}
-              </TouchableOpacity>
-            ) : (
-              <View style={styles.signOutSection}>
-                {/* Work Description Input */}
-                <Text style={[styles.inputLabel, { color: isDarkMode ? '#FFFFFF' : '#000000' }]}>
-                  {t('volunteer.work_description') || 'Work Description'} *
-                </Text>
-                <TextInput
-                  style={[
-                    styles.descriptionInput,
-                    {
-                      backgroundColor: isDarkMode ? '#2C2C2E' : '#F5F5F5',
-                      color: isDarkMode ? '#FFFFFF' : '#000000',
-                    },
-                  ]}
-                  placeholder={t('volunteer.enter_work_description') || 'Enter what you worked on...'}
-                  placeholderTextColor={isDarkMode ? '#666666' : '#999999'}
-                  value={workDescription}
-                  onChangeText={setWorkDescription}
-                  multiline
-                  numberOfLines={3}
-                  maxLength={100}
-                />
-                <Text style={styles.characterCount}>
-                  {workDescription.length}/100
-                </Text>
 
-                {/* Sign Out Button */}
-                <TouchableOpacity
-                  style={[styles.signOutButton, isProcessing && styles.buttonDisabled]}
-                  onPress={handleSignOut}
-                  disabled={isProcessing}
-                >
-                  {isProcessing ? (
-                    <ActivityIndicator color="#FFFFFF" />
-                  ) : (
-                    <>
-                      <Ionicons name="stop" size={24} color="#FFFFFF" />
-                      <Text style={styles.signOutButtonText}>{t('volunteer.stop_timer') || 'Stop Timer'}</Text>
-                    </>
-                  )}
-                </TouchableOpacity>
+                {/* Start Time Info */}
+                {volunteerStatus === 'signed_in' && lastRecord?.startTime && (
+                  <View style={styles.startTimeInfo}>
+                    <Text style={[styles.startTimeLabel, { color: isDarkMode ? '#94A3B8' : '#64748B' }]}>
+                      {t('volunteer.started_at') || 'Started at'}:
+                    </Text>
+                    <Text style={[styles.startTimeValue, { color: isDarkMode ? '#FFFFFF' : '#000000' }]}>
+                      {timeService.formatForDisplay(timeService.parseServerTime(lastRecord.startTime) || new Date(), { showTime: true })}
+                    </Text>
+                  </View>
+                )}
               </View>
-            )}
-
-            {/* Start Time Info */}
-            {volunteerStatus === 'signed_in' && lastRecord?.startTime && (
-              <View style={styles.startTimeInfo}>
-                <Text style={[styles.startTimeLabel, { color: isDarkMode ? '#94A3B8' : '#64748B' }]}>
-                  {t('volunteer.started_at') || 'Started at'}:
-                </Text>
-                <Text style={[styles.startTimeValue, { color: isDarkMode ? '#FFFFFF' : '#000000' }]}>
-                  {timeService.formatForDisplay(timeService.parseServerTime(lastRecord.startTime) || new Date(), { showTime: true })}
-                </Text>
-              </View>
-            )}
-          </View>
-        </View>
+            </View>
+          </TouchableWithoutFeedback>
+        </KeyboardAvoidingView>
       </Modal>
     </View>
   );
@@ -764,7 +838,23 @@ const styles = StyleSheet.create({
   inputLabel: {
     fontSize: 14,
     fontWeight: '600',
+  },
+  inputLabelRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     marginBottom: 8,
+  },
+  keyboardDismissButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    backgroundColor: '#4A90E2',
+    borderRadius: 8,
+  },
+  keyboardDismissText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '600',
   },
   descriptionInput: {
     borderRadius: 12,

@@ -19,7 +19,7 @@
     <key>CFBundlePackageType</key>
     <string>$(PRODUCT_BUNDLE_PACKAGE_TYPE)</string>
     <key>CFBundleShortVersionString</key>
-    <string>1.1.2</string>
+    <string>1.0.8</string>
     <key>CFBundleSignature</key>
     <string>????</string>
     <key>CFBundleURLTypes</key>
@@ -27,18 +27,19 @@
       <dict>
         <key>CFBundleURLSchemes</key>
         <array>
+          <string>pomelox</string>
           <string>com.pomelotech.pomelo</string>
         </array>
       </dict>
       <dict>
         <key>CFBundleURLSchemes</key>
         <array>
-          <string>exp+pomelox</string>
+          <string>exp+vitaglobal</string>
         </array>
       </dict>
     </array>
     <key>CFBundleVersion</key>
-    <string>38</string>
+    <string>10008</string>
     <key>LSMinimumSystemVersion</key>
     <string>12.0</string>
     <key>LSRequiresIPhoneOS</key>
@@ -105,7 +106,7 @@
       </dict>
     </dict>
     <key>NSCameraUsageDescription</key>
-    <string>This app uses your camera to scan QR codes for activity check-in, event registration, and membership verification.</string>
+    <string>This app uses your camera to scan QR codes for activity check-in and event registration, and to take profile photos.</string>
     <key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
     <string>This app needs access to your location to automatically detect your region for appropriate privacy policy content.</string>
     <key>NSLocationUsageDescription</key>

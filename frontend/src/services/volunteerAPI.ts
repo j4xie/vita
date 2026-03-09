@@ -72,10 +72,20 @@ const localCheckInCache = new Map<number, {
  * @param startTime 签到时间
  */
 const storeLocalCheckIn = (userId: number, recordId: number, startTime: string): void => {
-  localCheckInCache.set(userId, {
+  const cacheData = {
     recordId,
     startTime,
     timestamp: Date.now()
+  };
+  localCheckInCache.set(userId, cacheData);
+  // 同时持久化到AsyncStorage，防止App重启后丢失
+  AsyncStorage.setItem(
+    `volunteer_checkin_${userId}`,
+    JSON.stringify(cacheData)
+  ).catch(err => {
+    if (__DEV__) {
+      console.warn('⚠️ [LOCAL-CACHE] AsyncStorage持久化失败:', err);
+    }
   });
   if (__DEV__) {
     console.log('💾 [LOCAL-CACHE] 存储签到信息:', { userId, recordId, startTime });
@@ -91,8 +101,8 @@ const getLocalCheckIn = (userId: number): VolunteerRecord | null => {
   const cached = localCheckInCache.get(userId);
   if (!cached) return null;
 
-  // 检查缓存是否过期（10分钟）
-  const isExpired = Date.now() - cached.timestamp > 10 * 60 * 1000;
+  // 检查缓存是否过期（24小时 - 作为后端数据缺失的fallback需要更长有效期）
+  const isExpired = Date.now() - cached.timestamp > 24 * 60 * 60 * 1000;
   if (isExpired) {
     localCheckInCache.delete(userId);
     if (__DEV__) {
@@ -116,11 +126,99 @@ const getLocalCheckIn = (userId: number): VolunteerRecord | null => {
 };
 
 /**
+ * 从AsyncStorage恢复签到缓存（用于App重启后恢复）
+ */
+const getLocalCheckInFromStorage = async (userId: number): Promise<string | null> => {
+  try {
+    const stored = await AsyncStorage.getItem(`volunteer_checkin_${userId}`);
+    if (!stored) return null;
+
+    const parsed = JSON.parse(stored);
+    // 检查是否过期（24小时）
+    if (Date.now() - parsed.timestamp > 24 * 60 * 60 * 1000) {
+      await AsyncStorage.removeItem(`volunteer_checkin_${userId}`);
+      return null;
+    }
+
+    if (__DEV__) {
+      console.log('📦 [ASYNC-STORAGE] 从持久化存储恢复签到时间:', {
+        userId,
+        startTime: parsed.startTime,
+        recordId: parsed.recordId
+      });
+    }
+    return parsed.startTime;
+  } catch (err) {
+    if (__DEV__) {
+      console.warn('⚠️ [ASYNC-STORAGE] 读取持久化缓存失败:', err);
+    }
+    return null;
+  }
+};
+
+/**
+ * 从AsyncStorage恢复完整签到记录（含recordId）
+ * 与 getLocalCheckInFromStorage 不同，此函数返回完整的 VolunteerRecord 对象
+ * 用于App重启后恢复签退所需的记录ID
+ */
+const getLocalCheckInRecordFromStorage = async (userId: number): Promise<VolunteerRecord | null> => {
+  try {
+    const stored = await AsyncStorage.getItem(`volunteer_checkin_${userId}`);
+    if (!stored) return null;
+
+    const parsed = JSON.parse(stored);
+    // 检查是否过期（24小时）
+    if (Date.now() - parsed.timestamp > 24 * 60 * 60 * 1000) {
+      await AsyncStorage.removeItem(`volunteer_checkin_${userId}`);
+      return null;
+    }
+
+    if (!parsed.recordId || !parsed.startTime) return null;
+
+    if (__DEV__) {
+      console.log('📦 [ASYNC-STORAGE] 从持久化存储恢复完整签到记录:', {
+        userId,
+        recordId: parsed.recordId,
+        startTime: parsed.startTime
+      });
+    }
+    return {
+      id: parsed.recordId,
+      userId: userId,
+      startTime: parsed.startTime,
+      endTime: null,
+      type: 1,
+      legalName: '',
+      status: 1
+    };
+  } catch (err) {
+    if (__DEV__) {
+      console.warn('⚠️ [ASYNC-STORAGE] 读取完整签到记录失败:', err);
+    }
+    return null;
+  }
+};
+
+/**
+ * 公开的本地签到记录获取接口
+ * 先查内存缓存，再查AsyncStorage，供外部组件作为API失败的fallback使用
+ */
+export const getLocalCheckInRecord = async (userId: number): Promise<VolunteerRecord | null> => {
+  // 先尝试内存缓存
+  const memoryRecord = getLocalCheckIn(userId);
+  if (memoryRecord) return memoryRecord;
+
+  // 再尝试AsyncStorage
+  return await getLocalCheckInRecordFromStorage(userId);
+};
+
+/**
  * 清理本地签到信息
  * @param userId 用户ID
  */
 const clearLocalCheckIn = (userId: number): void => {
   localCheckInCache.delete(userId);
+  AsyncStorage.removeItem(`volunteer_checkin_${userId}`).catch(() => {});
   if (__DEV__) {
     console.log('🧹 [LOCAL-CACHE] 清理签到缓存:', { userId });
   }
@@ -392,32 +490,31 @@ export const volunteerSignRecord = async (
       form.append('startTime', formattedStartTime);
     }
     
-    // 签退(type=2)需要 endTime 和 id(记录ID)
+    // 签退(type=2)需要 endTime，id(记录ID)可选
     if (type === 2) {
       if (!endTime) {
         throw new Error('签退操作缺少endTime参数');
       }
-      if (!recordId) {
-        throw new Error('签退操作缺少记录ID参数');
-      }
       // 转换时间格式为API期望的格式 (YYYY-MM-DD HH:mm:ss)
       const formattedEndTime = formatTimeForAPI(endTime);
       form.append('endTime', formattedEndTime);
-      form.append('id', String(recordId));
+      // id参数：如果有真实记录ID则发送，否则让后端按userId查找
+      if (recordId) {
+        form.append('id', String(recordId));
+      }
 
       // 添加工作描述（如果提供）
       if (remark) {
         form.append('remark', remark);
       }
 
-      // 🆕 添加自动审核状态（如果指定）
-      // 注意：后端可能期望的参数名是 'status' 而不是 'autoApprovalStatus'
+      // 🆕 添加自动审核状态（仅在自动审核通过时设置）
       if (autoApprovalStatus === 1) {
-        form.append('status', '1');  // 使用 status 参数
+        form.append('status', '1');
         console.log('📝 [AUTO-APPROVE] 添加自动审核参数到请求: status=1');
       } else {
-        form.append('status', '-1');  // 明确设置为待审核
-        console.log('⚠️ [AUTO-APPROVE] 未满足自动审核条件，设置 status=-1');
+        // 不发送status参数，让后端使用默认值（避免-1可能导致的问题）
+        console.log('ℹ️ [AUTO-APPROVE] 未满足自动审核条件，不发送status参数');
       }
     }
 
@@ -801,14 +898,17 @@ export const getLastVolunteerRecord = async (userId: number): Promise<APIRespons
     return await getLastRecordFromRecordList(userId);
 
   } catch (error) {
-    console.warn('⚠️ [API] 所有接口尝试失败:', error.message);
-
-    // 返回明确的错误信息，不再使用本地缓存（避免显示过期数据）
-    return {
-      code: 500,
-      msg: `无法获取志愿者记录: ${error.message}`,
-      data: null
-    };
+    console.warn('⚠️ [API] lastRecordList失败, 尝试备用接口:', error.message);
+    try {
+      return await getLastRecordFromRecordList(userId);
+    } catch (fallbackError) {
+      console.warn('⚠️ [API] 备用接口也失败:', fallbackError.message);
+      return {
+        code: 500,
+        msg: `无法获取志愿者记录: ${error.message}`,
+        data: null
+      };
+    }
   }
 };
 
@@ -830,11 +930,25 @@ const getLastRecordFromRecordList = async (userId: number): Promise<APIResponse<
     if (response.ok) {
       const result = await response.json();
       if (result.code === 200 && result.rows && result.rows.length > 0) {
-        // 获取最后一条记录（按ID排序）
-        const sortedRecords = result.rows.sort((a: any, b: any) => b.id - a.id);
+        // 过滤掉没有ID的记录
+        const validRecords = result.rows.filter((r: any) => r.id);
+        if (validRecords.length === 0) {
+          return { code: 404, msg: '无有效签到记录' };
+        }
+        // 优先查找未签退的活跃记录（endTime为空）
+        const activeRecords = validRecords.filter((r: any) => !r.endTime && r.endTime !== 0);
+        const recordsToUse = activeRecords.length > 0 ? activeRecords : validRecords;
+        const sortedRecords = recordsToUse.sort((a: any, b: any) => b.id - a.id);
         const lastRecord = sortedRecords[0];
-        
-        console.log(`✅ [recordList-fallback] 用户${userId}最新记录:`, lastRecord);
+
+        console.log(`✅ [recordList-fallback] 用户${userId}最新记录:`, {
+          id: lastRecord.id,
+          endTime: lastRecord.endTime,
+          startTime: lastRecord.startTime,
+          isActive: !lastRecord.endTime,
+          totalRecords: validRecords.length,
+          activeRecords: activeRecords.length,
+        });
         return {
           code: 200,
           msg: '操作成功',
@@ -1010,11 +1124,30 @@ export const performVolunteerCheckIn = async (
 
       // 💾 存储本地签到信息，用于快速签退
       try {
-        // 尝试从API响应中获取记录ID，如果没有则使用时间戳估算
+        // 尝试从API响应中获取记录ID
         let recordId = result.data?.id || result.data?.recordId;
         if (!recordId) {
-          // 如果API响应中没有ID，使用时间戳估算
-          recordId = Date.now() % 1000000;
+          // API未返回记录ID，从recordList接口获取真实ID
+          try {
+            const recordListResponse = await getLastRecordFromRecordList(userId);
+            if (recordListResponse.code === 200 && recordListResponse.data?.id) {
+              recordId = recordListResponse.data.id;
+              if (__DEV__) {
+                console.log('✅ [CHECKIN-ID-RECOVERY] 从recordList获取到真实记录ID:', recordId);
+              }
+            }
+          } catch (fetchError) {
+            if (__DEV__) {
+              console.warn('⚠️ [CHECKIN-ID-RECOVERY] 获取真实记录ID失败:', fetchError);
+            }
+          }
+          // 最后手段：使用时间戳作为临时ID（仅用于本地状态追踪）
+          if (!recordId) {
+            recordId = Date.now() % 1000000;
+            if (__DEV__) {
+              console.warn('⚠️ [LOCAL-CACHE] 使用临时ID (非真实记录ID):', recordId);
+            }
+          }
         }
         storeLocalCheckIn(userId, recordId, currentTime);
         if (__DEV__) {
@@ -1100,26 +1233,55 @@ export const performVolunteerCheckOut = async (
       console.log('📋 [VOLUNTEER-CHECKOUT] 获取记录API响应:', lastRecordResponse);
     }
     
-    if (lastRecordResponse.code !== 200 || !lastRecordResponse.data) {
-      // 提供更友好的错误信息
-      let userMessage = lastRecordResponse.msg;
-      if (userMessage === '无签到记录' || userMessage === '暂时无法获取签到记录，请稍后再试或联系管理员') {
-        userMessage = '未找到您的签到记录。请确认您已成功签到，或稍后再试。如问题持续存在，请联系管理员。';
-      }
+    let lastRecord: VolunteerRecord;
 
-      const error = new Error(userMessage);
+    if (lastRecordResponse.code !== 200 || !lastRecordResponse.data) {
+      // API失败，尝试从本地缓存恢复记录
       if (__DEV__) {
-        console.error('❌ [VOLUNTEER-CHECKOUT] 获取记录失败:', {
+        console.warn('⚠️ [VOLUNTEER-CHECKOUT] API获取记录失败，尝试本地缓存恢复:', {
           code: lastRecordResponse.code,
           message: lastRecordResponse.msg,
-          userId: userId,
-          timestamp: new Date().toISOString()
+          userId: userId
         });
       }
-      throw error;
+
+      // 尝试内存缓存
+      let cachedRecord = getLocalCheckIn(userId);
+
+      // 尝试AsyncStorage持久化缓存
+      if (!cachedRecord) {
+        cachedRecord = await getLocalCheckInRecordFromStorage(userId);
+      }
+
+      if (cachedRecord && cachedRecord.id) {
+        lastRecord = cachedRecord;
+        if (__DEV__) {
+          console.log('✅ [VOLUNTEER-CHECKOUT] 从本地缓存恢复签到记录:', {
+            recordId: lastRecord.id,
+            startTime: lastRecord.startTime
+          });
+        }
+      } else {
+        // 所有方案均失败
+        let userMessage = lastRecordResponse.msg;
+        if (userMessage === '无签到记录' || userMessage === '暂时无法获取签到记录，请稍后再试或联系管理员') {
+          userMessage = '未找到您的签到记录。请确认您已成功签到，或稍后再试。如问题持续存在，请联系管理员。';
+        }
+
+        const error = new Error(userMessage);
+        if (__DEV__) {
+          console.error('❌ [VOLUNTEER-CHECKOUT] 获取记录失败且无本地缓存:', {
+            code: lastRecordResponse.code,
+            message: lastRecordResponse.msg,
+            userId: userId,
+            timestamp: new Date().toISOString()
+          });
+        }
+        throw error;
+      }
+    } else {
+      lastRecord = lastRecordResponse.data;
     }
-    
-    const lastRecord = lastRecordResponse.data;
 
     // 🔍 详细记录原始时间戳数据
     if (__DEV__) {
@@ -1134,17 +1296,45 @@ export const performVolunteerCheckOut = async (
 
     // 🔧 智能时间戳解析和修正
     if (!lastRecord.startTime) {
-      // 处理startTime为null的异常情况
-      const error = new Error('检测到异常的签到记录（签到时间为空），请重新签到');
+      // 后端返回startTime为null，尝试从本地缓存恢复
       if (__DEV__) {
-        console.error('❌ [VOLUNTEER-CHECKOUT] 签到时间为null:', {
+        console.warn('⚠️ [VOLUNTEER-CHECKOUT] 后端签到时间为null，尝试本地缓存恢复:', {
           recordId: lastRecord.id,
           userId: lastRecord.userId,
           status: lastRecord.status,
           type: lastRecord.type
         });
       }
-      throw error;
+
+      // 优先从内存缓存恢复
+      const localRecord = getLocalCheckIn(userId);
+      let recoveredStartTime: string | null = localRecord?.startTime || null;
+
+      // 内存缓存没有，尝试AsyncStorage持久化存储
+      if (!recoveredStartTime) {
+        recoveredStartTime = await getLocalCheckInFromStorage(userId);
+      }
+
+      if (recoveredStartTime) {
+        lastRecord.startTime = recoveredStartTime;
+        if (__DEV__) {
+          console.log('✅ [VOLUNTEER-CHECKOUT] 成功从本地缓存恢复签到时间:', {
+            recoveredStartTime,
+            recordId: lastRecord.id
+          });
+        }
+      } else {
+        const error = new Error('检测到异常的签到记录（签到时间为空），请重新签到');
+        if (__DEV__) {
+          console.error('❌ [VOLUNTEER-CHECKOUT] 签到时间为null且无本地缓存:', {
+            recordId: lastRecord.id,
+            userId: lastRecord.userId,
+            status: lastRecord.status,
+            type: lastRecord.type
+          });
+        }
+        throw error;
+      }
     }
 
     if (lastRecord.startTime) {
@@ -1232,11 +1422,36 @@ export const performVolunteerCheckOut = async (
       });
     }
     
-    // 验证记录有效性
+    // 验证记录有效性 - 尝试从本地缓存恢复缺失的记录ID
     if (!lastRecord.id) {
-      const error = new Error('签到记录ID缺失');
-      console.error('❌ [VOLUNTEER-CHECKOUT] ID验证失败:', error);
-      throw error;
+      if (__DEV__) {
+        console.warn('⚠️ [VOLUNTEER-CHECKOUT] 记录ID缺失，尝试从本地缓存恢复...');
+      }
+
+      // 尝试内存缓存
+      const cachedRecord = getLocalCheckIn(userId);
+      if (cachedRecord?.id) {
+        lastRecord.id = cachedRecord.id;
+        if (__DEV__) {
+          console.log('✅ [VOLUNTEER-CHECKOUT] 从内存缓存恢复记录ID:', cachedRecord.id);
+        }
+      } else {
+        // 尝试AsyncStorage
+        const storedRecord = await getLocalCheckInRecordFromStorage(userId);
+        if (storedRecord?.id) {
+          lastRecord.id = storedRecord.id;
+          if (__DEV__) {
+            console.log('✅ [VOLUNTEER-CHECKOUT] 从AsyncStorage恢复记录ID:', storedRecord.id);
+          }
+        }
+      }
+
+      // 所有缓存都没有，才报错
+      if (!lastRecord.id) {
+        const error = new Error('签到记录ID缺失，请尝试重新签到');
+        console.error('❌ [VOLUNTEER-CHECKOUT] ID验证失败且无缓存可恢复:', error);
+        throw error;
+      }
     }
     
     if (lastRecord.endTime) {
@@ -1383,7 +1598,7 @@ export const performVolunteerCheckOut = async (
     });
     
     // 🆕 使用智能签退，自动判断审核状态
-    const result = await smartVolunteerSignOut(
+    let result = await smartVolunteerSignOut(
       userId,
       operateUserId,
       operateLegalName,
@@ -1391,9 +1606,25 @@ export const performVolunteerCheckOut = async (
       lastRecord.id, // recordId
       remark // 传递工作描述
     );
-    
+
     console.log('📋 [VOLUNTEER-CHECKOUT] 签退API返回结果:', result);
-    
+
+    // 🔄 如果带recordId签退失败，尝试不带recordId（让后端按userId查找活跃记录）
+    if (result.code !== 200 && result.msg?.includes('暂无需要签退的记录')) {
+      console.warn('⚠️ [VOLUNTEER-CHECKOUT] 带recordId签退失败，尝试不带recordId重试...');
+      result = await volunteerSignRecord(
+        userId,
+        2,
+        operateUserId,
+        operateLegalName,
+        undefined, // startTime
+        normalTimeString, // endTime
+        undefined, // recordId - 不传，让后端自行查找
+        remark
+      );
+      console.log('📋 [VOLUNTEER-CHECKOUT] 不带recordId重试结果:', result);
+    }
+
     if (result.code === 200) {
       console.log('✅ [VOLUNTEER-CHECKOUT] 签退成功');
 
@@ -1434,6 +1665,10 @@ export const forceResetVolunteerStatus = async (
       operateLegalName,
       recordId
     });
+
+    if (!userId || !operateUserId || !recordId) {
+      throw new Error('重置参数缺失: userId, operateUserId, recordId 均不能为空');
+    }
 
     // 直接调用签退API，跳过所有复杂的验证逻辑
     const currentTime = new Date();
@@ -1625,6 +1860,7 @@ export const autoCheckoutOvertimeUsers = async (
 
     // 查找所有未签退记录和超过12小时的历史记录
     for (const record of recordsResult.rows) {
+      if (!record.id) continue;
       if (!record.endTime && record.startTime) {
         const signInTime = timeService.parseServerTime(record.startTime);
         if (!signInTime) continue;
@@ -1743,20 +1979,45 @@ export const performTimeEntry = async (
     // 尝试从返回数据中获取记录ID
     if (checkInResult.data && checkInResult.data.id) {
       recordId = checkInResult.data.id;
-    } else {
-      // 如果返回数据中没有ID，尝试获取最新记录
+    }
+
+    // Fallback 1: 通过 lastRecordList 获取（内部已含 recordList 备用）
+    if (!recordId) {
       try {
         const lastRecord = await getLastVolunteerRecord(userId);
         if (lastRecord.code === 200 && lastRecord.data) {
           recordId = lastRecord.data.id;
         }
       } catch (error) {
-        console.warn('获取最新记录失败:', error);
+        console.warn('⚠️ [TIME-ENTRY] lastRecordList获取失败:', error);
+      }
+    }
+
+    // Fallback 2: 直接调用 recordList 接口（绕过可能有SQL bug的lastRecordList）
+    if (!recordId) {
+      try {
+        const token = await getCurrentToken();
+        if (token) {
+          const response = await fetch(`${getBaseUrl()}/app/hour/recordList?userId=${userId}`, {
+            method: 'GET',
+            headers: { 'Authorization': `Bearer ${token}` },
+          });
+          if (response.ok) {
+            const result = await response.json();
+            if (result.code === 200 && result.rows && result.rows.length > 0) {
+              const sortedRecords = result.rows.sort((a: any, b: any) => b.id - a.id);
+              recordId = sortedRecords[0].id;
+              console.log('✅ [TIME-ENTRY] 通过recordList备用方案获取到记录ID:', recordId);
+            }
+          }
+        }
+      } catch (error) {
+        console.warn('⚠️ [TIME-ENTRY] recordList备用方案也失败:', error);
       }
     }
 
     if (!recordId) {
-      console.error('❌ [TIME-ENTRY] 无法获取签到记录ID');
+      console.error('❌ [TIME-ENTRY] 所有方案均无法获取签到记录ID');
       return {
         success: false,
         message: '无法获取签到记录ID，请重试'

@@ -52,7 +52,7 @@ export const getPermissionLevel = (position?: PositionInfo): PermissionLevel => 
  */
 export const getPermissionLevelFromRoleKey = (roleKey?: string): PermissionLevel => {
   if (!roleKey) return PermissionLevel.GUEST;
-  
+
   switch (roleKey) {
     case 'manage':
       return PermissionLevel.ADMIN;
@@ -60,6 +60,8 @@ export const getPermissionLevelFromRoleKey = (roleKey?: string): PermissionLevel
       return PermissionLevel.PART_ADMIN;
     case 'staff':
       return PermissionLevel.STAFF;
+    case 'merchant':
+      return PermissionLevel.USER; // 商家用户权限等级等同普通用户
     case 'common':
       return PermissionLevel.USER;
     default:

@@ -10,7 +10,7 @@ import { useTranslation } from 'react-i18next';
 import { pomeloXAPI } from '../services/PomeloXAPI';
 import { theme } from '../theme';
 import { CustomTabBar } from '../components/navigation/CustomTabBar';
-import { SimpleSearchTabBar } from '../components/navigation/SimpleSearchTabBar';
+import { MerchantTabBar } from '../components/navigation/MerchantTabBar';
 import { useUser, UserProvider } from '../context/UserContext';
 import { createPermissionChecker } from '../types/userPermissions';
 import { pageTransitions } from '../utils/animations';
@@ -38,7 +38,6 @@ import { SetNewPasswordScreen } from '../screens/auth/SetNewPasswordScreen';
 import { RegisterChoiceScreen } from '../screens/auth/RegisterChoiceScreen';
 import { IdentityChoiceScreen } from '../screens/auth/IdentityChoiceScreen';
 import { ParentInvitationRegisterScreen } from '../screens/auth/ParentInvitationRegisterScreen';
-import { ParentNormalRegisterScreen } from '../screens/auth/ParentNormalRegisterScreen';
 import { ParentNormalRegisterStep1Screen } from '../screens/auth/ParentNormalRegisterStep1Screen';
 import { ParentNormalRegisterStep2Screen } from '../screens/auth/ParentNormalRegisterStep2Screen';
 import { StudentInvitationRegisterScreen } from '../screens/auth/StudentInvitationRegisterScreen';
@@ -56,6 +55,8 @@ import { GeneralScreen } from '../screens/profile/GeneralScreen';
 import { AboutSupportScreen } from '../screens/profile/AboutSupportScreen';
 import { LanguageSelectionScreen } from '../screens/profile/LanguageSelectionScreen';
 import { EditProfileScreen } from '../screens/profile/EditProfileScreen';
+import { CertificateListScreen } from '../screens/profile/CertificateListScreen';
+import { PVSADynamicFormScreen } from '../screens/certificate/PVSADynamicFormScreen';
 import { ActivityLayoutSelectionScreen } from '../screens/profile/ActivityLayoutSelectionScreen';
 import { PersonalQRScreen } from '../screens/profile/PersonalQRScreen';
 // Cards Screens
@@ -64,9 +65,9 @@ import { MyCardsScreen } from '../screens/cards/MyCardsScreen';
 import { OrganizationProvider } from '../context/OrganizationContext'; // 暂时注释功能，保留接口
 // Other Tab Screens
 import { ExploreScreen } from '../screens/explore/ExploreScreen';
-import { ConsultingScreen } from '../screens/consulting/ConsultingScreen';
 import { CommunityScreen } from '../screens/community/CommunityScreen';
 import { CommunityEventsScreen } from '../screens/community/CommunityEventsScreen';
+import { MerchantDetailScreen } from '../screens/community/MerchantDetailScreen';
 // import { SchoolMerchantsScreen } from '../screens/community/SchoolMerchantsScreen'; // TODO: Create this screen
 import { WellbeingScreen } from '../screens/wellbeing/WellbeingScreen';
 import { SearchScreen } from '../screens/search/SearchScreen';
@@ -82,6 +83,13 @@ import { GlobalTouchHandler } from '../components/common/GlobalTouchHandler';
 import { ErrorBoundary } from '../components/common/ErrorBoundary';
 import { TermsScreen } from '../screens/legal/TermsScreen';
 import { AIChatScreen } from '../screens/AIChatScreen';
+import { MembershipPurchaseScreen } from '../screens/rewards/MembershipPurchaseScreen';
+import { MyCouponsScreen } from '../screens/rewards/MyCouponsScreen';
+import { MyOrdersScreen } from '../screens/rewards/MyOrdersScreen';
+// Merchant Screens
+import { MerchantDashboardScreen } from '../screens/merchant/MerchantDashboardScreen';
+import { MerchantWriteOffScreen } from '../screens/merchant/MerchantWriteOffScreen';
+import { MerchantActivitiesScreen } from '../screens/merchant/MerchantActivitiesScreen';
 
 // Stack Navigators
 const RootStack = createStackNavigator();
@@ -91,7 +99,9 @@ const ProfileStack = createStackNavigator();
 const WellbeingStack = createStackNavigator();
 const RewardsStack = createStackNavigator();
 const CommunityStack = createStackNavigator();
+const MerchantActivityStack = createStackNavigator();
 const Tab = createBottomTabNavigator();
+const MerchantTab = createBottomTabNavigator();
 
 // Auth Stack Navigator
 const AuthNavigator = () => {
@@ -330,12 +340,22 @@ const RewardsNavigator = () => {
           headerShown: false,
         }}
       />
-      {/* TODO: 添加更多积分商城相关页面
-        - MyPoints (我的积分)
-        - ExchangeOrders (兑换记录)
-        - Favorites (我的收藏)
-        - MyOrders (我的订单)
-      */}
+      {/* 我的优惠券 */}
+      <RewardsStack.Screen
+        name="MyCoupons"
+        component={MyCouponsScreen}
+        options={{
+          headerShown: false,
+        }}
+      />
+      {/* 我的订单 */}
+      <RewardsStack.Screen
+        name="MyOrders"
+        component={MyOrdersScreen}
+        options={{
+          headerShown: false,
+        }}
+      />
     </RewardsStack.Navigator>
   );
 };
@@ -372,12 +392,14 @@ const CommunityNavigator = () => {
         name="CommunityEvents"
         component={CommunityEventsScreen}
       />
-      {/* TODO: SchoolMerchantsScreen not yet implemented
       <CommunityStack.Screen
-        name="SchoolMerchants"
-        component={SchoolMerchantsScreen}
+        name="MerchantDetail"
+        component={MerchantDetailScreen}
+        options={{
+          headerShown: false,
+          ...pageTransitions.slideFromRight,
+        }}
       />
-      */}
     </CommunityStack.Navigator>
   );
 };
@@ -562,6 +584,47 @@ const ProfileNavigator = () => {
         }}
       />
       <ProfileStack.Screen
+        name="CertificateList"
+        component={CertificateListScreen}
+        options={{
+          headerShown: false,
+          ...pageTransitions.slideFromRight,
+        }}
+      />
+      <ProfileStack.Screen
+        name="PVSADynamicForm"
+        component={PVSADynamicFormScreen}
+        options={{
+          headerShown: false,
+          ...pageTransitions.slideFromRight,
+        }}
+      />
+      {/* Certificate flow - reuse activity screens within Profile stack */}
+      <ProfileStack.Screen
+        name="ActivityDetail"
+        component={ActivityDetailScreen}
+        options={{
+          headerShown: false,
+          ...pageTransitions.slideFromRight,
+        }}
+      />
+      <ProfileStack.Screen
+        name="ActivityRegistrationForm"
+        component={ActivityRegistrationFormScreen}
+        options={{
+          headerShown: false,
+          ...pageTransitions.slideFromRight,
+        }}
+      />
+      <ProfileStack.Screen
+        name="AIFormFiller"
+        component={AIFormFillerScreen}
+        options={{
+          headerShown: false,
+          ...pageTransitions.slideFromRight,
+        }}
+      />
+      <ProfileStack.Screen
         name="ActivityLayoutSelection"
         component={ActivityLayoutSelectionScreen}
         options={{
@@ -638,6 +701,87 @@ const ProfileNavigator = () => {
   );
 };
 
+// Merchant Activities Stack (for ActivityDetail navigation)
+const MerchantActivitiesNavigator = () => {
+  return (
+    <MerchantActivityStack.Navigator
+      {...({ id: "merchant-activities" } as any)}
+      screenOptions={{
+        headerShown: false,
+        ...pageTransitions.slideFromRight,
+        transitionSpec: {
+          open: { animation: 'timing', config: { duration: 250 } },
+          close: { animation: 'timing', config: { duration: 250 } },
+        },
+      }}
+    >
+      <MerchantActivityStack.Screen name="MerchantActivitiesHome" component={MerchantActivitiesScreen} />
+      <MerchantActivityStack.Screen name="ActivityDetail" component={ActivityDetailScreen} />
+      <MerchantActivityStack.Screen name="ActivityRegistrationForm" component={ActivityRegistrationFormScreen} />
+    </MerchantActivityStack.Navigator>
+  );
+};
+
+// Merchant Tab Navigator — shown for merchant role users
+// Dashboard stack: Dashboard + WriteOff (accessible via Dashboard button)
+const MerchantDashboardStack = createStackNavigator();
+const MerchantDashboardNavigator = () => (
+  <MerchantDashboardStack.Navigator {...({ id: "merchant-dashboard" } as any)} screenOptions={{ headerShown: false }}>
+    <MerchantDashboardStack.Screen name="MerchantDashboardHome" component={MerchantDashboardScreen} />
+    <MerchantDashboardStack.Screen name="MerchantWriteOff" component={MerchantWriteOffScreen} />
+  </MerchantDashboardStack.Navigator>
+);
+
+const MerchantTabNavigator = () => {
+  return (
+    <View style={{ flex: 1 }}>
+      <MerchantTab.Navigator
+        {...({ id: "merchant-tab" } as any)}
+        tabBar={(props) => <MerchantTabBar {...props} />}
+        screenOptions={{
+          headerShown: false,
+          tabBarActiveTintColor: '#FF8A72',
+          tabBarInactiveTintColor: '#555555',
+        }}
+      >
+        <MerchantTab.Screen
+          name="MerchantDashboard"
+          component={MerchantDashboardNavigator}
+          options={({ route }) => {
+            const routeName = getFocusedRouteNameFromRoute(route) ?? 'MerchantDashboardHome';
+            const hideOnWriteOff = routeName === 'MerchantWriteOff';
+            return {
+              tabBarStyle: { display: hideOnWriteOff ? 'none' : 'flex' },
+            };
+          }}
+        />
+        <MerchantTab.Screen
+          name="MerchantActivities"
+          component={MerchantActivitiesNavigator}
+          options={({ route }) => {
+            const routeName = getFocusedRouteNameFromRoute(route) ?? 'MerchantActivitiesHome';
+            const hideOnDetail = ['ActivityDetail', 'ActivityRegistrationForm'].includes(routeName);
+            return {
+              tabBarStyle: { display: hideOnDetail ? 'none' : 'flex' },
+            };
+          }}
+        />
+        <MerchantTab.Screen
+          name="MerchantProfile"
+          component={ProfileNavigator}
+          options={({ route }) => {
+            const routeName = getFocusedRouteNameFromRoute(route) ?? 'ProfileHome';
+            const showTabBar = routeName === 'ProfileHome';
+            return {
+              tabBarStyle: { display: showTabBar ? 'flex' : 'none' },
+            };
+          }}
+        />
+      </MerchantTab.Navigator>
+    </View>
+  );
+};
+
 // Tab Navigator with permission-based layout
 const TabNavigator = () => {
   // 追踪当前Tab以控制FloatingSearchButton显示
@@ -655,13 +799,20 @@ const TabNavigator = () => {
       permissionLevel: permissions.getPermissionLevel(),
       hasVolunteerAccess: permissions.hasVolunteerManagementAccess(),
       isAdmin: permissions.isAdmin(),
-      isStaff: permissions.isStaff()
+      isStaff: permissions.isStaff(),
+      isMerchant: permissions.isMerchant(),
     });
   } catch (error) {
     console.error('🚨 [TAB-NAVIGATOR] UserProvider错误:', error);
     // 降级处理：使用默认权限
     permissions = createPermissionChecker(null);
     user = null;
+  }
+
+  // 商家用户 → 使用商家专属 Tab 布局
+  if (permissions.isMerchant()) {
+    console.log('🏪 [TABS] 商家用户，使用 MerchantTabNavigator');
+    return <MerchantTabNavigator />;
   }
 
   return (
@@ -1025,6 +1176,33 @@ export const AppNavigator = () => {
                 <RootStack.Screen
                   name="AIChat"
                   component={AIChatScreen}
+                  options={{
+                    ...pageTransitions.slideFromRight,
+                  }}
+                />
+
+                {/* Membership Purchase Screen */}
+                <RootStack.Screen
+                  name="MembershipPurchase"
+                  component={MembershipPurchaseScreen}
+                  options={{
+                    ...pageTransitions.slideFromRight,
+                  }}
+                />
+
+                {/* Global Order Confirm - for cross-tab navigation (activity/membership) */}
+                <RootStack.Screen
+                  name="OrderConfirmGlobal"
+                  component={OrderConfirmScreen}
+                  options={{
+                    ...pageTransitions.slideFromRight,
+                  }}
+                />
+
+                {/* Global Payment Result - for cross-tab navigation */}
+                <RootStack.Screen
+                  name="PaymentResultGlobal"
+                  component={PaymentResultScreen}
                   options={{
                     ...pageTransitions.slideFromRight,
                   }}

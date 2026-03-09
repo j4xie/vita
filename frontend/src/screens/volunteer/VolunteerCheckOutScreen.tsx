@@ -196,7 +196,7 @@ export const VolunteerCheckOutScreen: React.FC = () => {
       console.log('🕐 [签退页面] 结束时间(当前):', endTime.toISOString());
 
       if (!startTime || isNaN(startTime.getTime())) {
-        return { hours: 0, minutes: 0, display: '时间解析错误', hasError: true, errorMessage: '签到时间记录异常' };
+        return { hours: 0, minutes: 0, display: t('common.time.parseError'), hasError: true, errorMessage: t('volunteer.checkout.checkInTimeAbnormal', '签到时间记录异常') };
       }
 
       // 计算时间差（分钟）
@@ -208,11 +208,11 @@ export const VolunteerCheckOutScreen: React.FC = () => {
       // 简单的时长显示
       let display = '';
       if (hours > 0) {
-        display = minutes > 0 ? `${hours}小时${minutes}分钟` : `${hours}小时`;
+        display = minutes > 0 ? t('common.time.hoursAndMinutes', { hours, minutes }) : t('common.time.hours', { hours });
       } else if (minutes > 0) {
-        display = `${minutes}分钟`;
+        display = t('common.time.minutes', { minutes });
       } else {
-        display = '少于1分钟';
+        display = t('common.time.lessThanOneMinute');
       }
 
       console.log('🕐 [签退页面] 计算结果:', { totalMinutes, hours, minutes, display });
@@ -229,7 +229,7 @@ export const VolunteerCheckOutScreen: React.FC = () => {
       };
     } catch (error) {
       console.error('工作时长计算失败:', error);
-      return { hours: 0, minutes: 0, display: '计算错误', hasError: true, errorMessage: '时长计算失败' };
+      return { hours: 0, minutes: 0, display: t('volunteer.checkout.calculationError', '计算错误'), hasError: true, errorMessage: t('volunteer.checkout.durationCalculationFailed', '时长计算失败') };
     }
   }, [volunteer.checkInTime]);
 
@@ -353,6 +353,11 @@ export const VolunteerCheckOutScreen: React.FC = () => {
       }
 
       const userId = typeof volunteer.userId === 'string' ? parseInt(volunteer.userId) : (volunteer.userId || 0);
+      if (!userId || userId <= 0) {
+        Alert.alert(t('common.error'), t('volunteer.checkout.invalidUserId', 'Invalid user ID'));
+        setIsSubmitting(false);
+        return;
+      }
       const operateUserId = typeof operateUserIdRaw === 'string' ? parseInt(operateUserIdRaw) : operateUserIdRaw;
 
       console.log('📤 [DEBUG] 提交签退参数:', {

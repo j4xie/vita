@@ -445,12 +445,16 @@
         "accept_button": "I Agree and Continue",
         "accept_simple": "Agree",
         "decline_button": "Decline",
-        "content": "Welcome to PomeloX application. We highly value your privacy rights. This privacy policy is designed to explain how we collect, use, store, and protect your personal information.\n\n## Service Provider Information\n\n**Service Provider (China):** Shanghai Grapefruit Smart Technology Co., Ltd.\n**Overseas Collaborative Entity:** American Promotion Company, Inc. (as overseas collaborative partner)\n\n## Information We Collect\n\nTo provide you with the best service experience, we need to collect the following personal information:\n\n• **Identity Information**: Legal name and Preferred name for identity verification and personalized services\n• **Contact Information**: Email address and phone number for account verification, important notifications, and security alerts\n• **Academic Information**: University affiliation for matching relevant activities and services\n• **Basic Profile**: Gender and other basic information for personalized recommendations\n• **Activity Information**: Activity registrations, check-in/check-out records, volunteer service records\n\n## Purpose of Information Use\n\nYour personal information will only be used for the following legitimate purposes:\n\n• Create and manage your user account\n• Provide activity registration and management services\n• Send important service notifications and security alerts\n• Improve our service quality and user experience\n• Ensure platform security and prevent fraudulent activities\n• AI Q&A and study abroad guidance services\n• Wellbeing Plan and volunteer coordination services\n\n## Third-Party Services\n\nTo provide complete services, we may use the following third-party services:\n\n• **Gmail SMTP**: For sending verification emails and activity notifications\n• **Cloudflare R2**: For securely storing activity images and user avatars\n• **Firebase FCM**: For pushing important activity reminders\n• **Google OAuth**: Optional third-party login method\n\nThese service providers all follow strict data protection standards, and we do not provide them with personal information beyond what is necessary for the service.",
+        "content": "Welcome to PomeloX application. We highly value your privacy rights. This privacy policy is designed to explain how we collect, use, store, and protect your personal information.\n\n## Service Provider Information\n\n**Service Provider:** Vita Global (501(c)(3) nonprofit organization, EIN: 61-1757345, USA)\n**Technology Partner (China):** Shanghai Grapefruit Smart Technology Co., Ltd.\n\n## Information We Collect\n\nTo provide you with the best service experience, we need to collect the following personal information:\n\n• **Identity Information**: Legal name and Preferred name for identity verification and personalized services\n• **Contact Information**: Email address and phone number for account verification, important notifications, and security alerts\n• **Academic Information**: University affiliation for matching relevant activities and services\n• **Basic Profile**: Gender and other basic information for personalized recommendations\n• **Activity Information**: Activity registrations, check-in/check-out records, volunteer service records\n\n## Purpose of Information Use\n\nYour personal information will only be used for the following legitimate purposes:\n\n• Create and manage your user account\n• Provide activity registration and management services\n• Send important service notifications and security alerts\n• Improve our service quality and user experience\n• Ensure platform security and prevent fraudulent activities\n• AI Q&A and study abroad guidance services\n• Wellbeing Plan and volunteer coordination services\n\n## Third-Party Services\n\nTo provide complete services, we may use the following third-party services:\n\n• **Gmail SMTP**: For sending verification emails and activity notifications\n• **Cloudflare R2**: For securely storing activity images and user avatars\n• **Firebase FCM**: For pushing important activity reminders\n• **Google OAuth**: Optional third-party login method\n\nThese service providers all follow strict data protection standards, and we do not provide them with personal information beyond what is necessary for the service.",
         "data_usage_highlight": "Your legal name, phone number, and email are only used for identity verification and necessary notifications. We promise not to use this sensitive information for marketing purposes or share it with third parties.",
-        "data_protection": "## Cross-border Data Transfer\n\nTo provide services, your personal information may be transferred to our overseas collaborative partner American Promotion Company, Inc. (USA). Transfer purposes include: service delivery, customer service/technical support, backup and security. We will take appropriate protective measures in accordance with the Personal Information Protection Law and other regulations.\n\n## Data Protection Commitment\n\nWe use industry-standard security measures to protect your personal information:\n\n• All data transmission uses HTTPS encryption\n• Passwords are stored using secure hashing algorithms\n• Regular security audits and vulnerability assessments\n• Strict access controls for internal personnel to personal information\n• Data encryption storage and access control\n\n## Your Rights\n\nUnder relevant laws and regulations, you have the following rights regarding your personal information:\n\n• **Right to Know**: Understand personal information processing\n• **Right to Access**: View the personal information we have collected about you at any time\n• **Right to Rectification**: Correct inaccurate or outdated personal information\n• **Right to Erasure**: Request deletion of your personal information and account\n• **Right to Restrict Processing**: Limit how we process your information\n• **Right to Data Portability**: Obtain a copy of your personal information\n• **Right to Withdraw Consent**: Withdraw consent for personal information processing\n\n## Data Retention\n\n• **Account Information**: Retained during your use of the service\n• **Activity Records**: Retained for 24 months for service improvement\n• **Transaction Records**: Retained according to legal requirements\n• **Deleted Data**: Permanently removed from all systems within 30 days\n\n## Minor Protection\n\n• Users under 14 require explicit guardian consent\n• Appropriate protection for users aged 14-18\n• Stricter security measures implemented\n\n## Contact Us\n\nFor any privacy-related questions, please contact us through:\n\n• **Customer Service/Technical**: info@chineseunion.org\n• **Legal/Compliance**: info@chineseunion.org\n• Service Hours: Monday-Friday 9:00-18:00 (Beijing Time)\n\nContinuing with registration indicates that you understand and agree to the above privacy policy terms.",
+        "data_protection": "## Cross-border Data Transfer\n\nTo provide services, your personal information may be processed by our Technology Partner Shanghai Grapefruit Smart Technology Co., Ltd. (China) for technical support purposes. We will take appropriate protective measures in accordance with applicable laws and regulations.\n\n## Data Protection Commitment\n\nWe use industry-standard security measures to protect your personal information:\n\n• All data transmission uses HTTPS encryption\n• Passwords are stored using secure hashing algorithms\n• Regular security audits and vulnerability assessments\n• Strict access controls for internal personnel to personal information\n• Data encryption storage and access control\n\n## Your Rights\n\nUnder relevant laws and regulations, you have the following rights regarding your personal information:\n\n• **Right to Know**: Understand personal information processing\n• **Right to Access**: View the personal information we have collected about you at any time\n• **Right to Rectification**: Correct inaccurate or outdated personal information\n• **Right to Erasure**: Request deletion of your personal information and account\n• **Right to Restrict Processing**: Limit how we process your information\n• **Right to Data Portability**: Obtain a copy of your personal information\n• **Right to Withdraw Consent**: Withdraw consent for personal information processing\n\n## Data Retention\n\n• **Account Information**: Retained during your use of the service\n• **Activity Records**: Retained for 24 months for service improvement\n• **Transaction Records**: Retained according to legal requirements\n• **Deleted Data**: Permanently removed from all systems within 30 days\n\n## Minor Protection\n\n• Users under 14 require explicit guardian consent\n• Appropriate protection for users aged 14-18\n• Stricter security measures implemented\n\n## Contact Us\n\nFor any privacy-related questions, please contact us through:\n\n• **Customer Service/Technical**: info@chineseunion.org\n• **Legal/Compliance**: info@chineseunion.org\n• Service Hours: Monday-Friday 9:00-18:00 (Beijing Time)\n\nThis Privacy Policy is governed by applicable US federal law, the laws of California, and the laws of the People's Republic of China as applicable. Continuing with registration indicates that you understand and agree to the above privacy policy terms.",
         "please_scroll": "Please scroll to read the full agreement",
         "read_complete": "Reading completed",
-        "scroll_to_accept": "Please read the full agreement first"
+        "scroll_to_accept": "Please read the full agreement first",
+        "version_label": "Version:",
+        "version_combined": "Full",
+        "version_china": "China",
+        "version_usa": "USA"
       },
       "verification": {
         "title": "SMS Verification",
@@ -485,7 +489,7 @@
         "brand_name": "PomeloX",
         "sms_terms_notice": "Message and data rates may apply. Enter your phone number to receive a one-time passcode message to your phone from PomeloX. Msg may vary. Reply \"HELP\" for help. Reply \"STOP\" to cancel.",
         "us_phone_not_supported_title": "US Phone Numbers Not Currently Supported",
-        "us_phone_not_supported_message": "We currently do not support SMS verification for US phone numbers",
+        "us_phone_not_supported_message": "We currently do not accept US phone number registrations.",
         "use_china_phone_or_referral": "Please use a Chinese phone number or referral code registration",
         "terms_agreement_title": "Read and agree: Service Terms and Privacy Policy",
         "read_and_agree": "Read and agree",
@@ -512,8 +516,6 @@
         "confirm_password_placeholder": "Re-enter password",
         "phone_china": "🇨🇳 China Mobile",
         "phone_usa": "🇺🇸 US Number",
-        "us_phone_not_supported_title": "US Phone Numbers Not Currently Supported",
-        "us_phone_not_supported_message": "We currently do not accept US phone number registrations.",
         "us_phone_contact_info": "If you don't have a Chinese phone number, please get a referral code through a recommended organization.",
         "phone_label": "Phone Number *",
         "phone_placeholder": "Enter your phone number",
@@ -602,6 +604,7 @@
           "services": "Service Notifications: Appointment confirmations, volunteer service schedules"
         },
         "consent_notice": "We will send you text messages for authentication and important notifications. Message and data rates may apply. You may reply \\\"STOP\\\" to cancel marketing messages at any time, but authentication messages cannot be cancelled. View our Privacy Policy for more information.",
+        "notice_prefix": "Notice: ",
         "compliance_title": "SMS Service Compliance Notice",
         "terms_privacy_checkbox": "Read and agree《Service terms》and《Privacy policy》",
         "sms_consent_checkbox": "I agree to receive text message",
@@ -685,8 +688,11 @@
       "community": "Community",
       "rewards": "Rewards",
       "profile": "Profile",
-      "wellbeing": "Safety",
-      "qr_code": "QR Code"
+      "wellbeing": "Consulting",
+      "qr_code": "QR Code",
+      "merchantDashboard": "Dashboard",
+      "merchantWriteOff": "Verify",
+      "merchantActivities": "Activities"
     },
     "screens": {
       "activity_list": "Activity List",
@@ -705,6 +711,82 @@
       "certificate_application": "Certificate Application",
       "privacy_policy": "Privacy Policy",
       "terms_of_service": "Terms of Service"
+    }
+  },
+  "merchant": {
+    "dashboard": {
+      "title": "Merchant Dashboard",
+      "welcome": "Welcome, {{name}}",
+      "couponOverview": "Coupon Overview",
+      "noCoupons": "No coupon templates yet",
+      "noCouponsHint": "Contact platform admin to create coupons",
+      "contactAdmin": "To create or modify coupons, please contact the platform admin",
+      "quickActions": "Quick Actions",
+      "scanToVerify": "Scan to Verify",
+      "recentWriteOffs": "Recent Verifications",
+      "noWriteOffs": "No verification records yet",
+      "couponCount": "{{count}} coupons",
+      "issued": "Issued: {{count}}",
+      "valid": "Valid",
+      "expired": "Expired",
+      "defaultName": "Merchant",
+      "loadError": "Failed to load data",
+      "stats": {
+        "todayWriteOffs": "Today",
+        "totalWriteOffs": "Total",
+        "activeCoupons": "Active"
+      }
+    },
+    "writeOff": {
+      "title": "Coupon Verification",
+      "headerSubtitle": "Scan or enter a code to redeem",
+      "scanTab": "Scan QR",
+      "manualTab": "Manual Input",
+      "scanHint": "Point camera at coupon QR code",
+      "manualHint": "Enter the coupon code printed on the coupon",
+      "manualInputTitle": "Manual Entry",
+      "couponCodeLabel": "Coupon Code",
+      "inputPlaceholder": "Enter coupon code",
+      "manualGuidance": "Code is case-insensitive · usually 8–16 characters",
+      "verifyButton": "Verify Coupon",
+      "verifying": "Verifying...",
+      "writeOffButton": "Confirm Write-off",
+      "writingOff": "Processing...",
+      "success": "Verification Successful",
+      "successMessage": "Coupon has been verified successfully",
+      "failed": "Verification Failed",
+      "failedMessage": "Unable to verify this coupon",
+      "invalidCode": "Invalid coupon code",
+      "alreadyUsed": "This coupon has already been used",
+      "couponExpired": "This coupon has expired",
+      "unknownCoupon": "Coupon",
+      "continueScan": "Continue Scanning",
+      "scanAnother": "Scan Another",
+      "couponInfo": "Coupon Info",
+      "couponName": "Name",
+      "couponDiscount": "Discount",
+      "couponHolder": "Holder",
+      "cameraPermission": "Camera access is needed to scan coupon QR codes",
+      "requestPermission": "Continue",
+      "pickFromAlbum": "Select from Album",
+      "noQRFound": "No QR code found in the selected image",
+      "scanningImage": "Scanning image..."
+    },
+    "activities": {
+      "title": "Nearby Activities",
+      "subtitle": "{{count}} activities in your area",
+      "noActivities": "No activities yet",
+      "noActivitiesHint": "Check back later for new activities",
+      "noFilteredActivities": "No matching activities",
+      "noFilteredHint": "Try a different filter to see more results",
+      "loadError": "Failed to load activities",
+      "viewDetail": "View Details",
+      "activitiesCount": "{{count}} activities",
+      "refreshing": "Refreshing...",
+      "filterAll": "All",
+      "filterUpcoming": "Upcoming",
+      "filterOngoing": "Ongoing",
+      "filterPast": "Past"
     }
   },
   "debug": {
@@ -762,7 +844,12 @@
       "register": "Register Now",
       "registered": "Registered",
       "full": "Full",
-      "ended": "Activity Ended"
+      "ended": "Activity Ended",
+      "date": "Date",
+      "location": "Location"
+    },
+    "share": {
+      "download_app": "Download Vita App to join!"
     },
     "details": {
       "actionButton": {
@@ -782,6 +869,8 @@
       "checkin_prompt_message": "Registration successful! Would you like to go to the check-in page to start your volunteer service?",
       "failed_title": "Registration Failed",
       "failed_message": "Registration failed, please try again later",
+      "auth_failed": "Authentication failed, please log in again",
+      "param_error": "Parameter error, please try again",
       "register_now": "Register Now"
     },
     "status": {
@@ -822,12 +911,51 @@
     "username": "Username",
     "region": "Region",
     "edit": {
-      "schoolEmail": "School Email",
-      "schoolEmailPlaceholder": "Please enter school email",
-      "workEmail": "Work Email",
-      "workEmailPlaceholder": "Please enter work email",
+      "title": "Edit Profile",
+      "changeAvatar": "Change Avatar",
+      "changeAvatarMessage": "Coming soon",
+      "name": "Name",
+      "namePlaceholder": "Enter your name",
+      "nickName": "Nickname",
+      "nickNamePlaceholder": "Enter your nickname",
+      "userName": "Username",
+      "userNamePlaceholder": "Enter your username",
+      "email": "Primary Email",
+      "emailPlaceholder": "Enter email address",
       "alternateEmail": "Work Email",
-      "alternateEmailPlaceholder": "Please enter work email"
+      "alternateEmailPlaceholder": "Enter work email",
+      "phone": "Phone",
+      "phonePlaceholder": "Enter phone number",
+      "areaCode": "Area Code",
+      "personalInfo": "Personal Information",
+      "gender": "Gender",
+      "male": "Male",
+      "female": "Female",
+      "other": "Other",
+      "university": "University",
+      "universityPlaceholder": "Enter your university",
+      "additionalInfo": "Additional Information",
+      "location": "Location",
+      "locationPlaceholder": "Enter your city",
+      "bio": "Bio",
+      "bioPlaceholder": "Tell us about yourself...",
+      "noChanges": "No Changes",
+      "noChangesMessage": "You haven't made any changes",
+      "saving": "Saving...",
+      "save": "Save",
+      "save_changes": "Save Changes",
+      "saveSuccess": "Save Successful",
+      "saveSuccessMessage": "Profile updated",
+      "confirm": "OK",
+      "fieldRestricted": "This field cannot be modified",
+      "nameRestrictedMessage": "Legal name cannot be changed after registration",
+      "usernameRestrictedMessage": "Username is linked to email and cannot be modified separately",
+      "emailRestrictedMessage": "Email is your login account and cannot be modified",
+      "phoneRestrictedMessage": "Phone number modification requires verification, feature coming soon",
+      "mandatoryFieldTitle": "Required Information Incomplete",
+      "mandatoryFieldMessage": "As an internal member, you need to fill in your {{emailType}} to continue.",
+      "continueEditing": "Continue Editing",
+      "discardAndExit": "Discard and Exit"
     },
     "region_updated_successfully": "Region updated to {{region}}",
     "region_update_failed": "Failed to update region, please try again",
@@ -912,7 +1040,10 @@
       "general": "General",
       "aboutSupport": "About & Support",
       "address": "Shipping Address",
-      "certificate": "Certificate Application"
+      "certificate": "Certificate Application",
+      "certificateLocked": "Staff Only",
+      "certificateLockedTitle": "Feature Not Available",
+      "certificateLockedMessage": "Certificate application is currently available to staff members only. Please contact an administrator for access."
     },
     "volunteer": {
       "management": "Volunteer Management"
@@ -920,6 +1051,10 @@
     "certificate": {
       "title": "Certificate Application",
       "subtitle": "Apply for certificates and documents",
+      "hero_title": "Certificate & Awards",
+      "hero_subtitle": "Apply for certificates to recognize your achievements",
+      "stat_open": "Open",
+      "stat_total": "Total",
       "no_certificates": "No Certificates Available",
       "no_certificates_desc": "There are no certificate applications open at this time",
       "not_application_season": "Not Open for Application",
@@ -928,7 +1063,7 @@
       "status_active": "Open for Application",
       "status_inactive": "Not Available",
       "deadline": "Deadline",
-      "applicants": "Applied",
+      "applicants": "applicants",
       "pvsa": {
         "title": "PVSA Certificate Application",
         "steps": {
@@ -938,7 +1073,13 @@
           "review": "Review & Submit"
         },
         "step1": {
-          "disclaimer": "I have read and understand the terms and conditions of the PVSA certificate application",
+          "terms_title": "Application Notice",
+          "term1": "The application window is from {{startDate}} to {{endDate}}. Please submit your application during this period — late submissions will not be accepted!! For applicants who are still CU members, we encourage applying after accumulating service hours in the final year.",
+          "term2": "After submission, the application will be reviewed by branch leaders and headquarters members before certificates can be issued. Please confirm with your branch leader that you meet the qualifications before submitting. Once submitted, the system cannot process withdrawals, and each person can only submit once — please apply and fill out carefully!!",
+          "term3": "Please verify your address information is correct. Deliveries may occasionally be lost — if this occurs, please contact Info@chineseunion.org",
+          "terms_confirm_label": "Please read the above",
+          "terms_confirm_placeholder": "After reading, please type \"I acknowledge the above information\"",
+          "disclaimer": "I acknowledge the above information",
           "legal_name": "Legal Full Name",
           "legal_name_placeholder": "Enter full name as shown on passport/ID",
           "school": "School",
@@ -1095,53 +1236,6 @@
       "lightModeCustomization": "Light Mode Customization",
       "darkModeCustomization": "Dark Mode Customization",
       "accentColorSelection": "Accent Color Selection"
-    },
-    "edit": {
-      "title": "Edit Profile",
-      "changeAvatar": "Change Avatar",
-      "changeAvatarMessage": "Coming soon",
-      "name": "Name",
-      "namePlaceholder": "Enter your name",
-      "nickName": "Nickname",
-      "nickNamePlaceholder": "Enter your nickname",
-      "userName": "Username",
-      "userNamePlaceholder": "Enter your username",
-      "email": "Primary Email",
-      "emailPlaceholder": "Enter email address",
-      "alternateEmail": "Work Email",
-      "alternateEmailPlaceholder": "Enter work email",
-      "phone": "Phone",
-      "phonePlaceholder": "Enter phone number",
-      "areaCode": "Area Code",
-      "personalInfo": "Personal Information",
-      "gender": "Gender",
-      "male": "Male",
-      "female": "Female",
-      "other": "Other",
-      "university": "University",
-      "universityPlaceholder": "Enter your university",
-      "additionalInfo": "Additional Information",
-      "location": "Location",
-      "locationPlaceholder": "Enter your city",
-      "bio": "Bio",
-      "bioPlaceholder": "Tell us about yourself...",
-      "noChanges": "No Changes",
-      "noChangesMessage": "You haven't made any changes",
-      "saving": "Saving...",
-      "save": "Save",
-      "save_changes": "Save Changes",
-      "saveSuccess": "Save Successful",
-      "saveSuccessMessage": "Profile updated",
-      "confirm": "OK",
-      "fieldRestricted": "This field cannot be modified",
-      "nameRestrictedMessage": "Legal name cannot be changed after registration",
-      "usernameRestrictedMessage": "Username is linked to email and cannot be modified separately",
-      "emailRestrictedMessage": "Email is your login account and cannot be modified",
-      "phoneRestrictedMessage": "Phone number modification requires verification, feature coming soon",
-      "mandatoryFieldTitle": "Required Information Incomplete",
-      "mandatoryFieldMessage": "As an internal member, you need to fill in your {{emailType}} to continue.",
-      "continueEditing": "Continue Editing",
-      "discardAndExit": "Discard and Exit"
     },
     "about": {
       "sectionAppInfo": "App Information",
@@ -1373,21 +1467,27 @@
     "studentsCount": " students",
     "iKnow": "Got it",
     "page_title": "Student Consulting",
-    "hero_title": "ChineSunion Consulting",
+    "hero_title": "ChineseUnion Consulting",
     "hero_subtitle": "Comprehensive enrollment consulting and life guidance services for international students to help you adapt quickly",
     "visit_website": "Visit Website",
     "services_title": "Our Services",
     "services": {
-      "academic": "Academic Consulting",
-      "academic_desc": "Course selection, major planning, academic resources",
-      "housing": "Housing Guide",
-      "housing_desc": "On/off campus housing recommendations and tips",
+      "academic": "New Student Access",
+      "academic_desc": "Enrollment prep, freshman info, official discussion groups",
+      "housing": "Off-campus Rentals",
+      "housing_desc": "Off-campus housing recommendations and tips",
       "arrival": "Airport Pickup",
       "arrival_desc": "Free airport pickup and enrollment check-in guide",
-      "community": "Community Integration",
-      "community_desc": "Student organizations, social events, cultural exchange"
+      "community": "Meet the New Students",
+      "community_desc": "In-person welcome events, make new friends"
     },
-    "contact_info": "For more information, visit chinesunion.org or contact our consulting team"
+    "quick_links": "Quick Links",
+    "links": {
+      "safety_plan": "Peace of Mind Program",
+      "student_notes": "Notes for New Students",
+      "freshers_album": "Freshers' Album"
+    },
+    "contact_info": "For more information, visit chineseunion.org or contact our consulting team"
   },
   "community": {
     "title": "Student Community",
@@ -1412,7 +1512,7 @@
       "description": "Please login to your account to explore the merchant community and discover nearby offers and services",
       "button": "Login Now"
     },
-    "headerSubtitle": "Connect peers, share wonderful moments, grow together",
+    "headerSubtitle": "Discover & Earn",
     "developing": "Coming soon",
     "developingDescription": "Building a warm student community",
     "upcomingFeatures": "Upcoming Features",
@@ -1472,8 +1572,8 @@
       "dateRangePlaceholder": "Select date range",
       "showResults": "Show {{count}} results"
     },
-    "favorites": "FAVORITES",
-    "merchantsLabel": "MERCHANTS",
+    "favorites": "FEATURED MERCHANTS",
+    "merchantsLabel": "ALL MERCHANTS",
     "nearby": "Nearby",
     "popular": "Popular",
     "search": {
@@ -1499,7 +1599,12 @@
       "website": "Website",
       "phone": "Phone",
       "address": "Address",
-      "hours": "Hours"
+      "hours": "Hours",
+      "useCoupon": "Use",
+      "writeOffConfirmTitle": "Use Coupon",
+      "writeOffConfirmMsg": "Are you sure you want to use this coupon? This action cannot be undone.",
+      "writeOffSuccess": "Coupon used successfully!",
+      "writeOffFailed": "Failed to use coupon"
     },
     "coupon": {
       "writeOffTitle": "Use Coupon",
@@ -2245,7 +2350,7 @@
       "userNotFound": "Phone number not found",
       "confirmCheckIn": "Confirm Check-in",
       "confirmCheckInMessage": "Confirm check-in for {{name}}?",
-      "confirmCheckOut": "Confirm Check-out",
+      "confirmCheckOut": "Confirm Check Out",
       "confirmCheckOutMessage": "Confirm check-out for {{name}}?\nVolunteer hours: {{hours}} hours {{minutes}} minutes",
       "checkInSuccess": "Check-in Successful",
       "checkInSuccessMessage": "{{name}} checked in",
@@ -2257,7 +2362,6 @@
       "timeStatistics": "Work Time Statistics",
       "workDescription": "Work Description",
       "workDescriptionPlaceholder": "Please describe your volunteer work today...",
-      "confirmCheckOut": "Confirm Check Out",
       "quickOptions": {
         "departmentActivity": "Dept Activity",
         "airportPickup": "Airport Pickup",
@@ -2461,13 +2565,13 @@
   "legal": {
     "terms": {
       "title": "Terms of Service",
-      "full_content": "PomeloX Terms of Service & Privacy Policy (Combined Version)\n\nVersion: v1.1 | Effective Date: September 3, 2025\n\nContract Parties Information\n\nService Provider (China): Shanghai Grapefruit Smart Technology Co., Ltd.\nOverseas Collaborative Entity (USA): American Promotion Company, Inc. (as overseas collaborative partner)\n\nPart I: Terms of Service\n\n1. Definitions and Scope\n\nThis platform refers to \"PomeloX\" and its operating entities, providing information and collaborative services, not directly providing police, medical, and public safety services. In case of emergency, please contact local emergency numbers (110/120/911).\n\n2. Service Functions\n\n• AI Q&A: Study abroad guides, visa/course/housing information suggestions (for reference only)\n• Wellbeing Plan: Missing person emergency coordination, volunteer clue collection and liaison\n• Airport Pickup & Transportation: Free bus reservations, paid pickup/rideshare\n• Activity Management: Event publishing, registration management, check-in/check-out and QR code verification\n• Volunteer Management: Check-in/out, hour tracking and certification\n• Local Discounts: Merchant offers, points and redemption\n• Marketplace/Job Matching: Information posting and chat matching\n• Alumni Network: Email verification, trusted referrals\n\n3. Registration and Eligibility\n\n• Must be at least 14 years old to register independently; those under 14 must have guardian representation\n• Provide truthful, accurate, and complete registration information\n• Hold valid school email or referral code\n• Properly safeguard account and password\n\n4. User Conduct Standards\n\nProhibited Behaviors:\n• Publishing illegal, harmful, vulgar, defamatory, hateful, discriminatory content\n• Infringing on others' intellectual property, privacy rights, and other legitimate rights\n• Conducting reverse engineering, bulk crawling, malicious scanning\n• Unauthorized commercial promotion, mass advertising\n• Endangering activity venues, transportation safety, violating public security rules\n\nPart II: Privacy Policy\n\n1. Information Collection\n\nCategories of Information Collected:\n• Account and Identity: Name/preferred name, avatar, school email/phone number\n• Travel and Activities: Flight information, airport pickup reservations, activity registration records\n• Emergency and Coordination: Emergency contacts, missing person clues, volunteer liaison\n• Device and Logs: Device identifiers, IP, operation logs\n• Transactions and Payments: Orders, amounts, payment transaction numbers\n• User Content: Chats, comments, images/videos\n\n2. Use Purposes\n\n• Create and manage user accounts\n• Provide activity registration and volunteer management services\n• Send important notifications and security alerts\n• AI Q&A and study abroad guidance services\n• Wellbeing Plan and volunteer coordination services\n• Improve service quality and user experience\n\n3. Cross-border Transfer\n\nOverseas Recipient: American Promotion Company, Inc. (as overseas collaborative partner, USA)\nTransfer Purpose: Service delivery, customer service/technical support, backup and security\nCompliance Measures: Take appropriate protective measures in accordance with Personal Information Protection Law and other regulations\n\n4. Your Rights\n\n• Right to Know: Understand personal information processing\n• Access Right: View personal information we have collected about you\n• Rectification Right: Correct inaccurate personal information\n• Deletion Right: Request deletion of personal information and account\n• Restriction Right: Limit information processing methods\n• Data Portability Right: Obtain copy of personal information\n\n5. Minor Protection\n\n• Users under 14 require explicit guardian consent\n• Appropriate protection for users aged 14-18\n• Stricter security measures implemented\n\n6. Data Security\n\n• HTTPS encryption for data transmission\n• Secure hash algorithm password storage\n• Strict access control and permission management\n• Regular security audits and vulnerability detection\n• Data encryption storage and access control\n\nDispute Resolution\n\nUsers in China: Governed by Chinese law, with jurisdiction by competent people's courts\nUsers in the United States: Governed by state of residence or California law, disputes resolved through arbitration\n\nContact Us\n\n• Customer Service/Technical: info@chineseunion.org\n• Legal/Compliance: info@chineseunion.org\n• Service Hours: Monday-Friday 9:00-18:00 (Beijing Time)\n\nThank you for choosing PomeloX\n\nWe are committed to providing a safe and reliable service platform for Chinese international students, strictly complying with laws and regulations to protect your legitimate rights."
+      "full_content": "PomeloX Terms of Service & Privacy Policy (Combined Version)\n\nVersion: v1.1 | Effective Date: September 3, 2025\n\nContract Parties Information\n\nService Provider: Vita Global (501(c)(3) nonprofit organization, EIN: 61-1757345, USA)\nTechnology Partner (China): Shanghai Grapefruit Smart Technology Co., Ltd.\n\nPart I: Terms of Service\n\n1. Definitions and Scope\n\nThis platform refers to \"PomeloX\" and its operating entities, providing information and collaborative services, not directly providing police, medical, and public safety services. In case of emergency, please contact local emergency numbers (110/120/911).\n\n2. Service Functions\n\n• AI Q&A: Study abroad guides, visa/course/housing information suggestions (for reference only)\n• Wellbeing Plan: Missing person emergency coordination, volunteer clue collection and liaison\n• Airport Pickup & Transportation: Free bus reservations, paid pickup/rideshare\n• Activity Management: Event publishing, registration management, check-in/check-out and QR code verification\n• Volunteer Management: Check-in/out, hour tracking and certification\n• Local Discounts: Merchant offers, points and redemption\n• Marketplace/Job Matching: Information posting and chat matching\n• Alumni Network: Email verification, trusted referrals\n\n3. Registration and Eligibility\n\n• Must be at least 14 years old to register independently; those under 14 must have guardian representation\n• Provide truthful, accurate, and complete registration information\n• Hold valid school email or referral code\n• Properly safeguard account and password\n\n4. User Conduct Standards\n\nProhibited Behaviors:\n• Publishing illegal, harmful, vulgar, defamatory, hateful, discriminatory content\n• Infringing on others' intellectual property, privacy rights, and other legitimate rights\n• Conducting reverse engineering, bulk crawling, malicious scanning\n• Unauthorized commercial promotion, mass advertising\n• Endangering activity venues, transportation safety, violating public security rules\n\nPart II: Privacy Policy\n\n1. Information Collection\n\nCategories of Information Collected:\n• Account and Identity: Name/preferred name, avatar, school email/phone number\n• Travel and Activities: Flight information, airport pickup reservations, activity registration records\n• Emergency and Coordination: Emergency contacts, missing person clues, volunteer liaison\n• Device and Logs: Device identifiers, IP, operation logs\n• Transactions and Payments: Orders, amounts, payment transaction numbers\n• User Content: Chats, comments, images/videos\n\n2. Use Purposes\n\n• Create and manage user accounts\n• Provide activity registration and volunteer management services\n• Send important notifications and security alerts\n• AI Q&A and study abroad guidance services\n• Wellbeing Plan and volunteer coordination services\n• Improve service quality and user experience\n\n3. Cross-border Transfer\n\nTechnology Partner: Shanghai Grapefruit Smart Technology Co., Ltd. (China)\nTransfer Purpose: Technical support, data processing, and service maintenance\nCompliance Measures: Appropriate protective measures taken in accordance with applicable laws and regulations\n\n4. Your Rights\n\n• Right to Know: Understand personal information processing\n• Access Right: View personal information we have collected about you\n• Rectification Right: Correct inaccurate personal information\n• Deletion Right: Request deletion of personal information and account\n• Restriction Right: Limit information processing methods\n• Data Portability Right: Obtain copy of personal information\n\n5. Minor Protection\n\n• Users under 14 require explicit guardian consent\n• Appropriate protection for users aged 14-18\n• Stricter security measures implemented\n\n6. Data Security\n\n• HTTPS encryption for data transmission\n• Secure hash algorithm password storage\n• Strict access control and permission management\n• Regular security audits and vulnerability detection\n• Data encryption storage and access control\n\nDispute Resolution\n\nUsers in China: Governed by Chinese law, with jurisdiction by competent people's courts\nUsers in the United States: Governed by state of residence or California law, disputes resolved through arbitration\n\nContact Us\n\n• Customer Service/Technical: info@chineseunion.org\n• Legal/Compliance: info@chineseunion.org\n• Service Hours: Monday-Friday 9:00-18:00 (Beijing Time)\n\nThank you for choosing PomeloX\n\nWe are committed to providing a safe and reliable service platform for Chinese international students, strictly complying with laws and regulations to protect your legitimate rights."
     },
     "privacy": {
       "title": "Privacy Policy",
-      "full_content": "PomeloX Terms of Service & Privacy Policy (Combined Version)\n\nVersion: v1.1 | Effective Date: September 3, 2025\n\nContract Parties Information\n\nService Provider (China): Shanghai Grapefruit Smart Technology Co., Ltd.\nOverseas Collaborative Entity (USA): American Promotion Company, Inc. (as overseas collaborative partner)\n\nPart I: Terms of Service\n\n1. Definitions and Scope\n\nThis platform refers to \"PomeloX\" and its operating entities, providing information and collaborative services, not directly providing police, medical, and public safety services. In case of emergency, please contact local emergency numbers (110/120/911).\n\n2. Service Functions\n\n• AI Q&A: Study abroad guides, visa/course/housing information suggestions (for reference only)\n• Wellbeing Plan: Missing person emergency coordination, volunteer clue collection and liaison\n• Airport Pickup & Transportation: Free bus reservations, paid pickup/rideshare\n• Activity Management: Event publishing, registration management, check-in/check-out and QR code verification\n• Volunteer Management: Check-in/out, hour tracking and certification\n• Local Discounts: Merchant offers, points and redemption\n• Marketplace/Job Matching: Information posting and chat matching\n• Alumni Network: Email verification, trusted referrals\n\n3. Registration and Eligibility\n\n• Must be at least 14 years old to register independently; those under 14 must have guardian representation\n• Provide truthful, accurate, and complete registration information\n• Hold valid school email or referral code\n• Properly safeguard account and password\n\n4. User Conduct Standards\n\nProhibited Behaviors:\n• Publishing illegal, harmful, vulgar, defamatory, hateful, discriminatory content\n• Infringing on others' intellectual property, privacy rights, and other legitimate rights\n• Conducting reverse engineering, bulk crawling, malicious scanning\n• Unauthorized commercial promotion, mass advertising\n• Endangering activity venues, transportation safety, violating public security rules\n\nPart II: Privacy Policy\n\n1. Information Collection\n\nCategories of Information Collected:\n• Account and Identity: Name/preferred name, avatar, school email/phone number\n• Travel and Activities: Flight information, airport pickup reservations, activity registration records\n• Emergency and Coordination: Emergency contacts, missing person clues, volunteer liaison\n• Device and Logs: Device identifiers, IP, operation logs\n• Transactions and Payments: Orders, amounts, payment transaction numbers\n• User Content: Chats, comments, images/videos\n\n2. Use Purposes\n\n• Create and manage user accounts\n• Provide activity registration and volunteer management services\n• Send important notifications and security alerts\n• AI Q&A and study abroad guidance services\n• Wellbeing Plan and volunteer coordination services\n• Improve service quality and user experience\n\n3. Cross-border Transfer\n\nOverseas Recipient: American Promotion Company, Inc. (as overseas collaborative partner, USA)\nTransfer Purpose: Service delivery, customer service/technical support, backup and security\nCompliance Measures: Take appropriate protective measures in accordance with Personal Information Protection Law and other regulations\n\n4. Your Rights\n\n• Right to Know: Understand personal information processing\n• Access Right: View personal information we have collected about you\n• Rectification Right: Correct inaccurate personal information\n• Deletion Right: Request deletion of personal information and account\n• Restriction Right: Limit information processing methods\n• Data Portability Right: Obtain copy of personal information\n\n5. Minor Protection\n\n• Users under 14 require explicit guardian consent\n• Appropriate protection for users aged 14-18\n• Stricter security measures implemented\n\n6. Data Security\n\n• HTTPS encryption for data transmission\n• Secure hash algorithm password storage\n• Strict access control and permission management\n• Regular security audits and vulnerability detection\n• Data encryption storage and access control\n\nDispute Resolution\n\nUsers in China: Governed by Chinese law, with jurisdiction by competent people's courts\nUsers in the United States: Governed by state of residence or California law, disputes resolved through arbitration\n\nContact Us\n\n• Customer Service/Technical: info@chineseunion.org\n• Legal/Compliance: info@chineseunion.org\n• Service Hours: Monday-Friday 9:00-18:00 (Beijing Time)\n\nThank you for your trust\n\nWe are committed to providing safe and reliable services for Chinese international students and their families. Protecting your privacy is our responsibility and the foundation of building trust with you.",
-      "content_china": "PomeloX Privacy Policy (China Version)\n\nEffective Date: September 3, 2025\nVersion: v1.1\n\nService Provider: Shanghai Grapefruit Smart Technology Co., Ltd.\nUnified Social Credit Code: 91310112MAEQURTF0X\nRegistered Address: Room 513, 5th Floor, Building 13, No. 1955 Chunshen Road, Minhang District, Shanghai\n\n1. Policy Overview\n\nWe strictly comply with the Personal Information Protection Law of the People's Republic of China, Cybersecurity Law, Data Security Law and other relevant laws and regulations, and process your personal information in accordance with the principles of legality, legitimacy, necessity and good faith.\n\n2. Personal Information Collection\n\nAccount & Identity Information:\n• Name/preferred name, avatar, school email/phone\n• School/grade/major, referral codes\n• Identity verification/email verification results\n\nActivity & Travel Information:\n• Flight/arrival information, pickup reservations\n• Activity registrations, check-in/check-out, verification records\n\nVolunteer Service Information:\n• Check-in/out records, hour tracking\n• Volunteer coordination feedback\n\nDevice & Log Information:\n• Device identifiers, IP addresses\n• Operation/security/crash logs\n• Cookie/local storage data\n\n3. Purpose and Legal Basis for Personal Information Use\n\nBased on your consent:\n• Account creation and management\n• AI Q&A services\n• Activity notifications and reminders\n\nFor contract performance:\n• Activity registration and volunteer management\n• Airport pickup and transportation services\n• Local discount services\n\nFor legal obligations:\n• Network security protection and risk monitoring\n• Cooperation with law enforcement investigations (as required by law)\n\nFor legitimate interests:\n• Service improvement and user experience\n• Fraud prevention and security\n\n4. Personal Information Sharing and Processing Entrustment\n\nThird-party service integration (only within necessary scope):\n• Gmail SMTP: Email delivery\n• Cloudflare R2: File and image storage\n• Firebase FCM: Push notification services\n\nCross-border transfer:\nWhen transferring personal information to overseas collaborative partners (American Promotion Company, Inc.) for technical support, appropriate protective measures will be taken in accordance with PIPL, including signing standard contract clauses and conducting security assessments.\n\n5. Your Personal Information Rights\n\n• Right to Know: Understand personal information processing\n• Right to Decide: Consent to or withdraw consent for personal information processing\n• Right to Access: View personal information we process\n• Right to Rectification: Correct inaccurate personal information\n• Right to Erasure: Request deletion of personal information\n• Right to Restrict Processing: Limit personal information processing methods\n• Right to Portability: Obtain copies of personal information\n\nHow to exercise your rights:\nSend email to info@chineseunion.org or info@chineseunion.org.\n\n6. Protection of Minors' Personal Information\n\n• Under 14: Must obtain explicit guardian consent\n• 14-18: Appropriate protection, parental guidance recommended\n• Enhanced security technical and management measures\n\n7. Personal Information Security Protection Measures\n\nTechnical measures:\n• AES-256 encryption for sensitive data\n• HTTPS encrypted transmission\n• Access control and authentication\n• 24-hour security monitoring\n\nManagement measures:\n• Minimum permission principle for employees\n• Regular security training and audits\n• Data access logging\n• Security incident emergency response\n\n8. Personal Information Storage\n\n• Storage location: Primarily in mainland China\n• Retention period: Shortest time necessary for processing purposes\n• Overdue processing: Automatic deletion or anonymization\n\n9. Contact Us\n\nFor personal information protection related questions:\n• Customer service: info@chineseunion.org\n• Data protection officer: info@chineseunion.org\n• Service hours: Monday-Friday 9:00-18:00 (Beijing Time)\n• Address: Room 513, 5th Floor, Building 13, No. 1955 Chunshen Road, Minhang District, Shanghai\n\n10. Policy Updates\n\nIf we need to modify this policy, we will notify you through in-app notifications, official website announcements, etc., and seek your consent for major changes.\n\nThis policy is governed by the laws of the People's Republic of China.",
-      "content_usa": "PomeloX Privacy Policy (USA Version)\n\nEffective Date: September 3, 2025\nVersion: v1.1\n\nService Provider: American Promotion Company, Inc.\nAddress: 8988 CAMINITO FRESCO, LA JOLLA, CA 92037\n\n1. Policy Overview\n\nWe comply with applicable US federal and state privacy laws, including the California Consumer Privacy Act (CCPA), California Privacy Rights Act (CPRA), and Children's Online Privacy Protection Act (COPPA).\n\n2. Information We Collect\n\nPersonal Information:\n• Name/preferred name, avatar, school email/phone\n• School/grade/major, referral codes\n• Identity verification results\n\nActivity & Travel Information:\n• Flight/arrival information, pickup reservations\n• Activity registrations, check-in/check-out records\n\nVolunteer Service Information:\n• Check-in/out records, hour tracking\n• Volunteer coordination feedback\n\nDevice & Usage Information:\n• Device identifiers, IP addresses\n• Operation/security/crash logs\n• Cookies/local storage data\n\n3. How We Use Your Information\n\nWith Your Consent:\n• Account creation and management\n• AI Q&A services\n• Activity notifications and reminders\n\nFor Contract Performance:\n• Activity registration and volunteer management\n• Airport pickup and transportation services\n• Local discount services\n\nFor Legitimate Interests:\n• Service improvement and user experience\n• Fraud prevention and security\n• Technical support and maintenance\n\n4. Information Sharing\n\nThird-Party Services (limited scope):\n• Gmail SMTP: Email delivery\n• Cloudflare R2: File storage\n• Firebase FCM: Push notifications\n\nWe do not sell your personal information.\n\n5. Your Privacy Rights\n\nUnder California Law (CCPA/CPRA):\n• Right to Know: What personal information we collect\n• Right to Access: Request copies of your personal information\n• Right to Delete: Request deletion of personal information\n• Right to Correct: Correct inaccurate personal information\n• Right to Opt-Out: Opt out of sale/sharing (we don't sell)\n• Right to Non-Discrimination: Equal service regardless of privacy choices\n\nTo exercise your rights:\nEmail us at info@chineseunion.org or info@chineseunion.org.\n\n6. Children's Privacy (COPPA Compliance)\n\n• Under 13: We do not knowingly collect information from children under 13\n• 13-17: Parental guidance recommended\n• Enhanced protection measures for minors\n\n7. Data Security\n\nTechnical Safeguards:\n• AES-256 encryption for sensitive data\n• HTTPS encrypted transmission\n• Access controls and authentication\n• 24/7 security monitoring\n\nOperational Safeguards:\n• Employee access on need-to-know basis\n• Regular security training and audits\n• Data access logging\n• Incident response procedures\n\n8. Data Retention and Storage\n\n• Location: United States and other regions\n• Retention: Minimum time necessary for purposes\n• Disposal: Secure deletion or anonymization\n\n9. Contact Us\n\nFor privacy-related questions:\n• Email: info@chineseunion.org\n• Data Protection Officer: info@chineseunion.org\n• Address: 8988 CAMINITO FRESCO, LA JOLLA, CA 92037\n• Business Hours: Monday-Friday 9:00-18:00 (Beijing Time)\n\n10. Policy Updates\n\nWe may update this policy and will notify you of material changes through in-app notifications, email, or website notices.\n\nThis policy is governed by applicable US law and the laws of California."
+      "full_content": "PomeloX Terms of Service & Privacy Policy (Combined Version)\n\nVersion: v1.1 | Effective Date: September 3, 2025\n\nContract Parties Information\n\nService Provider: Vita Global (501(c)(3) nonprofit organization, EIN: 61-1757345, USA)\nTechnology Partner (China): Shanghai Grapefruit Smart Technology Co., Ltd.\n\nPart I: Terms of Service\n\n1. Definitions and Scope\n\nThis platform refers to \"PomeloX\" and its operating entities, providing information and collaborative services, not directly providing police, medical, and public safety services. In case of emergency, please contact local emergency numbers (110/120/911).\n\n2. Service Functions\n\n• AI Q&A: Study abroad guides, visa/course/housing information suggestions (for reference only)\n• Wellbeing Plan: Missing person emergency coordination, volunteer clue collection and liaison\n• Airport Pickup & Transportation: Free bus reservations, paid pickup/rideshare\n• Activity Management: Event publishing, registration management, check-in/check-out and QR code verification\n• Volunteer Management: Check-in/out, hour tracking and certification\n• Local Discounts: Merchant offers, points and redemption\n• Marketplace/Job Matching: Information posting and chat matching\n• Alumni Network: Email verification, trusted referrals\n\n3. Registration and Eligibility\n\n• Must be at least 14 years old to register independently; those under 14 must have guardian representation\n• Provide truthful, accurate, and complete registration information\n• Hold valid school email or referral code\n• Properly safeguard account and password\n\n4. User Conduct Standards\n\nProhibited Behaviors:\n• Publishing illegal, harmful, vulgar, defamatory, hateful, discriminatory content\n• Infringing on others' intellectual property, privacy rights, and other legitimate rights\n• Conducting reverse engineering, bulk crawling, malicious scanning\n• Unauthorized commercial promotion, mass advertising\n• Endangering activity venues, transportation safety, violating public security rules\n\nPart II: Privacy Policy\n\n1. Information Collection\n\nCategories of Information Collected:\n• Account and Identity: Name/preferred name, avatar, school email/phone number\n• Travel and Activities: Flight information, airport pickup reservations, activity registration records\n• Emergency and Coordination: Emergency contacts, missing person clues, volunteer liaison\n• Device and Logs: Device identifiers, IP, operation logs\n• Transactions and Payments: Orders, amounts, payment transaction numbers\n• User Content: Chats, comments, images/videos\n\n2. Use Purposes\n\n• Create and manage user accounts\n• Provide activity registration and volunteer management services\n• Send important notifications and security alerts\n• AI Q&A and study abroad guidance services\n• Wellbeing Plan and volunteer coordination services\n• Improve service quality and user experience\n\n3. Cross-border Transfer\n\nTechnology Partner: Shanghai Grapefruit Smart Technology Co., Ltd. (China)\nTransfer Purpose: Technical support, data processing, and service maintenance\nCompliance Measures: Appropriate protective measures taken in accordance with applicable laws and regulations\n\n4. Your Rights\n\n• Right to Know: Understand personal information processing\n• Access Right: View personal information we have collected about you\n• Rectification Right: Correct inaccurate personal information\n• Deletion Right: Request deletion of personal information and account\n• Restriction Right: Limit information processing methods\n• Data Portability Right: Obtain copy of personal information\n\n5. Minor Protection\n\n• Users under 14 require explicit guardian consent\n• Appropriate protection for users aged 14-18\n• Stricter security measures implemented\n\n6. Data Security\n\n• HTTPS encryption for data transmission\n• Secure hash algorithm password storage\n• Strict access control and permission management\n• Regular security audits and vulnerability detection\n• Data encryption storage and access control\n\nDispute Resolution\n\nUsers in China: Governed by Chinese law, with jurisdiction by competent people's courts\nUsers in the United States: Governed by state of residence or California law, disputes resolved through arbitration\n\nContact Us\n\n• Customer Service/Technical: info@chineseunion.org\n• Legal/Compliance: info@chineseunion.org\n• Service Hours: Monday-Friday 9:00-18:00 (Beijing Time)\n\nThank you for your trust\n\nWe are committed to providing safe and reliable services for Chinese international students and their families. Protecting your privacy is our responsibility and the foundation of building trust with you.",
+      "content_china": "PomeloX Privacy Policy (China Version)\n\nEffective Date: September 3, 2025\nVersion: v1.1\n\nTechnology Partner: Shanghai Grapefruit Smart Technology Co., Ltd.\nService Provider: Vita Global (501(c)(3) nonprofit organization, EIN: 61-1757345, 8988 Caminito Fresco, La Jolla, CA 92037, USA)\nUnified Social Credit Code: 91310112MAEQURTF0X\nRegistered Address: Room 513, 5th Floor, Building 13, No. 1955 Chunshen Road, Minhang District, Shanghai\n\n1. Policy Overview\n\nWe strictly comply with the Personal Information Protection Law of the People's Republic of China, Cybersecurity Law, Data Security Law and other relevant laws and regulations, and process your personal information in accordance with the principles of legality, legitimacy, necessity and good faith.\n\n2. Personal Information Collection\n\nAccount & Identity Information:\n• Name/preferred name, avatar, school email/phone\n• School/grade/major, referral codes\n• Identity verification/email verification results\n\nActivity & Travel Information:\n• Flight/arrival information, pickup reservations\n• Activity registrations, check-in/check-out, verification records\n\nVolunteer Service Information:\n• Check-in/out records, hour tracking\n• Volunteer coordination feedback\n\nDevice & Log Information:\n• Device identifiers, IP addresses\n• Operation/security/crash logs\n• Cookie/local storage data\n\n3. Purpose and Legal Basis for Personal Information Use\n\nBased on your consent:\n• Account creation and management\n• AI Q&A services\n• Activity notifications and reminders\n\nFor contract performance:\n• Activity registration and volunteer management\n• Airport pickup and transportation services\n• Local discount services\n\nFor legal obligations:\n• Network security protection and risk monitoring\n• Cooperation with law enforcement investigations (as required by law)\n\nFor legitimate interests:\n• Service improvement and user experience\n• Fraud prevention and security\n\n4. Personal Information Sharing and Processing Entrustment\n\nThird-party service integration (only within necessary scope):\n• Gmail SMTP: Email delivery\n• Cloudflare R2: File and image storage\n• Firebase FCM: Push notification services\n\nCross-border transfer:\nPersonal information may be transferred to the Service Provider Vita Global (USA) for service delivery and management. Appropriate protective measures will be taken in accordance with PIPL, including signing standard contract clauses and conducting security assessments.\n\n5. Your Personal Information Rights\n\n• Right to Know: Understand personal information processing\n• Right to Decide: Consent to or withdraw consent for personal information processing\n• Right to Access: View personal information we process\n• Right to Rectification: Correct inaccurate personal information\n• Right to Erasure: Request deletion of personal information\n• Right to Restrict Processing: Limit personal information processing methods\n• Right to Portability: Obtain copies of personal information\n\nHow to exercise your rights:\nSend email to info@chineseunion.org or info@chineseunion.org.\n\n6. Protection of Minors' Personal Information\n\n• Under 14: Must obtain explicit guardian consent\n• 14-18: Appropriate protection, parental guidance recommended\n• Enhanced security technical and management measures\n\n7. Personal Information Security Protection Measures\n\nTechnical measures:\n• AES-256 encryption for sensitive data\n• HTTPS encrypted transmission\n• Access control and authentication\n• 24-hour security monitoring\n\nManagement measures:\n• Minimum permission principle for employees\n• Regular security training and audits\n• Data access logging\n• Security incident emergency response\n\n8. Personal Information Storage\n\n• Storage location: Primarily in mainland China\n• Retention period: Shortest time necessary for processing purposes\n• Overdue processing: Automatic deletion or anonymization\n\n9. Contact Us\n\nFor personal information protection related questions:\n• Customer service: info@chineseunion.org\n• Data protection officer: info@chineseunion.org\n• Service hours: Monday-Friday 9:00-18:00 (Beijing Time)\n• Address: Room 513, 5th Floor, Building 13, No. 1955 Chunshen Road, Minhang District, Shanghai\n\n10. Policy Updates\n\nIf we need to modify this policy, we will notify you through in-app notifications, official website announcements, etc., and seek your consent for major changes.\n\nThis policy is governed by the laws of the People's Republic of China.",
+      "content_usa": "PomeloX Privacy Policy (USA Version)\n\nEffective Date: September 3, 2025\nVersion: v1.1\n\nService Provider: Vita Global (501(c)(3) nonprofit organization, EIN: 61-1757345)\nAddress: 8988 CAMINITO FRESCO, LA JOLLA, CA 92037\nTechnology Partner: Shanghai Grapefruit Smart Technology Co., Ltd. (China)\n\n1. Policy Overview\n\nWe comply with applicable US federal and state privacy laws, including the California Consumer Privacy Act (CCPA), California Privacy Rights Act (CPRA), and Children's Online Privacy Protection Act (COPPA).\n\n2. Information We Collect\n\nPersonal Information:\n• Name/preferred name, avatar, school email/phone\n• School/grade/major, referral codes\n• Identity verification results\n\nActivity & Travel Information:\n• Flight/arrival information, pickup reservations\n• Activity registrations, check-in/check-out records\n\nVolunteer Service Information:\n• Check-in/out records, hour tracking\n• Volunteer coordination feedback\n\nDevice & Usage Information:\n• Device identifiers, IP addresses\n• Operation/security/crash logs\n• Cookies/local storage data\n\n3. How We Use Your Information\n\nWith Your Consent:\n• Account creation and management\n• AI Q&A services\n• Activity notifications and reminders\n\nFor Contract Performance:\n• Activity registration and volunteer management\n• Airport pickup and transportation services\n• Local discount services\n\nFor Legitimate Interests:\n• Service improvement and user experience\n• Fraud prevention and security\n• Technical support and maintenance\n\n4. Information Sharing\n\nThird-Party Services (limited scope):\n• Gmail SMTP: Email delivery\n• Cloudflare R2: File storage\n• Firebase FCM: Push notifications\n\nWe do not sell your personal information.\n\n5. Your Privacy Rights\n\nUnder California Law (CCPA/CPRA):\n• Right to Know: What personal information we collect\n• Right to Access: Request copies of your personal information\n• Right to Delete: Request deletion of personal information\n• Right to Correct: Correct inaccurate personal information\n• Right to Opt-Out: Opt out of sale/sharing (we don't sell)\n• Right to Non-Discrimination: Equal service regardless of privacy choices\n\nTo exercise your rights:\nEmail us at info@chineseunion.org or info@chineseunion.org.\n\n6. Children's Privacy (COPPA Compliance)\n\n• Under 13: We do not knowingly collect information from children under 13\n• 13-17: Parental guidance recommended\n• Enhanced protection measures for minors\n\n7. Data Security\n\nTechnical Safeguards:\n• AES-256 encryption for sensitive data\n• HTTPS encrypted transmission\n• Access controls and authentication\n• 24/7 security monitoring\n\nOperational Safeguards:\n• Employee access on need-to-know basis\n• Regular security training and audits\n• Data access logging\n• Incident response procedures\n\n8. Data Retention and Storage\n\n• Location: United States and other regions\n• Retention: Minimum time necessary for purposes\n• Disposal: Secure deletion or anonymization\n\n9. Contact Us\n\nFor privacy-related questions:\n• Email: info@chineseunion.org\n• Data Protection Officer: info@chineseunion.org\n• Address: 8988 CAMINITO FRESCO, LA JOLLA, CA 92037\n• Business Hours: Monday-Friday 9:00-18:00 (Beijing Time)\n\n10. Policy Updates\n\nWe may update this policy and will notify you of material changes through in-app notifications, email, or website notices.\n\nThis policy is governed by applicable US law and the laws of California."
     }
   },
   "locations": {
@@ -2882,7 +2986,9 @@
       "earn_points": "Earn",
       "review_tasks": "Review Tasks",
       "free_meal_signup": "Free Meal",
-      "red_card_exclusive": "VIP"
+      "red_card_exclusive": "VIP",
+      "my_orders": "My Orders",
+      "view_orders": "View Orders"
     },
     "membership_card": {
       "title": "Membership Card",
@@ -2907,10 +3013,15 @@
       "discount_rate": "{{rate}}% OFF",
       "min_amount": "Min. ${{amount}}",
       "valid_period": "Valid: {{from}} - {{to}}",
+      "valid_from": "From",
+      "valid_to": "Until",
       "status_unused": "Unused",
       "status_used": "Used",
       "status_expired": "Expired",
-      "load_failed": "Failed to load coupons"
+      "load_failed": "Failed to load coupons",
+      "points": "pts",
+      "verified_by": "Verified by",
+      "verified_at": "Used on"
     },
     "mall": {
       "title": "Points Mall",
@@ -2991,6 +3102,31 @@
       }
     },
     "order": {
+      "my_orders_title": "My Orders",
+      "tab_all": "All",
+      "tab_pending_payment": "Pending",
+      "tab_pending_receipt": "Shipping",
+      "tab_completed": "Completed",
+      "cancel_order": "Cancel Order",
+      "cancel_order_confirm": "Are you sure you want to cancel this order?",
+      "cancel_order_success": "Order cancelled",
+      "cancel_order_failed": "Failed to cancel order",
+      "confirm_receipt_confirm": "Confirm you have received the item?",
+      "no_orders": "No orders yet",
+      "no_orders_in_tab": "No orders in this category",
+      "order_number": "Order No",
+      "order_type_points_mall": "Points Mall",
+      "order_type_activity": "Activity",
+      "order_type_membership": "Membership",
+      "status_pending_payment": "Pending Payment",
+      "status_paid": "Paid",
+      "status_cancelled": "Cancelled",
+      "status_refunded": "Refunded",
+      "status_closed": "Closed",
+      "status_pending_shipment": "Shipping",
+      "status_pending_receipt": "In Transit",
+      "status_received": "Received",
+      "points_refreshed": "Points updated: {{points}}",
       "confirm_title": "Confirm Order",
       "product_info": "Product Info",
       "payment_method": "Payment Method",
@@ -3013,7 +3149,12 @@
       "exchange_failed": "Exchange failed, please try again later",
       "create_order_failed": "Failed to create order, please try again later",
       "cannot_open_payment": "Cannot open payment page, please check if Alipay is installed",
-      "add_address": "Add Shipping Address"
+      "add_address": "Add Shipping Address",
+      "confirm_receipt": "Confirm Receipt",
+      "confirm_receipt_title": "Confirm Receipt",
+      "confirm_receipt_msg": "Please confirm you have received the item. This action cannot be undone.",
+      "confirm_receipt_success": "Receipt confirmed",
+      "confirm_receipt_failed": "Failed to confirm receipt, please try again later"
     },
     "payment": {
       "result_title": "Payment Result",
@@ -3038,7 +3179,15 @@
       "stripe_unavailable": "Stripe Payment Unavailable",
       "stripe_unavailable_desc": "The order has been created, but Stripe payment is not yet configured. Please try another payment method or contact support.",
       "alipay_unavailable": "Alipay Payment Unavailable",
-      "alipay_unavailable_desc": "The order has been created, but Alipay payment is not yet configured. Please try another payment method or contact support."
+      "alipay_unavailable_desc": "The order has been created, but Alipay payment is not yet configured. Please try another payment method or contact support.",
+      "checking_status": "Checking... {{current}}/{{total}}",
+      "pvsa_success_title": "Application Submitted!",
+      "pvsa_success_desc": "Your certificate application has been submitted and payment confirmed.",
+      "pvsa_next_steps_title": "What happens next?",
+      "pvsa_step1": "Your application will be reviewed by administrators",
+      "pvsa_step2": "Certificate will be processed and shipped to your address",
+      "pvsa_step3": "You will be notified when your certificate is ready",
+      "view_application": "View My Applications"
     },
     "membership_level": {
       "title": "Membership",
@@ -3153,5 +3302,30 @@
     },
     "no_selected": "Please select a shipping address",
     "load_failed": "Failed to load addresses"
+  },
+  "pvsa": {
+    "title": "PVSA Certificate",
+    "info_banner_title": "Certificate Application",
+    "info_banner_desc": "Please fill in all required fields accurately. Your information will be used for certificate processing.",
+    "deadline_notice": "Deadline",
+    "loading_form": "Preparing your form...",
+    "no_form_title": "Form Not Available",
+    "no_form_template": "Form template is not configured yet. Please contact the administrator.",
+    "submit_and_pay": "Submit & Proceed to Payment",
+    "error": {
+      "no_package_title": "Missing Package",
+      "no_package_desc": "Please select a package type before submitting.",
+      "no_payment_title": "Missing Payment Method",
+      "no_payment_desc": "Please select a payment method before submitting."
+    }
+  },
+  "form": {
+    "auto_filled": "Auto-filled",
+    "placeholder_input": "Enter {{label}}",
+    "placeholder_select": "Select {{label}}",
+    "validation": {
+      "required": "{{label}} is required",
+      "format_error": "{{label}} format is incorrect"
+    }
   }
 }

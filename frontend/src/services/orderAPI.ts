@@ -22,8 +22,8 @@ export type PayMode = '1' | '2'; // 1-金额 2-积分
 export type PayChannel = '1' | '2'; // 1-支付宝 2-Stripe
 
 // 订单状态
-export type OrderStatus = '1' | '2' | '3' | '4' | '5' | '6' | '7';
-// 1-待支付 2-已支付 3-已取消 4-已退款 5-已关闭 6-待发货 7-待收货
+export type OrderStatus = '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8';
+// 1-待支付 2-已支付 3-已取消 4-已退款 5-已关闭 6-待发货 7-待收货 8-已收货
 
 // 创建订单请求参数
 export interface CreateOrderParams {
@@ -134,31 +134,32 @@ const getHeaders = async (): Promise<Record<string, string>> => {
 };
 
 /**
- * 获取订单状态文本
+ * 获取订单状态的 i18n 翻译 key
  */
-export const getOrderStatusText = (status: OrderStatus): string => {
-  const statusMap: Record<OrderStatus, string> = {
-    '1': '待支付',
-    '2': '已支付',
-    '3': '已取消',
-    '4': '已退款',
-    '5': '已关闭',
-    '6': '待发货',
-    '7': '待收货',
+export const getOrderStatusKey = (status: number | string): string => {
+  const statusMap: Record<string, string> = {
+    '1': 'rewards.order.status_pending_payment',
+    '2': 'rewards.order.status_paid',
+    '3': 'rewards.order.status_cancelled',
+    '4': 'rewards.order.status_refunded',
+    '5': 'rewards.order.status_closed',
+    '6': 'rewards.order.status_pending_shipment',
+    '7': 'rewards.order.status_pending_receipt',
+    '8': 'rewards.order.status_received',
   };
-  return statusMap[status] || '未知状态';
+  return statusMap[String(status)] || 'rewards.order.status_pending_payment';
 };
 
 /**
- * 获取订单类型文本
+ * 获取订单类型的 i18n 翻译 key
  */
-export const getOrderTypeText = (type: OrderType): string => {
-  const typeMap: Record<OrderType, string> = {
-    '1': '积分商城',
-    '2': '活动支付',
-    '3': '会员等级',
+export const getOrderTypeKey = (type: number | string): string => {
+  const typeMap: Record<string, string> = {
+    '1': 'rewards.order.order_type_points_mall',
+    '2': 'rewards.order.order_type_activity',
+    '3': 'rewards.order.order_type_membership',
   };
-  return typeMap[type] || '未知类型';
+  return typeMap[String(type)] || 'rewards.order.order_type_points_mall';
 };
 
 // ==================== API 函数 ====================
@@ -358,6 +359,79 @@ export const cancelOrder = async (orderId: string, cancelReason?: string): Promi
   }
 };
 
+/**
+ * 确认收货
+ * POST /app/order/confirmReceipt
+ *
+ * @param orderId 订单ID
+ */
+export const confirmReceipt = async (orderId: string): Promise<void> => {
+  try {
+    const baseUrl = getBaseUrl();
+    const headers = await getHeaders();
+
+    const url = `${baseUrl}/app/order/confirmReceipt?orderId=${orderId}`;
+
+    console.log('[OrderAPI] 确认收货:', orderId);
+
+    const response = await fetch(url, {
+      method: 'POST',
+      headers,
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const result: ApiResponse = await response.json();
+    console.log('[OrderAPI] 确认收货结果:', result);
+
+    if (result.code !== 200) {
+      throw new Error(result.msg || '确认收货失败');
+    }
+  } catch (error) {
+    console.error('[OrderAPI] 确认收货失败:', error);
+    throw error;
+  }
+};
+
+/**
+ * 查询用户积分（实时）
+ * POST /app/user/userPoint
+ *
+ * @returns 用户当前积分
+ */
+export const getUserPoints = async (): Promise<number> => {
+  try {
+    const baseUrl = getBaseUrl();
+    const headers = await getHeaders();
+
+    const url = `${baseUrl}/app/user/userPoint`;
+
+    console.log('[OrderAPI] 查询用户积分');
+
+    const response = await fetch(url, {
+      method: 'POST',
+      headers,
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const result: ApiResponse<number> = await response.json();
+    console.log('[OrderAPI] 用户积分:', result);
+
+    if (result.code === 200) {
+      return result.data ?? 0;
+    }
+    return 0;
+  } catch (error) {
+    console.error('[OrderAPI] 查询用户积分失败:', error);
+    return 0;
+  }
+};
+
 // ==================== 导出 ====================
 
 const orderAPI = {
@@ -365,8 +439,10 @@ const orderAPI = {
   getOrderList,
   getOrderInfo,
   cancelOrder,
-  getOrderStatusText,
-  getOrderTypeText,
+  confirmReceipt,
+  getUserPoints,
+  getOrderStatusKey,
+  getOrderTypeKey,
 };
 
 export default orderAPI;

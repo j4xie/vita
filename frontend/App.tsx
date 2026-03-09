@@ -3,6 +3,13 @@ import { View, Text, StyleSheet } from 'react-native';
 
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+// Stripe SDK 需要原生模块，在 Expo Go 中不可用，做懒加载
+let StripeProvider: any = null;
+try {
+  StripeProvider = require('@stripe/stripe-react-native').StripeProvider;
+} catch (e) {
+  console.log('[App] Stripe SDK 原生模块不可用，支付功能将禁用');
+}
 import { TextEncoder, TextDecoder } from 'text-encoding';
 
 import { AppNavigator } from './src/navigation/AppNavigator';
@@ -45,14 +52,16 @@ function MainApp() {
     console.log('用户选择去设置页面修改region');
   };
 
-  return (
+  const stripePublishableKey = process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY || '';
+
+  const appContent = (
     <SafeAreaProvider>
       <StatusBar style="auto" />
       <AppNavigator />
-      
+
       {/* 🎨 全局Toast管理器 */}
       <ToastManager />
-      
+
       {/* 📍 位置不匹配提醒 */}
       {shouldShowAlert && currentRegion && settingsRegion && (
         <LocationMismatchAlert
@@ -65,6 +74,21 @@ function MainApp() {
       )}
     </SafeAreaProvider>
   );
+
+  // Stripe 原生模块可用时包裹 StripeProvider，否则直接渲染
+  if (StripeProvider && stripePublishableKey) {
+    return (
+      <StripeProvider
+        publishableKey={stripePublishableKey}
+        merchantIdentifier="merchant.com.pomelotech.pomelo"
+        urlScheme="pomelox"
+      >
+        {appContent}
+      </StripeProvider>
+    );
+  }
+
+  return appContent;
 }
 
 export default function App() {

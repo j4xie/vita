@@ -39,6 +39,7 @@ import { getCurrentToken } from '../../services/authAPI';
 import { getVolunteerHours, VolunteerHours, getPersonalVolunteerHours } from '../../services/volunteerAPI';
 import { positionService } from '../../services/positionService';
 import { apiCache } from '../../services/apiCache';
+import { useMembershipLevel } from '../../hooks/useMembershipLevel';
 
 interface SettingRowProps {
   title: string;
@@ -47,6 +48,7 @@ interface SettingRowProps {
   value?: string;
   isLast?: boolean;
   badgeCount?: number;
+  testID?: string;
 }
 
 const SettingRow: React.FC<SettingRowProps> = ({
@@ -56,6 +58,7 @@ const SettingRow: React.FC<SettingRowProps> = ({
   value,
   isLast = false,
   badgeCount,
+  testID,
 }) => {
   const themeContext = useTheme();
   const isDarkMode = themeContext.isDarkMode;
@@ -129,6 +132,7 @@ const SettingRow: React.FC<SettingRowProps> = ({
       accessibilityRole="button"
       accessibilityLabel={value ? `${title}, ${value}` : title}
       accessibilityHint="Double tap to open"
+      testID={testID}
     >
       <View style={rowStyles.settingRowLeft}>
         <View style={rowStyles.iconBackground}>
@@ -180,6 +184,7 @@ export const ProfileHomeScreen: React.FC = () => {
   const isDarkMode = themeContext.isDarkMode;
   const insets = useSafeAreaInsets();
   const { user, isAuthenticated, logout, permissions } = useUser();
+  const { membershipLevel, loading: membershipLoading } = useMembershipLevel();
 
   // 身份二维码状态
   const [showIdentityQR, setShowIdentityQR] = useState(false);
@@ -651,6 +656,26 @@ export const ProfileHomeScreen: React.FC = () => {
       title: t('profile.menuItems.address', '收货地址'),
       icon: 'location-outline' as keyof typeof Ionicons.glyphMap,
       onPress: () => navigation.navigate('AddressList'),
+    },
+    // Certificate Application - accessible for staff+, discoverable for common users
+    {
+      id: 'certificate',
+      title: t('profile.menuItems.certificate'),
+      icon: (permissions.isAdmin() || permissions.isPartManager() || permissions.isStaff()
+        ? 'document-text-outline' : 'lock-closed-outline') as keyof typeof Ionicons.glyphMap,
+      value: !(permissions.isAdmin() || permissions.isPartManager() || permissions.isStaff())
+        ? t('profile.menuItems.certificateLocked') : undefined,
+      onPress: () => {
+        if (permissions.isAdmin() || permissions.isPartManager() || permissions.isStaff()) {
+          navigation.navigate('CertificateList');
+        } else {
+          Alert.alert(
+            t('profile.menuItems.certificateLockedTitle'),
+            t('profile.menuItems.certificateLockedMessage'),
+          );
+        }
+      },
+      testID: 'certificate-application-btn',
     },
     {
       id: 'general',
@@ -1293,40 +1318,60 @@ export const ProfileHomeScreen: React.FC = () => {
             <VolunteerManagementCard onPress={handleVolunteerSectionPress} />
           )}
 
-          {/* 会员卡区域已隐藏以通过App Store审核 */}
-          {/* <View style={styles.membershipSection}>
-            <Text style={styles.sectionTitle}>{t('profile.my_membership')}</Text>
-            <View style={styles.membershipCardL1}>
-              <View style={styles.membershipHeader}>
-                <Text style={styles.membershipTitle}>{t('profile.membership_title')}</Text>
-                <View style={styles.membershipBadge}>
-                  <Text style={styles.membershipBadgeText}>{t('profile.membership_regular')}</Text>
+          {/* 会员卡区域 - 仅当有会员等级数据时显示 */}
+          {isAuthenticated && membershipLevel && (
+            <View style={styles.membershipSection}>
+              <Text style={styles.sectionTitle}>{t('profile.my_membership')}</Text>
+              <View style={styles.membershipCardL1}>
+                <View style={styles.membershipHeader}>
+                  <Text style={styles.membershipTitle}>
+                    {t(`membership_purchase.levels.${membershipLevel.sysUserLevel?.id}`, membershipLevel.sysUserLevel?.levelName || t('profile.membership_title'))}
+                  </Text>
+                  <View style={styles.membershipBadge}>
+                    <Text style={styles.membershipBadgeText}>
+                      {t(`membership_purchase.${membershipLevel.sysUserLevel?.acquisitionMethodType || 'register_get'}`)}
+                    </Text>
+                  </View>
+                </View>
+
+                {/* 会员权益列表 */}
+                {membershipLevel.sysUserLevel?.userLevelExEquityList && membershipLevel.sysUserLevel.userLevelExEquityList.length > 0 && (
+                  <View style={{ marginBottom: 12 }}>
+                    <Text style={{ fontSize: 13, fontWeight: '600', color: isDarkMode ? '#9CA3AF' : '#6B7280', marginBottom: 8 }}>
+                      {t('rewards.membership_level.benefits_title')}
+                    </Text>
+                    {membershipLevel.sysUserLevel.userLevelExEquityList.map((equity, index) => (
+                      <View key={index} style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4 }}>
+                        <Ionicons name="checkmark-circle" size={14} color="#FF6B35" style={{ marginRight: 6 }} />
+                        <Text style={{ fontSize: 13, color: isDarkMode ? '#D1D5DB' : '#374151', flex: 1 }}>
+                          {t(`membership_purchase.equities.${equity.equName}`, equity.equName)}
+                        </Text>
+                      </View>
+                    ))}
+                  </View>
+                )}
+
+                <View style={styles.membershipActions}>
+                  <TouchableOpacity
+                    style={styles.myCardsButton}
+                    onPress={() => navigation.navigate('MembershipPurchase')}
+                  >
+                    <Ionicons name="card-outline" size={16} color="#6B7280" />
+                    <Text style={styles.myCardsText}>{t('profile.my_cards', '我的会员卡')}</Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={styles.upgradeButtonDawn}
+                    onPress={() => {
+                      navigation.navigate('MembershipPurchase');
+                    }}
+                  >
+                    <Text style={styles.upgradeTextDawn}>{t('profile.upgrade_membership')}</Text>
+                  </TouchableOpacity>
                 </View>
               </View>
-              
-              <View style={styles.membershipActions}>
-                <TouchableOpacity 
-                  style={styles.myCardsButton}
-                  onPress={() => navigation.navigate('MyCards')}
-                >
-                  <Ionicons name="card-outline" size={16} color="#6B7280" />
-                  <Text style={styles.myCardsText}>{t('profile.my_cards', '我的会员卡')}</Text>
-                  <View style={styles.cardCountBadge}>
-                    <Text style={styles.cardCountText}>0</Text>
-                  </View>
-                </TouchableOpacity>
-
-                <TouchableOpacity 
-                  style={styles.upgradeButtonDawn}
-                  onPress={() => {
-                    Alert.alert(t('alerts.feature_not_implemented'), t('alerts.feature_under_development'));
-                  }}
-                >
-                  <Text style={styles.upgradeTextDawn}>{t('profile.upgrade_membership')}</Text>
-                </TouchableOpacity>
-              </View>
             </View>
-          </View> */}
+          )}
 
           {/* 我的评价/笔记区 - 暂时隐藏 */}
           {/* 
@@ -1368,6 +1413,7 @@ export const ProfileHomeScreen: React.FC = () => {
                   onPress={item.onPress}
                   badgeCount={item.badgeCount}
                   isLast={index === settingItems.length - 1}
+                  testID={(item as any).testID}
                 />
               ))}
             </View>

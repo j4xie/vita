@@ -30,6 +30,7 @@ import {
 import { useUser } from '../../context/UserContext';
 import { login } from '../../services/authAPI';
 import LiquidSuccessModal from '../../components/modals/LiquidSuccessModal';
+import { AreaCodePickerModal, getPhonePlaceholder } from '../../components/common/AreaCodePickerModal';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { 
   validateTextByLanguage,
@@ -136,6 +137,7 @@ export const ParentNormalRegisterScreen: React.FC = () => {
   
   // 🔧 成功弹窗状态 - 与其他注册页面保持一致
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [showAreaCodeModal, setShowAreaCodeModal] = useState(false);
 
 
 
@@ -489,15 +491,12 @@ export const ParentNormalRegisterScreen: React.FC = () => {
             <View style={styles.inputContainer}>
               <Text style={styles.label}>{t('auth.register.parent.phone_label')}</Text>
               <View style={styles.phoneInputWrapper}>
-                <TouchableOpacity 
+                <TouchableOpacity
                   style={styles.areaCodeSelector}
-                  onPress={() => {
-                    // 简化：只支持中国手机号
-                    updateFormData('areaCode', '86');
-                  }}
+                  onPress={() => setShowAreaCodeModal(true)}
                 >
                   <Text style={styles.areaCodeText}>
-                    {t('auth.register.parent.area_code_china')}
+                    +{formData.areaCode}
                   </Text>
                   <Ionicons name="chevron-down" size={16} color={theme.colors.text.secondary} />
                 </TouchableOpacity>
@@ -635,6 +634,13 @@ export const ParentNormalRegisterScreen: React.FC = () => {
         </TouchableWithoutFeedback>
       </View>
       
+      <AreaCodePickerModal
+        visible={showAreaCodeModal}
+        selectedCode={formData.areaCode}
+        onSelect={(code) => updateFormData('areaCode', code)}
+        onClose={() => setShowAreaCodeModal(false)}
+      />
+
       {/* 🔧 成功Modal - 与其他注册页面保持一致的体验 */}
       <LiquidSuccessModal
         visible={showSuccessModal}
@@ -727,7 +733,7 @@ const styles = StyleSheet.create({
     fontSize: theme.typography.fontSize.base,
     color: theme.colors.text.primary,
     borderWidth: 1,
-    borderColor: 'transparent',
+    borderColor: theme.colors.border.primary,
     minHeight: 52,
   },
   inputError: {
@@ -748,7 +754,7 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.background.secondary,
     borderRadius: theme.borderRadius.lg,
     borderWidth: 1,
-    borderColor: 'transparent',
+    borderColor: theme.colors.border.primary,
     overflow: 'hidden',
   },
   areaCodeSelector: {
@@ -786,7 +792,7 @@ const styles = StyleSheet.create({
     fontSize: theme.typography.fontSize.base,
     color: theme.colors.text.primary,
     borderWidth: 1,
-    borderColor: 'transparent',
+    borderColor: theme.colors.border.primary,
   },
   sendCodeButton: {
     backgroundColor: theme.colors.primary,
@@ -833,7 +839,7 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.background.secondary,
     borderRadius: theme.borderRadius.lg,
     borderWidth: 1,
-    borderColor: 'transparent',
+    borderColor: theme.colors.border.primary,
     overflow: 'hidden',
   },
   picker: {

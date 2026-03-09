@@ -281,6 +281,8 @@ export const LoginScreen: React.FC = () => {
               <View style={[styles.inputWrapper, errors.email && styles.inputError, focusedInput === 'email' && styles.inputFocused]}>
                 <Ionicons name="person-outline" size={20} color={theme.colors.text.disabled} />
                 <TextInput
+                  testID="login-email-input"
+                  accessibilityLabel="Email input"
                   style={styles.input}
                   placeholder={t('auth.login.email_placeholder')}
                   value={email}
@@ -322,6 +324,8 @@ export const LoginScreen: React.FC = () => {
               <View style={[styles.inputWrapper, errors.password && styles.inputError, focusedInput === 'password' && styles.inputFocused]}>
                 <Ionicons name="lock-closed-outline" size={20} color={theme.colors.text.disabled} />
                 <TextInput
+                  testID="login-password-input"
+                  accessibilityLabel="Password input"
                   style={styles.input}
                   placeholder={t('auth.login.password_placeholder')}
                   value={password}
@@ -394,6 +398,8 @@ export const LoginScreen: React.FC = () => {
                   (!formValid || loading) && styles.loginButtonDisabled
                 ]}>
                   <TouchableOpacity
+                    testID="login-submit-button"
+                    accessibilityLabel="Login button"
                     style={styles.loginButtonInner}
                     onPress={handleLogin}
                     disabled={!formValid || loading}
@@ -538,7 +544,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: theme.spacing.md,
     paddingVertical: theme.spacing.md, // 增加垂直内边距
     borderWidth: 1.5,
-    borderColor: 'transparent', // Default state has no visible border
+    borderColor: theme.colors.border.primary,
     minHeight: 52, // 设置最小高度，让输入框更舒适
   },
   inputFocused: {

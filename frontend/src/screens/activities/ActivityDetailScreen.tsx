@@ -10,7 +10,9 @@ import {
   Alert,
   ImageBackground,
   StatusBar,
-  Linking
+  Linking,
+  Share,
+  Platform,
 } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -26,6 +28,7 @@ import { timeService } from '../../utils/UnifiedTimeService';
 import { weatherAPI } from '../../services/weatherAPI';
 import { schoolService } from '../../services/schoolService';
 import { MapSelectorModal } from '../../components/modals/MapSelectorModal';
+import { activityToOrderItem } from '../../types/order';
 
 const { width: screenWidth } = Dimensions.get('window');
 
@@ -167,11 +170,39 @@ export const ActivityDetailScreen: React.FC = () => {
       navigation.navigate('Login', { returnTo: 'ActivityDetail', activityId: activity.id });
       return;
     }
-    // Navigate to form
+    // 付费活动 → OrderConfirmGlobal (RootStack level)
+    if (activity.price && activity.price > 0) {
+      navigation.navigate('OrderConfirmGlobal', {
+        orderItem: activityToOrderItem(activity),
+      });
+      return;
+    }
+    // 免费活动 → 报名表单
     navigation.navigate('ActivityRegistrationForm', { activity });
   };
 
   const handleBack = () => navigation.goBack();
+
+  const handleShare = async () => {
+    try {
+      const title = activity.title || activity.name || '';
+      const date = activity.date || activity.startTime || '';
+      const location = activity.location || activity.address || '';
+
+      let message = title;
+      if (date) message += `\n${t('activity.detail.date')}: ${date}`;
+      if (location) message += `\n${t('activity.detail.location')}: ${location}`;
+      message += `\n\n${t('activity.share.download_app', 'Download Vita App to join!')}`;
+
+      await Share.share(
+        Platform.OS === 'ios'
+          ? { message }
+          : { title, message }
+      );
+    } catch (error) {
+      // User cancelled share - no action needed
+    }
+  };
 
   // --- RENDER SECTION (New UI) --- //
 
@@ -196,7 +227,7 @@ export const ActivityDetailScreen: React.FC = () => {
               <TouchableOpacity style={styles.roundButton} onPress={handleBack}>
                 <Ionicons name="chevron-back" size={24} color="#1A1A1A" />
               </TouchableOpacity>
-              <TouchableOpacity style={styles.roundButton} onPress={() => {/* Share */ }}>
+              <TouchableOpacity style={styles.roundButton} onPress={handleShare}>
                 <Ionicons name="share-outline" size={22} color="#1A1A1A" />
               </TouchableOpacity>
             </View>
@@ -339,7 +370,16 @@ export const ActivityDetailScreen: React.FC = () => {
             <Ionicons name="arrow-forward" size={20} color="#1A1A1A" />
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.linkRow}>
+          <TouchableOpacity
+            style={styles.linkRow}
+            onPress={() => {
+              const city = activity.location || activity.address || '';
+              if (city) {
+                const query = encodeURIComponent(city + ' weather');
+                Linking.openURL(`https://www.google.com/search?q=${query}`);
+              }
+            }}
+          >
             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
               <Ionicons name="sunny-outline" size={20} color="#FFA500" />
               <Text style={styles.linkText}>

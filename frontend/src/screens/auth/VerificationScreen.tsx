@@ -225,11 +225,9 @@ export const VerificationScreen: React.FC = () => {
     if (resendCountdown > 0) return;
 
     try {
-      const phoneNumberWithCode = phoneType === 'CN' 
-        ? `86${phoneNumber}` 
-        : `1${phoneNumber}`;
-      
-      const result = await pomeloXAPI.sendSMSVerification(phoneNumberWithCode);
+      const areaCode = phoneType === 'CN' ? '86' : '1';
+
+      const result = await pomeloXAPI.sendSMSVerification(phoneNumber, areaCode);
       
       if (result.code === 'OK') {
         Alert.alert(t('auth.register.sms.code_sent_title'), t('auth.register.sms.code_sent_message'));
@@ -413,7 +411,7 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.background.secondary,
     borderRadius: theme.borderRadius.lg,
     borderWidth: 1,
-    borderColor: 'transparent',
+    borderColor: theme.colors.border.primary,
     fontSize: theme.typography.fontSize.xl,
     fontWeight: theme.typography.fontWeight.semibold,
     color: theme.colors.text.primary,

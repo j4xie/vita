@@ -82,17 +82,17 @@ export const ActivityFilterModal: React.FC<ActivityFilterModalProps> = ({
   const SLIDER_WIDTH = screenWidth - SIDEBAR_WIDTH - 48 - 24; // 考虑padding
   const THUMB_SIZE = 24;
   const MIN_PRICE = 0;
-  const MAX_PRICE = 100;
+  const MAX_PRICE = 50;
 
   // 价格区间映射到滑块位置 (0-1)
   const priceRangeToPositions = (range: ActivityFilterOptions['priceRange']): [number, number] => {
     switch (range) {
       case 'all': return [0, 1];
       case 'free': return [0, 0];
-      case 'under10': return [0, 0.1];
-      case '10to30': return [0.1, 0.3];
-      case '30to50': return [0.3, 0.5];
-      case '50plus': return [0.5, 1];
+      case 'under10': return [0, 0.2];
+      case '10to30': return [0.2, 0.6];
+      case '30to50': return [0.6, 1.0];
+      case '50plus': return [1.0, 1.0];
       default: return [0, 1];
     }
   };
@@ -107,10 +107,10 @@ export const ActivityFilterModal: React.FC<ActivityFilterModalProps> = ({
   // 滑块位置映射到价格区间
   const positionsToRange = (min: number, max: number): ActivityFilterOptions['priceRange'] => {
     if (min === 0 && max === 0) return 'free';
-    if (min === 0 && max <= 0.15) return 'under10';
-    if (min >= 0.05 && min <= 0.15 && max >= 0.25 && max <= 0.35) return '10to30';
-    if (min >= 0.25 && min <= 0.35 && max >= 0.45 && max <= 0.55) return '30to50';
-    if (min >= 0.45 && max >= 0.9) return '50plus';
+    if (min === 0 && max <= 0.25) return 'under10';
+    if (min >= 0.15 && min <= 0.25 && max >= 0.55 && max <= 0.65) return '10to30';
+    if (min >= 0.55 && min <= 0.65 && max >= 0.95) return '30to50';
+    if (min >= 0.95 && max >= 0.95) return '50plus';
     if (min === 0 && max >= 0.95) return 'all';
     return 'all';
   };
@@ -170,15 +170,15 @@ export const ActivityFilterModal: React.FC<ActivityFilterModalProps> = ({
     const minPrice = Math.round(minPos * MAX_PRICE);
     const maxPrice = Math.round(maxPos * MAX_PRICE);
     if (minPrice === 0 && maxPrice === 0) return 'Free';
-    if (minPrice === 0 && maxPrice >= 100) return 'Free - $100+';
+    if (minPrice === 0 && maxPrice >= 50) return 'Free - $50+';
     if (minPrice === 0) return `Free - $${maxPrice}`;
-    if (maxPrice >= 100) return `$${minPrice} - $100+`;
+    if (maxPrice >= 50) return `$${minPrice} - $50+`;
     return `$${minPrice} - $${maxPrice}`;
   };
 
   // Tab configuration
   const tabs = [
-    { id: 'price', label: t('filters.price', 'Price'), icon: 'pricetag-outline' },
+    { id: 'price', label: t('filters.price', 'Price'), icon: 'apps-outline' },
     { id: 'type', label: t('filters.type', 'Type'), icon: 'grid-outline' },
     { id: 'availability', label: t('filters.availability', 'Availability'), icon: 'people-outline' },
     { id: 'location', label: t('filters.location', 'Location'), icon: 'location-outline' },
@@ -450,10 +450,20 @@ export const ActivityFilterModal: React.FC<ActivityFilterModalProps> = ({
   return (
     <Modal visible={visible} animationType="slide" transparent={true} onRequestClose={onClose}>
       <View style={styles.modalOverlay}>
+        {/* Floating close button over dim area */}
+        <TouchableOpacity
+          testID="filter-modal-close"
+          accessibilityLabel="filter-modal-close"
+          style={[styles.floatingClose, { top: insets.top + 120 }]}
+          onPress={onClose}
+          activeOpacity={0.7}
+        >
+          <Ionicons name="close" size={20} color="#000" />
+        </TouchableOpacity>
         <View style={styles.container}>
           <View style={styles.header}>
             <View style={styles.headerLeft}>
-              <Ionicons name="filter-outline" size={24} color="#000" />
+              <Ionicons name="funnel-outline" size={24} color="#000" />
               <Text style={styles.headerTitle}>Filter</Text>
             </View>
             <TouchableOpacity onPress={handleClearAll}>
@@ -465,14 +475,16 @@ export const ActivityFilterModal: React.FC<ActivityFilterModalProps> = ({
               {tabs.map(tab => (
                 <TouchableOpacity
                   key={tab.id}
+                  testID={`filter-tab-${tab.id}`}
+                  accessibilityLabel={`filter-tab-${tab.id}`}
                   style={[styles.tabItem, activeTab === tab.id && styles.tabItemActive]}
                   onPress={() => setActiveTab(tab.id)}
                 >
                   {activeTab === tab.id && <View style={styles.activeIndicator} />}
-                  <Ionicons 
-                    name={tab.icon as any} 
-                    size={22} 
-                    color={activeTab === tab.id ? COLORS.primary : '#999'} 
+                  <Ionicons
+                    name={tab.icon as any}
+                    size={22}
+                    color={activeTab === tab.id ? COLORS.primary : '#999'}
                   />
                   <Text style={[styles.tabLabel, activeTab === tab.id && styles.tabLabelActive]}>
                     {tab.label}
@@ -485,7 +497,7 @@ export const ActivityFilterModal: React.FC<ActivityFilterModalProps> = ({
             </ScrollView>
           </View>
           <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, 20) }]}>
-            <TouchableOpacity style={styles.closeButton} onPress={onClose}>
+            <TouchableOpacity testID="filter-close-button" style={styles.closeButton} onPress={onClose}>
               <Text style={styles.closeButtonText}>Close</Text>
             </TouchableOpacity>
             <TouchableOpacity style={styles.applyButton} onPress={handleApply}>
@@ -504,8 +516,24 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.5)',
     justifyContent: 'flex-end',
   },
+  floatingClose: {
+    position: 'absolute',
+    right: 20,
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    backgroundColor: '#FFFFFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    elevation: 4,
+  },
   container: {
-    height: '80%',
+    height: '75%',
     backgroundColor: '#FFF',
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
@@ -561,8 +589,10 @@ const styles = StyleSheet.create({
     left: 0,
     top: 0,
     bottom: 0,
-    width: 3,
+    width: 4,
     backgroundColor: COLORS.primary,
+    borderTopRightRadius: 2,
+    borderBottomRightRadius: 2,
   },
   tabLabel: {
     fontSize: 11,
@@ -671,29 +701,31 @@ const styles = StyleSheet.create({
   },
   closeButton: {
     flex: 1,
-    height: 56,
-    borderRadius: 28,
-    borderWidth: 1.5,
-    borderColor: COLORS.border,
+    height: 48,
+    borderRadius: 59,
+    borderWidth: 1,
+    borderColor: '#949494',
     alignItems: 'center',
     justifyContent: 'center',
   },
   closeButtonText: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#666',
+    fontFamily: 'Poppins-Medium',
+    fontSize: 15,
+    fontWeight: '500',
+    color: '#949494',
   },
   applyButton: {
     flex: 1.5,
-    height: 56,
-    borderRadius: 28,
+    height: 48,
+    borderRadius: 59,
     backgroundColor: COLORS.primary,
     alignItems: 'center',
     justifyContent: 'center',
   },
   applyButtonText: {
-    fontSize: 18,
-    fontWeight: '700',
+    fontFamily: 'Poppins-Medium',
+    fontSize: 15,
+    fontWeight: '500',
     color: '#FFF',
   },
   priceContent: {

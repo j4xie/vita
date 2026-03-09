@@ -7,15 +7,20 @@ import {
   ActivityIndicator,
   Alert,
   DeviceEventEmitter,
+  Platform,
 } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import * as Haptics from 'expo-haptics';
+import { LinearGradient } from 'expo-linear-gradient';
+import Animated, { FadeIn, FadeInUp } from 'react-native-reanimated';
 import { paymentAPI } from '../../services/paymentAPI';
 import { pomeloXAPI } from '../../services/PomeloXAPI';
 import { useUser } from '../../context/UserContext';
+import { useTheme } from '../../context/ThemeContext';
+import { theme } from '../../theme';
 
 /**
  * Payment Result Screen
@@ -27,14 +32,15 @@ export const PaymentResultScreen: React.FC = () => {
   const navigation = useNavigation<any>();
   const route = useRoute<any>();
   const insets = useSafeAreaInsets();
-
-  const { user } = useUser();
+  const { isDarkMode } = useTheme();
+  const { user, refreshUserInfo } = useUser();
 
   const orderId = route.params?.orderId;
   const productName = route.params?.productName;
   const paymentMethod: 'stripe' | 'alipay' | 'points' = route.params?.paymentMethod ?? 'alipay';
   const pvsaFormData = route.params?.pvsaFormData as Record<string, string> | undefined;
   const pvsaActivityId = route.params?.pvsaActivityId as number | undefined;
+  const isPVSAFlow = !!pvsaActivityId;
 
   const [loading, setLoading] = useState(true);
   const [paymentStatus, setPaymentStatus] = useState<'pending' | 'paid' | 'cancelled' | 'refunded'>('pending');
@@ -60,18 +66,10 @@ export const PaymentResultScreen: React.FC = () => {
 
     const checkPaymentStatus = async () => {
       try {
-        console.log('[Payment] Querying status for order:', orderId);
-
-        const response = await paymentAPI.queryPaymentStatus({
-          orderId,
-        });
-
+        const response = await paymentAPI.queryPaymentStatus({ orderId });
         if (response.code === 200 && response.data) {
           const status = response.data.status;
-          console.log('[Payment] Status:', status);
-
           setPaymentStatus(status);
-
           if (status === 'paid') {
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
             setLoading(false);
@@ -84,20 +82,16 @@ export const PaymentResultScreen: React.FC = () => {
       }
     };
 
-    // Query once immediately
     checkPaymentStatus();
 
-    // Poll every 3 seconds, up to 20 times (60 seconds)
     const interval = setInterval(() => {
       setPollCount(prev => {
         const newCount = prev + 1;
-
         if (newCount >= 20) {
           setLoading(false);
           clearInterval(interval);
           return prev;
         }
-
         checkPaymentStatus();
         return newCount;
       });
@@ -105,6 +99,15 @@ export const PaymentResultScreen: React.FC = () => {
 
     return () => clearInterval(interval);
   }, [orderId, paymentMethod]);
+
+  // Refresh user info after payment success
+  useEffect(() => {
+    if (paymentStatus === 'paid') {
+      refreshUserInfo().catch((e) =>
+        console.warn('[PaymentResult] Failed to refresh user info:', e)
+      );
+    }
+  }, [paymentStatus]);
 
   // Submit PVSA form data after payment success
   useEffect(() => {
@@ -115,18 +118,14 @@ export const PaymentResultScreen: React.FC = () => {
 
     (async () => {
       try {
-        console.log('[PaymentResult] Submitting PVSA form after payment success');
         await pomeloXAPI.submitActivityRegistration(pvsaActivityId, Number(user.id), pvsaFormData);
         DeviceEventEmitter.emit('activityRegistrationChanged', { activityId: pvsaActivityId });
-        console.log('[PaymentResult] PVSA form submitted successfully');
       } catch (e) {
         console.warn('[PaymentResult] PVSA form submission failed:', e);
-        // Don't block success state — form data is backed up in order remark
       }
     })();
   }, [paymentStatus, pvsaFormData, pvsaActivityId, user?.id]);
 
-  // Render content based on payment status
   const renderContent = () => {
     if (loading && paymentStatus === 'pending') {
       const waitingDesc = paymentMethod === 'stripe'
@@ -135,28 +134,99 @@ export const PaymentResultScreen: React.FC = () => {
 
       return (
         <View style={styles.statusContainer}>
-          <ActivityIndicator size="large" color="#007AFF" />
-          <Text style={styles.statusTitle}>{t('rewards.payment.waiting')}</Text>
-          <Text style={styles.statusDesc}>
+          <ActivityIndicator size="large" color={isDarkMode ? '#FF8A65' : theme.colors.primary} />
+          <Text style={[styles.statusTitle, isDarkMode && styles.statusTitleDark]}>
+            {t('rewards.payment.waiting')}
+          </Text>
+          <Text style={[styles.statusDesc, isDarkMode && styles.statusDescDark]}>
             {waitingDesc}
           </Text>
+          {/* Polling progress for Alipay */}
+          {paymentMethod === 'alipay' && pollCount > 0 && (
+            <Animated.View entering={FadeIn.duration(300)} style={styles.pollProgress}>
+              <View style={[styles.pollBarBg, isDarkMode && { backgroundColor: '#2C2C2E' }]}>
+                <View style={[styles.pollBarFill, { width: `${Math.min((pollCount / 20) * 100, 100)}%` }]} />
+              </View>
+              <Text style={[styles.pollText, isDarkMode && { color: '#9CA3AF' }]}>
+                {t('rewards.payment.checking_status', { current: pollCount, total: 20, defaultValue: `Checking... ${pollCount}/20` })}
+              </Text>
+            </Animated.View>
+          )}
         </View>
       );
     }
 
     if (paymentStatus === 'paid') {
+      // PVSA-specific enriched success state
+      if (isPVSAFlow) {
+        return (
+          <Animated.View entering={FadeInUp.duration(600).springify()} style={styles.statusContainer}>
+            <LinearGradient
+              colors={['#FFD700', '#FFA500'] as any}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.iconCircle}
+            >
+              <Ionicons name="ribbon" size={44} color="#fff" />
+            </LinearGradient>
+            <Text style={[styles.statusTitle, isDarkMode && styles.statusTitleDark]}>
+              {t('rewards.payment.pvsa_success_title', 'Application Submitted!')}
+            </Text>
+            <Text style={[styles.statusDesc, isDarkMode && styles.statusDescDark]}>
+              {t('rewards.payment.pvsa_success_desc', 'Your certificate application has been submitted and payment confirmed.')}
+            </Text>
+
+            {/* Product badge */}
+            {productName && (
+              <View style={[styles.productBadge, isDarkMode && { backgroundColor: '#2C2C2E' }]}>
+                <Ionicons name="document-text" size={16} color={isDarkMode ? '#FF8A65' : theme.colors.primary} />
+                <Text style={[styles.productBadgeText, isDarkMode && { color: '#FF8A65' }]}>{productName}</Text>
+              </View>
+            )}
+
+            {/* What happens next */}
+            <View style={[styles.nextStepsCard, isDarkMode && { backgroundColor: '#1C1C1E' }]}>
+              <Text style={[styles.nextStepsTitle, isDarkMode && { color: '#fff' }]}>
+                {t('rewards.payment.pvsa_next_steps_title', 'What happens next?')}
+              </Text>
+              <View style={styles.nextStepItem}>
+                <View style={[styles.stepDot, { backgroundColor: '#34C759' }]} />
+                <Text style={[styles.nextStepText, isDarkMode && { color: '#9CA3AF' }]}>
+                  {t('rewards.payment.pvsa_step1', 'Your application will be reviewed by administrators')}
+                </Text>
+              </View>
+              <View style={styles.nextStepItem}>
+                <View style={[styles.stepDot, { backgroundColor: '#FF9500' }]} />
+                <Text style={[styles.nextStepText, isDarkMode && { color: '#9CA3AF' }]}>
+                  {t('rewards.payment.pvsa_step2', 'Certificate will be processed and shipped to your address')}
+                </Text>
+              </View>
+              <View style={styles.nextStepItem}>
+                <View style={[styles.stepDot, { backgroundColor: '#007AFF' }]} />
+                <Text style={[styles.nextStepText, isDarkMode && { color: '#9CA3AF' }]}>
+                  {t('rewards.payment.pvsa_step3', 'You will be notified when your certificate is ready')}
+                </Text>
+              </View>
+            </View>
+          </Animated.View>
+        );
+      }
+
+      // Generic success state
       return (
-        <View style={styles.statusContainer}>
+        <Animated.View entering={FadeInUp.duration(600).springify()} style={styles.statusContainer}>
           <View style={[styles.iconCircle, styles.iconCircleSuccess]}>
             <Ionicons name="checkmark" size={48} color="#FFFFFF" />
           </View>
-          <Text style={styles.statusTitle}>{t('rewards.payment.success')}</Text>
-          <Text style={styles.statusDesc}>
+          <Text style={[styles.statusTitle, isDarkMode && styles.statusTitleDark]}>
+            {t('rewards.payment.success')}
+          </Text>
+          <Text style={[styles.statusDesc, isDarkMode && styles.statusDescDark]}>
             {productName
               ? t('rewards.payment.success_exchange', { product: productName })
               : t('rewards.payment.success_default')}
           </Text>
-        </View>
+        </Animated.View>
       );
     }
 
@@ -166,8 +236,10 @@ export const PaymentResultScreen: React.FC = () => {
           <View style={[styles.iconCircle, styles.iconCircleCancelled]}>
             <Ionicons name="close" size={48} color="#FFFFFF" />
           </View>
-          <Text style={styles.statusTitle}>{t('rewards.payment.cancelled')}</Text>
-          <Text style={styles.statusDesc}>
+          <Text style={[styles.statusTitle, isDarkMode && styles.statusTitleDark]}>
+            {t('rewards.payment.cancelled')}
+          </Text>
+          <Text style={[styles.statusDesc, isDarkMode && styles.statusDescDark]}>
             {t('rewards.payment.cancelled_desc')}
           </Text>
         </View>
@@ -180,8 +252,10 @@ export const PaymentResultScreen: React.FC = () => {
         <View style={[styles.iconCircle, styles.iconCircleWarning]}>
           <Ionicons name="time" size={48} color="#FFFFFF" />
         </View>
-        <Text style={styles.statusTitle}>{t('rewards.payment.processing')}</Text>
-        <Text style={styles.statusDesc}>
+        <Text style={[styles.statusTitle, isDarkMode && styles.statusTitleDark]}>
+          {t('rewards.payment.processing')}
+        </Text>
+        <Text style={[styles.statusDesc, isDarkMode && styles.statusDescDark]}>
           {t('rewards.payment.processing_desc')}
         </Text>
       </View>
@@ -193,10 +267,8 @@ export const PaymentResultScreen: React.FC = () => {
 
     if (paymentStatus === 'paid') {
       if (pvsaActivityId) {
-        // PVSA flow: go back to certificate list
         navigation.navigate('Main', { screen: 'ProfileTab', params: { screen: 'CertificateList' } });
       } else {
-        // Use 'Main' for RootStack-level navigation compatibility
         navigation.navigate('Main');
       }
     } else if (paymentStatus === 'cancelled') {
@@ -207,22 +279,27 @@ export const PaymentResultScreen: React.FC = () => {
   };
 
   const getButtonText = () => {
-    if (paymentStatus === 'paid') return t('rewards.payment.return_home');
+    if (paymentStatus === 'paid') {
+      if (isPVSAFlow) return t('rewards.payment.view_application', 'View My Applications');
+      return t('rewards.payment.return_home');
+    }
     if (paymentStatus === 'cancelled') return t('rewards.payment.retry_payment');
     return t('rewards.payment.view_orders');
   };
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
+    <View style={[styles.container, isDarkMode && styles.containerDark, { paddingTop: insets.top }]}>
       {/* Header */}
-      <View style={styles.header}>
+      <View style={[styles.header, isDarkMode && styles.headerDark]}>
         <TouchableOpacity
           onPress={() => navigation.navigate('Main')}
           style={styles.closeButton}
         >
-          <Ionicons name="close" size={24} color="#000" />
+          <Ionicons name="close" size={24} color={isDarkMode ? '#fff' : '#000'} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>{t('rewards.payment.result_title')}</Text>
+        <Text style={[styles.headerTitle, isDarkMode && styles.headerTitleDark]}>
+          {t('rewards.payment.result_title')}
+        </Text>
         <View style={{ width: 40 }} />
       </View>
 
@@ -236,20 +313,20 @@ export const PaymentResultScreen: React.FC = () => {
         {!loading && (
           <>
             <TouchableOpacity
-              style={styles.primaryButton}
+              style={[styles.primaryButton, isDarkMode && styles.primaryButtonDark]}
               onPress={handleButtonPress}
             >
-              <Text style={styles.primaryButtonText}>
+              <Text style={[styles.primaryButtonText, isDarkMode && styles.primaryButtonTextDark]}>
                 {getButtonText()}
               </Text>
             </TouchableOpacity>
 
             {paymentStatus === 'paid' && (
               <TouchableOpacity
-                style={styles.secondaryButton}
+                style={[styles.secondaryButton, isDarkMode && styles.secondaryButtonDark]}
                 onPress={() => navigation.navigate('MyOrders')}
               >
-                <Text style={styles.secondaryButtonText}>
+                <Text style={[styles.secondaryButtonText, isDarkMode && styles.secondaryButtonTextDark]}>
                   {t('rewards.payment.view_orders')}
                 </Text>
               </TouchableOpacity>
@@ -259,7 +336,7 @@ export const PaymentResultScreen: React.FC = () => {
 
         {loading && (
           <TouchableOpacity
-            style={styles.secondaryButton}
+            style={[styles.secondaryButton, isDarkMode && styles.secondaryButtonDark]}
             onPress={() => {
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
               Alert.alert(
@@ -275,7 +352,7 @@ export const PaymentResultScreen: React.FC = () => {
               );
             }}
           >
-            <Text style={styles.secondaryButtonText}>
+            <Text style={[styles.secondaryButtonText, isDarkMode && styles.secondaryButtonTextDark]}>
               {t('rewards.payment.leave_temporarily')}
             </Text>
           </TouchableOpacity>
@@ -290,6 +367,9 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#FFFFFF',
   },
+  containerDark: {
+    backgroundColor: '#000000',
+  },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -298,6 +378,9 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderBottomWidth: 0.5,
     borderBottomColor: '#E5E5EA',
+  },
+  headerDark: {
+    borderBottomColor: '#38383A',
   },
   closeButton: {
     width: 40,
@@ -310,6 +393,9 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#000000',
   },
+  headerTitleDark: {
+    color: '#FFFFFF',
+  },
   content: {
     flex: 1,
     justifyContent: 'center',
@@ -318,6 +404,7 @@ const styles = StyleSheet.create({
   },
   statusContainer: {
     alignItems: 'center',
+    width: '100%',
   },
   iconCircle: {
     width: 96,
@@ -343,12 +430,91 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     textAlign: 'center',
   },
+  statusTitleDark: {
+    color: '#FFFFFF',
+  },
   statusDesc: {
     fontSize: 15,
     color: '#8E8E93',
     textAlign: 'center',
     lineHeight: 22,
   },
+  statusDescDark: {
+    color: '#9CA3AF',
+  },
+
+  // PVSA-specific styles
+  productBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFF7ED',
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 10,
+    marginTop: 16,
+    gap: 8,
+  },
+  productBadgeText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: theme.colors.primary,
+  },
+  nextStepsCard: {
+    width: '100%',
+    backgroundColor: '#F9FAFB',
+    borderRadius: 16,
+    padding: 20,
+    marginTop: 24,
+  },
+  nextStepsTitle: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#111827',
+    marginBottom: 14,
+  },
+  nextStepItem: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginBottom: 12,
+    gap: 10,
+  },
+  stepDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    marginTop: 6,
+  },
+  nextStepText: {
+    flex: 1,
+    fontSize: 13,
+    color: '#6B7280',
+    lineHeight: 19,
+  },
+
+  // Alipay polling progress
+  pollProgress: {
+    width: '100%',
+    marginTop: 24,
+    alignItems: 'center',
+  },
+  pollBarBg: {
+    width: '60%',
+    height: 3,
+    backgroundColor: '#F3F4F6',
+    borderRadius: 2,
+    overflow: 'hidden',
+    marginBottom: 8,
+  },
+  pollBarFill: {
+    height: '100%',
+    backgroundColor: theme.colors.primary,
+    borderRadius: 2,
+  },
+  pollText: {
+    fontSize: 12,
+    color: '#9CA3AF',
+  },
+
   footer: {
     paddingHorizontal: 16,
     paddingTop: 16,
@@ -360,10 +526,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 12,
   },
+  primaryButtonDark: {
+    backgroundColor: '#FFFFFF',
+  },
   primaryButtonText: {
     fontSize: 16,
     fontWeight: '600',
     color: '#FFFFFF',
+  },
+  primaryButtonTextDark: {
+    color: '#000000',
   },
   secondaryButton: {
     backgroundColor: '#F5F5F7',
@@ -371,9 +543,15 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     alignItems: 'center',
   },
+  secondaryButtonDark: {
+    backgroundColor: '#1C1C1E',
+  },
   secondaryButtonText: {
     fontSize: 16,
     fontWeight: '500',
     color: '#000000',
+  },
+  secondaryButtonTextDark: {
+    color: '#FFFFFF',
   },
 });

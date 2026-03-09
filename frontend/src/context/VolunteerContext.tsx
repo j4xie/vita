@@ -240,22 +240,4 @@ export const getStatusFromRecord = (record: VolunteerRecord | null): VolunteerSt
   return 'not_signed_in';
 };
 
-/**
- * 辅助函数：获取状态显示文本
- * @param status 志愿者状态
- * @returns 显示文本
- */
-export const getStatusDisplayText = (status: VolunteerStatus): string => {
-  switch (status) {
-    case 'not_signed_in':
-      return '未签到';
-    case 'signed_in':
-      return '已签到';
-    case 'signed_out':
-      return '已签退';
-    default:
-      return '未知状态';
-  }
-};
-
 export default VolunteerContext;

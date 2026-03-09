@@ -540,7 +540,7 @@ const styles = StyleSheet.create({
     fontSize: theme.typography.fontSize.base,
     color: theme.colors.text.primary,
     borderWidth: 1,
-    borderColor: 'transparent',
+    borderColor: theme.colors.border.primary,
     minHeight: 52,
   },
   inputError: {
@@ -584,7 +584,7 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.background.secondary,
     borderRadius: theme.borderRadius.lg,
     borderWidth: 1,
-    borderColor: 'transparent',
+    borderColor: theme.colors.border.primary,
     overflow: 'hidden',
   },
   areaCodeSelector: {
@@ -622,7 +622,7 @@ const styles = StyleSheet.create({
     fontSize: theme.typography.fontSize.base,
     color: theme.colors.text.primary,
     borderWidth: 1,
-    borderColor: 'transparent',
+    borderColor: theme.colors.border.primary,
   },
   sendCodeButton: {
     backgroundColor: theme.colors.primary,
@@ -669,7 +669,7 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.background.secondary,
     borderRadius: theme.borderRadius.lg,
     borderWidth: 1,
-    borderColor: 'transparent',
+    borderColor: theme.colors.border.primary,
     overflow: 'hidden',
   },
   picker: {

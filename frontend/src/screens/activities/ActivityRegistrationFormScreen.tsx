@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, memo } from 'react';
 import {
   View,
   Text,
@@ -14,9 +14,11 @@ import {
 } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useTranslation } from 'react-i18next';
 import { theme } from '../../theme';
 import { useUser } from '../../context/UserContext';
+import { useTheme } from '../../context/ThemeContext';
 import { pomeloXAPI } from '../../services/PomeloXAPI';
 import { useTabBarVerification } from '../../hooks/useTabBarStateGuard';
 import { DynamicFormRenderer } from '../../components/activity/DynamicFormRenderer';
@@ -35,11 +37,96 @@ interface RegistrationFormData {
 
 // ... (keep usage of RegisterFormData and other existing logic as fallback)
 
+// Activity Info Banner Component
+const ActivityInfoBanner = memo(({ activity, isDarkMode, t }: {
+  activity: any;
+  isDarkMode: boolean;
+  t: (key: string, fallback?: string) => string;
+}) => (
+  <View style={[
+    bannerStyles.container,
+    isDarkMode && bannerStyles.containerDark,
+  ]}>
+    <LinearGradient
+      colors={isDarkMode
+        ? ['rgba(255, 107, 53, 0.15)', 'rgba(255, 107, 53, 0.05)'] as const
+        : ['rgba(255, 107, 53, 0.08)', 'rgba(255, 107, 53, 0.02)'] as const}
+      style={bannerStyles.gradient}
+    >
+      <Text style={[
+        bannerStyles.activityName,
+        isDarkMode && bannerStyles.textDark,
+      ]} numberOfLines={2}>
+        {activity?.title || activity?.name}
+      </Text>
+      <View style={bannerStyles.metaRow}>
+        {activity?.date && (
+          <View style={bannerStyles.metaItem}>
+            <Ionicons name="calendar-outline" size={14} color={isDarkMode ? '#F9A889' : '#FF6B35'} />
+            <Text style={[bannerStyles.metaText, isDarkMode && bannerStyles.metaTextDark]}>
+              {activity.date}
+            </Text>
+          </View>
+        )}
+        {(activity?.location || activity?.address) && (
+          <View style={[bannerStyles.metaItem, { marginLeft: 16 }]}>
+            <Ionicons name="location-outline" size={14} color={isDarkMode ? '#F9A889' : '#FF6B35'} />
+            <Text style={[bannerStyles.metaText, isDarkMode && bannerStyles.metaTextDark]} numberOfLines={1}>
+              {activity.location || activity.address}
+            </Text>
+          </View>
+        )}
+      </View>
+    </LinearGradient>
+  </View>
+));
+
+const bannerStyles = StyleSheet.create({
+  container: {
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: 'rgba(0, 0, 0, 0.08)',
+  },
+  containerDark: {
+    borderBottomColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  gradient: {
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+  },
+  activityName: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#1F2937',
+    marginBottom: 8,
+    lineHeight: 24,
+  },
+  textDark: {
+    color: '#F3F4F6',
+  },
+  metaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  metaItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  metaText: {
+    fontSize: 13,
+    color: '#6B7280',
+  },
+  metaTextDark: {
+    color: '#9CA3AF',
+  },
+});
+
 export const ActivityRegistrationFormScreen: React.FC = () => {
   const { t } = useTranslation();
   const navigation = useNavigation<any>();
   const route = useRoute<any>();
   const { user } = useUser();
+  const { isDarkMode } = useTheme();
   const activity = route.params?.activity;
 
   // Mode Selection State
@@ -76,6 +163,18 @@ export const ActivityRegistrationFormScreen: React.FC = () => {
   const { recommend: recommendAI } = useMemo(() => {
     return formAutoFill.shouldRecommendAI(formSchema, user);
   }, [formSchema, user]);
+
+  // Auto-fill initial data for DynamicFormRenderer
+  const initialData = useMemo(() => {
+    if (!user) return {};
+    const data: Record<string, string> = {};
+    if (user.legalName) data.legalName = user.legalName;
+    if (user.nickName) data.nickName = user.nickName;
+    if (user.email) data.email = user.email;
+    if (user.phonenumber) data.phonenumber = user.phonenumber;
+    if (user.dept?.deptName) data.schoolName = user.dept.deptName;
+    return data;
+  }, [user]);
 
   // 🛡️ TabBar状态守护：确保报名表单页面TabBar始终隐藏
   useTabBarVerification('ActivityRegistrationForm', { debugLogs: false });
@@ -127,7 +226,7 @@ export const ActivityRegistrationFormScreen: React.FC = () => {
     setLoading(true);
     try {
       if (!user || !user.id) {
-        Alert.alert(t('activities.registration.failed_title'), '用户身份验证失败，请重新登录');
+        Alert.alert(t('activities.registration.failed_title'), t('activities.registration.auth_failed'));
         return;
       }
 
@@ -135,7 +234,7 @@ export const ActivityRegistrationFormScreen: React.FC = () => {
       const userIdInt = parseInt(user.id);
 
       if (isNaN(activityIdInt) || isNaN(userIdInt) || userIdInt <= 0) {
-        Alert.alert(t('activities.registration.failed_title'), '参数解析失败，请重试');
+        Alert.alert(t('activities.registration.failed_title'), t('activities.registration.param_error'));
         return;
       }
 
@@ -159,7 +258,7 @@ export const ActivityRegistrationFormScreen: React.FC = () => {
     setLoading(true);
     try {
       if (!user || !user.id) {
-        Alert.alert(t('activities.registration.failed_title'), '用户身份验证失败，请重新登录');
+        Alert.alert(t('activities.registration.failed_title'), t('activities.registration.auth_failed'));
         return;
       }
 
@@ -167,7 +266,7 @@ export const ActivityRegistrationFormScreen: React.FC = () => {
       const userIdInt = parseInt(user.id);
 
       if (isNaN(activityIdInt) || isNaN(userIdInt) || userIdInt <= 0) {
-        Alert.alert(t('activities.registration.failed_title'), '参数解析失败，请重试');
+        Alert.alert(t('activities.registration.failed_title'), t('activities.registration.param_error'));
         return;
       }
 
@@ -231,28 +330,24 @@ export const ActivityRegistrationFormScreen: React.FC = () => {
     }
   };
 
+  const dk = isDarkMode;
+
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, dk && styles.containerDark]}>
       <View style={styles.contentView}>
         {/* Header */}
-        <View style={styles.header}>
+        <View style={[styles.header, dk && styles.headerDark]}>
           <TouchableOpacity onPress={handleBack} style={styles.backButton}>
-            <Ionicons name="arrow-back" size={24} color={theme.colors.text.primary} />
+            <Ionicons name="arrow-back" size={24} color={dk ? '#F3F4F6' : theme.colors.text.primary} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>{t('activities.registration.form_title')}</Text>
+          <Text style={[styles.headerTitle, dk && styles.headerTitleDark]}>
+            {t('activities.registration.form_title')}
+          </Text>
           <View style={{ width: 24 }} />
         </View>
 
         {/* Activity Info */}
-        <View style={styles.activityInfo}>
-          <Text style={styles.activityName}>{activity?.title || activity?.name}</Text>
-          <View style={styles.activityMeta}>
-            <Ionicons name="calendar" size={16} color={theme.colors.text.secondary} />
-            <Text style={styles.activityTime}>{activity?.date}</Text>
-            <Ionicons name="location" size={16} color={theme.colors.text.secondary} style={{ marginLeft: 16 }} />
-            <Text style={styles.activityLocation}>{activity?.location || activity?.address}</Text>
-          </View>
-        </View>
+        <ActivityInfoBanner activity={activity} isDarkMode={dk} t={t} />
 
         {hasDynamicForm && !modeSelected ? (
           <FormModeSelector
@@ -271,10 +366,12 @@ export const ActivityRegistrationFormScreen: React.FC = () => {
               keyboardDismissMode="on-drag"
             >
               <View style={styles.form}>
-                <Text style={styles.formTitle}>
-                  {t('activities.registration.registration_info') || '报名信息'}
+                <Text style={[styles.formTitle, dk && styles.textDark]}>
+                  {t('activities.registration.registration_info')}
                 </Text>
-                <Text style={styles.formSubtitle}>{t('activities.registration.form_subtitle')}</Text>
+                <Text style={[styles.formSubtitle, dk && styles.subtitleDark]}>
+                  {t('activities.registration.form_subtitle')}
+                </Text>
 
                 {hasDynamicForm ? (
                   <DynamicFormRenderer
@@ -282,44 +379,45 @@ export const ActivityRegistrationFormScreen: React.FC = () => {
                     onSubmit={handleDynamicSubmit}
                     submitLabel={t('activities.registration.submit_button')}
                     loading={loading}
+                    initialData={initialData}
                   />
                 ) : (
                 <>
                   {/* Legal Name */}
                   <View style={styles.inputGroup}>
-                    <Text style={styles.inputLabel}>{t('auth.register.form.legal_name_label')}</Text>
+                    <Text style={[styles.inputLabel, dk && styles.labelDark]}>{t('auth.register.form.legal_name_label')}</Text>
                     <TextInput
-                      style={[styles.input, errors.legalName && styles.inputError]}
+                      style={[styles.input, dk && styles.inputDark, errors.legalName && styles.inputError]}
                       value={formData.legalName}
                       onChangeText={(value) => updateFormField('legalName', value)}
                       placeholder={t('auth.register.form.legal_name_placeholder')}
-                      placeholderTextColor={theme.colors.text.disabled}
+                      placeholderTextColor={dk ? '#6B7280' : theme.colors.text.disabled}
                     />
                     {errors.legalName && <Text style={styles.errorText}>{errors.legalName}</Text>}
                   </View>
 
                   {/* Nickname */}
                   <View style={styles.inputGroup}>
-                    <Text style={styles.inputLabel}>{t('auth.register.form.nickname_label')}</Text>
+                    <Text style={[styles.inputLabel, dk && styles.labelDark]}>{t('auth.register.form.nickname_label')}</Text>
                     <TextInput
-                      style={[styles.input, errors.nickName && styles.inputError]}
+                      style={[styles.input, dk && styles.inputDark, errors.nickName && styles.inputError]}
                       value={formData.nickName}
                       onChangeText={(value) => updateFormField('nickName', value)}
                       placeholder={t('auth.register.form.nickname_placeholder')}
-                      placeholderTextColor={theme.colors.text.disabled}
+                      placeholderTextColor={dk ? '#6B7280' : theme.colors.text.disabled}
                     />
                     {errors.nickName && <Text style={styles.errorText}>{errors.nickName}</Text>}
                   </View>
 
                   {/* Phone */}
                   <View style={styles.inputGroup}>
-                    <Text style={styles.inputLabel}>{t('auth.register.form.phone_label')}</Text>
+                    <Text style={[styles.inputLabel, dk && styles.labelDark]}>{t('auth.register.form.phone_label')}</Text>
                     <TextInput
-                      style={[styles.input, errors.phone && styles.inputError]}
+                      style={[styles.input, dk && styles.inputDark, errors.phone && styles.inputError]}
                       value={formData.phone}
                       onChangeText={(value) => updateFormField('phone', value)}
                       placeholder={t('auth.register.form.phone_placeholder')}
-                      placeholderTextColor={theme.colors.text.disabled}
+                      placeholderTextColor={dk ? '#6B7280' : theme.colors.text.disabled}
                       keyboardType="phone-pad"
                     />
                     {errors.phone && <Text style={styles.errorText}>{errors.phone}</Text>}
@@ -327,13 +425,13 @@ export const ActivityRegistrationFormScreen: React.FC = () => {
 
                   {/* Email */}
                   <View style={styles.inputGroup}>
-                    <Text style={styles.inputLabel}>{t('auth.register.form.email_label')}</Text>
+                    <Text style={[styles.inputLabel, dk && styles.labelDark]}>{t('auth.register.form.email_label')}</Text>
                     <TextInput
-                      style={[styles.input, errors.email && styles.inputError]}
+                      style={[styles.input, dk && styles.inputDark, errors.email && styles.inputError]}
                       value={formData.email}
                       onChangeText={(value) => updateFormField('email', value)}
                       placeholder={t('auth.register.form.email_placeholder')}
-                      placeholderTextColor={theme.colors.text.disabled}
+                      placeholderTextColor={dk ? '#6B7280' : theme.colors.text.disabled}
                       keyboardType="email-address"
                       autoCapitalize="none"
                     />
@@ -342,18 +440,18 @@ export const ActivityRegistrationFormScreen: React.FC = () => {
 
                   {/* School */}
                   <View style={styles.inputGroup}>
-                    <Text style={styles.inputLabel}>{t('auth.register.form.school_label')}</Text>
+                    <Text style={[styles.inputLabel, dk && styles.labelDark]}>{t('auth.register.form.school_label')}</Text>
                     <TextInput
-                      style={[styles.input, errors.schoolName && styles.inputError]}
+                      style={[styles.input, dk && styles.inputDark, errors.schoolName && styles.inputError]}
                       value={formData.schoolName}
                       onChangeText={(value) => updateFormField('schoolName', value)}
                       placeholder={t('auth.register.form.school_placeholder')}
-                      placeholderTextColor={theme.colors.text.disabled}
+                      placeholderTextColor={dk ? '#6B7280' : theme.colors.text.disabled}
                       editable={false}
                     />
                   </View>
 
-                  <Text style={styles.note}>
+                  <Text style={[styles.note, dk && styles.noteDark]}>
                     {t('activities.registration.info_note')}
                   </Text>
                 </>
@@ -366,7 +464,7 @@ export const ActivityRegistrationFormScreen: React.FC = () => {
 
       {/* Fixed Submit Button - Only show generic submit if Static Form */}
       {!hasDynamicForm && (
-        <View style={styles.fixedBottomContainer}>
+        <View style={[styles.fixedBottomContainer, dk && styles.fixedBottomDark]}>
           <TouchableOpacity
             style={[styles.submitButton, loading && styles.submitButtonDisabled]}
             onPress={handleStaticSubmit}
@@ -397,14 +495,20 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: theme.colors.background.primary,
   },
+  containerDark: {
+    backgroundColor: '#000000',
+  },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: theme.spacing[4],
     paddingVertical: theme.spacing[3],
-    borderBottomWidth: 0.5,
+    borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: 'rgba(0, 0, 0, 0.1)',
+  },
+  headerDark: {
+    borderBottomColor: 'rgba(255, 255, 255, 0.1)',
   },
   backButton: {
     width: 40,
@@ -417,31 +521,8 @@ const styles = StyleSheet.create({
     fontWeight: theme.typography.fontWeight.semibold,
     color: theme.colors.text.primary,
   },
-  activityInfo: {
-    padding: theme.spacing[4],
-    backgroundColor: '#F9FAFB',
-    borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
-  },
-  activityName: {
-    fontSize: theme.typography.fontSize.xl,
-    fontWeight: theme.typography.fontWeight.bold,
-    color: theme.colors.text.primary,
-    marginBottom: theme.spacing[2],
-  },
-  activityMeta: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  activityTime: {
-    fontSize: theme.typography.fontSize.sm,
-    color: theme.colors.text.secondary,
-    marginLeft: theme.spacing[1],
-  },
-  activityLocation: {
-    fontSize: theme.typography.fontSize.sm,
-    color: theme.colors.text.secondary,
-    marginLeft: theme.spacing[1],
+  headerTitleDark: {
+    color: '#F3F4F6',
   },
   contentView: {
     flex: 1,
@@ -451,7 +532,7 @@ const styles = StyleSheet.create({
   },
   form: {
     padding: theme.spacing[4],
-    paddingBottom: theme.spacing[4] + 120, // 为固定按钮留出空间
+    paddingBottom: theme.spacing[4] + 120,
   },
   formTitle: {
     fontSize: theme.typography.fontSize.lg,
@@ -459,11 +540,17 @@ const styles = StyleSheet.create({
     color: theme.colors.text.primary,
     marginBottom: theme.spacing[2],
   },
+  textDark: {
+    color: '#F3F4F6',
+  },
   formSubtitle: {
     fontSize: theme.typography.fontSize.sm,
     color: theme.colors.text.secondary,
     marginBottom: theme.spacing[6],
     lineHeight: 20,
+  },
+  subtitleDark: {
+    color: '#9CA3AF',
   },
   inputGroup: {
     marginBottom: theme.spacing[4],
@@ -474,6 +561,9 @@ const styles = StyleSheet.create({
     color: theme.colors.text.primary,
     marginBottom: theme.spacing[2],
   },
+  labelDark: {
+    color: '#D1D5DB',
+  },
   input: {
     borderWidth: 1,
     borderColor: '#D1D5DB',
@@ -483,6 +573,11 @@ const styles = StyleSheet.create({
     fontSize: theme.typography.fontSize.base,
     color: theme.colors.text.primary,
     backgroundColor: '#FFFFFF',
+  },
+  inputDark: {
+    borderColor: 'rgba(255, 255, 255, 0.15)',
+    backgroundColor: '#1C1C1E',
+    color: '#F3F4F6',
   },
   inputError: {
     borderColor: theme.colors.danger,
@@ -500,17 +595,24 @@ const styles = StyleSheet.create({
     marginTop: theme.spacing[4],
     textAlign: 'center',
   },
+  noteDark: {
+    color: '#6B7280',
+  },
   fixedBottomContainer: {
     position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
     paddingHorizontal: theme.spacing[4],
-    paddingVertical: theme.spacing[3], // 减少垂直间距
-    paddingBottom: theme.spacing[3] + 20, // 显著减少底部间距，更贴近底部
+    paddingVertical: theme.spacing[3],
+    paddingBottom: theme.spacing[3] + 20,
     backgroundColor: 'rgba(255, 255, 255, 0.98)',
-    borderTopWidth: 0.5,
+    borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: 'rgba(0, 0, 0, 0.1)',
+  },
+  fixedBottomDark: {
+    backgroundColor: 'rgba(28, 28, 30, 0.98)',
+    borderTopColor: 'rgba(255, 255, 255, 0.1)',
   },
   submitButton: {
     backgroundColor: theme.colors.primary,

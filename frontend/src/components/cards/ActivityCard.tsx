@@ -21,7 +21,7 @@ import { useTheme } from '../../context/ThemeContext';
 import EventTracker, { analytics, Events } from '../../analytics/EventTracker';
 import { useSmartGesture } from '../../hooks/useSmartGesture';
 import { useCardPress } from '../../hooks/useCardPress';
-import { useSchoolLogos, getLogoByDeptIdSync } from '../../hooks/useSchoolLogos';
+import { useSchoolLogos, getSchoolLogoSync } from '../../hooks/useSchoolLogos';
 
 const { width: screenWidth } = Dimensions.get('window');
 const cardWidth = screenWidth - theme.spacing.lg * 2; // 使用语义化间距
@@ -100,7 +100,6 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({
   const darkModeStyles = useAllDarkModeStyles();
   const { isDarkMode, styles: dmStyles, gradients: dmGradients, icons: dmIcons } = darkModeStyles;
 
-  // 🔧 使用 hook 监听缓存加载状态
   const { loading: schoolsLoading } = useSchoolLogos();
 
   // ========== ALL HOOKS MUST BE CALLED BEFORE ANY EARLY RETURNS ==========
@@ -283,30 +282,19 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({
     debug: false,
   });
 
-  // 🔧 同步获取学校 logo - 当缓存加载完成后重新计算
   const schoolLogoUrl = useMemo(() => {
-    const presetAvatar = activity?.organizer?.avatar;
-    const deptId = activity?.deptId;
-
-    // 如果预设 avatar 是有效的 logo URL，直接使用
-    const isFallback = !presetAvatar ||
-      presetAvatar.includes('ui-avatars.com') ||
-      presetAvatar.includes('americanpromotioncompany.com');
-
-    if (!isFallback) {
-      return presetAvatar;
+    if (!schoolsLoading) {
+      const textLogo = getSchoolLogoSync(activity?.title || '', activity?.location || '');
+      if (textLogo) return textLogo;
     }
 
-    // 缓存加载完成后，尝试获取真实 logo
-    if (!schoolsLoading && deptId) {
-      const cachedLogo = getLogoByDeptIdSync(deptId);
-      if (cachedLogo) {
-        return cachedLogo;
-      }
+    const avatar = activity?.organizer?.avatar;
+    if (avatar && !avatar.includes('ui-avatars.com') && !avatar.includes('americanpromotioncompany.com')) {
+      return avatar;
     }
 
     return null;
-  }, [activity?.organizer?.avatar, activity?.deptId, schoolsLoading]);
+  }, [activity?.title, activity?.location, activity?.organizer?.avatar, schoolsLoading]);
 
   // ========== EARLY RETURN AFTER ALL HOOKS ==========
   // 确保activity对象存在 - must be AFTER all hooks to comply with rules-of-hooks
@@ -328,7 +316,7 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({
       const day = date.getDate();
       return `${month}/${day}`;
     } catch (error) {
-      return '待定日期';
+      return t('activities.date_tbd', '待定日期');
     }
   };
 

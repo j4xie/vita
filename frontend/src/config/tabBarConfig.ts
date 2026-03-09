@@ -5,7 +5,8 @@ export const TAB_BAR_VISIBLE_PAGES = {
   // 主要Tab页面 - 这些是TabBar的根页面，必须显示
   TAB_ROOTS: [
     'Explore',      // 探索Tab根页面
-    'Community',    // 社区Tab根页面  
+    'Community',    // 社区Tab根页面
+    'Rewards',      // 会员Tab根页面
     'Wellbeing',    // 安心Tab根页面
     'Profile',      // 个人Tab根页面
   ],
@@ -17,6 +18,9 @@ export const TAB_BAR_VISIBLE_PAGES = {
     'ProfileHome',     // 个人首页 (Profile Tab内)
     'CommunityHome',   // 社区首页 (Community Tab内)
     'RewardsHome',     // 积分商城首页 (Rewards Tab内)
+    // 商家Tab页面
+    'MerchantDashboard',      // 商家工作台
+    'MerchantActivitiesHome', // 商家活动列表
   ],
 } as const;
 
@@ -66,6 +70,8 @@ export const mustHideTabBar = (routeName: string): boolean => {
     'Register',
     'SchoolDetail',
     'CommunityEvents',  // 社区活动列表页面
+    'MerchantDetail',   // 商家详情页面
+    'PVSACertificateApplication', // PVSA证书申请向导
   ];
   
   return criticalHiddenPages.includes(routeName);
@@ -87,6 +93,8 @@ export const HIDDEN_TAB_BAR_PAGES = [
   
   // 个人资料页面
   'EditProfile',                // 编辑个人资料
+  'CertificateList',            // 证书申请列表
+  'PVSACertificateApplication', // PVSA证书申请向导
   'Notifications',              // 通知设置
   'General',                    // 通用设置
   'AboutSupport',               // 关于和支持
@@ -107,6 +115,10 @@ export const HIDDEN_TAB_BAR_PAGES = [
 
   // 社区页面
   'CommunityEvents',            // 社区活动列表
+  'MerchantDetail',             // 商家详情
+
+  // 积分商城子页面
+  'MyCoupons',                  // 我的优惠券
 ] as const;
 
 // 导出类型定义

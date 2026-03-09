@@ -161,15 +161,6 @@ export const ForgotPasswordScreen: React.FC = () => {
   const handleSendCode = async () => {
     if (!validateForm()) return;
 
-    // 额外检查：只允许中国区号
-    if (areaCode !== '+86') {
-      Alert.alert(
-        t('auth.forgot_password.us_phone_not_supported_title'),
-        t('auth.forgot_password.us_phone_not_supported_message')
-      );
-      return;
-    }
-
     setLoading(true);
 
     try {
@@ -405,18 +396,7 @@ export const ForgotPasswordScreen: React.FC = () => {
                   </TouchableOpacity>
                   <TouchableOpacity
                     style={[styles.areaCodeButton, areaCode === '+1' && styles.areaCodeButtonActive]}
-                    onPress={() => {
-                      Alert.alert(
-                        t('auth.forgot_password.us_phone_not_supported_title'),
-                        t('auth.forgot_password.us_phone_not_supported_message') + '\n\n' +
-                        t('auth.forgot_password.contact_admin'),
-                        [
-                          { text: t('common.cancel'), style: 'cancel' },
-                          { text: t('common.got_it'), style: 'default' }
-                        ]
-                      );
-                      // 确保区号始终保持+86，不允许切换到+1
-                    }}
+                    onPress={() => setAreaCode('+1')}
                   >
                     <Text style={[styles.areaCodeText, areaCode === '+1' && styles.areaCodeTextActive]}>
                       🇺🇸 +1
@@ -675,7 +655,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: theme.spacing.md,
     paddingVertical: theme.spacing[4],
     borderWidth: 1.5,
-    borderColor: 'transparent',
+    borderColor: theme.colors.border.primary,
     minHeight: 52,
   },
   inputFocused: {

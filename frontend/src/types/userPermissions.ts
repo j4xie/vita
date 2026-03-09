@@ -7,6 +7,7 @@ export enum UserRole {
   SUPER_ADMIN = 'manage',        // 总管理员
   PART_MANAGER = 'part_manage',  // 分管理员
   STAFF = 'staff',               // 内部员工
+  MERCHANT = 'merchant',         // 商家用户
   COMMON = 'common',             // 普通用户
   GUEST = 'guest'                // 访客
 }
@@ -50,7 +51,7 @@ export interface SimpleRoleInfo {
 }
 
 // 用户权限级别 - 直接使用后端roleKey，避免不必要的映射
-export type PermissionLevel = 'manage' | 'part_manage' | 'staff' | 'common' | 'guest';
+export type PermissionLevel = 'manage' | 'part_manage' | 'staff' | 'merchant' | 'common' | 'guest';
 
 // 权限映射配置
 export const PERMISSION_CONFIG = {
@@ -73,8 +74,9 @@ export type DataScope = 'all' | 'school' | 'self' | 'none';
 // 权限检查函数类型
 export interface PermissionChecker {
   isAdmin: () => boolean;
-  isPartManager: () => boolean; 
+  isPartManager: () => boolean;
   isStaff: () => boolean;
+  isMerchant: () => boolean;
   isRegularUser: () => boolean;
   hasVolunteerManagementAccess: () => boolean;
   hasUserManagementAccess: () => boolean;
@@ -125,7 +127,7 @@ export const getUserPermissionLevel = (user: {
     const roleKey = user.role.roleKey;
     console.log(`🔍 [PERMISSION] 单个role对象检测: ${roleKey}`);
     
-    if (['manage', 'part_manage', 'staff', 'common'].includes(roleKey)) {
+    if (['manage', 'part_manage', 'staff', 'merchant', 'common'].includes(roleKey)) {
       console.log(`✅ [PERMISSION] 权限确认: ${roleKey} (来自role.roleKey)`);
       return roleKey as PermissionLevel;
     }
@@ -149,7 +151,7 @@ export const getUserPermissionLevel = (user: {
       // 优先使用roleKey字段，key作为备用
       const roleKey = (role as any).roleKey || role.key;
       
-      if (roleKey && ['manage', 'part_manage', 'staff', 'common'].includes(roleKey)) {
+      if (roleKey && ['manage', 'part_manage', 'staff', 'merchant', 'common'].includes(roleKey)) {
         console.log(`✅ [PERMISSION] roles数组检测成功: ${roleKey} (来自role.roleKey)`);
         return roleKey as PermissionLevel;
       }
@@ -329,6 +331,7 @@ export const createPermissionChecker = (user: any): PermissionChecker => {
     isAdmin: () => permissionLevel === 'manage',
     isPartManager: () => permissionLevel === 'part_manage',
     isStaff: () => permissionLevel === 'staff',
+    isMerchant: () => permissionLevel === 'merchant',
     isRegularUser: () => permissionLevel === 'common',
     
     // 功能权限检查 - staff可以查看志愿者界面但只能看个人数据，管理员可以管理
@@ -344,6 +347,7 @@ export const createPermissionChecker = (user: any): PermissionChecker => {
         case 'manage': return 'all';           // 总管理员：所有学校数据
         case 'part_manage': return 'school';   // 分管理员：本校数据（可操作）
         case 'staff': return 'self';           // 内部员工：只能查看自己的数据
+        case 'merchant': return 'self';        // 商家用户：只能查看自己的数据
         default: return 'none';                // 普通用户：无数据
       }
     },

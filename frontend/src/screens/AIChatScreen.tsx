@@ -23,7 +23,7 @@ import Markdown from 'react-native-markdown-display';
 
 import { ChatMessage } from '../types/ai';
 import { SessionMetadata } from '../types/chat';
-import { sendMessage as sendChatMessage } from '../services/chatAPI';
+import { sendMessage as sendChatMessage, getCommonQuestions, CommonQuestion } from '../services/chatAPI';
 import { ThinkingIndicator } from '../components/ai/ThinkingIndicator';
 import { ChatHistoryBottomSheet } from '../components/ai/ChatHistoryBottomSheet';
 import {
@@ -68,6 +68,28 @@ const QUESTION_POOL = [
   { icon: 'people-outline', iconColor: '#34C759', key: 'volunteer_guide', category: 'social' },
   { icon: 'heart-outline', iconColor: '#FF3B30', key: 'community_tips', category: 'social' },
   { icon: 'star-outline', iconColor: '#FFD60A', key: 'activity_suggest', category: 'social' },
+
+  // 💰 财务理财场景
+  { icon: 'receipt-outline', iconColor: '#FF6B35', key: 'tax_filing', category: 'finance' },
+  { icon: 'trending-up-outline', iconColor: '#34C759', key: 'credit_score', category: 'finance' },
+
+  // 🎓 学术深度场景
+  { icon: 'calculator-outline', iconColor: '#5856D6', key: 'gpa_calculation', category: 'education' },
+  { icon: 'clipboard-outline', iconColor: '#007AFF', key: 'course_registration', category: 'education' },
+
+  // 🍽️ 餐饮美食场景
+  { icon: 'restaurant-outline', iconColor: '#FF9500', key: 'dining_options', category: 'food' },
+  { icon: 'basket-outline', iconColor: '#34C759', key: 'chinese_grocery', category: 'food' },
+
+  // 🏥 健康保障场景
+  { icon: 'fitness-outline', iconColor: '#FF2D55', key: 'health_insurance', category: 'health' },
+  { icon: 'happy-outline', iconColor: '#AF52DE', key: 'mental_health', category: 'health' },
+
+  // 📱 科技生活场景
+  { icon: 'phone-portrait-outline', iconColor: '#007AFF', key: 'phone_plan', category: 'tech' },
+
+  // 🚗 日常出行场景
+  { icon: 'car-outline', iconColor: '#FF6B35', key: 'drivers_license', category: 'daily' },
 ];
 
 // 随机选择3个引导问题
@@ -87,6 +109,7 @@ export const AIChatScreen: React.FC<Props> = ({ navigation, route }) => {
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [suggestedQuestions, setSuggestedQuestions] = useState(() => getRandomQuestions());
+  const [backendQuestions, setBackendQuestions] = useState<CommonQuestion[]>([]);
 
   // 多会话管理状态
   const [sessions, setSessions] = useState<SessionMetadata[]>([]);
@@ -170,6 +193,17 @@ export const AIChatScreen: React.FC<Props> = ({ navigation, route }) => {
     setTypingMessageIndex(null);
     setTypingText('');
   };
+
+  // 加载后端常用问题
+  useEffect(() => {
+    getCommonQuestions()
+      .then(questions => {
+        if (questions.length > 0) {
+          setBackendQuestions(questions);
+        }
+      })
+      .catch(err => console.error('[AIChatScreen] Failed to load backend questions:', err));
+  }, []);
 
   // 加载保存的会话
   useEffect(() => {
@@ -639,6 +673,23 @@ export const AIChatScreen: React.FC<Props> = ({ navigation, route }) => {
         <Ionicons name="refresh-outline" size={18} color="#8e8e93" />
         <Text style={styles.refreshButtonText}>{t('ai.refreshQuestions')}</Text>
       </TouchableOpacity>
+
+      {/* Backend common questions */}
+      {backendQuestions.length > 0 && (
+        <View style={styles.backendQuestionsContainer}>
+          {backendQuestions.slice(0, 4).map((q) => (
+            <TouchableOpacity
+              key={q.id}
+              style={styles.backendQuestionChip}
+              onPress={() => sendMessage(q.message)}
+              activeOpacity={0.7}
+            >
+              <Ionicons name="chatbubble-ellipses-outline" size={14} color="#F9A889" />
+              <Text style={styles.backendQuestionText} numberOfLines={1}>{q.message}</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      )}
     </View>
   );
 
@@ -1053,6 +1104,29 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#8e8e93',
     marginLeft: 4,
+  },
+  // Backend questions
+  backendQuestionsContainer: {
+    width: '100%',
+    marginTop: 16,
+    gap: 8,
+  },
+  backendQuestionChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#ffffff',
+    borderRadius: 20,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    gap: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(249, 168, 137, 0.3)',
+  },
+  backendQuestionText: {
+    flex: 1,
+    fontSize: 13,
+    color: '#1d1d1f',
+    fontWeight: '500',
   },
 });
 

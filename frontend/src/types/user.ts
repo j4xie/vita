@@ -173,6 +173,7 @@ export const hasPermission = (user: FrontendUser | null, requiredLevel: Permissi
     'manage': 4,
     'part_manage': 3,
     'staff': 2,
+    'merchant': 1,
     'common': 1,
     'guest': 0,
   };

@@ -310,7 +310,7 @@ export const AboutSupportScreen: React.FC = () => {
               {`PomeloX v${APP_DISPLAY_VERSION}`}
             </Text>
             <Text style={styles.copyrightText}>
-              © 2025 西柚Pomelo. All rights reserved.
+              © 2025 Vita Global. All rights reserved.
             </Text>
           </View>
         </ScrollView>

@@ -49,6 +49,7 @@ import { i18n } from '../../utils/i18n';
 import { useUser } from '../../context/UserContext';
 import { login } from '../../services/authAPI';
 import LiquidSuccessModal from '../../components/modals/LiquidSuccessModal';
+import { AreaCodePickerModal, getPhonePlaceholder } from '../../components/common/AreaCodePickerModal';
 
 interface RouteParams {
   step1Data: {
@@ -100,6 +101,7 @@ export const ParentNormalRegisterStep2Screen: React.FC = () => {
   // 手机号相关
   const [phoneNumber, setPhoneNumber] = useState('');
   const [areaCode, setAreaCode] = useState<'86' | '1'>('86');
+  const [showAreaCodeModal, setShowAreaCodeModal] = useState(false);
   const [verificationCode, setVerificationCode] = useState('');
   
   // 实时验证状态
@@ -677,30 +679,16 @@ export const ParentNormalRegisterStep2Screen: React.FC = () => {
               <View style={styles.phoneInputWrapper}>
                 <TouchableOpacity
                   style={styles.areaCodeSelector}
-                  onPress={() => {
-                    if (areaCode === '86') {
-                      // 尝试切换到+1时显示提示
-                      Alert.alert(
-                        t('auth.register.form.us_phone_not_supported_title'),
-                        t('auth.register.form.us_phone_not_supported_message') + '\n\n' +
-                        t('auth.register.form.use_china_phone_or_referral'),
-                        [
-                          { text: t('common.cancel'), style: 'cancel' },
-                          { text: t('common.got_it'), style: 'default' }
-                        ]
-                      );
-                    }
-                    // 不执行切换，保持+86
-                  }}
+                  onPress={() => setShowAreaCodeModal(true)}
                 >
                   <Text style={styles.areaCodeText}>
-                    {areaCode === '86' ? '+86' : '+1'}
+                    +{areaCode}
                   </Text>
                   <Ionicons name="chevron-down" size={16} color={theme.colors.text.secondary} />
                 </TouchableOpacity>
                 <TextInput
                   style={[styles.phoneInput, errors.phoneNumber && styles.inputError]}
-                  placeholder={areaCode === '86' ? '13812345678' : '2025550123'}
+                  placeholder={getPhonePlaceholder(areaCode)}
                   value={phoneNumber}
                   onChangeText={setPhoneNumber}
                   keyboardType="phone-pad"
@@ -853,6 +841,13 @@ export const ParentNormalRegisterStep2Screen: React.FC = () => {
         confirmText={t('auth.register.success.start_using')}
         icon="checkmark-circle"
       />
+
+      <AreaCodePickerModal
+        visible={showAreaCodeModal}
+        selectedCode={areaCode}
+        onSelect={setAreaCode}
+        onClose={() => setShowAreaCodeModal(false)}
+      />
     </SafeAreaView>
   );
 };
@@ -949,7 +944,7 @@ const styles = StyleSheet.create({
     fontSize: theme.typography.fontSize.base,
     color: theme.colors.text.primary,
     borderWidth: 1,
-    borderColor: 'transparent',
+    borderColor: theme.colors.border.primary,
     minHeight: 52, // 设置最小高度，让输入框更舒适
   },
   inputDisabled: {
@@ -990,7 +985,7 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.background.secondary,
     borderRadius: theme.borderRadius.lg,
     borderWidth: 1,
-    borderColor: 'transparent',
+    borderColor: theme.colors.border.primary,
     paddingHorizontal: theme.spacing[4],
     paddingVertical: theme.spacing[3],
     minHeight: 48,
@@ -1056,7 +1051,7 @@ const styles = StyleSheet.create({
     fontSize: theme.typography.fontSize.base,
     color: theme.colors.text.primary,
     borderWidth: 1,
-    borderColor: 'transparent',
+    borderColor: theme.colors.border.primary,
   },
   sendCodeButton: {
     backgroundColor: theme.colors.primary,
@@ -1215,7 +1210,7 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.background.secondary,
     borderRadius: theme.borderRadius.lg,
     borderWidth: 1,
-    borderColor: 'transparent',
+    borderColor: theme.colors.border.primary,
     overflow: 'hidden',
   },
   areaCodeSelector: {

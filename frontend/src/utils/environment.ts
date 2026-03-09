@@ -36,22 +36,21 @@ class EnvironmentManager {
   private readonly STORAGE_KEY = '@PomeloX:environment';
   
   private constructor() {
-    // 初始化时从环境变量读取当前环境，环境变量优先级最高
-    const envFromVariable = process.env.EXPO_PUBLIC_ENVIRONMENT as Environment;
-    this.currentEnv = envFromVariable || 'production';
+    // 根据 .env 配置动态判断环境
+    const envFromConfig = process.env.EXPO_PUBLIC_ENVIRONMENT;
+    if (envFromConfig === 'production') {
+      this.currentEnv = 'production';
+    } else if (envFromConfig === 'development') {
+      this.currentEnv = 'development';
+    } else {
+      // 默认使用生产环境（App Store安全）
+      this.currentEnv = 'production';
+    }
 
     // 调试日志
     console.log(`🔧 [Environment] 环境管理器初始化:`);
-    console.log(`   环境变量: ${envFromVariable || 'undefined'}`);
+    console.log(`   EXPO_PUBLIC_ENVIRONMENT=${envFromConfig}`);
     console.log(`   当前环境: ${this.currentEnv}`);
-
-    // 只有在没有环境变量时才从AsyncStorage加载
-    if (!envFromVariable) {
-      console.log(`   将从AsyncStorage加载环境设置`);
-      this.loadStoredEnvironment();
-    } else {
-      console.log(`   使用环境变量设置: ${envFromVariable}`);
-    }
   }
 
   public static getInstance(): EnvironmentManager {
@@ -194,8 +193,8 @@ class EnvironmentManager {
    * 美国用户加载速度 <100ms
    */
   getImagesCdnUrl(): string {
-    // 统一使用 vitaimage bucket
-    return 'https://pub-9281f44aadcf48da8a2c7ac3df13f475.r2.dev';
+    // 使用 R2 自定义域名，避免 r2.dev 被校园网 DNS 劫持
+    return 'https://image.americanpromotioncompany.com';
   }
 
   /**

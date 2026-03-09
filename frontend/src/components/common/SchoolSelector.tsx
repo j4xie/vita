@@ -237,7 +237,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     borderWidth: 1,
-    borderColor: 'transparent',
+    borderColor: theme.colors.border.primary,
   },
   selectorError: {
     borderColor: theme.colors.danger,

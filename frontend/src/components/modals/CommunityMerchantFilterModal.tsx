@@ -6,7 +6,6 @@ import {
   TouchableOpacity,
   ScrollView,
   StyleSheet,
-  SafeAreaView,
   Dimensions,
   Image,
 } from 'react-native';
@@ -15,15 +14,22 @@ import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const { width: screenWidth } = Dimensions.get('window');
-const SIDEBAR_WIDTH = 85;
-const CARD_WIDTH = (screenWidth - SIDEBAR_WIDTH - 48) / 2; // 2列网格
+const SIDEBAR_WIDTH = 88;
+
+const COLORS = {
+  primary: '#FF7763',
+  white: '#FFFFFF',
+  border: '#E8E8E8',
+  gray100: '#F8F8F8',
+  textMain: '#1A1A1A',
+};
 
 export interface MerchantFilterOptions {
   category: string | null;
   priceRange: 'all' | 'free' | 'under-10' | '10-30' | '30-50' | '50-plus';
   sortBy: 'points-high' | 'points-low' | 'price-low' | 'price-high' | 'newest';
   selectedSchools: string[];
-  selectedMerchantTypes: string[]; // 选中的商家类型
+  selectedMerchantTypes: string[];
 }
 
 interface CommunityMerchantFilterModalProps {
@@ -44,10 +50,7 @@ export const CommunityMerchantFilterModal: React.FC<CommunityMerchantFilterModal
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
 
-  // 当前选中的分类标签
   const [activeTab, setActiveTab] = useState('type');
-
-  // 筛选状态
   const [selectedTypes, setSelectedTypes] = useState<string[]>(
     initialFilters?.selectedMerchantTypes || []
   );
@@ -57,65 +60,31 @@ export const CommunityMerchantFilterModal: React.FC<CommunityMerchantFilterModal
     initialFilters?.selectedSchools || []
   );
 
-  // 左侧分类标签
   const tabs = [
-    { id: 'type', label: 'Type', icon: 'grid', count: selectedTypes.length },
-    { id: 'price', label: 'Price', icon: 'cash', count: priceRange !== 'all' ? 1 : 0 },
-    { id: 'sort', label: 'Sort', icon: 'swap-vertical', count: 0 },
-    { id: 'schools', label: 'Schools', icon: 'school', count: selectedSchools.length },
+    { id: 'price', label: 'Price', icon: 'pricetag-outline' },
+    { id: 'type', label: 'Type', icon: 'grid-outline' },
+    { id: 'sort', label: 'Sort', icon: 'swap-vertical-outline' },
+    { id: 'schools', label: 'Location', icon: 'location-outline' },
   ];
 
-  // 商家类型选项（带图片）
   const merchantTypes = [
-    {
-      id: 'restaurant',
-      label: 'Restaurant',
-      image: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=400',
-      icon: '🍽️',
-    },
-    {
-      id: 'cafe',
-      label: 'Café',
-      image: 'https://images.unsplash.com/photo-1554118811-1e0d58224f24?w=400',
-      icon: '☕',
-    },
-    {
-      id: 'bar',
-      label: 'Bar',
-      image: 'https://images.unsplash.com/photo-1514933651103-005eec06c04b?w=400',
-      icon: '🍺',
-    },
-    {
-      id: 'shopping',
-      label: 'Shopping',
-      image: 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=400',
-      icon: '🛍️',
-    },
-    {
-      id: 'fitness',
-      label: 'Fitness',
-      image: 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=400',
-      icon: '🏋️',
-    },
-    {
-      id: 'study',
-      label: 'Study Space',
-      image: 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=400',
-      icon: '📚',
-    },
+    { id: 'restaurant', label: 'Restaurant', image: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=400' },
+    { id: 'cafe', label: 'Cafe', image: 'https://images.unsplash.com/photo-1554118811-1e0d58224f24?w=400' },
+    { id: 'bar', label: 'Bar', image: 'https://images.unsplash.com/photo-1514933651103-005eec06c04b?w=400' },
+    { id: 'shopping', label: 'Shopping', image: 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=400' },
+    { id: 'fitness', label: 'Fitness', image: 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=400' },
+    { id: 'study', label: 'Study Space', image: 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=400' },
   ];
 
-  // 价格选项
-  const priceOptions = [
-    { id: 'all', label: 'All Prices' },
+  const priceChips: { id: MerchantFilterOptions['priceRange']; label: string }[] = [
+    { id: 'all', label: 'All' },
     { id: 'free', label: 'Free' },
-    { id: 'under-10', label: 'Under $10' },
+    { id: 'under-10', label: 'under $10' },
     { id: '10-30', label: '$10 - $30' },
     { id: '30-50', label: '$30 - $50' },
     { id: '50-plus', label: '$50+' },
   ];
 
-  // 排序选项
   const sortOptions = [
     { id: 'points-high', label: 'Highest Points' },
     { id: 'points-low', label: 'Lowest Points' },
@@ -124,7 +93,6 @@ export const CommunityMerchantFilterModal: React.FC<CommunityMerchantFilterModal
     { id: 'newest', label: 'Newest' },
   ];
 
-  // 切换类型选择
   const toggleType = (typeId: string) => {
     setSelectedTypes(prev =>
       prev.includes(typeId)
@@ -133,7 +101,6 @@ export const CommunityMerchantFilterModal: React.FC<CommunityMerchantFilterModal
     );
   };
 
-  // 切换学校选择
   const toggleSchool = (schoolId: string) => {
     setSelectedSchools(prev =>
       prev.includes(schoolId)
@@ -142,7 +109,6 @@ export const CommunityMerchantFilterModal: React.FC<CommunityMerchantFilterModal
     );
   };
 
-  // 清空筛选
   const handleClearAll = () => {
     setSelectedTypes([]);
     setPriceRange('all');
@@ -150,7 +116,6 @@ export const CommunityMerchantFilterModal: React.FC<CommunityMerchantFilterModal
     setSelectedSchools([]);
   };
 
-  // 应用筛选
   const handleApply = () => {
     onApply({
       category: selectedTypes[0] || null,
@@ -162,82 +127,96 @@ export const CommunityMerchantFilterModal: React.FC<CommunityMerchantFilterModal
     onClose();
   };
 
-  // 渲染右侧内容
   const renderContent = () => {
     switch (activeTab) {
-      case 'type':
+      case 'price':
         return (
-          <View style={styles.gridContainer}>
-            <Text style={styles.sectionTitle}>Type</Text>
-            <View style={styles.grid}>
-              {merchantTypes.map((type) => (
+          <View>
+            <Text style={styles.sectionTitle}>Price</Text>
+            <Text style={styles.sectionSubtitle}>Free - $50+</Text>
+            {/* Slider track */}
+            <View style={styles.sliderTrackContainer}>
+              <View style={styles.sliderTrack} />
+              <View style={styles.sliderActiveTrack} />
+              <View style={[styles.sliderThumb, { left: 0 }]} />
+              <View style={[styles.sliderThumb, { right: 0 }]} />
+            </View>
+            <View style={styles.chipsContainer}>
+              {priceChips.map(chip => (
                 <TouchableOpacity
-                  key={type.id}
-                  style={[
-                    styles.imageCard,
-                    selectedTypes.includes(type.id) && styles.imageCardSelected,
-                  ]}
-                  onPress={() => toggleType(type.id)}
+                  key={chip.id}
+                  style={[styles.chip, priceRange === chip.id ? styles.chipSelected : styles.chipUnselected]}
+                  onPress={() => setPriceRange(chip.id)}
                 >
-                  <Image source={{ uri: type.image }} style={styles.cardImage} />
-                  <Text style={styles.cardLabel}>{type.label}</Text>
+                  <Text style={[styles.chipText, priceRange === chip.id ? styles.chipTextSelected : styles.chipTextUnselected]}>
+                    {chip.label}
+                  </Text>
                 </TouchableOpacity>
               ))}
             </View>
           </View>
         );
 
-      case 'price':
+      case 'type':
         return (
-          <View style={styles.listContainer}>
-            <Text style={styles.sectionTitle}>Price Range</Text>
-            {priceOptions.map((option) => (
-              <TouchableOpacity
-                key={option.id}
-                style={styles.listItem}
-                onPress={() => setPriceRange(option.id as MerchantFilterOptions['priceRange'])}
-              >
-                <Text style={styles.listItemText}>{option.label}</Text>
-                {priceRange === option.id && (
-                  <Ionicons name="checkmark" size={24} color="#FF3B30" />
-                )}
-              </TouchableOpacity>
-            ))}
+          <View>
+            <Text style={styles.sectionTitle}>Type</Text>
+            <View style={styles.typeGrid}>
+              {merchantTypes.map((type) => (
+                <TouchableOpacity
+                  key={type.id}
+                  style={[styles.imageCard, selectedTypes.includes(type.id) && styles.imageCardSelected]}
+                  onPress={() => toggleType(type.id)}
+                >
+                  <Image source={{ uri: type.image }} style={styles.cardImage} />
+                  <View style={styles.cardLabelContainer}>
+                    <Text style={styles.cardLabel}>{type.label}</Text>
+                    {selectedTypes.includes(type.id) && (
+                      <View style={styles.checkBadge}>
+                        <Ionicons name="checkmark" size={12} color="#fff" />
+                      </View>
+                    )}
+                  </View>
+                </TouchableOpacity>
+              ))}
+            </View>
           </View>
         );
 
       case 'sort':
         return (
-          <View style={styles.listContainer}>
+          <View>
             <Text style={styles.sectionTitle}>Sort By</Text>
-            {sortOptions.map((option) => (
-              <TouchableOpacity
-                key={option.id}
-                style={styles.listItem}
-                onPress={() => setSortBy(option.id as MerchantFilterOptions['sortBy'])}
-              >
-                <Text style={styles.listItemText}>{option.label}</Text>
-                {sortBy === option.id && (
-                  <Ionicons name="checkmark" size={24} color="#FF3B30" />
-                )}
-              </TouchableOpacity>
-            ))}
+            <View style={styles.availabilityChips}>
+              {sortOptions.map((option) => (
+                <TouchableOpacity
+                  key={option.id}
+                  style={[styles.sortChip, sortBy === option.id && styles.chipSelected]}
+                  onPress={() => setSortBy(option.id as MerchantFilterOptions['sortBy'])}
+                >
+                  <Text style={[styles.chipText, sortBy === option.id ? styles.chipTextSelected : styles.chipTextUnselected]}>
+                    {option.label}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
           </View>
         );
 
       case 'schools':
         return (
-          <View style={styles.listContainer}>
-            <Text style={styles.sectionTitle}>Schools</Text>
+          <View>
+            <Text style={styles.sectionTitle}>Location</Text>
             {schools.map((school) => (
               <TouchableOpacity
                 key={school.id}
-                style={styles.listItem}
+                style={[styles.locationItem, selectedSchools.includes(school.id) && styles.locationItemActive]}
                 onPress={() => toggleSchool(school.id)}
               >
-                <Text style={styles.listItemText}>{school.name}</Text>
+                <Ionicons name="school-outline" size={22} color={COLORS.primary} style={styles.locationIcon} />
+                <Text style={styles.locationTitle}>{school.name}</Text>
                 {selectedSchools.includes(school.id) && (
-                  <Ionicons name="checkmark" size={24} color="#FF3B30" />
+                  <Ionicons name="checkmark" size={22} color={COLORS.primary} />
                 )}
               </TouchableOpacity>
             ))}
@@ -250,303 +229,386 @@ export const CommunityMerchantFilterModal: React.FC<CommunityMerchantFilterModal
   };
 
   return (
-    <Modal
-      visible={visible}
-      animationType="slide"
-      presentationStyle="pageSheet"
-      onRequestClose={onClose}
-    >
-      <SafeAreaView style={styles.container}>
-        {/* 顶部栏 */}
-        <View style={styles.header}>
-          <Text style={styles.headerTitle}>Filters and sorting</Text>
-          <TouchableOpacity onPress={handleClearAll}>
-            <Text style={styles.clearText}>Clear All</Text>
-          </TouchableOpacity>
-        </View>
+    <Modal visible={visible} animationType="slide" transparent={true} onRequestClose={onClose}>
+      <View style={styles.modalOverlay}>
+        {/* Close button floating over dim area */}
+        <TouchableOpacity
+          testID="filter-modal-close"
+          accessibilityLabel="filter-modal-close"
+          style={[styles.floatingClose, { top: insets.top + 120 }]}
+          onPress={onClose}
+          activeOpacity={0.7}
+        >
+          <Ionicons name="close" size={20} color="#000" />
+        </TouchableOpacity>
 
-        {/* 主内容区 - 左右分栏 */}
-        <View style={styles.content}>
-          {/* 左侧分类导航栏 */}
-          <View style={styles.sidebar}>
-            {tabs.map((tab) => (
-              <TouchableOpacity
-                key={tab.id}
-                style={[
-                  styles.sidebarTab,
-                  activeTab === tab.id && styles.sidebarTabActive,
-                ]}
-                onPress={() => setActiveTab(tab.id)}
-              >
-                {/* 左侧红色指示条 */}
-                {activeTab === tab.id && <View style={styles.activeIndicator} />}
-
-                {/* 图标 + 数字徽章 */}
-                <View style={styles.iconContainer}>
-                  <Ionicons
-                    name={tab.icon as any}
-                    size={24}
-                    color={activeTab === tab.id ? '#FF3B30' : '#999'}
-                  />
-                  {tab.count > 0 && (
-                    <View style={styles.badge}>
-                      <Text style={styles.badgeText}>{tab.count}</Text>
-                    </View>
-                  )}
-                </View>
-
-                {/* 标签文字 */}
-                <Text style={[
-                  styles.sidebarLabel,
-                  activeTab === tab.id && styles.sidebarLabelActive,
-                ]}>
-                  {tab.label}
-                </Text>
-              </TouchableOpacity>
-            ))}
+        <View style={styles.container}>
+          {/* Header */}
+          <View style={styles.header}>
+            <View style={styles.headerLeft}>
+              <Ionicons name="funnel-outline" size={24} color="#000" />
+              <Text style={styles.headerTitle}>Filter</Text>
+            </View>
+            <TouchableOpacity onPress={handleClearAll}>
+              <Text style={styles.clearText}>Clear All</Text>
+            </TouchableOpacity>
           </View>
 
-          {/* 右侧内容区 */}
-          <ScrollView
-            style={styles.rightContent}
-            showsVerticalScrollIndicator={false}
-            contentContainerStyle={styles.rightContentInner}
-          >
-            {renderContent()}
-          </ScrollView>
-        </View>
+          {/* Main - sidebar + content */}
+          <View style={styles.main}>
+            <View style={styles.sidebar}>
+              {tabs.map(tab => (
+                <TouchableOpacity
+                  key={tab.id}
+                  testID={`filter-tab-${tab.id}`}
+                  accessibilityLabel={`filter-tab-${tab.id}`}
+                  style={[styles.tabItem, activeTab === tab.id && styles.tabItemActive]}
+                  onPress={() => setActiveTab(tab.id)}
+                >
+                  {activeTab === tab.id && <View style={styles.activeIndicator} />}
+                  <Ionicons
+                    name={tab.icon as any}
+                    size={22}
+                    color={activeTab === tab.id ? COLORS.primary : '#999'}
+                  />
+                  <Text style={[styles.tabLabel, activeTab === tab.id && styles.tabLabelActive]}>
+                    {tab.label}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
 
-        {/* 底部按钮 - 固定在底部 */}
-        <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, 16) }]}>
-          <TouchableOpacity style={styles.closeButton} onPress={onClose}>
-            <Text style={styles.closeButtonText}>Close</Text>
-          </TouchableOpacity>
+            <ScrollView style={styles.rightPanel} contentContainerStyle={styles.rightPanelContent} showsVerticalScrollIndicator={false}>
+              {renderContent()}
+            </ScrollView>
+          </View>
 
-          <TouchableOpacity style={styles.applyButton} onPress={handleApply}>
-            <Text style={styles.applyButtonText}>Show results</Text>
-          </TouchableOpacity>
+          {/* Footer */}
+          <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, 20) }]}>
+            <TouchableOpacity testID="filter-close-button" style={styles.closeButton} onPress={onClose}>
+              <Text style={styles.closeButtonText}>Close</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.applyButton} onPress={handleApply}>
+              <Text style={styles.applyButtonText}>Show Results</Text>
+            </TouchableOpacity>
+          </View>
         </View>
-      </SafeAreaView>
+      </View>
     </Modal>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
+  modalOverlay: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'flex-end',
   },
-
-  // 顶部栏
+  floatingClose: {
+    position: 'absolute',
+    right: 20,
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    backgroundColor: '#FFFFFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    elevation: 4,
+  },
+  container: {
+    height: '75%',
+    backgroundColor: '#FFF',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    overflow: 'hidden',
+  },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 20,
-    paddingVertical: 16,
+    paddingVertical: 18,
     borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0',
+    borderBottomColor: COLORS.border,
   },
-
+  headerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
   headerTitle: {
-    fontSize: 20,
+    fontSize: 22,
     fontWeight: '700',
-    color: '#1A1A1A',
+    marginLeft: 10,
+    color: '#000',
   },
-
   clearText: {
-    fontSize: 15,
+    fontSize: 16,
+    color: COLORS.primary,
     fontWeight: '600',
-    color: '#FF3B30',
   },
-
-  // 主内容区
-  content: {
+  main: {
     flex: 1,
     flexDirection: 'row',
   },
-
-  // 左侧分类导航栏
   sidebar: {
     width: SIDEBAR_WIDTH,
-    backgroundColor: '#F8F8F8',
+    backgroundColor: COLORS.gray100,
     borderRightWidth: 1,
-    borderRightColor: '#E5E5E5',
+    borderRightColor: COLORS.border,
   },
-
-  sidebarTab: {
-    paddingVertical: 20,
+  tabItem: {
+    paddingVertical: 15,
     alignItems: 'center',
+    justifyContent: 'center',
     position: 'relative',
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(0,0,0,0.03)',
   },
-
-  sidebarTabActive: {
-    backgroundColor: '#FFFFFF',
+  tabItemActive: {
+    backgroundColor: '#FFF',
   },
-
   activeIndicator: {
     position: 'absolute',
     left: 0,
     top: 0,
     bottom: 0,
-    width: 3,
-    backgroundColor: '#FF3B30',
+    width: 4,
+    backgroundColor: COLORS.primary,
+    borderTopRightRadius: 2,
+    borderBottomRightRadius: 2,
   },
-
-  iconContainer: {
-    position: 'relative',
-    marginBottom: 6,
-  },
-
-  badge: {
-    position: 'absolute',
-    top: -4,
-    right: -8,
-    backgroundColor: '#FF3B30',
-    width: 18,
-    height: 18,
-    borderRadius: 9,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-
-  badgeText: {
+  tabLabel: {
     fontSize: 11,
-    fontWeight: '700',
-    color: '#FFFFFF',
-  },
-
-  sidebarLabel: {
-    fontSize: 12,
-    color: '#666',
-    textAlign: 'center',
-  },
-
-  sidebarLabelActive: {
-    color: '#1A1A1A',
+    color: '#999',
+    marginTop: 6,
     fontWeight: '600',
   },
-
-  // 右侧内容区
-  rightContent: {
-    flex: 1,
-    backgroundColor: '#F5F5F5',
-  },
-
-  rightContentInner: {
-    padding: 16,
-  },
-
-  // 图片网格
-  gridContainer: {
-    flex: 1,
-  },
-
-  sectionTitle: {
-    fontSize: 20,
+  tabLabelActive: {
+    color: COLORS.primary,
     fontWeight: '700',
-    color: '#1A1A1A',
-    marginBottom: 16,
+  },
+  rightPanel: {
+    flex: 1,
+    backgroundColor: '#FFF',
+  },
+  rightPanelContent: {
+    padding: 24,
+  },
+  sectionTitle: {
+    fontSize: 24,
+    fontWeight: '800',
+    color: '#000',
+    marginBottom: 12,
+  },
+  sectionSubtitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#333',
+    marginBottom: 20,
   },
 
-  grid: {
+  // Slider
+  sliderTrackContainer: {
+    height: 40,
+    justifyContent: 'center',
+    marginBottom: 30,
+    position: 'relative',
+  },
+  sliderTrack: {
+    position: 'absolute',
+    top: 18,
+    left: 0,
+    right: 0,
+    height: 4,
+    backgroundColor: '#F0F0F0',
+    borderRadius: 2,
+  },
+  sliderActiveTrack: {
+    position: 'absolute',
+    top: 18,
+    left: 0,
+    right: 0,
+    height: 4,
+    backgroundColor: COLORS.primary,
+    borderRadius: 2,
+  },
+  sliderThumb: {
+    position: 'absolute',
+    top: 8,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: COLORS.primary,
+    borderWidth: 3,
+    borderColor: '#FFF',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+
+  // Chips
+  chipsContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 12,
   },
+  chip: {
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 24,
+    borderWidth: 1.5,
+    marginBottom: 4,
+  },
+  chipUnselected: {
+    backgroundColor: '#FFF',
+    borderColor: COLORS.border,
+  },
+  chipSelected: {
+    backgroundColor: COLORS.primary,
+    borderColor: COLORS.primary,
+  },
+  chipText: {
+    fontSize: 15,
+    fontWeight: '700',
+  },
+  chipTextUnselected: {
+    color: '#444',
+  },
+  chipTextSelected: {
+    color: '#FFF',
+  },
 
-  // 图片卡片
+  // Type grid
+  typeGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+  },
   imageCard: {
-    width: CARD_WIDTH,
-    backgroundColor: '#FFFFFF',
+    width: (screenWidth - SIDEBAR_WIDTH - 60) / 2,
+    backgroundColor: '#FFF',
     borderRadius: 12,
     overflow: 'hidden',
     borderWidth: 2,
     borderColor: 'transparent',
+    marginBottom: 8,
   },
-
   imageCardSelected: {
-    borderColor: '#FF3B30',
+    borderColor: COLORS.primary,
   },
-
   cardImage: {
     width: '100%',
-    height: 120,
-    backgroundColor: '#F0F0F0',
+    height: 80,
+    backgroundColor: '#F2F2F2',
   },
-
-  cardLabel: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#1A1A1A',
-    textAlign: 'center',
-    paddingVertical: 12,
-  },
-
-  // 列表容器（价格、排序、学校）
-  listContainer: {
-    flex: 1,
-  },
-
-  listItem: {
+  cardLabelContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: '#FFFFFF',
-    padding: 16,
-    marginBottom: 8,
+    justifyContent: 'center',
+    paddingVertical: 8,
+  },
+  cardLabel: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#333',
+  },
+  checkBadge: {
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    backgroundColor: COLORS.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginLeft: 6,
+  },
+
+  // Sort / Availability
+  availabilityChips: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+  },
+  sortChip: {
+    paddingHorizontal: 20,
+    paddingVertical: 12,
     borderRadius: 12,
+    borderWidth: 1.5,
+    borderColor: COLORS.border,
+    backgroundColor: '#FFF',
+    marginBottom: 4,
   },
 
-  listItemText: {
+  // Location
+  locationItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F0F0F0',
+  },
+  locationItemActive: {
+    backgroundColor: 'rgba(255, 119, 99, 0.05)',
+  },
+  locationIcon: {
+    width: 32,
+    marginRight: 12,
+  },
+  locationTitle: {
+    flex: 1,
     fontSize: 16,
-    color: '#1A1A1A',
+    fontWeight: '600',
+    color: '#000',
   },
 
-  // 底部按钮 - 优化版
+  // Footer
   footer: {
     flexDirection: 'row',
-    paddingHorizontal: 16,
-    paddingTop: 32, // 增大顶部间距，让按钮下移
-    gap: 12,
+    paddingHorizontal: 20,
+    paddingTop: 15,
     borderTopWidth: 1,
-    borderTopColor: '#E5E5E5',
-    backgroundColor: '#FFFFFF',
-    // paddingBottom 通过内联样式动态设置（包含安全区域）
+    borderTopColor: COLORS.border,
+    gap: 15,
+    backgroundColor: '#FFF',
   },
-
   closeButton: {
     flex: 1,
-    paddingVertical: 16,
-    borderRadius: 12,
-    backgroundColor: '#F0F0F0',
+    height: 48,
+    borderRadius: 59,
+    borderWidth: 1,
+    borderColor: '#949494',
     alignItems: 'center',
     justifyContent: 'center',
   },
-
   closeButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#666',
+    fontFamily: 'Poppins-Medium',
+    fontSize: 15,
+    fontWeight: '500',
+    color: '#949494',
   },
-
   applyButton: {
-    flex: 1.5, // 稍微更宽
-    paddingVertical: 16,
-    borderRadius: 12,
-    backgroundColor: '#FF3B30',
+    flex: 1.5,
+    height: 48,
+    borderRadius: 59,
+    backgroundColor: COLORS.primary,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#FF3B30',
+    shadowColor: '#FF7763',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
     elevation: 4,
   },
-
   applyButtonText: {
-    fontSize: 16,
-    fontWeight: '700',
+    fontFamily: 'Poppins-SemiBold',
+    fontSize: 15,
+    fontWeight: '600',
     color: '#FFFFFF',
   },
 });

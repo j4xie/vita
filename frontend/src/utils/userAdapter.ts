@@ -124,6 +124,7 @@ export interface FrontendUser {
   permissions: {
     isAdmin: boolean;
     isPartAdmin: boolean; // 分管理员
+    isMerchant: boolean; // 商家用户
     canManageActivities: boolean;
     canManageVolunteers: boolean;
     canManageInvitations: boolean;
@@ -177,6 +178,7 @@ const parsePermissions = (roles: BackendUserInfo['roles'] | [], isAdmin: boolean
   return {
     isAdmin,
     isPartAdmin: hasRole('part_manage'), // 分管理员
+    isMerchant: hasRole('merchant'), // 商家用户
     canManageActivities: isAdmin || hasRole('part_manage'),
     canManageVolunteers: isAdmin || hasRole('part_manage'),
     canManageInvitations: isAdmin || hasRole('part_manage'),
@@ -199,6 +201,7 @@ const getPermissionLevelFromRoles = (roles: BackendUserInfo['roles'] | [], isAdm
     if (role.roleKey === 'manage') return 'manage';
     if (role.roleKey === 'part_manage') return 'part_manage';
     if (role.roleKey === 'staff') return 'staff';
+    if (role.roleKey === 'merchant') return 'merchant';
   }
 
   return 'common';

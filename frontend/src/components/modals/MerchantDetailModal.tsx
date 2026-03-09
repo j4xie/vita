@@ -70,8 +70,9 @@ export const MerchantDetailModal: React.FC<MerchantDetailModalProps> = ({
   };
 
   // 核销优惠券
-  const handleWriteOff = async (couponId: number) => {
-    if (!merchant || !user?.userId) return;
+  const handleWriteOff = async (coupon: Coupon) => {
+    const couponCode = coupon.code;
+    if (!merchant || !user?.userId || !couponCode) return;
 
     Alert.alert(
       t('community.coupon.writeOffTitle', 'Use Coupon'),
@@ -84,7 +85,7 @@ export const MerchantDetailModal: React.FC<MerchantDetailModalProps> = ({
             setWritingOff(true);
             try {
               const result = await couponAPI.writeOffCoupon({
-                couponId,
+                couponNo: couponCode,
                 merchantId: parseInt(merchant.id),
                 userId: parseInt(String(user.userId)),
               });
@@ -178,7 +179,7 @@ export const MerchantDetailModal: React.FC<MerchantDetailModalProps> = ({
 
                   <TouchableOpacity
                     style={styles.useButton}
-                    onPress={() => handleWriteOff(coupon.id)}
+                    onPress={() => handleWriteOff(coupon)}
                     disabled={writingOff}
                   >
                     {writingOff ? (

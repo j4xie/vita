@@ -78,4 +78,51 @@ export const getSchoolDisplayName = (schoolId: string): string => {
   return nameMapping[schoolId?.toLowerCase()] || schoolId?.toUpperCase() || 'School';
 };
 
+/**
+ * 从活动标题/地点文本中匹配学校，返回本地 bundled logo asset
+ * 按缩写长度降序匹配，防止 "USC" 误匹配 "UCSC"
+ */
+const SCHOOL_TEXT_PATTERNS: { pattern: RegExp; key: keyof typeof schoolLogos }[] = [
+  // 按缩写长度降序排列
+  { pattern: /(?:^|[^a-z])ucsb(?:$|[^a-z])/i, key: 'ucsb' },
+  { pattern: /(?:^|[^a-z])ucsc(?:$|[^a-z])/i, key: 'ucsc' },
+  { pattern: /(?:^|[^a-z])ucsd(?:$|[^a-z])/i, key: 'ucsd' },
+  { pattern: /(?:^|[^a-z])ucla(?:$|[^a-z])/i, key: 'ucla' },
+  { pattern: /(?:^|[^a-z])ucb(?:$|[^a-z])/i, key: 'ucb' },
+  { pattern: /(?:^|[^a-z])ucd(?:$|[^a-z])/i, key: 'ucd' },
+  { pattern: /(?:^|[^a-z])uci(?:$|[^a-z])/i, key: 'uci' },
+  { pattern: /(?:^|[^a-z])umn(?:$|[^a-z])/i, key: 'umn' },
+  { pattern: /(?:^|[^a-z])usc(?:$|[^a-z])/i, key: 'usc' },
+  { pattern: /(?:^|[^a-z])uw(?:$|[^a-z])/i, key: 'uw' },
+  // 英文名匹配
+  { pattern: /santa cruz/i, key: 'ucsc' },
+  { pattern: /santa barbara/i, key: 'ucsb' },
+  { pattern: /san diego/i, key: 'ucsd' },
+  { pattern: /berkeley/i, key: 'ucb' },
+  { pattern: /los angeles/i, key: 'ucla' },
+  { pattern: /irvine/i, key: 'uci' },
+  { pattern: /davis/i, key: 'ucd' },
+  { pattern: /minnesota/i, key: 'umn' },
+  { pattern: /washington/i, key: 'uw' },
+  { pattern: /southern california/i, key: 'usc' },
+];
+
+export const getLocalSchoolLogo = (title: string, location?: string): number | null => {
+  const text = `${title} ${location || ''}`;
+  for (const { pattern, key } of SCHOOL_TEXT_PATTERNS) {
+    if (pattern.test(text)) {
+      return schoolLogos[key];
+    }
+  }
+  return null;
+};
+
+/**
+ * 通过 deptId 获取本地 bundled logo asset
+ */
+export const getLocalLogoByDeptId = (deptId: number): number | null => {
+  const mapped = getSchoolLogo(deptId.toString());
+  return mapped ?? null;
+};
+
 export default schoolLogos;

@@ -145,8 +145,8 @@ class PomeloXAPI {
   /**
    * 发送短信验证码
    */
-  async sendSMSVerification(phone: string): Promise<SMSResponse> {
-    const response = await fetchWithRetry(`${getBaseUrl()}/sms/vercodeSms?phoneNum=${phone}`, {
+  async sendSMSVerification(phone: string, areaCode: string = '86'): Promise<SMSResponse> {
+    const response = await fetchWithRetry(`${getBaseUrl()}/sms/vercodeSms?phoneNum=${phone}&areaCode=${areaCode}`, {
       method: 'GET',
       headers: {
         'Accept': 'application/json',
@@ -565,6 +565,9 @@ class PomeloXAPI {
     categoryId?: number;
     startTime?: string;
     endTime?: string;
+    deptId?: number;
+    accessRoleKey?: string; // 按角色过滤活动访问权限
+    actType?: number; // 活动类型: 4-证书申请
   }): Promise<ApiResponse<{
     total: number;
     rows: {
@@ -606,6 +609,9 @@ class PomeloXAPI {
     if (params.categoryId) queryParams.append('categoryId', params.categoryId.toString());
     if (params.startTime) queryParams.append('startTime', params.startTime);
     if (params.endTime) queryParams.append('endTime', params.endTime);
+    if (params.deptId) queryParams.append('deptId', params.deptId.toString());
+    if (params.accessRoleKey) queryParams.append('accessRoleKey', params.accessRoleKey);
+    if (params.actType !== undefined) queryParams.append('actType', params.actType.toString());
 
     const queryString = queryParams.toString();
     const endpoint = queryString ? `/app/activity/list?${queryString}` : '/app/activity/list';
@@ -1018,8 +1024,8 @@ class PomeloXAPI {
    */
   async logout(): Promise<void> {
     await AsyncStorage.multiRemove([
-      'vita_access_token',
-      'vita_user_id',
+      '@pomelox_token',
+      '@pomelox_user_id',
     ]);
   }
 

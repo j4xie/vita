@@ -85,6 +85,11 @@ class MerchantAPI {
       const token = await getCurrentToken();
       console.log('🔐 [MerchantAPI] Token状态:', token ? `有效 (前20字符: ${token.substring(0, 20)}...)` : '❌ 无Token');
 
+      if (!token) {
+        console.warn('⚠️ [MerchantAPI] 无有效Token，跳过请求');
+        return { code: 401, msg: '未登录', data: [] };
+      }
+
       const response = await fetch(url, {
         method: 'GET',
         headers: {

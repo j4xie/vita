@@ -7,9 +7,8 @@ import {
   TouchableOpacity,
   RefreshControl,
   StatusBar,
-  Dimensions,
-  ImageBackground,
   Alert,
+  ActivityIndicator,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -17,24 +16,39 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTranslation } from 'react-i18next';
 import { useUser } from '../../context/UserContext';
-import { calculateTier, getNextTierPoints } from '../../utils/membershipTierCalculator';
+import { useMembershipLevel } from '../../hooks/useMembershipLevel';
 import { theme } from '../../theme';
 
-const { width: screenWidth } = Dimensions.get('window');
+// Tier-based theme for membership card gradients
+const getTierTheme = (levelId?: number): { colors: [string, string, string]; textColor: string } => {
+  switch (levelId) {
+    case 4: // 蓝卡
+      return { colors: ['#1E88E5', '#42A5F5', '#1E88E5'], textColor: '#FFF' };
+    case 5: // 红卡
+      return { colors: ['#C62828', '#EF5350', '#C62828'], textColor: '#FFF' };
+    case 6: // 红黑卡
+      return { colors: ['#B71C1C', '#212121', '#B71C1C'], textColor: '#FFF' };
+    case 7: // 黑卡
+      return { colors: ['#212121', '#424242', '#212121'], textColor: '#FFF' };
+    default: // Default gold gradient
+      return { colors: ['#A67C52', '#EEDC82', '#A67C52'], textColor: '#FFF' };
+  }
+};
 
-// Mock Data for Benefits
+// Benefits data with i18n keys
 const BENEFITS = [
-  { id: '1', title: 'Merchant\nCoupons', icon: 'gift-outline' },
-  { id: '2', title: 'Platform\nCoupons', icon: 'ticket-outline' },
-  { id: '3', title: 'Points\nMall', icon: 'storefront-outline' },
-  { id: '4', title: 'Group\nBuy', icon: 'people-outline' },
+  { id: '1', titleKey: 'rewards.benefits.merchant_coupon', icon: 'gift-outline' },
+  { id: '2', titleKey: 'rewards.benefits.platform_coupon', icon: 'ticket-outline' },
+  { id: '3', titleKey: 'rewards.benefits.points_mall', icon: 'storefront-outline' },
+  { id: '4', titleKey: 'rewards.benefits.group_buy', icon: 'people-outline' },
 ];
 
-// Mock Data for Services (Bottom Section)
+// Services data with i18n keys
 const SERVICES = [
-  { id: '1', title: 'Points\nBalance', subtitle: '0 Points', icon: 'wallet-outline' },
-  { id: '2', title: 'My\nCoupons', subtitle: 'View Active', icon: 'pricetag-outline' },
-  { id: '3', title: 'Refer\nFriends', subtitle: 'Earn', icon: 'share-social-outline' },
+  { id: '1', titleKey: 'rewards.menu.points_balance', subtitleKey: 'rewards.menu.points', icon: 'wallet-outline' },
+  { id: '2', titleKey: 'rewards.menu.my_coupons', subtitleKey: 'rewards.menu.earn_redeem', icon: 'pricetag-outline' },
+  { id: '3', titleKey: 'rewards.menu.refer_friends', subtitleKey: 'rewards.menu.earn_points', icon: 'share-social-outline' },
+  { id: '4', titleKey: 'rewards.menu.my_orders', subtitleKey: 'rewards.menu.view_orders', icon: 'receipt-outline' },
 ];
 
 // Login Prompt Perks Preview Data
@@ -114,24 +128,31 @@ export const PointsMallHomeScreen: React.FC = () => {
   const navigation = useNavigation<any>();
   const insets = useSafeAreaInsets();
   const { user } = useUser();
+  const { membershipLevel, loading: membershipLoading, refresh: refreshMembership } = useMembershipLevel();
   const [refreshing, setRefreshing] = useState(false);
 
-  const userPoints = user?.points || 0;
-  // Simple Tier Logic for Display
-  const currentTier = 'BRONZE MEMBER'; // Default
-  const nextTierPoints = 100;
-  const progressPercent = Math.min((userPoints / nextTierPoints) * 100, 100);
+  // Use real API data for membership level
+  const userPoints = user?.points ?? 0;
+  const currentTier = membershipLevel?.sysUserLevel?.levelName || t('rewards.membership_level.no_membership');
+  const limitValue = membershipLevel?.sysUserLevel?.limitValue || 100;
+  const progressPercent = limitValue > 0 ? Math.min((userPoints / limitValue) * 100, 100) : 0;
+  const equityList = membershipLevel?.sysUserLevel?.userLevelExEquityList || [];
+  const tierTheme = getTierTheme(membershipLevel?.sysUserLevel?.id);
 
-  const onRefresh = useCallback(() => {
+  const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    setTimeout(() => setRefreshing(false), 1000);
-  }, []);
+    try {
+      await refreshMembership();
+    } finally {
+      setRefreshing(false);
+    }
+  }, [refreshMembership]);
 
   const handleBenefitPress = (id: string) => {
     if (id === '3') { // Points Mall
       navigation.navigate('PointsMallList');
     } else {
-      Alert.alert('Coming Soon', 'This feature is under development.');
+      Alert.alert(t('alerts.feature_not_implemented'), t('alerts.feature_under_development'));
     }
   };
 
@@ -142,10 +163,9 @@ export const PointsMallHomeScreen: React.FC = () => {
       {/* Dark Header Background */}
       <View style={styles.darkHeaderBg}>
         <View style={[styles.header, { marginTop: insets.top }]}>
-          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.iconBtn}>
-            <Ionicons name="chevron-back" size={24} color="#FFF" />
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>Membership</Text>
+          {/* No back button - this is a Tab root screen, tab bar handles navigation */}
+          <View style={styles.iconBtn} />
+          <Text style={styles.headerTitle}>{t('rewards.membership_level.title')}</Text>
           <TouchableOpacity style={styles.iconBtn}>
             <Ionicons name="notifications-outline" size={24} color="#FFF" />
           </TouchableOpacity>
@@ -165,7 +185,7 @@ export const PointsMallHomeScreen: React.FC = () => {
         {/* Membership Card */}
         <View style={styles.cardContainer}>
           <LinearGradient
-            colors={['#A67C52', '#EEDC82', '#A67C52']} // Gold Gradient
+            colors={tierTheme.colors}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={styles.membershipCard}
@@ -178,48 +198,69 @@ export const PointsMallHomeScreen: React.FC = () => {
             </View>
 
             <View style={styles.cardMiddle}>
-              <Text style={styles.tierText}>{currentTier}</Text>
+              {membershipLoading ? (
+                <ActivityIndicator size="small" color="#FFF" />
+              ) : (
+                <Text style={styles.tierText}>{currentTier}</Text>
+              )}
             </View>
 
             <View style={styles.cardBottom}>
               <View>
                 <Text style={styles.pointsValue}>{userPoints}</Text>
-                <Text style={styles.pointsLabel}>POINTS</Text>
+                <Text style={styles.pointsLabel}>{t('rewards.membership_level.points_label')}</Text>
               </View>
               <View style={styles.progressSection}>
                 <View style={styles.progressBarBg}>
                   <View style={[styles.progressBarFill, { width: `${progressPercent}%` }]} />
                 </View>
-                <Text style={styles.progressText}>{Math.round(progressPercent)}% to Next Tier</Text>
+                {membershipLevel?.sysUserLevel ? (
+                  <Text style={styles.progressText}>{t('rewards.membership_level.next_tier', { percent: Math.round(progressPercent) })}</Text>
+                ) : (
+                  <Text style={styles.progressText}>{t('rewards.membership_level.upgrade_hint')}</Text>
+                )}
               </View>
             </View>
           </LinearGradient>
         </View>
 
-        {/* Member Benefits */}
+        {/* Member Benefits - use equity list from API when available, fallback to static BENEFITS */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>MEMBER BENEFITS</Text>
+            <Text style={styles.sectionTitle}>{t('rewards.membership_level.benefits_title')}</Text>
             <TouchableOpacity>
-              <Text style={styles.seeAllText}>VIEW ALL</Text>
+              <Text style={styles.seeAllText}>{t('rewards.membership_level.view_all_benefits')}</Text>
             </TouchableOpacity>
           </View>
 
-          <View style={styles.benefitsGrid}>
-            {BENEFITS.map((item) => (
-              <TouchableOpacity key={item.id} style={styles.benefitItem} onPress={() => handleBenefitPress(item.id)}>
-                <View style={styles.benefitIconContainer}>
-                  <Ionicons name={item.icon as any} size={24} color="#D4AF37" />
-                </View>
-                <Text style={styles.benefitText}>{item.title}</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
+          {equityList.length > 0 ? (
+            <View style={styles.benefitsGrid}>
+              {equityList.map((equity) => (
+                <TouchableOpacity key={equity.equityId} style={styles.benefitItem} onPress={() => handleBenefitPress(String(equity.equityId))}>
+                  <View style={styles.benefitIconContainer}>
+                    <Ionicons name="star-outline" size={24} color="#D4AF37" />
+                  </View>
+                  <Text style={styles.benefitText}>{equity.equName}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          ) : (
+            <View style={styles.benefitsGrid}>
+              {BENEFITS.map((item) => (
+                <TouchableOpacity key={item.id} style={styles.benefitItem} onPress={() => handleBenefitPress(item.id)}>
+                  <View style={styles.benefitIconContainer}>
+                    <Ionicons name={item.icon as any} size={24} color="#D4AF37" />
+                  </View>
+                  <Text style={styles.benefitText}>{t(item.titleKey)}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          )}
         </View>
 
         {/* Privileges & Services */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>PRIVILEGES & SERVICES</Text>
+          <Text style={styles.sectionTitle}>{t('rewards.menu.points_mall')}</Text>
 
           {/* Big Banner Button */}
           <TouchableOpacity style={styles.mallBanner} onPress={() => navigation.navigate('PointsMallList')}>
@@ -227,8 +268,8 @@ export const PointsMallHomeScreen: React.FC = () => {
               <Ionicons name="storefront-outline" size={24} color="#000" />
             </View>
             <View style={styles.mallTextContent}>
-              <Text style={styles.mallTitle}>Points Mall</Text>
-              <Text style={styles.mallSubtitle}>Exclusive Rewards</Text>
+              <Text style={styles.mallTitle}>{t('rewards.mall.title')}</Text>
+              <Text style={styles.mallSubtitle}>{t('rewards.menu.points_mall_desc')}</Text>
             </View>
             <View style={styles.arrowCircle}>
               <Ionicons name="arrow-forward" size={16} color="#000" style={{ transform: [{ rotate: '-45deg' }] }} />
@@ -238,12 +279,24 @@ export const PointsMallHomeScreen: React.FC = () => {
           {/* Services Row */}
           <View style={styles.servicesRow}>
             {SERVICES.map((item) => (
-              <TouchableOpacity key={item.id} style={styles.serviceCard}>
+              <TouchableOpacity
+                key={item.id}
+                style={styles.serviceCard}
+                onPress={() => {
+                  if (item.id === '2') {
+                    navigation.navigate('MyCoupons' as never);
+                  } else if (item.id === '4') {
+                    navigation.navigate('MyOrders' as never);
+                  } else {
+                    Alert.alert(t('alerts.feature_not_implemented'), t('alerts.feature_under_development'));
+                  }
+                }}
+              >
                 <View style={styles.serviceIconCircle}>
                   <Ionicons name={item.icon as any} size={24} color="#8E8E93" />
                 </View>
-                <Text style={styles.serviceTitle}>{item.title}</Text>
-                {item.subtitle && <Text style={styles.serviceSubtitle}>{item.subtitle}</Text>}
+                <Text style={styles.serviceTitle}>{t(item.titleKey)}</Text>
+                {item.subtitleKey && <Text style={styles.serviceSubtitle}>{t(item.subtitleKey)}</Text>}
               </TouchableOpacity>
             ))}
           </View>

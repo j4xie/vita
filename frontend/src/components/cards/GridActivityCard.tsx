@@ -27,6 +27,8 @@ import { useCardPress } from '../../hooks/useCardPress';
 import { OptimizedImage } from '../common/OptimizedImage';
 import { formatActivityDateWithTimezone, FrontendActivity } from '../../utils/activityAdapter';
 import { LoaderOne } from '../ui/LoaderOne';
+import { useSchoolLogos, getSchoolLogoSync } from '../../hooks/useSchoolLogos';
+
 
 const { width: screenWidth } = Dimensions.get('window');
 
@@ -75,6 +77,24 @@ const GridActivityCardComponent: React.FC<GridActivityCardProps> = ({
   const { t, i18n } = useTranslation();
   const [imageLoading, setImageLoading] = useState(true);
   const [imageError, setImageError] = useState(false);
+  const { loading: schoolsLoading } = useSchoolLogos();
+
+  // 解析组织者头像：优先文本匹配学校 logo
+  const resolvedAvatar = React.useMemo(() => {
+    const avatar = activity?.organizerAvatar;
+    const isFallback = !avatar ||
+      avatar.includes('ui-avatars.com') ||
+      avatar.includes('americanpromotioncompany.com');
+
+    if (!isFallback) return avatar;
+
+    if (!schoolsLoading && activity) {
+      const textLogo = getSchoolLogoSync(activity.title || '', activity.location || '');
+      if (textLogo) return textLogo;
+    }
+
+    return avatar || null;
+  }, [activity?.organizerAvatar, activity?.title, activity?.location, schoolsLoading]);
 
   // 流畅动画系统 - ALL HOOKS MUST BE CALLED BEFORE ANY EARLY RETURNS
   const scale = useSharedValue(1);
@@ -348,9 +368,9 @@ const GridActivityCardComponent: React.FC<GridActivityCardProps> = ({
           {/* 组织者信息行 */}
           <View style={styles.organizerRow}>
             <View style={styles.organizerInfo}>
-              {activity.organizerAvatar ? (
+              {resolvedAvatar ? (
                 <Image
-                  source={{ uri: activity.organizerAvatar }}
+                  source={{ uri: resolvedAvatar }}
                   style={styles.organizerAvatar}
                 />
               ) : (

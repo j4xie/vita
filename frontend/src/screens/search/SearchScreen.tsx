@@ -9,6 +9,8 @@ import {
   ScrollView,
   Keyboard,
   Platform,
+  KeyboardAvoidingView,
+  TouchableWithoutFeedback,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
@@ -32,7 +34,7 @@ import { adaptActivity } from '../../utils/activityAdapter';
 import { useUser } from '../../context/UserContext';
 
 export const SearchScreen: React.FC = ({ route }: any) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const navigation = useNavigation<any>();
   const insets = useSafeAreaInsets();
   const { user } = useUser(); // 🆕 新增用户上下文
@@ -117,7 +119,7 @@ export const SearchScreen: React.FC = ({ route }: any) => {
         });
         
         // 使用标准的activityAdapter确保数据一致性
-        const adaptedResults = filteredRows.map(activity => adaptActivity(activity));
+        const adaptedResults = filteredRows.map(activity => adaptActivity(activity, i18n.language?.startsWith('en') ? 'en' : 'zh'));
         setSearchResults(adaptedResults);
       }
     } catch (error) {
@@ -169,6 +171,13 @@ export const SearchScreen: React.FC = ({ route }: any) => {
             autoCapitalize="none"
             autoCorrect={false}
             returnKeyType="search"
+            blurOnSubmit={true}
+            onSubmitEditing={() => {
+              Keyboard.dismiss();
+              if (searchText.trim().length >= 2) {
+                handleSearch(searchText);
+              }
+            }}
           />
         </View>
         
@@ -199,10 +208,12 @@ export const SearchScreen: React.FC = ({ route }: any) => {
             <Text style={[styles.emptySubtitle, dmStyles.text.secondary]}>{t('cards.try_different_search')}</Text>
           </View>
         ) : (
-          <ScrollView 
+          <ScrollView
             style={styles.resultsList}
             contentContainerStyle={styles.resultsContent}
             showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+            onScrollBeginDrag={Keyboard.dismiss}
           >
             {searchResults.map((activity, index) => (
               <SimpleActivityCard
