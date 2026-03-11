@@ -1,0 +1,2907 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PomeloX 表单设计器操作手册</title>
+<style>
+/* ===== CSS Reset & Variables ===== */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --blue-50:#eff6ff;--blue-100:#dbeafe;--blue-200:#bfdbfe;--blue-300:#93c5fd;
+  --blue-400:#60a5fa;--blue-500:#3b82f6;--blue-600:#2563eb;--blue-700:#1d4ed8;
+  --blue-800:#1e40af;--blue-900:#1e3a8a;
+  --gray-50:#f9fafb;--gray-100:#f3f4f6;--gray-200:#e5e7eb;--gray-300:#d1d5db;
+  --gray-400:#9ca3af;--gray-500:#6b7280;--gray-600:#4b5563;--gray-700:#374151;
+  --gray-800:#1f2937;--gray-900:#111827;
+  --green-50:#f0fdf4;--green-500:#22c55e;--green-600:#16a34a;
+  --orange-50:#fff7ed;--orange-500:#f97316;--orange-600:#ea580c;
+  --purple-50:#faf5ff;--purple-500:#a855f7;--purple-600:#9333ea;
+  --red-50:#fef2f2;--red-500:#ef4444;
+  --radius:8px;--radius-lg:12px;--radius-xl:16px;
+  --shadow-sm:0 1px 2px rgba(0,0,0,.05);
+  --shadow:0 1px 3px rgba(0,0,0,.1),0 1px 2px rgba(0,0,0,.06);
+  --shadow-md:0 4px 6px rgba(0,0,0,.07),0 2px 4px rgba(0,0,0,.06);
+  --shadow-lg:0 10px 15px rgba(0,0,0,.1),0 4px 6px rgba(0,0,0,.05);
+  --transition:all .2s ease;
+}
+html{scroll-behavior:smooth;font-size:16px}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"PingFang SC","Microsoft YaHei",sans-serif;color:var(--gray-800);background:var(--gray-50);line-height:1.7}
+
+/* ===== Scrollbar ===== */
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--gray-300);border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:var(--gray-400)}
+
+/* ===== Layout ===== */
+.page-wrapper{display:flex;min-height:100vh}
+
+/* Sidebar */
+.sidebar{position:fixed;top:0;left:0;width:280px;height:100vh;background:#fff;border-right:1px solid var(--gray-200);overflow-y:auto;z-index:100;transition:transform .3s ease}
+.sidebar-header{padding:20px 20px 16px;border-bottom:1px solid var(--gray-100);position:sticky;top:0;background:#fff;z-index:1}
+.sidebar-header h2{font-size:16px;color:var(--blue-700);display:flex;align-items:center;gap:8px}
+.sidebar-header h2 span{font-size:20px}
+.sidebar-search{margin-top:12px;position:relative}
+.sidebar-search input{width:100%;padding:8px 12px 8px 34px;border:1px solid var(--gray-200);border-radius:var(--radius);font-size:13px;outline:none;transition:var(--transition)}
+.sidebar-search input:focus{border-color:var(--blue-400);box-shadow:0 0 0 3px rgba(59,130,246,.1)}
+.sidebar-search .search-icon{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--gray-400);font-size:14px}
+
+.sidebar-nav{padding:8px 0}
+.nav-group{margin-bottom:4px}
+.nav-group-title{padding:8px 20px;font-size:11px;font-weight:600;color:var(--gray-400);text-transform:uppercase;letter-spacing:.5px}
+.nav-item{display:block;padding:7px 20px 7px 28px;font-size:13px;color:var(--gray-600);text-decoration:none;transition:var(--transition);border-left:3px solid transparent;cursor:pointer}
+.nav-item:hover{background:var(--blue-50);color:var(--blue-600)}
+.nav-item.active{background:var(--blue-50);color:var(--blue-700);border-left-color:var(--blue-500);font-weight:500}
+.nav-item .badge{display:inline-block;margin-left:6px;padding:1px 6px;font-size:10px;background:var(--gray-100);color:var(--gray-500);border-radius:10px}
+
+/* Main content */
+.main-content{margin-left:280px;flex:1;min-width:0}
+.content-wrapper{max-width:960px;margin:0 auto;padding:32px 40px 80px}
+
+/* Mobile sidebar toggle */
+.sidebar-toggle{display:none;position:fixed;bottom:24px;left:24px;z-index:200;width:48px;height:48px;border-radius:50%;background:var(--blue-600);color:#fff;border:none;font-size:20px;cursor:pointer;box-shadow:var(--shadow-lg);transition:var(--transition)}
+.sidebar-toggle:hover{background:var(--blue-700);transform:scale(1.05)}
+.sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.3);z-index:99}
+
+/* ===== Typography ===== */
+h1{font-size:32px;font-weight:700;color:var(--gray-900);margin-bottom:8px}
+h2{font-size:24px;font-weight:700;color:var(--gray-900);margin:48px 0 16px;padding-bottom:8px;border-bottom:2px solid var(--blue-100)}
+h3{font-size:20px;font-weight:600;color:var(--gray-800);margin:32px 0 12px}
+h4{font-size:16px;font-weight:600;color:var(--gray-700);margin:20px 0 8px}
+p{margin-bottom:12px;color:var(--gray-600)}
+.subtitle{font-size:16px;color:var(--gray-500);margin-bottom:32px}
+
+/* ===== Hero Section ===== */
+.hero{background:linear-gradient(135deg,var(--blue-600),var(--blue-800));color:#fff;padding:48px 40px;border-radius:var(--radius-xl);margin-bottom:40px;position:relative;overflow:hidden}
+.hero::before{content:'';position:absolute;top:-50%;right:-20%;width:400px;height:400px;background:rgba(255,255,255,.05);border-radius:50%}
+.hero::after{content:'';position:absolute;bottom:-30%;left:-10%;width:300px;height:300px;background:rgba(255,255,255,.03);border-radius:50%}
+.hero h1{color:#fff;font-size:36px;margin-bottom:12px;position:relative;z-index:1}
+.hero p{color:rgba(255,255,255,.85);font-size:16px;margin-bottom:0;position:relative;z-index:1}
+.hero-stats{display:flex;gap:32px;margin-top:24px;position:relative;z-index:1}
+.hero-stat{text-align:center}
+.hero-stat .num{font-size:28px;font-weight:700;display:block}
+.hero-stat .label{font-size:12px;opacity:.8}
+
+/* ===== Cards ===== */
+.card{background:#fff;border:1px solid var(--gray-200);border-radius:var(--radius-lg);padding:24px;margin-bottom:16px;transition:var(--transition)}
+.card:hover{box-shadow:var(--shadow-md)}
+.card-header{display:flex;align-items:center;gap:12px;margin-bottom:16px}
+.card-icon{width:40px;height:40px;border-radius:var(--radius);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.card-icon.input{background:var(--blue-50);color:var(--blue-600)}
+.card-icon.select{background:var(--green-50);color:var(--green-600)}
+.card-icon.layout{background:var(--purple-50);color:var(--purple-600)}
+.card-icon.upload{background:var(--orange-50);color:var(--orange-600)}
+
+/* ===== Component Section ===== */
+.component-card{border-left:4px solid var(--blue-400)}
+.component-card.select-type{border-left-color:var(--green-500)}
+.component-card.layout-type{border-left-color:var(--purple-500)}
+
+.component-title{display:flex;align-items:center;justify-content:between;cursor:pointer;user-select:none;gap:8px}
+.component-title h3{margin:0;flex:1}
+.component-title .tag{padding:2px 8px;font-size:11px;border-radius:4px;font-weight:500}
+.component-title .tag.input-tag{background:var(--blue-50);color:var(--blue-600)}
+.component-title .tag.select-tag{background:var(--green-50);color:var(--green-600)}
+.component-title .tag.layout-tag{background:var(--purple-50);color:var(--purple-600)}
+.component-title .toggle-icon{font-size:12px;color:var(--gray-400);transition:transform .2s ease;width:20px;text-align:center}
+.component-title .toggle-icon.open{transform:rotate(90deg)}
+
+.component-body{display:none;margin-top:16px;padding-top:16px;border-top:1px solid var(--gray-100)}
+.component-body.open{display:block}
+
+.component-desc{font-size:14px;color:var(--gray-600);margin-bottom:16px;padding:12px 16px;background:var(--gray-50);border-radius:var(--radius);line-height:1.6}
+
+/* Property Table */
+.prop-table{width:100%;border-collapse:collapse;font-size:13px;margin-bottom:16px}
+.prop-table th{text-align:left;padding:8px 12px;background:var(--gray-50);color:var(--gray-700);font-weight:600;border-bottom:2px solid var(--gray-200);white-space:nowrap}
+.prop-table td{padding:8px 12px;border-bottom:1px solid var(--gray-100);vertical-align:top}
+.prop-table tr:hover td{background:var(--blue-50)}
+.prop-table .prop-name{font-weight:500;color:var(--gray-800);white-space:nowrap}
+.prop-table .prop-type{color:var(--blue-600);font-family:monospace;font-size:12px}
+.prop-table .prop-default{color:var(--gray-500);font-family:monospace;font-size:12px}
+
+/* Template Example */
+.template-ref{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;background:var(--blue-50);color:var(--blue-700);font-size:12px;border-radius:var(--radius);font-weight:500;margin:2px}
+.template-ref::before{content:'#'}
+
+/* Scenario Box */
+.scenario-box{padding:12px 16px;background:var(--green-50);border-radius:var(--radius);border-left:3px solid var(--green-500);margin-bottom:16px;font-size:13px;color:var(--gray-700)}
+.scenario-box strong{color:var(--green-600)}
+
+/* ===== Tabs ===== */
+.tabs{display:flex;gap:0;border-bottom:2px solid var(--gray-200);margin-bottom:20px}
+.tab-btn{padding:10px 20px;font-size:14px;font-weight:500;color:var(--gray-500);background:none;border:none;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;transition:var(--transition)}
+.tab-btn:hover{color:var(--gray-700)}
+.tab-btn.active{color:var(--blue-600);border-bottom-color:var(--blue-600)}
+.tab-content{display:none}
+.tab-content.active{display:block}
+
+/* ===== Layout Diagram ===== */
+.layout-diagram{display:flex;gap:8px;padding:20px;background:var(--gray-50);border-radius:var(--radius-lg);border:2px dashed var(--gray-300);margin-bottom:20px}
+.layout-panel{border-radius:var(--radius);padding:16px;text-align:center;font-size:13px;font-weight:500}
+.layout-panel.left{background:var(--blue-100);color:var(--blue-700);width:20%;min-height:120px;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.layout-panel.center{background:var(--green-50);color:var(--green-700);flex:1;min-height:120px;display:flex;flex-direction:column;align-items:center;justify-content:center;border:2px dashed var(--green-300)}
+.layout-panel.right{background:var(--purple-50);color:var(--purple-700);width:25%;min-height:120px;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.layout-panel .panel-icon{font-size:24px;margin-bottom:6px}
+.layout-panel .panel-title{font-weight:600}
+.layout-panel .panel-desc{font-size:11px;margin-top:4px;opacity:.7}
+
+/* ===== Step List ===== */
+.steps{counter-reset:step}
+.step{position:relative;padding:20px 20px 20px 64px;margin-bottom:12px;background:#fff;border:1px solid var(--gray-200);border-radius:var(--radius-lg);counter-increment:step;transition:var(--transition)}
+.step:hover{border-color:var(--blue-300);box-shadow:var(--shadow)}
+.step::before{content:counter(step);position:absolute;left:16px;top:20px;width:32px;height:32px;background:var(--blue-600);color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700}
+.step h4{margin:0 0 6px;font-size:15px}
+.step p{margin:0;font-size:13px;color:var(--gray-600)}
+
+/* ===== Template Card ===== */
+.template-card{background:#fff;border:1px solid var(--gray-200);border-radius:var(--radius-lg);overflow:hidden;margin-bottom:20px;transition:var(--transition)}
+.template-card:hover{box-shadow:var(--shadow-md)}
+.template-card-header{padding:16px 20px;background:linear-gradient(135deg,var(--blue-500),var(--blue-700));color:#fff;display:flex;align-items:center;justify-content:space-between}
+.template-card-header h4{color:#fff;margin:0;font-size:16px}
+.template-card-header .template-id{background:rgba(255,255,255,.2);padding:2px 10px;border-radius:10px;font-size:12px}
+.template-card-body{padding:20px}
+.template-components{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+.template-comp{padding:4px 12px;background:var(--gray-100);border-radius:var(--radius);font-size:12px;color:var(--gray-700)}
+.template-comp .comp-type{color:var(--blue-600);font-weight:500}
+.template-config{font-size:13px;color:var(--gray-600);padding:12px;background:var(--gray-50);border-radius:var(--radius)}
+.template-config strong{color:var(--gray-800)}
+
+/* Form Properties */
+.form-prop-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px}
+.form-prop-item{padding:14px;background:#fff;border:1px solid var(--gray-200);border-radius:var(--radius);transition:var(--transition)}
+.form-prop-item:hover{border-color:var(--blue-300)}
+.form-prop-item .fp-name{font-weight:600;color:var(--gray-800);font-size:14px;margin-bottom:4px}
+.form-prop-item .fp-key{font-family:monospace;font-size:11px;color:var(--blue-600);margin-bottom:6px}
+.form-prop-item .fp-desc{font-size:12px;color:var(--gray-500)}
+.form-prop-item .fp-options{margin-top:6px;display:flex;flex-wrap:wrap;gap:4px}
+.form-prop-item .fp-opt{padding:2px 8px;background:var(--gray-100);border-radius:3px;font-size:11px;color:var(--gray-600)}
+
+/* ===== Floating buttons ===== */
+.back-to-top{position:fixed;bottom:24px;right:24px;width:44px;height:44px;border-radius:50%;background:var(--blue-600);color:#fff;border:none;font-size:18px;cursor:pointer;box-shadow:var(--shadow-lg);opacity:0;visibility:hidden;transition:var(--transition);z-index:200}
+.back-to-top.visible{opacity:1;visibility:visible}
+.back-to-top:hover{background:var(--blue-700);transform:translateY(-2px)}
+
+/* ===== Utility ===== */
+.text-blue{color:var(--blue-600)}
+.text-green{color:var(--green-600)}
+.text-purple{color:var(--purple-600)}
+.text-orange{color:var(--orange-600)}
+.text-sm{font-size:13px}
+.mt-8{margin-top:8px}
+.mt-16{margin-top:16px}
+.mb-16{margin-bottom:16px}
+.hidden{display:none!important}
+
+/* Filter chips */
+.filter-bar{display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap}
+.filter-chip{padding:6px 16px;border-radius:20px;font-size:13px;font-weight:500;cursor:pointer;border:1px solid var(--gray-300);background:#fff;color:var(--gray-600);transition:var(--transition)}
+.filter-chip:hover{border-color:var(--blue-400);color:var(--blue-600)}
+.filter-chip.active{background:var(--blue-600);color:#fff;border-color:var(--blue-600)}
+
+/* ===== Responsive ===== */
+@media(max-width:900px){
+  .sidebar{transform:translateX(-100%)}
+  .sidebar.open{transform:translateX(0)}
+  .sidebar-toggle{display:flex;align-items:center;justify-content:center}
+  .sidebar-overlay.active{display:block}
+  .main-content{margin-left:0}
+  .content-wrapper{padding:24px 16px 80px}
+  .hero{padding:32px 24px}
+  .hero h1{font-size:28px}
+  .hero-stats{gap:16px}
+  .layout-diagram{flex-direction:column}
+  .layout-panel.left,.layout-panel.right{width:100%;min-height:80px}
+  .form-prop-grid{grid-template-columns:1fr}
+  h1{font-size:26px}
+  h2{font-size:20px}
+}
+@media(max-width:600px){
+  .hero-stats{flex-wrap:wrap;gap:12px}
+  .hero-stat{flex:1;min-width:80px}
+  .tabs{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .tab-btn{white-space:nowrap;padding:8px 14px;font-size:13px}
+}
+
+/* ===== Form Simulator ===== */
+.simulator-container{display:flex;gap:0;border:2px solid var(--gray-200);border-radius:var(--radius-lg);overflow:hidden;min-height:500px;background:#fff;margin-bottom:24px}
+.sim-left{width:200px;background:var(--gray-50);border-right:1px solid var(--gray-200);padding:12px;overflow-y:auto;flex-shrink:0}
+.sim-left h4{font-size:13px;color:var(--gray-500);margin:0 0 8px;padding:0 4px;text-transform:uppercase;letter-spacing:.5px}
+.sim-comp-group{margin-bottom:12px}
+.sim-comp-group-title{font-size:11px;color:var(--gray-400);padding:4px;font-weight:600}
+.sim-comp-btn{display:flex;align-items:center;gap:6px;width:100%;padding:6px 8px;border:1px solid var(--gray-200);border-radius:var(--radius);background:#fff;cursor:pointer;font-size:12px;color:var(--gray-700);margin-bottom:4px;transition:var(--transition)}
+.sim-comp-btn:hover{border-color:var(--blue-400);color:var(--blue-600);background:var(--blue-50)}
+.sim-comp-btn .sim-icon{font-size:14px;width:20px;text-align:center}
+.sim-center{flex:1;padding:16px;overflow-y:auto;background:#fff;border-right:1px solid var(--gray-200)}
+.sim-center-header{display:flex;align-items:center;gap:8px;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid var(--gray-100)}
+.sim-center-header input{flex:1;padding:6px 10px;border:1px solid var(--gray-200);border-radius:var(--radius);font-size:13px}
+.sim-center-header button{padding:6px 14px;border-radius:var(--radius);font-size:12px;cursor:pointer;border:1px solid;transition:var(--transition)}
+.sim-clear-btn{background:#fff;color:var(--red-500);border-color:var(--red-500)!important}
+.sim-clear-btn:hover{background:var(--red-50)}
+.sim-canvas{min-height:300px;border:2px dashed var(--gray-200);border-radius:var(--radius);padding:16px}
+.sim-canvas.empty{display:flex;align-items:center;justify-content:center;color:var(--gray-400);font-size:14px}
+.sim-canvas-item{padding:12px;border:1px solid var(--gray-200);border-radius:var(--radius);margin-bottom:8px;cursor:pointer;transition:var(--transition);position:relative}
+.sim-canvas-item:hover{border-color:var(--blue-300)}
+.sim-canvas-item.selected{border-color:var(--blue-500);box-shadow:0 0 0 2px rgba(59,130,246,.15)}
+.sim-canvas-item .sim-item-label{font-size:12px;color:var(--gray-600);margin-bottom:4px;display:flex;align-items:center;gap:4px}
+.sim-canvas-item .sim-item-label .required{color:var(--red-500)}
+.sim-canvas-item .sim-item-control{width:100%}
+.sim-canvas-item .sim-item-actions{position:absolute;top:4px;right:4px;display:none;gap:4px}
+.sim-canvas-item:hover .sim-item-actions{display:flex}
+.sim-item-actions button{width:22px;height:22px;border:1px solid var(--gray-200);border-radius:3px;background:#fff;cursor:pointer;font-size:10px;display:flex;align-items:center;justify-content:center}
+.sim-item-actions button:hover{background:var(--red-50);border-color:var(--red-500);color:var(--red-500)}
+.sim-right{width:260px;background:var(--gray-50);padding:12px;overflow-y:auto;flex-shrink:0}
+.sim-right h4{font-size:13px;color:var(--gray-600);margin:0 0 12px}
+.sim-prop-row{margin-bottom:10px}
+.sim-prop-row label{display:block;font-size:11px;color:var(--gray-500);margin-bottom:2px}
+.sim-prop-row input,.sim-prop-row select{width:100%;padding:4px 8px;border:1px solid var(--gray-200);border-radius:4px;font-size:12px}
+.sim-prop-row input[type="checkbox"]{width:auto;margin-right:6px}
+.sim-prop-help{font-size:11px;color:var(--blue-700);background:var(--blue-50);border-left:3px solid var(--blue-300);margin-top:3px;margin-bottom:2px;padding:3px 8px;line-height:1.5;border-radius:0 4px 4px 0}
+.sim-prop-tabs{display:flex;gap:0;margin-bottom:12px;border-bottom:2px solid var(--gray-200)}
+.sim-prop-tab{flex:1;padding:8px 0;border:none;background:none;font-size:13px;font-weight:500;color:var(--gray-500);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;transition:var(--transition)}
+.sim-prop-tab.active{color:var(--blue-600);border-bottom-color:var(--blue-600)}
+.sim-prop-tab:hover{color:var(--blue-500)}
+.sim-show-border{outline:1px dashed var(--gray-300);outline-offset:2px}
+.sim-template-btns{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px}
+.sim-template-btn{padding:4px 10px;border:1px solid var(--blue-300);border-radius:var(--radius);background:var(--blue-50);color:var(--blue-700);font-size:11px;cursor:pointer;transition:var(--transition)}
+.sim-template-btn:hover{background:var(--blue-100)}
+.sim-template-btn.active{background:var(--blue-600);color:#fff;border-color:var(--blue-600)}
+
+/* Component Tip Card (rendered in right panel, no overflow issue) */
+.sim-tip-card{background:#fff;border:1px solid var(--blue-200);border-radius:var(--radius);padding:10px 12px;margin-bottom:10px;font-size:12px;line-height:1.6;color:var(--gray-700);animation:tipFadeIn .2s ease}
+@keyframes tipFadeIn{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}
+.sim-tip-card .tt-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
+.sim-tip-card .tt-title{font-weight:600;color:var(--blue-700);font-size:13px}
+.sim-tip-card .tt-close{background:none;border:none;color:var(--gray-400);cursor:pointer;font-size:14px;padding:0;line-height:1}
+.sim-tip-card .tt-close:hover{color:var(--gray-600)}
+.sim-tip-card .tt-desc{margin-bottom:8px;color:var(--gray-600)}
+.sim-tip-card .tt-props{margin-bottom:6px}
+.sim-tip-card .tt-props-title{font-weight:600;color:var(--gray-700);margin-bottom:2px;font-size:11px}
+.sim-tip-card .tt-prop-list{display:flex;flex-wrap:wrap;gap:3px}
+.sim-tip-card .tt-prop-tag{padding:1px 6px;background:var(--gray-100);border-radius:3px;font-size:10px;color:var(--gray-600)}
+.sim-tip-card .tt-example{padding:6px 8px;background:var(--blue-50);border-radius:var(--radius);font-size:11px;color:var(--blue-700);border-left:3px solid var(--blue-400)}
+
+/* Demo Animation Controls */
+.demo-bubble{position:absolute;z-index:9999;max-width:320px;padding:10px 14px;background:#fff;border:2px solid var(--green-500);border-radius:10px;box-shadow:0 4px 20px rgba(0,0,0,.15);font-size:12px;color:var(--gray-700);pointer-events:auto}
+.demo-bubble::before{content:'';position:absolute;width:10px;height:10px;background:#fff;border:2px solid var(--green-500);border-right:none;border-top:none;transform:rotate(45deg)}
+.demo-bubble.arrow-top::before{top:-7px;left:50%;margin-left:-5px;transform:rotate(135deg)}
+.demo-bubble.arrow-bottom::before{bottom:-7px;left:50%;margin-left:-5px;transform:rotate(-45deg)}
+.demo-bubble .demo-text{font-weight:500;margin-bottom:8px;line-height:1.5}
+.demo-bubble .demo-progress{width:100%;height:4px;background:var(--gray-200);border-radius:2px;overflow:hidden;margin-bottom:8px}
+.demo-bubble .demo-progress-fill{height:100%;background:var(--green-500);border-radius:2px;transition:width .3s ease}
+.demo-bubble .demo-btns{display:flex;gap:6px;align-items:center}
+.demo-bubble .demo-next{padding:5px 16px;border:none;border-radius:4px;background:var(--green-500);color:#fff;font-size:12px;font-weight:600;cursor:pointer;transition:var(--transition)}
+.demo-bubble .demo-next:hover{background:var(--green-600)}
+.demo-bubble .demo-stop{padding:4px 10px;border:1px solid var(--gray-300);border-radius:4px;background:#fff;color:var(--gray-500);font-size:10px;cursor:pointer}
+.demo-bubble .demo-stop:hover{background:var(--gray-100)}
+.demo-bubble .demo-prev{padding:4px 10px;border:1px solid var(--gray-300);border-radius:4px;background:#fff;color:var(--gray-600);font-size:12px;cursor:pointer}
+.demo-bubble .demo-prev:hover{background:var(--gray-100)}
+.demo-bubble .demo-pause{padding:4px 10px;border:1px solid var(--gray-300);border-radius:4px;background:#fff;color:var(--gray-600);font-size:14px;cursor:pointer;min-width:32px;text-align:center}
+.demo-bubble .demo-pause:hover{background:var(--gray-100)}
+.demo-target-highlight{outline:2px solid var(--green-500)!important;outline-offset:2px;box-shadow:0 0 0 4px rgba(34,197,94,.15)!important;transition:outline .2s ease,box-shadow .2s ease}
+.sim-canvas-item.demo-highlight{border-color:var(--green-500);box-shadow:0 0 0 2px rgba(34,197,94,.2);animation:demoGlow 1s ease}
+@keyframes demoGlow{0%{box-shadow:0 0 0 2px rgba(34,197,94,.4)}50%{box-shadow:0 0 8px 4px rgba(34,197,94,.2)}100%{box-shadow:0 0 0 2px rgba(34,197,94,.2)}}
+
+/* Simulator responsive */
+@media(max-width:900px){
+  .simulator-container{flex-direction:column}
+  .sim-left,.sim-right{width:100%;max-height:200px}
+}
+
+/* ===== AI Chat Widget ===== */
+.ai-chat-fab{position:fixed;bottom:80px;right:24px;width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,var(--blue-500),var(--purple-500));color:#fff;border:none;font-size:24px;cursor:pointer;box-shadow:0 4px 16px rgba(59,130,246,.4);z-index:1000;transition:all .3s ease;display:flex;align-items:center;justify-content:center}
+.ai-chat-fab:hover{transform:scale(1.1);box-shadow:0 6px 24px rgba(59,130,246,.5)}
+.ai-chat-window{position:fixed;bottom:80px;right:24px;width:400px;height:560px;background:#fff;border-radius:var(--radius-xl);box-shadow:0 16px 48px rgba(0,0,0,.15);z-index:1001;display:none;flex-direction:column;overflow:hidden;border:1px solid var(--gray-200)}
+.ai-chat-window.open{display:flex;animation:chatSlideUp .3s ease}
+@keyframes chatSlideUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+.ai-chat-header{padding:14px 16px;background:linear-gradient(135deg,var(--blue-600),var(--purple-600));color:#fff;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.ai-chat-header h4{margin:0;font-size:15px;font-weight:600;color:#fff;display:flex;align-items:center;gap:8px}
+.ai-chat-header .close-btn{background:none;border:none;color:rgba(255,255,255,.8);font-size:20px;cursor:pointer;padding:0;line-height:1}
+.ai-chat-header .close-btn:hover{color:#fff}
+.ai-chat-messages{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:12px}
+.ai-chat-msg{max-width:85%;padding:10px 14px;border-radius:12px;font-size:13px;line-height:1.6;word-break:break-word}
+.ai-chat-msg.user{align-self:flex-end;background:var(--blue-600);color:#fff;border-bottom-right-radius:4px}
+.ai-chat-msg.bot{align-self:flex-start;background:var(--gray-100);color:var(--gray-800);border-bottom-left-radius:4px}
+.ai-chat-msg.bot p{margin:0 0 6px}
+.ai-chat-msg.bot p:last-child{margin:0}
+.ai-chat-msg.bot strong{color:var(--gray-900)}
+.ai-chat-msg.bot code{background:var(--gray-200);padding:1px 4px;border-radius:3px;font-size:12px}
+.ai-chat-msg.bot ul,.ai-chat-msg.bot ol{margin:4px 0;padding-left:18px}
+.ai-chat-msg.bot li{margin-bottom:2px}
+.ai-chat-msg.typing::after{content:'...';animation:dots 1.4s infinite}
+@keyframes dots{0%,20%{content:'.'}40%{content:'..'}60%,100%{content:'...'}}
+.ai-chat-quick{padding:8px 16px;display:flex;flex-wrap:wrap;gap:6px;border-top:1px solid var(--gray-100);flex-shrink:0;max-height:80px;overflow-y:auto}
+.ai-chat-quick-btn{padding:4px 10px;border:1px solid var(--gray-200);border-radius:14px;background:#fff;color:var(--gray-600);font-size:11px;cursor:pointer;transition:var(--transition);white-space:nowrap}
+.ai-chat-quick-btn:hover{border-color:var(--blue-400);color:var(--blue-600);background:var(--blue-50)}
+.ai-chat-input-area{padding:12px 16px;border-top:1px solid var(--gray-200);display:flex;gap:8px;flex-shrink:0}
+.ai-chat-input-area input{flex:1;padding:8px 12px;border:1px solid var(--gray-200);border-radius:20px;font-size:13px;outline:none;transition:var(--transition)}
+.ai-chat-input-area input:focus{border-color:var(--blue-400)}
+.ai-chat-input-area button{width:36px;height:36px;border-radius:50%;background:var(--blue-600);color:#fff;border:none;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;transition:var(--transition);flex-shrink:0}
+.ai-chat-input-area button:hover{background:var(--blue-700)}
+.ai-chat-input-area button:disabled{background:var(--gray-300);cursor:not-allowed}
+.ai-chat-stop-btn{display:none;align-self:center;padding:5px 14px;border:1px solid var(--gray-300);border-radius:16px;background:#fff;color:var(--gray-600);font-size:12px;cursor:pointer;margin:4px 0;transition:var(--transition)}
+.ai-chat-stop-btn:hover{border-color:#f87171;color:#ef4444}
+.ai-chat-stop-btn.visible{display:inline-flex;align-items:center;gap:4px}
+.ai-chat-msg.bot pre.md-codeblock{background:var(--gray-800);color:var(--gray-100);padding:10px 12px;border-radius:6px;overflow-x:auto;font-size:12px;line-height:1.5;margin:6px 0;white-space:pre-wrap;word-break:break-all}
+.ai-chat-msg.bot pre.md-codeblock code{background:none;padding:0;color:inherit;font-size:inherit}
+.ai-chat-msg.bot table.md-table{border-collapse:collapse;width:100%;margin:6px 0;font-size:12px}
+.ai-chat-msg.bot table.md-table th,.ai-chat-msg.bot table.md-table td{border:1px solid var(--gray-300);padding:4px 8px;text-align:left}
+.ai-chat-msg.bot table.md-table th{background:var(--gray-200);font-weight:600}
+.ai-chat-msg.bot h4,.ai-chat-msg.bot h5{margin:6px 0 4px;font-weight:600}
+.ai-chat-msg.bot h4{font-size:14px}
+.ai-chat-msg.bot h5{font-size:13px}
+@media(max-width:500px){
+  .ai-chat-window{width:calc(100vw - 16px);right:8px;bottom:8px;height:calc(100vh - 16px);border-radius:var(--radius-lg)}
+}
+
+/* Print */
+@media print{
+  .sidebar,.sidebar-toggle,.back-to-top,.sidebar-overlay,.ai-chat-fab,.ai-chat-window{display:none!important}
+  .main-content{margin-left:0}
+  .component-body{display:block!important}
+  .hero{background:var(--blue-100)!important;color:var(--blue-900)!important}
+  .hero h1,.hero p{color:var(--blue-900)!important}
+}
+</style>
+</head>
+<body>
+
+<!-- Sidebar -->
+<nav class="sidebar" id="sidebar">
+  <div class="sidebar-header">
+    <h2>表单设计器手册</h2>
+    <div class="sidebar-search">
+      <span class="search-icon"></span>
+      <input type="text" id="sidebarSearch" placeholder="搜索组件或章节...">
+    </div>
+  </div>
+  <div class="sidebar-nav" id="sidebarNav">
+    <div class="nav-group">
+      <div class="nav-group-title">概览</div>
+      <a class="nav-item" href="#overview">页面布局总览</a>
+      <a class="nav-item" href="#quick-start">快速入门教程</a>
+    </div>
+    <div class="nav-group">
+      <div class="nav-group-title">输入型组件 <span class="badge">4</span></div>
+      <a class="nav-item" href="#comp-input-text" data-search="单行文本 input text">单行文本</a>
+      <a class="nav-item" href="#comp-textarea" data-search="多行文本 textarea">多行文本</a>
+      <a class="nav-item" href="#comp-password" data-search="密码 password">密码</a>
+      <a class="nav-item" href="#comp-counter" data-search="计数器 counter number">计数器</a>
+    </div>
+    <div class="nav-group">
+      <div class="nav-group-title">选择型组件 <span class="badge">13</span></div>
+      <a class="nav-item" href="#comp-select" data-search="下拉选择 select dropdown">下拉选择</a>
+      <a class="nav-item" href="#comp-cascader" data-search="级联选择 cascader">级联选择</a>
+      <a class="nav-item" href="#comp-radio" data-search="单选框组 radio">单选框组</a>
+      <a class="nav-item" href="#comp-checkbox" data-search="多选框组 checkbox">多选框组</a>
+      <a class="nav-item" href="#comp-switch" data-search="开关 switch toggle">开关</a>
+      <a class="nav-item" href="#comp-slider" data-search="滑块 slider range">滑块</a>
+      <a class="nav-item" href="#comp-time" data-search="时间选择 time picker">时间选择</a>
+      <a class="nav-item" href="#comp-time-range" data-search="时间范围 time range">时间范围</a>
+      <a class="nav-item" href="#comp-date" data-search="日期选择 date picker">日期选择</a>
+      <a class="nav-item" href="#comp-date-range" data-search="日期范围 date range">日期范围</a>
+      <a class="nav-item" href="#comp-rate" data-search="评分 rate star">评分</a>
+      <a class="nav-item" href="#comp-color" data-search="颜色选择 color picker">颜色选择</a>
+      <a class="nav-item" href="#comp-upload" data-search="上传 upload file image video">上传</a>
+    </div>
+    <div class="nav-group">
+      <div class="nav-group-title">布局型组件 <span class="badge">2</span></div>
+      <a class="nav-item" href="#comp-row" data-search="行容器 row container layout flex">行容器</a>
+      <a class="nav-item" href="#comp-button" data-search="按钮 button submit">按钮</a>
+    </div>
+    <div class="nav-group">
+      <div class="nav-group-title">表单配置</div>
+      <a class="nav-item" href="#form-properties">表单属性</a>
+    </div>
+    <div class="nav-group">
+      <div class="nav-group-title">在线体验</div>
+      <a class="nav-item" href="#simulator" data-search="模拟器 simulator 体验 交互">表单模拟器</a>
+    </div>
+    <div class="nav-group">
+      <div class="nav-group-title">示例模板 <span class="badge">5</span></div>
+      <a class="nav-item" href="#template-1">活动报名表</a>
+      <a class="nav-item" href="#template-2">志愿者申请表</a>
+      <a class="nav-item" href="#template-3">满意度调查表</a>
+      <a class="nav-item" href="#template-4">素材提交表</a>
+      <a class="nav-item" href="#template-5">综合组件示例表</a>
+    </div>
+  </div>
+</nav>
+
+<!-- Mobile overlay -->
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+<!-- Mobile toggle -->
+<button class="sidebar-toggle" id="sidebarToggle" title="目录">&#x2261;</button>
+
+<!-- Main Content -->
+<main class="main-content">
+<div class="content-wrapper">
+
+<!-- Hero -->
+<section class="hero">
+  <h1>PomeloX 表单设计器操作手册</h1>
+  <p>零基础入门指南 — 使用可视化拖拽方式创建活动报名表单模板</p>
+  <p style="margin-top:8px;font-size:14px;color:rgba(255,255,255,.75)">本文件为 <strong>Vita Global</strong> 相关服务内部文件</p>
+  <div class="hero-stats">
+    <div class="hero-stat"><span class="num">19</span><span class="label">可用组件</span></div>
+    <div class="hero-stat"><span class="num">3</span><span class="label">组件分类</span></div>
+    <div class="hero-stat"><span class="num">5</span><span class="label">示例模板</span></div>
+    <div class="hero-stat"><span class="num">10</span><span class="label">表单属性</span></div>
+  </div>
+</section>
+
+<!-- Section: Overview -->
+<section id="overview">
+<h2>一、页面布局总览</h2>
+<p>表单设计器采用经典的<strong>三栏布局</strong>，让你可以直观地拖拽组件、配置属性，快速创建表单模板。</p>
+
+<div class="layout-diagram">
+  <div class="layout-panel left">
+    <div class="panel-icon"></div>
+    <div class="panel-title">组件面板</div>
+    <div class="panel-desc">19个组件分3类<br>点击/拖拽添加</div>
+  </div>
+  <div class="layout-panel center">
+    <div class="panel-icon"></div>
+    <div class="panel-title">画布区域</div>
+    <div class="panel-desc">拖入组件进行排列<br>可复制/删除/排序</div>
+  </div>
+  <div class="layout-panel right">
+    <div class="panel-icon"></div>
+    <div class="panel-title">属性面板</div>
+    <div class="panel-desc">组件属性 | 表单属性<br>两个Tab切换</div>
+  </div>
+</div>
+
+<div class="card">
+  <h4>各区域说明</h4>
+  <table class="prop-table">
+    <thead><tr><th>区域</th><th>位置</th><th>功能</th></tr></thead>
+    <tbody>
+      <tr><td class="prop-name">组件面板</td><td>左侧栏</td><td>展示所有19个可用组件，分为"输入型组件"（4个）、"选择型组件"（13个）、"布局型组件"（2个）三大类。点击或拖拽即可将组件添加到画布。</td></tr>
+      <tr><td class="prop-name">画布区域</td><td>中间主区域</td><td>表单的可视化编辑区域。顶部有"表单模板名称"输入框和"清空"、"提交表单"按钮。组件添加后可点选查看属性，鼠标悬浮可复制或删除组件。</td></tr>
+      <tr><td class="prop-name">属性面板</td><td>右侧栏</td><td>包含两个Tab页："组件属性"用于配置当前选中组件的各项参数，"表单属性"用于配置整个表单的全局设置。</td></tr>
+    </tbody>
+  </table>
+</div>
+</section>
+
+<!-- Section: Quick Start -->
+<section id="quick-start">
+<h2>二、快速入门教程</h2>
+<p>按照以下步骤，你可以在5分钟内创建你的第一个表单模板。</p>
+
+<div class="steps">
+  <div class="step">
+    <h4>登录管理后台</h4>
+    <p>访问后台地址，使用管理员账号登录系统。输入验证码后点击登录。</p>
+  </div>
+  <div class="step">
+    <h4>进入表单设计器</h4>
+    <p>在左侧菜单找到 <strong>活动管理 > 活动表单模板</strong>，点击进入模板列表页面，然后点击 <strong>"新增模板"</strong> 按钮进入表单设计器。</p>
+  </div>
+  <div class="step">
+    <h4>填写表单模板名称</h4>
+    <p>在画布顶部的输入框中输入模板名称，例如"活动报名表"。这是必填项，提交前必须填写。</p>
+  </div>
+  <div class="step">
+    <h4>添加组件到画布</h4>
+    <p>从左侧组件面板中，<strong>点击</strong>或<strong>拖拽</strong>你需要的组件到中间画布区域。组件会按添加顺序从上到下排列。</p>
+  </div>
+  <div class="step">
+    <h4>配置组件属性</h4>
+    <p>点击画布中的某个组件，右侧属性面板会显示该组件的所有可配置项。你可以修改标题、字段名、设置必填、添加校验规则等。</p>
+  </div>
+  <div class="step">
+    <h4>配置表单属性（可选）</h4>
+    <p>点击右侧属性面板的 <strong>"表单属性"</strong> Tab，可以设置全局的标签对齐方式、表单尺寸、栅格间隔等。</p>
+  </div>
+  <div class="step">
+    <h4>提交保存模板</h4>
+    <p>确认无误后，点击画布顶部的 <strong>"提交表单"</strong> 按钮。系统提示"新增成功"即表示模板已保存到后端数据库。</p>
+  </div>
+</div>
+
+<div class="card" style="background:var(--blue-50);border-color:var(--blue-200)">
+  <h4 style="color:var(--blue-700)">小提示</h4>
+  <ul style="font-size:13px;color:var(--gray-600);padding-left:20px">
+    <li><strong>复制组件</strong>：鼠标悬浮在画布中的组件上，点击右上角的"复制"图标可快速复制该组件。</li>
+    <li><strong>删除组件</strong>：点击组件右上角的"删除"图标可移除该组件。</li>
+    <li><strong>清空画布</strong>：点击"清空"按钮可一键清除所有已添加的组件，重新开始设计。</li>
+    <li><strong>字段名唯一</strong>：每个组件的"字段名"（v-model）在表单中必须唯一，系统会自动生成默认字段名。</li>
+  </ul>
+</div>
+</section>
+
+<!-- Section: Simulator -->
+<section id="simulator">
+<h2>三、在线体验 — 表单模拟器</h2>
+<p>在下方模拟器中体验表单设计器的核心操作流程：从左侧添加组件到画布，点击组件查看右侧属性面板，或一键加载预设模板。</p>
+
+<div class="sim-template-btns">
+  <span style="font-size:12px;color:var(--gray-500);line-height:28px">快速加载模板：</span>
+  <button class="sim-template-btn" onclick="loadSimTemplate(1)">活动报名表</button>
+  <button class="sim-template-btn" onclick="playTemplateDemo(1)" style="border-style:dashed">演示1</button>
+  <button class="sim-template-btn" onclick="loadSimTemplate(2)">志愿者申请表</button>
+  <button class="sim-template-btn" onclick="playTemplateDemo(2)" style="border-style:dashed">演示2</button>
+  <button class="sim-template-btn" onclick="loadSimTemplate(3)">满意度调查表</button>
+  <button class="sim-template-btn" onclick="playTemplateDemo(3)" style="border-style:dashed">演示3</button>
+  <button class="sim-template-btn" onclick="loadSimTemplate(4)">素材提交表</button>
+  <button class="sim-template-btn" onclick="playTemplateDemo(4)" style="border-style:dashed">演示4</button>
+  <button class="sim-template-btn" onclick="loadSimTemplate(5)">综合组件示例表</button>
+  <button class="sim-template-btn" onclick="playTemplateDemo(5)" style="border-style:dashed">演示5</button>
+</div>
+
+<div class="simulator-container">
+  <!-- Left: Component Panel -->
+  <div class="sim-left">
+    <h4>组件面板</h4>
+    <div class="sim-comp-group">
+      <div class="sim-comp-group-title">输入型组件</div>
+      <button class="sim-comp-btn" data-comp-type="input" onclick="addSimComp('input')"><span class="sim-icon">T</span>单行文本</button>
+      <button class="sim-comp-btn" data-comp-type="textarea" onclick="addSimComp('textarea')"><span class="sim-icon">T+</span>多行文本</button>
+      <button class="sim-comp-btn" data-comp-type="password" onclick="addSimComp('password')"><span class="sim-icon">*</span>密码</button>
+      <button class="sim-comp-btn" data-comp-type="counter" onclick="addSimComp('counter')"><span class="sim-icon">#</span>计数器</button>
+    </div>
+    <div class="sim-comp-group">
+      <div class="sim-comp-group-title">选择型组件</div>
+      <button class="sim-comp-btn" data-comp-type="select" onclick="addSimComp('select')"><span class="sim-icon">V</span>下拉选择</button>
+      <button class="sim-comp-btn" data-comp-type="cascader" onclick="addSimComp('cascader')"><span class="sim-icon">&gt;&gt;</span>级联选择</button>
+      <button class="sim-comp-btn" data-comp-type="radio" onclick="addSimComp('radio')"><span class="sim-icon">&#x25C9;</span>单选框组</button>
+      <button class="sim-comp-btn" data-comp-type="checkbox" onclick="addSimComp('checkbox')"><span class="sim-icon">&#x2611;</span>多选框组</button>
+      <button class="sim-comp-btn" data-comp-type="switch" onclick="addSimComp('switch')"><span class="sim-icon">~</span>开关</button>
+      <button class="sim-comp-btn" data-comp-type="slider" onclick="addSimComp('slider')"><span class="sim-icon">&#x2194;</span>滑块</button>
+      <button class="sim-comp-btn" data-comp-type="time" onclick="addSimComp('time')"><span class="sim-icon">时</span>时间选择</button>
+      <button class="sim-comp-btn" data-comp-type="timerange" onclick="addSimComp('timerange')"><span class="sim-icon">时~</span>时间范围</button>
+      <button class="sim-comp-btn" data-comp-type="date" onclick="addSimComp('date')"><span class="sim-icon">日</span>日期选择</button>
+      <button class="sim-comp-btn" data-comp-type="daterange" onclick="addSimComp('daterange')"><span class="sim-icon">日~</span>日期范围</button>
+      <button class="sim-comp-btn" data-comp-type="rate" onclick="addSimComp('rate')"><span class="sim-icon">*</span>评分</button>
+      <button class="sim-comp-btn" data-comp-type="color" onclick="addSimComp('color')"><span class="sim-icon">C</span>颜色选择</button>
+      <button class="sim-comp-btn" data-comp-type="upload" onclick="addSimComp('upload')"><span class="sim-icon">^</span>上传</button>
+    </div>
+    <div class="sim-comp-group">
+      <div class="sim-comp-group-title">布局型组件</div>
+      <button class="sim-comp-btn" data-comp-type="row" onclick="addSimComp('row')"><span class="sim-icon">[=]</span>行容器</button>
+      <button class="sim-comp-btn" data-comp-type="button" onclick="addSimComp('button')"><span class="sim-icon">O</span>按钮</button>
+    </div>
+  </div>
+
+  <!-- Center: Canvas -->
+  <div class="sim-center">
+    <div class="sim-center-header">
+      <input type="text" id="simFormName" placeholder="请输入表单模板名称..." value="">
+      <button class="sim-clear-btn" onclick="clearSimCanvas()">清空</button>
+    </div>
+    <div class="sim-canvas empty" id="simCanvas">
+      点击左侧组件或加载模板开始体验
+    </div>
+  </div>
+
+  <!-- Right: Property Panel -->
+  <div class="sim-right" id="simProps">
+    <div class="sim-prop-tabs">
+      <button class="sim-prop-tab active" onclick="switchPropTab('comp')">组件属性</button>
+      <button class="sim-prop-tab" onclick="switchPropTab('form')">表单属性</button>
+    </div>
+    <div id="simPropsContent" style="font-size:12px;color:var(--gray-400)">
+      请点击画布中的组件查看属性
+    </div>
+    <div id="simFormPropsContent" style="display:none">
+      <div class="sim-prop-row"><label>表单名</label><div class="sim-prop-help">表单的引用名称，代码中用来操作表单</div><input type="text" value="elForm" onchange="simFormGlobal.formName=this.value"></div>
+      <div class="sim-prop-row"><label>表单模型</label><div class="sim-prop-help">表单数据绑定的对象名，所有字段值存这里</div><input type="text" value="formData" onchange="simFormGlobal.formModel=this.value"></div>
+      <div class="sim-prop-row"><label>校验模型</label><div class="sim-prop-help">校验规则对象名，必填和格式校验都在这里</div><input type="text" value="rules" onchange="simFormGlobal.rulesModel=this.value"></div>
+      <div class="sim-prop-row"><label>表单尺寸</label><div class="sim-prop-help">所有组件的统一大小</div><select onchange="simFormGlobal.size=this.value;renderSimCanvas()"><option value="medium" selected>中等</option><option value="small">较小</option><option value="mini">迷你</option></select></div>
+      <div class="sim-prop-row"><label>标签对齐</label><div class="sim-prop-help">标题文字的对齐方式</div><select onchange="simFormGlobal.labelPosition=this.value;renderSimCanvas()"><option value="right" selected>右对齐</option><option value="left">左对齐</option><option value="top">顶部对齐</option></select></div>
+      <div class="sim-prop-row"><label>标签宽度</label><div class="sim-prop-help">标题占多宽，单位px</div><input type="number" value="100" onchange="simFormGlobal.labelWidth=Number(this.value);renderSimCanvas()"></div>
+      <div class="sim-prop-row"><label>栅格间隔</label><div class="sim-prop-help">组件之间的间距，单位px</div><input type="number" value="15" onchange="simFormGlobal.gutter=Number(this.value);renderSimCanvas()"></div>
+      <div class="sim-prop-row"><label><input type="checkbox" onchange="simFormGlobal.disabled=this.checked;renderSimCanvas()">禁用表单</label><div class="sim-prop-help">开启后全部组件变灰不可操作</div></div>
+      <div class="sim-prop-row"><label><input type="checkbox" checked onchange="simFormGlobal.formBtns=this.checked;renderSimCanvas()">表单按钮</label><div class="sim-prop-help">是否显示提交和重置按钮</div></div>
+      <div class="sim-prop-row"><label><input type="checkbox" onchange="simFormGlobal.showBorder=this.checked;renderSimCanvas()">显示组件边框</label><div class="sim-prop-help">给每个组件显示边框轮廓</div></div>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- Section: Components -->
+<section id="components">
+<h2>四、组件完整说明</h2>
+
+<div class="filter-bar">
+  <span class="filter-chip active" data-filter="all">全部 (19)</span>
+  <span class="filter-chip" data-filter="input">输入型 (4)</span>
+  <span class="filter-chip" data-filter="select">选择型 (13)</span>
+  <span class="filter-chip" data-filter="layout">布局型 (2)</span>
+</div>
+
+<!-- ========== INPUT TYPE COMPONENTS ========== -->
+
+<!-- 1. 单行文本 -->
+<div class="card component-card" id="comp-input-text" data-type="input">
+  <div class="component-title" onclick="toggleComponent(this)">
+    <div class="card-icon input">T</div>
+    <h3>单行文本</h3>
+    <span class="tag input-tag">输入型</span>
+    <span class="toggle-icon">&#x25B6;</span>
+  </div>
+  <div class="component-body">
+    <div class="component-desc">
+      <strong>用途：</strong>用于收集一行简短文字信息，如姓名、手机号、邮箱等。支持前后缀、图标、字数限制、正则校验等丰富配置。<br>
+      <strong>使用模板：</strong>
+      <span class="template-ref">活动报名表</span>
+      <span class="template-ref">志愿者申请表</span>
+      <span class="template-ref">素材提交表</span>
+    </div>
+    <table class="prop-table">
+      <thead><tr><th>属性名称</th><th>类型</th><th>默认值</th><th>说明</th></tr></thead>
+      <tbody>
+        <tr><td class="prop-name">组件类型</td><td class="prop-type">下拉选择</td><td class="prop-default">单行文本</td><td>定义该组件的渲染类型，不可更改为其他大类。</td></tr>
+        <tr><td class="prop-name">字段名</td><td class="prop-type">文本</td><td class="prop-default">field10X</td><td>绑定到表单数据模型(v-model)的字段标识，须在表单内唯一。例如 <code>userName</code>、<code>mobile</code>。</td></tr>
+        <tr><td class="prop-name">标题</td><td class="prop-type">文本</td><td class="prop-default">单行文本</td><td>显示在组件左侧（或上方）的标签文字，如"姓名"、"手机号"。</td></tr>
+        <tr><td class="prop-name">占位提示</td><td class="prop-type">文本</td><td class="prop-default">请输入XXX</td><td>输入框为空时显示的灰色提示文字，引导用户输入。</td></tr>
+        <tr><td class="prop-name">表单栅格</td><td class="prop-type">滑块 1-24</td><td class="prop-default">24</td><td>基于24栅格系统控制组件占用的宽度。24=整行，12=半行，8=三分之一行。</td></tr>
+        <tr><td class="prop-name">标签宽度</td><td class="prop-type">数字</td><td class="prop-default">跟随表单</td><td>覆盖表单全局的标签宽度设置，单位px。留空则跟随表单属性中的设置。</td></tr>
+        <tr><td class="prop-name">组件宽度</td><td class="prop-type">文本</td><td class="prop-default">100%</td><td>输入框本身的宽度，支持百分比和像素值。如 <code>100%</code> 或 <code>300px</code>。</td></tr>
+        <tr><td class="prop-name">默认值</td><td class="prop-type">文本</td><td class="prop-default">空</td><td>组件的初始填充值，表单渲染后即显示此值。</td></tr>
+        <tr><td class="prop-name">前缀</td><td class="prop-type">文本</td><td class="prop-default">空</td><td>在输入框前方显示的文字，如"http://"。</td></tr>
+        <tr><td class="prop-name">后缀</td><td class="prop-type">文本</td><td class="prop-default">空</td><td>在输入框后方显示的文字，如"元"、"人"。</td></tr>
+        <tr><td class="prop-name">前图标</td><td class="prop-type">图标选择</td><td class="prop-default">空</td><td>在输入框前方显示的Element UI图标，如 <code>el-icon-mobile</code>（手机图标）、<code>el-icon-search</code>（搜索图标）。可手动输入图标类名或点击"选择"按钮从图标库中选取。</td></tr>
+        <tr><td class="prop-name">后图标</td><td class="prop-type">图标选择</td><td class="prop-default">空</td><td>在输入框后方显示的图标，用法同前图标。</td></tr>
+        <tr><td class="prop-name">最多输入</td><td class="prop-type">数字</td><td class="prop-default">空（不限制）</td><td>限制用户可输入的最大字符数。如手机号设为11，身份证设为18。</td></tr>
+        <tr><td class="prop-name">输入统计</td><td class="prop-type">开关</td><td class="prop-default">关闭</td><td>开启后在输入框右下角显示已输入/最大字符数（如"5/11"），需配合"最多输入"使用。</td></tr>
+        <tr><td class="prop-name">能否清空</td><td class="prop-type">开关</td><td class="prop-default">开启</td><td>开启后输入框有内容时，右侧显示清空按钮(x)，一键清除输入。</td></tr>
+        <tr><td class="prop-name">是否只读</td><td class="prop-type">开关</td><td class="prop-default">关闭</td><td>开启后输入框可显示内容但不可编辑，适合展示预填数据。</td></tr>
+        <tr><td class="prop-name">是否禁用</td><td class="prop-type">开关</td><td class="prop-default">关闭</td><td>开启后组件变为灰色不可操作状态。</td></tr>
+        <tr><td class="prop-name">是否必填</td><td class="prop-type">开关</td><td class="prop-default">开启</td><td>开启后标题前显示红色星号(*)，提交时检查是否为空。</td></tr>
+        <tr><td class="prop-name">正则校验</td><td class="prop-type">规则组</td><td class="prop-default">空</td><td>点击"添加规则"可设置正则表达式校验。每条规则包含：<br><strong>表达式</strong>：正则表达式，如 <code>/^1(3|4|5|7|8|9)\d{9}$/</code>（手机号）<br><strong>错误提示</strong>：校验不通过时的提示文字，如"手机号格式错误"。</td></tr>
+      </tbody>
+    </table>
+    <div class="scenario-box">
+      <strong>使用场景举例：</strong>在"活动报名表"模板中，"手机号"字段使用了单行文本组件，配置了前图标 <code>el-icon-mobile</code>、最多输入11个字符、开启输入统计、并添加了手机号正则校验规则。
+    </div>
+  </div>
+</div>
+
+<!-- 2. 多行文本 -->
+<div class="card component-card" id="comp-textarea" data-type="input">
+  <div class="component-title" onclick="toggleComponent(this)">
+    <div class="card-icon input">T+</div>
+    <h3>多行文本</h3>
+    <span class="tag input-tag">输入型</span>
+    <span class="toggle-icon">&#x25B6;</span>
+  </div>
+  <div class="component-body">
+    <div class="component-desc">
+      <strong>用途：</strong>用于收集较长的文字内容，如自我介绍、申请理由、建议反馈等。支持设置显示行数范围。<br>
+      <strong>使用模板：</strong>
+      <span class="template-ref">活动报名表</span>
+      <span class="template-ref">志愿者申请表</span>
+      <span class="template-ref">满意度调查表</span>
+    </div>
+    <table class="prop-table">
+      <thead><tr><th>属性名称</th><th>类型</th><th>默认值</th><th>说明</th></tr></thead>
+      <tbody>
+        <tr><td class="prop-name">组件类型</td><td class="prop-type">下拉选择</td><td class="prop-default">多行文本</td><td>不可更改。</td></tr>
+        <tr><td class="prop-name">字段名</td><td class="prop-type">文本</td><td class="prop-default">field10X</td><td>绑定v-model的字段标识，须唯一。</td></tr>
+        <tr><td class="prop-name">标题</td><td class="prop-type">文本</td><td class="prop-default">多行文本</td><td>显示的标签文字。</td></tr>
+        <tr><td class="prop-name">占位提示</td><td class="prop-type">文本</td><td class="prop-default">请输入XXX</td><td>空状态提示文字。</td></tr>
+        <tr><td class="prop-name">表单栅格</td><td class="prop-type">滑块 1-24</td><td class="prop-default">24</td><td>组件占用宽度。</td></tr>
+        <tr><td class="prop-name">标签宽度</td><td class="prop-type">数字</td><td class="prop-default">跟随表单</td><td>覆盖全局标签宽度。</td></tr>
+        <tr><td class="prop-name">组件宽度</td><td class="prop-type">文本</td><td class="prop-default">100%</td><td>文本域宽度。</td></tr>
+        <tr><td class="prop-name">默认值</td><td class="prop-type">文本</td><td class="prop-default">空</td><td>初始填充值。</td></tr>
+        <tr><td class="prop-name">最小行数</td><td class="prop-type">数字</td><td class="prop-default">4</td><td>文本域的最小显示行数，即初始高度。</td></tr>
+        <tr><td class="prop-name">最大行数</td><td class="prop-type">数字</td><td class="prop-default">4</td><td>文本域的最大显示行数，超过后出现滚动条。设为更大值可让文本域自动展开。</td></tr>
+        <tr><td class="prop-name">最多输入</td><td class="prop-type">数字</td><td class="prop-default">空</td><td>限制最大字符数。</td></tr>
+        <tr><td class="prop-name">输入统计</td><td class="prop-type">开关</td><td class="prop-default">关闭</td><td>显示字符计数。</td></tr>
+        <tr><td class="prop-name">能否清空</td><td class="prop-type">开关</td><td class="prop-default">开启</td><td>显示清空按钮。</td></tr>
+        <tr><td class="prop-name">是否只读</td><td class="prop-type">开关</td><td class="prop-default">关闭</td><td>只读不可编辑。</td></tr>
+        <tr><td class="prop-name">是否禁用</td><td class="prop-type">开关</td><td class="prop-default">关闭</td><td>灰色不可操作。</td></tr>
+        <tr><td class="prop-name">是否必填</td><td class="prop-type">开关</td><td class="prop-default">开启</td><td>提交时校验非空。</td></tr>
+        <tr><td class="prop-name">正则校验</td><td class="prop-type">规则组</td><td class="prop-default">空</td><td>自定义正则校验规则。</td></tr>
+      </tbody>
+    </table>
+    <div class="scenario-box">
+      <strong>使用场景举例：</strong>在"活动报名表"中，"自我介绍"字段设置了最小3行、最大6行，让文本框在用户输入时自动扩展。在"满意度调查表"中，"改进建议"用多行文本收集用户反馈。
+    </div>
+  </div>
+</div>
+
+<!-- 3. 密码 -->
+<div class="card component-card" id="comp-password" data-type="input">
+  <div class="component-title" onclick="toggleComponent(this)">
+    <div class="card-icon input">*</div>
+    <h3>密码</h3>
+    <span class="tag input-tag">输入型</span>
+    <span class="toggle-icon">&#x25B6;</span>
+  </div>
+  <div class="component-body">
+    <div class="component-desc">
+      <strong>用途：</strong>用于安全地输入密码或敏感信息，输入内容默认以圆点(&#x2022;&#x2022;&#x2022;)显示。属性与单行文本基本一致。<br>
+      <strong>使用模板：</strong>
+      <span class="template-ref">综合组件示例表</span>
+    </div>
+    <table class="prop-table">
+      <thead><tr><th>属性名称</th><th>类型</th><th>默认值</th><th>说明</th></tr></thead>
+      <tbody>
+        <tr><td class="prop-name">组件类型</td><td class="prop-type">下拉选择</td><td class="prop-default">密码</td><td>渲染为 <code>type="password"</code> 的输入框。</td></tr>
+        <tr><td class="prop-name">字段名</td><td class="prop-type">文本</td><td class="prop-default">field10X</td><td>绑定字段标识。</td></tr>
+        <tr><td class="prop-name">标题</td><td class="prop-type">文本</td><td class="prop-default">密码</td><td>如"登录密码"、"确认密码"。</td></tr>
+        <tr><td class="prop-name">占位提示</td><td class="prop-type">文本</td><td class="prop-default">请输入密码</td><td>提示用户输入密码。</td></tr>
+        <tr><td class="prop-name">表单栅格</td><td class="prop-type">滑块 1-24</td><td class="prop-default">24</td><td>占用宽度。</td></tr>
+        <tr><td class="prop-name">标签宽度</td><td class="prop-type">数字</td><td class="prop-default">跟随表单</td><td>覆盖全局。</td></tr>
+        <tr><td class="prop-name">组件宽度</td><td class="prop-type">文本</td><td class="prop-default">100%</td><td>输入框宽度。</td></tr>
+        <tr><td class="prop-name">默认值</td><td class="prop-type">文本</td><td class="prop-default">空</td><td>通常不设置默认密码。</td></tr>
+        <tr><td class="prop-name">前缀</td><td class="prop-type">文本</td><td class="prop-default">空</td><td>输入框前方文字。</td></tr>
+        <tr><td class="prop-name">后缀</td><td class="prop-type">文本</td><td class="prop-default">空</td><td>输入框后方文字。</td></tr>
+        <tr><td class="prop-name">前图标</td><td class="prop-type">图标选择</td><td class="prop-default">空</td><td>常用 <code>el-icon-lock</code> 锁图标。</td></tr>
+        <tr><td class="prop-name">后图标</td><td class="prop-type">图标选择</td><td class="prop-default">空</td><td>可设显示/隐藏密码图标。</td></tr>
+        <tr><td class="prop-name">最多输入</td><td class="prop-type">数字</td><td class="prop-default">空</td><td>限制密码最大长度。</td></tr>
+        <tr><td class="prop-name">输入统计</td><td class="prop-type">开关</td><td class="prop-default">关闭</td><td>显示字符计数。</td></tr>
+        <tr><td class="prop-name">能否清空</td><td class="prop-type">开关</td><td class="prop-default">开启</td><td>显示清空按钮。</td></tr>
+        <tr><td class="prop-name">是否只读</td><td class="prop-type">开关</td><td class="prop-default">关闭</td><td>只读模式。</td></tr>
+        <tr><td class="prop-name">是否禁用</td><td class="prop-type">开关</td><td class="prop-default">关闭</td><td>禁用状态。</td></tr>
+        <tr><td class="prop-name">是否必填</td><td class="prop-type">开关</td><td class="prop-default">开启</td><td>校验非空。</td></tr>
+        <tr><td class="prop-name">正则校验</td><td class="prop-type">规则组</td><td class="prop-default">空</td><td>可添加密码强度校验，如 <code>/^.{6,20}$/</code> 要求6-20位。</td></tr>
+      </tbody>
+    </table>
+    <div class="scenario-box">
+      <strong>使用场景举例：</strong>在"综合组件示例表"中，"登录密码"字段设置了前图标 <code>el-icon-lock</code>，并设置占位提示为"请输入6-20位密码"，让用户清楚密码要求。
+    </div>
+  </div>
+</div>
+
+<!-- 4. 计数器 -->
+<div class="card component-card" id="comp-counter" data-type="input">
+  <div class="component-title" onclick="toggleComponent(this)">
+    <div class="card-icon input">#</div>
+    <h3>计数器</h3>
+    <span class="tag input-tag">输入型</span>
+    <span class="toggle-icon">&#x25B6;</span>
+  </div>
+  <div class="component-body">
+    <div class="component-desc">
+      <strong>用途：</strong>用于输入数字值，提供加减按钮方便调整。适合人数、数量、金额等数字类字段。<br>
+      <strong>使用模板：</strong>
+      <span class="template-ref">综合组件示例表</span>
+    </div>
+    <table class="prop-table">
+      <thead><tr><th>属性名称</th><th>类型</th><th>默认值</th><th>说明</th></tr></thead>
+      <tbody>
+        <tr><td class="prop-name">组件类型</td><td class="prop-type">下拉选择</td><td class="prop-default">计数器</td><td>渲染为带加减按钮的数字输入框。</td></tr>
+        <tr><td class="prop-name">字段名</td><td class="prop-type">文本</td><td class="prop-default">field10X</td><td>绑定字段标识。</td></tr>
+        <tr><td class="prop-name">标题</td><td class="prop-type">文本</td><td class="prop-default">计数器</td><td>如"参与人数"、"订购数量"。</td></tr>
+        <tr><td class="prop-name">占位提示</td><td class="prop-type">文本</td><td class="prop-default">计数器</td><td>提示文字。</td></tr>
+        <tr><td class="prop-name">表单栅格</td><td class="prop-type">滑块 1-24</td><td class="prop-default">24</td><td>占用宽度。</td></tr>
+        <tr><td class="prop-name">标签宽度</td><td class="prop-type">数字</td><td class="prop-default">跟随表单</td><td>覆盖全局标签宽度。</td></tr>
+        <tr><td class="prop-name">默认值</td><td class="prop-type">数字</td><td class="prop-default">空</td><td>初始数字值。</td></tr>
+        <tr><td class="prop-name">精度</td><td class="prop-type">数字(步进器)</td><td class="prop-default">0</td><td>小数位数精度。0表示整数，1表示保留一位小数，2表示保留两位小数。</td></tr>
+        <tr><td class="prop-name">按钮位置</td><td class="prop-type">单选</td><td class="prop-default">默认</td><td><strong>默认</strong>：加减按钮在左右两侧。<strong>右侧</strong>：加减按钮都在右侧上下排列，更紧凑。</td></tr>
+        <tr><td class="prop-name">严格步数</td><td class="prop-type">开关</td><td class="prop-default">关闭</td><td>开启后只能输入步长的倍数值。例如步长为5时，只能输入0、5、10、15等。</td></tr>
+        <tr><td class="prop-name">是否禁用</td><td class="prop-type">开关</td><td class="prop-default">关闭</td><td>禁用状态。</td></tr>
+        <tr><td class="prop-name">是否必填</td><td class="prop-type">开关</td><td class="prop-default">开启</td><td>校验非空。</td></tr>
+        <tr><td class="prop-name">正则校验</td><td class="prop-type">规则组</td><td class="prop-default">空</td><td>数字校验规则。</td></tr>
+      </tbody>
+    </table>
+    <div class="scenario-box">
+      <strong>使用场景举例：</strong>在"综合组件示例表"中，"参与人数"字段使用了计数器，设置按钮位置为"右侧"使界面更紧凑，开启"严格步数"确保只能输入整数。
+    </div>
+  </div>
+</div>
+
+<!-- ========== SELECT TYPE COMPONENTS ========== -->
+
+<!-- 5. 下拉选择 -->
+<div class="card component-card select-type" id="comp-select" data-type="select">
+  <div class="component-title" onclick="toggleComponent(this)">
+    <div class="card-icon select">V</div>
+    <h3>下拉选择</h3>
+    <span class="tag select-tag">选择型</span>
+    <span class="toggle-icon">&#x25B6;</span>
+  </div>
+  <div class="component-body">
+    <div class="component-desc">
+      <strong>用途：</strong>提供下拉菜单让用户从预定义选项中选择一个或多个值。适合学校、城市、类别等有固定选项的字段。<br>
+      <strong>使用模板：</strong>
+      <span class="template-ref">活动报名表</span>
+    </div>
+    <table class="prop-table">
+      <thead><tr><th>属性名称</th><th>类型</th><th>默认值</th><th>说明</th></tr></thead>
+      <tbody>
+        <tr><td class="prop-name">组件类型</td><td class="prop-type">下拉选择</td><td class="prop-default">下拉选择</td><td>渲染为Element UI的Select组件。</td></tr>
+        <tr><td class="prop-name">字段名</td><td class="prop-type">文本</td><td class="prop-default">field10X</td><td>绑定字段标识。</td></tr>
+        <tr><td class="prop-name">标题</td><td class="prop-type">文本</td><td class="prop-default">下拉选择</td><td>如"学校"、"年级"。</td></tr>
+        <tr><td class="prop-name">占位提示</td><td class="prop-type">文本</td><td class="prop-default">请选择XXX</td><td>下拉框空状态提示。</td></tr>
+        <tr><td class="prop-name">表单栅格</td><td class="prop-type">滑块 1-24</td><td class="prop-default">24</td><td>占用宽度。</td></tr>
+        <tr><td class="prop-name">标签宽度</td><td class="prop-type">数字</td><td class="prop-default">跟随表单</td><td>覆盖全局。</td></tr>
+        <tr><td class="prop-name">组件宽度</td><td class="prop-type">文本</td><td class="prop-default">100%</td><td>下拉框宽度。</td></tr>
+        <tr><td class="prop-name">默认值</td><td class="prop-type">文本</td><td class="prop-default">空</td><td>初始选中值。</td></tr>
+        <tr><td class="prop-name">选项列表</td><td class="prop-type">可编辑列表</td><td class="prop-default">选项一/选项二</td><td>每个选项包含"选项名"（显示文字）和"选项值"（提交数据）。可拖拽排序。</td></tr>
+        <tr><td class="prop-name">添加选项</td><td class="prop-type">按钮</td><td class="prop-default">-</td><td>点击在列表末尾添加新选项。每个选项右侧有删除按钮。</td></tr>
+        <tr><td class="prop-name">能否清空</td><td class="prop-type">开关</td><td class="prop-default">开启</td><td>允许清除已选值。</td></tr>
+        <tr><td class="prop-name">多选文件</td><td class="prop-type">开关</td><td class="prop-default">关闭</td><td>开启后允许选择多个值（注：此处界面显示为"多选文件"，实际功能为多选）。</td></tr>
+        <tr><td class="prop-name">是否禁用</td><td class="prop-type">开关</td><td class="prop-default">关闭</td><td>禁用状态。</td></tr>
+        <tr><td class="prop-name">是否可搜索</td><td class="prop-type">开关</td><td class="prop-default">关闭</td><td>开启后可在下拉框中输入关键字搜索过滤选项，适合选项较多的场景。</td></tr>
+        <tr><td class="prop-name">是否多选</td><td class="prop-type">开关</td><td class="prop-default">关闭</td><td>开启后允许选择多个选项，选中项以标签形式显示。</td></tr>
+        <tr><td class="prop-name">是否必填</td><td class="prop-type">开关</td><td class="prop-default">开启</td><td>校验必选。</td></tr>
+        <tr><td class="prop-name">正则校验</td><td class="prop-type">规则组</td><td class="prop-default">空</td><td>自定义校验。</td></tr>
+      </tbody>
+    </table>
+    <div class="scenario-box">
+      <strong>使用场景举例：</strong>在"活动报名表"中，"学校"字段使用下拉选择并开启"是否可搜索"，用户可输入关键字快速定位到自己的学校。
+    </div>
+  </div>
+</div>
+
+<!-- 6-17: 其余选择型组件 -->
+<div class="card component-card select-type" id="comp-cascader" data-type="select">
+  <div class="component-title" onclick="toggleComponent(this)">
+    <div class="card-icon select">&gt;&gt;</div>
+    <h3>级联选择</h3>
+    <span class="tag select-tag">选择型</span>
+    <span class="toggle-icon">&#x25B6;</span>
+  </div>
+  <div class="component-body">
+    <div class="component-desc">
+      <strong>用途：</strong>用于多层级数据的逐级选择，如省/市/区地址选择、部门/岗位选择等。数据可以是动态API获取或静态配置。<br>
+      <strong>使用模板：</strong><span class="template-ref">综合组件示例表</span>
+    </div>
+    <table class="prop-table">
+      <thead><tr><th>属性名称</th><th>类型</th><th>默认值</th><th>说明</th></tr></thead>
+      <tbody>
+        <tr><td class="prop-name">组件类型</td><td class="prop-type">下拉选择</td><td class="prop-default">级联选择</td><td>渲染为Cascader级联面板。</td></tr>
+        <tr><td class="prop-name">字段名</td><td class="prop-type">文本</td><td class="prop-default">field10X</td><td>绑定v-model的字段标识，须唯一。如 <code>region</code>。</td></tr>
+        <tr><td class="prop-name">标题</td><td class="prop-type">文本</td><td class="prop-default">级联选择</td><td>显示的标签文字，如"所在地区"。</td></tr>
+        <tr><td class="prop-name">占位提示</td><td class="prop-type">文本</td><td class="prop-default">请选择XXX</td><td>下拉框空状态提示文字。</td></tr>
+        <tr><td class="prop-name">表单栅格</td><td class="prop-type">滑块 1-24</td><td class="prop-default">24</td><td>组件占用宽度。</td></tr>
+        <tr><td class="prop-name">标签宽度</td><td class="prop-type">数字</td><td class="prop-default">跟随表单</td><td>覆盖全局标签宽度。</td></tr>
+        <tr><td class="prop-name">组件宽度</td><td class="prop-type">文本</td><td class="prop-default">100%</td><td>级联选择器宽度。</td></tr>
+        <tr><td class="prop-name">默认值</td><td class="prop-type">文本</td><td class="prop-default">空</td><td>初始选中路径。</td></tr>
+        <tr><td class="prop-name">选项分隔符</td><td class="prop-type">文本</td><td class="prop-default">/</td><td>多级展示时的分隔符号，如"浙江省 / 杭州市 / 西湖区"。</td></tr>
+        <tr><td class="prop-name">数据类型</td><td class="prop-type">单选</td><td class="prop-default">动态数据</td><td><strong>动态数据</strong>：从后端API动态获取选项树。<strong>静态数据</strong>：手动配置固定的选项树。</td></tr>
+        <tr><td class="prop-name">标签键名</td><td class="prop-type">文本</td><td class="prop-default">label</td><td>数据中用于显示文字的字段名。</td></tr>
+        <tr><td class="prop-name">值键名</td><td class="prop-type">文本</td><td class="prop-default">value</td><td>数据中用于提交值的字段名。</td></tr>
+        <tr><td class="prop-name">子级键名</td><td class="prop-type">文本</td><td class="prop-default">children</td><td>数据中子节点数组的字段名。</td></tr>
+        <tr><td class="prop-name">是否多选</td><td class="prop-type">开关</td><td class="prop-default">关闭</td><td>允许选择多个叶子节点。</td></tr>
+        <tr><td class="prop-name">展示全路径</td><td class="prop-type">开关</td><td class="prop-default">开启</td><td>开启后显示完整路径如"浙江 / 杭州 / 西湖"，关闭则只显示最后一级"西湖"。</td></tr>
+        <tr><td class="prop-name">可否筛选</td><td class="prop-type">开关</td><td class="prop-default">关闭</td><td>开启后可输入关键字搜索选项。</td></tr>
+        <tr><td class="prop-name">能否清空</td><td class="prop-type">开关</td><td class="prop-default">开启</td><td>允许清除已选。</td></tr>
+        <tr><td class="prop-name">是否禁用</td><td class="prop-type">开关</td><td class="prop-default">关闭</td><td>禁用状态，不可操作。</td></tr>
+        <tr><td class="prop-name">是否必填</td><td class="prop-type">开关</td><td class="prop-default">开启</td><td>提交时校验非空。</td></tr>
+        <tr><td class="prop-name">正则校验</td><td class="prop-type">规则组</td><td class="prop-default">空</td><td>自定义校验规则。</td></tr>
+      </tbody>
+    </table>
+    <div class="scenario-box">
+      <strong>使用场景举例：</strong>在"综合组件示例表"中，"所在地区"使用级联选择并开启了"可否筛选"，用户可以快速搜索定位到自己所在的地区。
+    </div>
+  </div>
+</div>
+
+<div class="card component-card select-type" id="comp-radio" data-type="select">
+  <div class="component-title" onclick="toggleComponent(this)">
+    <div class="card-icon select">&#x25C9;</div>
+    <h3>单选框组</h3>
+    <span class="tag select-tag">选择型</span>
+    <span class="toggle-icon">&#x25B6;</span>
+  </div>
+  <div class="component-body">
+    <div class="component-desc">
+      <strong>用途：</strong>用于在少量固定选项中选择一个值，选项直接展示在页面上（不需要下拉）。适合性别、是/否等场景。<br>
+      <strong>使用模板：</strong><span class="template-ref">综合组件示例表</span>
+    </div>
+    <table class="prop-table">
+      <thead><tr><th>属性名称</th><th>类型</th><th>默认值</th><th>说明</th></tr></thead>
+      <tbody>
+        <tr><td class="prop-name">组件类型</td><td class="prop-type">下拉选择</td><td class="prop-default">单选框组</td><td>渲染为Radio单选按钮组。</td></tr>
+        <tr><td class="prop-name">字段名</td><td class="prop-type">文本</td><td class="prop-default">field10X</td><td>绑定v-model的字段标识，须唯一。如 <code>gender</code>。</td></tr>
+        <tr><td class="prop-name">标题</td><td class="prop-type">文本</td><td class="prop-default">单选框组</td><td>显示的标签文字，如"性别"、"是否参加"。</td></tr>
+        <tr><td class="prop-name">表单栅格</td><td class="prop-type">滑块 1-24</td><td class="prop-default">24</td><td>组件占用宽度。24=整行，12=半行。</td></tr>
+        <tr><td class="prop-name">标签宽度</td><td class="prop-type">数字</td><td class="prop-default">跟随表单</td><td>覆盖全局标签宽度，单位px。</td></tr>
+        <tr><td class="prop-name">默认值</td><td class="prop-type">文本</td><td class="prop-default">空</td><td>初始选中的选项值。</td></tr>
+        <tr><td class="prop-name">选项列表</td><td class="prop-type">可编辑列表</td><td class="prop-default">选项一/选项二</td><td>每项包含"选项名"和"选项值"，可增删排序。</td></tr>
+        <tr><td class="prop-name">添加选项</td><td class="prop-type">按钮</td><td class="prop-default">-</td><td>新增一个选项。</td></tr>
+        <tr><td class="prop-name">选项样式</td><td class="prop-type">单选</td><td class="prop-default">默认</td><td><strong>默认</strong>：经典圆形单选按钮样式。<strong>按钮</strong>：选项渲染为可点击的按钮形式，视觉更突出。</td></tr>
+        <tr><td class="prop-name">是否带边框</td><td class="prop-type">开关</td><td class="prop-default">关闭</td><td>仅"默认"样式时出现，给选项添加边框。</td></tr>
+        <tr><td class="prop-name">选项尺寸</td><td class="prop-type">单选</td><td class="prop-default">中等</td><td>仅"按钮"样式时出现。<strong>中等</strong>、<strong>较小</strong>、<strong>迷你</strong>三种尺寸。</td></tr>
+        <tr><td class="prop-name">是否禁用</td><td class="prop-type">开关</td><td class="prop-default">关闭</td><td>开启后组件变为灰色不可操作状态。</td></tr>
+        <tr><td class="prop-name">是否必填</td><td class="prop-type">开关</td><td class="prop-default">开启</td><td>开启后标题前显示红色星号(*)，提交时检查是否为空。</td></tr>
+        <tr><td class="prop-name">正则校验</td><td class="prop-type">规则组</td><td class="prop-default">空</td><td>自定义正则校验规则。</td></tr>
+      </tbody>
+    </table>
+    <div class="scenario-box">
+      <strong>使用场景举例：</strong>在"综合组件示例表"中，"性别"字段使用单选框组并切换为"按钮"样式，只有"男"和"女"两个选项，以按钮形式直观展示。
+    </div>
+  </div>
+</div>
+
+<div class="card component-card select-type" id="comp-checkbox" data-type="select">
+  <div class="component-title" onclick="toggleComponent(this)">
+    <div class="card-icon select">&#x2611;</div>
+    <h3>多选框组</h3>
+    <span class="tag select-tag">选择型</span>
+    <span class="toggle-icon">&#x25B6;</span>
+  </div>
+  <div class="component-body">
+    <div class="component-desc">
+      <strong>用途：</strong>用于从多个选项中选择一个或多个值。适合兴趣爱好、技能特长、满意项目等多选场景。<br>
+      <strong>使用模板：</strong>
+      <span class="template-ref">志愿者申请表</span>
+      <span class="template-ref">满意度调查表</span>
+    </div>
+    <table class="prop-table">
+      <thead><tr><th>属性名称</th><th>类型</th><th>默认值</th><th>说明</th></tr></thead>
+      <tbody>
+        <tr><td class="prop-name">组件类型</td><td class="prop-type">下拉选择</td><td class="prop-default">多选框组</td><td>渲染为Checkbox多选按钮组。</td></tr>
+        <tr><td class="prop-name">字段名</td><td class="prop-type">文本</td><td class="prop-default">field10X</td><td>绑定v-model的字段标识，须唯一。如 <code>skills</code>。</td></tr>
+        <tr><td class="prop-name">标题</td><td class="prop-type">文本</td><td class="prop-default">多选框组</td><td>显示的标签文字，如"技能特长"、"兴趣爱好"。</td></tr>
+        <tr><td class="prop-name">表单栅格</td><td class="prop-type">滑块 1-24</td><td class="prop-default">24</td><td>组件占用宽度。</td></tr>
+        <tr><td class="prop-name">标签宽度</td><td class="prop-type">数字</td><td class="prop-default">跟随表单</td><td>覆盖全局标签宽度，单位px。</td></tr>
+        <tr><td class="prop-name">默认值</td><td class="prop-type">文本</td><td class="prop-default">空</td><td>初始选中的选项值数组。</td></tr>
+        <tr><td class="prop-name">至少应选</td><td class="prop-type">数字</td><td class="prop-default">空</td><td>要求至少选择的数量，如设为1则至少选一项。</td></tr>
+        <tr><td class="prop-name">最多可选</td><td class="prop-type">数字</td><td class="prop-default">空</td><td>限制最多可选的数量，如设为3则最多选三项。</td></tr>
+        <tr><td class="prop-name">选项列表</td><td class="prop-type">可编辑列表</td><td class="prop-default">选项一/选项二/选项三</td><td>每项包含"选项名"和"选项值"。</td></tr>
+        <tr><td class="prop-name">选项样式</td><td class="prop-type">单选</td><td class="prop-default">默认</td><td><strong>默认</strong>：方形复选框。<strong>按钮</strong>：按钮形式多选。</td></tr>
+        <tr><td class="prop-name">是否带边框</td><td class="prop-type">开关</td><td class="prop-default">关闭</td><td>仅"默认"样式时出现，给选项添加边框。</td></tr>
+        <tr><td class="prop-name">选项尺寸</td><td class="prop-type">单选</td><td class="prop-default">中等</td><td>仅"按钮"样式时出现。<strong>中等</strong>、<strong>较小</strong>、<strong>迷你</strong>三种尺寸。</td></tr>
+        <tr><td class="prop-name">是否禁用</td><td class="prop-type">开关</td><td class="prop-default">关闭</td><td>开启后组件变为灰色不可操作状态。</td></tr>
+        <tr><td class="prop-name">是否必填</td><td class="prop-type">开关</td><td class="prop-default">开启</td><td>开启后标题前显示红色星号(*)，提交时检查是否为空。</td></tr>
+        <tr><td class="prop-name">正则校验</td><td class="prop-type">规则组</td><td class="prop-default">空</td><td>自定义正则校验规则。</td></tr>
+      </tbody>
+    </table>
+    <div class="scenario-box">
+      <strong>使用场景举例：</strong>在"志愿者申请表"中，"技能特长"使用多选框组，预设了"编程"、"设计"、"翻译"、"组织策划"、"摄影摄像"五个选项。在"满意度调查表"中使用了"按钮"样式展示满意方面选项。
+    </div>
+  </div>
+</div>
+
+<div class="card component-card select-type" id="comp-switch" data-type="select">
+  <div class="component-title" onclick="toggleComponent(this)">
+    <div class="card-icon select">~</div>
+    <h3>开关</h3>
+    <span class="tag select-tag">选择型</span>
+    <span class="toggle-icon">&#x25B6;</span>
+  </div>
+  <div class="component-body">
+    <div class="component-desc">
+      <strong>用途：</strong>用于两个互斥状态的切换（是/否、开启/关闭）。可自定义开关两端的提示文字和值。<br>
+      <strong>使用模板：</strong><span class="template-ref">满意度调查表</span>
+    </div>
+    <table class="prop-table">
+      <thead><tr><th>属性名称</th><th>类型</th><th>默认值</th><th>说明</th></tr></thead>
+      <tbody>
+        <tr><td class="prop-name">组件类型</td><td class="prop-type">下拉选择</td><td class="prop-default">开关</td><td>渲染为Switch切换开关。</td></tr>
+        <tr><td class="prop-name">字段名</td><td class="prop-type">文本</td><td class="prop-default">field10X</td><td>绑定v-model的字段标识，须唯一。如 <code>willJoinAgain</code>。</td></tr>
+        <tr><td class="prop-name">标题</td><td class="prop-type">文本</td><td class="prop-default">开关</td><td>显示的标签文字，如"是否愿意再次参加"。</td></tr>
+        <tr><td class="prop-name">表单栅格</td><td class="prop-type">滑块 1-24</td><td class="prop-default">24</td><td>组件占用宽度。</td></tr>
+        <tr><td class="prop-name">标签宽度</td><td class="prop-type">数字</td><td class="prop-default">跟随表单</td><td>覆盖全局标签宽度，单位px。</td></tr>
+        <tr><td class="prop-name">默认值</td><td class="prop-type">文本</td><td class="prop-default">空</td><td>开关的初始状态值。</td></tr>
+        <tr><td class="prop-name">开启提示</td><td class="prop-type">文本</td><td class="prop-default">空</td><td>开关开启时旁边显示的文字，如"愿意"、"是"。</td></tr>
+        <tr><td class="prop-name">关闭提示</td><td class="prop-type">文本</td><td class="prop-default">空</td><td>开关关闭时旁边显示的文字，如"不愿意"、"否"。</td></tr>
+        <tr><td class="prop-name">开启值</td><td class="prop-type">文本</td><td class="prop-default">true</td><td>开启状态提交的值，可自定义为任意值如"1"、"yes"。</td></tr>
+        <tr><td class="prop-name">关闭值</td><td class="prop-type">文本</td><td class="prop-default">false</td><td>关闭状态提交的值，如"0"、"no"。</td></tr>
+        <tr><td class="prop-name">开启颜色</td><td class="prop-type">颜色</td><td class="prop-default">#409EFF</td><td>开关开启时的背景颜色。</td></tr>
+        <tr><td class="prop-name">关闭颜色</td><td class="prop-type">颜色</td><td class="prop-default">#DCDFE6</td><td>开关关闭时的背景颜色。</td></tr>
+        <tr><td class="prop-name">是否禁用</td><td class="prop-type">开关</td><td class="prop-default">关闭</td><td>开启后组件变为灰色不可操作状态。</td></tr>
+        <tr><td class="prop-name">是否必填</td><td class="prop-type">开关</td><td class="prop-default">开启</td><td>开启后标题前显示红色星号(*)，提交时检查是否为空。</td></tr>
+      </tbody>
+    </table>
+    <div class="scenario-box">
+      <strong>使用场景举例：</strong>在"满意度调查表"中，"是否愿意再次参加"使用开关组件，设置了开启提示"愿意"和关闭提示"不愿意"，直观表达用户意愿。
+    </div>
+  </div>
+</div>
+
+<div class="card component-card select-type" id="comp-slider" data-type="select">
+  <div class="component-title" onclick="toggleComponent(this)">
+    <div class="card-icon select">&#x2194;</div>
+    <h3>滑块</h3>
+    <span class="tag select-tag">选择型</span>
+    <span class="toggle-icon">&#x25B6;</span>
+  </div>
+  <div class="component-body">
+    <div class="component-desc">
+      <strong>用途：</strong>通过拖拽滑块在一定范围内选择数值。适合满意度、推荐指数、价格区间等连续数值场景。<br>
+      <strong>使用模板：</strong><span class="template-ref">满意度调查表</span>
+    </div>
+    <table class="prop-table">
+      <thead><tr><th>属性名称</th><th>类型</th><th>默认值</th><th>说明</th></tr></thead>
+      <tbody>
+        <tr><td class="prop-name">组件类型</td><td class="prop-type">下拉选择</td><td class="prop-default">滑块</td><td>渲染为Slider滑块组件。</td></tr>
+        <tr><td class="prop-name">字段名</td><td class="prop-type">文本</td><td class="prop-default">field10X</td><td>绑定v-model的字段标识，须唯一。如 <code>recommendScore</code>。</td></tr>
+        <tr><td class="prop-name">标题</td><td class="prop-type">文本</td><td class="prop-default">滑块</td><td>显示的标签文字，如"推荐指数"、"满意程度"。</td></tr>
+        <tr><td class="prop-name">表单栅格</td><td class="prop-type">滑块 1-24</td><td class="prop-default">24</td><td>组件占用宽度。</td></tr>
+        <tr><td class="prop-name">标签宽度</td><td class="prop-type">数字</td><td class="prop-default">跟随表单</td><td>覆盖全局标签宽度，单位px。</td></tr>
+        <tr><td class="prop-name">默认值</td><td class="prop-type">数字</td><td class="prop-default">0</td><td>滑块初始位置值。</td></tr>
+        <tr><td class="prop-name">最小值</td><td class="prop-type">数字</td><td class="prop-default">0</td><td>滑块的最小可选值。</td></tr>
+        <tr><td class="prop-name">最大值</td><td class="prop-type">数字</td><td class="prop-default">100</td><td>滑块的最大可选值。</td></tr>
+        <tr><td class="prop-name">步长</td><td class="prop-type">数字</td><td class="prop-default">1</td><td>滑块移动的最小单位。设为10则只能选0、10、20...等值。</td></tr>
+        <tr><td class="prop-name">显示间断点</td><td class="prop-type">开关</td><td class="prop-default">关闭</td><td>开启后在滑轨上按步长显示刻度点，方便用户定位。</td></tr>
+        <tr><td class="prop-name">范围选择</td><td class="prop-type">开关</td><td class="prop-default">关闭</td><td>开启后变为双滑块，可选择一个数值区间（如价格区间500-1000）。</td></tr>
+        <tr><td class="prop-name">是否禁用</td><td class="prop-type">开关</td><td class="prop-default">关闭</td><td>开启后组件变为灰色不可操作状态。</td></tr>
+        <tr><td class="prop-name">是否必填</td><td class="prop-type">开关</td><td class="prop-default">开启</td><td>开启后标题前显示红色星号(*)，提交时检查是否为空。</td></tr>
+      </tbody>
+    </table>
+    <div class="scenario-box">
+      <strong>使用场景举例：</strong>在"满意度调查表"中，"推荐指数"使用滑块，范围0-100，步长10，并开启"显示间断点"方便用户在0/10/20/.../100之间精确选择。
+    </div>
+  </div>
+</div>
+
+<div class="card component-card select-type" id="comp-time" data-type="select">
+  <div class="component-title" onclick="toggleComponent(this)">
+    <div class="card-icon select">时</div>
+    <h3>时间选择</h3>
+    <span class="tag select-tag">选择型</span>
+    <span class="toggle-icon">&#x25B6;</span>
+  </div>
+  <div class="component-body">
+    <div class="component-desc">
+      <strong>用途：</strong>用于选择具体时间点（时:分:秒）。适合活动开始时间、预约时间等场景。<br>
+      <strong>使用模板：</strong><span class="template-ref">综合组件示例表</span>
+    </div>
+    <table class="prop-table">
+      <thead><tr><th>属性名称</th><th>类型</th><th>默认值</th><th>说明</th></tr></thead>
+      <tbody>
+        <tr><td class="prop-name">组件类型</td><td class="prop-type">下拉选择</td><td class="prop-default">时间选择</td><td>渲染为TimePicker时间选择器。</td></tr>
+        <tr><td class="prop-name">字段名</td><td class="prop-type">文本</td><td class="prop-default">field10X</td><td>绑定v-model的字段标识，须唯一。如 <code>startTime</code>。</td></tr>
+        <tr><td class="prop-name">标题</td><td class="prop-type">文本</td><td class="prop-default">时间选择</td><td>显示的标签文字，如"活动开始时间"。</td></tr>
+        <tr><td class="prop-name">占位提示</td><td class="prop-type">文本</td><td class="prop-default">请选择XXX</td><td>时间框空状态提示文字。</td></tr>
+        <tr><td class="prop-name">表单栅格</td><td class="prop-type">滑块 1-24</td><td class="prop-default">24</td><td>组件占用宽度。</td></tr>
+        <tr><td class="prop-name">标签宽度</td><td class="prop-type">数字</td><td class="prop-default">跟随表单</td><td>覆盖全局标签宽度，单位px。</td></tr>
+        <tr><td class="prop-name">组件宽度</td><td class="prop-type">文本</td><td class="prop-default">100%</td><td>时间选择器宽度。</td></tr>
+        <tr><td class="prop-name">默认值</td><td class="prop-type">文本</td><td class="prop-default">空</td><td>初始选中时间值。</td></tr>
+        <tr><td class="prop-name">时间段</td><td class="prop-type">文本</td><td class="prop-default">00:00:00-23:59:59</td><td>可选的时间范围限制，格式为"起始时间-结束时间"。</td></tr>
+        <tr><td class="prop-name">时间格式</td><td class="prop-type">文本</td><td class="prop-default">HH:mm:ss</td><td>时间显示和提交的格式。HH=24小时制小时，mm=分钟，ss=秒。</td></tr>
+        <tr><td class="prop-name">能否清空</td><td class="prop-type">开关</td><td class="prop-default">开启</td><td>允许清空已选时间。</td></tr>
+        <tr><td class="prop-name">是否禁用</td><td class="prop-type">开关</td><td class="prop-default">关闭</td><td>开启后组件变为灰色不可操作状态。</td></tr>
+        <tr><td class="prop-name">是否必填</td><td class="prop-type">开关</td><td class="prop-default">开启</td><td>开启后标题前显示红色星号(*)，提交时检查是否为空。</td></tr>
+      </tbody>
+    </table>
+    <div class="scenario-box">
+      <strong>使用场景举例：</strong>在"综合组件示例表"中，"活动开始时间"使用时间选择器，让用户精确选择活动的开始时刻。
+    </div>
+  </div>
+</div>
+
+<div class="card component-card select-type" id="comp-time-range" data-type="select">
+  <div class="component-title" onclick="toggleComponent(this)">
+    <div class="card-icon select">时</div>
+    <h3>时间范围</h3>
+    <span class="tag select-tag">选择型</span>
+    <span class="toggle-icon">&#x25B6;</span>
+  </div>
+  <div class="component-body">
+    <div class="component-desc">
+      <strong>用途：</strong>用于选择时间区间（开始时间 ~ 结束时间）。适合可用时间段、工作时间等场景。<br>
+      <strong>使用模板：</strong><span class="template-ref">志愿者申请表</span>
+    </div>
+    <table class="prop-table">
+      <thead><tr><th>属性名称</th><th>类型</th><th>默认值</th><th>说明</th></tr></thead>
+      <tbody>
+        <tr><td class="prop-name">组件类型</td><td class="prop-type">下拉选择</td><td class="prop-default">时间范围</td><td>渲染为双时间选择器，选择时间区间。</td></tr>
+        <tr><td class="prop-name">字段名</td><td class="prop-type">文本</td><td class="prop-default">field10X</td><td>绑定v-model的字段标识，须唯一。如 <code>availableTime</code>。</td></tr>
+        <tr><td class="prop-name">标题</td><td class="prop-type">文本</td><td class="prop-default">时间范围</td><td>显示的标签文字，如"可用时间段"。</td></tr>
+        <tr><td class="prop-name">开始占位</td><td class="prop-type">文本</td><td class="prop-default">开始时间</td><td>左侧（开始时间）输入框的占位提示。</td></tr>
+        <tr><td class="prop-name">结束占位</td><td class="prop-type">文本</td><td class="prop-default">结束时间</td><td>右侧（结束时间）输入框的占位提示。</td></tr>
+        <tr><td class="prop-name">表单栅格</td><td class="prop-type">滑块 1-24</td><td class="prop-default">24</td><td>组件占用宽度。</td></tr>
+        <tr><td class="prop-name">标签宽度</td><td class="prop-type">数字</td><td class="prop-default">跟随表单</td><td>覆盖全局标签宽度，单位px。</td></tr>
+        <tr><td class="prop-name">组件宽度</td><td class="prop-type">文本</td><td class="prop-default">100%</td><td>时间范围选择器宽度。</td></tr>
+        <tr><td class="prop-name">默认值</td><td class="prop-type">文本</td><td class="prop-default">空</td><td>初始选中的时间范围值。</td></tr>
+        <tr><td class="prop-name">分隔符</td><td class="prop-type">文本</td><td class="prop-default">至</td><td>两个时间输入框之间的分隔文字。</td></tr>
+        <tr><td class="prop-name">时间格式</td><td class="prop-type">文本</td><td class="prop-default">HH:mm:ss</td><td>时间格式。</td></tr>
+        <tr><td class="prop-name">能否清空</td><td class="prop-type">开关</td><td class="prop-default">开启</td><td>允许清除已选时间范围。</td></tr>
+        <tr><td class="prop-name">是否禁用</td><td class="prop-type">开关</td><td class="prop-default">关闭</td><td>开启后组件变为灰色不可操作状态。</td></tr>
+        <tr><td class="prop-name">是否必填</td><td class="prop-type">开关</td><td class="prop-default">开启</td><td>开启后标题前显示红色星号(*)，提交时检查是否为空。</td></tr>
+      </tbody>
+    </table>
+    <div class="scenario-box">
+      <strong>使用场景举例：</strong>在"志愿者申请表"中，"可用时间"使用时间范围组件，让志愿者填写自己每天可提供服务的时间段。
+    </div>
+  </div>
+</div>
+
+<div class="card component-card select-type" id="comp-date" data-type="select">
+  <div class="component-title" onclick="toggleComponent(this)">
+    <div class="card-icon select">日</div>
+    <h3>日期选择</h3>
+    <span class="tag select-tag">选择型</span>
+    <span class="toggle-icon">&#x25B6;</span>
+  </div>
+  <div class="component-body">
+    <div class="component-desc">
+      <strong>用途：</strong>弹出日历面板选择日期。支持日期、周、月、年、日期时间等多种模式。<br>
+      <strong>使用模板：</strong><span class="template-ref">活动报名表</span>
+    </div>
+    <table class="prop-table">
+      <thead><tr><th>属性名称</th><th>类型</th><th>默认值</th><th>说明</th></tr></thead>
+      <tbody>
+        <tr><td class="prop-name">组件类型</td><td class="prop-type">下拉选择</td><td class="prop-default">日期选择</td><td>渲染为DatePicker日期选择器。</td></tr>
+        <tr><td class="prop-name">字段名</td><td class="prop-type">文本</td><td class="prop-default">field10X</td><td>绑定v-model的字段标识，须唯一。如 <code>eventDate</code>。</td></tr>
+        <tr><td class="prop-name">标题</td><td class="prop-type">文本</td><td class="prop-default">日期选择</td><td>显示的标签文字，如"活动日期"。</td></tr>
+        <tr><td class="prop-name">占位提示</td><td class="prop-type">文本</td><td class="prop-default">请选择XXX</td><td>日期框空状态提示文字。</td></tr>
+        <tr><td class="prop-name">表单栅格</td><td class="prop-type">滑块 1-24</td><td class="prop-default">24</td><td>组件占用宽度。</td></tr>
+        <tr><td class="prop-name">标签宽度</td><td class="prop-type">数字</td><td class="prop-default">跟随表单</td><td>覆盖全局标签宽度，单位px。</td></tr>
+        <tr><td class="prop-name">组件宽度</td><td class="prop-type">文本</td><td class="prop-default">100%</td><td>日期选择器宽度。</td></tr>
+        <tr><td class="prop-name">默认值</td><td class="prop-type">文本</td><td class="prop-default">空</td><td>初始选中日期值。</td></tr>
+        <tr><td class="prop-name">时间类型</td><td class="prop-type">下拉选择</td><td class="prop-default">日期(date)</td><td>可选：<strong>date</strong>(日期)、<strong>week</strong>(周)、<strong>month</strong>(月)、<strong>year</strong>(年)、<strong>datetime</strong>(日期+时间)。</td></tr>
+        <tr><td class="prop-name">时间格式</td><td class="prop-type">文本</td><td class="prop-default">yyyy-MM-dd</td><td>日期显示格式。yyyy=年，MM=月，dd=日。datetime模式下可用 <code>yyyy-MM-dd HH:mm:ss</code>。</td></tr>
+        <tr><td class="prop-name">能否清空</td><td class="prop-type">开关</td><td class="prop-default">开启</td><td>允许清除。</td></tr>
+        <tr><td class="prop-name">是否只读</td><td class="prop-type">开关</td><td class="prop-default">关闭</td><td>只读模式。</td></tr>
+        <tr><td class="prop-name">是否禁用</td><td class="prop-type">开关</td><td class="prop-default">关闭</td><td>开启后组件变为灰色不可操作状态。</td></tr>
+        <tr><td class="prop-name">是否必填</td><td class="prop-type">开关</td><td class="prop-default">开启</td><td>开启后标题前显示红色星号(*)，提交时检查是否为空。</td></tr>
+      </tbody>
+    </table>
+    <div class="scenario-box">
+      <strong>使用场景举例：</strong>在"活动报名表"中，"活动日期"使用日期选择器，用户点击输入框即可弹出日历进行选择。
+    </div>
+  </div>
+</div>
+
+<div class="card component-card select-type" id="comp-date-range" data-type="select">
+  <div class="component-title" onclick="toggleComponent(this)">
+    <div class="card-icon select">日</div>
+    <h3>日期范围</h3>
+    <span class="tag select-tag">选择型</span>
+    <span class="toggle-icon">&#x25B6;</span>
+  </div>
+  <div class="component-body">
+    <div class="component-desc">
+      <strong>用途：</strong>选择日期区间（开始日期 ~ 结束日期），弹出双日历面板。<br>
+      <strong>使用模板：</strong><span class="template-ref">综合组件示例表</span>
+    </div>
+    <table class="prop-table">
+      <thead><tr><th>属性名称</th><th>类型</th><th>默认值</th><th>说明</th></tr></thead>
+      <tbody>
+        <tr><td class="prop-name">组件类型</td><td class="prop-type">下拉选择</td><td class="prop-default">日期范围</td><td>渲染为双日历面板日期范围选择器。</td></tr>
+        <tr><td class="prop-name">字段名</td><td class="prop-type">文本</td><td class="prop-default">field10X</td><td>绑定v-model的字段标识，须唯一。如 <code>dateRange</code>。</td></tr>
+        <tr><td class="prop-name">标题</td><td class="prop-type">文本</td><td class="prop-default">日期范围</td><td>显示的标签文字，如"活动日期范围"。</td></tr>
+        <tr><td class="prop-name">开始占位</td><td class="prop-type">文本</td><td class="prop-default">开始日期</td><td>左侧输入框的提示。</td></tr>
+        <tr><td class="prop-name">结束占位</td><td class="prop-type">文本</td><td class="prop-default">结束日期</td><td>右侧输入框的提示。</td></tr>
+        <tr><td class="prop-name">表单栅格</td><td class="prop-type">滑块 1-24</td><td class="prop-default">24</td><td>组件占用宽度。</td></tr>
+        <tr><td class="prop-name">标签宽度</td><td class="prop-type">数字</td><td class="prop-default">跟随表单</td><td>覆盖全局标签宽度，单位px。</td></tr>
+        <tr><td class="prop-name">组件宽度</td><td class="prop-type">文本</td><td class="prop-default">100%</td><td>日期范围选择器宽度。</td></tr>
+        <tr><td class="prop-name">默认值</td><td class="prop-type">文本</td><td class="prop-default">空</td><td>初始选中的日期范围值。</td></tr>
+        <tr><td class="prop-name">时间类型</td><td class="prop-type">下拉选择</td><td class="prop-default">daterange</td><td>可选：<strong>daterange</strong>(日期范围)、<strong>monthrange</strong>(月范围)、<strong>datetimerange</strong>(日期时间范围)。</td></tr>
+        <tr><td class="prop-name">分隔符</td><td class="prop-type">文本</td><td class="prop-default">至</td><td>两个日期框之间的分隔文字。</td></tr>
+        <tr><td class="prop-name">时间格式</td><td class="prop-type">文本</td><td class="prop-default">yyyy-MM-dd</td><td>日期显示格式。</td></tr>
+        <tr><td class="prop-name">能否清空</td><td class="prop-type">开关</td><td class="prop-default">开启</td><td>允许清除已选日期范围。</td></tr>
+        <tr><td class="prop-name">是否只读</td><td class="prop-type">开关</td><td class="prop-default">关闭</td><td>开启后可显示内容但不可编辑。</td></tr>
+        <tr><td class="prop-name">是否禁用</td><td class="prop-type">开关</td><td class="prop-default">关闭</td><td>开启后组件变为灰色不可操作状态。</td></tr>
+        <tr><td class="prop-name">是否必填</td><td class="prop-type">开关</td><td class="prop-default">开启</td><td>开启后标题前显示红色星号(*)，提交时检查是否为空。</td></tr>
+      </tbody>
+    </table>
+    <div class="scenario-box">
+      <strong>使用场景举例：</strong>在"综合组件示例表"中，"活动日期范围"使用日期范围选择器，同时选择活动的开始和结束日期。
+    </div>
+  </div>
+</div>
+
+<div class="card component-card select-type" id="comp-rate" data-type="select">
+  <div class="component-title" onclick="toggleComponent(this)">
+    <div class="card-icon select">*</div>
+    <h3>评分</h3>
+    <span class="tag select-tag">选择型</span>
+    <span class="toggle-icon">&#x25B6;</span>
+  </div>
+  <div class="component-body">
+    <div class="component-desc">
+      <strong>用途：</strong>星级评分组件，用户点击星星给出评分。适合满意度评价、打分等场景。<br>
+      <strong>使用模板：</strong><span class="template-ref">满意度调查表</span>
+    </div>
+    <table class="prop-table">
+      <thead><tr><th>属性名称</th><th>类型</th><th>默认值</th><th>说明</th></tr></thead>
+      <tbody>
+        <tr><td class="prop-name">组件类型</td><td class="prop-type">下拉选择</td><td class="prop-default">评分</td><td>渲染为Rate星级评分组件。</td></tr>
+        <tr><td class="prop-name">字段名</td><td class="prop-type">文本</td><td class="prop-default">field10X</td><td>绑定v-model的字段标识，须唯一。如 <code>overallRating</code>。</td></tr>
+        <tr><td class="prop-name">标题</td><td class="prop-type">文本</td><td class="prop-default">评分</td><td>显示的标签文字，如"整体评分"、"服务评价"。</td></tr>
+        <tr><td class="prop-name">表单栅格</td><td class="prop-type">滑块 1-24</td><td class="prop-default">24</td><td>组件占用宽度。</td></tr>
+        <tr><td class="prop-name">标签宽度</td><td class="prop-type">数字</td><td class="prop-default">跟随表单</td><td>覆盖全局标签宽度，单位px。</td></tr>
+        <tr><td class="prop-name">默认值</td><td class="prop-type">数字</td><td class="prop-default">0</td><td>初始评分值。</td></tr>
+        <tr><td class="prop-name">最大值</td><td class="prop-type">数字</td><td class="prop-default">5</td><td>最高可评的星数。</td></tr>
+        <tr><td class="prop-name">允许半选</td><td class="prop-type">开关</td><td class="prop-default">关闭</td><td>开启后支持选择半颗星（如3.5星），提供更精细的评分。</td></tr>
+        <tr><td class="prop-name">辅助文字</td><td class="prop-type">开关</td><td class="prop-default">关闭</td><td>开启后在星星右侧显示文字描述，如"极差"、"失望"、"一般"、"满意"、"惊喜"。</td></tr>
+        <tr><td class="prop-name">显示分数</td><td class="prop-type">开关</td><td class="prop-default">关闭</td><td>开启后在星星右侧显示当前分数（如"4.5"），与辅助文字可同时显示。</td></tr>
+        <tr><td class="prop-name">是否禁用</td><td class="prop-type">开关</td><td class="prop-default">关闭</td><td>开启后组件变为灰色不可操作状态。</td></tr>
+        <tr><td class="prop-name">是否必填</td><td class="prop-type">开关</td><td class="prop-default">开启</td><td>开启后标题前显示红色星号(*)，提交时检查是否为空。</td></tr>
+      </tbody>
+    </table>
+    <div class="scenario-box">
+      <strong>使用场景举例：</strong>在"满意度调查表"中，"整体评分"开启了"允许半选"、"辅助文字"和"显示分数"三个开关，用户可以给出如4.5星的精细评价，同时看到描述文字和数字分数。
+    </div>
+  </div>
+</div>
+
+<div class="card component-card select-type" id="comp-color" data-type="select">
+  <div class="component-title" onclick="toggleComponent(this)">
+    <div class="card-icon select">C</div>
+    <h3>颜色选择</h3>
+    <span class="tag select-tag">选择型</span>
+    <span class="toggle-icon">&#x25B6;</span>
+  </div>
+  <div class="component-body">
+    <div class="component-desc">
+      <strong>用途：</strong>弹出取色面板让用户选择颜色值。适合主题色、标签颜色等个性化配置场景。<br>
+      <strong>使用模板：</strong><span class="template-ref">综合组件示例表</span>
+    </div>
+    <table class="prop-table">
+      <thead><tr><th>属性名称</th><th>类型</th><th>默认值</th><th>说明</th></tr></thead>
+      <tbody>
+        <tr><td class="prop-name">组件类型</td><td class="prop-type">下拉选择</td><td class="prop-default">颜色选择</td><td>渲染为ColorPicker取色器组件。</td></tr>
+        <tr><td class="prop-name">字段名</td><td class="prop-type">文本</td><td class="prop-default">field10X</td><td>绑定v-model的字段标识，须唯一。如 <code>themeColor</code>。</td></tr>
+        <tr><td class="prop-name">标题</td><td class="prop-type">文本</td><td class="prop-default">颜色选择</td><td>显示的标签文字，如"主题颜色"。</td></tr>
+        <tr><td class="prop-name">表单栅格</td><td class="prop-type">滑块 1-24</td><td class="prop-default">24</td><td>组件占用宽度。</td></tr>
+        <tr><td class="prop-name">标签宽度</td><td class="prop-type">数字</td><td class="prop-default">跟随表单</td><td>覆盖全局标签宽度，单位px。</td></tr>
+        <tr><td class="prop-name">默认值</td><td class="prop-type">文本</td><td class="prop-default">空</td><td>初始颜色值，如 <code>#409EFF</code>。</td></tr>
+        <tr><td class="prop-name">颜色格式</td><td class="prop-type">下拉选择</td><td class="prop-default">空（自动）</td><td>指定颜色值的输出格式：<strong>hex</strong>(#FF0000)、<strong>rgb</strong>(rgb(255,0,0))、<strong>rgba</strong>(rgba(255,0,0,1))、<strong>hsv</strong>、<strong>hsl</strong>。</td></tr>
+        <tr><td class="prop-name">选项尺寸</td><td class="prop-type">单选</td><td class="prop-default">中等</td><td>色块按钮的尺寸：<strong>中等</strong>、<strong>较小</strong>、<strong>迷你</strong>。</td></tr>
+        <tr><td class="prop-name">是否禁用</td><td class="prop-type">开关</td><td class="prop-default">关闭</td><td>开启后组件变为灰色不可操作状态。</td></tr>
+        <tr><td class="prop-name">是否必填</td><td class="prop-type">开关</td><td class="prop-default">开启</td><td>开启后标题前显示红色星号(*)，提交时检查是否为空。</td></tr>
+      </tbody>
+    </table>
+    <div class="scenario-box">
+      <strong>使用场景举例：</strong>在"综合组件示例表"中，"主题颜色"使用颜色选择器，让管理员为活动选择品牌主题色。
+    </div>
+  </div>
+</div>
+
+<div class="card component-card select-type" id="comp-upload" data-type="select">
+  <div class="component-title" onclick="toggleComponent(this)">
+    <div class="card-icon upload">^</div>
+    <h3>上传</h3>
+    <span class="tag select-tag">选择型</span>
+    <span class="toggle-icon">&#x25B6;</span>
+  </div>
+  <div class="component-body">
+    <div class="component-desc">
+      <strong>用途：</strong>文件上传组件，支持图片、视频、音频、文档等各类文件。可配置文件类型限制、大小限制、展示方式等。<br>
+      <strong>使用模板：</strong><span class="template-ref">素材提交表</span>
+    </div>
+    <table class="prop-table">
+      <thead><tr><th>属性名称</th><th>类型</th><th>默认值</th><th>说明</th></tr></thead>
+      <tbody>
+        <tr><td class="prop-name">组件类型</td><td class="prop-type">下拉选择</td><td class="prop-default">上传</td><td>渲染为Upload文件上传组件。</td></tr>
+        <tr><td class="prop-name">字段名</td><td class="prop-type">文本</td><td class="prop-default">field10X</td><td>绑定v-model的字段标识，须唯一。如 <code>activityPhotos</code>。</td></tr>
+        <tr><td class="prop-name">标题</td><td class="prop-type">文本</td><td class="prop-default">上传</td><td>显示的标签文字，如"活动照片上传"。</td></tr>
+        <tr><td class="prop-name">表单栅格</td><td class="prop-type">滑块 1-24</td><td class="prop-default">24</td><td>组件占用宽度。</td></tr>
+        <tr><td class="prop-name">标签宽度</td><td class="prop-type">数字</td><td class="prop-default">跟随表单</td><td>覆盖全局标签宽度，单位px。</td></tr>
+        <tr><td class="prop-name">默认值</td><td class="prop-type">文本</td><td class="prop-default">空</td><td>初始文件列表。</td></tr>
+        <tr><td class="prop-name">文件字段名</td><td class="prop-type">文本</td><td class="prop-default">file</td><td>上传时的form-data字段名，后端据此接收文件。</td></tr>
+        <tr><td class="prop-name">文件类型</td><td class="prop-type">下拉选择</td><td class="prop-default">图片</td><td>限制可上传的文件类型。可选：<strong>图片</strong>(image/*)、<strong>视频</strong>(video/*)、<strong>音频</strong>(audio/*)、<strong>excel</strong>、<strong>word</strong>、<strong>pdf</strong>、<strong>txt</strong>。</td></tr>
+        <tr><td class="prop-name">文件大小</td><td class="prop-type">数字+单位</td><td class="prop-default">2 MB</td><td>单个文件最大大小。数字部分可输入，单位可选 <strong>MB</strong> 或 <strong>KB</strong>。图片推荐2-5MB，视频推荐50-100MB。</td></tr>
+        <tr><td class="prop-name">上传地址</td><td class="prop-type">文本</td><td class="prop-default">/file/upload</td><td>文件上传的后端API接口地址。</td></tr>
+        <tr><td class="prop-name">列表类型</td><td class="prop-type">单选</td><td class="prop-default">text</td><td>已上传文件的展示方式：<br><strong>text</strong>：文件名列表，适合文档类。<br><strong>picture</strong>：缩略图+文件名列表。<br><strong>picture-card</strong>：卡片式图片网格，适合图片上传。</td></tr>
+        <tr><td class="prop-name">按钮文字</td><td class="prop-type">文本</td><td class="prop-default">点击上传图片</td><td>仅 text 和 picture 列表类型时显示，上传按钮的文字。如"点击上传视频"。</td></tr>
+        <tr><td class="prop-name">显示提示</td><td class="prop-type">开关</td><td class="prop-default">关闭</td><td>开启后在上传区域下方显示文件限制提示，如"只能上传不超过2MB的image/*文件"。</td></tr>
+        <tr><td class="prop-name">多选文件</td><td class="prop-type">开关</td><td class="prop-default">关闭</td><td>开启后点击上传时可一次选择多个文件。</td></tr>
+        <tr><td class="prop-name">自动上传</td><td class="prop-type">开关</td><td class="prop-default">开启</td><td>开启后选择文件即自动上传，关闭则需手动触发。</td></tr>
+        <tr><td class="prop-name">是否禁用</td><td class="prop-type">开关</td><td class="prop-default">关闭</td><td>开启后组件变为灰色不可操作状态。</td></tr>
+        <tr><td class="prop-name">是否必填</td><td class="prop-type">开关</td><td class="prop-default">开启</td><td>开启后标题前显示红色星号(*)，提交时检查是否为空。</td></tr>
+        <tr><td class="prop-name">正则校验</td><td class="prop-type">规则组</td><td class="prop-default">空</td><td>自定义校验规则。</td></tr>
+      </tbody>
+    </table>
+    <div class="scenario-box">
+      <strong>使用场景举例：</strong>在"素材提交表"中配置了两个上传组件：<br>
+      1. "活动照片上传"：文件类型=图片，列表类型=picture-card（卡片网格预览），文件大小=2MB，开启多选文件和显示提示。<br>
+      2. "活动视频上传"：文件类型=视频，列表类型=text（文件列表），文件大小=50MB，按钮文字改为"点击上传视频"，开启显示提示。
+    </div>
+  </div>
+</div>
+
+<!-- ========== LAYOUT TYPE COMPONENTS ========== -->
+
+<div class="card component-card layout-type" id="comp-row" data-type="layout">
+  <div class="component-title" onclick="toggleComponent(this)">
+    <div class="card-icon" style="background:var(--purple-50);color:var(--purple-600)">&#x25A4;</div>
+    <h3>行容器</h3>
+    <span class="tag layout-tag">布局型</span>
+    <span class="toggle-icon">&#x25B6;</span>
+  </div>
+  <div class="component-body">
+    <div class="component-desc">
+      <strong>用途：</strong>布局容器，用于将多个组件放在同一行内并排显示。可使用栅格系统控制每列宽度。<br>
+      <strong>使用模板：</strong><span class="template-ref">综合组件示例表</span>
+    </div>
+    <table class="prop-table">
+      <thead><tr><th>属性名称</th><th>类型</th><th>默认值</th><th>说明</th></tr></thead>
+      <tbody>
+        <tr><td class="prop-name">组件名</td><td class="prop-type">文本（只读）</td><td class="prop-default">row10X</td><td>系统自动生成的行容器名称，不可修改。</td></tr>
+        <tr><td class="prop-name">表单栅格</td><td class="prop-type">滑块 1-24</td><td class="prop-default">24</td><td>行容器本身占用的宽度。</td></tr>
+        <tr><td class="prop-name">栅格间隔</td><td class="prop-type">数字(步进器)</td><td class="prop-default">15</td><td>行内各列之间的间距，单位px。</td></tr>
+        <tr><td class="prop-name">布局模式</td><td class="prop-type">单选</td><td class="prop-default">default</td><td><strong>default</strong>：使用标准栅格布局。<strong>flex</strong>：使用Flex弹性布局，支持水平/垂直对齐等高级排列方式。</td></tr>
+        <tr><td class="prop-name">布局结构树</td><td class="prop-type">树形结构</td><td class="prop-default">-</td><td>以树状图展示行容器内的列结构，可直观查看嵌套关系。</td></tr>
+      </tbody>
+    </table>
+    <div class="scenario-box">
+      <strong>使用场景举例：</strong>在"综合组件示例表"中添加了行容器，可以将"姓名"和"手机号"放在同一行，各占12格（半行），实现紧凑的双列表单布局。
+    </div>
+  </div>
+</div>
+
+<div class="card component-card layout-type" id="comp-button" data-type="layout">
+  <div class="component-title" onclick="toggleComponent(this)">
+    <div class="card-icon" style="background:var(--purple-50);color:var(--purple-600)">O</div>
+    <h3>按钮</h3>
+    <span class="tag layout-tag">布局型</span>
+    <span class="toggle-icon">&#x25B6;</span>
+  </div>
+  <div class="component-body">
+    <div class="component-desc">
+      <strong>用途：</strong>在表单中添加可点击的操作按钮，如"提交"、"重置"、"下一步"等。<br>
+      <strong>使用模板：</strong><span class="template-ref">综合组件示例表</span>
+    </div>
+    <table class="prop-table">
+      <thead><tr><th>属性名称</th><th>类型</th><th>默认值</th><th>说明</th></tr></thead>
+      <tbody>
+        <tr><td class="prop-name">组件类型</td><td class="prop-type">下拉选择</td><td class="prop-default">button</td><td>渲染为Element UI Button。</td></tr>
+        <tr><td class="prop-name">字段名</td><td class="prop-type">文本</td><td class="prop-default">field10X</td><td>按钮标识。</td></tr>
+        <tr><td class="prop-name">标题</td><td class="prop-type">文本</td><td class="prop-default">按钮</td><td>按钮显示的文字，如"提交申请"、"下一步"。</td></tr>
+        <tr><td class="prop-name">表单栅格</td><td class="prop-type">滑块 1-24</td><td class="prop-default">24</td><td>按钮占用宽度。</td></tr>
+        <tr><td class="prop-name">标签宽度</td><td class="prop-type">数字</td><td class="prop-default">跟随表单</td><td>按钮左侧标签区域宽度。</td></tr>
+        <tr><td class="prop-name">默认值</td><td class="prop-type">文本</td><td class="prop-default">空</td><td>按钮额外配置。</td></tr>
+        <tr><td class="prop-name">是否禁用</td><td class="prop-type">开关</td><td class="prop-default">关闭</td><td>禁用按钮。</td></tr>
+      </tbody>
+    </table>
+    <div class="scenario-box">
+      <strong>使用场景举例：</strong>在"综合组件示例表"中，添加了一个标题为"提交申请"的按钮，用户填写完表单后可点击此按钮提交。
+    </div>
+  </div>
+</div>
+
+</section>
+
+<!-- Section: Form Properties -->
+<section id="form-properties">
+<h2>五、表单属性</h2>
+<p>点击右侧属性面板的<strong>"表单属性"</strong>Tab，可以配置整个表单的全局设置。这些设置影响表单中所有组件的默认表现。</p>
+
+<div class="form-prop-grid">
+  <div class="form-prop-item">
+    <div class="fp-name">表单名</div>
+    <div class="fp-key">ref: elForm</div>
+    <div class="fp-desc">表单组件的引用名称，用于代码中获取表单实例进行校验等操作。默认值 <code>elForm</code>。</div>
+  </div>
+  <div class="form-prop-item">
+    <div class="fp-name">表单模型</div>
+    <div class="fp-key">model: formData</div>
+    <div class="fp-desc">表单数据绑定的对象名称，所有字段值都存储在此对象中。默认值 <code>formData</code>。</div>
+  </div>
+  <div class="form-prop-item">
+    <div class="fp-name">校验模型</div>
+    <div class="fp-key">rules: rules</div>
+    <div class="fp-desc">表单校验规则的对象名称，包含所有必填和正则校验规则。默认值 <code>rules</code>。</div>
+  </div>
+  <div class="form-prop-item">
+    <div class="fp-name">表单尺寸</div>
+    <div class="fp-key">size</div>
+    <div class="fp-desc">统一设置所有组件的尺寸大小。</div>
+    <div class="fp-options">
+      <span class="fp-opt">中等（默认）</span>
+      <span class="fp-opt">较小</span>
+      <span class="fp-opt">迷你</span>
+    </div>
+  </div>
+  <div class="form-prop-item">
+    <div class="fp-name">标签对齐</div>
+    <div class="fp-key">label-position</div>
+    <div class="fp-desc">所有组件标签（标题）的对齐方式。</div>
+    <div class="fp-options">
+      <span class="fp-opt">左对齐</span>
+      <span class="fp-opt">右对齐</span>
+      <span class="fp-opt">顶部对齐（默认）</span>
+    </div>
+  </div>
+  <div class="form-prop-item">
+    <div class="fp-name">标签宽度</div>
+    <div class="fp-key">label-width: 100px</div>
+    <div class="fp-desc">所有标签的统一宽度，单位px。数字越大，标签占的空间越多。仅在"左对齐"和"右对齐"时生效。默认100px。</div>
+  </div>
+  <div class="form-prop-item">
+    <div class="fp-name">栅格间隔</div>
+    <div class="fp-key">gutter: 15</div>
+    <div class="fp-desc">表单栅格布局中列与列之间的间距，单位px。默认15px。</div>
+  </div>
+  <div class="form-prop-item">
+    <div class="fp-name">禁用表单</div>
+    <div class="fp-key">disabled: false</div>
+    <div class="fp-desc">开启后整个表单变为只读禁用状态，所有组件不可操作。适合查看模式。</div>
+  </div>
+  <div class="form-prop-item">
+    <div class="fp-name">表单按钮</div>
+    <div class="fp-key">formBtns: true</div>
+    <div class="fp-desc">是否显示表单底部的"提交"和"重置"按钮。默认开启。关闭后可使用自定义按钮组件代替。</div>
+  </div>
+  <div class="form-prop-item">
+    <div class="fp-name">显示未选中组件边框</div>
+    <div class="fp-key">unFocusedComponentBorder</div>
+    <div class="fp-desc">在设计器中是否给未选中的组件显示边框轮廓。仅影响设计时的预览效果，不影响最终表单。</div>
+  </div>
+</div>
+</section>
+
+
+<!-- Component Coverage Summary -->
+<section>
+<h2>六、组件覆盖总表</h2>
+<p>以下表格展示了每个组件在示例模板中的使用情况，确保全部19个组件至少出现在一个模板中。</p>
+<div class="card">
+<table class="prop-table">
+  <thead><tr><th>#</th><th>组件</th><th>分类</th><th>使用模板</th></tr></thead>
+  <tbody>
+    <tr><td>1</td><td class="prop-name">单行文本</td><td><span class="tag input-tag">输入型</span></td><td>活动报名表、志愿者申请表、素材提交表</td></tr>
+    <tr><td>2</td><td class="prop-name">多行文本</td><td><span class="tag input-tag">输入型</span></td><td>活动报名表、志愿者申请表、满意度调查表</td></tr>
+    <tr><td>3</td><td class="prop-name">密码</td><td><span class="tag input-tag">输入型</span></td><td>综合组件示例表</td></tr>
+    <tr><td>4</td><td class="prop-name">计数器</td><td><span class="tag input-tag">输入型</span></td><td>综合组件示例表</td></tr>
+    <tr><td>5</td><td class="prop-name">下拉选择</td><td><span class="tag select-tag">选择型</span></td><td>活动报名表</td></tr>
+    <tr><td>6</td><td class="prop-name">级联选择</td><td><span class="tag select-tag">选择型</span></td><td>综合组件示例表</td></tr>
+    <tr><td>7</td><td class="prop-name">单选框组</td><td><span class="tag select-tag">选择型</span></td><td>综合组件示例表</td></tr>
+    <tr><td>8</td><td class="prop-name">多选框组</td><td><span class="tag select-tag">选择型</span></td><td>志愿者申请表、满意度调查表</td></tr>
+    <tr><td>9</td><td class="prop-name">开关</td><td><span class="tag select-tag">选择型</span></td><td>满意度调查表</td></tr>
+    <tr><td>10</td><td class="prop-name">滑块</td><td><span class="tag select-tag">选择型</span></td><td>满意度调查表</td></tr>
+    <tr><td>11</td><td class="prop-name">时间选择</td><td><span class="tag select-tag">选择型</span></td><td>综合组件示例表</td></tr>
+    <tr><td>12</td><td class="prop-name">时间范围</td><td><span class="tag select-tag">选择型</span></td><td>志愿者申请表</td></tr>
+    <tr><td>13</td><td class="prop-name">日期选择</td><td><span class="tag select-tag">选择型</span></td><td>活动报名表</td></tr>
+    <tr><td>14</td><td class="prop-name">日期范围</td><td><span class="tag select-tag">选择型</span></td><td>综合组件示例表</td></tr>
+    <tr><td>15</td><td class="prop-name">评分</td><td><span class="tag select-tag">选择型</span></td><td>满意度调查表</td></tr>
+    <tr><td>16</td><td class="prop-name">颜色选择</td><td><span class="tag select-tag">选择型</span></td><td>综合组件示例表</td></tr>
+    <tr><td>17</td><td class="prop-name">上传</td><td><span class="tag select-tag">选择型</span></td><td>素材提交表</td></tr>
+    <tr><td>18</td><td class="prop-name">行容器</td><td><span class="tag layout-tag">布局型</span></td><td>综合组件示例表</td></tr>
+    <tr><td>19</td><td class="prop-name">按钮</td><td><span class="tag layout-tag">布局型</span></td><td>综合组件示例表</td></tr>
+  </tbody>
+</table>
+</div>
+</section>
+
+
+</div><!-- content-wrapper -->
+</main>
+
+<!-- AI Chat FAB -->
+<button class="ai-chat-fab" id="aiChatFab" title="AI 助手">
+  AI
+</button>
+
+<!-- AI Chat Window -->
+<div class="ai-chat-window" id="aiChatWindow">
+  <div class="ai-chat-header">
+    <h4>AI 表单设计助手</h4>
+    <button class="close-btn" onclick="toggleAiChat()">&times;</button>
+  </div>
+  <div class="ai-chat-messages" id="aiChatMessages">
+    <div class="ai-chat-msg bot">你好！我是表单设计助手，可以帮你解答关于表单设计器的所有问题。你可以问我如何使用某个组件、如何配置属性、或者如何创建表单模板等。</div>
+  </div>
+  <div class="ai-chat-quick" id="aiChatQuick">
+    <button class="ai-chat-quick-btn" onclick="askQuickQuestion(this)">如何创建报名表？</button>
+    <button class="ai-chat-quick-btn" onclick="askQuickQuestion(this)">手机号怎么验证？</button>
+    <button class="ai-chat-quick-btn" onclick="askQuickQuestion(this)">如何上传图片？</button>
+    <button class="ai-chat-quick-btn" onclick="askQuickQuestion(this)">怎么实现多列布局？</button>
+    <button class="ai-chat-quick-btn" onclick="askQuickQuestion(this)">有哪些组件可用？</button>
+    <button class="ai-chat-quick-btn" onclick="askQuickQuestion(this)">日期格式怎么设置？</button>
+    <button class="ai-chat-quick-btn" onclick="askQuickQuestion(this)">开关组件怎么用？</button>
+    <button class="ai-chat-quick-btn" onclick="askQuickQuestion(this)">评分组件有什么配置？</button>
+  </div>
+  <div class="ai-chat-input-area">
+    <input type="text" id="aiChatInput" placeholder="输入你的问题..." onkeydown="if(event.key==='Enter')sendAiChat()">
+    <button id="aiChatSend" onclick="sendAiChat()">&gt;</button>
+  </div>
+</div>
+
+<!-- Back to top -->
+<button class="back-to-top" id="backToTop" title="回到顶部">&#x2191;</button>
+
+<script>
+// ===== Toggle Component Accordion =====
+function toggleComponent(el){
+  const body=el.nextElementSibling;
+  const icon=el.querySelector('.toggle-icon');
+  body.classList.toggle('open');
+  icon.classList.toggle('open');
+}
+
+// ===== Filter Components =====
+document.querySelectorAll('.filter-chip').forEach(chip=>{
+  chip.addEventListener('click',()=>{
+    document.querySelectorAll('.filter-chip').forEach(c=>c.classList.remove('active'));
+    chip.classList.add('active');
+    const filter=chip.dataset.filter;
+    document.querySelectorAll('.component-card').forEach(card=>{
+      if(filter==='all'||card.dataset.type===filter){
+        card.classList.remove('hidden');
+      }else{
+        card.classList.add('hidden');
+      }
+    });
+  });
+});
+
+// ===== Sidebar Search =====
+document.getElementById('sidebarSearch').addEventListener('input',function(){
+  const q=this.value.toLowerCase();
+  document.querySelectorAll('.nav-item').forEach(item=>{
+    const text=(item.textContent+(item.dataset.search||'')).toLowerCase();
+    item.style.display=text.includes(q)?'':'none';
+  });
+  document.querySelectorAll('.nav-group').forEach(group=>{
+    const visible=group.querySelectorAll('.nav-item[style=""], .nav-item:not([style])');
+    const hasVisible=[...group.querySelectorAll('.nav-item')].some(i=>i.style.display!=='none');
+    group.style.display=hasVisible||!q?'':'none';
+  });
+});
+
+// ===== Active Nav Highlight =====
+const navItems=document.querySelectorAll('.nav-item[href]');
+const sections=[];
+navItems.forEach(item=>{
+  const id=item.getAttribute('href').slice(1);
+  const el=document.getElementById(id);
+  if(el)sections.push({el,nav:item});
+});
+
+function updateActiveNav(){
+  let current=null;
+  sections.forEach(s=>{
+    if(s.el.getBoundingClientRect().top<=120)current=s;
+  });
+  navItems.forEach(n=>n.classList.remove('active'));
+  if(current)current.nav.classList.add('active');
+}
+window.addEventListener('scroll',updateActiveNav,{passive:true});
+updateActiveNav();
+
+// ===== Back to Top =====
+const btt=document.getElementById('backToTop');
+window.addEventListener('scroll',()=>{
+  btt.classList.toggle('visible',window.scrollY>400);
+},{passive:true});
+btt.addEventListener('click',()=>window.scrollTo({top:0,behavior:'smooth'}));
+
+// ===== Mobile Sidebar =====
+const sidebar=document.getElementById('sidebar');
+const toggle=document.getElementById('sidebarToggle');
+const overlay=document.getElementById('sidebarOverlay');
+
+function openSidebar(){sidebar.classList.add('open');overlay.classList.add('active')}
+function closeSidebar(){sidebar.classList.remove('open');overlay.classList.remove('active')}
+
+toggle.addEventListener('click',()=>sidebar.classList.contains('open')?closeSidebar():openSidebar());
+overlay.addEventListener('click',closeSidebar);
+
+// Close sidebar on nav click (mobile)
+navItems.forEach(item=>item.addEventListener('click',()=>{
+  if(window.innerWidth<=900)closeSidebar();
+}));
+
+// ===== PHASE 5: Form Simulator =====
+
+// Component tooltip data (descriptions, key props, examples)
+const SIM_COMP_TIPS={
+  input:{desc:'收集一行简短文字，如姓名、手机号、邮箱地址。',keyProps:['占位提示','最多输入','前/后图标','正则校验','输入统计'],example:'手机号字段：设置最多输入11、添加正则 /^1[3-9]\\d{9}$/ 校验格式。'},
+  textarea:{desc:'收集较长文字内容，如自我介绍、申请理由、反馈建议。',keyProps:['最小行数','最大行数','最多输入','输入统计'],example:'自我介绍字段：设置最小3行最大6行，文本框随输入自动展开。'},
+  password:{desc:'安全输入密码或敏感信息，内容以圆点显示。',keyProps:['前图标','最多输入','正则校验'],example:'登录密码：设置前图标el-icon-lock，占位提示"请输入6-20位密码"。'},
+  counter:{desc:'数字输入带加减按钮，适合人数、数量等数字字段。',keyProps:['精度','按钮位置','严格步数','步长'],example:'参与人数：按钮位置设为"右侧"更紧凑，开启严格步数确保整数。'},
+  select:{desc:'下拉菜单选择预定义选项，适合学校、类别等固定选项。',keyProps:['选项列表','是否可搜索','是否多选','能否清空'],example:'学校字段：开启"是否可搜索"，用户输入关键字快速定位学校。'},
+  cascader:{desc:'多层级逐级选择，如省/市/区地址。支持动态或静态数据。',keyProps:['数据类型','选项分隔符','展示全路径','可否筛选'],example:'所在地区：开启筛选，用户可搜索定位地区，分隔符默认"/"。'},
+  radio:{desc:'少量固定选项中选一个，选项直接展示在页面上。',keyProps:['选项列表','选项样式(默认/按钮)','是否带边框','选项尺寸'],example:'性别字段：切换为"按钮"样式，只有"男""女"两个选项。'},
+  checkbox:{desc:'从多个选项中选择一个或多个值。',keyProps:['选项列表','至少应选','最多可选','选项样式'],example:'技能特长：预设5个选项，设置至少选1项确保有效数据。'},
+  switch:{desc:'两个互斥状态的切换（是/否、开启/关闭）。',keyProps:['开启/关闭提示','开启/关闭值','开启/关闭颜色'],example:'是否再次参加：开启提示"愿意"，关闭提示"不愿意"。'},
+  slider:{desc:'拖拽滑块在范围内选择数值，适合评分、比例等。',keyProps:['最小值','最大值','步长','显示间断点','范围选择'],example:'推荐指数：范围0-100，步长10，开启间断点方便定位。'},
+  time:{desc:'选择具体时间点（时:分:秒），适合预约时间等。',keyProps:['时间段','时间格式','能否清空'],example:'活动开始时间：时间格式HH:mm:ss，限定09:00-18:00时间段。'},
+  timerange:{desc:'选择一段时间范围（开始时间~结束时间），适合可用时段。',keyProps:['时间格式','范围分隔符','能否清空'],example:'可用时段：格式HH:mm，选择09:00至17:00。'},
+  date:{desc:'弹出日历面板选日期，支持日期/周/月/年/日期时间模式。',keyProps:['时间类型','时间格式','能否清空','是否只读'],example:'活动日期：时间类型选date，格式yyyy-MM-dd。'},
+  daterange:{desc:'选择一段日期范围（开始日期~结束日期），适合活动周期。',keyProps:['时间格式','范围分隔符','能否清空','是否只读'],example:'活动日期范围：格式yyyy-MM-dd，选择开始和结束日期。'},
+  rate:{desc:'星级评分组件，用户点击星星给出评分。',keyProps:['最大值','允许半选','辅助文字','显示分数'],example:'整体评分：开启半选+辅助文字+显示分数，支持4.5星精细评价。'},
+  color:{desc:'弹出取色面板选择颜色值，适合主题色配置。',keyProps:['颜色格式(hex/rgb/rgba)','选项尺寸'],example:'主题颜色：格式选hex，输出如#FF5722。'},
+  upload:{desc:'文件上传，支持图片、视频、音频、文档等多类型。',keyProps:['文件类型','文件大小','列表类型','多选文件','自动上传'],example:'活动照片：类型=图片，列表类型=picture-card(卡片预览)，大小2MB。'},
+  row:{desc:'行容器用于多列布局，将多个组件排在同一行。',keyProps:['布局模式','栅格间隔','对齐方式'],example:'姓名+手机号排一行：行容器内放两个单行文本，各占12列。'},
+  button:{desc:'在表单中添加可点击的操作按钮。',keyProps:['标题(按钮文字)','是否禁用'],example:'提交申请按钮：标题设为"提交申请"，放在表单底部。'}
+};
+
+let tooltipDismissed={};
+
+const SIM_COMP_DEFS={
+  input:{name:'单行文本',icon:'T',control:'<input type="text" placeholder="请输入..." style="width:100%;padding:6px 10px;border:1px solid #ddd;border-radius:4px;font-size:13px">',props:{label:'单行文本',field:'field_input',placeholder:'请输入...',required:true,maxlength:'',width:'100%',defaultValue:'',prefix:'',suffix:'',showWordLimit:false,clearable:false,readonly:false,disabled:false,spanCount:24,labelWidth:80,regexValidation:''}},
+  textarea:{name:'多行文本',icon:'T+',control:'<textarea placeholder="请输入..." style="width:100%;padding:6px 10px;border:1px solid #ddd;border-radius:4px;font-size:13px;min-height:60px;resize:vertical"></textarea>',props:{label:'多行文本',field:'field_textarea',placeholder:'请输入...',required:true,minRows:4,maxRows:4,maxlength:'',width:'100%',defaultValue:'',showWordLimit:false,clearable:false,readonly:false,disabled:false,spanCount:24,labelWidth:80,regexValidation:''}},
+  password:{name:'密码',icon:'*',control:'<input type="password" placeholder="请输入密码..." style="width:100%;padding:6px 10px;border:1px solid #ddd;border-radius:4px;font-size:13px">',props:{label:'密码',field:'field_password',placeholder:'请输入密码...',required:true,maxlength:'',width:'100%',showWordLimit:false,clearable:false,disabled:false,spanCount:24,labelWidth:80,regexValidation:''}},
+  counter:{name:'计数器',icon:'#',control:'<div style="display:flex;align-items:center;gap:4px"><button style="width:28px;height:28px;border:1px solid #ddd;border-radius:4px;background:#f9f9f9;cursor:pointer">-</button><input type="number" value="0" style="width:60px;text-align:center;padding:4px;border:1px solid #ddd;border-radius:4px;font-size:13px"><button style="width:28px;height:28px;border:1px solid #ddd;border-radius:4px;background:#f9f9f9;cursor:pointer">+</button></div>',props:{label:'计数器',field:'field_counter',placeholder:'',required:true,step:1,precision:0,min:0,max:100,defaultValue:'',buttonPosition:'默认',strictStep:false,disabled:false,spanCount:24,labelWidth:80,regexValidation:''}},
+  select:{name:'下拉选择',icon:'V',control:'<select style="width:100%;padding:6px 10px;border:1px solid #ddd;border-radius:4px;font-size:13px;background:#fff"><option value="">请选择...</option><option>选项一</option><option>选项二</option><option>选项三</option></select>',props:{label:'下拉选择',field:'field_select',placeholder:'请选择...',required:true,searchable:false,multiple:false,clearable:false,disabled:false,width:'100%',defaultValue:'',options:'选项一,选项二,选项三',spanCount:24,labelWidth:80,regexValidation:''}},
+  cascader:{name:'级联选择',icon:'&gt;&gt;',control:'<select style="width:100%;padding:6px 10px;border:1px solid #ddd;border-radius:4px;font-size:13px;background:#fff"><option value="">请选择地区...</option><option>浙江省 / 杭州市</option><option>江苏省 / 南京市</option></select>',props:{label:'级联选择',field:'field_cascader',placeholder:'请选择...',required:true,clearable:false,filterable:false,multiple:false,showAllLevels:true,separator:'/',dataType:'动态数据',labelKey:'label',valueKey:'value',childrenKey:'children',disabled:false,spanCount:24,labelWidth:80}},
+  radio:{name:'单选框组',icon:'&#x25C9;',control:'<label style="margin-right:16px;font-size:13px;cursor:pointer"><input type="radio" name="sim_radio" style="margin-right:4px">选项一</label><label style="margin-right:16px;font-size:13px;cursor:pointer"><input type="radio" name="sim_radio" style="margin-right:4px">选项二</label>',props:{label:'单选框组',field:'field_radio',required:true,optionStyle:'默认',options:'选项一,选项二,选项三',defaultValue:'',border:false,size:'default',disabled:false,spanCount:24,labelWidth:80,regexValidation:''}},
+  checkbox:{name:'多选框组',icon:'&#x2611;',control:'<label style="margin-right:16px;font-size:13px;cursor:pointer"><input type="checkbox" style="margin-right:4px">选项一</label><label style="margin-right:16px;font-size:13px;cursor:pointer"><input type="checkbox" style="margin-right:4px">选项二</label><label style="font-size:13px;cursor:pointer"><input type="checkbox" style="margin-right:4px">选项三</label>',props:{label:'多选框组',field:'field_checkbox',required:true,options:'选项一,选项二,选项三',defaultValue:'',optionStyle:'默认',border:false,size:'default',min:0,max:0,disabled:false,spanCount:24,labelWidth:80,regexValidation:''}},
+  switch:{name:'开关',icon:'~',control:'<label style="display:inline-flex;align-items:center;cursor:pointer;gap:8px"><span style="position:relative;width:40px;height:22px;background:#dcdfe6;border-radius:11px;transition:all .3s" onclick="this.style.background=this.style.background===\'rgb(64, 158, 255)\'?\'#dcdfe6\':\'#409EFF\'"><span style="position:absolute;top:2px;left:2px;width:18px;height:18px;background:#fff;border-radius:50%;transition:all .3s"></span></span></label>',props:{label:'开关',field:'field_switch',required:false,activeText:'',inactiveText:'',activeValue:'true',inactiveValue:'false',activeColor:'#409EFF',inactiveColor:'#DCDFE6',disabled:false,spanCount:24,labelWidth:80}},
+  slider:{name:'滑块',icon:'&#x2194;',control:'<input type="range" min="0" max="100" value="50" style="width:100%;cursor:pointer"><div style="display:flex;justify-content:space-between;font-size:11px;color:#999"><span>0</span><span>50</span><span>100</span></div>',props:{label:'滑块',field:'field_slider',min:0,max:100,step:1,required:true,defaultValue:'',showInput:false,range:false,showStops:false,disabled:false,spanCount:24,labelWidth:80}},
+  time:{name:'时间选择',icon:'时',control:'<input type="time" style="width:100%;padding:6px 10px;border:1px solid #ddd;border-radius:4px;font-size:13px">',props:{label:'时间选择',field:'field_time',placeholder:'请选择时间',required:true,format:'HH:mm:ss',width:'100%',defaultValue:'',timeRange:'00:00:00-23:59:59',clearable:false,disabled:false,spanCount:24,labelWidth:80}},
+  timerange:{name:'时间范围',icon:'时~',control:'<div style="display:flex;align-items:center;gap:6px"><input type="time" style="flex:1;padding:6px 10px;border:1px solid #ddd;border-radius:4px;font-size:13px"><span style="color:#999">至</span><input type="time" style="flex:1;padding:6px 10px;border:1px solid #ddd;border-radius:4px;font-size:13px"></div>',props:{label:'时间范围',field:'field_timerange',startPlaceholder:'开始时间',endPlaceholder:'结束时间',required:true,format:'HH:mm:ss',width:'100%',defaultValue:'',rangeSeparator:'至',clearable:false,disabled:false,spanCount:24,labelWidth:80}},
+  date:{name:'日期选择',icon:'日',control:'<input type="date" style="width:100%;padding:6px 10px;border:1px solid #ddd;border-radius:4px;font-size:13px">',props:{label:'日期选择',field:'field_date',placeholder:'请选择日期',required:true,format:'yyyy-MM-dd',dateType:'date',width:'100%',defaultValue:'',clearable:false,readonly:false,disabled:false,spanCount:24,labelWidth:80}},
+  daterange:{name:'日期范围',icon:'日~',control:'<div style="display:flex;align-items:center;gap:6px"><input type="date" style="flex:1;padding:6px 10px;border:1px solid #ddd;border-radius:4px;font-size:13px"><span style="color:#999">至</span><input type="date" style="flex:1;padding:6px 10px;border:1px solid #ddd;border-radius:4px;font-size:13px"></div>',props:{label:'日期范围',field:'field_daterange',startPlaceholder:'开始日期',endPlaceholder:'结束日期',required:true,format:'yyyy-MM-dd',dateType:'daterange',width:'100%',defaultValue:'',rangeSeparator:'至',clearable:false,readonly:false,disabled:false,spanCount:24,labelWidth:80}},
+  rate:{name:'评分',icon:'*',control:'<div class="sim-rate" style="font-size:24px;cursor:pointer;user-select:none" onclick="simRateClick(event,this)">&#9734;&#9734;&#9734;&#9734;&#9734;</div>',props:{label:'评分',field:'field_rate',max:5,allowHalf:false,required:true,defaultValue:'',showScore:false,showText:false,disabled:false,spanCount:24,labelWidth:80}},
+  color:{name:'颜色选择',icon:'C',control:'<input type="color" value="#409EFF" style="width:40px;height:32px;border:1px solid #ddd;border-radius:4px;cursor:pointer;padding:2px">',props:{label:'颜色选择',field:'field_color',format:'hex',required:false,defaultValue:'#409EFF',showAlpha:false,colorFormat:'hex',size:'default',disabled:false,spanCount:24,labelWidth:80}},
+  upload:{name:'上传',icon:'^',control:'<div style="border:2px dashed #ddd;border-radius:8px;padding:20px;text-align:center;color:#999;cursor:pointer;font-size:13px" onclick="this.style.borderColor=\'#409EFF\';this.innerHTML=\'OK 已选择文件\'">上传 点击上传文件</div>',props:{label:'上传',field:'field_upload',fileType:'图片',maxSize:'2MB',listType:'picture-card',required:true,buttonText:'点击上传',showTip:true,multiple:false,autoUpload:true,fileFieldName:'file',uploadUrl:'/file/upload',disabled:false,spanCount:24,labelWidth:80,regexValidation:''}},
+  row:{name:'行容器',icon:'[=]',control:'<div style="border:2px dashed #c0c4cc;border-radius:6px;padding:12px;text-align:center;color:#909399;font-size:12px;background:#f5f7fa">行容器 (拖入组件实现多列布局)</div>',props:{label:'行容器',field:'field_row',layoutType:'default',gutter:15,justify:'start',align:'top',spanCount:24}},
+  button:{name:'按钮',icon:'O',control:'<button style="padding:8px 24px;background:#409EFF;color:#fff;border:none;border-radius:4px;font-size:14px;cursor:pointer">提交</button>',props:{label:'按钮',field:'field_button',text:'提交',disabled:false,spanCount:24,labelWidth:80}}
+};
+
+let simItems=[];
+let simSelectedIdx=-1;
+let simIdCounter=0;
+const simFormGlobal={formName:'elForm',formModel:'formData',rulesModel:'rules',size:'medium',labelPosition:'right',labelWidth:100,gutter:15,disabled:false,formBtns:true,showBorder:false};
+
+function switchPropTab(tab){
+  document.querySelectorAll('.sim-prop-tab').forEach(t=>t.classList.remove('active'));
+  if(tab==='form'){
+    document.querySelectorAll('.sim-prop-tab')[1].classList.add('active');
+    document.getElementById('simPropsContent').style.display='none';
+    document.getElementById('simFormPropsContent').style.display='block';
+  }else{
+    document.querySelectorAll('.sim-prop-tab')[0].classList.add('active');
+    document.getElementById('simPropsContent').style.display='block';
+    document.getElementById('simFormPropsContent').style.display='none';
+  }
+}
+
+function updateFormPropsUI(){
+  const fp=document.getElementById('simFormPropsContent');
+  if(!fp)return;
+  const rows=fp.querySelectorAll('.sim-prop-row');
+  const g=simFormGlobal;
+  // text inputs: formName(0), formModel(1), rulesModel(2)
+  if(rows[0])rows[0].querySelector('input[type="text"]').value=g.formName||'elForm';
+  if(rows[1])rows[1].querySelector('input[type="text"]').value=g.formModel||'formData';
+  if(rows[2])rows[2].querySelector('input[type="text"]').value=g.rulesModel||'rules';
+  // selects: size(3), labelPosition(4)
+  if(rows[3])rows[3].querySelector('select').value=g.size||'medium';
+  if(rows[4]){const sel=rows[4].querySelector('select');if(sel)sel.value=g.labelPosition||'right';}
+  // numbers: labelWidth(5), gutter(6)
+  if(rows[5])rows[5].querySelector('input[type="number"]').value=g.labelWidth||100;
+  if(rows[6])rows[6].querySelector('input[type="number"]').value=g.gutter||15;
+  // checkboxes: disabled(7), formBtns(8), showBorder(9)
+  if(rows[7])rows[7].querySelector('input[type="checkbox"]').checked=!!g.disabled;
+  if(rows[8])rows[8].querySelector('input[type="checkbox"]').checked=g.formBtns!==false;
+  if(rows[9])rows[9].querySelector('input[type="checkbox"]').checked=!!g.showBorder;
+}
+
+function addSimComp(type){
+  const def=SIM_COMP_DEFS[type];
+  if(!def)return;
+  const item={id:++simIdCounter,type,name:def.name,props:JSON.parse(JSON.stringify(def.props))};
+  simItems.push(item);
+  renderSimCanvas();
+  selectSimItem(simItems.length-1);
+}
+
+function buildControl(item){
+  const p=item.props;
+  const dis=p.disabled?' disabled style="opacity:.5;pointer-events:none"':'';
+  const ro=p.readonly?' readonly':'';
+  const ph=p.placeholder||'';
+  const clearBtn=p.clearable?'<span style="position:absolute;right:8px;top:50%;transform:translateY(-50%);cursor:pointer;color:#c0c4cc;font-size:14px" title="清空">&times;</span>':'';
+  const wrapStyle=p.clearable?'position:relative':'';
+  const inputStyle='width:100%;padding:6px 10px;border:1px solid #ddd;border-radius:4px;font-size:13px';
+  const pfx=p.prefix?`<span style="padding:6px 10px;background:#f5f7fa;border:1px solid #ddd;border-right:none;border-radius:4px 0 0 4px;font-size:12px;color:#909399">${p.prefix}</span>`:'';
+  const sfx=p.suffix?`<span style="padding:6px 10px;background:#f5f7fa;border:1px solid #ddd;border-left:none;border-radius:0 4px 4px 0;font-size:12px;color:#909399">${p.suffix}</span>`:'';
+  const hasFix=p.prefix||p.suffix;
+  switch(item.type){
+    case 'input':
+      if(hasFix) return `<div style="display:flex;align-items:stretch;${wrapStyle}">${pfx}<input type="text" placeholder="${ph}" style="flex:1;padding:6px 10px;border:1px solid #ddd;font-size:13px;${p.prefix?'border-radius:0':'border-radius:4px 0 0 4px'};${p.suffix?'':'border-radius:0 4px 4px 0'}"${dis}${ro}>${sfx}${clearBtn}</div>`;
+      return `<div style="${wrapStyle}"><input type="text" placeholder="${ph}" style="${inputStyle}"${dis}${ro}>${clearBtn}</div>`;
+    case 'textarea':
+      return `<textarea placeholder="${ph}" style="${inputStyle};min-height:${(p.minRows||3)*20}px;resize:vertical"${dis}${ro}></textarea>`;
+    case 'password':
+      return `<div style="${wrapStyle}"><input type="password" placeholder="${ph}" style="${inputStyle}"${dis}>${clearBtn}</div>`;
+    case 'select':
+      return `<div style="${wrapStyle}"><select style="${inputStyle};background:#fff"${dis}><option value="">${ph||'请选择...'}</option>${(p.options||'').split(',').filter(Boolean).map(o=>'<option>'+o+'</option>').join('')}</select>${clearBtn}</div>`;
+    case 'radio':{
+      const opts=(p.options||'选项一,选项二').split(',');
+      const isBtn=p.optionStyle==='按钮';
+      if(isBtn) return `<div style="display:flex;gap:0">${opts.map((o,i)=>`<label style="padding:5px 14px;border:1px solid #ddd;${i===0?'border-radius:4px 0 0 4px':''}${i===opts.length-1?'border-radius:0 4px 4px 0':''};font-size:12px;cursor:pointer;${p.border?'':'margin-left:-1px'}"${dis}><input type="radio" name="sim_r_${item.id}" style="display:none">${o}</label>`).join('')}</div>`;
+      return opts.map(o=>`<label style="margin-right:14px;font-size:13px;cursor:pointer"${dis}><input type="radio" name="sim_r_${item.id}" style="margin-right:4px">${o}</label>`).join('');
+    }
+    case 'checkbox':{
+      const opts=(p.options||'选项一,选项二,选项三').split(',');
+      return opts.map(o=>`<label style="margin-right:14px;font-size:13px;cursor:pointer;${p.border?'padding:4px 10px;border:1px solid #ddd;border-radius:4px':''}"${dis}><input type="checkbox" style="margin-right:4px">${o}</label>`).join('');
+    }
+    case 'counter':{
+      const btnPos=p.buttonPosition==='右侧';
+      const val=p.defaultValue||'0';
+      if(btnPos) return `<div style="display:flex;align-items:center"${dis}><input type="number" value="${val}" style="width:100px;text-align:center;padding:6px;border:1px solid #ddd;border-radius:4px 0 0 4px;font-size:13px"><div style="display:flex;flex-direction:column;border:1px solid #ddd;border-left:none;border-radius:0 4px 4px 0"><button style="padding:0 8px;border:none;border-bottom:1px solid #ddd;background:#f5f7fa;cursor:pointer;font-size:10px">▲</button><button style="padding:0 8px;border:none;background:#f5f7fa;cursor:pointer;font-size:10px">▼</button></div></div>`;
+      return `<div style="display:flex;align-items:center;gap:4px"${dis}><button style="width:28px;height:28px;border:1px solid #ddd;border-radius:4px;background:#f9f9f9;cursor:pointer">-</button><input type="number" value="${val}" style="width:60px;text-align:center;padding:4px;border:1px solid #ddd;border-radius:4px;font-size:13px"><button style="width:28px;height:28px;border:1px solid #ddd;border-radius:4px;background:#f9f9f9;cursor:pointer">+</button></div>`;
+    }
+    case 'cascader':
+      return `<div style="${wrapStyle}"><select style="${inputStyle};background:#fff"${dis}><option value="">${ph||'请选择...'}</option><option>选项一 ${p.separator||'/'} 子选项</option></select>${p.clearable?clearBtn:''}</div>`;
+    case 'switch':{
+      const isOn=p.defaultValue==='true'||p.defaultValue===true;
+      const onC=p.activeColor||'#409EFF';
+      const offC=p.inactiveColor||'#DCDFE6';
+      const bg=isOn?onC:offC;
+      const pos=isOn?'20px':'2px';
+      return `<div style="display:flex;align-items:center;gap:8px"${dis}>${p.inactiveText?'<span style="font-size:12px;color:#999">'+p.inactiveText+'</span>':''}<span style="display:inline-block;width:40px;height:22px;background:${bg};border-radius:11px;position:relative;cursor:pointer"><span style="position:absolute;top:2px;left:${pos};width:18px;height:18px;background:#fff;border-radius:50%;transition:all .3s"></span></span>${p.activeText?'<span style="font-size:12px;color:#999">'+p.activeText+'</span>':''}</div>`;
+    }
+    case 'slider':{
+      const mn=p.min||0,mx=p.max||100,dv=p.defaultValue||mn;
+      return `<div${dis}><input type="range" min="${mn}" max="${mx}" value="${dv}" step="${p.step||1}" style="width:100%;cursor:pointer"><div style="display:flex;justify-content:space-between;font-size:11px;color:#999"><span>${mn}</span><span>${mx}</span></div></div>`;
+    }
+    case 'time':
+      return `<div style="${wrapStyle}"><input type="time" style="${inputStyle}"${dis} placeholder="${ph}">${p.clearable?clearBtn:''}</div>`;
+    case 'timerange':{
+      const sep=p.rangeSeparator||'至';
+      return `<div style="display:flex;align-items:center;gap:6px"${dis}><input type="time" placeholder="${p.startPlaceholder||'开始时间'}" style="flex:1;padding:6px 10px;border:1px solid #ddd;border-radius:4px;font-size:13px"><span style="color:#999">${sep}</span><input type="time" placeholder="${p.endPlaceholder||'结束时间'}" style="flex:1;padding:6px 10px;border:1px solid #ddd;border-radius:4px;font-size:13px"></div>`;
+    }
+    case 'date':
+      return `<div style="${wrapStyle}"><input type="date" style="${inputStyle}"${dis}${p.readonly?' readonly':''}>${p.clearable?clearBtn:''}</div>`;
+    case 'daterange':{
+      const sep=p.rangeSeparator||'至';
+      return `<div style="display:flex;align-items:center;gap:6px"${dis}><input type="date" placeholder="${p.startPlaceholder||'开始日期'}" style="flex:1;padding:6px 10px;border:1px solid #ddd;border-radius:4px;font-size:13px"${p.readonly?' readonly':''}><span style="color:#999">${sep}</span><input type="date" placeholder="${p.endPlaceholder||'结束日期'}" style="flex:1;padding:6px 10px;border:1px solid #ddd;border-radius:4px;font-size:13px"${p.readonly?' readonly':''}></div>`;
+    }
+    case 'rate':{
+      const mx=p.max||5;
+      const dv=Number(p.defaultValue)||0;
+      let stars='';
+      for(let i=1;i<=mx;i++) stars+=i<=dv?'★':'☆';
+      return `<div style="font-size:24px;cursor:pointer;user-select:none;color:#f7ba2a"${dis}>${stars}${p.showScore?'<span style="font-size:13px;color:#999;margin-left:8px">'+dv+'分</span>':''}</div>`;
+    }
+    case 'color':{
+      const dv=p.defaultValue||'#409EFF';
+      return `<input type="color" value="${dv}" style="width:40px;height:32px;border:1px solid #ddd;border-radius:4px;cursor:pointer;padding:2px"${dis}>`;
+    }
+    case 'upload':{
+      const lt=p.listType||'text';
+      if(lt==='picture-card') return `<div style="width:80px;height:80px;border:1px dashed #ddd;border-radius:6px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#999;font-size:24px"${dis}>+</div>`;
+      return `<button style="padding:6px 16px;border:1px solid #ddd;border-radius:4px;background:#fff;cursor:pointer;font-size:13px"${dis}>${p.buttonText||'点击上传'}</button>${p.showTip?'<div style="font-size:11px;color:#999;margin-top:4px">只能上传'+( p.fileType||'文件')+',大小不超过'+(p.maxSize||'2MB')+'</div>':''}`;
+    }
+    case 'row':
+      return `<div style="border:2px dashed #c0c4cc;border-radius:6px;padding:12px;text-align:center;color:#909399;font-size:12px;background:#f5f7fa">行容器 (拖入组件实现多列布局)</div>`;
+    case 'button':{
+      const txt=p.text||p.defaultValue||'提交';
+      return `<button style="padding:8px 24px;background:#409EFF;color:#fff;border:none;border-radius:4px;font-size:14px;cursor:pointer"${dis}>${txt}</button>`;
+    }
+    default:
+      return SIM_COMP_DEFS[item.type].control;
+  }
+}
+
+function renderSimCanvas(){
+  const canvas=document.getElementById('simCanvas');
+  if(simItems.length===0){
+    canvas.className='sim-canvas empty';
+    canvas.innerHTML='点击左侧组件或加载模板开始体验';
+    return;
+  }
+  canvas.className='sim-canvas';
+  const fg=simFormGlobal;
+  const isTop=fg.labelPosition==='top';
+  const formDis=fg.disabled;
+  const borderCls=fg.showBorder?' sim-show-border':'';
+  canvas.innerHTML=simItems.map((item,i)=>{
+    const def=SIM_COMP_DEFS[item.type];
+    const sel=i===simSelectedIdx?'selected':'';
+    const demoHl=item._demoHighlight?'demo-highlight':'';
+    const req=item.props.required?'<span class="required">* </span>':'';
+    // Override disabled if form-level disabled is on
+    if(formDis&&!item.props._origDisabled){item.props._origDisabled=item.props.disabled;item.props.disabled=true;}
+    if(!formDis&&item.props._origDisabled!==undefined){item.props.disabled=item.props._origDisabled;delete item.props._origDisabled;}
+    const labelStyle=isTop?'display:block;margin-bottom:4px':`display:inline-block;width:${fg.labelWidth||100}px;text-align:${fg.labelPosition==='right'?'right':'left'};margin-right:8px;vertical-align:top`;
+    return `<div class="sim-canvas-item ${sel} ${demoHl}${borderCls}" onclick="selectSimItem(${i})" style="position:relative;margin-bottom:${fg.gutter||15}px">
+      <div class="sim-item-actions"><button onclick="event.stopPropagation();removeSimItem(${i})" title="删除">&times;</button></div>
+      <div class="sim-item-label" style="${labelStyle}">${req}${item.props.label||def.name}</div>
+      <div class="sim-item-control" style="${isTop?'':'display:inline-block;vertical-align:top;flex:1'}">${buildControl(item)}</div>
+    </div>`;
+  }).join('')+(fg.formBtns?'<div style="text-align:center;padding:12px 0;border-top:1px solid #eee;margin-top:8px"><button style="padding:8px 24px;background:#409EFF;color:#fff;border:none;border-radius:4px;font-size:13px;margin-right:12px;cursor:pointer">提交</button><button style="padding:8px 24px;background:#fff;color:#606266;border:1px solid #dcdfe6;border-radius:4px;font-size:13px;cursor:pointer">重置</button></div>':'');
+}
+
+function dismissTooltip(itemId){
+  tooltipDismissed[itemId]=true;
+  renderSimProps();
+}
+
+function selectSimItem(idx){
+  simSelectedIdx=idx;
+  renderSimCanvas();
+  renderSimProps();
+}
+
+function removeSimItem(idx){
+  simItems.splice(idx,1);
+  if(simSelectedIdx>=simItems.length)simSelectedIdx=simItems.length-1;
+  renderSimCanvas();
+  renderSimProps();
+}
+
+function clearSimCanvas(){
+  simItems=[];
+  simSelectedIdx=-1;
+  document.getElementById('simFormName').value='';
+  renderSimCanvas();
+  document.getElementById('simPropsContent').innerHTML='<div style="font-size:12px;color:var(--gray-400)">请点击画布中的组件查看属性</div>';
+}
+
+function renderSimProps(){
+  const el=document.getElementById('simPropsContent');
+  if(simSelectedIdx<0||simSelectedIdx>=simItems.length){
+    el.innerHTML='<div style="font-size:12px;color:var(--gray-400)">请点击画布中的组件查看属性</div>';
+    return;
+  }
+  const item=simItems[simSelectedIdx];
+  const def=SIM_COMP_DEFS[item.type];
+  const p=item.props;
+  let html='';
+
+  // Show tip card at top if not dismissed
+  if(!tooltipDismissed[item.id]){
+    const tip=SIM_COMP_TIPS[item.type];
+    if(tip){
+      html+=`<div class="sim-tip-card">
+        <div class="tt-header"><span class="tt-title">${def.name}</span><button class="tt-close" onclick="dismissTooltip(${item.id})">&times;</button></div>
+        <div class="tt-desc">${tip.desc}</div>
+        <div class="tt-props"><div class="tt-props-title">核心属性：</div><div class="tt-prop-list">${tip.keyProps.map(p=>'<span class="tt-prop-tag">'+p+'</span>').join('')}</div></div>
+        <div class="tt-example">${tip.example}</div>
+      </div>`;
+    }
+  }
+
+  // Property descriptions for inline help
+  const propDescs={
+    label:'左边的名字，比如"姓名"',
+    field:'数据的key，不能重复',
+    placeholder:'没填时的灰字提示',
+    required:'必填，不填不让交',
+    maxlength:'最多能输几个字',
+    width:'多宽，如100%或200px',
+    minRows:'最少几行高',
+    maxRows:'最多几行高',
+    step:'每次加减多少',
+    precision:'保留几位小数',
+    searchable:'能不能打字搜选项',
+    multiple:'能不能选多个',
+    optionStyle:'按钮样式还是圆点样式',
+    min:'最小能填多少',
+    max:'最大能填多少',
+    allowHalf:'能不能选半颗星',
+    format:'格式，如yyyy-MM-dd',
+    activeText:'打开时显示的字',
+    inactiveText:'关闭时显示的字',
+    activeValue:'打开时提交的值',
+    inactiveValue:'关闭时提交的值',
+    fileType:'能传什么文件：图片/视频/文档',
+    maxSize:'文件最大多少，如2MB',
+    listType:'文件怎么展示：text文字/picture-card图片卡片',
+    text:'按钮上的字',
+    showWordLimit:'显示已输入字数',
+    clearable:'显示一键清空按钮',
+    disabled:'禁用，不让操作',
+    readonly:'只能看不能改',
+    showInput:'滑块旁边显示数字框',
+    range:'选一个范围而不是单个值',
+    showStops:'滑块上显示刻度点',
+    showAlpha:'能调透明度',
+    colorFormat:'颜色格式：hex/rgb/hsl',
+    spanCount:'占几列宽(1-24)',
+    labelWidth:'标签多宽(px)',
+    defaultValue:'默认填好的值',
+    prefix:'输入框前面加的字',
+    suffix:'输入框后面加的字',
+    regexValidation:'选择一种格式校验，提交时自动检查',
+    options:'选项列表，用逗号分隔',
+    border:'选项加边框',
+    size:'大小：default/medium/small/mini',
+    strictStep:'只能按步长的倍数填',
+    activeColor:'打开时的颜色',
+    inactiveColor:'关闭时的颜色',
+    filterable:'能不能输入筛选',
+    showAllLevels:'显示完整路径',
+    separator:'路径分隔符',
+    dateType:'日期类型：date/week/month/year',
+    showScore:'显示分数',
+    showText:'显示评分文字',
+    buttonText:'上传按钮的字',
+    showTip:'显示上传提示',
+    autoUpload:'选完自动上传',
+    rangeSeparator:'范围中间的分隔符，如至',
+    layoutType:'布局模式：default默认/flex弹性',
+    gutter:'列之间的间距(px)',
+    justify:'水平对齐：start/end/center/space-around/space-between',
+    align:'垂直对齐：top/middle/bottom',
+    timeRange:'时间选择范围，如00:00:00-23:59:59',
+    startPlaceholder:'开始时间/日期的灰字提示',
+    endPlaceholder:'结束时间/日期的灰字提示',
+    dataType:'动态数据从接口获取，静态数据手动输入',
+    labelKey:'选项显示用的字段名',
+    valueKey:'选项提交用的字段名',
+    childrenKey:'子级选项的字段名',
+    buttonPosition:'加减按钮在左右还是在右侧',
+    fileFieldName:'上传时文件的字段名',
+    uploadUrl:'文件上传到哪个地址'
+  };
+
+  // Property editors
+  for(const[key,val] of Object.entries(p)){
+    const labels={label:'标题',field:'字段名',placeholder:'占位提示',required:'是否必填',maxlength:'最多输入',width:'组件宽度',minRows:'最小行数',maxRows:'最大行数',step:'步长',precision:'精度',searchable:'是否可搜索',multiple:'是否多选',optionStyle:'选项样式',min:'最小值',max:'最大值',allowHalf:'允许半选',format:'格式',activeText:'开启提示',inactiveText:'关闭提示',activeValue:'开启值',inactiveValue:'关闭值',fileType:'文件类型',maxSize:'文件大小',listType:'列表类型',text:'按钮文字',showWordLimit:'字数统计',clearable:'可清空',disabled:'是否禁用',readonly:'是否只读',showInput:'显示输入框',range:'范围选择',showStops:'显示刻度',showAlpha:'透明度',colorFormat:'颜色格式',spanCount:'栅格列数',labelWidth:'标签宽度',defaultValue:'默认值',prefix:'前缀',suffix:'后缀',regexValidation:'正则校验',options:'选项列表',border:'是否带边框',size:'选项尺寸',strictStep:'严格步数',activeColor:'开启颜色',inactiveColor:'关闭颜色',filterable:'可筛选',showAllLevels:'显示全路径',separator:'分隔符',dateType:'日期类型',showScore:'显示分数',showText:'显示文字',buttonText:'按钮文字',showTip:'显示提示',autoUpload:'自动上传',rangeSeparator:'范围分隔符',layoutType:'布局模式',gutter:'栅格间隔',justify:'水平对齐',align:'垂直对齐',timeRange:'时间段',startPlaceholder:'开始占位',endPlaceholder:'结束占位',dataType:'数据类型',labelKey:'标签键名',valueKey:'值键名',childrenKey:'子级键名',buttonPosition:'按钮位置',fileFieldName:'文件字段名',uploadUrl:'上传地址'};
+    const lbl=labels[key]||key;
+    const helpText=propDescs[key]||'';
+    const helpHtml=helpText?`<div class="sim-prop-help">${helpText}</div>`:'';
+    if(key==='regexValidation'){
+      // Render as dropdown with preset patterns
+      const presets=[
+        {v:'',n:'不校验'},
+        {v:'/^1[3-9]\\d{9}$/',n:'手机号(中国)'},
+        {v:'/^[\\w.-]+@[\\w.-]+\\.\\w+$/',n:'邮箱地址'},
+        {v:'/^\\d{6}$/',n:'6位验证码'},
+        {v:'/^[\\u4e00-\\u9fa5]{2,10}$/',n:'中文姓名(2-10字)'},
+        {v:'/^\\d{17}[\\dXx]$/',n:'身份证号'},
+        {v:'/^https?:\\/\\/.+/',n:'网址URL'}
+      ];
+      const opts=presets.map(p=>`<option value="${p.v}" ${val===p.v?'selected':''}>${p.n}</option>`).join('');
+      html+=`<div class="sim-prop-row" data-prop-key="${key}"><label>${lbl}</label>${helpHtml}<select onchange="updateSimProp('${key}',this.value)">${opts}</select></div>`;
+    }else if(typeof val==='boolean'){
+      html+=`<div class="sim-prop-row" data-prop-key="${key}"><label><input type="checkbox" ${val?'checked':''} onchange="updateSimProp('${key}',this.checked)">${lbl}</label>${helpHtml}</div>`;
+    }else if(typeof val==='number'){
+      html+=`<div class="sim-prop-row" data-prop-key="${key}"><label>${lbl}</label>${helpHtml}<input type="number" value="${val}" onchange="updateSimProp('${key}',Number(this.value))"></div>`;
+    }else{
+      html+=`<div class="sim-prop-row" data-prop-key="${key}"><label>${lbl}</label>${helpHtml}<input type="text" value="${val}" onchange="updateSimProp('${key}',this.value)"></div>`;
+    }
+  }
+  el.innerHTML=html;
+}
+
+function updateSimProp(key,val){
+  if(simSelectedIdx>=0&&simSelectedIdx<simItems.length){
+    simItems[simSelectedIdx].props[key]=val;
+    renderSimCanvas();
+  }
+}
+
+function simRateClick(e,el){
+  const stars=['&#9734;','&#9734;','&#9734;','&#9734;','&#9734;'];
+  const rect=el.getBoundingClientRect();
+  const x=e.clientX-rect.left;
+  const rating=Math.ceil((x/rect.width)*5);
+  el.innerHTML=Array.from({length:5},(_, i)=>i<rating?'&#9733;':'&#9734;').join('');
+}
+
+const SIM_TEMPLATES={
+  1:{name:'活动报名表',items:[
+    {type:'input',props:{label:'姓名',field:'userName',placeholder:'请输入真实姓名',required:true,maxlength:'20',width:'100%',clearable:true,spanCount:12,labelWidth:90}},
+    {type:'input',props:{label:'手机号',field:'mobile',placeholder:'请输入11位手机号',required:true,maxlength:'11',width:'100%',showWordLimit:true,regexValidation:'/^1[3-9]\\d{9}$/',prefix:'',suffix:'',spanCount:12,labelWidth:90}},
+    {type:'input',props:{label:'邮箱',field:'email',placeholder:'选填，用于接收通知',required:false,maxlength:'50',width:'100%',clearable:true,regexValidation:'/^[\\w.-]+@[\\w.-]+\\.\\w+$/',spanCount:12,labelWidth:90}},
+    {type:'select',props:{label:'学校',field:'school',placeholder:'请搜索选择学校',required:true,searchable:true,multiple:false,clearable:true,options:'UCLA,UCSD,UCSB,UMN,USC,NYU',width:'100%',spanCount:12,labelWidth:90}},
+    {type:'radio',props:{label:'年级',field:'grade',required:true,options:'大一,大二,大三,大四,研究生',optionStyle:'按钮',size:'small',spanCount:24,labelWidth:90}},
+    {type:'date',props:{label:'活动日期',field:'eventDate',required:true,format:'yyyy-MM-dd',dateType:'date',clearable:true,placeholder:'请选择日期',spanCount:12,labelWidth:90}},
+    {type:'select',props:{label:'T恤尺码',field:'tshirtSize',required:false,options:'XS,S,M,L,XL,XXL',placeholder:'请选择尺码',clearable:true,spanCount:12,labelWidth:90}},
+    {type:'textarea',props:{label:'自我介绍',field:'selfIntro',placeholder:'请简短介绍自己，包括专业、兴趣爱好等...',required:false,minRows:3,maxRows:6,maxlength:'200',showWordLimit:true,spanCount:24,labelWidth:90}},
+    {type:'switch',props:{label:'接受协议',field:'agreeTerms',required:false,activeText:'同意',inactiveText:'不同意',activeColor:'#67C23A',spanCount:24,labelWidth:90}},
+    {type:'button',props:{label:'',field:'submitBtn',text:'提交报名',spanCount:24}}
+  ]},
+  2:{name:'志愿者申请表',items:[
+    {type:'input',props:{label:'姓名',field:'name',placeholder:'请输入姓名',required:true,maxlength:'20',clearable:true,spanCount:12,labelWidth:80}},
+    {type:'input',props:{label:'邮箱',field:'email',placeholder:'请输入邮箱',required:true,maxlength:'50',clearable:true,regexValidation:'/^[\\w.-]+@[\\w.-]+\\.\\w+$/',spanCount:12,labelWidth:80}},
+    {type:'input',props:{label:'手机号',field:'phone',placeholder:'请输入手机号',required:true,maxlength:'11',showWordLimit:true,spanCount:12,labelWidth:80}},
+    {type:'select',props:{label:'学校',field:'school',placeholder:'请选择学校',required:true,searchable:true,clearable:true,options:'UCLA,UCSD,UCSB,UMN,USC',spanCount:12,labelWidth:80}},
+    {type:'radio',props:{label:'志愿经验',field:'experience',required:true,options:'无经验,1年以内,1-3年,3年以上',optionStyle:'默认',spanCount:24,labelWidth:80}},
+    {type:'checkbox',props:{label:'技能特长',field:'skills',required:true,options:'编程开发,设计美工,翻译语言,组织策划,摄影摄像,文案写作,财务管理',optionStyle:'默认',border:true,min:1,max:3,spanCount:24,labelWidth:80}},
+    {type:'time',props:{label:'可开始时间',field:'availStart',required:true,format:'HH:mm',placeholder:'最早几点',clearable:true,spanCount:12,labelWidth:80}},
+    {type:'time',props:{label:'可结束时间',field:'availEnd',required:true,format:'HH:mm',placeholder:'最晚几点',clearable:true,spanCount:12,labelWidth:80}},
+    {type:'slider',props:{label:'每周可用小时',field:'weeklyHours',min:1,max:40,step:1,showInput:true,required:true,spanCount:24,labelWidth:80}},
+    {type:'textarea',props:{label:'申请理由',field:'reason',placeholder:'请说明你的申请动机和能为团队带来什么...',required:true,minRows:4,maxRows:8,maxlength:'500',showWordLimit:true,spanCount:24,labelWidth:80}},
+    {type:'upload',props:{label:'个人简历',field:'resume',fileType:'文档',maxSize:'5MB',listType:'text',required:false,buttonText:'上传简历',showTip:true,spanCount:24,labelWidth:80}},
+    {type:'button',props:{label:'',field:'submitBtn',text:'提交申请',spanCount:24}}
+  ]},
+  3:{name:'满意度调查表',items:[
+    {type:'radio',props:{label:'活动名称',field:'activityName',required:true,options:'中秋嘉年华,新生欢迎会,学术讲座,运动会,志愿者活动',optionStyle:'按钮',size:'small',spanCount:24,labelWidth:100}},
+    {type:'rate',props:{label:'整体评分',field:'overallRating',max:5,allowHalf:true,showScore:true,showText:true,required:true,spanCount:12,labelWidth:100}},
+    {type:'rate',props:{label:'组织评分',field:'orgRating',max:5,allowHalf:true,showScore:true,required:true,spanCount:12,labelWidth:100}},
+    {type:'rate',props:{label:'内容评分',field:'contentRating',max:5,allowHalf:false,showScore:true,required:true,spanCount:12,labelWidth:100}},
+    {type:'rate',props:{label:'场地评分',field:'venueRating',max:5,allowHalf:false,showScore:true,required:false,spanCount:12,labelWidth:100}},
+    {type:'slider',props:{label:'推荐指数',field:'recommend',min:0,max:100,step:10,showInput:true,showStops:true,required:true,spanCount:24,labelWidth:100}},
+    {type:'switch',props:{label:'是否再次参加',field:'joinAgain',activeText:'愿意',inactiveText:'不愿意',activeColor:'#67C23A',inactiveColor:'#F56C6C',spanCount:12,labelWidth:100}},
+    {type:'switch',props:{label:'推荐给朋友',field:'recommend2friend',activeText:'会',inactiveText:'不会',activeColor:'#409EFF',spanCount:12,labelWidth:100}},
+    {type:'checkbox',props:{label:'满意方面',field:'satisfied',required:false,options:'活动内容,组织安排,场地环境,餐饮服务,社交氛围,工作人员态度',border:true,spanCount:24,labelWidth:100}},
+    {type:'checkbox',props:{label:'需改进方面',field:'needImprove',required:false,options:'时间安排,交通指引,活动流程,互动环节,餐饮质量,信息通知',spanCount:24,labelWidth:100}},
+    {type:'textarea',props:{label:'改进建议',field:'suggestion',placeholder:'请详细描述您的改进建议，帮助我们做得更好...',required:false,minRows:4,maxRows:8,maxlength:'300',showWordLimit:true,spanCount:24,labelWidth:100}},
+    {type:'button',props:{label:'',field:'submitBtn',text:'提交问卷',spanCount:24}}
+  ]},
+  4:{name:'素材提交表',items:[
+    {type:'input',props:{label:'活动名称',field:'activityName',placeholder:'请输入活动名称',required:true,maxlength:'50',clearable:true,spanCount:12,labelWidth:90}},
+    {type:'date',props:{label:'活动日期',field:'activityDate',required:true,format:'yyyy-MM-dd',dateType:'date',placeholder:'请选择活动日期',spanCount:12,labelWidth:90}},
+    {type:'select',props:{label:'素材类型',field:'materialType',required:true,options:'活动现场,宣传海报,人物采访,花絮花絮,其他',placeholder:'请选择素材类型',clearable:true,spanCount:12,labelWidth:90}},
+    {type:'input',props:{label:'拍摄者',field:'photographer',placeholder:'请输入拍摄者姓名',required:true,spanCount:12,labelWidth:90}},
+    {type:'upload',props:{label:'照片上传',field:'photos',fileType:'图片',maxSize:'5MB',listType:'picture-card',required:true,multiple:true,buttonText:'选择照片',showTip:true,autoUpload:false,spanCount:24,labelWidth:90}},
+    {type:'upload',props:{label:'视频上传',field:'videos',fileType:'视频',maxSize:'100MB',listType:'text',required:false,multiple:true,buttonText:'选择视频',showTip:true,autoUpload:false,spanCount:24,labelWidth:90}},
+    {type:'upload',props:{label:'其他文件',field:'otherFiles',fileType:'文档',maxSize:'10MB',listType:'text',required:false,buttonText:'选择文件',showTip:true,spanCount:24,labelWidth:90}},
+    {type:'textarea',props:{label:'素材说明',field:'description',placeholder:'请描述素材内容、拍摄场景等信息...',required:false,minRows:3,maxRows:6,maxlength:'200',showWordLimit:true,spanCount:24,labelWidth:90}},
+    {type:'switch',props:{label:'授权公开使用',field:'publicAuth',activeText:'授权',inactiveText:'不授权',activeColor:'#67C23A',spanCount:24,labelWidth:90}},
+    {type:'button',props:{label:'',field:'submitBtn',text:'提交素材',spanCount:24}}
+  ]},
+  5:{name:'综合组件示例表',items:[
+    {type:'input',props:{label:'用户名',field:'username',placeholder:'请输入用户名',required:true,maxlength:'20',clearable:true,showWordLimit:true,prefix:'@',spanCount:12,labelWidth:90}},
+    {type:'password',props:{label:'登录密码',field:'password',placeholder:'请输入6-20位密码',required:true,maxlength:'20',showWordLimit:true,spanCount:12,labelWidth:90}},
+    {type:'counter',props:{label:'参与人数',field:'participants',required:true,step:5,precision:0,min:1,max:200,strictStep:true,spanCount:12,labelWidth:90}},
+    {type:'counter',props:{label:'预算金额',field:'budget',required:false,step:100,precision:2,min:0,max:99999,spanCount:12,labelWidth:90}},
+    {type:'cascader',props:{label:'所在地区',field:'region',required:true,placeholder:'请选择省/市/区',filterable:true,clearable:true,showAllLevels:true,separator:' > ',spanCount:12,labelWidth:90}},
+    {type:'select',props:{label:'兴趣标签',field:'tags',required:false,multiple:true,searchable:true,clearable:true,options:'编程,设计,音乐,运动,摄影,旅行,美食,阅读',placeholder:'可多选',spanCount:12,labelWidth:90}},
+    {type:'radio',props:{label:'性别',field:'gender',required:true,options:'男,女,不愿透露',optionStyle:'按钮',size:'small',spanCount:12,labelWidth:90}},
+    {type:'radio',props:{label:'紧急程度',field:'urgency',required:true,options:'低,中,高,紧急',optionStyle:'按钮',border:true,spanCount:12,labelWidth:90}},
+    {type:'date',props:{label:'开始日期',field:'startDate',required:true,format:'yyyy-MM-dd',dateType:'date',clearable:true,placeholder:'请选择',spanCount:12,labelWidth:90}},
+    {type:'date',props:{label:'结束日期',field:'endDate',required:false,format:'yyyy-MM-dd',dateType:'month',clearable:true,placeholder:'可选',spanCount:12,labelWidth:90}},
+    {type:'time',props:{label:'活动时间',field:'eventTime',required:true,format:'HH:mm',placeholder:'请选择时间',clearable:true,spanCount:12,labelWidth:90}},
+    {type:'color',props:{label:'主题颜色',field:'themeColor',format:'hex',showAlpha:true,colorFormat:'hex',required:false,spanCount:12,labelWidth:90}},
+    {type:'slider',props:{label:'完成进度',field:'progress',min:0,max:100,step:5,showInput:true,showStops:false,spanCount:24,labelWidth:90}},
+    {type:'rate',props:{label:'优先级',field:'priority',max:5,allowHalf:false,showScore:true,showText:true,required:true,spanCount:12,labelWidth:90}},
+    {type:'switch',props:{label:'公开可见',field:'isPublic',activeText:'公开',inactiveText:'私密',activeColor:'#67C23A',inactiveColor:'#909399',spanCount:12,labelWidth:90}},
+    {type:'upload',props:{label:'附件',field:'attachment',fileType:'文档',maxSize:'10MB',listType:'text',required:false,multiple:true,buttonText:'上传附件',showTip:true,spanCount:24,labelWidth:90}},
+    {type:'textarea',props:{label:'备注说明',field:'remark',placeholder:'请输入备注...',required:false,minRows:3,maxRows:6,maxlength:'500',showWordLimit:true,clearable:true,spanCount:24,labelWidth:90}},
+    {type:'button',props:{label:'',field:'submitBtn',text:'提交申请',spanCount:24}}
+  ]}
+};
+
+function loadSimTemplate(id){
+  const tpl=SIM_TEMPLATES[id];
+  if(!tpl)return;
+  tooltipDismissed={};
+  document.getElementById('simFormName').value=tpl.name;
+  simItems=tpl.items.map(item=>{const base=JSON.parse(JSON.stringify(SIM_COMP_DEFS[item.type].props));Object.assign(base,item.props);return{id:++simIdCounter,type:item.type,name:SIM_COMP_DEFS[item.type].name,props:base};});
+  simSelectedIdx=0;
+  renderSimCanvas();
+  renderSimProps();
+  document.querySelectorAll('.sim-template-btn').forEach(b=>b.classList.remove('active'));
+  if(event&&event.target)event.target.classList.add('active');
+}
+
+// ===== Template Demo Animation =====
+let demoTimer=null;
+let demoRunning=false;
+let demoPaused=false;
+const DEMO_INTERVAL=3000; // auto-advance every 3 seconds
+
+const DEMO_SCRIPTS={
+  1:[
+    {action:'clear',text:'1/16：清空画布，开始创建「活动报名表」(10个组件)'},
+    {action:'name',value:'活动报名表',text:'2/16：输入模板名称'},
+    {action:'add',type:'input',text:'3/16：添加「单行文本」用于姓名'},
+    {action:'prop',key:'label',value:'姓名',text:'4/16：标题改为「姓名」，设置必填+可清空'},
+    {action:'prop',key:'placeholder',value:'请输入真实姓名',text:'  > 设置占位提示引导用户'},
+    {action:'add',type:'input',text:'5/16：添加「单行文本」用于手机号'},
+    {action:'prop',key:'label',value:'手机号',text:'6/16：标题改为「手机号」'},
+    {action:'prop',key:'maxlength',value:'11',text:'  > 限制最多输入11位 + 开启字数统计'},
+    {action:'prop',key:'showWordLimit',value:true,text:'  > 开启字数统计，用户可以看到已输入几位'},
+    {action:'prop',key:'regexValidation',value:'/^1[3-9]\\d{9}$/',text:'  > 校验规则选择「手机号」，自动检查格式'},
+    {action:'add',type:'select',text:'7/16：添加「下拉选择」选择学校'},
+    {action:'prop',key:'searchable',value:true,text:'  > 开启搜索功能，输入关键字快速筛选'},
+    {action:'prop',key:'clearable',value:true,text:'  > 开启可清空，方便重新选择'},
+    {action:'add',type:'radio',text:'8/16：添加「单选框组」选择年级'},
+    {action:'prop',key:'label',value:'年级',text:'  > 标题改为「年级」，选项样式改为按钮'},
+    {action:'prop',key:'optionStyle',value:'按钮',text:'  > 按钮样式更直观美观'},
+    {action:'add',type:'date',text:'9/16：添加「日期选择」选择活动日期'},
+    {action:'prop',key:'clearable',value:true,text:'  > 开启可清空'},
+    {action:'add',type:'textarea',text:'10/16：添加「多行文本」自我介绍'},
+    {action:'prop',key:'label',value:'自我介绍',text:'  > 标题改为「自我介绍」'},
+    {action:'prop',key:'maxlength',value:'200',text:'  > 限制200字 + 开启字数统计'},
+    {action:'prop',key:'showWordLimit',value:true,text:'  > 字数统计让用户知道还能写多少'},
+    {action:'add',type:'switch',text:'11/16：添加「开关」同意协议'},
+    {action:'prop',key:'label',value:'接受协议',text:'  > 标题改为「接受协议」'},
+    {action:'prop',key:'activeText',value:'同意',text:'  > 开启时显示「同意」'},
+    {action:'prop',key:'activeColor',value:'#67C23A',text:'  > 开启颜色改为绿色'},
+    {action:'add',type:'button',text:'12/16：添加「按钮」提交报名'},
+    {action:'done',text:'完成! 10个组件的活动报名表，展示了正则校验、字数统计、搜索下拉等属性配置'}
+  ],
+  2:[
+    {action:'clear',text:'1/20：清空画布，开始创建「志愿者申请表」(12个组件)'},
+    {action:'name',value:'志愿者申请表',text:'2/20：输入模板名称'},
+    {action:'add',type:'input',text:'3/20：添加「单行文本」用于姓名'},
+    {action:'prop',key:'label',value:'姓名',text:'  > 标题改为「姓名」，设置必填'},
+    {action:'add',type:'input',text:'4/20：添加「单行文本」用于邮箱'},
+    {action:'prop',key:'label',value:'邮箱',text:'  > 标题改为「邮箱」'},
+    {action:'prop',key:'regexValidation',value:'/^[\\w.-]+@[\\w.-]+\\.\\w+$/',text:'  > 校验规则选择「邮箱地址」，自动检查格式'},
+    {action:'add',type:'input',text:'5/20：添加「单行文本」用于手机号'},
+    {action:'prop',key:'label',value:'手机号',text:'  > 标题改为「手机号」'},
+    {action:'prop',key:'maxlength',value:'11',text:'  > 限制11位'},
+    {action:'add',type:'select',text:'6/20：添加「下拉选择」选择学校'},
+    {action:'prop',key:'searchable',value:true,text:'  > 开启搜索功能'},
+    {action:'add',type:'radio',text:'7/20：添加「单选框组」选择志愿经验'},
+    {action:'prop',key:'label',value:'志愿经验',text:'  > 标题改为「志愿经验」'},
+    {action:'add',type:'checkbox',text:'8/20：添加「多选框组」选择技能特长'},
+    {action:'prop',key:'label',value:'技能特长',text:'  > 标题改为「技能特长」'},
+    {action:'prop',key:'border',value:true,text:'  > 开启边框样式，更美观'},
+    {action:'prop',key:'min',value:1,text:'  > 至少选1个，最多选3个'},
+    {action:'add',type:'time',text:'9/20：添加「时间选择」可开始时间'},
+    {action:'prop',key:'label',value:'可开始时间',text:'  > 标题改为「可开始时间」'},
+    {action:'prop',key:'format',value:'HH:mm',text:'  > 时间格式改为 HH:mm（不需要秒）'},
+    {action:'add',type:'slider',text:'10/20：添加「滑块」选择每周可用小时'},
+    {action:'prop',key:'label',value:'每周可用小时',text:'  > 标题改为「每周可用小时」'},
+    {action:'prop',key:'max',value:40,text:'  > 最大值设为40小时'},
+    {action:'prop',key:'showInput',value:true,text:'  > 开启输入框，可以直接输入精确数值'},
+    {action:'add',type:'textarea',text:'11/20：添加「多行文本」申请理由'},
+    {action:'prop',key:'label',value:'申请理由',text:'  > 标题改为「申请理由」'},
+    {action:'prop',key:'maxlength',value:'500',text:'  > 限制500字 + 开启字数统计'},
+    {action:'prop',key:'showWordLimit',value:true,text:'  > 字数统计帮助控制篇幅'},
+    {action:'add',type:'upload',text:'12/20：添加「上传」上传简历'},
+    {action:'prop',key:'label',value:'个人简历',text:'  > 标题改为「个人简历」'},
+    {action:'prop',key:'fileType',value:'文档',text:'  > 文件类型改为文档'},
+    {action:'prop',key:'maxSize',value:'5MB',text:'  > 文件大小限制5MB'},
+    {action:'add',type:'button',text:'13/20：添加「按钮」提交申请'},
+    {action:'done',text:'完成! 12个组件的志愿者申请表，展示了多选限制、滑块输入框、文件上传、正则校验等'}
+  ],
+  3:[
+    {action:'clear',text:'1/22：清空画布，开始创建「满意度调查表」(12个组件)'},
+    {action:'name',value:'满意度调查表',text:'2/22：输入模板名称'},
+    {action:'add',type:'radio',text:'3/22：添加「单选框组」选择活动名称'},
+    {action:'prop',key:'label',value:'活动名称',text:'  > 标题改为「活动名称」'},
+    {action:'prop',key:'optionStyle',value:'按钮',text:'  > 选项样式改为按钮'},
+    {action:'prop',key:'size',value:'small',text:'  > 尺寸改为小号，节省空间'},
+    {action:'add',type:'rate',text:'4/22：添加「评分」整体评分'},
+    {action:'prop',key:'label',value:'整体评分',text:'  > 标题改为「整体评分」'},
+    {action:'prop',key:'allowHalf',value:true,text:'  > 开启半星选择，更精确'},
+    {action:'prop',key:'showScore',value:true,text:'  > 显示分数，如「4.5分」'},
+    {action:'prop',key:'showText',value:true,text:'  > 显示评价文字'},
+    {action:'add',type:'rate',text:'5/22：添加「评分」组织评分'},
+    {action:'prop',key:'label',value:'组织评分',text:'  > 标题改为「组织评分」'},
+    {action:'prop',key:'allowHalf',value:true,text:'  > 同样开启半星'},
+    {action:'add',type:'rate',text:'6/22：再添加「评分」内容评分'},
+    {action:'prop',key:'label',value:'内容评分',text:'  > 标题改为「内容评分」'},
+    {action:'add',type:'slider',text:'7/22：添加「滑块」推荐指数'},
+    {action:'prop',key:'label',value:'推荐指数',text:'  > 标题改为「推荐指数」'},
+    {action:'prop',key:'step',value:10,text:'  > 步长设为10，每档10分'},
+    {action:'prop',key:'showInput',value:true,text:'  > 显示输入框'},
+    {action:'prop',key:'showStops',value:true,text:'  > 显示刻度点，直观展示档位'},
+    {action:'add',type:'switch',text:'8/22：添加「开关」是否再次参加'},
+    {action:'prop',key:'label',value:'是否再次参加',text:'  > 标题改为「是否再次参加」'},
+    {action:'prop',key:'activeText',value:'愿意',text:'  > 开启时显示「愿意」'},
+    {action:'prop',key:'inactiveText',value:'不愿意',text:'  > 关闭时显示「不愿意」'},
+    {action:'prop',key:'activeColor',value:'#67C23A',text:'  > 开启颜色改为绿色'},
+    {action:'prop',key:'inactiveColor',value:'#F56C6C',text:'  > 关闭颜色改为红色'},
+    {action:'add',type:'checkbox',text:'9/22：添加「多选框组」满意方面'},
+    {action:'prop',key:'label',value:'满意方面',text:'  > 标题改为「满意方面」'},
+    {action:'prop',key:'border',value:true,text:'  > 开启边框样式'},
+    {action:'add',type:'checkbox',text:'10/22：添加「多选框组」需改进方面'},
+    {action:'prop',key:'label',value:'需改进方面',text:'  > 标题改为「需改进方面」'},
+    {action:'add',type:'textarea',text:'11/22：添加「多行文本」改进建议'},
+    {action:'prop',key:'label',value:'改进建议',text:'  > 标题改为「改进建议」'},
+    {action:'prop',key:'maxlength',value:'300',text:'  > 限制300字 + 开启字数统计'},
+    {action:'prop',key:'showWordLimit',value:true,text:'  > 显示字数统计'},
+    {action:'add',type:'button',text:'12/22：添加「按钮」提交问卷'},
+    {action:'done',text:'完成! 12个组件，展示了多评分维度、滑块刻度、开关颜色、多选边框等高级属性'}
+  ],
+  4:[
+    {action:'clear',text:'1/18：清空画布，开始创建「素材提交表」(10个组件)'},
+    {action:'name',value:'素材提交表',text:'2/18：输入模板名称'},
+    {action:'add',type:'input',text:'3/18：添加「单行文本」活动名称'},
+    {action:'prop',key:'label',value:'活动名称',text:'  > 标题改为「活动名称」'},
+    {action:'prop',key:'maxlength',value:'50',text:'  > 限制50字'},
+    {action:'prop',key:'clearable',value:true,text:'  > 开启可清空'},
+    {action:'add',type:'date',text:'4/18：添加「日期选择」活动日期'},
+    {action:'prop',key:'label',value:'活动日期',text:'  > 标题改为「活动日期」'},
+    {action:'add',type:'select',text:'5/18：添加「下拉选择」素材类型'},
+    {action:'prop',key:'label',value:'素材类型',text:'  > 标题改为「素材类型」'},
+    {action:'prop',key:'clearable',value:true,text:'  > 开启可清空'},
+    {action:'add',type:'input',text:'6/18：添加「单行文本」拍摄者'},
+    {action:'prop',key:'label',value:'拍摄者',text:'  > 标题改为「拍摄者」'},
+    {action:'add',type:'upload',text:'7/18：添加「上传」照片上传'},
+    {action:'prop',key:'label',value:'照片上传',text:'  > 标题改为「照片上传」'},
+    {action:'prop',key:'fileType',value:'图片',text:'  > 文件类型设为图片'},
+    {action:'prop',key:'maxSize',value:'5MB',text:'  > 大小限制5MB'},
+    {action:'prop',key:'listType',value:'picture-card',text:'  > 列表类型设为卡片预览'},
+    {action:'prop',key:'multiple',value:true,text:'  > 开启多文件上传'},
+    {action:'prop',key:'autoUpload',value:false,text:'  > 关闭自动上传，手动确认后再上传'},
+    {action:'add',type:'upload',text:'8/18：添加「上传」视频上传'},
+    {action:'prop',key:'label',value:'视频上传',text:'  > 标题改为「视频上传」'},
+    {action:'prop',key:'fileType',value:'视频',text:'  > 文件类型设为视频'},
+    {action:'prop',key:'maxSize',value:'100MB',text:'  > 视频文件限制100MB'},
+    {action:'prop',key:'listType',value:'text',text:'  > 列表类型设为文本列表'},
+    {action:'add',type:'textarea',text:'9/18：添加「多行文本」素材说明'},
+    {action:'prop',key:'label',value:'素材说明',text:'  > 标题改为「素材说明」'},
+    {action:'add',type:'switch',text:'10/18：添加「开关」授权公开使用'},
+    {action:'prop',key:'label',value:'授权公开使用',text:'  > 标题改为「授权公开使用」'},
+    {action:'prop',key:'activeText',value:'授权',text:'  > 开启时显示「授权」'},
+    {action:'prop',key:'activeColor',value:'#67C23A',text:'  > 开启颜色改为绿色'},
+    {action:'add',type:'button',text:'11/18：添加「按钮」提交素材'},
+    {action:'done',text:'完成! 10个组件，展示了多文件上传、卡片预览vs文本列表、关闭自动上传等上传高级配置'}
+  ],
+  5:[
+    {action:'clear',text:'1/32：清空画布，开始创建「综合组件示例表」(18个组件，全属性演示)'},
+    {action:'name',value:'综合组件示例表',text:'2/32：输入模板名称'},
+    {action:'add',type:'input',text:'3/32：添加「单行文本」用户名'},
+    {action:'prop',key:'label',value:'用户名',text:'  > 标题改为「用户名」'},
+    {action:'prop',key:'prefix',value:'@',text:'  > 设置前缀「@」'},
+    {action:'prop',key:'showWordLimit',value:true,text:'  > 开启字数统计'},
+    {action:'prop',key:'clearable',value:true,text:'  > 开启可清空'},
+    {action:'add',type:'password',text:'4/32：添加「密码」登录密码'},
+    {action:'prop',key:'label',value:'登录密码',text:'  > 标题改为「登录密码」'},
+    {action:'prop',key:'maxlength',value:'20',text:'  > 限制20位'},
+    {action:'add',type:'counter',text:'5/32：添加「计数器」参与人数'},
+    {action:'prop',key:'label',value:'参与人数',text:'  > 标题改为「参与人数」'},
+    {action:'prop',key:'step',value:5,text:'  > 步长设为5，每次加减5人'},
+    {action:'prop',key:'min',value:1,text:'  > 最小值1人'},
+    {action:'prop',key:'max',value:200,text:'  > 最大值200人'},
+    {action:'prop',key:'strictStep',value:true,text:'  > 开启严格步数，只能是5的倍数'},
+    {action:'add',type:'counter',text:'6/32：添加「计数器」预算金额'},
+    {action:'prop',key:'label',value:'预算金额',text:'  > 标题改为「预算金额」'},
+    {action:'prop',key:'step',value:100,text:'  > 步长100'},
+    {action:'prop',key:'precision',value:2,text:'  > 精度2位小数'},
+    {action:'add',type:'cascader',text:'7/32：添加「级联选择」所在地区'},
+    {action:'prop',key:'label',value:'所在地区',text:'  > 标题改为「所在地区」'},
+    {action:'prop',key:'filterable',value:true,text:'  > 开启筛选搜索'},
+    {action:'prop',key:'showAllLevels',value:true,text:'  > 显示完整路径'},
+    {action:'prop',key:'separator',value:' > ',text:'  > 分隔符改为「 > 」'},
+    {action:'add',type:'select',text:'8/32：添加「下拉选择」兴趣标签'},
+    {action:'prop',key:'label',value:'兴趣标签',text:'  > 标题改为「兴趣标签」'},
+    {action:'prop',key:'multiple',value:true,text:'  > 开启多选'},
+    {action:'prop',key:'searchable',value:true,text:'  > 开启搜索'},
+    {action:'prop',key:'clearable',value:true,text:'  > 开启可清空'},
+    {action:'add',type:'radio',text:'9/32：添加「单选框组」性别'},
+    {action:'prop',key:'label',value:'性别',text:'  > 标题改为「性别」'},
+    {action:'prop',key:'optionStyle',value:'按钮',text:'  > 选项样式改为按钮'},
+    {action:'prop',key:'size',value:'small',text:'  > 尺寸改为小号'},
+    {action:'add',type:'radio',text:'10/32：添加「单选框组」紧急程度'},
+    {action:'prop',key:'label',value:'紧急程度',text:'  > 标题改为「紧急程度」'},
+    {action:'prop',key:'optionStyle',value:'按钮',text:'  > 按钮样式'},
+    {action:'prop',key:'border',value:true,text:'  > 开启边框'},
+    {action:'add',type:'date',text:'11/32：添加「日期选择」开始日期'},
+    {action:'prop',key:'label',value:'开始日期',text:'  > 标题改为「开始日期」'},
+    {action:'prop',key:'clearable',value:true,text:'  > 开启可清空'},
+    {action:'add',type:'date',text:'12/32：添加「日期选择」结束日期'},
+    {action:'prop',key:'label',value:'结束日期',text:'  > 标题改为「结束日期」'},
+    {action:'prop',key:'dateType',value:'month',text:'  > 日期类型改为「月份」选择'},
+    {action:'add',type:'time',text:'13/32：添加「时间选择」活动时间'},
+    {action:'prop',key:'label',value:'活动时间',text:'  > 标题改为「活动时间」'},
+    {action:'prop',key:'format',value:'HH:mm',text:'  > 格式改为 HH:mm'},
+    {action:'add',type:'color',text:'14/32：添加「颜色选择」主题颜色'},
+    {action:'prop',key:'showAlpha',value:true,text:'  > 开启透明度调整'},
+    {action:'add',type:'slider',text:'15/32：添加「滑块」完成进度'},
+    {action:'prop',key:'label',value:'完成进度',text:'  > 标题改为「完成进度」'},
+    {action:'prop',key:'step',value:5,text:'  > 步长设为5'},
+    {action:'prop',key:'showInput',value:true,text:'  > 显示输入框'},
+    {action:'add',type:'rate',text:'16/32：添加「评分」优先级'},
+    {action:'prop',key:'label',value:'优先级',text:'  > 标题改为「优先级」'},
+    {action:'prop',key:'showScore',value:true,text:'  > 显示分数'},
+    {action:'prop',key:'showText',value:true,text:'  > 显示文字'},
+    {action:'add',type:'switch',text:'17/32：添加「开关」公开可见'},
+    {action:'prop',key:'label',value:'公开可见',text:'  > 标题改为「公开可见」'},
+    {action:'prop',key:'activeText',value:'公开',text:'  > 开启时显示「公开」'},
+    {action:'prop',key:'inactiveText',value:'私密',text:'  > 关闭时显示「私密」'},
+    {action:'prop',key:'activeColor',value:'#67C23A',text:'  > 开启绿色'},
+    {action:'prop',key:'inactiveColor',value:'#909399',text:'  > 关闭灰色'},
+    {action:'add',type:'upload',text:'18/32：添加「上传」附件'},
+    {action:'prop',key:'label',value:'附件',text:'  > 标题改为「附件」'},
+    {action:'prop',key:'fileType',value:'文档',text:'  > 文件类型设为文档'},
+    {action:'prop',key:'multiple',value:true,text:'  > 开启多文件上传'},
+    {action:'add',type:'textarea',text:'19/32：添加「多行文本」备注说明'},
+    {action:'prop',key:'label',value:'备注说明',text:'  > 标题改为「备注说明」'},
+    {action:'prop',key:'maxlength',value:'500',text:'  > 限制500字'},
+    {action:'prop',key:'showWordLimit',value:true,text:'  > 开启字数统计'},
+    {action:'add',type:'button',text:'20/38：添加「按钮」提交申请'},
+    {action:'formTab',text:'21/38：切换到「表单属性」Tab，开始配置全局设置'},
+    {action:'formProp',key:'labelPosition',value:'left',text:'22/38：标签对齐改为「左对齐」→ 看看标题位置变化'},
+    {action:'formProp',key:'labelPosition',value:'top',text:'23/38：标签对齐改为「顶部对齐」→ 标题到组件上方，适合移动端'},
+    {action:'formProp',key:'labelPosition',value:'right',text:'24/38：改回「右对齐」→ 最常用的对齐方式'},
+    {action:'formProp',key:'labelWidth',value:150,text:'25/38：标签宽度从100改为150px → 标签区域变宽'},
+    {action:'formProp',key:'labelWidth',value:100,text:'26/38：改回100px → 恢复标准宽度'},
+    {action:'formProp',key:'gutter',value:30,text:'27/38：栅格间隔从15改为30px → 组件之间距离变大'},
+    {action:'formProp',key:'gutter',value:15,text:'28/38：改回15px → 恢复标准间隔'},
+    {action:'formProp',key:'size',value:'small',text:'29/38：表单尺寸改为「较小」→ 所有组件整体缩小'},
+    {action:'formProp',key:'size',value:'mini',text:'30/38：表单尺寸改为「迷你」→ 最紧凑的尺寸'},
+    {action:'formProp',key:'size',value:'medium',text:'31/38：改回「中等」→ 默认尺寸最通用'},
+    {action:'formProp',key:'showBorder',value:true,text:'32/38：开启「显示组件边框」→ 每个组件有虚线边框'},
+    {action:'formProp',key:'showBorder',value:false,text:'33/38：关闭组件边框 → 恢复整洁外观'},
+    {action:'formProp',key:'formBtns',value:false,text:'34/38：关闭「表单按钮」→ 底部提交/重置按钮消失'},
+    {action:'formProp',key:'formBtns',value:true,text:'35/38：重新开启 → 提交/重置按钮回来了'},
+    {action:'formProp',key:'disabled',value:true,text:'36/38：开启「禁用表单」→ 所有组件变灰不可操作'},
+    {action:'formProp',key:'disabled',value:false,text:'37/38：关闭禁用 → 恢复正常可操作状态'},
+    {action:'compTab',text:'38/38：切回「组件属性」Tab'},
+    {action:'done',text:'完成! 18个组件 + 10个表单属性全部演示完毕，包括对齐方式切换、尺寸调整、间距控制、禁用表单等全局设置'}
+  ]
+};
+
+let demoScript=null;
+let demoStep=0;
+let demoTotal=0;
+let demoHighlightEl=null;
+let demoScrollHandler=null;
+let demoCurrentTarget=null;
+
+function playTemplateDemo(id){
+  if(demoRunning){stopDemo();return;}
+  const script=DEMO_SCRIPTS[id];
+  if(!script)return;
+  demoRunning=true;
+  demoPaused=false;
+  demoScript=script;
+  demoStep=0;
+  demoTotal=script.length;
+  tooltipDismissed={};
+
+  document.getElementById('simulator').scrollIntoView({behavior:'smooth',block:'start'});
+  setTimeout(()=>execDemoStep(),400);
+}
+
+function getDemoTarget(s){
+  // Returns the DOM element the bubble should anchor to
+  switch(s.action){
+    case 'clear':
+      return document.querySelector('.sim-clear-btn');
+    case 'name':
+      return document.getElementById('simFormName');
+    case 'add':
+      return document.querySelector(`.sim-comp-btn[data-comp-type="${s.type}"]`);
+    case 'prop':
+      return document.querySelector(`.sim-prop-row[data-prop-key="${s.key}"]`);
+    case 'formTab':
+      return document.querySelectorAll('.sim-prop-tab')[1];
+    case 'compTab':
+      return document.querySelectorAll('.sim-prop-tab')[0];
+    case 'formProp':{
+      const fpEl=document.getElementById('simFormPropsContent');
+      if(fpEl){
+        const rows=fpEl.querySelectorAll('.sim-prop-row');
+        const keyMap={formName:0,formModel:1,rulesModel:2,size:3,labelPosition:4,labelWidth:5,gutter:6,disabled:7,formBtns:8,showBorder:9};
+        const idx=keyMap[s.key];
+        if(idx!==undefined&&rows[idx])return rows[idx];
+      }
+      return document.getElementById('simFormPropsContent');
+    }
+    case 'done':
+      return document.getElementById('simCanvas');
+  }
+  return null;
+}
+
+function execDemoStep(){
+  if(demoStep>=demoTotal||!demoRunning){
+    stopDemo();
+    return;
+  }
+  // Clear previous highlight
+  if(demoHighlightEl){
+    demoHighlightEl.classList.remove('demo-target-highlight');
+    demoHighlightEl=null;
+  }
+
+  const s=demoScript[demoStep];
+
+  // Execute action
+  switch(s.action){
+    case 'clear':
+      clearSimCanvas();
+      break;
+    case 'name':
+      document.getElementById('simFormName').value=s.value;
+      break;
+    case 'add':
+      addSimComp(s.type);
+      break;
+    case 'prop':
+      if(simSelectedIdx>=0&&simSelectedIdx<simItems.length){
+        simItems[simSelectedIdx].props[s.key]=s.value;
+        renderSimCanvas();
+        renderSimProps();
+      }
+      break;
+    case 'formTab':
+      switchPropTab('form');
+      break;
+    case 'compTab':
+      switchPropTab('comp');
+      break;
+    case 'formProp':
+      simFormGlobal[s.key]=s.value;
+      renderSimCanvas();
+      // Update the form props UI to reflect the change
+      updateFormPropsUI();
+      break;
+    case 'done':
+      break;
+  }
+
+  // Find target and show bubble
+  const target=getDemoTarget(s);
+  if(target){
+    target.classList.add('demo-target-highlight');
+    demoHighlightEl=target;
+    // Scroll target into view if in scrollable panel
+    target.scrollIntoView({behavior:'smooth',block:'nearest'});
+  }
+
+  showDemoBubble(s.text,demoStep,target);
+  demoStep++;
+}
+
+function positionBubble(bubble,targetEl){
+  const sx=window.scrollX, sy=window.scrollY;
+  if(!targetEl){
+    const simContainer=document.querySelector('.simulator-container');
+    const simRect=simContainer?simContainer.getBoundingClientRect():{left:100,top:200};
+    bubble.className='demo-bubble arrow-bottom';
+    bubble.style.left=(sx+simRect.left+40)+'px';
+    bubble.style.top=(sy+simRect.top-120)+'px';
+    return;
+  }
+  const rect=targetEl.getBoundingClientRect();
+  const bw=280;
+  bubble.style.maxWidth=bw+'px';
+  // Use actual height or estimate 120px if not yet rendered
+  const bh=bubble.offsetHeight>20?bubble.offsetHeight:120;
+
+  // Default: below the target (arrow pointing up to target)
+  let posLeft=sx+rect.left+rect.width/2-bw/2;
+  let posTop=sy+rect.bottom+12;
+  let arrowClass='arrow-top';
+
+  // If not enough room below viewport, put above
+  if(rect.bottom+bh+20>window.innerHeight){
+    posTop=sy+rect.top-bh-12;
+    arrowClass='arrow-bottom';
+  }
+
+  // Keep within viewport horizontally
+  if(posLeft<sx+8) posLeft=sx+8;
+  if(posLeft+bw>sx+window.innerWidth-8) posLeft=sx+window.innerWidth-bw-8;
+
+  bubble.className='demo-bubble '+arrowClass;
+  bubble.style.left=posLeft+'px';
+  bubble.style.top=posTop+'px';
+}
+
+function showDemoBubble(text,stepNum,targetEl){
+  let bubble=document.getElementById('demoBubble');
+  if(!bubble){
+    bubble=document.createElement('div');
+    bubble.id='demoBubble';
+    document.body.appendChild(bubble);
+  }
+
+  const pct=Math.round(((stepNum)/demoTotal)*100);
+  const isLast=(demoStep>=demoTotal);
+  const isFirst=(demoStep<=1);
+  const pauseIcon=demoPaused?'&#x25B6;':'&#x23F8;';
+  const pauseTitle=demoPaused?'继续自动播放':'暂停自动播放';
+
+  bubble.innerHTML=`<div class="demo-text">${text}</div><div class="demo-progress"><div class="demo-progress-fill" style="width:${pct}%"></div></div><div class="demo-btns">${isFirst?'':`<button class="demo-prev" onclick="demoPrevStep()" title="上一步">&#x25C0;</button>`}<button class="demo-pause" onclick="demoTogglePause()" title="${pauseTitle}">${pauseIcon}</button>${isLast?`<button class="demo-next" onclick="stopDemo()">完成</button>`:`<button class="demo-next" onclick="demoNextManual()">&#x25B6; 下一步</button>`}<button class="demo-stop" onclick="stopDemo()">退出</button></div>`;
+
+  // Schedule auto-advance
+  scheduleAutoAdvance();
+
+  demoCurrentTarget=targetEl;
+  // Render offscreen first to measure height, then position
+  bubble.style.left='-9999px';
+  bubble.style.top='-9999px';
+  requestAnimationFrame(()=>positionBubble(bubble,targetEl));
+
+  // Remove old scroll listener, add new one
+  if(demoScrollHandler){
+    window.removeEventListener('scroll',demoScrollHandler,true);
+  }
+  demoScrollHandler=function(){
+    const b=document.getElementById('demoBubble');
+    if(b&&demoCurrentTarget) positionBubble(b,demoCurrentTarget);
+  };
+  window.addEventListener('scroll',demoScrollHandler,true);
+}
+
+function scheduleAutoAdvance(){
+  if(demoTimer){clearTimeout(demoTimer);demoTimer=null;}
+  if(!demoRunning||demoPaused)return;
+  if(demoStep>=demoTotal)return;
+  demoTimer=setTimeout(()=>{
+    if(demoRunning&&!demoPaused) execDemoStep();
+  },DEMO_INTERVAL);
+}
+
+function demoTogglePause(){
+  demoPaused=!demoPaused;
+  // Re-render bubble to update pause/play icon
+  if(demoStep>0&&demoScript){
+    const s=demoScript[demoStep-1];
+    const target=getDemoTarget(s);
+    showDemoBubble(s.text,demoStep-1,target);
+  }
+  if(!demoPaused) scheduleAutoAdvance();
+}
+
+function demoNextManual(){
+  // User clicked next: cancel auto timer, execute, restart timer
+  if(demoTimer){clearTimeout(demoTimer);demoTimer=null;}
+  execDemoStep();
+}
+
+function demoPrevStep(){
+  if(!demoRunning||!demoScript||demoStep<=1)return;
+  if(demoTimer){clearTimeout(demoTimer);demoTimer=null;}
+  // We need to replay from the beginning up to demoStep-2
+  const targetStep=demoStep-2;
+  // Reset state
+  if(demoHighlightEl){demoHighlightEl.classList.remove('demo-target-highlight');demoHighlightEl=null;}
+  simItems=[];simSelectedIdx=-1;simIdCounter=0;
+  // Reset form globals
+  Object.assign(simFormGlobal,{formName:'elForm',formModel:'formData',rulesModel:'rules',size:'medium',labelPosition:'right',labelWidth:100,gutter:15,disabled:false,formBtns:true,showBorder:false});
+  switchPropTab('comp');
+  demoStep=0;
+  tooltipDismissed={};
+  // Replay silently up to targetStep
+  for(let i=0;i<=targetStep;i++){
+    const s=demoScript[i];
+    switch(s.action){
+      case 'clear':clearSimCanvas();break;
+      case 'name':document.getElementById('simFormName').value=s.value;break;
+      case 'add':addSimComp(s.type);break;
+      case 'prop':if(simSelectedIdx>=0&&simSelectedIdx<simItems.length){simItems[simSelectedIdx].props[s.key]=s.value;renderSimCanvas();renderSimProps();}break;
+      case 'formTab':switchPropTab('form');break;
+      case 'compTab':switchPropTab('comp');break;
+      case 'formProp':simFormGlobal[s.key]=s.value;renderSimCanvas();updateFormPropsUI();break;
+    }
+    demoStep=i+1;
+  }
+  // Now show the bubble for this step
+  const s=demoScript[targetStep];
+  const target=getDemoTarget(s);
+  if(target){target.classList.add('demo-target-highlight');demoHighlightEl=target;target.scrollIntoView({behavior:'smooth',block:'nearest'});}
+  showDemoBubble(s.text,targetStep,target);
+}
+
+function stopDemo(){
+  demoRunning=false;
+  demoPaused=false;
+  demoScript=null;
+  demoStep=0;
+  demoCurrentTarget=null;
+  if(demoTimer){clearTimeout(demoTimer);demoTimer=null;}
+  if(demoScrollHandler){
+    window.removeEventListener('scroll',demoScrollHandler,true);
+    demoScrollHandler=null;
+  }
+  const bubble=document.getElementById('demoBubble');
+  if(bubble)bubble.remove();
+  if(demoHighlightEl){
+    demoHighlightEl.classList.remove('demo-target-highlight');
+    demoHighlightEl=null;
+  }
+  simItems.forEach(item=>delete item._demoHighlight);
+  renderSimCanvas();
+}
+
+// ===== PHASE 6a: Knowledge Base (optimized for RAG speed) =====
+// Split knowledge into topic-indexed chunks for fast retrieval
+const KB_CHUNKS={
+  overview:'表单设计器三栏布局：左侧组件面板(19个组件,3类)、中间画布(拖拽排列,清空/提交按钮)、右侧属性面板(组件属性Tab+表单属性Tab)。操作流程：添加组件->配置属性->预览->保存。',
+  input_components:'输入型组件4个：1.单行文本(姓名/手机号/邮箱,支持前后缀/图标/正则校验,手机号正则/^1[3-9]\\d{9}$/,邮箱正则/^[\\w.-]+@[\\w.-]+\\.\\w+$/) 2.多行文本(自我介绍/建议,最小/最大行数) 3.密码(圆点显示,el-icon-lock图标) 4.计数器(加减按钮,精度/按钮位置/严格步数)',
+  select_components:'选择型组件13个：下拉选择(选项列表/可搜索/多选) 级联选择(省市区/动态静态数据/筛选) 单选框组(默认/按钮样式/边框/尺寸) 多选框组(至少应选/最多可选) 开关(开启关闭提示/值/颜色) 滑块(最小最大值/步长/间断点/范围选择) 时间选择(时间段/格式HH:mm:ss) 时间范围(开始结束占位/分隔符) 日期选择(date/week/month/year/datetime/格式yyyy-MM-dd) 日期范围(daterange/monthrange/datetimerange) 评分(最大值/半选/辅助文字/显示分数) 颜色选择(hex/rgb/rgba格式) 上传(文件类型/大小/列表类型text/picture/picture-card)',
+  layout_components:'布局型组件2个：行容器(多组件并排,栅格间隔,default/flex布局模式) 按钮(提交/重置操作)',
+  form_props:'表单属性10个：表单名(elForm) 表单模型(formData) 校验模型(rules) 表单尺寸(中等/较小/迷你) 标签对齐(左/右/顶部,顶部适合移动端) 标签宽度(默认100px) 栅格间隔(默认15px) 禁用表单 表单按钮(提交+重置) 显示未选中组件边框',
+  templates:'5个示例模板：1.活动报名表(ID:14,单行文本x2+下拉+日期+多行文本) 2.志愿者申请表(ID:15,单行文本x2+时间范围+多选框组+多行文本) 3.满意度调查表(ID:16,评分+滑块+开关+多选框组+多行文本) 4.素材提交表(ID:17,单行文本+上传x2) 5.综合组件示例表(ID:18,密码+计数器+级联+单选框组+时间+日期范围+颜色+行容器+按钮)',
+  faq_create:'创建报名表步骤：1.进入表单设计器 2.输入模板名称 3.添加组件(单行文本/下拉/日期/多行文本) 4.配置属性(必填/校验) 5.提交保存',
+  faq_validate:'手机号验证：单行文本->正则校验->添加规则->表达式/^1[3-9]\\d{9}$/->错误提示"手机号格式错误",最多输入11。邮箱验证：正则/^[\\w.-]+@[\\w.-]+\\.\\w+$/。',
+  faq_upload:'图片上传配置：上传组件->文件类型=图片->列表类型=picture-card(卡片预览)->文件大小2-5MB->开启多选文件和显示提示。视频上传：文件类型=视频,列表类型=text,大小50-100MB。',
+  faq_layout:'多列布局：添加行容器->设置栅格间隔15px->行容器内添加组件->各组件表单栅格设为12(半行)/8(三分之一)/6(四分之一)。栅格系统基于24列。',
+  faq_general:'组件选择建议：短文本->单行文本,长文本->多行文本,固定少选项->单选/多选框组,选项多->下拉选择,是否->开关,打分->评分,文件->上传,数字->计数器/滑块。属性不生效检查：1.确认选中正确组件 2.属性Tab是组件属性 3.某些属性有依赖(选项尺寸仅按钮样式) 4.字段名唯一。'
+};
+
+// Smart RAG: match question keywords to relevant KB chunks
+function getRelevantContext(question){
+  const q=question.toLowerCase();
+  const matches=[];
+  const rules=[
+    {keys:['概述','布局','三栏','面板','画布','怎么用','是什么','介绍'],chunk:'overview'},
+    {keys:['单行','多行','密码','计数','输入','文本'],chunk:'input_components'},
+    {keys:['下拉','选择','级联','单选','多选','开关','滑块','时间','日期','评分','颜色','上传','选择型'],chunk:'select_components'},
+    {keys:['行容器','按钮','布局','多列','并排','flex','栅格'],chunk:'layout_components'},
+    {keys:['表单属性','标签','对齐','尺寸','全局','栅格间隔','禁用表单'],chunk:'form_props'},
+    {keys:['模板','示例','报名表','申请表','调查表','素材','综合'],chunk:'templates'},
+    {keys:['创建','怎么做','步骤','流程','如何','新增'],chunk:'faq_create'},
+    {keys:['验证','校验','正则','手机','邮箱','格式'],chunk:'faq_validate'},
+    {keys:['上传','图片','视频','文件','照片'],chunk:'faq_upload'},
+    {keys:['多列','行容器','排列','布局','栅格','并排','宽度'],chunk:'faq_layout'},
+    {keys:['选择','组件','建议','不生效','问题'],chunk:'faq_general'}
+  ];
+  const matched=new Set();
+  rules.forEach(r=>{
+    if(r.keys.some(k=>q.includes(k))&&!matched.has(r.chunk)){
+      matched.add(r.chunk);
+      matches.push(KB_CHUNKS[r.chunk]);
+    }
+  });
+  // If no specific match, send overview + faq_general (minimal context)
+  if(matches.length===0){
+    matches.push(KB_CHUNKS.overview,KB_CHUNKS.faq_general);
+  }
+  // Cap at 2 chunks to keep context small and fast
+  return matches.slice(0,2).join('\n\n');
+}
+
+// ===== PHASE 6b: AI Chat =====
+let aiSessionId=null;
+let aiChatHistory=[];
+let aiIsTyping=false;
+let aiAbortController=null;
+
+// Load chat history from localStorage
+try{
+  const saved=localStorage.getItem('formDesignerAiChat');
+  if(saved){
+    const data=JSON.parse(saved);
+    aiChatHistory=data.history||[];
+    aiSessionId=data.sessionId||null;
+  }
+}catch(e){}
+
+function saveAiChatState(){
+  try{
+    localStorage.setItem('formDesignerAiChat',JSON.stringify({history:aiChatHistory,sessionId:aiSessionId}));
+  }catch(e){}
+}
+
+function toggleAiChat(){
+  const win=document.getElementById('aiChatWindow');
+  const fab=document.getElementById('aiChatFab');
+  const isOpen=win.classList.contains('open');
+  if(isOpen){
+    win.classList.remove('open');
+    fab.style.display='flex';
+  }else{
+    win.classList.add('open');
+    fab.style.display='none';
+    if(aiChatHistory.length>0)restoreAiChat();
+    scrollChatBottom();
+  }
+}
+
+document.getElementById('aiChatFab').addEventListener('click',toggleAiChat);
+
+function restoreAiChat(){
+  const msgs=document.getElementById('aiChatMessages');
+  if(aiChatHistory.length===0)return;
+  // Keep the welcome message, add history
+  let html='<div class="ai-chat-msg bot">你好！我是表单设计助手，可以帮你解答关于表单设计器的所有问题。你可以问我如何使用某个组件、如何配置属性、或者如何创建表单模板等。</div>';
+  aiChatHistory.forEach(m=>{
+    html+=`<div class="ai-chat-msg ${m.role}">${m.role==='bot'?renderMd(m.text):escHtml(m.text)}</div>`;
+  });
+  msgs.innerHTML=html;
+}
+
+function scrollChatBottom(){
+  const msgs=document.getElementById('aiChatMessages');
+  setTimeout(()=>msgs.scrollTop=msgs.scrollHeight,50);
+}
+
+function escHtml(s){
+  const d=document.createElement('div');
+  d.textContent=s;
+  return d.innerHTML;
+}
+
+function renderMd(text){
+  if(!text)return '';
+  // 1. Extract fenced code blocks before escaping
+  const codeBlocks=[];
+  text=text.replace(/```(\w*)\n?([\s\S]*?)```/g,(_,lang,code)=>{
+    codeBlocks.push('<pre class="md-codeblock"><code'+(lang?' class="lang-'+lang+'"':'')+'>'+ escHtml(code.trimEnd())+'</code></pre>');
+    return '\x00CB'+( codeBlocks.length-1)+'\x00';
+  });
+  let html=escHtml(text);
+  // 2. Headings
+  html=html.replace(/^###\s+(.+)$/gm,'<h5>$1</h5>');
+  html=html.replace(/^##\s+(.+)$/gm,'<h4>$1</h4>');
+  html=html.replace(/^#\s+(.+)$/gm,'<h4>$1</h4>');
+  // 3. Bold + inline code
+  html=html.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>');
+  html=html.replace(/`([^`]+)`/g,'<code>$1</code>');
+  // 4. Tables
+  html=html.replace(/^(\|.+\|)\n(\|[-:\s|]+\|)\n((?:\|.+\|\n?)*)/gm,(_,header,sep,body)=>{
+    const ths=header.split('|').filter(c=>c.trim()).map(c=>'<th>'+c.trim()+'</th>').join('');
+    const rows=body.trim().split('\n').map(row=>{
+      const tds=row.split('|').filter(c=>c.trim()).map(c=>'<td>'+c.trim()+'</td>').join('');
+      return '<tr>'+tds+'</tr>';
+    }).join('');
+    return '<table class="md-table"><thead><tr>'+ths+'</tr></thead><tbody>'+rows+'</tbody></table>';
+  });
+  // 5. Unordered lists
+  html=html.replace(/^[-*]\s+(.+)$/gm,'<li>$1</li>');
+  html=html.replace(/((?:<li>.*<\/li>\n?)+)/g,'<ul>$1</ul>');
+  // 6. Ordered lists
+  html=html.replace(/^\d+\.\s+(.+)$/gm,'<oli>$1</oli>');
+  html=html.replace(/((?:<oli>.*<\/oli>\n?)+)/g,m=>'<ol>'+m.replace(/<\/?oli>/g,t=>t.replace('oli','li'))+'</ol>');
+  // 7. Paragraphs
+  html=html.replace(/\n\n/g,'</p><p>');
+  html=html.replace(/\n/g,'<br>');
+  html='<p>'+html+'</p>';
+  html=html.replace(/<p><\/p>/g,'');
+  // 8. Restore code blocks
+  html=html.replace(/\x00CB(\d+)\x00/g,(_,i)=>codeBlocks[parseInt(i)]);
+  return html;
+}
+
+// Pre-written answers for quick questions — instant local response, no API call
+const QUICK_ANSWERS={
+  '有哪些组件可以使用？':'表单设计器提供 **19 个组件**，分为三大类：\n\n**输入型组件（4个）**\n- 单行文本（支持正则校验、前后缀）\n- 多行文本（自适应高度、字数统计）\n- 密码输入（可切换显示）\n- 计数器（步长、精度、范围设置）\n\n**选择型组件（13个）**\n- 下拉选择、级联选择、单选框组、多选框组\n- 开关、滑块、评分、颜色选择\n- 时间选择、时间范围、日期选择、日期范围\n- 上传（文件/图片/视频）\n\n**布局型组件（2个）**\n- 行容器（多组件并排，栅格布局）\n- 按钮（提交/重置操作）',
+  '如何创建报名表？':'创建报名表步骤：\n\n1. **进入表单设计器** — 点击"创建新模板"或从模板列表进入\n2. **输入模板名称** — 填写表单标题，如"2025秋季活动报名表"\n3. **添加组件** — 从左侧组件面板拖拽所需组件到画布：\n   - 单行文本 × 2（姓名、手机号）\n   - 下拉选择（年级/专业）\n   - 日期选择（出生日期/期望日期）\n   - 多行文本（备注/自我介绍）\n4. **配置属性** — 选中组件后在右侧属性面板设置必填、校验规则等\n5. **提交保存** — 点击提交按钮保存模板',
+  '如何添加表单验证？':'常用表单验证配置：\n\n**手机号验证**\n- 选中单行文本组件 → 正则校验 → 添加规则\n- 表达式：`/^1[3-9]\\d{9}$/`\n- 错误提示："手机号格式错误"\n- 最多输入：11 个字符\n\n**邮箱验证**\n- 正则表达式：`/^[\\w.-]+@[\\w.-]+\\.\\w+$/`\n- 错误提示："邮箱格式错误"\n\n**通用设置**\n- 在组件属性面板开启"必填"开关\n- 添加自定义正则规则实现格式校验\n- 设置最大/最小长度限制',
+  '模板有哪些示例？':'系统内置 **5 个示例模板**：\n\n1. **活动报名表**（ID:14）— 单行文本×2 + 下拉 + 日期 + 多行文本\n2. **志愿者申请表**（ID:15）— 单行文本×2 + 时间范围 + 多选框组 + 多行文本\n3. **满意度调查表**（ID:16）— 评分 + 滑块 + 开关 + 多选框组 + 多行文本\n4. **素材提交表**（ID:17）— 单行文本 + 上传×2\n5. **综合组件示例表**（ID:18）— 密码 + 计数器 + 级联 + 单选框组 + 时间 + 日期范围 + 颜色 + 行容器 + 按钮\n\n可直接从模板列表加载使用或在此基础上修改。'
+};
+
+function askQuickQuestion(btn){
+  const q=btn.textContent.trim();
+  // Check for local pre-written answer first
+  if(QUICK_ANSWERS[q]){
+    const msgs=document.getElementById('aiChatMessages');
+    msgs.innerHTML+=`<div class="ai-chat-msg user">${escHtml(q)}</div>`;
+    aiChatHistory.push({role:'user',text:q});
+    const botEl=document.createElement('div');
+    botEl.className='ai-chat-msg bot';
+    botEl.innerHTML=renderMd(QUICK_ANSWERS[q]);
+    msgs.appendChild(botEl);
+    aiChatHistory.push({role:'bot',text:QUICK_ANSWERS[q]});
+    saveAiChatState();
+    scrollChatBottom();
+    return;
+  }
+  document.getElementById('aiChatInput').value=q;
+  sendAiChat();
+}
+
+async function sendAiChat(){
+  if(aiIsTyping)return;
+  const input=document.getElementById('aiChatInput');
+  const q=input.value.trim();
+  if(!q)return;
+  input.value='';
+
+  const msgs=document.getElementById('aiChatMessages');
+  msgs.innerHTML+=`<div class="ai-chat-msg user">${escHtml(q)}</div>`;
+  aiChatHistory.push({role:'user',text:q});
+  scrollChatBottom();
+
+  aiIsTyping=true;
+  document.getElementById('aiChatSend').disabled=true;
+  const typingEl=document.createElement('div');
+  typingEl.className='ai-chat-msg bot typing';
+  typingEl.textContent='正在思考';
+  msgs.appendChild(typingEl);
+  scrollChatBottom();
+
+  const context=getRelevantContext(q);
+  const fullQ='表单设计器助手，基于知识简洁回答，要点用列表。\n\n'+context+'\n\n问题：'+q;
+  const body={question:fullQ,deptId:211,model:'qwen-turbo-latest',skipRag:true};
+  if(aiSessionId)body.session_id=aiSessionId;
+
+  let fullAnswer='';
+  let botEl=null;
+  let stopBtn=null;
+  let lastErr=null;
+
+  for(let attempt=0;attempt<2;attempt++){
+    try{
+      aiAbortController=new AbortController();
+      const safetyTimeout=setTimeout(()=>{if(aiIsTyping)aiAbortController.abort();},30000);
+
+      const resp=await fetch('https://www.vitaglobal.icu/ai/api/ai/chat/stream',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify(body),
+        signal:aiAbortController.signal
+      });
+      clearTimeout(safetyTimeout);
+      if(!resp.ok) throw new Error('HTTP '+resp.status);
+
+      // Remove typing, create bot element + stop button
+      typingEl.remove();
+      if(!botEl){
+        botEl=document.createElement('div');
+        botEl.className='ai-chat-msg bot';
+        msgs.appendChild(botEl);
+        stopBtn=document.createElement('button');
+        stopBtn.className='ai-chat-stop-btn visible';
+        stopBtn.innerHTML='&#9632; 停止生成';
+        stopBtn.onclick=()=>{aiAbortController.abort();};
+        msgs.appendChild(stopBtn);
+      }
+
+      // Throttled rendering via requestAnimationFrame
+      const reader=resp.body.getReader();
+      const decoder=new TextDecoder();
+      let buffer='';
+      let renderPending=false;
+
+      while(true){
+        const {done,value}=await reader.read();
+        if(done)break;
+        buffer+=decoder.decode(value,{stream:true});
+        const lines=buffer.split('\n');
+        buffer=lines.pop()||'';
+        for(const line of lines){
+          const trimmed=line.trim();
+          if(!trimmed||!trimmed.startsWith('data:'))continue;
+          const jsonStr=trimmed.slice(5).trim();
+          if(!jsonStr)continue;
+          try{
+            const evt=JSON.parse(jsonStr);
+            if(evt.type==='chunk'&&evt.content){
+              fullAnswer+=evt.content;
+              if(!renderPending){
+                renderPending=true;
+                requestAnimationFrame(()=>{
+                  botEl.innerHTML=renderMd(fullAnswer);
+                  scrollChatBottom();
+                  renderPending=false;
+                });
+              }
+            }else if(evt.type==='start'&&evt.session_id){
+              aiSessionId=evt.session_id;
+            }else if(evt.type==='done'&&evt.session_id){
+              aiSessionId=evt.session_id;
+            }else if(evt.type==='error'){
+              fullAnswer+='\n⚠️ '+(evt.message||'服务异常');
+            }
+          }catch(e){}
+        }
+      }
+
+      lastErr=null;
+      break; // success
+    }catch(err){
+      lastErr=err;
+      if(err.name==='AbortError'){
+        // User clicked stop or timeout — keep partial answer
+        if(fullAnswer){lastErr=null;}
+        break;
+      }
+      // First failure: wait 1s then retry
+      if(attempt===0){
+        typingEl.textContent='重试中';
+        if(!msgs.contains(typingEl))msgs.appendChild(typingEl);
+        await new Promise(r=>setTimeout(r,1000));
+        continue;
+      }
+    }
+  }
+
+  // Clean up stop button
+  if(stopBtn)stopBtn.remove();
+
+  // Final render
+  if(fullAnswer){
+    if(!botEl){
+      typingEl.remove();
+      botEl=document.createElement('div');
+      botEl.className='ai-chat-msg bot';
+      msgs.appendChild(botEl);
+    }
+    botEl.innerHTML=renderMd(fullAnswer);
+    aiChatHistory.push({role:'bot',text:fullAnswer});
+    saveAiChatState();
+  }else if(lastErr){
+    typingEl.remove();
+    const errEl=document.createElement('div');
+    errEl.className='ai-chat-msg bot';
+    const errMsg=lastErr.name==='AbortError'?'请求超时，请稍后重试。':'网络请求失败，已重试仍无法连接。';
+    errEl.innerHTML='<p>'+errMsg+'</p>';
+    msgs.appendChild(errEl);
+    aiChatHistory.push({role:'bot',text:errMsg});
+  }
+
+  aiIsTyping=false;
+  aiAbortController=null;
+  document.getElementById('aiChatSend').disabled=false;
+  scrollChatBottom();
+}
+</script>
+
+<footer style="text-align:center;padding:32px 20px;margin-top:40px;border-top:1px solid var(--gray-200);color:var(--gray-500);font-size:13px;line-height:2">
+  <div><strong style="color:var(--gray-700)">Vita Global</strong></div>
+  <div>本文件为 Vita Global 相关服务内部文件</div>
+  <div style="margin-top:4px;font-size:12px;color:var(--gray-400)">&copy; 2025 Vita Global 版权所有</div>
+</footer>
+</body>
+</html>
