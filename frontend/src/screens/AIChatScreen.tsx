@@ -23,8 +23,9 @@ import Markdown from 'react-native-markdown-display';
 
 import { ChatMessage } from '../types/ai';
 import { SessionMetadata } from '../types/chat';
-import { sendMessage as sendChatMessage, getCommonQuestions, CommonQuestion } from '../services/chatAPI';
+import { sendMessage as sendChatMessage, sendMessageStream, getCommonQuestions, CommonQuestion } from '../services/chatAPI';
 import { ThinkingIndicator } from '../components/ai/ThinkingIndicator';
+import { KeyboardDoneAccessory, KEYBOARD_ACCESSORY_ID } from '../components/common/KeyboardDismissWrapper';
 import { ChatHistoryBottomSheet } from '../components/ai/ChatHistoryBottomSheet';
 import {
   initializeSessionStorage,
@@ -106,6 +107,7 @@ export const AIChatScreen: React.FC<Props> = ({ navigation, route }) => {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputText, setInputText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isStreaming, setIsStreaming] = useState(false);
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [suggestedQuestions, setSuggestedQuestions] = useState(() => getRandomQuestions());
@@ -261,7 +263,7 @@ export const AIChatScreen: React.FC<Props> = ({ navigation, route }) => {
     abortControllerRef.current?.abort();
   };
 
-  // 发送消息
+  // 流式发送消息（带非流式降级）
   const sendMessage = async (messageText?: string) => {
     const text = messageText || inputText.trim();
     if (!text) return;
@@ -293,52 +295,215 @@ export const AIChatScreen: React.FC<Props> = ({ navigation, route }) => {
       flatListRef.current?.scrollToEnd({ animated: true });
     }, 100);
 
+    // 预创建AI消息占位符（用于流式更新）
+    const aiMessageId = `ai_${Date.now()}`;
+
     try {
-      // 调用AI API (使用chatAPI获取元数据)
-      const response = await sendChatMessage(text, controller.signal);
+      // 尝试流式请求
+      let streamSuccess = false;
+      try {
+        // 添加空的AI消息占位符
+        const placeholderMessage: ChatMessage = {
+          id: aiMessageId,
+          role: 'assistant',
+          content: '',
+          timestamp: Date.now(),
+        };
+        const messagesWithPlaceholder = [...newMessages, placeholderMessage];
+        setMessages(messagesWithPlaceholder);
+        setIsStreaming(true);
 
-      // 添加AI回复（包含元数据）
-      const aiMessage: ChatMessage = {
-        id: `ai_${Date.now()}`,
-        role: 'assistant',
-        content: response.reply,
-        timestamp: Date.now(),
-        metadata: {
-          sourceType: response.sourceType as 'web_search' | 'knowledge_base' | 'general' | undefined,
-          ragScore: response.ragScore,
-          schoolId: response.schoolId,
-          webSources: response.webSources,
-        },
-      };
+        // 用于节流UI更新的变量
+        let lastUIUpdateTime = 0;
+        let pendingContent = '';
+        let updateTimer: NodeJS.Timeout | null = null;
 
-      const updatedMessages = [...newMessages, aiMessage];
-      setMessages(updatedMessages);
-      setSessionId(response.session_id);
+        const response = await sendMessageStream(
+          text,
+          {
+            onStart: (newSessionId) => {
+              console.log('[AIChatScreen] SSE 开始, sessionId:', newSessionId);
+              setSessionId(newSessionId);
+            },
+            onChunk: (_chunk, accumulated) => {
+              pendingContent = accumulated;
+              const now = Date.now();
+              // 节流: 每50ms最多更新一次UI，避免过于频繁的setState
+              if (now - lastUIUpdateTime >= 50) {
+                lastUIUpdateTime = now;
+                if (updateTimer) {
+                  clearTimeout(updateTimer);
+                  updateTimer = null;
+                }
+                setMessages(prev => {
+                  const updated = [...prev];
+                  const lastIdx = updated.length - 1;
+                  if (lastIdx >= 0 && updated[lastIdx].id === aiMessageId) {
+                    updated[lastIdx] = { ...updated[lastIdx], content: pendingContent };
+                  }
+                  return updated;
+                });
+                // 自动滚动
+                if (isAtBottomRef.current) {
+                  flatListRef.current?.scrollToEnd({ animated: false });
+                }
+              } else if (!updateTimer) {
+                // 设置一个延迟更新确保最后的内容能显示
+                updateTimer = setTimeout(() => {
+                  updateTimer = null;
+                  lastUIUpdateTime = Date.now();
+                  setMessages(prev => {
+                    const updated = [...prev];
+                    const lastIdx = updated.length - 1;
+                    if (lastIdx >= 0 && updated[lastIdx].id === aiMessageId) {
+                      updated[lastIdx] = { ...updated[lastIdx], content: pendingContent };
+                    }
+                    return updated;
+                  });
+                  if (isAtBottomRef.current) {
+                    flatListRef.current?.scrollToEnd({ animated: false });
+                  }
+                }, 50);
+              }
+            },
+            onDone: (fullContent, newSessionId) => {
+              // 清理节流定时器
+              if (updateTimer) {
+                clearTimeout(updateTimer);
+                updateTimer = null;
+              }
+              console.log('[AIChatScreen] SSE 完成, 内容长度:', fullContent.length);
+              // 最终更新使用完整内容
+              setMessages(prev => {
+                const updated = [...prev];
+                const lastIdx = updated.length - 1;
+                if (lastIdx >= 0 && updated[lastIdx].id === aiMessageId) {
+                  updated[lastIdx] = { ...updated[lastIdx], content: fullContent };
+                }
+                return updated;
+              });
+            },
+            onError: (errorMsg) => {
+              console.error('[AIChatScreen] SSE 错误:', errorMsg);
+            },
+          },
+          controller.signal
+        );
 
-      // 启动打字机效果
-      const messageIndex = updatedMessages.length - 1;
-      startTypingEffect(messageIndex, response.reply);
+        // 清理节流定时器
+        if (updateTimer) {
+          clearTimeout(updateTimer);
+        }
 
-      // 保存会话
-      await saveSession(updatedMessages, response.session_id);
+        setIsStreaming(false);
+        streamSuccess = true;
+
+        // 最终消息已通过onChunk/onDone实时更新，此处确保session_id保存
+        if (response.session_id) {
+          setSessionId(response.session_id);
+        }
+
+        // 获取最终消息列表用于保存
+        // 由于setState是异步的，直接构建最终消息列表
+        const finalAiMessage: ChatMessage = {
+          id: aiMessageId,
+          role: 'assistant',
+          content: response.reply,
+          timestamp: Date.now(),
+        };
+        const finalMessages = [...newMessages, finalAiMessage];
+        setMessages(finalMessages);
+        await saveSession(finalMessages, response.session_id);
+
+      } catch (streamErr: any) {
+        setIsStreaming(false);
+
+        // 用户取消 - 直接抛出
+        if (streamErr.message === 'USER_CANCELLED') {
+          throw streamErr;
+        }
+
+        // 流式失败 - 降级到非流式
+        if (!streamSuccess) {
+          console.warn('[AIChatScreen] 流式请求失败，降级到非流式:', streamErr.message);
+
+          // 移除占位符消息
+          setMessages(newMessages);
+
+          // 检查是否已被取消
+          if (controller.signal.aborted) {
+            const cancelError = new Error('USER_CANCELLED');
+            cancelError.name = 'AbortError';
+            throw cancelError;
+          }
+
+          // 非流式降级
+          const response = await sendChatMessage(text, controller.signal);
+
+          const aiMessage: ChatMessage = {
+            id: `ai_${Date.now()}`,
+            role: 'assistant',
+            content: response.reply,
+            timestamp: Date.now(),
+            metadata: {
+              sourceType: response.sourceType as 'web_search' | 'knowledge_base' | 'general' | undefined,
+              ragScore: response.ragScore,
+              schoolId: response.schoolId,
+              webSources: response.webSources,
+            },
+          };
+
+          const updatedMessages = [...newMessages, aiMessage];
+          setMessages(updatedMessages);
+          setSessionId(response.session_id);
+
+          // 非流式使用打字机效果
+          const messageIndex = updatedMessages.length - 1;
+          startTypingEffect(messageIndex, response.reply);
+
+          await saveSession(updatedMessages, response.session_id);
+        }
+      }
     } catch (err: any) {
       // 用户主动取消 - 添加中断提示消息
       if (err.message === 'USER_CANCELLED') {
-        const interruptedMessage: ChatMessage = {
-          id: `ai_interrupted_${Date.now()}`,
-          role: 'assistant',
-          content: t('ai.interruptedMessage'),
-          timestamp: Date.now(),
-        };
-        const updatedMessages = [...newMessages, interruptedMessage];
-        setMessages(updatedMessages);
-        await saveSession(updatedMessages);
+        // 检查是否有流式内容需要保留
+        const currentMessages = messages;
+        const hasStreamedContent = currentMessages.some(
+          m => m.id === aiMessageId && m.content && m.content.length > 0
+        );
+
+        if (hasStreamedContent) {
+          // 保留已流式传输的部分内容
+          const interruptNote = '\n\n---\n*' + t('ai.interruptedMessage') + '*';
+          setMessages(prev => {
+            const updated = [...prev];
+            const aiIdx = updated.findIndex(m => m.id === aiMessageId);
+            if (aiIdx >= 0) {
+              updated[aiIdx] = { ...updated[aiIdx], content: updated[aiIdx].content + interruptNote };
+            }
+            return updated;
+          });
+        } else {
+          const interruptedMessage: ChatMessage = {
+            id: `ai_interrupted_${Date.now()}`,
+            role: 'assistant',
+            content: t('ai.interruptedMessage'),
+            timestamp: Date.now(),
+          };
+          const updatedMessages = [...newMessages, interruptedMessage];
+          setMessages(updatedMessages);
+          await saveSession(updatedMessages);
+        }
       } else {
         console.error('Send message error:', err);
+        // 移除空的AI占位符消息（如果存在）
+        setMessages(prev => prev.filter(m => !(m.id === aiMessageId && m.content === '')));
         setError(err.message || t('ai.errorMessage'));
       }
     } finally {
       setIsLoading(false);
+      setIsStreaming(false);
       abortControllerRef.current = null;
     }
   };
@@ -540,10 +705,11 @@ export const AIChatScreen: React.FC<Props> = ({ navigation, route }) => {
   const renderMessage = ({ item, index }: { item: ChatMessage; index: number }) => {
     const isUser = item.role === 'user';
     const isTyping = typingMessageIndex === index;
+    const isStreamingMessage = isStreaming && index === messages.length - 1 && !isUser;
 
     // 显示打字效果或完整内容
     const displayContent = isTyping && typingText ? typingText : item.content;
-    const showCursor = isTyping && displayContent.length < item.content.length;
+    const showCursor = (isTyping && displayContent.length < item.content.length) || isStreamingMessage;
 
     // 获取元数据
     const metadata = item.metadata;
@@ -583,7 +749,7 @@ export const AIChatScreen: React.FC<Props> = ({ navigation, route }) => {
         </TouchableOpacity>
 
         {/* AI消息元数据标签 */}
-        {hasMetadata && !isTyping && (
+        {hasMetadata && !isTyping && !isStreamingMessage && (
           <View style={styles.metadataContainer}>
             {/* 来源类型和相关性 */}
             <View style={styles.metadataRow}>
@@ -764,16 +930,34 @@ export const AIChatScreen: React.FC<Props> = ({ navigation, route }) => {
         }}
       />
 
-      {/* 加载指示器 - Grok风格 */}
-      {isLoading && <ThinkingIndicator estimatedTime={3} />}
+      {/* 加载指示器 - 仅在等待首个chunk时显示，流式传输中不显示 */}
+      {isLoading && !isStreaming && <ThinkingIndicator estimatedTime={3} />}
 
       {/* 错误提示 */}
       {error && (
         <View style={styles.errorContainer}>
           <Text style={styles.errorText}>{error}</Text>
-          <TouchableOpacity onPress={() => setError(null)}>
-            <Ionicons name="close-circle" size={20} color="#ff3b30" />
-          </TouchableOpacity>
+          <View style={styles.errorActions}>
+            <TouchableOpacity
+              style={styles.retryButton}
+              onPress={() => {
+                setError(null);
+                // 重试最后一条用户消息
+                const lastUserMsg = [...messages].reverse().find(m => m.role === 'user');
+                if (lastUserMsg) {
+                  // 移除最后的用户消息，sendMessage会重新添加
+                  setMessages(messages.filter(m => m.id !== lastUserMsg.id));
+                  sendMessage(lastUserMsg.content);
+                }
+              }}
+            >
+              <Ionicons name="refresh-outline" size={16} color="#007AFF" />
+              <Text style={styles.retryButtonText}>{t('ai.retry')}</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => setError(null)}>
+              <Ionicons name="close-circle" size={20} color="#ff3b30" />
+            </TouchableOpacity>
+          </View>
         </View>
       )}
 
@@ -794,6 +978,7 @@ export const AIChatScreen: React.FC<Props> = ({ navigation, route }) => {
               maxLength={500}
               editable={!isLoading}
               onSubmitEditing={() => sendMessage()}
+              inputAccessoryViewID={Platform.OS === 'ios' ? KEYBOARD_ACCESSORY_ID : undefined}
             />
             {isLoading ? (
               <TouchableOpacity
@@ -846,6 +1031,7 @@ export const AIChatScreen: React.FC<Props> = ({ navigation, route }) => {
         onDeleteSession={handleDeleteSession}
         onClearAll={handleClearAll}
       />
+      <KeyboardDoneAccessory />
     </KeyboardAvoidingView>
   );
 };
@@ -853,7 +1039,7 @@ export const AIChatScreen: React.FC<Props> = ({ navigation, route }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f9f9f9',
+    backgroundColor: '#FAF3F1',
   },
   header: {
     flexDirection: 'row',
@@ -905,7 +1091,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(249, 168, 137, 0.9)',
   },
   aiBubble: {
-    backgroundColor: '#e5e5ea',
+    backgroundColor: '#ffffff',
   },
   messageText: {
     fontSize: 16,
@@ -987,7 +1173,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingVertical: 12,
     paddingHorizontal: 16,
-    backgroundColor: '#f9f9f9',
+    backgroundColor: '#FAF3F1',
   },
   loadingText: {
     marginLeft: 8,
@@ -1009,6 +1195,25 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#ff3b30',
     marginRight: 8,
+  },
+  errorActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  retryButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingVertical: 4,
+    paddingHorizontal: 10,
+    borderRadius: 12,
+    backgroundColor: 'rgba(0, 122, 255, 0.1)',
+  },
+  retryButtonText: {
+    fontSize: 13,
+    color: '#007AFF',
+    fontWeight: '500',
   },
   inputContainer: {
     paddingHorizontal: 16,

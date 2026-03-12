@@ -9,6 +9,7 @@ except ImportError:
 import uuid
 import json
 import os
+import time
 from core.rag_service import retrieve, get_system_prompt
 from core.form_knowledge_service import match_forms, build_form_designer_prompt, get_kb_stats, format_form_examples
 from database import get_database
@@ -25,9 +26,33 @@ if dashscope is not None:
 CHAT_HISTORY_PATH = os.path.join(os.path.dirname(__file__), 'data', 'chat_history.json')
 
 # Session storage dictionary
-# Structure: {session_id: {'dept_id': int, 'messages': list}}
+# Structure: {session_id: {'dept_id': int, 'messages': list, 'last_accessed': float}}
 sessions = {}
 MAX_SESSION_MESSAGES = 12  # Keep last 6 rounds (6 user + 6 assistant)
+SESSION_TTL = 7200  # 2 hours in seconds
+_request_counter = 0
+_CLEANUP_INTERVAL = 50  # Run cleanup every N requests
+
+
+def _cleanup_expired_sessions():
+    """Remove sessions that have not been accessed within SESSION_TTL."""
+    now = time.time()
+    expired = [sid for sid, s in sessions.items()
+               if now - s.get('last_accessed', 0) > SESSION_TTL]
+    for sid in expired:
+        del sessions[sid]
+    if expired:
+        print(f"[Session Cleanup] Removed {len(expired)} expired sessions, {len(sessions)} remaining")
+
+
+def _touch_session(session_id):
+    """Update last_accessed timestamp and trigger periodic cleanup."""
+    global _request_counter
+    if session_id in sessions:
+        sessions[session_id]['last_accessed'] = time.time()
+    _request_counter += 1
+    if _request_counter % _CLEANUP_INTERVAL == 0:
+        _cleanup_expired_sessions()
 
 
 # ==================== Chat History File Storage ====================
@@ -245,7 +270,8 @@ def ask_ai():
         if session_id not in sessions:
             sessions[session_id] = {
                 'dept_id': dept_id,
-                'messages': []
+                'messages': [],
+                'last_accessed': time.time()
             }
 
         # Check if session's dept_id matches
@@ -253,8 +279,11 @@ def ask_ai():
             # Department changed, clear history
             sessions[session_id] = {
                 'dept_id': dept_id,
-                'messages': []
+                'messages': [],
+                'last_accessed': time.time()
             }
+
+        _touch_session(session_id)
 
         # RAG retrieve relevant content, get content, score and quality flag
         retrieved_content, max_score, has_high_quality = retrieve(dept_id, question)
@@ -504,9 +533,11 @@ def api_ai_chat():
         dept_id = int(dept_id)
 
         if session_id not in sessions:
-            sessions[session_id] = {'dept_id': dept_id, 'messages': []}
+            sessions[session_id] = {'dept_id': dept_id, 'messages': [], 'last_accessed': time.time()}
         if sessions[session_id]['dept_id'] != dept_id:
-            sessions[session_id] = {'dept_id': dept_id, 'messages': []}
+            sessions[session_id] = {'dept_id': dept_id, 'messages': [], 'last_accessed': time.time()}
+
+        _touch_session(session_id)
 
         skip_rag = data.get('skipRag', False)
         if skip_rag:
@@ -568,9 +599,11 @@ def api_ai_chat_stream():
         def generate():
             try:
                 if session_id not in sessions:
-                    sessions[session_id] = {'dept_id': dept_id, 'messages': []}
+                    sessions[session_id] = {'dept_id': dept_id, 'messages': [], 'last_accessed': time.time()}
                 if sessions[session_id]['dept_id'] != dept_id:
-                    sessions[session_id] = {'dept_id': dept_id, 'messages': []}
+                    sessions[session_id] = {'dept_id': dept_id, 'messages': [], 'last_accessed': time.time()}
+
+                _touch_session(session_id)
 
                 if skip_rag:
                     retrieved_content, max_score, has_high_quality = "", 0.0, True
@@ -693,7 +726,9 @@ def api_form_designer_chat_stream():
         def generate():
             try:
                 if session_id not in sessions:
-                    sessions[session_id] = {'dept_id': 0, 'messages': []}
+                    sessions[session_id] = {'dept_id': 0, 'messages': [], 'last_accessed': time.time()}
+
+                _touch_session(session_id)
 
                 # Build knowledge-enhanced prompt
                 if system_prompt_override:
