@@ -1,0 +1,887 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WeChat 爬虫使用指南</title>
+<style>
+/* ===== CSS Reset & Variables ===== */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --blue-50:#eff6ff;--blue-100:#dbeafe;--blue-200:#bfdbfe;--blue-300:#93c5fd;
+  --blue-400:#60a5fa;--blue-500:#3b82f6;--blue-600:#2563eb;--blue-700:#1d4ed8;
+  --blue-800:#1e40af;--blue-900:#1e3a8a;
+  --gray-50:#f9fafb;--gray-100:#f3f4f6;--gray-200:#e5e7eb;--gray-300:#d1d5db;
+  --gray-400:#9ca3af;--gray-500:#6b7280;--gray-600:#4b5563;--gray-700:#374151;
+  --gray-800:#1f2937;--gray-900:#111827;
+  --green-50:#f0fdf4;--green-500:#22c55e;--green-600:#16a34a;
+  --orange-50:#fff7ed;--orange-500:#f97316;--orange-600:#ea580c;
+  --purple-50:#faf5ff;--purple-500:#a855f7;--purple-600:#9333ea;
+  --red-50:#fef2f2;--red-500:#ef4444;--red-600:#dc2626;
+  --yellow-50:#fefce8;--yellow-500:#eab308;--yellow-600:#ca8a04;
+  --radius:8px;--radius-lg:12px;--radius-xl:16px;
+  --shadow-sm:0 1px 2px rgba(0,0,0,.05);
+  --shadow:0 1px 3px rgba(0,0,0,.1),0 1px 2px rgba(0,0,0,.06);
+  --shadow-md:0 4px 6px rgba(0,0,0,.07),0 2px 4px rgba(0,0,0,.06);
+  --shadow-lg:0 10px 15px rgba(0,0,0,.1),0 4px 6px rgba(0,0,0,.05);
+  --transition:all .2s ease;
+}
+html{scroll-behavior:smooth;font-size:16px}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"PingFang SC","Microsoft YaHei",sans-serif;color:var(--gray-800);background:var(--gray-50);line-height:1.7}
+
+/* ===== Scrollbar ===== */
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--gray-300);border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:var(--gray-400)}
+
+/* ===== Layout ===== */
+.page-wrapper{display:flex;min-height:100vh}
+
+/* Sidebar */
+.sidebar{position:fixed;top:0;left:0;width:280px;height:100vh;background:#fff;border-right:1px solid var(--gray-200);overflow-y:auto;z-index:100;transition:transform .3s ease}
+.sidebar-header{padding:20px 20px 16px;border-bottom:1px solid var(--gray-100);position:sticky;top:0;background:#fff;z-index:1}
+.sidebar-header h2{font-size:16px;color:var(--blue-700);display:flex;align-items:center;gap:8px}
+.sidebar-header h2 span{font-size:20px}
+
+.sidebar-nav{padding:8px 0}
+.nav-group{margin-bottom:4px}
+.nav-group-title{padding:8px 20px;font-size:11px;font-weight:600;color:var(--gray-400);text-transform:uppercase;letter-spacing:.5px}
+.nav-item{display:block;padding:7px 20px 7px 28px;font-size:13px;color:var(--gray-600);text-decoration:none;transition:var(--transition);border-left:3px solid transparent;cursor:pointer}
+.nav-item:hover{background:var(--blue-50);color:var(--blue-600)}
+.nav-item.active{background:var(--blue-50);color:var(--blue-700);border-left-color:var(--blue-500);font-weight:500}
+
+/* Main content */
+.main-content{margin-left:280px;flex:1;min-width:0}
+.content-wrapper{max-width:960px;margin:0 auto;padding:32px 40px 80px}
+
+/* Mobile sidebar toggle */
+.sidebar-toggle{display:none;position:fixed;bottom:24px;left:24px;z-index:200;width:48px;height:48px;border-radius:50%;background:var(--blue-600);color:#fff;border:none;font-size:20px;cursor:pointer;box-shadow:var(--shadow-lg);transition:var(--transition)}
+.sidebar-toggle:hover{background:var(--blue-700);transform:scale(1.05)}
+.sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.3);z-index:99}
+
+/* ===== Typography ===== */
+h1{font-size:32px;font-weight:700;color:var(--gray-900);margin-bottom:8px}
+h2{font-size:24px;font-weight:700;color:var(--gray-900);margin:48px 0 16px;padding-bottom:8px;border-bottom:2px solid var(--blue-100)}
+h3{font-size:20px;font-weight:600;color:var(--gray-800);margin:32px 0 12px}
+h4{font-size:16px;font-weight:600;color:var(--gray-700);margin:20px 0 8px}
+p{margin-bottom:12px;color:var(--gray-600)}
+.subtitle{font-size:16px;color:var(--gray-500);margin-bottom:32px}
+
+/* ===== Hero Section ===== */
+.hero{background:linear-gradient(135deg,#059669,#065f46);color:#fff;padding:48px 40px;border-radius:var(--radius-xl);margin-bottom:40px;position:relative;overflow:hidden}
+.hero::before{content:'';position:absolute;top:-50%;right:-20%;width:400px;height:400px;background:rgba(255,255,255,.05);border-radius:50%}
+.hero::after{content:'';position:absolute;bottom:-30%;left:-10%;width:300px;height:300px;background:rgba(255,255,255,.03);border-radius:50%}
+.hero h1{color:#fff;font-size:36px;margin-bottom:12px;position:relative;z-index:1}
+.hero p{color:rgba(255,255,255,.85);font-size:16px;margin-bottom:0;position:relative;z-index:1}
+.hero-stats{display:flex;gap:32px;margin-top:24px;position:relative;z-index:1}
+.hero-stat{text-align:center}
+.hero-stat .num{font-size:28px;font-weight:700;display:block}
+.hero-stat .label{font-size:12px;opacity:.8}
+
+/* ===== Cards ===== */
+.card{background:#fff;border:1px solid var(--gray-200);border-radius:var(--radius-lg);padding:24px;margin-bottom:16px;transition:var(--transition)}
+.card:hover{box-shadow:var(--shadow-md)}
+
+/* ===== Code Blocks ===== */
+pre{background:var(--gray-900);color:#e5e7eb;padding:20px 24px;border-radius:var(--radius-lg);overflow-x:auto;font-size:13px;line-height:1.6;margin-bottom:16px;position:relative}
+pre code{font-family:"SF Mono","Fira Code","Cascadia Code",Consolas,monospace;color:inherit;background:none;padding:0}
+code{font-family:"SF Mono","Fira Code","Cascadia Code",Consolas,monospace;font-size:13px;background:var(--gray-100);color:var(--red-600);padding:2px 6px;border-radius:4px}
+pre .comment{color:#6b7280}
+pre .keyword{color:#60a5fa}
+pre .string{color:#34d399}
+pre .flag{color:#f59e0b}
+pre .url{color:#a78bfa}
+
+/* ===== Alert / Tip boxes ===== */
+.alert{padding:16px 20px;border-radius:var(--radius-lg);margin-bottom:16px;font-size:14px;line-height:1.6}
+.alert-info{background:var(--blue-50);border-left:4px solid var(--blue-500);color:var(--blue-800)}
+.alert-warning{background:var(--yellow-50);border-left:4px solid var(--yellow-500);color:#92400e}
+.alert-danger{background:var(--red-50);border-left:4px solid var(--red-500);color:#991b1b}
+.alert-success{background:var(--green-50);border-left:4px solid var(--green-500);color:#166534}
+.alert strong{display:block;margin-bottom:4px}
+
+/* ===== Step List ===== */
+.steps{counter-reset:step}
+.step{position:relative;padding:20px 20px 20px 64px;margin-bottom:12px;background:#fff;border:1px solid var(--gray-200);border-radius:var(--radius-lg);counter-increment:step;transition:var(--transition)}
+.step:hover{border-color:var(--blue-300);box-shadow:var(--shadow)}
+.step::before{content:counter(step);position:absolute;left:16px;top:20px;width:32px;height:32px;background:var(--blue-600);color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700}
+.step h4{margin:0 0 6px;font-size:15px}
+.step p{margin:0;font-size:13px;color:var(--gray-600)}
+
+/* ===== Tables ===== */
+.data-table{width:100%;border-collapse:collapse;font-size:13px;margin-bottom:16px}
+.data-table th{text-align:left;padding:10px 12px;background:var(--gray-50);color:var(--gray-700);font-weight:600;border-bottom:2px solid var(--gray-200);white-space:nowrap}
+.data-table td{padding:10px 12px;border-bottom:1px solid var(--gray-100);vertical-align:top}
+.data-table tr:hover td{background:var(--blue-50)}
+
+/* ===== Tags / Badges ===== */
+.tag{display:inline-block;padding:2px 10px;font-size:11px;border-radius:10px;font-weight:600}
+.tag-green{background:var(--green-50);color:var(--green-600)}
+.tag-blue{background:var(--blue-50);color:var(--blue-600)}
+.tag-orange{background:var(--orange-50);color:var(--orange-600)}
+.tag-red{background:var(--red-50);color:var(--red-600)}
+.tag-purple{background:var(--purple-50);color:var(--purple-600)}
+
+/* Success rate bar */
+.rate-bar{display:inline-flex;align-items:center;gap:8px}
+.rate-fill{height:8px;border-radius:4px;display:inline-block}
+.rate-90{width:90px;background:var(--green-500)}
+.rate-60{width:60px;background:var(--orange-500)}
+.rate-55{width:55px;background:var(--yellow-500)}
+
+/* ===== Method Cards ===== */
+.method-card{background:#fff;border:1px solid var(--gray-200);border-radius:var(--radius-lg);overflow:hidden;margin-bottom:20px;transition:var(--transition)}
+.method-card:hover{box-shadow:var(--shadow-md)}
+.method-header{padding:16px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.method-header.green{background:linear-gradient(135deg,#059669,#047857);color:#fff}
+.method-header.orange{background:linear-gradient(135deg,var(--orange-500),var(--orange-600));color:#fff}
+.method-header.yellow{background:linear-gradient(135deg,#d97706,#b45309);color:#fff}
+.method-header h4{color:#fff;margin:0;font-size:16px}
+.method-header .method-badge{background:rgba(255,255,255,.2);padding:2px 10px;border-radius:10px;font-size:12px}
+.method-body{padding:20px}
+
+/* ===== Floating buttons ===== */
+.back-to-top{position:fixed;bottom:24px;right:24px;width:44px;height:44px;border-radius:50%;background:var(--blue-600);color:#fff;border:none;font-size:18px;cursor:pointer;box-shadow:var(--shadow-lg);opacity:0;visibility:hidden;transition:var(--transition);z-index:200}
+.back-to-top.visible{opacity:1;visibility:visible}
+.back-to-top:hover{background:var(--blue-700);transform:translateY(-2px)}
+
+/* ===== Responsive ===== */
+@media(max-width:768px){
+  .sidebar{transform:translateX(-100%)}
+  .sidebar.open{transform:translateX(0)}
+  .sidebar-toggle{display:flex;align-items:center;justify-content:center}
+  .sidebar-overlay.open{display:block}
+  .main-content{margin-left:0}
+  .content-wrapper{padding:20px 16px 80px}
+  .hero{padding:32px 24px}
+  .hero h1{font-size:28px}
+  .hero-stats{gap:16px;flex-wrap:wrap}
+  .method-header{flex-direction:column;align-items:flex-start;gap:8px}
+}
+
+/* ===== Utility ===== */
+.text-blue{color:var(--blue-600)}
+.text-green{color:var(--green-600)}
+.text-purple{color:var(--purple-600)}
+.text-orange{color:var(--orange-600)}
+.mt-8{margin-top:8px}
+.mt-16{margin-top:16px}
+.mb-16{margin-bottom:16px}
+ul,ol{margin-bottom:12px;padding-left:24px;color:var(--gray-600)}
+li{margin-bottom:6px;font-size:14px}
+</style>
+</head>
+
+<body>
+<div class="page-wrapper">
+
+<!-- ============ Sidebar ============ -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-header">
+    <h2><span>&#x1F50D;</span> WeChat 爬虫指南</h2>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-group">
+      <div class="nav-group-title">快速开始</div>
+      <a class="nav-item" href="#overview">概述</a>
+      <a class="nav-item" href="#install">安装配置</a>
+      <a class="nav-item" href="#quick-start">快速上手</a>
+    </div>
+    <div class="nav-group">
+      <div class="nav-group-title">公众号文章爬取</div>
+      <a class="nav-item" href="#method-a">方式 A — 直接 URL</a>
+      <a class="nav-item" href="#method-b">方式 B — 搜狗搜索</a>
+      <a class="nav-item" href="#method-c">方式 C — 历史 API</a>
+    </div>
+    <div class="nav-group">
+      <div class="nav-group-title">聊天记录提取</div>
+      <a class="nav-item" href="#chat-overview">聊天记录概述</a>
+      <a class="nav-item" href="#chat-decrypt">数据库解密</a>
+      <a class="nav-item" href="#chat-export">导出格式</a>
+    </div>
+    <div class="nav-group">
+      <div class="nav-group-title">高级功能</div>
+      <a class="nav-item" href="#python-api">Python API</a>
+      <a class="nav-item" href="#database">数据库存储</a>
+      <a class="nav-item" href="#captcha">验证码与代理</a>
+    </div>
+    <div class="nav-group">
+      <div class="nav-group-title">参考</div>
+      <a class="nav-item" href="#limitations">限制说明</a>
+      <a class="nav-item" href="#env-vars">环境变量</a>
+      <a class="nav-item" href="#troubleshooting">常见问题</a>
+    </div>
+  </nav>
+</aside>
+
+<!-- ============ Sidebar Overlay (Mobile) ============ -->
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+<!-- ============ Main Content ============ -->
+<main class="main-content">
+<div class="content-wrapper">
+
+<!-- Hero -->
+<section class="hero" id="overview">
+  <h1>WeChat 爬虫使用指南</h1>
+  <p>公众号文章爬取 + 聊天记录提取 | CLI 命令行 + Python API 双模式</p>
+  <div class="hero-stats">
+    <div class="hero-stat">
+      <span class="num">3</span>
+      <span class="label">文章爬取方式</span>
+    </div>
+    <div class="hero-stat">
+      <span class="num">3</span>
+      <span class="label">导出格式</span>
+    </div>
+    <div class="hero-stat">
+      <span class="num">4</span>
+      <span class="label">数据库表</span>
+    </div>
+  </div>
+</section>
+
+<!-- =============================== -->
+<!-- 安装配置 -->
+<!-- =============================== -->
+<h2 id="install">安装配置</h2>
+
+<div class="steps">
+  <div class="step">
+    <h4>安装 Python 依赖</h4>
+    <p>项目依赖 httpx、beautifulsoup4、lxml、sqlalchemy 等库。</p>
+  </div>
+  <div class="step">
+    <h4>安装 Playwright 浏览器（可选，用于 JS 渲染文章）</h4>
+    <p>部分公众号文章需要浏览器渲染才能获取完整内容。</p>
+  </div>
+  <div class="step">
+    <h4>安装 PyWxDump（可选，用于聊天记录自动解密）</h4>
+    <p>仅 Windows 平台可用，自动提取微信数据库密钥。</p>
+  </div>
+</div>
+
+<pre><code><span class="comment"># 1. 安装核心依赖</span>
+<span class="keyword">cd</span> crawler/wechat
+<span class="keyword">pip install</span> httpx beautifulsoup4 lxml sqlalchemy[asyncio] asyncpg python-dotenv
+
+<span class="comment"># 2. 安装 Playwright（可选 — JS 渲染回退）</span>
+<span class="keyword">pip install</span> playwright
+<span class="keyword">playwright install</span> chromium
+
+<span class="comment"># 3. 安装 PyWxDump（可选 — Windows 自动密钥提取）</span>
+<span class="keyword">pip install</span> pywxdump
+
+<span class="comment"># 4. 安装 pysqlcipher3（可选 — 聊天记录解密）</span>
+<span class="keyword">pip install</span> pysqlcipher3</code></pre>
+
+<div class="alert alert-info">
+  <strong>环境要求</strong>
+  Python 3.10+，推荐 3.11+。Playwright chromium 约占 400MB 磁盘空间。
+</div>
+
+<!-- =============================== -->
+<!-- 快速上手 -->
+<!-- =============================== -->
+<h2 id="quick-start">快速上手</h2>
+
+<p>最简单的方式是直接提供文章 URL 进行爬取：</p>
+
+<pre><code><span class="keyword">python</span> scripts/crawl_articles.py \
+  <span class="flag">--urls</span> <span class="string">"https://mp.weixin.qq.com/s/xxxxxxx"</span> \
+  <span class="flag">--output-dir</span> ./output/articles \
+  <span class="flag">--no-db</span></code></pre>
+
+<p>爬取结果保存在 <code>./output/articles/</code> 目录，每篇文章一个 JSON 文件，外加一个 <code>index.json</code> 索引。</p>
+
+<!-- =============================== -->
+<!-- 方式 A — 直接 URL -->
+<!-- =============================== -->
+<h2 id="method-a">方式 A — 直接 URL 爬取</h2>
+
+<div class="method-card">
+  <div class="method-header green">
+    <h4>直接 URL — 推荐方式</h4>
+    <span class="method-badge">成功率 ~90%</span>
+  </div>
+  <div class="method-body">
+    <p>直接提供一个或多个 <code>mp.weixin.qq.com</code> 文章链接，爬虫会获取文章全文、图片、视频等。</p>
+    <p><strong>适用场景：</strong>已知文章链接、从朋友圈/群聊获取的分享链接、需要精确爬取特定文章。</p>
+
+    <h4>单篇文章</h4>
+    <pre><code><span class="keyword">python</span> scripts/crawl_articles.py \
+  <span class="flag">--urls</span> <span class="string">"https://mp.weixin.qq.com/s/xxxxxxx"</span></code></pre>
+
+    <h4>多篇文章</h4>
+    <pre><code><span class="keyword">python</span> scripts/crawl_articles.py \
+  <span class="flag">--urls</span> <span class="string">"https://mp.weixin.qq.com/s/aaa"</span> <span class="string">"https://mp.weixin.qq.com/s/bbb"</span> \
+  <span class="flag">--download-media</span> \
+  <span class="flag">--output-dir</span> ./output/articles</code></pre>
+
+    <h4>爬取结果字段</h4>
+    <table class="data-table">
+      <thead><tr><th>字段</th><th>说明</th><th>示例</th></tr></thead>
+      <tbody>
+        <tr><td><code>title</code></td><td>文章标题</td><td>"2025年留学新政策"</td></tr>
+        <tr><td><code>author</code></td><td>作者</td><td>"小编"</td></tr>
+        <tr><td><code>account_name</code></td><td>公众号名称</td><td>"留学全知道"</td></tr>
+        <tr><td><code>content</code></td><td>纯文本正文</td><td>"近日，教育部..."</td></tr>
+        <tr><td><code>publish_date</code></td><td>发布日期</td><td>"2025-01-15"</td></tr>
+        <tr><td><code>images</code></td><td>图片 URL 列表</td><td>["https://mmbiz..."]</td></tr>
+        <tr><td><code>source_url</code></td><td>原始链接</td><td>"https://mp.weixin..."</td></tr>
+        <tr><td><code>reading_count</code></td><td>阅读数</td><td>0 (永远为0)</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- =============================== -->
+<!-- 方式 B — 搜狗搜索 -->
+<!-- =============================== -->
+<h2 id="method-b">方式 B — 搜狗搜索</h2>
+
+<div class="method-card">
+  <div class="method-header orange">
+    <h4>搜狗微信搜索</h4>
+    <span class="method-badge">成功率 ~60%</span>
+  </div>
+  <div class="method-body">
+    <p>通过搜狗微信搜索（<code>weixin.sogou.com</code>）按关键词或公众号名称搜索文章，然后逐篇爬取。</p>
+
+    <div class="alert alert-warning">
+      <strong>注意</strong>
+      搜狗反爬较严格，单 IP 发送几十次请求即触发验证码。建议配合代理池或打码平台使用。
+    </div>
+
+    <h4>按关键词搜索</h4>
+    <pre><code><span class="keyword">python</span> scripts/crawl_articles.py \
+  <span class="flag">--keyword</span> <span class="string">"留学签证"</span> \
+  <span class="flag">--max-articles</span> 20 \
+  <span class="flag">--max-pages</span> 3</code></pre>
+
+    <h4>按公众号名称搜索</h4>
+    <pre><code><span class="keyword">python</span> scripts/crawl_articles.py \
+  <span class="flag">--account</span> <span class="string">"留学全知道"</span> \
+  <span class="flag">--max-articles</span> 50</code></pre>
+
+    <h4>使用代理</h4>
+    <pre><code><span class="keyword">python</span> scripts/crawl_articles.py \
+  <span class="flag">--keyword</span> <span class="string">"留学"</span> \
+  <span class="flag">--proxy</span> <span class="string">"http://127.0.0.1:7890"</span></code></pre>
+
+    <h4>使用 Sogou Cookies（延长会话）</h4>
+    <pre><code><span class="comment"># 先在浏览器登录搜狗，导出 cookies 为 JSON</span>
+<span class="keyword">python</span> scripts/crawl_articles.py \
+  <span class="flag">--keyword</span> <span class="string">"签证"</span> \
+  <span class="flag">--sogou-cookies</span> sogou_cookies.json</code></pre>
+  </div>
+</div>
+
+<!-- =============================== -->
+<!-- 方式 C — 历史 API -->
+<!-- =============================== -->
+<h2 id="method-c">方式 C — 历史 API</h2>
+
+<div class="method-card">
+  <div class="method-header yellow">
+    <h4>微信内部历史 API</h4>
+    <span class="method-badge">成功率 ~55%</span>
+  </div>
+  <div class="method-body">
+    <p>通过微信内部 API（<code>mp.weixin.qq.com/mp/profile_ext</code>）拉取公众号的全部历史文章。需要有效的微信 Cookie。</p>
+
+    <div class="alert alert-danger">
+      <strong>前提条件</strong>
+      需要通过 mitmproxy 或手动抓包获取微信客户端的 Cookie，Cookie 有效期通常只有 2~24 小时。
+    </div>
+
+    <h4>基本用法</h4>
+    <pre><code><span class="keyword">python</span> scripts/crawl_articles.py \
+  <span class="flag">--biz</span> <span class="string">"MzA3MDk1NDkxMQ=="</span> \
+  <span class="flag">--history</span> \
+  <span class="flag">--wechat-cookies</span> cookies.json \
+  <span class="flag">--max-articles</span> 100</code></pre>
+
+    <h4>Cookie 文件格式</h4>
+    <pre><code><span class="comment">// cookies.json</span>
+{
+  <span class="string">"wxuin"</span>: <span class="string">"123456789"</span>,
+  <span class="string">"wxsid"</span>: <span class="string">"abcdef..."</span>,
+  <span class="string">"pass_ticket"</span>: <span class="string">"xxxxx..."</span>,
+  <span class="string">"wap_sid2"</span>: <span class="string">"xxxxx..."</span>
+}</code></pre>
+
+    <h4>获取 __biz 参数</h4>
+    <p>在微信中打开公众号任意文章，查看 URL 中的 <code>__biz</code> 参数（Base64 编码字符串）。</p>
+
+    <h4>断点续传</h4>
+    <p>如果爬取中断（网络超时、Cookie 过期等），爬虫会自动保存 checkpoint。再次运行相同命令会从上次断点继续。</p>
+  </div>
+</div>
+
+<!-- =============================== -->
+<!-- 三种方式对比 -->
+<!-- =============================== -->
+<h3>三种方式对比</h3>
+
+<table class="data-table">
+  <thead>
+    <tr><th>特性</th><th>方式 A — 直接 URL</th><th>方式 B — 搜狗搜索</th><th>方式 C — 历史 API</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>成功率</strong></td>
+      <td><span class="rate-bar"><span class="rate-fill rate-90"></span> ~90%</span></td>
+      <td><span class="rate-bar"><span class="rate-fill rate-60"></span> ~60%</span></td>
+      <td><span class="rate-bar"><span class="rate-fill rate-55"></span> ~55%</span></td>
+    </tr>
+    <tr><td><strong>需要 Cookie</strong></td><td>否</td><td>可选（延长会话）</td><td>是（必须）</td></tr>
+    <tr><td><strong>需要代理</strong></td><td>否</td><td>建议</td><td>否</td></tr>
+    <tr><td><strong>文章数量</strong></td><td>手动指定</td><td>搜索结果数</td><td>全部历史</td></tr>
+    <tr><td><strong>反爬强度</strong></td><td>低</td><td>高（验证码）</td><td>中（频率限制）</td></tr>
+    <tr><td><strong>推荐场景</strong></td><td>已知链接</td><td>按主题发现文章</td><td>全量采集某账号</td></tr>
+  </tbody>
+</table>
+
+<!-- =============================== -->
+<!-- 聊天记录提取 -->
+<!-- =============================== -->
+<h2 id="chat-overview">聊天记录提取</h2>
+
+<p>从微信本地数据库（<code>EnMicroMsg.db</code>）中提取聊天记录，支持解密、过滤和多格式导出。</p>
+
+<div class="alert alert-info">
+  <strong>平台支持</strong>
+  微信本地数据库仅存在于 <strong>Windows</strong> 和 <strong>Android</strong> 平台。macOS/iOS 版微信不使用 SQLite 存储聊天记录。
+</div>
+
+<h3 id="chat-decrypt">数据库解密</h3>
+
+<h4>方法 1：PyWxDump 自动提取密钥（Windows）</h4>
+<p>PyWxDump 可以自动从运行中的微信进程提取数据库密钥。</p>
+<pre><code><span class="comment"># 确保微信正在运行</span>
+<span class="keyword">pip install</span> pywxdump
+<span class="keyword">pywxdump</span> <span class="flag">bias</span>  <span class="comment"># 自动获取偏移地址和密钥</span></code></pre>
+
+<h4>方法 2：手动提供密钥</h4>
+<pre><code><span class="keyword">python</span> scripts/extract_chat.py \
+  <span class="flag">--db-path</span> ./EnMicroMsg.db \
+  <span class="flag">--key</span> <span class="string">"abc123def"</span> \
+  <span class="flag">--output-format</span> json</code></pre>
+
+<h4>过滤联系人和日期范围</h4>
+<pre><code><span class="keyword">python</span> scripts/extract_chat.py \
+  <span class="flag">--db-path</span> ./EnMicroMsg.db \
+  <span class="flag">--key</span> <span class="string">"abc123def"</span> \
+  <span class="flag">--contacts</span> <span class="string">"wxid_123,wxid_456"</span> \
+  <span class="flag">--date-range</span> <span class="string">"2024-01-01:2024-12-31"</span> \
+  <span class="flag">--output-format</span> csv</code></pre>
+
+<h3 id="chat-export">导出格式</h3>
+
+<table class="data-table">
+  <thead><tr><th>格式</th><th>参数</th><th>说明</th><th>适用场景</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><span class="tag tag-blue">JSON</span></td>
+      <td><code>--output-format json</code></td>
+      <td>结构化 JSON，包含所有字段</td>
+      <td>程序处理、数据分析</td>
+    </tr>
+    <tr>
+      <td><span class="tag tag-green">CSV</span></td>
+      <td><code>--output-format csv</code></td>
+      <td>表格格式，UTF-8 BOM 编码</td>
+      <td>Excel 查看、统计分析</td>
+    </tr>
+    <tr>
+      <td><span class="tag tag-purple">TXT</span></td>
+      <td><code>--output-format txt</code></td>
+      <td>可读文本，按对话分组</td>
+      <td>人工阅读、存档</td>
+    </tr>
+  </tbody>
+</table>
+
+<h4>消息类型识别</h4>
+<table class="data-table">
+  <thead><tr><th>类型码</th><th>类型</th><th>说明</th></tr></thead>
+  <tbody>
+    <tr><td><code>1</code></td><td>text</td><td>文本消息</td></tr>
+    <tr><td><code>3</code></td><td>image</td><td>图片消息</td></tr>
+    <tr><td><code>34</code></td><td>voice</td><td>语音消息</td></tr>
+    <tr><td><code>43</code></td><td>video</td><td>视频消息</td></tr>
+    <tr><td><code>47</code></td><td>emoji</td><td>表情包</td></tr>
+    <tr><td><code>48</code></td><td>location</td><td>位置分享</td></tr>
+    <tr><td><code>49</code></td><td>link</td><td>链接/文件</td></tr>
+    <tr><td><code>10000</code></td><td>system</td><td>系统消息</td></tr>
+  </tbody>
+</table>
+
+<!-- =============================== -->
+<!-- Python API -->
+<!-- =============================== -->
+<h2 id="python-api">Python API</h2>
+
+<p>除了 CLI 命令行，所有功能也可以通过 Python API 直接调用。</p>
+
+<h3>文章爬取 API</h3>
+
+<pre><code><span class="keyword">import</span> asyncio
+<span class="keyword">from</span> src.official_account.crawler <span class="keyword">import</span> (
+    ArticleCrawler,
+    SogouWeixinCrawler,
+    HistoryCrawler,
+)
+
+<span class="keyword">async def</span> main():
+    <span class="comment"># ---- 直接爬取单篇文章 ----</span>
+    crawler = ArticleCrawler()
+    article = <span class="keyword">await</span> crawler.crawl_article(
+        <span class="string">"https://mp.weixin.qq.com/s/xxxxxxx"</span>
+    )
+    print(article.title, article.content_text[:100])
+    <span class="keyword">await</span> crawler.close()
+
+    <span class="comment"># ---- 批量爬取多篇文章 ----</span>
+    crawler = ArticleCrawler(download_media=<span class="keyword">True</span>, media_dir=<span class="string">"./media"</span>)
+    urls = [<span class="string">"https://mp.weixin.qq.com/s/aaa"</span>, <span class="string">"https://mp.weixin.qq.com/s/bbb"</span>]
+    articles = <span class="keyword">await</span> crawler.crawl_multiple(urls, concurrency=3)
+    <span class="keyword">await</span> crawler.close()
+
+    <span class="comment"># ---- 搜狗关键词搜索 ----</span>
+    sogou = SogouWeixinCrawler(proxy=<span class="string">"http://127.0.0.1:7890"</span>)
+    results = <span class="keyword">await</span> sogou.search_articles(<span class="string">"留学签证"</span>, max_pages=2)
+    <span class="keyword">for</span> r <span class="keyword">in</span> results:
+        print(r.title, r.url)
+    <span class="keyword">await</span> sogou.close()
+
+asyncio.run(main())</code></pre>
+
+<h3>核心类概览</h3>
+
+<table class="data-table">
+  <thead><tr><th>类名</th><th>用途</th><th>关键方法</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><code>ArticleCrawler</code></td>
+      <td>爬取单篇/多篇文章</td>
+      <td><code>crawl_article(url)</code><br><code>crawl_multiple(urls)</code></td>
+    </tr>
+    <tr>
+      <td><code>SogouWeixinCrawler</code></td>
+      <td>搜狗微信搜索</td>
+      <td><code>search_articles(keyword)</code><br><code>search_by_account(name)</code><br><code>resolve_article_url(sogou_url)</code></td>
+    </tr>
+    <tr>
+      <td><code>HistoryCrawler</code></td>
+      <td>历史文章拉取</td>
+      <td><code>crawl_history(biz, max_articles=100)</code></td>
+    </tr>
+    <tr>
+      <td><code>CaptchaSolver</code></td>
+      <td>验证码自动打码</td>
+      <td><code>solve_image_captcha(image_bytes)</code></td>
+    </tr>
+    <tr>
+      <td><code>ProxyPool</code></td>
+      <td>代理 IP 轮换</td>
+      <td><code>get_proxy()</code><br><code>remove_proxy(proxy)</code></td>
+    </tr>
+    <tr>
+      <td><code>ArticleParser</code></td>
+      <td>HTML 解析提取</td>
+      <td><code>parse(html, source_url)</code></td>
+    </tr>
+  </tbody>
+</table>
+
+<h3>数据类</h3>
+
+<pre><code><span class="keyword">@dataclass</span>
+<span class="keyword">class</span> ArticleData:
+    title: str
+    author: str
+    account_name: str
+    account_biz: str
+    publish_date: str
+    content_html: str       <span class="comment"># 原始 HTML</span>
+    content_text: str       <span class="comment"># 纯文本</span>
+    summary: str
+    cover_image_url: str
+    source_url: str
+    reading_count: int      <span class="comment"># 永远为 0</span>
+    like_count: int         <span class="comment"># 永远为 0</span>
+    images: list[str]       <span class="comment"># 图片 URL 列表</span>
+    videos: list[str]       <span class="comment"># 视频 URL 列表</span>
+    audios: list[str]       <span class="comment"># 音频 URL 列表</span></code></pre>
+
+<!-- =============================== -->
+<!-- 数据库存储 -->
+<!-- =============================== -->
+<h2 id="database">数据库存储</h2>
+
+<p>爬取结果可以存入 PostgreSQL 数据库，使用 SQLAlchemy ORM 模型。默认同时导出为本地 JSON 文件。</p>
+
+<h4>启用数据库存储</h4>
+<pre><code><span class="comment"># 通过环境变量</span>
+<span class="keyword">export</span> DATABASE_URL=<span class="string">"postgresql://user:pass@localhost:5432/wechat_db"</span>
+<span class="keyword">python</span> scripts/crawl_articles.py <span class="flag">--keyword</span> <span class="string">"留学"</span>
+
+<span class="comment"># 或通过命令行参数</span>
+<span class="keyword">python</span> scripts/crawl_articles.py \
+  <span class="flag">--keyword</span> <span class="string">"留学"</span> \
+  <span class="flag">--database-url</span> <span class="string">"postgresql://user:pass@localhost:5432/wechat_db"</span>
+
+<span class="comment"># 跳过数据库，仅导出文件</span>
+<span class="keyword">python</span> scripts/crawl_articles.py <span class="flag">--keyword</span> <span class="string">"留学"</span> <span class="flag">--no-db</span></code></pre>
+
+<h4>数据库表结构</h4>
+
+<table class="data-table">
+  <thead><tr><th>表名</th><th>用途</th><th>关键字段</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><code>wechat_articles</code></td>
+      <td>公众号文章</td>
+      <td>title, content, source_url (唯一键), publish_date, images (JSONB)</td>
+    </tr>
+    <tr>
+      <td><code>wechat_official_accounts</code></td>
+      <td>公众号账号注册</td>
+      <td>biz_id (唯一键), name, account_type, last_crawled_at</td>
+    </tr>
+    <tr>
+      <td><code>wechat_messages</code></td>
+      <td>聊天消息</td>
+      <td>conversation_id, sender_name, message_type, content, timestamp</td>
+    </tr>
+    <tr>
+      <td><code>wechat_contacts</code></td>
+      <td>联系人</td>
+      <td>wechat_id (唯一键), nickname, contact_type</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="alert alert-info">
+  <strong>去重机制</strong>
+  文章以 <code>source_url</code> 作为唯一键，重复爬取会自动更新（upsert）而非重复插入。
+</div>
+
+<!-- =============================== -->
+<!-- 验证码与代理 -->
+<!-- =============================== -->
+<h2 id="captcha">验证码与代理</h2>
+
+<h3>验证码打码服务</h3>
+<p>搜狗搜索触发验证码后，爬虫会自动调用打码服务。支持两种服务：</p>
+
+<table class="data-table">
+  <thead><tr><th>服务</th><th>环境变量</th><th>说明</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><strong>2Captcha</strong>（国际）</td>
+      <td><code>CAPTCHA_SERVICE=2captcha</code><br><code>CAPTCHA_API_KEY=xxx</code></td>
+      <td>英文平台，按次计费，$2.99/1000次</td>
+    </tr>
+    <tr>
+      <td><strong>超级鹰</strong>（国内）</td>
+      <td><code>CAPTCHA_SERVICE=chaojiying</code><br><code>CHAOJIYING_USER=xxx</code><br><code>CHAOJIYING_PASS=xxx</code></td>
+      <td>中文平台，按点数计费</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3>代理池配置</h3>
+<p>支持三种代理配置方式（按优先级）：</p>
+
+<pre><code><span class="comment"># 方式 1：代理池 API（每次请求获取新 IP）</span>
+<span class="keyword">export</span> PROXY_POOL_URL=<span class="string">"http://your-proxy-api/get"</span>
+
+<span class="comment"># 方式 2：静态代理列表</span>
+<span class="keyword">export</span> PROXY_LIST=<span class="string">"http://user:pass@ip1:port,socks5://ip2:port"</span>
+
+<span class="comment"># 方式 3：proxies.txt 文件（每行一个代理地址）</span>
+<span class="comment"># 放在 crawler/wechat/proxies.txt</span>
+http://user:pass@ip1:port
+socks5://ip2:port</code></pre>
+
+<div class="alert alert-success">
+  <strong>自动容错</strong>
+  连续 3 次触发验证码后，爬虫会自动切换代理并刷新 Cookie。失败的代理会被从池中移除。
+</div>
+
+<!-- =============================== -->
+<!-- 限制说明 -->
+<!-- =============================== -->
+<h2 id="limitations">限制说明</h2>
+
+<div class="card">
+  <h4>已知限制</h4>
+  <table class="data-table">
+    <thead><tr><th>限制项</th><th>详情</th><th>影响</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><span class="tag tag-red">阅读数/点赞数</span></td>
+        <td>微信不对外暴露文章的阅读量和点赞量</td>
+        <td><code>reading_count</code> 和 <code>like_count</code> 永远为 0</td>
+      </tr>
+      <tr>
+        <td><span class="tag tag-orange">搜狗验证码</span></td>
+        <td>单 IP 搜索几十次即触发验证码</td>
+        <td>大规模搜索需配合代理池和打码服务</td>
+      </tr>
+      <tr>
+        <td><span class="tag tag-orange">历史 API Cookie</span></td>
+        <td>Cookie 有效期仅 2~24 小时</td>
+        <td>长时间爬取需多次抓包更新 Cookie</td>
+      </tr>
+      <tr>
+        <td><span class="tag tag-blue">JS 渲染文章</span></td>
+        <td>部分文章需要浏览器渲染</td>
+        <td>需安装 Playwright，爬取速度较慢</td>
+      </tr>
+      <tr>
+        <td><span class="tag tag-blue">聊天记录平台</span></td>
+        <td>仅支持 Windows/Android</td>
+        <td>macOS/iOS 版微信不适用</td>
+      </tr>
+      <tr>
+        <td><span class="tag tag-purple">频率限制</span></td>
+        <td>微信 API 每页间隔 10~30 秒</td>
+        <td>大批量爬取耗时较长</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- =============================== -->
+<!-- 环境变量 -->
+<!-- =============================== -->
+<h2 id="env-vars">环境变量参考</h2>
+
+<table class="data-table">
+  <thead><tr><th>变量名</th><th>说明</th><th>默认值</th></tr></thead>
+  <tbody>
+    <tr><td><code>DATABASE_URL</code></td><td>PostgreSQL 连接 URL</td><td>-</td></tr>
+    <tr><td><code>WECHAT_DATA_DIR</code></td><td>微信数据目录</td><td>自动检测</td></tr>
+    <tr><td><code>WECHAT_DB_KEY</code></td><td>数据库解密密钥</td><td>-</td></tr>
+    <tr><td><code>CAPTCHA_SERVICE</code></td><td>打码服务名称</td><td>-</td></tr>
+    <tr><td><code>CAPTCHA_API_KEY</code></td><td>打码服务 API Key</td><td>-</td></tr>
+    <tr><td><code>CHAOJIYING_USER</code></td><td>超级鹰用户名</td><td>-</td></tr>
+    <tr><td><code>CHAOJIYING_PASS</code></td><td>超级鹰密码</td><td>-</td></tr>
+    <tr><td><code>PROXY_POOL_URL</code></td><td>代理池 API 地址</td><td>-</td></tr>
+    <tr><td><code>PROXY_LIST</code></td><td>静态代理列表（逗号分隔）</td><td>-</td></tr>
+    <tr><td><code>LOG_LEVEL</code></td><td>日志级别</td><td>INFO</td></tr>
+    <tr><td><code>DEFAULT_EXPORT_FORMAT</code></td><td>默认导出格式</td><td>json</td></tr>
+    <tr><td><code>EXPORT_OUTPUT_DIR</code></td><td>导出文件目录</td><td>~/wechat_export</td></tr>
+  </tbody>
+</table>
+
+<!-- =============================== -->
+<!-- 常见问题 -->
+<!-- =============================== -->
+<h2 id="troubleshooting">常见问题</h2>
+
+<div class="card" style="border-left:4px solid var(--orange-500)">
+  <h4>Q: 搜狗搜索总是触发验证码怎么办？</h4>
+  <p>A: 配置代理池（<code>PROXY_LIST</code> 或 <code>PROXY_POOL_URL</code>）并启用打码服务。也可以先在浏览器手动访问搜狗获取 Cookie，通过 <code>--sogou-cookies</code> 传入。</p>
+</div>
+
+<div class="card" style="border-left:4px solid var(--orange-500)">
+  <h4>Q: 历史 API 返回 "ret=-1" 或空数据？</h4>
+  <p>A: Cookie 已过期。需要重新通过 mitmproxy 抓包获取微信客户端的新 Cookie。Cookie 有效期通常 2~24 小时。</p>
+</div>
+
+<div class="card" style="border-left:4px solid var(--orange-500)">
+  <h4>Q: 文章内容为空或不完整？</h4>
+  <p>A: 该文章可能需要 JS 渲染。确保已安装 Playwright（<code>pip install playwright && playwright install chromium</code>），爬虫会自动回退到浏览器渲染。</p>
+</div>
+
+<div class="card" style="border-left:4px solid var(--orange-500)">
+  <h4>Q: pysqlcipher3 安装失败？</h4>
+  <p>A: 该库需要 SQLCipher C 库。Ubuntu: <code>apt install libsqlcipher-dev</code>。macOS: <code>brew install sqlcipher</code>。Windows: 使用预编译 wheel 或通过 conda 安装。</p>
+</div>
+
+<div class="card" style="border-left:4px solid var(--orange-500)">
+  <h4>Q: 如何获取公众号的 __biz 参数？</h4>
+  <p>A: 在微信中打开该公众号的任意文章，复制链接。URL 中 <code>__biz=</code> 后面的值即为 biz 参数（Base64 字符串，通常以 <code>==</code> 结尾）。</p>
+</div>
+
+<!-- Footer -->
+<div style="margin-top:60px;padding-top:20px;border-top:1px solid var(--gray-200);text-align:center;color:var(--gray-400);font-size:13px">
+  PomeloX WeChat Crawler &mdash; 使用指南 v1.0 &mdash; 2026-03
+</div>
+
+</div><!-- /content-wrapper -->
+</main>
+
+</div><!-- /page-wrapper -->
+
+<!-- ============ Sidebar Toggle (Mobile) ============ -->
+<button class="sidebar-toggle" id="sidebarToggle" aria-label="Toggle sidebar">&#9776;</button>
+
+<!-- ============ Back to Top ============ -->
+<button class="back-to-top" id="backToTop" aria-label="Back to top">&#8593;</button>
+
+<script>
+// Sidebar toggle (mobile)
+const sidebar = document.getElementById('sidebar');
+const sidebarToggle = document.getElementById('sidebarToggle');
+const sidebarOverlay = document.getElementById('sidebarOverlay');
+
+sidebarToggle.addEventListener('click', () => {
+  sidebar.classList.toggle('open');
+  sidebarOverlay.classList.toggle('open');
+});
+sidebarOverlay.addEventListener('click', () => {
+  sidebar.classList.remove('open');
+  sidebarOverlay.classList.remove('open');
+});
+
+// Back to top
+const backToTop = document.getElementById('backToTop');
+window.addEventListener('scroll', () => {
+  backToTop.classList.toggle('visible', window.scrollY > 400);
+});
+backToTop.addEventListener('click', () => {
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+});
+
+// Active nav item highlighting
+const navItems = document.querySelectorAll('.nav-item');
+const sections = [];
+navItems.forEach(item => {
+  const href = item.getAttribute('href');
+  if (href && href.startsWith('#')) {
+    const el = document.getElementById(href.slice(1));
+    if (el) sections.push({ el, nav: item });
+  }
+});
+
+function updateActiveNav() {
+  const scrollPos = window.scrollY + 100;
+  let current = sections[0];
+  for (const s of sections) {
+    if (s.el.offsetTop <= scrollPos) current = s;
+  }
+  navItems.forEach(n => n.classList.remove('active'));
+  if (current) current.nav.classList.add('active');
+}
+window.addEventListener('scroll', updateActiveNav);
+updateActiveNav();
+
+// Close sidebar on nav click (mobile)
+navItems.forEach(item => {
+  item.addEventListener('click', () => {
+    if (window.innerWidth <= 768) {
+      sidebar.classList.remove('open');
+      sidebarOverlay.classList.remove('open');
+    }
+  });
+});
+</script>
+</body>
+</html>
