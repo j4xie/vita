@@ -17,11 +17,17 @@ class Config:
     # dept_id 对应数据库 sys_dept 表的 dept_id 字段
     DEPARTMENTS = {
         211: {'name': 'UC Berkeley', 'name_cn': '加州大学伯克利分校', 'file': 'UCBCU'},
+        212: {'name': 'UC Santa Cruz', 'name_cn': '加州大学圣克鲁兹分校', 'file': 'UCSC'},
         213: {'name': 'University of Southern California', 'name_cn': '南加州大学', 'file': 'USCCU'},
         214: {'name': 'UC Los Angeles', 'name_cn': '加州大学洛杉矶分校', 'file': 'UCLACU'},
+        215: {'name': 'UC Irvine', 'name_cn': '加州大学欧文分校', 'file': 'UCI'},
         216: {'name': 'UC San Diego', 'name_cn': '加州大学圣地亚哥分校', 'file': 'UCSD'},
+        217: {'name': 'University of Minnesota', 'name_cn': '明尼苏达大学', 'file': 'UMN'},
         218: {'name': 'University of Washington', 'name_cn': '华盛顿大学', 'file': 'UWCU'},
+        220: {'name': 'UC Santa Barbara', 'name_cn': '加州大学圣塔芭芭拉分校', 'file': 'UCSB'},
         226: {'name': 'New York University', 'name_cn': '纽约大学', 'file': 'NYUCU'},
+        231: {'name': 'Ohio State University', 'name_cn': '俄亥俄州立大学', 'file': 'OSU'},
+        232: {'name': 'University of Pennsylvania', 'name_cn': '宾夕法尼亚大学', 'file': 'UPenn'},
     }
 
     # 所有有效的 dept_id 列表(用于验证)

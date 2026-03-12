@@ -3,6 +3,7 @@ MySQL数据库实现 (支持SSH隧道)
 支持直连和SSH隧道两种方式连接MySQL
 """
 import os
+import json
 from typing import List, Optional, Dict, Any
 from datetime import datetime
 import pymysql
@@ -153,6 +154,15 @@ class MySQLDatabase(DatabaseInterface):
         enabled = row.get('enabled') == '1' if isinstance(row.get('enabled'), str) else bool(row.get('enabled', True))
         indexed = row.get('indexed') == '1' if isinstance(row.get('indexed'), str) else bool(row.get('indexed', False))
 
+        # 解析预计算的 embedding (JSON TEXT 字段)
+        question_embedding = None
+        raw_emb = row.get('question_embedding')
+        if raw_emb and isinstance(raw_emb, str):
+            try:
+                question_embedding = json.loads(raw_emb)
+            except (json.JSONDecodeError, ValueError):
+                pass
+
         return KnowledgeEntry(
             kb_id=row['kb_id'],
             question=row['question'],
@@ -164,6 +174,7 @@ class MySQLDatabase(DatabaseInterface):
             quality_score=row.get('quality_score', 0.7),
             enabled=enabled,
             indexed=indexed,
+            question_embedding=question_embedding,
             created_at=row['create_time'] if isinstance(row['create_time'], datetime) else row['create_time'],
             updated_at=row['update_time'] if isinstance(row['update_time'], datetime) else row['update_time']
         )
@@ -289,16 +300,18 @@ class MySQLDatabase(DatabaseInterface):
                 # 将布尔值转换为CHAR(1)格式
                 enabled_val = '1' if knowledge.enabled else '0'
                 indexed_val = '1' if knowledge.indexed else '0'
+                # 序列化 embedding 为 JSON
+                emb_json = json.dumps(knowledge.question_embedding) if knowledge.question_embedding else None
 
                 cursor.execute("""
                     INSERT INTO ai_knowledge_base
                     (kb_id, question, answer, dept_id, category, source, feedback_id,
-                     quality_score, enabled, indexed, create_time, update_time)
-                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                     quality_score, enabled, indexed, question_embedding, create_time, update_time)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                 """, (
                     knowledge.kb_id, knowledge.question, knowledge.answer, knowledge.dept_id,
                     knowledge.category, knowledge.source, knowledge.feedback_id,
-                    knowledge.quality_score, enabled_val, indexed_val,
+                    knowledge.quality_score, enabled_val, indexed_val, emb_json,
                     knowledge.created_at, knowledge.updated_at
                 ))
             return True
@@ -351,6 +364,9 @@ class MySQLDatabase(DatabaseInterface):
             updates['enabled'] = '1' if updates['enabled'] else '0'
         if 'indexed' in updates:
             updates['indexed'] = '1' if updates['indexed'] else '0'
+        # 序列化 embedding 为 JSON 字符串
+        if 'question_embedding' in updates and isinstance(updates['question_embedding'], list):
+            updates['question_embedding'] = json.dumps(updates['question_embedding'])
 
         # 总是更新 update_time
         updates['update_time'] = datetime.now()
@@ -358,13 +374,17 @@ class MySQLDatabase(DatabaseInterface):
         set_clause = ", ".join([f"{k} = %s" for k in updates.keys()])
         values = list(updates.values()) + [kb_id]
 
-        with self._get_connection() as conn:
-            cursor = conn.cursor()
-            cursor.execute(
-                f"UPDATE ai_knowledge_base SET {set_clause} WHERE kb_id = %s",
-                values
-            )
-            return cursor.rowcount > 0
+        try:
+            with self._get_connection() as conn:
+                cursor = conn.cursor()
+                cursor.execute(
+                    f"UPDATE ai_knowledge_base SET {set_clause} WHERE kb_id = %s",
+                    values
+                )
+                return cursor.rowcount > 0
+        except Exception as e:
+            print(f"[MySQL] Failed to update knowledge {kb_id}: {e}")
+            return False
 
     def delete_knowledge(self, kb_id: str) -> bool:
         """删除知识库条目"""

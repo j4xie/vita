@@ -119,13 +119,50 @@ def cosine_similarity(v1: List[float], v2: List[float]) -> float:
         return 0.0
 
 
+def _compute_and_store_embeddings(entries, Settings, db):
+    """
+    Batch compute embeddings for entries missing them, and persist to DB.
+    Returns a dict mapping kb_id -> embedding.
+    """
+    need_embedding = [e for e in entries if e.question_embedding is None]
+    if not need_embedding:
+        return {}
+
+    questions = [e.question for e in need_embedding]
+    computed = {}
+
+    try:
+        # Use batch API if available (DashScope supports batch embedding)
+        if hasattr(Settings.embed_model, 'get_text_embedding_batch'):
+            embeddings = Settings.embed_model.get_text_embedding_batch(questions)
+        else:
+            # Fallback: single API call per question
+            embeddings = [Settings.embed_model.get_text_embedding(q) for q in questions]
+
+        for entry, emb in zip(need_embedding, embeddings):
+            computed[entry.kb_id] = emb
+            # Persist embedding to DB for future queries
+            try:
+                db.update_knowledge(entry.kb_id, {'question_embedding': emb})
+            except Exception:
+                pass  # Non-critical: will recompute next time
+
+        print(f"[Database Retrieval] Batch computed {len(computed)} embeddings")
+    except Exception as e:
+        print(f"[Database Retrieval] Batch embedding failed: {e}")
+
+    return computed
+
+
 def retrieve_from_database_kb(
     dept_id: int,
     query: str,
     similarity_threshold: float = 0.2
 ) -> List[Dict[str, Any]]:
     """
-    Retrieve unindexed knowledge entries from database
+    Retrieve unindexed knowledge entries from database.
+    Uses pre-computed embeddings stored in DB to avoid per-entry API calls.
+    Falls back to batch computation for entries missing embeddings.
 
     Args:
         dept_id: Department ID
@@ -140,20 +177,18 @@ def retrieve_from_database_kb(
             'kb_id': str
         }]
     """
-    # Get database instance (JSON for development, MySQL for production)
     db = get_database()
 
-    # Query unindexed knowledge entries
     knowledge_entries = db.get_knowledge_by_dept(
         dept_id=dept_id,
-        indexed=False,  # Only query unindexed entries
+        indexed=False,
         enabled_only=True
     )
 
     if not knowledge_entries:
         return []
 
-    # Vectorize query (only if embedding model is available)
+    # Vectorize query (1 API call)
     try:
         StorageContext, load_index_from_storage, Settings, _, _ = _init_llama_index()
         if Settings is None or not hasattr(Settings, 'embed_model'):
@@ -164,21 +199,22 @@ def retrieve_from_database_kb(
         print(f"[Database Retrieval] Query vectorization failed: {e}")
         return []
 
+    # Batch compute any missing embeddings (0 API calls if all cached)
+    computed = _compute_and_store_embeddings(knowledge_entries, Settings, db)
+
     results = []
 
-    # Calculate similarity for each knowledge entry
     for entry in knowledge_entries:
         try:
-            # Vectorize knowledge base question
-            kb_embedding = Settings.embed_model.get_text_embedding(entry.question)
+            # Use pre-computed embedding (from DB or freshly computed)
+            kb_embedding = entry.question_embedding or computed.get(entry.kb_id)
+            if kb_embedding is None:
+                continue
 
-            # Calculate cosine similarity
             similarity = cosine_similarity(query_embedding, kb_embedding)
 
             if similarity >= similarity_threshold:
-                # Format as retrieval result
                 content = f"[Database Knowledge-{entry.kb_id}]\nQuestion: {entry.question}\nAnswer: {entry.answer}"
-
                 results.append({
                     'content': content,
                     'score': similarity,
@@ -190,7 +226,6 @@ def retrieve_from_database_kb(
             print(f"[Database Retrieval] Failed to process entry {entry.kb_id}: {e}")
             continue
 
-    # Sort by score descending
     results.sort(key=lambda x: x['score'], reverse=True)
 
     if results:

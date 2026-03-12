@@ -1,6 +1,7 @@
 """
 知识库条目数据模型
 """
+import json
 from datetime import datetime
 from typing import Optional, List, Dict, Any
 from enum import Enum
@@ -28,6 +29,7 @@ class KnowledgeEntry:
         quality_score: float = 1.0,
         enabled: bool = True,
         indexed: bool = False,
+        question_embedding: Optional[List[float]] = None,
         created_at: Optional[datetime] = None,
         updated_at: Optional[datetime] = None
     ):
@@ -41,12 +43,13 @@ class KnowledgeEntry:
         self.quality_score = quality_score
         self.enabled = enabled
         self.indexed = indexed
+        self.question_embedding = question_embedding
         self.created_at = created_at or datetime.now()
         self.updated_at = updated_at or datetime.now()
 
     def to_dict(self) -> Dict[str, Any]:
         """转换为字典"""
-        return {
+        d = {
             'kb_id': self.kb_id,
             'question': self.question,
             'answer': self.answer,
@@ -60,15 +63,26 @@ class KnowledgeEntry:
             'created_at': self.created_at.isoformat() if isinstance(self.created_at, datetime) else self.created_at,
             'updated_at': self.updated_at.isoformat() if isinstance(self.updated_at, datetime) else self.updated_at
         }
+        if self.question_embedding is not None:
+            d['question_embedding'] = self.question_embedding
+        return d
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> 'KnowledgeEntry':
         """从字典创建对象"""
+        data = dict(data)  # Don't mutate the original
         # 转换时间字符串为 datetime 对象
         if isinstance(data.get('created_at'), str):
             data['created_at'] = datetime.fromisoformat(data['created_at'])
         if isinstance(data.get('updated_at'), str):
             data['updated_at'] = datetime.fromisoformat(data['updated_at'])
+        # 转换 embedding JSON 字符串为列表
+        emb = data.get('question_embedding')
+        if isinstance(emb, str):
+            try:
+                data['question_embedding'] = json.loads(emb)
+            except (json.JSONDecodeError, ValueError):
+                data['question_embedding'] = None
 
         return cls(**data)
 

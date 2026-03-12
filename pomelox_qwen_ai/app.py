@@ -764,6 +764,51 @@ def api_form_designer_stats():
     return jsonify(get_kb_stats())
 
 
+# ==================== Embedding 预计算管理 ====================
+
+@app.route('/api/admin/backfill-embeddings', methods=['POST'])
+def api_backfill_embeddings():
+    """
+    Backfill pre-computed embeddings for unindexed knowledge entries.
+    This converts N per-query API calls to 0 by pre-computing at write time.
+    POST body: {"dept_id": 216} or {} for all departments.
+    """
+    from core.rag_service import _init_llama_index, _compute_and_store_embeddings
+
+    data = request.get_json(silent=True) or {}
+    target_dept = data.get('dept_id')
+
+    StorageContext, load_index_from_storage, Settings, _, _ = _init_llama_index()
+    if Settings is None or not hasattr(Settings, 'embed_model'):
+        return jsonify({'error': 'Embedding model not available'}), 500
+
+    db = get_database()
+    dept_ids = [target_dept] if target_dept else list(Config.DEPARTMENTS.keys())
+
+    total_computed = 0
+    results = {}
+
+    for dept_id in dept_ids:
+        entries = db.get_knowledge_by_dept(dept_id=dept_id, indexed=False, enabled_only=True)
+        need_emb = [e for e in entries if e.question_embedding is None]
+        if not need_emb:
+            results[str(dept_id)] = {'total': len(entries), 'computed': 0, 'status': 'all_cached'}
+            continue
+
+        computed = _compute_and_store_embeddings(need_emb, Settings, db)
+        results[str(dept_id)] = {
+            'total': len(entries),
+            'computed': len(computed),
+            'status': 'ok' if computed else 'failed'
+        }
+        total_computed += len(computed)
+
+    return jsonify({
+        'total_computed': total_computed,
+        'departments': results
+    })
+
+
 # ==================== 反馈系统路由注册 ====================
 # 注册反馈系统的所有API端点
 from core.app_feedback_routes import register_feedback_routes
