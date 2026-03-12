@@ -312,7 +312,7 @@ def get_system_prompt(dept_id: int, retrieved_content: str, use_web_search: bool
         Complete system prompt
     """
     dept_info = Config.DEPARTMENTS.get(dept_id, {})
-    school_name = dept_info.get('name', f'Department {dept_id}')
+    school_name = dept_info.get('name') or Config.ALL_SCHOOL_NAMES.get(dept_id, f'Department {dept_id}')
 
     if retrieved_content:
         # RAG mode: content retrieved from knowledge base

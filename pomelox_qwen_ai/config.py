@@ -27,6 +27,22 @@ class Config:
     # 所有有效的 dept_id 列表(用于验证)
     VALID_DEPT_IDS = list(DEPARTMENTS.keys())
 
+    # 所有学校名称映射 (包括尚未配置知识库的学校，用于 system prompt)
+    ALL_SCHOOL_NAMES = {
+        210: 'UC Davis',
+        211: 'UC Berkeley',
+        212: 'UC Santa Cruz',
+        213: 'University of Southern California',
+        214: 'UC Los Angeles',
+        215: 'UC Irvine',
+        216: 'UC San Diego',
+        217: 'University of Minnesota',
+        218: 'University of Washington',
+        219: 'Berklee College of Music',
+        220: 'UC Santa Barbara',
+        226: 'New York University',
+    }
+
     # RAG configuration
     SCHOOL_DATA_PATH = os.path.join(os.path.dirname(__file__), 'school_data')
     VECTOR_STORE_PATH = os.path.join(os.path.dirname(__file__), 'vector_store')

@@ -10,6 +10,7 @@ import uuid
 import json
 import os
 from core.rag_service import retrieve, get_system_prompt
+from core.form_knowledge_service import match_forms, build_form_designer_prompt, get_kb_stats, format_form_examples
 from database import get_database
 
 # Initialize Flask application
@@ -632,6 +633,135 @@ def api_ai_chat_stream():
 
     except Exception as e:
         return jsonify({'error': f'Server error: {str(e)}'}), 500
+
+
+# ==================== Form Designer Knowledge Base API ====================
+
+@app.route('/api/ai/form-designer/match', methods=['POST'])
+def api_form_designer_match():
+    """Match user question to relevant real form examples from knowledge base"""
+    try:
+        data = request.get_json(force=True, silent=True)
+        if not data:
+            return jsonify({'error': 'Request body cannot be empty'}), 400
+
+        question = data.get('question', '')
+        top_k = data.get('top_k', 5)
+
+        if not question:
+            return jsonify({'error': 'Question cannot be empty'}), 400
+
+        matched = match_forms(question, top_k=int(top_k))
+        return jsonify({
+            'matched': [{
+                'id': f.get('id'),
+                'name': f.get('name'),
+                'fieldCount': len(f.get('fields', [])),
+                'fields': f.get('fields', []),
+                'hasPayment': f.get('hasPayment', False),
+                'hasSignature': f.get('hasSignature', False),
+                'pages': f.get('pages', 1),
+            } for f in matched],
+            'total_kb': len(match_forms.__globals__.get('_FORM_KB', []))
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/ai/form-designer/chat/stream', methods=['POST'])
+def api_form_designer_chat_stream():
+    """
+    Streaming AI Chat endpoint for Form Designer.
+    Builds system prompt with knowledge base matching on the backend.
+    Frontend sends raw user question + designer context.
+    """
+    try:
+        data = request.get_json(force=True, silent=True)
+        if not data:
+            return jsonify({'error': 'Request body cannot be empty'}), 400
+
+        message = data.get('message', '') or data.get('question', '')
+        session_id = data.get('session_id', str(uuid.uuid4()))
+        model = data.get('model', 'qwen-plus')
+        designer_context = data.get('designer_context', '')  # Current form state, type hints, etc.
+        system_prompt_override = data.get('system_prompt', '')  # Full system prompt from frontend (existing behavior)
+
+        if not message:
+            return jsonify({'error': 'Message cannot be empty'}), 400
+
+        def generate():
+            try:
+                if session_id not in sessions:
+                    sessions[session_id] = {'dept_id': 0, 'messages': []}
+
+                # Build knowledge-enhanced prompt
+                if system_prompt_override:
+                    # Legacy mode: frontend sends full system prompt, we just append KB examples
+                    kb_section = build_form_designer_prompt(message, '')
+                    full_system_prompt = system_prompt_override + kb_section
+                    # The message is the user question (already extracted by frontend)
+                    user_message = message
+                else:
+                    # New mode: frontend sends raw question + context, we build everything
+                    kb_section = build_form_designer_prompt(message, designer_context)
+                    full_system_prompt = kb_section
+                    user_message = message
+
+                messages_list = [{'role': 'system', 'content': full_system_prompt}]
+                messages_list.extend(sessions[session_id]['messages'])
+                messages_list.append({'role': 'user', 'content': user_message})
+
+                yield f"data: {json.dumps({'type': 'start', 'session_id': session_id})}\n\n"
+
+                full_content = ''
+                call_params = {
+                    'model': model,
+                    'messages': messages_list,
+                    'result_format': 'message',
+                    'stream': True,
+                    'incremental_output': True
+                }
+
+                responses = dashscope.Generation.call(**call_params)
+                for response in responses:
+                    if response.status_code == 200:
+                        if response.output and response.output.choices:
+                            chunk = response.output.choices[0].message.content
+                            if chunk:
+                                full_content += chunk
+                                yield f"data: {json.dumps({'type': 'chunk', 'content': chunk})}\n\n"
+                    else:
+                        yield f"data: {json.dumps({'type': 'error', 'message': response.message})}\n\n"
+                        return
+
+                sessions[session_id]['messages'].append({'role': 'user', 'content': user_message})
+                sessions[session_id]['messages'].append({'role': 'assistant', 'content': full_content})
+                if len(sessions[session_id]['messages']) > MAX_SESSION_MESSAGES:
+                    sessions[session_id]['messages'] = sessions[session_id]['messages'][-MAX_SESSION_MESSAGES:]
+
+                yield f"data: {json.dumps({'type': 'done', 'session_id': session_id, 'full_content': full_content})}\n\n"
+
+            except Exception as e:
+                yield f"data: {json.dumps({'type': 'error', 'message': str(e)})}\n\n"
+
+        return Response(
+            stream_with_context(generate()),
+            mimetype='text/event-stream',
+            headers={
+                'Cache-Control': 'no-cache',
+                'Connection': 'keep-alive',
+                'X-Accel-Buffering': 'no'
+            }
+        )
+
+    except Exception as e:
+        return jsonify({'error': f'Server error: {str(e)}'}), 500
+
+
+@app.route('/api/ai/form-designer/stats', methods=['GET'])
+def api_form_designer_stats():
+    """Get form knowledge base statistics"""
+    return jsonify(get_kb_stats())
 
 
 # ==================== 反馈系统路由注册 ====================
