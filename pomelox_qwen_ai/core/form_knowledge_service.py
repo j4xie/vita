@@ -9,7 +9,8 @@ Loads 88 real production forms from mike-x and provides:
 import json
 import os
 import re
-from typing import List, Dict, Tuple
+from typing import List, Dict, Tuple, Optional
+
 
 # Load knowledge base on module init
 _KB_PATH = os.path.join(os.path.dirname(__file__), '..', 'data', 'form_knowledge_base.json')
@@ -141,15 +142,70 @@ def match_forms(question: str, top_k: int = 5) -> List[Dict]:
     return selected
 
 
+# ==================== Type Mapping ====================
+
+# Semantic description of mike-x field types (NOT hardcoded frontend types)
+# This helps AI understand what each mike-x type means functionally,
+# so it can pick the correct frontend component type from whatever
+# the frontend currently supports (passed via supported_types param).
+_MIKEX_TYPE_SEMANTICS = {
+    'single': '单行文本输入',
+    'input': '单行文本输入',
+    'number': '数字输入',
+    'textarea': '多行文本输入',
+    'contactName': '姓名输入（文本）',
+    'contactEmail': '邮箱输入（文本, vModel建议: email）',
+    'contactMobile': '手机号输入（文本, vModel建议: phone）',
+    'contactTelephone': '电话输入（文本）',
+    'contactIMItem': '即时通讯号输入（文本, vModel建议: wechatId）',
+    'contactCompany': '公司名输入（文本）',
+    'contactPosition': '职位输入（文本）',
+    'contactAddress': '地址输入（文本）',
+    'contactGender': '性别选择（单选: 男/女）',
+    'contactBirthDate': '出生日期（日期选择）',
+    'contactAvatar': '头像上传（图片上传）',
+    'radio': '单选',
+    'checkbox': '多选',
+    'dropdown': '下拉选择',
+    'dateTime': '日期时间选择',
+    'date': '日期选择',
+    'time': '时间选择',
+    'pictureAttachment': '图片上传',
+    'attachment': '文件上传',
+    'signature': '电子签名（⚠️特殊组件，需确认前端是否支持）',
+    'commodity': '商品/支付（⚠️特殊组件，需确认前端是否支持）',
+    'staticText': '静态文本说明',
+    'staticPicture': '静态图片展示',
+    'separator': '分隔线',
+    'city': '城市选择（文本或级联选择）',
+}
+
+
+def _get_type_semantic(mikex_type: str) -> str:
+    """Get semantic description for a mike-x field type"""
+    return _MIKEX_TYPE_SEMANTICS.get(mikex_type, mikex_type)
+
+
 # ==================== System Prompt Construction ====================
 
-def format_form_examples(forms: List[Dict]) -> str:
-    """Format matched forms as prompt examples"""
+def format_form_examples(forms: List[Dict], supported_types: Optional[List[str]] = None) -> str:
+    """
+    Format matched forms as prompt examples.
+
+    Args:
+        forms: List of matched form dicts from knowledge base
+        supported_types: Optional list of frontend-supported component types
+                        (e.g., ['input', 'textarea', 'radio', ...]).
+                        If provided, will be included as constraint for AI.
+                        If not provided, no type constraint is added (frontend
+                        system prompt handles it).
+    """
     if not forms:
         return ''
 
     text = '\n\n## 真实表单参考（从88个生产表单中智能匹配）\n'
-    text += '以下是与用户需求最相关的真实表单案例。**生成推荐时必须参考这些真实案例的字段命名、选项内容和表单结构**，确保生成结果贴近实际使用。\n\n'
+    text += '以下是与用户需求最相关的真实表单案例。**生成推荐时必须参考这些真实案例的字段命名、选项内容和表单结构**，确保生成结果贴近实际使用。\n'
+    text += '注意：字段的原始类型已附带语义说明，请根据前端设计器支持的组件类型进行转换。\n\n'
 
     for i, form in enumerate(forms):
         name = form.get('name', 'Unknown')
@@ -169,13 +225,14 @@ def format_form_examples(forms: List[Dict]) -> str:
 
         for field in fields:
             title = field.get('title', '')
-            ftype = field.get('type', 'input')
+            raw_type = field.get('type', 'input')
+            semantic = _get_type_semantic(raw_type)
             required = '必填' if field.get('required') else '选填'
             desc = field.get('desc', '')
             options = field.get('options', [])
             placeholder = field.get('placeholder', '')
 
-            text += f'  - **{title}** ({ftype}, {required})'
+            text += f'  - **{title}** [{semantic}] ({required})'
             if desc:
                 text += f' — {desc}'
             text += '\n'
@@ -188,24 +245,35 @@ def format_form_examples(forms: List[Dict]) -> str:
                 text += f'    placeholder: "{placeholder}"\n'
         text += '\n'
 
-    text += '**参考规则**: 字段名、选项值、desc描述参考真实案例，但根据用户具体需求灵活增减。不要生搬硬套。\n'
+    text += '**参考规则**:\n'
+    text += '1. 字段名、选项值、desc描述参考真实案例，但根据用户具体需求灵活增减，不要生搬硬套\n'
+    text += '2. 生成的type必须使用前端设计器实际支持的组件类型（见系统提示中的类型列表）\n'
+    text += '3. 带⚠️标记的特殊组件（如签名、商品支付）需确认前端是否支持，不支持时用替代方案\n'
+    text += '4. 联系方式字段通过vModel命名区分用途: name, email, phone, wechatId\n'
+
+    # If frontend passed supported types, include as reference
+    if supported_types:
+        text += f'5. 当前前端支持的组件类型: {", ".join(supported_types)}\n'
+
     return text
 
 
-def build_form_designer_prompt(user_question: str, designer_context: str = '') -> str:
+def build_form_designer_prompt(user_question: str, designer_context: str = '',
+                                supported_types: Optional[List[str]] = None) -> str:
     """
     Build the complete system prompt for the form designer AI assistant.
 
     Args:
         user_question: The user's original question/request
         designer_context: Additional context from the form designer (current form state, etc.)
+        supported_types: Optional list of frontend-supported component types
 
     Returns:
         Complete system prompt with knowledge base examples
     """
     # Match relevant forms
     matched_forms = match_forms(user_question)
-    kb_examples = format_form_examples(matched_forms)
+    kb_examples = format_form_examples(matched_forms, supported_types)
 
     # Build match hint
     match_hint = ''

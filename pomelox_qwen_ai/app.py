@@ -685,6 +685,7 @@ def api_form_designer_chat_stream():
         model = data.get('model', 'qwen-plus')
         designer_context = data.get('designer_context', '')  # Current form state, type hints, etc.
         system_prompt_override = data.get('system_prompt', '')  # Full system prompt from frontend (existing behavior)
+        supported_types = data.get('supported_types', None)  # Frontend-supported component types (dynamic)
 
         if not message:
             return jsonify({'error': 'Message cannot be empty'}), 400
@@ -697,13 +698,12 @@ def api_form_designer_chat_stream():
                 # Build knowledge-enhanced prompt
                 if system_prompt_override:
                     # Legacy mode: frontend sends full system prompt, we just append KB examples
-                    kb_section = build_form_designer_prompt(message, '')
+                    kb_section = build_form_designer_prompt(message, '', supported_types)
                     full_system_prompt = system_prompt_override + kb_section
-                    # The message is the user question (already extracted by frontend)
                     user_message = message
                 else:
                     # New mode: frontend sends raw question + context, we build everything
-                    kb_section = build_form_designer_prompt(message, designer_context)
+                    kb_section = build_form_designer_prompt(message, designer_context, supported_types)
                     full_system_prompt = kb_section
                     user_message = message
 
