@@ -1,7 +1,10 @@
 dashscope==1.20.4
 flask==2.3.2
 flask-cors==4.0.0
+gunicorn>=21.2.0  # 生产WSGI服务器 (多worker并发)
+gevent>=23.9.0  # 异步worker支持
 python-dotenv==1.1.1
+redis>=4.0.0  # 缓存服务
 
 # RAG 相关依赖
 llama-index-core==0.10.67

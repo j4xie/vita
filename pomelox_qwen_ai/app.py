@@ -10,7 +10,12 @@ import uuid
 import json
 import os
 import time
+import signal
+import threading
+import fcntl
 from core.rag_service import retrieve, get_system_prompt
+from core.cache_service import get_cached_response, set_cached_response, get_cache_stats, clear_all_cache, clear_cache_by_dept, reset_stats
+from core.scope_filter import is_off_topic, get_off_topic_reply
 from core.form_knowledge_service import match_forms, build_form_designer_prompt, get_kb_stats, format_form_examples
 from database import get_database
 
@@ -25,43 +30,30 @@ if dashscope is not None:
 # Chat history storage path
 CHAT_HISTORY_PATH = os.path.join(os.path.dirname(__file__), 'data', 'chat_history.json')
 
-# Session storage dictionary
-# Structure: {session_id: {'dept_id': int, 'messages': list, 'last_accessed': float}}
-sessions = {}
-MAX_SESSION_MESSAGES = 12  # Keep last 6 rounds (6 user + 6 assistant)
-SESSION_TTL = 7200  # 2 hours in seconds
-_request_counter = 0
-_CLEANUP_INTERVAL = 50  # Run cleanup every N requests
+# Session storage — Redis-backed for multi-worker (Gunicorn) compatibility
+from core.session_store import (
+    ensure_session, append_messages,
+    get_session_messages as get_store_messages,
+    get_session, delete_session as delete_store_session,
+    get_session_dept_id, set_session
+)
 
 
-def _cleanup_expired_sessions():
-    """Remove sessions that have not been accessed within SESSION_TTL."""
-    now = time.time()
-    expired = [sid for sid, s in sessions.items()
-               if now - s.get('last_accessed', 0) > SESSION_TTL]
-    for sid in expired:
-        del sessions[sid]
-    if expired:
-        print(f"[Session Cleanup] Removed {len(expired)} expired sessions, {len(sessions)} remaining")
+# ==================== Chat History File Storage (with file locking) ====================
+_chat_history_lock = threading.Lock()
 
 
-def _touch_session(session_id):
-    """Update last_accessed timestamp and trigger periodic cleanup."""
-    global _request_counter
-    if session_id in sessions:
-        sessions[session_id]['last_accessed'] = time.time()
-    _request_counter += 1
-    if _request_counter % _CLEANUP_INTERVAL == 0:
-        _cleanup_expired_sessions()
-
-
-# ==================== Chat History File Storage ====================
 def load_chat_history():
-    """Load chat history from file"""
+    """Load chat history from file (thread-safe with file lock)"""
     if os.path.exists(CHAT_HISTORY_PATH):
         try:
-            with open(CHAT_HISTORY_PATH, 'r', encoding='utf-8') as f:
-                return json.load(f)
+            with _chat_history_lock:
+                with open(CHAT_HISTORY_PATH, 'r', encoding='utf-8') as f:
+                    fcntl.flock(f, fcntl.LOCK_SH)
+                    try:
+                        return json.load(f)
+                    finally:
+                        fcntl.flock(f, fcntl.LOCK_UN)
         except Exception as e:
             print(f"Failed to load chat history: {e}")
             return []
@@ -69,10 +61,15 @@ def load_chat_history():
 
 
 def save_chat_history(history):
-    """Save chat history to file"""
+    """Save chat history to file (thread-safe with file lock)"""
     try:
-        with open(CHAT_HISTORY_PATH, 'w', encoding='utf-8') as f:
-            json.dump(history, f, ensure_ascii=False, indent=2)
+        with _chat_history_lock:
+            with open(CHAT_HISTORY_PATH, 'w', encoding='utf-8') as f:
+                fcntl.flock(f, fcntl.LOCK_EX)
+                try:
+                    json.dump(history, f, ensure_ascii=False, indent=2)
+                finally:
+                    fcntl.flock(f, fcntl.LOCK_UN)
         return True
     except Exception as e:
         print(f"Failed to save chat history: {e}")
@@ -159,6 +156,9 @@ def clear_all_chats():
         return jsonify({'error': f'Server error: {str(e)}'}), 500
 
 
+DASHSCOPE_TIMEOUT = 30  # seconds
+
+
 def call_ai_with_web_search(messages, enable_search=False, search_strategy='standard'):
     # Check if dashscope is available
     if dashscope is None:
@@ -177,7 +177,8 @@ def call_ai_with_web_search(messages, enable_search=False, search_strategy='stan
     call_params = {
         'model': 'qwen-plus',
         'messages': messages,
-        'result_format': 'message'
+        'result_format': 'message',
+        'max_tokens': 768
     }
 
     if enable_search:
@@ -188,7 +189,23 @@ def call_ai_with_web_search(messages, enable_search=False, search_strategy='stan
             'enable_citation': True
         }
 
-    response = dashscope.Generation.call(**call_params)
+    # P1: Timeout protection for DashScope API call
+    # Use signal.alarm in main thread, threading.Timer as fallback
+    response = None
+    timeout_error = [False]  # mutable container for closure
+
+    def _timeout_callback():
+        timeout_error[0] = True
+
+    timer = threading.Timer(DASHSCOPE_TIMEOUT, _timeout_callback)
+    timer.start()
+    try:
+        response = dashscope.Generation.call(**call_params)
+    finally:
+        timer.cancel()
+
+    if timeout_error[0]:
+        raise TimeoutError(f"DashScope API call timed out after {DASHSCOPE_TIMEOUT}s")
 
     if response.status_code == 200:
         answer = response.output.choices[0].message.content
@@ -266,27 +283,45 @@ def ask_ai():
         else:
             print(f"[Auth] Department ID: {dept_id} ({dept_info.get('name', 'Unknown')})")
 
-        # If session doesn't exist, create new session
-        if session_id not in sessions:
-            sessions[session_id] = {
-                'dept_id': dept_id,
-                'messages': [],
-                'last_accessed': time.time()
-            }
+        # Ensure session exists (creates if missing, resets if dept changed)
+        ensure_session(session_id, dept_id)
 
-        # Check if session's dept_id matches
-        if sessions[session_id]['dept_id'] != dept_id:
-            # Department changed, clear history
-            sessions[session_id] = {
-                'dept_id': dept_id,
-                'messages': [],
-                'last_accessed': time.time()
-            }
+        t_start = time.time()
 
-        _touch_session(session_id)
+        # Check cache first (exact match)
+        cached = get_cached_response(question, dept_id)
+        if cached:
+            print(f"[Timing /ask] Cache HIT: {time.time() - t_start:.3f}s", flush=True)
+            user_msg_id = f"msg_{uuid.uuid4().hex[:12]}"
+            return jsonify({
+                'session_id': session_id,
+                'question': question,
+                'answer': cached['answer'],
+                'dept_id': dept_id,
+                'rag_score': cached.get('rag_score', 0),
+                'source_type': 'cache',
+                'message_id': user_msg_id
+            })
+
+        # Scope filter: reject off-topic questions before RAG/LLM
+        if is_off_topic(question):
+            reply = get_off_topic_reply(dept_id)
+            print(f"[Scope] OFF-TOPIC rejected: {question[:30]}", flush=True)
+            user_msg_id = f"msg_{uuid.uuid4().hex[:12]}"
+            return jsonify({
+                'session_id': session_id,
+                'question': question,
+                'answer': reply,
+                'dept_id': dept_id,
+                'rag_score': 0,
+                'source_type': 'scope_filter',
+                'message_id': user_msg_id
+            })
 
         # RAG retrieve relevant content, get content, score and quality flag
+        t_rag = time.time()
         retrieved_content, max_score, has_high_quality = retrieve(dept_id, question)
+        print(f"[Timing /ask] RAG retrieval: {time.time() - t_rag:.2f}s (score={max_score:.2f})", flush=True)
 
         # Determine if web search should be enabled
         use_web_search = False
@@ -301,22 +336,25 @@ def ask_ai():
 
         # Build message list
         messages = [{'role': 'system', 'content': system_prompt}]
-        messages.extend(sessions[session_id]['messages'])
+        messages.extend(get_store_messages(session_id))
         messages.append({'role': 'user', 'content': question})
 
         # Call Qwen API (enable web search if needed)
+        t_llm = time.time()
         answer, sources = call_ai_with_web_search(
             messages,
             enable_search=use_web_search,
             search_strategy=Config.WEB_SEARCH_STRATEGY
         )
+        t_end = time.time()
+        print(f"[Timing /ask] LLM: {t_end - t_llm:.2f}s | Total: {t_end - t_start:.2f}s | Output: {len(answer)} chars", flush=True)
 
-        # Save conversation history (don't save system prompt, only user dialogue)
-        sessions[session_id]['messages'].append({'role': 'user', 'content': question})
-        sessions[session_id]['messages'].append({'role': 'assistant', 'content': answer})
-        # Trim session history to avoid unbounded growth
-        if len(sessions[session_id]['messages']) > MAX_SESSION_MESSAGES:
-            sessions[session_id]['messages'] = sessions[session_id]['messages'][-MAX_SESSION_MESSAGES:]
+        # Cache the response for future exact-match hits
+        source_type = 'web_search' if use_web_search else 'knowledge_base'
+        set_cached_response(question, dept_id, answer, rag_score=max_score, source_type=source_type)
+
+        # Save conversation history (Redis-backed, auto-trimmed)
+        append_messages(session_id, question, answer)
 
         # Generate message IDs
         user_msg_id = f"msg_{uuid.uuid4().hex[:12]}"
@@ -396,11 +434,12 @@ def ask_ai():
 def get_history(session_id):
     """Query conversation history endpoint"""
     try:
-        if session_id in sessions:
+        session = get_session(session_id)
+        if session:
             return jsonify({
                 'session_id': session_id,
-                'dept_id': sessions[session_id]['dept_id'],
-                'history': sessions[session_id]['messages']
+                'dept_id': session.get('dept_id'),
+                'history': session.get('messages', [])
             })
         else:
             return jsonify({'error': 'Session does not exist'}), 404
@@ -412,8 +451,9 @@ def get_history(session_id):
 def clear_session(session_id):
     """Clear session records endpoint"""
     try:
-        if session_id in sessions:
-            del sessions[session_id]
+        session = get_session(session_id)
+        if session:
+            delete_store_session(session_id)
             return jsonify({'message': 'Session cleared'})
         else:
             return jsonify({'error': 'Session does not exist'}), 404
@@ -440,6 +480,25 @@ def list_schools():
 def health_check():
     """Health check endpoint"""
     return jsonify({'status': 'healthy'})
+
+
+@app.route('/cache/stats', methods=['GET'])
+def cache_stats():
+    """Cache statistics endpoint"""
+    return jsonify(get_cache_stats())
+
+
+@app.route('/cache/clear', methods=['POST'])
+def cache_clear():
+    """Clear chat cache. Use after updating knowledge base.
+    Optional body: {"dept_id": 216} to clear specific school, or empty to clear all."""
+    data = request.get_json(force=True, silent=True) or {}
+    dept_id = data.get('dept_id')
+    if dept_id:
+        deleted = clear_cache_by_dept(int(dept_id))
+    else:
+        deleted = clear_all_cache()
+    return jsonify({'cleared': deleted})
 
 
 # ==================== 会话管理API ====================
@@ -532,12 +591,23 @@ def api_ai_chat():
 
         dept_id = int(dept_id)
 
-        if session_id not in sessions:
-            sessions[session_id] = {'dept_id': dept_id, 'messages': [], 'last_accessed': time.time()}
-        if sessions[session_id]['dept_id'] != dept_id:
-            sessions[session_id] = {'dept_id': dept_id, 'messages': [], 'last_accessed': time.time()}
+        ensure_session(session_id, dept_id)
 
-        _touch_session(session_id)
+        # Scope filter: reject off-topic before RAG/LLM
+        if is_off_topic(message):
+            reply = get_off_topic_reply(dept_id)
+            print("[Scope] OFF-TOPIC rejected (non-stream): %s" % message[:30], flush=True)
+            return jsonify({'answer': reply, 'session_id': session_id, 'source_type': 'scope_filter'})
+
+        # Check cache first (exact + semantic match)
+        cached = get_cached_response(message, dept_id)
+        if cached:
+            return jsonify({
+                'session_id': session_id,
+                'response': cached['answer'],
+                'source_type': 'cache',
+                'message_count': len(get_store_messages(session_id))
+            })
 
         skip_rag = data.get('skipRag', False)
         if skip_rag:
@@ -550,7 +620,7 @@ def api_ai_chat():
             system_prompt = get_system_prompt(dept_id, retrieved_content, use_web_search)
 
         messages_list = [{'role': 'system', 'content': system_prompt}]
-        messages_list.extend(sessions[session_id]['messages'])
+        messages_list.extend(get_store_messages(session_id))
         messages_list.append({'role': 'user', 'content': message})
 
         answer, sources = call_ai_with_web_search(
@@ -559,15 +629,17 @@ def api_ai_chat():
             search_strategy=Config.WEB_SEARCH_STRATEGY
         )
 
-        sessions[session_id]['messages'].append({'role': 'user', 'content': message})
-        sessions[session_id]['messages'].append({'role': 'assistant', 'content': answer})
-        if len(sessions[session_id]['messages']) > MAX_SESSION_MESSAGES:
-            sessions[session_id]['messages'] = sessions[session_id]['messages'][-MAX_SESSION_MESSAGES:]
+        # Cache the response
+        if not skip_rag:
+            src_type = 'web_search' if use_web_search else 'knowledge_base'
+            set_cached_response(message, dept_id, answer, rag_score=max_score, source_type=src_type)
+
+        append_messages(session_id, message, answer)
 
         return jsonify({
             'session_id': session_id,
             'response': answer,
-            'message_count': len(sessions[session_id]['messages'])
+            'message_count': len(get_store_messages(session_id))
         })
 
     except Exception as e:
@@ -598,12 +670,31 @@ def api_ai_chat_stream():
 
         def generate():
             try:
-                if session_id not in sessions:
-                    sessions[session_id] = {'dept_id': dept_id, 'messages': [], 'last_accessed': time.time()}
-                if sessions[session_id]['dept_id'] != dept_id:
-                    sessions[session_id] = {'dept_id': dept_id, 'messages': [], 'last_accessed': time.time()}
+                t_start = time.time()
 
-                _touch_session(session_id)
+                # Scope filter: reject off-topic before RAG/LLM
+                if is_off_topic(message):
+                    reply = get_off_topic_reply(dept_id)
+                    print("[Scope] OFF-TOPIC rejected (stream): %s" % message[:30], flush=True)
+                    yield f"data: {json.dumps({'type': 'start', 'session_id': session_id})}\n\n"
+                    yield f"data: {json.dumps({'type': 'chunk', 'content': reply})}\n\n"
+                    yield f"data: {json.dumps({'type': 'done', 'session_id': session_id, 'full_content': reply})}\n\n"
+                    return
+
+                # Check cache first (exact match) - stream cached response as chunks
+                if not skip_rag:
+                    cached = get_cached_response(message, dept_id)
+                    if cached:
+                        print(f"[Timing] Cache HIT (stream): {time.time() - t_start:.3f}s", flush=True)
+                        yield f"data: {json.dumps({'type': 'start', 'session_id': session_id})}\n\n"
+                        yield f"data: {json.dumps({'type': 'chunk', 'content': cached['answer']})}\n\n"
+                        yield f"data: {json.dumps({'type': 'done', 'session_id': session_id, 'full_content': cached['answer']})}\n\n"
+                        return
+
+                ensure_session(session_id, dept_id)
+
+                # P0: Send progress event — retrieving
+                yield f"data: {json.dumps({'type': 'progress', 'stage': 'retrieving', 'message': '正在检索知识库...'})}\n\n"
 
                 if skip_rag:
                     retrieved_content, max_score, has_high_quality = "", 0.0, True
@@ -611,43 +702,82 @@ def api_ai_chat_stream():
                     system_prompt = get_system_prompt(dept_id, "", False)
                     print(f"[RAG] Skipped - client provided context (deptId={dept_id})")
                 else:
+                    t_rag = time.time()
                     retrieved_content, max_score, has_high_quality = retrieve(dept_id, message)
+                    print(f"[Timing] RAG retrieval: {time.time() - t_rag:.2f}s (score={max_score:.2f})", flush=True)
                     use_web_search = not has_high_quality and Config.ENABLE_WEB_SEARCH_FALLBACK
                     system_prompt = get_system_prompt(dept_id, retrieved_content, use_web_search)
 
+                # P0: Send progress event — generating
+                yield f"data: {json.dumps({'type': 'progress', 'stage': 'generating', 'message': '正在生成回答...'})}\n\n"
+
                 messages_list = [{'role': 'system', 'content': system_prompt}]
-                messages_list.extend(sessions[session_id]['messages'])
+                messages_list.extend(get_store_messages(session_id))
                 messages_list.append({'role': 'user', 'content': message})
 
                 yield f"data: {json.dumps({'type': 'start', 'session_id': session_id})}\n\n"
 
                 full_content = ''
+                t_llm = time.time()
+                t_first_chunk = None
                 call_params = {
                     'model': model,
                     'messages': messages_list,
                     'result_format': 'message',
                     'stream': True,
-                    'incremental_output': True
+                    'incremental_output': True,
+                    'max_tokens': 768
                 }
                 if use_web_search:
                     call_params['enable_search'] = True
 
+                # P1: Streaming timeout — cancel if no chunks received within DASHSCOPE_TIMEOUT
+                stream_timeout_flag = [False]
+                def _stream_timeout():
+                    stream_timeout_flag[0] = True
+                stream_timer = threading.Timer(DASHSCOPE_TIMEOUT, _stream_timeout)
+                stream_timer.start()
+
                 responses = dashscope.Generation.call(**call_params)
                 for response in responses:
+                    if stream_timeout_flag[0]:
+                        yield f"data: {json.dumps({'type': 'error', 'message': f'DashScope streaming timed out after {DASHSCOPE_TIMEOUT}s'})}\n\n"
+                        return
                     if response.status_code == 200:
                         if response.output and response.output.choices:
                             chunk = response.output.choices[0].message.content
                             if chunk:
+                                if t_first_chunk is None:
+                                    t_first_chunk = time.time()
+                                    print(f"[Timing] LLM TTFB: {t_first_chunk - t_llm:.2f}s", flush=True)
+                                    # Reset timer after first chunk — LLM is responding
+                                    stream_timer.cancel()
+                                    stream_timer = threading.Timer(60, _stream_timeout)
+                                    stream_timer.start()
                                 full_content += chunk
                                 yield f"data: {json.dumps({'type': 'chunk', 'content': chunk})}\n\n"
                     else:
+                        stream_timer.cancel()
                         yield f"data: {json.dumps({'type': 'error', 'message': response.message})}\n\n"
                         return
 
-                sessions[session_id]['messages'].append({'role': 'user', 'content': message})
-                sessions[session_id]['messages'].append({'role': 'assistant', 'content': full_content})
-                if len(sessions[session_id]['messages']) > MAX_SESSION_MESSAGES:
-                    sessions[session_id]['messages'] = sessions[session_id]['messages'][-MAX_SESSION_MESSAGES:]
+                stream_timer.cancel()
+                t_end = time.time()
+                # Try to get token usage from last response
+                output_tokens = 0
+                try:
+                    if hasattr(response, 'usage') and response.usage:
+                        output_tokens = getattr(response.usage, 'output_tokens', 0)
+                except Exception:
+                    pass
+                print(f"[Timing] LLM total: {t_end - t_llm:.2f}s | Total request: {t_end - t_start:.2f}s | Output: {len(full_content)} chars, {output_tokens} tokens", flush=True)
+
+                # Cache the response
+                if not skip_rag:
+                    src_type = 'web_search' if use_web_search else 'knowledge_base'
+                    set_cached_response(message, dept_id, full_content, rag_score=max_score, source_type=src_type)
+
+                append_messages(session_id, message, full_content)
 
                 yield f"data: {json.dumps({'type': 'done', 'session_id': session_id, 'full_content': full_content})}\n\n"
 
@@ -719,16 +849,24 @@ def api_form_designer_chat_stream():
         designer_context = data.get('designer_context', '')  # Current form state, type hints, etc.
         system_prompt_override = data.get('system_prompt', '')  # Full system prompt from frontend (existing behavior)
         supported_types = data.get('supported_types', None)  # Frontend-supported component types (dynamic)
+        frontend_history = data.get('history', None)  # Recent chat history from frontend as fallback
 
         if not message:
             return jsonify({'error': 'Message cannot be empty'}), 400
 
         def generate():
             try:
-                if session_id not in sessions:
-                    sessions[session_id] = {'dept_id': 0, 'messages': [], 'last_accessed': time.time()}
+                session = ensure_session(session_id, 0)
 
-                _touch_session(session_id)
+                # If backend session is empty but frontend sent history, seed from it
+                if not session.get('messages') and frontend_history:
+                    seed_msgs = []
+                    for h in frontend_history:
+                        if isinstance(h, dict) and h.get('role') and h.get('content'):
+                            seed_msgs.append({'role': h['role'], 'content': h['content']})
+                    if seed_msgs:
+                        session['messages'] = seed_msgs
+                        set_session(session_id, session)
 
                 # Build knowledge-enhanced prompt
                 if system_prompt_override:
@@ -743,7 +881,7 @@ def api_form_designer_chat_stream():
                     user_message = message
 
                 messages_list = [{'role': 'system', 'content': full_system_prompt}]
-                messages_list.extend(sessions[session_id]['messages'])
+                messages_list.extend(get_store_messages(session_id))
                 messages_list.append({'role': 'user', 'content': user_message})
 
                 yield f"data: {json.dumps({'type': 'start', 'session_id': session_id})}\n\n"
@@ -754,7 +892,8 @@ def api_form_designer_chat_stream():
                     'messages': messages_list,
                     'result_format': 'message',
                     'stream': True,
-                    'incremental_output': True
+                    'incremental_output': True,
+                    'max_tokens': 2048
                 }
 
                 responses = dashscope.Generation.call(**call_params)
@@ -769,10 +908,7 @@ def api_form_designer_chat_stream():
                         yield f"data: {json.dumps({'type': 'error', 'message': response.message})}\n\n"
                         return
 
-                sessions[session_id]['messages'].append({'role': 'user', 'content': user_message})
-                sessions[session_id]['messages'].append({'role': 'assistant', 'content': full_content})
-                if len(sessions[session_id]['messages']) > MAX_SESSION_MESSAGES:
-                    sessions[session_id]['messages'] = sessions[session_id]['messages'][-MAX_SESSION_MESSAGES:]
+                append_messages(session_id, user_message, full_content)
 
                 yield f"data: {json.dumps({'type': 'done', 'session_id': session_id, 'full_content': full_content})}\n\n"
 

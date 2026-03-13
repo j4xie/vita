@@ -11,6 +11,7 @@ from flask import request, jsonify
 from database import get_database
 from services.feedback_service import FeedbackService
 from services.knowledge_service import KnowledgeService
+from core.cache_service import clear_cache_by_dept
 
 
 # 初始化服务 (全局单例)
@@ -303,10 +304,20 @@ def register_feedback_routes(app):
             data = request.get_json()
 
             _, knowledge_service = get_services()
+
+            # Get dept_id before update for cache invalidation
+            detail = knowledge_service.get_knowledge_detail(kb_id)
+            dept_id = detail.get('dept_id') if detail else None
+
             success = knowledge_service.update_knowledge(kb_id, data)
 
             if not success:
                 return jsonify({'error': 'Update failed'}), 400
+
+            # Auto-invalidate cache for this school after knowledge update
+            if dept_id:
+                cleared = clear_cache_by_dept(dept_id)
+                print("[Knowledge] Updated kb=%s, cleared %d cache entries for dept=%s" % (kb_id, cleared, dept_id))
 
             return jsonify({'success': True})
 
@@ -318,10 +329,20 @@ def register_feedback_routes(app):
         """删除知识库条目"""
         try:
             _, knowledge_service = get_services()
+
+            # Get dept_id before delete for cache invalidation
+            detail = knowledge_service.get_knowledge_detail(kb_id)
+            dept_id = detail.get('dept_id') if detail else None
+
             success = knowledge_service.delete_knowledge(kb_id)
 
             if not success:
                 return jsonify({'error': 'Delete failed'}), 404
+
+            # Auto-invalidate cache for this school after knowledge delete
+            if dept_id:
+                cleared = clear_cache_by_dept(dept_id)
+                print("[Knowledge] Deleted kb=%s, cleared %d cache entries for dept=%s" % (kb_id, cleared, dept_id))
 
             return jsonify({'success': True})
 
