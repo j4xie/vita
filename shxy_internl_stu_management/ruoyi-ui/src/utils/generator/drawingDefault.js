@@ -24,6 +24,12 @@ export default [
     regList: [{
       pattern: '/^1(3|4|5|7|8|9)\\d{9}$/',
       message: '手机号格式错误'
-    }]
+    }],
+    condition: {
+      enable: false,
+      field: '',
+      operator: '===',
+      value: ''
+    }
   }
 ]

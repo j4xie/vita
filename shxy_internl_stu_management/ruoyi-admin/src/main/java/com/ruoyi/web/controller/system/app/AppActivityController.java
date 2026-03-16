@@ -160,7 +160,7 @@ public class AppActivityController extends BaseController
      * @return
      */
     @Transactional(rollbackFor = Exception.class)
-    @GetMapping("/enroll")
+    @PostMapping("/enroll")
     public AjaxResult enroll(ActivityExUser activityExUser, String isCancel)
     {
         try{
@@ -201,6 +201,9 @@ public class AppActivityController extends BaseController
                 activityExUserDTO.setSignStatus(-1L);
                 if(null != activityExUser.getModelFormInfo()){
                     activityExUserDTO.setModelFormInfo(activityExUser.getModelFormInfo());
+                }
+                if(null != activityExUser.getShareUserId()){
+                    activityExUserDTO.setShareUserId(activityExUser.getShareUserId());
                 }
                 int count = activityExUserService.insertActivityExUser(activityExUserDTO);
                 ajax.put("data", count);

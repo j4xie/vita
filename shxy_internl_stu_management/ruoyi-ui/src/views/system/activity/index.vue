@@ -80,10 +80,16 @@
     <el-table v-loading="loading" :data="activityList" @selection-change="handleSelectionChange">
       <el-table-column type="selection" width="55" align="center" />
       <!-- <el-table-column label="活动ID" align="center" prop="id" /> -->
-      <el-table-column label="活动名称" align="center" prop="name" />
+      <el-table-column label="活动名称" align="center" prop="name" width="250" :show-overflow-tooltip="true"/>
       <el-table-column label="展示图" align="center" prop="icon" >
         <template slot-scope="scope">
-          <img :src="scope.row.icon" style="height: 60px;"/>
+          <div v-if="scope.row.icon">
+            <img 
+              :src="scope.row.icon.split(',')[0]" 
+              style="height: 60px;"
+            />
+          </div>
+          <span v-else>无图片</span>
         </template>
       </el-table-column>
       <el-table-column label="活动时间" align="center" prop="startTime" width="200">
@@ -130,7 +136,7 @@
       </el-table-column>
       <el-table-column label="创建人" align="center" prop="createName" />
       <el-table-column label="所属学校" align="center" prop="deptName" />
-      <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
+      <el-table-column label="操作" align="center" width="160" fixed="right" class-name="small-padding fixed-width">
         <template slot-scope="scope">
           <el-button
             size="mini"
@@ -252,16 +258,14 @@
         </el-row>
         <el-row>
           <el-col :span="12">
-            <el-form-item label="状态">
-              <el-radio-group v-model="form.enabled">
-                <el-radio :label="1">正常</el-radio>
-                <el-radio :label="-1">停用</el-radio>
-              </el-radio-group>
+            <el-form-item label="积分" prop="point">
+              <el-input v-model="form.point" placeholder="请输入参与活动可得积分">
+              </el-input>
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="积分" prop="point">
-              <el-input v-model="form.point" placeholder="请输入参与活动可得积分">
+            <el-form-item label="分享积分" prop="sharePoint">
+              <el-input v-model="form.sharePoint" placeholder="请输入分享活动可得积分">
               </el-input>
             </el-form-item>
           </el-col>
@@ -294,21 +298,48 @@
         </el-row>
         <el-row>
           <el-col :span="12">
+            <el-form-item label="访问权限" prop="accessPermissionArr">
+              <el-select v-model="form.accessPermissionArr" multiple clearable placeholder="请选择">
+                <el-option
+                  v-for="item in roleList"
+                  :key="item.roleKey"
+                  :label="item.roleName"
+                  :value="item.roleKey">
+                </el-option>
+              </el-select>
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="状态">
+              <el-radio-group v-model="form.enabled">
+                <el-radio :label="1">正常</el-radio>
+                <el-radio :label="-1">停用</el-radio>
+              </el-radio-group>
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-row>
+          <!-- <el-col :span="12"> -->
             <el-form-item label="展示图" prop="icon">
               <el-upload
                 class="avatar-uploader"
                 :action="serverUrl"
-                :show-file-list="false"
+                :headers="uploadHeaders"
+                :multiple="true"
+                :limit="6"
+                :file-list="form.icon"
                 :on-success="handleAvatarSuccess"
+                :on-remove="handleRemove"
+                :on-exceed="handleExceed"
+                :list-type="'picture-card'"
                 :before-upload="beforeAvatarUpload"
-                :class="imageUrl ? '' : 'avatar-out-block'"
-                >
-                <img v-if="imageUrl" :src="imageUrl" class="avatar">
-                <i v-else class="el-icon-plus avatar-uploader-icon"></i>
+              >
+                <i class="el-icon-plus"></i>
               </el-upload>
+              <div slot="tip" class="el-upload__tip">最多上传6张图片，单张图片不超过2MB</div>
             </el-form-item>
-          </el-col>
-          <el-col :span="12"></el-col>
+          <!-- </el-col> -->
+          <!-- <el-col :span="12"></el-col> -->
         </el-row>
         <el-form-item label="活动详情" prop="detail">
           
@@ -404,7 +435,9 @@ export default {
       signTime: [],
       actTime: [],
       // 表单参数
-      form: {},
+      form: {
+        icon: []
+      },
       // 表单校验
       rules: {
         actType: [
@@ -603,7 +636,7 @@ export default {
       this.form = {
         id: null,
         name: null,
-        icon: null,
+        icon: [],
         startTime: null,
         endTime: null,
         address: null,
@@ -643,7 +676,7 @@ export default {
       this.reset()
       this.open = true
       this.form.enabled = 1
-      this.form.icon = ""
+      this.form.icon = []
       this.imageUrl = ''
       this.title = "创建活动"
     },
@@ -652,13 +685,24 @@ export default {
       this.reset()
       const id = row.id || this.ids
       getActivity(id).then(response => {
-        this.form = response.data
+        const data = response.data
+        // 将图片 URL 字符串转换为数组格式
+        if (data.icon) {
+          const imageUrls = data.icon.split(',')
+          data.icon = imageUrls.map((url, index) => ({
+            name: `活动图片${index + 1}`,
+            url: url
+          }))
+        } else {
+          data.icon = []
+        }
+        this.form = data
         console.log(this.form);
         this.signTime = [this.form.signStartTime, this.form.signEndTime]
         this.actTime = [this.form.startTime, this.form.endTime]
         this.open = true
         this.title = "修改活动"
-        this.imageUrl = this.form.icon
+        // 不再需要 imageUrl，因为我们直接使用 form.icon 绑定到 el-upload 组件
         var _tempDeptArr = this.form.deptIds ? this.form.deptIds.split(",") : []
         if(_tempDeptArr.length > 0){
           for(var i = 0;i < _tempDeptArr.length; i++){
@@ -672,20 +716,35 @@ export default {
     /** 提交按钮 */
     submitForm() {
       this.$refs["form"].validate(valid => {
-        if(this.form.deptIdArr && this.form.deptIdArr.length > 0){
-            this.form.deptIds = this.form.deptIdArr.join(',')
+        // 创建表单数据副本，避免修改原始数据
+        const formData = { ...this.form }
+        
+        if(formData.deptIdArr && formData.deptIdArr.length > 0){
+            formData.deptIds = formData.deptIdArr.join(',')
         }
         console.log("result=",this.form);
+        if(formData.accessPermissionArr && formData.accessPermissionArr.length > 0){
+            formData.accessPermission = formData.accessPermissionArr.join(',')
+        }
+        
+        // 处理图片数组，转换为逗号分隔的字符串
+        if (Array.isArray(formData.icon) && formData.icon.length > 0) {
+          formData.icon = formData.icon.map(item => item.url).join(',')
+        } else {
+          formData.icon = ''
+        }
+        
+        console.log("result=",formData);
         //return false;
         if (valid) {
           console.log(this.actTime)
           console.log(this.signTime)
           //校验必填字段
-          if(this.form.name == null){
+          if(formData.name == null){
             this.$modal.msgError("活动名称不能为空")
             return false;
           }
-          if(this.form.address == null){
+          if(formData.address == null){
             this.$modal.msgError("活动地址不能为空")
             return false;
           }
@@ -694,47 +753,47 @@ export default {
             return false;
           }else{
             
-            this.form.startTime = this.actTime[0] //this.form.id == null ? this.getSimpleDate(this.form.actTime[0]) : this.form.actTime[0]
-            this.form.endTime = this.actTime[1] //this.form.id == null ? this.getSimpleDate(this.form.actTime[1]) : this.form.actTime[1]
+            formData.startTime = this.actTime[0] //this.form.id == null ? this.getSimpleDate(this.form.actTime[0]) : this.form.actTime[0]
+            formData.endTime = this.actTime[1] //this.form.id == null ? this.getSimpleDate(this.form.actTime[1]) : this.form.actTime[1]
           }
           if(this.signTime == null){
             this.$modal.msgError("请选择活动报名时间")
             return false;
           }else{
-            this.form.signStartTime = this.signTime[0] //this.form.id == null ? this.getSimpleDate(this.form.signTime[0]) : this.form.signTime[0]
-            this.form.signEndTime = this.signTime[1] //this.form.id == null ? this.getSimpleDate(this.form.signTime[1]) : this.form.signTime[1]
+            formData.signStartTime = this.signTime[0] //this.form.id == null ? this.getSimpleDate(this.form.signTime[0]) : this.form.signTime[0]
+            formData.signEndTime = this.signTime[1] //this.form.id == null ? this.getSimpleDate(this.form.signTime[1]) : this.form.signTime[1]
           }
-          if(this.form.timeZone == null){
+          if(formData.timeZone == null){
             this.$modal.msgError("请选择时区")
             return false;
           }
-          if(this.form.enrollment != null && this.form.enrollment != ''){
-            if(/^\d+$/.test(this.form.enrollment) && parseInt(this.form.enrollment, 10) >= 0){
+          if(formData.enrollment != null && formData.enrollment != ''){
+            if(/^\d+$/.test(formData.enrollment) && parseInt(formData.enrollment, 10) >= 0){
               
             }else{
               this.$modal.msgError("报名人数只能输入大于等于0的整数")
               return false;
             }
           }
-          if(this.form.detail == null){
+          if(formData.detail == null){
             this.$modal.msgError("活动详情不能为空")
             return false;
           }
-          console.log(this.form)
+          console.log(formData)
           if (this.form.id != null) {
-            updateActivity(this.form).then(response => {
+            updateActivity(formData).then(response => {
               this.$modal.msgSuccess("修改成功")
               this.open = false
               this.imageUrl = "";
-              this.form.icon = ""
+              this.form.icon = []
               this.getList()
             })
           } else {
-            addActivity(this.form).then(response => {
+            addActivity(formData).then(response => {
               this.$modal.msgSuccess("新增成功")
               this.open = false
               this.imageUrl = "";
-              this.form.icon = ""
+              this.form.icon = []
               this.getList()
             })
           }
@@ -795,16 +854,39 @@ export default {
       const activityId = row.id
       this.$router.push("/system/activity-ex-user/list/" + activityId)
     },
-    handleAvatarSuccess(res, file) {
-      if(res.code == 200){
-        this.imageUrl = res.data
-        this.form.icon = res.data
+    handleAvatarSuccess(response, file, fileList) {
+      if(response.code == 200){
+        // 构建文件列表数据结构
+        const newFileList = fileList.map(item => {
+          if (item.response && item.response.data) {
+            return {
+              name: item.name,
+              url: item.response.data
+            }
+          }
+          return item
+        })
+        this.form.icon = newFileList
         console.log("上传结果");
-        console.log(res);
+        console.log(response);
         this.$message.success("上传成功")
       }else{
         this.$message.error("上传失败")
       }
+    },
+    
+    /**
+     * 移除图片
+     */
+    handleRemove(file, fileList) {
+      this.form.icon = fileList
+    },
+    
+    /**
+     * 上传超过限制
+     */
+    handleExceed(files, fileList) {
+      this.$message.error('最多只能上传6张图片');
     },
     beforeAvatarUpload(file) {
       const isJPG = (file.type === 'image/jpeg' || file.type === 'image/png' || file.type === 'image/jpg');

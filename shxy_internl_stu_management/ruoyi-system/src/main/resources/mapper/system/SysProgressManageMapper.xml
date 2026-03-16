@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.SysProgressManageMapper">
+    
+    <resultMap type="SysProgressManage" id="SysProgressManageResult">
+        <result property="id"    column="id"    />
+    </resultMap>
+
+    <sql id="selectSysProgressManageVo">
+        select id from sys_progress_manage
+    </sql>
+
+    <select id="selectSysProgressManageList" parameterType="SysProgressManage" resultMap="SysProgressManageResult">
+        <include refid="selectSysProgressManageVo"/>
+        <where>  
+        </where>
+    </select>
+    
+    <select id="selectSysProgressManageById" parameterType="Long" resultMap="SysProgressManageResult">
+        <include refid="selectSysProgressManageVo"/>
+        where id = #{id}
+    </select>
+
+    <insert id="insertSysProgressManage" parameterType="SysProgressManage" useGeneratedKeys="true" keyProperty="id">
+        insert into sys_progress_manage
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+         </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+         </trim>
+    </insert>
+
+    <update id="updateSysProgressManage" parameterType="SysProgressManage">
+        update sys_progress_manage
+        <trim prefix="SET" suffixOverrides=",">
+        </trim>
+        where id = #{id}
+    </update>
+
+    <delete id="deleteSysProgressManageById" parameterType="Long">
+        delete from sys_progress_manage where id = #{id}
+    </delete>
+
+    <delete id="deleteSysProgressManageByIds" parameterType="String">
+        delete from sys_progress_manage where id in 
+        <foreach item="id" collection="array" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+</mapper>

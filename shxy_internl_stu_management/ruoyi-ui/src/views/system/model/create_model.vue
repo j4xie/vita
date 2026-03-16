@@ -13,7 +13,7 @@
           </div>
           <draggable
             class="components-draggable"
-            :list="inputComponents"
+            :list="processedInputComponents"
             :group="{ name: 'componentsGroup', pull: 'clone', put: false }"
             :clone="cloneComponent"
             draggable=".components-item"
@@ -21,7 +21,7 @@
             @end="onEnd"
           >
             <div
-              v-for="(element, index) in inputComponents" :key="index" class="components-item"
+              v-for="(element, index) in processedInputComponents" :key="index" class="components-item"
               @click="addComponent(element)"
             >
               <div class="components-body">
@@ -35,7 +35,7 @@
           </div>
           <draggable
             class="components-draggable"
-            :list="selectComponents"
+            :list="processedSelectComponents"
             :group="{ name: 'componentsGroup', pull: 'clone', put: false }"
             :clone="cloneComponent"
             draggable=".components-item"
@@ -43,9 +43,7 @@
             @end="onEnd"
           >
             <div
-              v-for="(element, index) in selectComponents"
-              :key="index"
-              class="components-item"
+              v-for="(element, index) in processedSelectComponents" :key="index" class="components-item"
               @click="addComponent(element)"
             >
               <div class="components-body">
@@ -96,47 +94,68 @@
           <el-button class="delete-btn" icon="el-icon-delete" type="text" @click="empty">
             清空
           </el-button>
+          <!-- 添加页面按钮 -->
+          <el-button class="add-page-btn" icon="el-icon-plus" type="primary" @click="addPage">
+            添加页面
+          </el-button>
           <!-- 添加提交表单按钮 -->
           <el-button class="submit-btn" icon="el-icon-upload" type="primary" @click="submitForm">
             提交表单
           </el-button>
         </div>
       </div>
-      <el-scrollbar class="center-scrollbar">
-        <el-row class="center-board-row" :gutter="formConf.gutter">
-          <el-form
-            :size="formConf.size"
-            :label-position="formConf.labelPosition"
-            :disabled="formConf.disabled"
-            :label-width="formConf.labelWidth + 'px'"
-            ref="form"
+      <!-- 分页标签页 -->
+      <div class="page-tabs">
+        <el-tabs v-model="currentPage" type="border-card" @tab-click="handlePageChange">
+          <el-tab-pane 
+            v-for="page in pages" 
+            :key="page.id" 
+            :label="page.name" 
+            :name="page.id"
           >
-            <draggable class="drawing-board" :list="drawingList" :animation="340" group="componentsGroup">
-              <draggable-item
-                v-for="(element, index) in drawingList"
-                :key="element.renderKey"
-                :drawing-list="drawingList"
-                :element="element"
-                :index="index"
-                :active-id="activeId"
-                :form-conf="formConf"
-                @activeItem="activeFormItem"
-                @copyItem="drawingItemCopy"
-                @deleteItem="drawingItemDelete"
-              />
-            </draggable>
-            <div v-show="!drawingList.length" class="empty-info">
-              从左侧拖入或点选组件进行表单设计
+            <div class="page-tab-content">
+              <el-scrollbar class="center-scrollbar">
+                <el-row class="center-board-row" :gutter="formConf.gutter">
+                  <el-form
+                    :size="formConf.size"
+                    :label-position="formConf.labelPosition"
+                    :disabled="formConf.disabled"
+                    :label-width="formConf.labelWidth + 'px'"
+                    :style="formStyle"
+                    ref="form"
+                  >
+                    <draggable class="drawing-board" :list="currentPageComponents" :animation="340" group="componentsGroup">
+                      <draggable-item
+                        v-for="(element, index) in currentPageComponents"
+                        :key="element.renderKey"
+                        :drawing-list="currentPageComponents"
+                        :element="element"
+                        :index="index"
+                        :active-id="activeId"
+                        :form-conf="formConf"
+                        @activeItem="activeFormItem"
+                        @copyItem="drawingItemCopy"
+                        @deleteItem="drawingItemDelete"
+                      />
+                    </draggable>
+                    <div v-show="!currentPageComponents.length" class="empty-info">
+                      从左侧拖入或点选组件进行表单设计
+                    </div>
+                  </el-form>
+                </el-row>
+              </el-scrollbar>
             </div>
-          </el-form>
-        </el-row>
-      </el-scrollbar>
+          </el-tab-pane>
+        </el-tabs>
+      </div>
     </div>
 
     <right-panel
       :active-data="activeData"
       :form-conf="formConf"
-      :show-field="!!drawingList.length"
+      :show-field="!!currentPageComponents.length"
+      :form-fields="formFields"
+      :appearance="appearance"
       @tag-change="tagChange"
     />
 
@@ -156,7 +175,7 @@ import beautifier from 'js-beautify'
 import ClipboardJS from 'clipboard'
 import render from '@/utils/generator/render'
 import RightPanel from '@/views/tool/build/RightPanel'
-import { inputComponents, selectComponents, layoutComponents, formConf } from '@/utils/generator/config'
+import { processedInputComponents, processedSelectComponents, layoutComponents, formConf } from '@/utils/generator/config'
 import { beautifierConf, titleCase } from '@/utils/index'
 import { makeUpHtml, vueTemplate, vueScript, cssStyle } from '@/utils/generator/html'
 import { makeUpJs } from '@/utils/generator/js'
@@ -183,11 +202,16 @@ export default {
       logo,
       idGlobal: 100,
       formConf,
-      inputComponents,
-      selectComponents,
+      processedInputComponents,
+      processedSelectComponents,
       layoutComponents,
       labelWidth: 100,
-      drawingList: drawingDefault,
+      pages: [{
+        id: '1',
+        name: '页面 1',
+        components: drawingDefault
+      }],
+      currentPage: '1',
       drawingData: {},
       activeId: drawingDefault[0].formId,
       drawerVisible: false,
@@ -198,7 +222,20 @@ export default {
       operationType: '',
       activeData: drawingDefault[0],
       name: '', // 表单模板名称
-      modelId: null // 当前编辑的模板ID
+      modelId: null, // 当前编辑的模板ID
+      appearance: {
+        theme: 'default',
+        primaryColor: '#FF6B35',
+        backgroundColor: '#FFFFFF',
+        backgroundGradient: 'none',
+        gradientDirection: 'to right',
+        gradientColor1: '#FFFFFF',
+        gradientColor2: '#F0F0F0',
+        backgroundImage: '',
+        fontSize: 'medium',
+        headerImage: '',
+        headerTitle: '活动报名'
+      }
     }
   },
   created() {
@@ -233,6 +270,32 @@ export default {
       immediate: true
     }
   },
+  computed: {
+    // 当前页面的组件列表
+    currentPageComponents() {
+      const page = this.pages.find(p => p.id === this.currentPage)
+      return page ? page.components : []
+    },
+    // 当前页面的字段列表，用于条件配置
+    formFields() {
+      return this.currentPageComponents.filter(item => item.layout === 'colFormItem' && item.tag !== 'el-button')
+    },
+    // 表单样式，根据配置动态生成
+    formStyle() {
+      if (this.formConf.backgroundGradient === 'none') {
+        return { backgroundColor: this.formConf.backgroundColor }
+      } else if (this.formConf.backgroundGradient === 'linear') {
+        return {
+          background: `linear-gradient(${this.formConf.gradientDirection}, ${this.formConf.gradientColor1}, ${this.formConf.gradientColor2})`
+        }
+      } else if (this.formConf.backgroundGradient === 'radial') {
+        return {
+          background: `radial-gradient(circle, ${this.formConf.gradientColor1}, ${this.formConf.gradientColor2})`
+        }
+      }
+      return { backgroundColor: this.formConf.backgroundColor }
+    }
+  },
   mounted() {
     const clipboard = new ClipboardJS('#copyNode', {
       text: trigger => {
@@ -261,9 +324,30 @@ export default {
         if (data.content) {
           try {
             const formData = JSON.parse(data.content)
-            if (formData.fields && Array.isArray(formData.fields)) {
-              this.drawingList = formData.fields
-              // 如果有第一个字段，设置为活动项
+            if (formData.pages && Array.isArray(formData.pages)) {
+              // 处理页面数据，确保每个页面都有id和components
+              this.pages = formData.pages.map((page, index) => ({
+                id: String(page.id || index + 1),
+                name: page.name || `页面 ${index + 1}`,
+                components: page.components || []
+              }))
+              // 设置当前页面为第一个页面
+              if (this.pages.length > 0) {
+                this.currentPage = this.pages[0].id
+                // 如果第一个页面有组件，设置为活动项
+                if (this.pages[0].components.length > 0) {
+                  this.activeData = this.pages[0].components[0]
+                  this.activeId = this.pages[0].components[0].formId
+                }
+              }
+            } else if (formData.fields && Array.isArray(formData.fields)) {
+              // 兼容旧格式，将fields转换为单页
+              this.pages = [{
+                id: '1',
+                name: '页面 1',
+                components: formData.fields
+              }]
+              this.currentPage = '1'
               if (formData.fields.length > 0) {
                 this.activeData = formData.fields[0]
                 this.activeId = formData.fields[0].formId
@@ -291,7 +375,7 @@ export default {
     },
     addComponent(item) {
       const clone = this.cloneComponent(item)
-      this.drawingList.push(clone)
+      this.currentPageComponents.push(clone)
       this.activeFormItem(clone)
     },
     cloneComponent(origin) {
@@ -314,7 +398,7 @@ export default {
     },
     AssembleFormData() {
       this.formData = {
-        fields: JSON.parse(JSON.stringify(this.drawingList)),
+        pages: JSON.parse(JSON.stringify(this.pages)),
         ...this.formConf
       }
     },
@@ -336,9 +420,12 @@ export default {
       document.getElementById('copyNode').click()
     },
     empty() {
-      this.$confirm('确定要清空所有组件吗？', '提示', { type: 'warning' }).then(
+      this.$confirm('确定要清空当前页面的所有组件吗？', '提示', { type: 'warning' }).then(
         () => {
-          this.drawingList = []
+          const page = this.pages.find(p => p.id === this.currentPage)
+          if (page) {
+            page.components = []
+          }
         }
       )
     },
@@ -364,9 +451,9 @@ export default {
     drawingItemDelete(index, parent) {
       parent.splice(index, 1)
       this.$nextTick(() => {
-        const len = this.drawingList.length
+        const len = this.currentPageComponents.length
         if (len) {
-          this.activeFormItem(this.drawingList[len - 1])
+          this.activeFormItem(this.currentPageComponents[len - 1])
         }
       })
     },
@@ -396,7 +483,10 @@ export default {
       
       this.AssembleFormData();
       console.log('提交的表单数据:', this.formData);
-      if(this.formData.fields.length == 0){
+      
+      // 检查是否所有页面都为空
+      const hasComponents = this.pages.some(page => page.components && page.components.length > 0)
+      if(!hasComponents){
         this.$message.error('表单不能为空，请添加组件后再提交');
         return;
       }
@@ -448,7 +538,7 @@ export default {
         }
       })
       this.activeData = newTag
-      this.updateDrawingList(newTag, this.drawingList)
+      this.updateDrawingList(newTag, this.currentPageComponents)
     },
     updateDrawingList(newTag, list) {
       const index = list.findIndex(item => item.formId === this.activeId)
@@ -458,6 +548,30 @@ export default {
         list.forEach(item => {
           if (Array.isArray(item.children)) this.updateDrawingList(newTag, item.children)
         })
+      }
+    },
+    // 添加新页面
+    addPage() {
+      const newPageId = String(this.pages.length + 1)
+      const newPage = {
+        id: newPageId,
+        name: `页面 ${newPageId}`,
+        components: []
+      }
+      this.pages.push(newPage)
+      this.currentPage = newPageId
+    },
+    // 处理页面切换
+    handlePageChange(tab) {
+      // 使用 currentPage 获取当前选中的页面 ID
+      const pageId = this.currentPage
+      const page = this.pages.find(p => p.id === pageId)
+      if (page) {
+        if (page.components.length > 0) {
+          this.activeFormItem(page.components[0])
+        }
+        // 注意：不在页面切换时自动创建默认组件
+        // 只有第一个页面在初始化时会有默认组件
       }
     }
   }
@@ -594,13 +708,13 @@ $lighterBlue: #409EFF;
 .container {
   position: relative;
   width: 100%;
-  height: 100%;
+  height: calc(100vh - 84px);
 }
 
 .components-list {
   padding: 8px;
   box-sizing: border-box;
-  height: 100%;
+  height: calc(100vh - 125px);
   .components-item {
     display: inline-block;
     width: 48%;
@@ -653,8 +767,8 @@ $lighterBlue: #409EFF;
   overflow: hidden;
 }
 .center-scrollbar {
-  height: calc(100vh - 50px);
-  overflow: hidden;
+  height: 100%;
+  overflow: auto;
   border-left: 1px solid #f1e8e8;
   border-right: 1px solid #f1e8e8;
   box-sizing: border-box;
@@ -664,6 +778,21 @@ $lighterBlue: #409EFF;
   width: auto;
   margin: 0 350px 0 260px;
   box-sizing: border-box;
+}
+.page-tabs {
+  height: calc(100vh - 50px);
+  overflow: hidden;
+  .el-tabs {
+    height: 100%;
+  }
+  .el-tabs__content {
+    height: calc(100% - 39px);
+    overflow: hidden;
+  }
+  .page-tab-content {
+    height: 100%;
+    overflow: hidden;
+  }
 }
 .empty-info{
   position: absolute;
@@ -705,6 +834,9 @@ $lighterBlue: #409EFF;
   }
   .delete-btn{
     color: #F56C6C;
+  }
+  .add-page-btn{
+    margin-left: 15px;
   }
   .submit-btn{
     margin-left: 15px;
@@ -750,12 +882,17 @@ $lighterBlue: #409EFF;
   }
 }
 .drawing-board {
-  height: 100%;
+  height: calc(100vh - 195px);
   position: relative;
+  overflow-y: scroll;
+  padding-top: 10px;
   .components-body {
     padding: 0;
     margin: 0;
     font-size: 0;
+  }
+  .el-form-item:last-child {
+    padding-bottom: 80px;
   }
   .sortable-ghost {
     position: relative;

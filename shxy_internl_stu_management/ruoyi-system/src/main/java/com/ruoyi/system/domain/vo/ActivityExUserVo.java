@@ -1,5 +1,6 @@
 package com.ruoyi.system.domain.vo;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.ruoyi.common.annotation.Excel;
 import com.ruoyi.common.core.domain.BaseEntity;
 import org.apache.commons.lang3.builder.ToStringBuilder;
@@ -18,33 +19,50 @@ public class ActivityExUserVo extends BaseEntity
     private static final long serialVersionUID = 1L;
 
     /** 活动id */
-    @Excel(name = "活动id")
+    //@Excel(name = "活动id")
     private Long activityId;
 
     /** 用户id */
-    @Excel(name = "用户id")
+    //@Excel(name = "用户id")
     private Long userId;
-
-    /** 签到状态（-1 未签到     1 已签到） */
-    @Excel(name = "签到状态", readConverterExp = "-=1,未=签到,1=,已=签到")
-    private Long signStatus;
 
     private String modelFormInfo;
 
     /** 状态（-1待付款   1正常） */
     private Long status;
 
+    private String avatar;
+
+    @Excel(name = "法定姓名")
     private String legalName;
 
+    @Excel(name = "英文名")
     private String nickName;
 
+    @Excel(name = "手机号")
     private String phonenumber;
 
+    @Excel(name = "邮箱")
     private String email;
 
+    //@Excel(name = "活动名称")
     private String activityName;
 
+    /** 签到状态（-1 未签到     1 已签到） */
+    @Excel(name = "签到状态", readConverterExp = "-1=未签到,1=已签到")
+    private Long signStatus;
+
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    @Excel(name = "报名时间", width = 30, dateFormat = "yyyy-MM-dd HH:mm:ss")
     private Date createTime;
+
+    public String getAvatar() {
+        return avatar;
+    }
+
+    public void setAvatar(String avatar) {
+        this.avatar = avatar;
+    }
 
     public String getModelFormInfo() {
         return modelFormInfo;

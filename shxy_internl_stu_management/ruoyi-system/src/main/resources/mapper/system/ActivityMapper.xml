@@ -23,6 +23,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <result property="modelName"    column="model_name"    />
         <result property="modelContent"    column="model_content"    />
         <result property="status"    column="status"    />
+        <result property="sharePoint"    column="share_point"    />
         <result property="enabled"    column="enabled"    />
         <result property="createTime"    column="create_time"    />
         <result property="updateTime"    column="update_time"    />
@@ -39,7 +40,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 
     <sql id="selectActivityVo">
         select act.id, act.name, act.icon, act.start_time, act.end_time, act.address, act.enrollment, act.detail, act.sign_start_time, act.sign_end_time, act.time_zone, act.price, act.point, act.act_type,
-               act.model_id, act.model_name, act.model_content, act.status, act.dept_ids, act.enabled, act.create_time, act.update_time, act.create_user_id, act.create_name, act.create_nick_name, d.dept_id,
+               act.model_id, act.model_name, act.model_content, act.status, act.dept_ids, act.access_permission, act.share_point, act.enabled, act.create_time, act.update_time, act.create_user_id, act.create_name, act.create_nick_name, d.dept_id,
                (SELECT count(1) from activity_ex_user aeu WHERE aeu.activity_id = act.id) as register_count,
                CASE
                    WHEN d.parent_id > 1 THEN CONCAT((select ind.dept_name from sys_dept ind where ind.dept_id = d.parent_id), '(',d.dept_name,')')
@@ -78,7 +79,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 
     <select id="selectActivityListForApp" parameterType="Activity" resultMap="ActivityResult">
         select act.id, act.name, act.icon, act.start_time, act.end_time, act.address, act.enrollment, act.detail, act.sign_start_time, act.sign_end_time, act.time_zone, act.status, act.price, act.point, act.act_type, act.model_id, act.model_name, act.model_content,
-        act.dept_ids, act.enabled, act.create_time, act.update_time, act.create_user_id, act.create_name, act.create_nick_name, d.dept_id,
+        act.dept_ids, act.access_permission, act.share_point, act.enabled, act.create_time, act.update_time, act.create_user_id, act.create_name, act.create_nick_name, d.dept_id,
         (SELECT count(1) from activity_ex_user aeu WHERE aeu.activity_id = act.id) as register_count,
         COALESCE((select sign_status from activity_ex_user aeu where act.id = aeu.activity_id and aeu.user_id = #{userId}), 0) as sign_status,
         CASE
@@ -118,7 +119,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 
     <select id="selectActivityListByUser" parameterType="Activity" resultMap="ActivityResult">
         select act.id, act.name, act.icon, act.start_time, act.end_time, act.address, act.enrollment, act.detail, act.sign_start_time, act.sign_end_time, act.time_zone, act.price, act.point, act.act_type, act.model_id, act.model_name, act.model_content, act.status,
-        act.dept_ids, act.enabled, act.create_time, act.update_time, act.create_user_id,
+        act.dept_ids, act.access_permission, act.share_point, act.enabled, act.create_time, act.update_time, act.create_user_id,
         act.create_name, act.create_nick_name, aeu.sign_status,
         (SELECT count(1) from activity_ex_user aeu WHERE aeu.activity_id = act.id) as register_count,
         CASE
@@ -161,6 +162,8 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="modelContent != null">model_content,</if>
             <if test="status != null">status,</if>
             <if test="deptIds != null">dept_ids,</if>
+            <if test="accessPermission != null">access_permission,</if>
+            <if test="sharePoint != null">share_point,</if>
             <if test="enabled != null">enabled,</if>
             <if test="createTime != null">create_time,</if>
             <if test="updateTime != null">update_time,</if>
@@ -187,6 +190,8 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="modelContent != null">#{modelContent},</if>
             <if test="status != null">#{status},</if>
             <if test="deptIds != null">#{deptIds},</if>
+            <if test="accessPermission != null">#{accessPermission},</if>
+            <if test="sharePoint != null">#{sharePoint},</if>
             <if test="enabled != null">#{enabled},</if>
             <if test="createTime != null">#{createTime},</if>
             <if test="updateTime != null">#{updateTime},</if>
@@ -217,6 +222,8 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="modelContent != null">model_content = #{modelContent},</if>
             <if test="status != null">status = #{status},</if>
             <if test="deptIds != null">dept_ids = #{deptIds},</if>
+            <if test="accessPermission != null">access_permission = #{accessPermission},</if>
+            <if test="sharePoint != null">share_point = #{sharePoint},</if>
             <if test="enabled != null">enabled = #{enabled},</if>
             <if test="createTime != null">create_time = #{createTime},</if>
             <if test="updateTime != null">update_time = #{updateTime},</if>

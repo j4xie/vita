@@ -8,7 +8,13 @@ export const formConf = {
   gutter: 15,
   disabled: false,
   span: 24,
-  formBtns: true
+  formBtns: true,
+  unFocusedComponentBorder: true,
+  backgroundColor: '#FFFFFF',
+  backgroundGradient: 'none',
+  gradientDirection: 'to right',
+  gradientColor1: '#FFFFFF',
+  gradientColor2: '#F0F0F0'
 }
 
 export const inputComponents = [
@@ -79,6 +85,52 @@ export const inputComponents = [
     disabled: false,
     required: true,
     regList: [],
+    changeTag: true,
+    document: 'https://element.eleme.cn/#/zh-CN/component/input'
+  },
+  {
+    label: '手机号',
+    tag: 'el-input',
+    tagIcon: 'phone',
+    placeholder: '请输入手机号',
+    defaultValue: undefined,
+    span: 24,
+    labelWidth: null,
+    style: { width: '100%' },
+    clearable: true,
+    'prefix-icon': 'el-icon-phone',
+    maxlength: 11,
+    'show-word-limit': true,
+    readonly: false,
+    disabled: false,
+    required: true,
+    regList: [{
+      pattern: '/^1(3|4|5|7|8|9)\\d{9}$/',
+      message: '手机号格式错误'
+    }],
+    changeTag: true,
+    document: 'https://element.eleme.cn/#/zh-CN/component/input'
+  },
+  {
+    label: '邮箱',
+    tag: 'el-input',
+    tagIcon: 'email',
+    placeholder: '请输入邮箱',
+    defaultValue: undefined,
+    span: 24,
+    labelWidth: null,
+    style: { width: '100%' },
+    clearable: true,
+    'prefix-icon': 'el-icon-message',
+    maxlength: null,
+    'show-word-limit': false,
+    readonly: false,
+    disabled: false,
+    required: true,
+    regList: [{
+      pattern: '/^([a-zA-Z0-9_-])+@([a-zA-Z0-9_-])+(\\.[a-zA-Z0-9_-])+$/',
+      message: '邮箱格式错误'
+    }],
     changeTag: true,
     document: 'https://element.eleme.cn/#/zh-CN/component/input'
   },
@@ -392,6 +444,28 @@ export const selectComponents = [
     regList: [],
     changeTag: true,
     document: 'https://element.eleme.cn/#/zh-CN/component/upload'
+  },
+  {
+    label: '电子签名',
+    tag: 'el-upload',
+    tagIcon: 'edit',
+    action: process.env.VUE_APP_BASE_API + '/file/upload',
+    defaultValue: null,
+    labelWidth: null,
+    disabled: false,
+    required: true,
+    accept: 'image/*',
+    name: 'file',
+    'auto-upload': true,
+    showTip: false,
+    buttonText: '点击签名',
+    fileSize: 2,
+    sizeUnit: 'MB',
+    'list-type': 'text',
+    multiple: false,
+    regList: [],
+    changeTag: true,
+    document: 'https://element.eleme.cn/#/zh-CN/component/upload'
   }
 ]
 
@@ -436,3 +510,33 @@ export const trigger = {
   'el-date-picker': 'change',
   'el-rate': 'change'
 }
+
+// 条件显示操作符
+export const conditionOperators = [
+  { label: '等于', value: '===' },
+  { label: '不等于', value: '!==' },
+  { label: '大于', value: '>' },
+  { label: '小于', value: '<' },
+  { label: '大于等于', value: '>=' },
+  { label: '小于等于', value: '<=' },
+  { label: '包含', value: 'includes' },
+  { label: '不包含', value: 'not includes' }
+]
+
+// 为所有组件添加条件显示属性
+const addConditionProps = (components) => {
+  return components.map(component => ({
+    ...component,
+    condition: {
+      enable: false,
+      field: '',
+      operator: '===',
+      value: ''
+    }
+  }))
+}
+
+// 处理后的组件列表
+export const processedInputComponents = addConditionProps(inputComponents)
+export const processedSelectComponents = addConditionProps(selectComponents)
+export const processedLayoutComponents = addConditionProps(layoutComponents)

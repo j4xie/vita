@@ -10,6 +10,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <result property="signStatus"    column="sign_status"    />
         <result property="modelFormInfo"    column="model_form_info"    />
         <result property="status"    column="status"    />
+        <result property="shareUserId"    column="share_user_id"    />
         <result property="createTime"    column="create_time"    />
     </resultMap>
 
@@ -19,6 +20,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <result property="signStatus"    column="sign_status"    />
         <result property="modelFormInfo"    column="model_form_info"    />
         <result property="status"    column="status"    />
+        <result property="avatar"    column="avatar"    />
         <result property="legalName"    column="legal_name"    />
         <result property="nickName"    column="nick_name"    />
         <result property="phonenumber"    column="phonenumber"    />
@@ -28,17 +30,20 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     </resultMap>
 
     <sql id="selectActivityExUserVo">
-        select activity_id, user_id, sign_status, model_form_info, status from activity_ex_user
+        select activity_id, user_id, sign_status, model_form_info, status, share_user_id from activity_ex_user
     </sql>
 
     <select id="selectActivityExUserVoList" parameterType="ActivityExUserVo" resultMap="ActivityExUserVoResult">
-        select aeu.sign_status, aeu.model_form_info, aeu.status, su.legal_name, su.nick_name, su.phonenumber, su.email, act.name as activity_name, aeu.create_time from activity_ex_user aeu
+        select aeu.sign_status, aeu.model_form_info, aeu.status, su.user_id, su.avatar, su.legal_name, su.nick_name, su.phonenumber, su.email, act.name as activity_name, aeu.share_user_id, aeu.create_time from activity_ex_user aeu
         LEFT JOIN sys_user su on aeu.user_id = su.user_id
         LEFT JOIN activity act on aeu.activity_id = act.id
         <where>
             <if test="activityId != null "> and aeu.activity_id = #{activityId}</if>
             <if test="userId != null "> and aeu.user_id = #{userId}</if>
             <if test="status != null "> and aeu.status = #{status}</if>
+            <if test="legalName != null "> and su.legal_name = #{legalName}</if>
+            <if test="nickName != null "> and su.nick_name = #{nickName}</if>
+            <if test="phonenumber != null "> and su.phonenumber = #{phonenumber}</if>
         </where>
     </select>
 
@@ -66,6 +71,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="signStatus != null">sign_status,</if>
             <if test="modelFormInfo != null">model_form_info,</if>
             <if test="status != null">status,</if>
+            <if test="shareUserId != null">share_user_id,</if>
             create_time
          </trim>
         <trim prefix="values (" suffix=")" suffixOverrides=",">
@@ -74,6 +80,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="signStatus != null">#{signStatus},</if>
             <if test="modelFormInfo != null">#{modelFormInfo},</if>
             <if test="status != null">#{status},</if>
+            <if test="shareUserId != null">#{shareUserId},</if>
             sysdate()
          </trim>
     </insert>

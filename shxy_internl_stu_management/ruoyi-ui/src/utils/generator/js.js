@@ -22,9 +22,21 @@ export function makeUpJs(conf, type) {
   const methodList = mixinMethod(type)
   const uploadVarList = []
 
-  conf.fields.forEach(el => {
-    buildAttributes(el, dataList, ruleList, optionsList, methodList, propsList, uploadVarList)
-  })
+  // 处理多页表单
+  if (conf.pages && conf.pages.length > 0) {
+    conf.pages.forEach(page => {
+      if (page.components) {
+        page.components.forEach(el => {
+          buildAttributes(el, dataList, ruleList, optionsList, methodList, propsList, uploadVarList)
+        })
+      }
+    })
+  } else if (conf.fields && conf.fields.length > 0) {
+    // 兼容旧格式
+    conf.fields.forEach(el => {
+      buildAttributes(el, dataList, ruleList, optionsList, methodList, propsList, uploadVarList)
+    })
+  }
 
   const script = buildexport(
     conf,
@@ -208,11 +220,26 @@ function buildOptionMethod(methodName, model, methodList) {
 function buildexport(conf, type, data, rules, selectOptions, uploadVar, props, methods) {
   // 收集所有upload组件的vModel，用于生成计算属性
   const uploadComponents = []
-  conf.fields.forEach(el => {
-    if (el.action && el.tag === 'el-upload') {
-      uploadComponents.push(el.vModel)
-    }
-  })
+  
+  // 处理多页表单
+  if (conf.pages && conf.pages.length > 0) {
+    conf.pages.forEach(page => {
+      if (page.components) {
+        page.components.forEach(el => {
+          if (el.action && el.tag === 'el-upload') {
+            uploadComponents.push(el.vModel)
+          }
+        })
+      }
+    })
+  } else if (conf.fields && conf.fields.length > 0) {
+    // 兼容旧格式
+    conf.fields.forEach(el => {
+      if (el.action && el.tag === 'el-upload') {
+        uploadComponents.push(el.vModel)
+      }
+    })
+  }
   
   // 生成计算属性
   let computedProperties = ''
@@ -222,6 +249,13 @@ function buildexport(conf, type, data, rules, selectOptions, uploadVar, props, m
         return process.env.VUE_APP_BASE_API + '/file/upload'
       }`
     ).join(',\n    ')},`
+  }
+
+  // 添加分页相关数据
+  let pageData = ''
+  if (conf.pages && conf.pages.length > 0) {
+    pageData = `activePage: ${conf.pages[0].id},
+      `
   }
 
   const str = `${exportDefault}{
@@ -236,6 +270,7 @@ function buildexport(conf, type, data, rules, selectOptions, uploadVar, props, m
       ${conf.formRules}: {
         ${rules}
       },
+      ${pageData}
       ${uploadVar}
       ${selectOptions}
       ${props}

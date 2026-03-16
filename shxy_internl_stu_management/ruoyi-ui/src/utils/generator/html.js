@@ -85,7 +85,32 @@ const layouts = {
     }
     const required = !trigger[element.tag] && element.required ? 'required' : ''
     const tagDom = tags[element.tag] ? tags[element.tag](element) : null
-    let str = `<el-form-item ${labelWidth} label="${element.label}" prop="${element.vModel}" ${required}>
+    
+    // 添加条件显示逻辑
+    let conditionStr = ''
+    if (element.condition && element.condition.enable && element.condition.field) {
+      const field = element.condition.field
+      const operator = element.condition.operator
+      let value = element.condition.value
+      
+      // 处理值的类型
+      if (!isNaN(value) && value !== '') {
+        value = Number(value)
+      } else if (value === 'true') {
+        value = true
+      } else if (value === 'false') {
+        value = false
+      }
+      
+      // 构建条件表达式
+      if (operator === 'includes' || operator === 'not includes') {
+        conditionStr = `v-if="${confGlobal.formModel}.${field}${operator === 'includes' ? '.includes' : ' && !.includes'}('${value}')"`
+      } else {
+        conditionStr = `v-if="${confGlobal.formModel}.${field} ${operator} ${JSON.stringify(value)}"`
+      }
+    }
+    
+    let str = `<el-form-item ${labelWidth} label="${element.label}" prop="${element.vModel}" ${required} ${conditionStr}>
         ${tagDom}
       </el-form-item>`
     str = colWrapper(element, str)
@@ -341,13 +366,39 @@ function buildElUploadChild(conf) {
 }
 
 export function makeUpHtml(conf, type) {
-  const htmlList = []
+  let htmlStr = ''
   confGlobal = conf
-  someSpanIsNot24 = conf.fields.some(item => item.span !== 24)
-  conf.fields.forEach(el => {
-    htmlList.push(layouts[el.layout](el))
-  })
-  const htmlStr = htmlList.join('\n')
+  
+  if (conf.pages && conf.pages.length > 0) {
+    // 多页表单
+    someSpanIsNot24 = conf.pages.some(page => page.components && page.components.some(item => item.span !== 24))
+    let tabsHtml = `<el-tabs v-model="activePage" type="border-card">
+`
+    conf.pages.forEach((page, index) => {
+      tabsHtml += `  <el-tab-pane :label="'${page.name}'" :name="${page.id}">
+`
+      if (page.components && page.components.length > 0) {
+        const pageHtmlList = []
+        page.components.forEach(el => {
+          pageHtmlList.push(layouts[el.layout](el))
+        })
+        tabsHtml += `    ${pageHtmlList.join('\n')}
+`
+      }
+      tabsHtml += `  </el-tab-pane>
+`
+    })
+    tabsHtml += `</el-tabs>`
+    htmlStr = tabsHtml
+  } else if (conf.fields && conf.fields.length > 0) {
+    // 单页表单（兼容旧格式）
+    someSpanIsNot24 = conf.fields.some(item => item.span !== 24)
+    const htmlList = []
+    conf.fields.forEach(el => {
+      htmlList.push(layouts[el.layout](el))
+    })
+    htmlStr = htmlList.join('\n')
+  }
 
   let temp = buildFormTemplate(conf, htmlStr, type)
   if (type === 'dialog') {

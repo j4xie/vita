@@ -74,6 +74,9 @@ public class Activity extends BaseEntity
     /** 活动积分 */
     private BigDecimal point;
 
+    /** 分享活动可获得积分 */
+    private BigDecimal sharePoint;
+
     /**
      * 活动类型
      * 1- 社交活动 (Social)
@@ -132,6 +135,35 @@ public class Activity extends BaseEntity
 
     // 相关的学校id
     private String deptIds;
+
+
+    private String accessPermission;
+
+    private String accessRoleKey;
+
+    public BigDecimal getSharePoint() {
+        return sharePoint;
+    }
+
+    public void setSharePoint(BigDecimal sharePoint) {
+        this.sharePoint = sharePoint;
+    }
+
+    public String getAccessRoleKey() {
+        return accessRoleKey;
+    }
+
+    public void setAccessRoleKey(String accessRoleKey) {
+        this.accessRoleKey = accessRoleKey;
+    }
+
+    public String getAccessPermission() {
+        return accessPermission;
+    }
+
+    public void setAccessPermission(String accessPermission) {
+        this.accessPermission = accessPermission;
+    }
 
 
     public String getDeptIds() {

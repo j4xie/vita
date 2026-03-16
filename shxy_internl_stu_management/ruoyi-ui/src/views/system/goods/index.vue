@@ -67,7 +67,13 @@
       <el-table-column label="商品名称" align="center" prop="goodName" />
       <el-table-column label="商品展示图" align="center" prop="goodIcon">
         <template slot-scope="scope">
-          <img :src="scope.row.goodIcon" style="height: 60px;"/>
+          <div v-if="scope.row.goodIcon">
+            <img 
+              :src="scope.row.goodIcon.split(',')[0]" 
+              style="height: 60px;"
+            />
+          </div>
+          <span v-else>无图片</span>
         </template>
       </el-table-column>
       <el-table-column label="商品所属分类" align="center" prop="classifyName" />
@@ -115,13 +121,22 @@
           <el-input v-model="form.goodName" placeholder="请输入商品名称" maxlength="50"/>
         </el-form-item>
         <el-form-item label="商品展示图" prop="goodIcon">
-          <!-- <el-input v-model="form.goodIcon" type="textarea" placeholder="请输入内容" /> -->
-          <BigFileUpload 
-            @handleUploadSuccess="handleUploadSuccess"
-            :defaultUrl = "form.goodIcon"
-            :imgWidth="120"
-            :imgHeight="120"
-          />
+          <el-upload
+            class="avatar-uploader"
+            :action="serverUrl"
+            :headers="uploadHeaders"
+            :multiple="true"
+            :limit="6"
+            :file-list="form.goodIcon"
+            :on-success="handleUploadSuccess"
+            :on-remove="handleRemove"
+            :on-exceed="handleExceed"
+            :list-type="'picture-card'"
+            :before-upload="beforeUpload"
+          >
+            <i class="el-icon-plus"></i>
+          </el-upload>
+          <div slot="tip" class="el-upload__tip">最多上传6张图片，单张图片不超过2MB</div>
         </el-form-item>
         <el-form-item label="选择分类" prop="classifyId">
           <el-select v-model="form.classifyId" placeholder="请选择分类">
@@ -219,7 +234,9 @@ export default {
         goodDetail: null,
       },
       // 表单参数
-      form: {},
+      form: {
+        goodIcon: []
+      },
       // 表单校验
       rules: {
         goodName: [
@@ -361,7 +378,7 @@ export default {
       this.form = {
         id: null,
         goodName: null,
-        goodIcon: null,
+        goodIcon: [],
         goodDesc: null,
         price: null,
         goodDetail: null,
@@ -399,7 +416,18 @@ export default {
       this.reset()
       const id = row.id || this.ids
       getGoods(id).then(response => {
-        this.form = response.data
+        const data = response.data
+        // 将图片 URL 字符串转换为数组格式
+        if (data.goodIcon) {
+          const imageUrls = data.goodIcon.split(',')
+          data.goodIcon = imageUrls.map((url, index) => ({
+            name: `商品图片${index + 1}`,
+            url: url
+          }))
+        } else {
+          data.goodIcon = []
+        }
+        this.form = data
         this.open = true
         this.title = "修改商品"
       })
@@ -407,9 +435,51 @@ export default {
     /**
      * 图片上传回执
      */
-    handleUploadSuccess(_url, _flag){
+    handleUploadSuccess(response, file, fileList) {
       console.log("图片上传回执")
-      this.form.goodIcon = _url
+      if (response.code === 200) {
+        // 构建文件列表数据结构
+        const newFileList = fileList.map(item => {
+          if (item.response && item.response.data) {
+            return {
+              name: item.name,
+              url: item.response.data
+            }
+          }
+          return item
+        })
+        this.form.goodIcon = newFileList
+      }
+    },
+    
+    /**
+     * 移除图片
+     */
+    handleRemove(file, fileList) {
+      this.form.goodIcon = fileList
+    },
+    
+    /**
+     * 上传超过限制
+     */
+    handleExceed(files, fileList) {
+      this.$message.error('最多只能上传6张图片');
+    },
+    
+    /**
+     * 上传前校验
+     */
+    beforeUpload(file) {
+      const isJPG = (file.type === 'image/jpeg' || file.type === 'image/png' || file.type === 'image/jpg');
+      const isLt2M = file.size / 1024 / 1024 < 2;
+
+      if (!isJPG) {
+        this.$message.error('上传图片只能是 JPG、PNG、JPEG 格式!');
+      }
+      if (!isLt2M) {
+        this.$message.error('上传图片大小不能超过 2MB!');
+      }
+      return isJPG && isLt2M;
     },
     /** 提交按钮 */
     submitForm() {
@@ -420,14 +490,24 @@ export default {
             return false;
           }
 
+          // 创建表单数据副本，避免修改原始数据
+          const formData = { ...this.form }
+          
+          // 处理图片数组，转换为逗号分隔的字符串
+          if (Array.isArray(formData.goodIcon) && formData.goodIcon.length > 0) {
+            formData.goodIcon = formData.goodIcon.map(item => item.url).join(',')
+          } else {
+            formData.goodIcon = ''
+          }
+
           if (this.form.id != null) {
-            updateGoods(this.form).then(response => {
+            updateGoods(formData).then(response => {
               this.$modal.msgSuccess("修改成功")
               this.open = false
               this.getList()
             })
           } else {
-            addGoods(this.form).then(response => {
+            addGoods(formData).then(response => {
               this.$modal.msgSuccess("新增成功")
               this.open = false
               this.getList()

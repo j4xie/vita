@@ -25,6 +25,8 @@
   },
   "dependencies": {
     "@googlemaps/js-api-loader": "^2.0.1",
+    "@logicflow/core": "^2.1.11",
+    "@logicflow/extension": "^2.1.13",
     "@riophae/vue-treeselect": "0.4.0",
     "axios": "0.28.1",
     "clipboard": "2.0.8",
@@ -50,6 +52,7 @@
     "vue-cropper": "0.5.5",
     "vue-quill-editor": "^3.0.6",
     "vue-router": "3.4.9",
+    "vue-super-flow": "^1.4.0",
     "vuedraggable": "2.24.3",
     "vuex": "3.6.0"
   },

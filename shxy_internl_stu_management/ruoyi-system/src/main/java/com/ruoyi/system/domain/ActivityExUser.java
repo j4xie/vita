@@ -32,6 +32,46 @@ public class ActivityExUser extends BaseEntity
     /** 状态（-1待付款   1正常） */
     private Long status;
 
+    private Long shareUserId;
+
+    private String legalName;
+
+    private String nickName;
+
+    private String phonenumber;
+
+    public String getLegalName() {
+        return legalName;
+    }
+
+    public void setLegalName(String legalName) {
+        this.legalName = legalName;
+    }
+
+    public String getNickName() {
+        return nickName;
+    }
+
+    public void setNickName(String nickName) {
+        this.nickName = nickName;
+    }
+
+    public String getPhonenumber() {
+        return phonenumber;
+    }
+
+    public void setPhonenumber(String phonenumber) {
+        this.phonenumber = phonenumber;
+    }
+
+    public Long getShareUserId() {
+        return shareUserId;
+    }
+
+    public void setShareUserId(Long shareUserId) {
+        this.shareUserId = shareUserId;
+    }
+
     public String getModelFormInfo() {
         return modelFormInfo;
     }

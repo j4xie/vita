@@ -143,4 +143,17 @@ public class ActivityController extends BaseController
         List<ActivityExUserVo> list = activityExUserService.selectActivityExUserVoList(activityExUser);
         return getDataTable(list);
     }
+
+    /**
+     * 导出活动列表
+     */
+    @PreAuthorize("@ss.hasPermi('system:activity:export')")
+    @Log(title = "活动", businessType = BusinessType.EXPORT)
+    @PostMapping("/exportExUser")
+    public void exportExUser(HttpServletResponse response, ActivityExUser activityExUser)
+    {
+        List<ActivityExUserVo> list = activityExUserService.selectActivityExUserVoList(activityExUser);
+        ExcelUtil<ActivityExUserVo> util = new ExcelUtil<ActivityExUserVo>(ActivityExUserVo.class);
+        util.exportExcel(response, list, "活动数据");
+    }
 }
