@@ -379,6 +379,7 @@
 
 <script>
 import { listActivity, getActivity, delActivity, addActivity, updateActivity, listModel, listSchool } from "@/api/system/activity"
+import { allListType } from "@/api/system/type"
 import {quillEditor} from 'vue-quill-editor'
 import 'quill/dist/quill.core.css'
 import 'quill/dist/quill.snow.css'
@@ -456,7 +457,7 @@ export default {
         ],
       },
       actTypeList: [
-        {
+        /* {
           label: '社交活动 (Social)',
           value: 1
         },
@@ -479,7 +480,7 @@ export default {
         {
           label: '职业发展 (Career)',
           value: 6
-        }
+        } */
       ],
       modelList: [],//表单模板列表
       options: [
@@ -583,13 +584,15 @@ export default {
       serverUrl: process.env.VUE_APP_FILE_SERVER_URL, // 这里写你要上传的图片服务器地址
       uploadHeaders: {
       }, 
-      currActivityId: ''
+      currActivityId: '',
+      roleList: []
     }
   },
   created() {
     this.getList()
     this.getModelList();
     this.getSchoolList();
+    this.getAllTypeList();
   },
   methods: {
     getSimpleDate(date) {
@@ -624,6 +627,15 @@ export default {
       listSchool({}).then(response => {
         console.log("学校列表", response)
         this.schoolList = response.data
+      })
+    },
+    /** 查询活动类型列表 */
+    getAllTypeList() {
+      this.loading = true
+      allListType(this.queryParams).then(response => {
+        this.actTypeList = response.rows
+        /* this.total = response.total */
+        this.loading = false
       })
     },
     // 取消按钮
