@@ -312,7 +312,9 @@ p{margin-bottom:12px;color:var(--gray-600)}
 /* ===== AI Chat Widget ===== */
 .ai-chat-fab{position:fixed;bottom:80px;right:24px;width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,var(--blue-500),var(--purple-500));color:#fff;border:none;font-size:24px;cursor:pointer;box-shadow:0 4px 16px rgba(59,130,246,.4);z-index:1000;transition:all .3s ease;display:flex;align-items:center;justify-content:center}
 .ai-chat-fab:hover{transform:scale(1.1);box-shadow:0 6px 24px rgba(59,130,246,.5)}
-.ai-chat-window{position:fixed;bottom:80px;right:24px;width:400px;height:560px;background:#fff;border-radius:var(--radius-xl);box-shadow:0 16px 48px rgba(0,0,0,.15);z-index:1001;display:none;flex-direction:column;overflow:hidden;border:1px solid var(--gray-200)}
+.ai-chat-window{position:fixed;bottom:80px;right:24px;width:400px;height:560px;min-width:320px;min-height:400px;background:#fff;border-radius:var(--radius-xl);box-shadow:0 16px 48px rgba(0,0,0,.15);z-index:1001;display:none;flex-direction:column;overflow:hidden;border:1px solid var(--gray-200)}
+.ai-chat-resize{position:absolute;top:0;left:0;width:16px;height:16px;cursor:nw-resize;z-index:10}
+.ai-chat-resize::after{content:'';position:absolute;top:4px;left:4px;width:8px;height:8px;border-top:2px solid rgba(255,255,255,.6);border-left:2px solid rgba(255,255,255,.6);border-radius:2px 0 0 0}
 .ai-chat-window.open{display:flex;animation:chatSlideUp .3s ease}
 @keyframes chatSlideUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
 .ai-chat-header{padding:14px 16px;background:linear-gradient(135deg,var(--blue-600),var(--purple-600));color:#fff;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
@@ -335,13 +337,38 @@ p{margin-bottom:12px;color:var(--gray-600)}
 .ai-chat-quick-btn{padding:4px 10px;border:1px solid var(--gray-200);border-radius:14px;background:#fff;color:var(--gray-600);font-size:11px;cursor:pointer;transition:var(--transition);white-space:nowrap}
 .ai-chat-quick-btn:hover{border-color:var(--blue-400);color:var(--blue-600);background:var(--blue-50)}
 .ai-chat-input-area{padding:12px 16px;border-top:1px solid var(--gray-200);display:flex;gap:8px;flex-shrink:0}
-.ai-chat-input-area input{flex:1;padding:8px 12px;border:1px solid var(--gray-200);border-radius:20px;font-size:13px;outline:none;transition:var(--transition)}
-.ai-chat-input-area input:focus{border-color:var(--blue-400)}
+.ai-chat-input-area textarea{flex:1;padding:8px 12px;border:1px solid var(--gray-200);border-radius:20px;font-size:13px;outline:none;transition:var(--transition);resize:none;line-height:1.4;max-height:80px;overflow-y:auto;font-family:inherit}
+.ai-chat-input-area textarea:focus{border-color:var(--blue-400)}
 .ai-chat-input-area button{width:36px;height:36px;border-radius:50%;background:var(--blue-600);color:#fff;border:none;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;transition:var(--transition);flex-shrink:0}
 .ai-chat-input-area button:hover{background:var(--blue-700)}
 .ai-chat-input-area button:disabled{background:var(--gray-300);cursor:not-allowed}
 .ai-chat-stop-btn{display:none;align-self:center;padding:5px 14px;border:1px solid var(--gray-300);border-radius:16px;background:#fff;color:var(--gray-600);font-size:12px;cursor:pointer;margin:4px 0;transition:var(--transition)}
 .ai-chat-stop-btn:hover{border-color:#f87171;color:#ef4444}
+.ai-demo-trigger-btn{display:block;margin-top:10px;padding:6px 14px;border:1px solid var(--blue-300);border-radius:16px;background:linear-gradient(135deg,var(--blue-50),#f0f0ff);color:var(--blue-600);font-size:12px;cursor:pointer;transition:all .2s ease;font-weight:500}
+.ai-demo-trigger-btn:hover{background:linear-gradient(135deg,var(--blue-100),#e8e8ff);border-color:var(--blue-400);transform:translateY(-1px);box-shadow:0 2px 8px rgba(59,130,246,.2)}
+.ai-demo-trigger-btn:disabled{opacity:.6;cursor:default;transform:none;box-shadow:none}
+.ai-option-btns{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.ai-option-btn{padding:6px 12px;border:1px solid var(--blue-200);border-radius:16px;background:#fff;color:var(--blue-600);font-size:12px;cursor:pointer;transition:all .2s ease;line-height:1.4;text-align:left}
+.ai-option-btn:hover{background:var(--blue-50);border-color:var(--blue-400);transform:translateY(-1px);box-shadow:0 2px 6px rgba(59,130,246,.15)}
+.ai-field-picker{margin-top:10px;border:1px solid var(--gray-200);border-radius:10px;overflow:hidden;background:#fff}
+.ai-field-picker-header{padding:8px 12px;background:var(--gray-50);border-bottom:1px solid var(--gray-200);font-size:11px;color:var(--gray-500);display:flex;justify-content:space-between;align-items:center}
+.ai-field-item{display:flex;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid var(--gray-100);cursor:pointer;transition:background .15s;user-select:none}
+.ai-field-item:last-child{border-bottom:none}
+.ai-field-item:hover{background:var(--blue-50)}
+.ai-field-item.checked{background:rgba(59,130,246,.04)}
+.ai-field-cb{width:16px;height:16px;border:2px solid var(--gray-300);border-radius:4px;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all .15s;font-size:10px;color:#fff}
+.ai-field-item.checked .ai-field-cb{background:var(--blue-500);border-color:var(--blue-500)}
+.ai-field-info{flex:1;min-width:0}
+.ai-field-name{font-size:13px;font-weight:500;color:var(--gray-800)}
+.ai-field-desc{font-size:11px;color:var(--gray-400);margin-top:1px}
+.ai-field-tag{padding:2px 6px;border-radius:8px;font-size:10px;background:var(--gray-100);color:var(--gray-500);flex-shrink:0;white-space:nowrap}
+.ai-field-item.checked .ai-field-tag{background:var(--blue-100);color:var(--blue-600)}
+.ai-field-actions{padding:8px 12px;border-top:1px solid var(--gray-200);display:flex;gap:8px;background:var(--gray-50)}
+.ai-field-build-btn{flex:1;padding:8px;border:none;border-radius:8px;background:linear-gradient(135deg,var(--blue-500),var(--purple-500));color:#fff;font-size:13px;font-weight:500;cursor:pointer;transition:all .2s}
+.ai-field-build-btn:hover{box-shadow:0 2px 8px rgba(59,130,246,.3);transform:translateY(-1px)}
+.ai-field-build-btn:disabled{opacity:.6;cursor:default;transform:none;box-shadow:none}
+.ai-field-skip-btn{padding:8px 14px;border:1px solid var(--gray-300);border-radius:8px;background:#fff;color:var(--gray-500);font-size:12px;cursor:pointer;transition:all .2s}
+.ai-field-skip-btn:hover{border-color:var(--gray-400);color:var(--gray-700)}
 .ai-chat-stop-btn.visible{display:inline-flex;align-items:center;gap:4px}
 .ai-chat-msg.bot pre.md-codeblock{background:var(--gray-800);color:var(--gray-100);padding:10px 12px;border-radius:6px;overflow-x:auto;font-size:12px;line-height:1.5;margin:6px 0;white-space:pre-wrap;word-break:break-all}
 .ai-chat-msg.bot pre.md-codeblock code{background:none;padding:0;color:inherit;font-size:inherit}
@@ -353,6 +380,7 @@ p{margin-bottom:12px;color:var(--gray-600)}
 .ai-chat-msg.bot h5{font-size:13px}
 @media(max-width:500px){
   .ai-chat-window{width:calc(100vw - 16px);right:8px;bottom:8px;height:calc(100vh - 16px);border-radius:var(--radius-lg)}
+  .ai-chat-resize{display:none}
 }
 
 /* Print */
@@ -1482,6 +1510,7 @@ p{margin-bottom:12px;color:var(--gray-600)}
 
 <!-- AI Chat Window -->
 <div class="ai-chat-window" id="aiChatWindow">
+  <div class="ai-chat-resize" id="aiChatResize"></div>
   <div class="ai-chat-header">
     <h4>AI 表单设计助手</h4>
     <button class="close-btn" onclick="toggleAiChat()">&times;</button>
@@ -1500,7 +1529,7 @@ p{margin-bottom:12px;color:var(--gray-600)}
     <button class="ai-chat-quick-btn" onclick="askQuickQuestion(this)">评分组件有什么配置？</button>
   </div>
   <div class="ai-chat-input-area">
-    <input type="text" id="aiChatInput" placeholder="输入你的问题..." onkeydown="if(event.key==='Enter')sendAiChat()">
+    <textarea id="aiChatInput" placeholder="输入你的问题... (Shift+Enter换行)" rows="1" onkeydown="if(event.key==='Enter'&&!event.isComposing){if(event.shiftKey){return}else{event.preventDefault();sendAiChat()}}" oninput="this.style.height='auto';this.style.height=Math.min(this.scrollHeight,80)+'px'"></textarea>
     <button id="aiChatSend" onclick="sendAiChat()">&gt;</button>
   </div>
 </div>
@@ -2576,17 +2605,17 @@ function stopDemo(){
 // ===== PHASE 6a: Knowledge Base (optimized for RAG speed) =====
 // Split knowledge into topic-indexed chunks for fast retrieval
 const KB_CHUNKS={
-  overview:'表单设计器三栏布局：左侧组件面板(19个组件,3类)、中间画布(拖拽排列,清空/提交按钮)、右侧属性面板(组件属性Tab+表单属性Tab)。操作流程：添加组件->配置属性->预览->保存。',
-  input_components:'输入型组件4个：1.单行文本(姓名/手机号/邮箱,支持前后缀/图标/正则校验,手机号正则/^1[3-9]\\d{9}$/,邮箱正则/^[\\w.-]+@[\\w.-]+\\.\\w+$/) 2.多行文本(自我介绍/建议,最小/最大行数) 3.密码(圆点显示,el-icon-lock图标) 4.计数器(加减按钮,精度/按钮位置/严格步数)',
-  select_components:'选择型组件13个：下拉选择(选项列表/可搜索/多选) 级联选择(省市区/动态静态数据/筛选) 单选框组(默认/按钮样式/边框/尺寸) 多选框组(至少应选/最多可选) 开关(开启关闭提示/值/颜色) 滑块(最小最大值/步长/间断点/范围选择) 时间选择(时间段/格式HH:mm:ss) 时间范围(开始结束占位/分隔符) 日期选择(date/week/month/year/datetime/格式yyyy-MM-dd) 日期范围(daterange/monthrange/datetimerange) 评分(最大值/半选/辅助文字/显示分数) 颜色选择(hex/rgb/rgba格式) 上传(文件类型/大小/列表类型text/picture/picture-card)',
-  layout_components:'布局型组件2个：行容器(多组件并排,栅格间隔,default/flex布局模式) 按钮(提交/重置操作)',
-  form_props:'表单属性10个：表单名(elForm) 表单模型(formData) 校验模型(rules) 表单尺寸(中等/较小/迷你) 标签对齐(左/右/顶部,顶部适合移动端) 标签宽度(默认100px) 栅格间隔(默认15px) 禁用表单 表单按钮(提交+重置) 显示未选中组件边框',
-  templates:'5个示例模板：1.活动报名表(ID:14,单行文本x2+下拉+日期+多行文本) 2.志愿者申请表(ID:15,单行文本x2+时间范围+多选框组+多行文本) 3.满意度调查表(ID:16,评分+滑块+开关+多选框组+多行文本) 4.素材提交表(ID:17,单行文本+上传x2) 5.综合组件示例表(ID:18,密码+计数器+级联+单选框组+时间+日期范围+颜色+行容器+按钮)',
-  faq_create:'创建报名表步骤：1.进入表单设计器 2.输入模板名称 3.添加组件(单行文本/下拉/日期/多行文本) 4.配置属性(必填/校验) 5.提交保存',
-  faq_validate:'手机号验证：单行文本->正则校验->添加规则->表达式/^1[3-9]\\d{9}$/->错误提示"手机号格式错误",最多输入11。邮箱验证：正则/^[\\w.-]+@[\\w.-]+\\.\\w+$/。',
-  faq_upload:'图片上传配置：上传组件->文件类型=图片->列表类型=picture-card(卡片预览)->文件大小2-5MB->开启多选文件和显示提示。视频上传：文件类型=视频,列表类型=text,大小50-100MB。',
-  faq_layout:'多列布局：添加行容器->设置栅格间隔15px->行容器内添加组件->各组件表单栅格设为12(半行)/8(三分之一)/6(四分之一)。栅格系统基于24列。',
-  faq_general:'组件选择建议：短文本->单行文本,长文本->多行文本,固定少选项->单选/多选框组,选项多->下拉选择,是否->开关,打分->评分,文件->上传,数字->计数器/滑块。属性不生效检查：1.确认选中正确组件 2.属性Tab是组件属性 3.某些属性有依赖(选项尺寸仅按钮样式) 4.字段名唯一。'
+  overview:'表单设计器采用经典三栏布局：\n- **左侧组件面板**：提供19个组件，分为输入型(4个)、选择型(13个)、布局型(2个)三类，点击或拖拽即可添加到画布\n- **中间画布区域**：展示已添加的组件，支持拖拽排序、复制、删除，顶部有模板名称输入框和清空/提交按钮\n- **右侧属性面板**：包含"组件属性"和"表单属性"两个Tab，选中画布中的组件后可配置其所有属性\n\n操作流程：进入设计器 → 输入模板名称 → 添加组件 → 配置属性 → 提交保存。\n提示：每个组件的字段名(v-model)必须唯一，系统会自动生成默认字段名。',
+  input_components:'**输入型组件（4个）详细说明：**\n\n1. **单行文本** — 最常用的输入组件，适用于姓名、手机号、邮箱等短文本输入\n   - 关键属性：标题、占位提示、前缀/后缀图标、最大长度、是否必填\n   - 正则校验：支持添加多条正则规则，每条包含"表达式"和"错误提示"\n   - 手机号正则：`/^1[3-9]\\d{9}$/`，配合最大长度11\n   - 邮箱正则：`/^[\\w.-]+@[\\w.-]+\\.\\w+$/`\n   - 前后缀：可设置文本前缀(如"¥")或图标前缀(如el-icon-phone)\n\n2. **多行文本** — 适用于自我介绍、备注、建议等长文本\n   - 关键属性：最小行数(默认4)、最大行数、字数统计、占位提示\n   - 自适应高度：设置autosize后会根据内容自动调整高度\n\n3. **密码** — 密码输入框，内容以圆点显示\n   - 关键属性：前缀图标(默认el-icon-lock)、是否显示切换按钮\n\n4. **计数器** — 数字输入，带加减按钮\n   - 关键属性：最小值、最大值、步长、精度(小数位数)、按钮位置(左右/右侧)、严格步数(只能输入步长倍数)',
+  select_components:'**选择型组件（13个）详细说明：**\n\n**基础选择：**\n- **下拉选择** — 适用于选项较多的场景(如专业、城市)。属性：选项列表(标签+值)、可搜索、可多选、可清空\n- **级联选择** — 适用于多级关联数据(如省市区)。属性：数据类型(静态/动态)、可搜索筛选、分隔符\n- **单选框组** — 适用于3-7个互斥选项。属性：选项列表、样式(默认/按钮)、边框、尺寸；注意"选项尺寸"仅在按钮样式下生效\n- **多选框组** — 适用于多项可选。属性：选项列表、至少应选数、最多可选数\n\n**开关与滑块：**\n- **开关** — 是/否二选一。属性：开启/关闭时的文字提示、值、颜色\n- **滑块** — 数值范围选择。属性：最小值、最大值、步长、显示间断点、范围选择(双滑块)\n\n**时间日期：**\n- **时间选择** — 单个时间点。格式：HH:mm:ss，支持时间段限制\n- **时间范围** — 开始~结束时间对。属性：开始/结束占位文字、分隔符\n- **日期选择** — 支持多种类型：date/week/month/year/datetime，格式如yyyy-MM-dd\n- **日期范围** — 支持：daterange/monthrange/datetimerange\n\n**其他：**\n- **评分** — 星级打分。属性：最大值(默认5)、允许半选、辅助文字、显示分数\n- **颜色选择** — 颜色拾取器。支持hex/rgb/rgba格式，可设置预定义颜色\n- **上传** — 文件/图片/视频上传。属性：文件类型(图片/视频/文件)、大小限制、列表类型(text文字/picture图片/picture-card卡片预览)、多选文件、显示提示',
+  layout_components:'**布局型组件（2个）详细说明：**\n\n1. **行容器** — 实现多组件并排的核心布局组件\n   - 用途：将多个组件放在同一行显示，如"姓名"和"手机号"并排\n   - 关键属性：栅格间隔(组件间距,默认15px)、布局模式(default/flex)\n   - 使用步骤：添加行容器 → 在行容器内添加子组件 → 设置每个子组件的"表单栅格"值\n   - 栅格系统：基于24列，如12=半行、8=三分之一、6=四分之一\n\n2. **按钮** — 表单操作按钮\n   - 用途：添加提交和重置按钮\n   - 注意：通常使用表单属性中的"表单按钮"开关即可，无需单独添加',
+  form_props:'**表单属性（10个全局配置项）：**\n\n| 属性 | 说明 | 默认值 |\n|------|------|--------|\n| 表单名 | 表单的ref名称 | elForm |\n| 表单模型 | 数据对象名 | formData |\n| 校验模型 | 校验规则对象名 | rules |\n| 表单尺寸 | 组件大小：中等/较小/迷你 | 中等 |\n| 标签对齐 | 标签位置：左对齐/右对齐/顶部对齐 | 右对齐 |\n| 标签宽度 | 标签占据的宽度 | 100px |\n| 栅格间隔 | 组件之间的间距 | 15px |\n| 禁用表单 | 是否禁用所有组件 | 否 |\n| 表单按钮 | 显示提交+重置按钮 | 是 |\n| 显示边框 | 未选中组件是否显示边框 | 否 |\n\n提示：标签对齐选"顶部对齐"适合移动端表单；栅格间隔影响行容器内组件的间距。',
+  templates:'**5个内置示例模板：**\n\n1. **活动报名表**（ID:14）— 最常用的报名场景\n   - 组件：单行文本×2(姓名、手机号) + 下拉选择(年级) + 日期选择(日期) + 多行文本(备注)\n\n2. **志愿者申请表**（ID:15）— 志愿服务报名\n   - 组件：单行文本×2(姓名、联系方式) + 时间范围(可用时间) + 多选框组(技能) + 多行文本(自我介绍)\n\n3. **满意度调查表**（ID:16）— 活动后反馈收集\n   - 组件：评分(总体评价) + 滑块(推荐意愿) + 开关(是否再次参加) + 多选框组(改进建议) + 多行文本(详细反馈)\n\n4. **素材提交表**（ID:17）— 文件收集\n   - 组件：单行文本(提交者) + 上传×2(图片上传+文件上传)\n\n5. **综合组件示例表**（ID:18）— 展示所有组件类型\n   - 组件：密码 + 计数器 + 级联选择 + 单选框组 + 时间选择 + 日期范围 + 颜色选择 + 行容器 + 按钮\n\n使用方法：在模板列表中点击对应模板即可加载，可在此基础上修改。',
+  faq_create:'**创建报名表的完整步骤：**\n\n1. **进入表单设计器** — 在管理后台菜单找到"活动管理 > 活动表单模板"，点击"新增模板"\n2. **输入模板名称** — 在画布顶部输入框填写名称，如"2025秋季活动报名表"（必填）\n3. **添加组件** — 从左侧组件面板点击或拖拽组件到画布：\n   - 单行文本（用于姓名、手机号）\n   - 下拉选择（用于年级、专业等固定选项）\n   - 日期选择（用于出生日期、期望参加日期）\n   - 多行文本（用于备注、自我介绍）\n4. **配置属性** — 点击画布中的组件，在右侧属性面板设置：\n   - 修改标题（如"请输入姓名"改为"姓名"）\n   - 开启"必填"开关\n   - 添加校验规则（如手机号正则）\n   - 设置占位提示文字\n5. **配置表单属性（可选）** — 切换到"表单属性"Tab，设置标签对齐、尺寸等\n6. **提交保存** — 点击画布顶部的"提交表单"按钮，提示"新增成功"即保存完成\n\n小技巧：可以先加载"活动报名表"示例模板，在其基础上修改，更快完成。',
+  faq_validate:'**表单验证配置详解：**\n\n**手机号验证：**\n1. 选中单行文本组件\n2. 在右侧属性面板找到"正则校验"\n3. 点击"添加规则"\n4. 填写正则表达式：`/^1[3-9]\\d{9}$/`\n5. 填写错误提示："请输入正确的手机号"\n6. 设置"最多输入"为11个字符\n\n**邮箱验证：**\n1. 正则表达式：`/^[\\w.-]+@[\\w.-]+\\.\\w+$/`\n2. 错误提示："请输入正确的邮箱地址"\n\n**必填验证：**\n- 在组件属性面板开启"必填"开关即可，系统会自动添加非空校验\n\n**自定义正则：**\n- 身份证号：`/^\\d{17}[\\dXx]$/`\n- 仅中文：`/^[\\u4e00-\\u9fa5]+$/`\n- 6位数字验证码：`/^\\d{6}$/`\n\n注意：一个组件可以添加多条正则规则，所有规则都会依次校验。',
+  faq_upload:'**上传组件配置详解：**\n\n**图片上传配置步骤：**\n1. 从左侧组件面板添加"上传"组件到画布\n2. 选中上传组件，在右侧属性面板配置：\n   - **文件类型**：选择"图片"（限制只能上传图片文件）\n   - **列表类型**：选择"picture-card"（卡片预览模式，上传后显示缩略图）\n   - **文件大小**：设置上传大小限制，建议2-5MB\n   - **多选文件**：开启后可一次选择多张图片\n   - **显示提示**：开启后会显示文件类型和大小限制说明\n3. 根据需要设置是否必填\n\n**视频上传配置：**\n- 文件类型：选择"视频"\n- 列表类型：建议选择"text"（文字列表模式）\n- 文件大小：建议50-100MB\n\n**普通文件上传：**\n- 文件类型：选择"文件"（支持所有类型）\n- 列表类型：选择"text"\n\n**三种列表类型对比：**\n- `text`：文字列表，显示文件名，适合文档/视频\n- `picture`：图片列表，小缩略图+文件名\n- `picture-card`：卡片模式，大缩略图预览，适合图片上传',
+  faq_layout:'**多列布局（栅格系统）详解：**\n\n表单设计器使用24列栅格系统实现多组件并排布局。\n\n**实现步骤：**\n1. 添加"行容器"组件到画布\n2. 在行容器内添加需要并排的组件\n3. 选中行容器内的每个组件，设置"表单栅格"值\n\n**常用栅格配置：**\n- **两列等宽**：每个组件设为12（12+12=24）\n- **三列等宽**：每个组件设为8（8+8+8=24）\n- **四列等宽**：每个组件设为6（6+6+6+6=24）\n- **左窄右宽**：左侧设为8，右侧设为16\n- **左宽右窄**：左侧设为16，右侧设为8\n\n**行容器属性：**\n- 栅格间隔：组件之间的间距，默认15px，可调整\n- 布局模式：default（默认）或 flex（弹性布局）\n\n**示例 — 姓名和手机号并排：**\n1. 添加行容器\n2. 在行容器内添加两个单行文本\n3. 第一个设为"姓名"，表单栅格=12\n4. 第二个设为"手机号"，表单栅格=12\n\n注意：栅格值之和不要超过24，否则会自动换行。',
+  faq_general:'**组件选择建议：**\n- 短文本(姓名/手机号) → 单行文本\n- 长文本(自我介绍/备注) → 多行文本\n- 固定少量选项(性别/是否) → 单选框组\n- 多项可选(技能/兴趣) → 多选框组\n- 选项较多(专业/城市) → 下拉选择\n- 多级关联(省市区) → 级联选择\n- 是/否开关 → 开关\n- 打分评价 → 评分\n- 文件/图片 → 上传\n- 数字输入 → 计数器或滑块\n\n**常见问题排查：**\n1. 属性修改不生效 → 确认选中了正确的组件，且在"组件属性"Tab下\n2. 选项尺寸不生效 → 该属性仅在单选框组的"按钮样式"下有效\n3. 字段名冲突 → 每个组件的字段名必须唯一\n4. 校验不触发 → 检查是否开启了"必填"或添加了正则规则\n5. 行容器内组件不并排 → 检查子组件的"表单栅格"值之和是否≤24'
 };
 
 // Smart RAG: match question keywords to relevant KB chunks
@@ -2617,8 +2646,8 @@ function getRelevantContext(question){
   if(matches.length===0){
     matches.push(KB_CHUNKS.overview,KB_CHUNKS.faq_general);
   }
-  // Cap at 2 chunks to keep context small and fast
-  return matches.slice(0,2).join('\n\n');
+  // Cap at 4 chunks for richer context
+  return matches.slice(0,4).join('\n\n');
 }
 
 // ===== PHASE 6b: AI Chat =====
@@ -2659,6 +2688,56 @@ function toggleAiChat(){
 }
 
 document.getElementById('aiChatFab').addEventListener('click',toggleAiChat);
+
+// Drag-to-resize from top-left corner
+(function(){
+  const handle=document.getElementById('aiChatResize');
+  const win=document.getElementById('aiChatWindow');
+  let dragging=false,startX,startY,startW,startH,startLeft,startTop;
+  handle.addEventListener('mousedown',function(e){
+    e.preventDefault();
+    dragging=true;
+    startX=e.clientX;startY=e.clientY;
+    startW=win.offsetWidth;startH=win.offsetHeight;
+    const rect=win.getBoundingClientRect();
+    startLeft=rect.left;startTop=rect.top;
+    document.body.style.cursor='nw-resize';
+    document.body.style.userSelect='none';
+  });
+  document.addEventListener('mousemove',function(e){
+    if(!dragging)return;
+    const dx=startX-e.clientX;
+    const dy=startY-e.clientY;
+    const newW=Math.max(320,Math.min(startW+dx,window.innerWidth-48));
+    const newH=Math.max(400,Math.min(startH+dy,window.innerHeight-48));
+    win.style.width=newW+'px';
+    win.style.height=newH+'px';
+  });
+  document.addEventListener('mouseup',function(){
+    if(!dragging)return;
+    dragging=false;
+    document.body.style.cursor='';
+    document.body.style.userSelect='';
+  });
+  // Touch support for mobile
+  handle.addEventListener('touchstart',function(e){
+    const t=e.touches[0];
+    dragging=true;
+    startX=t.clientX;startY=t.clientY;
+    startW=win.offsetWidth;startH=win.offsetHeight;
+  },{passive:true});
+  document.addEventListener('touchmove',function(e){
+    if(!dragging)return;
+    const t=e.touches[0];
+    const dx=startX-t.clientX;
+    const dy=startY-t.clientY;
+    const newW=Math.max(320,Math.min(startW+dx,window.innerWidth-48));
+    const newH=Math.max(400,Math.min(startH+dy,window.innerHeight-48));
+    win.style.width=newW+'px';
+    win.style.height=newH+'px';
+  },{passive:true});
+  document.addEventListener('touchend',function(){dragging=false;});
+})();
 
 function restoreAiChat(){
   const msgs=document.getElementById('aiChatMessages');
@@ -2726,10 +2805,484 @@ function renderMd(text){
 // Pre-written answers for quick questions — instant local response, no API call
 const QUICK_ANSWERS={
   '有哪些组件可以使用？':'表单设计器提供 **19 个组件**，分为三大类：\n\n**输入型组件（4个）**\n- 单行文本（支持正则校验、前后缀）\n- 多行文本（自适应高度、字数统计）\n- 密码输入（可切换显示）\n- 计数器（步长、精度、范围设置）\n\n**选择型组件（13个）**\n- 下拉选择、级联选择、单选框组、多选框组\n- 开关、滑块、评分、颜色选择\n- 时间选择、时间范围、日期选择、日期范围\n- 上传（文件/图片/视频）\n\n**布局型组件（2个）**\n- 行容器（多组件并排，栅格布局）\n- 按钮（提交/重置操作）',
+  '有哪些组件可用？':'表单设计器提供 **19 个组件**，分为三大类：\n\n**输入型组件（4个）**\n- 单行文本（支持正则校验、前后缀图标）\n- 多行文本（自适应高度、字数统计）\n- 密码输入（圆点显示，可切换明文）\n- 计数器（加减按钮，步长/精度/范围）\n\n**选择型组件（13个）**\n- 下拉选择、级联选择、单选框组、多选框组\n- 开关、滑块、评分、颜色选择\n- 时间选择、时间范围、日期选择、日期范围\n- 上传（文件/图片/视频）\n\n**布局型组件（2个）**\n- 行容器（多组件并排，24列栅格布局）\n- 按钮（提交/重置操作）',
   '如何创建报名表？':'创建报名表步骤：\n\n1. **进入表单设计器** — 点击"创建新模板"或从模板列表进入\n2. **输入模板名称** — 填写表单标题，如"2025秋季活动报名表"\n3. **添加组件** — 从左侧组件面板拖拽所需组件到画布：\n   - 单行文本 × 2（姓名、手机号）\n   - 下拉选择（年级/专业）\n   - 日期选择（出生日期/期望日期）\n   - 多行文本（备注/自我介绍）\n4. **配置属性** — 选中组件后在右侧属性面板设置必填、校验规则等\n5. **提交保存** — 点击提交按钮保存模板',
   '如何添加表单验证？':'常用表单验证配置：\n\n**手机号验证**\n- 选中单行文本组件 → 正则校验 → 添加规则\n- 表达式：`/^1[3-9]\\d{9}$/`\n- 错误提示："手机号格式错误"\n- 最多输入：11 个字符\n\n**邮箱验证**\n- 正则表达式：`/^[\\w.-]+@[\\w.-]+\\.\\w+$/`\n- 错误提示："邮箱格式错误"\n\n**通用设置**\n- 在组件属性面板开启"必填"开关\n- 添加自定义正则规则实现格式校验\n- 设置最大/最小长度限制',
-  '模板有哪些示例？':'系统内置 **5 个示例模板**：\n\n1. **活动报名表**（ID:14）— 单行文本×2 + 下拉 + 日期 + 多行文本\n2. **志愿者申请表**（ID:15）— 单行文本×2 + 时间范围 + 多选框组 + 多行文本\n3. **满意度调查表**（ID:16）— 评分 + 滑块 + 开关 + 多选框组 + 多行文本\n4. **素材提交表**（ID:17）— 单行文本 + 上传×2\n5. **综合组件示例表**（ID:18）— 密码 + 计数器 + 级联 + 单选框组 + 时间 + 日期范围 + 颜色 + 行容器 + 按钮\n\n可直接从模板列表加载使用或在此基础上修改。'
+  '手机号怎么验证？':'**手机号验证配置步骤：**\n\n1. 选中单行文本组件\n2. 在右侧属性面板找到 **"正则校验"**\n3. 点击 **"添加规则"**\n4. 填写正则表达式：`/^1[3-9]\\d{9}$/`\n5. 填写错误提示："请输入正确的手机号"\n6. 设置"最多输入"为 **11** 个字符\n\n**其他常用验证：**\n\n| 场景 | 正则表达式 | 提示 |\n|------|-----------|------|\n| 邮箱 | `/^[\\w.-]+@[\\w.-]+\\.\\w+$/` | 请输入正确的邮箱 |\n| 身份证号 | `/^\\d{17}[\\dXx]$/` | 请输入正确的身份证号 |\n| 仅中文 | `/^[\\u4e00-\\u9fa5]+$/` | 请输入中文 |\n| 6位验证码 | `/^\\d{6}$/` | 请输入6位数字验证码 |\n\n**通用设置：**\n- 开启"必填"开关 → 自动添加非空校验\n- 一个组件可添加多条正则规则，依次校验',
+  '模板有哪些示例？':'系统内置 **5 个示例模板**：\n\n1. **活动报名表**（ID:14）— 单行文本×2 + 下拉 + 日期 + 多行文本\n2. **志愿者申请表**（ID:15）— 单行文本×2 + 时间范围 + 多选框组 + 多行文本\n3. **满意度调查表**（ID:16）— 评分 + 滑块 + 开关 + 多选框组 + 多行文本\n4. **素材提交表**（ID:17）— 单行文本 + 上传×2\n5. **综合组件示例表**（ID:18）— 密码 + 计数器 + 级联 + 单选框组 + 时间 + 日期范围 + 颜色 + 行容器 + 按钮\n\n可直接从模板列表加载使用或在此基础上修改。',
+  '日期格式怎么设置？':'**日期组件配置详解：**\n\n**日期选择组件**支持多种类型，在属性面板的"时间类型"中选择：\n\n| 类型 | 说明 | 格式示例 |\n|------|------|----------|\n| date | 选择某一天 | yyyy-MM-dd（2025-09-15） |\n| week | 选择某一周 | yyyy 第 WW 周 |\n| month | 选择某月 | yyyy-MM（2025-09） |\n| year | 选择某年 | yyyy（2025） |\n| datetime | 日期+时间 | yyyy-MM-dd HH:mm:ss |\n\n**日期范围组件**支持：\n- daterange — 起止日期\n- monthrange — 起止月份\n- datetimerange — 起止日期时间\n\n**配置步骤：**\n1. 添加"日期选择"或"日期范围"组件\n2. 在属性面板选择"时间类型"\n3. 设置"格式"（如 `yyyy-MM-dd`）\n4. 可设置占位文字提示用户\n\n常用场景：出生日期用 date，活动时间段用 datetimerange。',
+  '开关组件怎么用？':'**开关组件配置详解：**\n\n开关组件用于"是/否"二选一场景，如"是否同意协议"、"是否参加"。\n\n**关键属性：**\n\n| 属性 | 说明 | 示例 |\n|------|------|------|\n| 开启提示 | 开启状态文字 | "是"、"同意" |\n| 关闭提示 | 关闭状态文字 | "否"、"拒绝" |\n| 开启值 | 开启时的值 | true / 1 / "yes" |\n| 关闭值 | 关闭时的值 | false / 0 / "no" |\n| 开启颜色 | 开启状态颜色 | #13ce66 |\n| 关闭颜色 | 关闭状态颜色 | #ff4949 |\n\n**配置步骤：**\n1. 从左侧面板添加"开关"组件\n2. 设置标题，如"是否同意服务条款"\n3. 设置开启/关闭提示文字\n4. 根据需要自定义开启/关闭值和颜色',
+  '评分组件有什么配置？':'**评分组件配置详解：**\n\n评分组件用于星级打分场景，如活动满意度、服务评价。\n\n**关键属性：**\n\n| 属性 | 说明 | 默认值 |\n|------|------|--------|\n| 最大值 | 最高几颗星 | 5 |\n| 允许半选 | 支持半颗星评分 | 否 |\n| 辅助文字 | 每级显示描述文字 | 否 |\n| 显示分数 | 星星旁显示数值 | 否 |\n\n**配置步骤：**\n1. 添加"评分"组件到画布\n2. 设置标题，如"活动满意度"\n3. 设置最大值（默认5颗星）\n4. 根据需要开启"允许半选"（更精细评分）\n5. 开启"辅助文字"可为每级星星设置描述（如：极差/失望/一般/满意/惊喜）\n6. 开启"显示分数"在星星右侧显示当前分值',
+  '如何上传图片？':'**图片上传配置步骤：**\n\n1. **添加上传组件** — 从左侧组件面板点击"上传"组件，添加到画布\n2. **设置文件类型** — 在右侧属性面板，将"文件类型"设为 **图片**\n3. **选择列表类型** — 推荐选择 **picture-card**（卡片预览模式），上传后会显示缩略图预览\n4. **设置大小限制** — "文件大小"建议设为 **2~5 MB**，防止用户上传过大的图片\n5. **开启多选（可选）** — 打开"多选文件"开关，允许一次选择多张图片\n6. **显示提示（推荐）** — 开启"显示提示"，会自动显示文件类型和大小限制说明\n\n**三种列表类型对比：**\n| 类型 | 说明 | 适用场景 |\n|------|------|----------|\n| text | 文字列表，显示文件名 | 文档、视频 |\n| picture | 小缩略图 + 文件名 | 混合文件 |\n| picture-card | 大卡片缩略图预览 | 图片上传（推荐） |\n\n**视频上传**：文件类型选"视频"，列表类型选"text"，大小建议 50~100 MB。',
+  '怎么实现多列布局？':'**多列布局实现方法：**\n\n表单设计器使用 **24 列栅格系统**，通过"行容器"组件实现多组件并排。\n\n**操作步骤：**\n1. 从左侧面板添加 **行容器** 组件到画布\n2. 在行容器内添加需要并排的组件（如两个单行文本）\n3. 选中行容器内的每个组件，设置 **"表单栅格"** 值\n\n**常用栅格配置：**\n| 布局 | 栅格值 | 效果 |\n|------|--------|------|\n| 两列等宽 | 12 + 12 | 各占一半 |\n| 三列等宽 | 8 + 8 + 8 | 各占三分之一 |\n| 四列等宽 | 6 + 6 + 6 + 6 | 各占四分之一 |\n| 左窄右宽 | 8 + 16 | 1:2 比例 |\n| 左宽右窄 | 16 + 8 | 2:1 比例 |\n\n**示例 — 姓名和手机号并排：**\n1. 添加行容器\n2. 行容器内添加两个单行文本\n3. 第一个改标题为"姓名"，表单栅格设为 **12**\n4. 第二个改标题为"手机号"，表单栅格设为 **12**\n\n**行容器属性：**\n- **栅格间隔**：组件间距，默认 15px\n- **布局模式**：default（默认）或 flex（弹性布局）\n\n⚠️ 注意：栅格值之和不要超过 24，否则多出的组件会自动换行。'
 };
+
+// ===== AI Demo System: AI controls the simulator =====
+const AI_DEMO_RECIPES={
+  'upload_image':{
+    desc:'图片上传组件演示',
+    steps:[
+      {action:'clear'},
+      {action:'name',value:'图片上传示例'},
+      {action:'add',type:'input',delay:400},
+      {action:'prop',key:'label',value:'提交者姓名'},
+      {action:'prop',key:'placeholder',value:'请输入您的姓名'},
+      {action:'add',type:'upload',delay:500},
+      {action:'prop',key:'label',value:'上传图片'},
+      {action:'prop',key:'fileType',value:'图片'},
+      {action:'prop',key:'listType',value:'picture-card'},
+      {action:'prop',key:'maxSize',value:'5MB'},
+      {action:'prop',key:'multiple',value:true},
+      {action:'prop',key:'showTip',value:true},
+    ]
+  },
+  'multi_column':{
+    desc:'多列布局演示',
+    steps:[
+      {action:'clear'},
+      {action:'name',value:'多列布局示例'},
+      {action:'add',type:'row',delay:400},
+      {action:'prop',key:'gutter',value:15},
+      {action:'add',type:'input',delay:400},
+      {action:'prop',key:'label',value:'姓名'},
+      {action:'prop',key:'spanCount',value:12},
+      {action:'prop',key:'placeholder',value:'请输入姓名'},
+      {action:'add',type:'input',delay:400},
+      {action:'prop',key:'label',value:'手机号'},
+      {action:'prop',key:'spanCount',value:12},
+      {action:'prop',key:'placeholder',value:'请输入手机号'},
+      {action:'prop',key:'regexValidation',value:'/^1[3-9]\\d{9}$/'},
+      {action:'add',type:'select',delay:400},
+      {action:'prop',key:'label',value:'年级'},
+      {action:'prop',key:'options',value:'大一,大二,大三,大四,研究生'},
+    ]
+  },
+  'registration_form':{
+    desc:'活动报名表演示',
+    steps:[
+      {action:'clear'},
+      {action:'name',value:'2025秋季活动报名表'},
+      {action:'add',type:'input',delay:400},
+      {action:'prop',key:'label',value:'姓名'},
+      {action:'prop',key:'placeholder',value:'请输入真实姓名'},
+      {action:'add',type:'input',delay:400},
+      {action:'prop',key:'label',value:'手机号'},
+      {action:'prop',key:'placeholder',value:'请输入手机号'},
+      {action:'prop',key:'regexValidation',value:'/^1[3-9]\\d{9}$/'},
+      {action:'add',type:'select',delay:400},
+      {action:'prop',key:'label',value:'年级'},
+      {action:'prop',key:'options',value:'大一,大二,大三,大四,研究生'},
+      {action:'add',type:'date',delay:400},
+      {action:'prop',key:'label',value:'期望参加日期'},
+      {action:'add',type:'textarea',delay:400},
+      {action:'prop',key:'label',value:'自我介绍'},
+      {action:'prop',key:'placeholder',value:'请简单介绍自己...'},
+    ]
+  },
+  'validation_demo':{
+    desc:'表单验证演示',
+    steps:[
+      {action:'clear'},
+      {action:'name',value:'验证规则示例'},
+      {action:'add',type:'input',delay:400},
+      {action:'prop',key:'label',value:'手机号'},
+      {action:'prop',key:'placeholder',value:'请输入手机号'},
+      {action:'prop',key:'regexValidation',value:'/^1[3-9]\\d{9}$/'},
+      {action:'prop',key:'maxlength',value:'11'},
+      {action:'add',type:'input',delay:400},
+      {action:'prop',key:'label',value:'邮箱'},
+      {action:'prop',key:'placeholder',value:'请输入邮箱地址'},
+      {action:'prop',key:'regexValidation',value:'/^[\\w.-]+@[\\w.-]+\\.\\w+$/'},
+      {action:'add',type:'input',delay:400},
+      {action:'prop',key:'label',value:'身份证号'},
+      {action:'prop',key:'placeholder',value:'请输入身份证号'},
+      {action:'prop',key:'regexValidation',value:'/^\\d{17}[\\dXx]$/'},
+      {action:'prop',key:'maxlength',value:'18'},
+    ]
+  },
+  'switch_demo':{
+    desc:'开关组件演示',
+    steps:[
+      {action:'clear'},
+      {action:'name',value:'开关组件示例'},
+      {action:'add',type:'switch',delay:400},
+      {action:'prop',key:'label',value:'是否同意协议'},
+      {action:'prop',key:'activeText',value:'同意'},
+      {action:'prop',key:'inactiveText',value:'拒绝'},
+      {action:'add',type:'switch',delay:400},
+      {action:'prop',key:'label',value:'开启通知'},
+      {action:'prop',key:'activeColor',value:'#13ce66'},
+      {action:'prop',key:'inactiveColor',value:'#ff4949'},
+    ]
+  },
+  'rate_demo':{
+    desc:'评分组件演示',
+    steps:[
+      {action:'clear'},
+      {action:'name',value:'评分组件示例'},
+      {action:'add',type:'rate',delay:400},
+      {action:'prop',key:'label',value:'活动满意度'},
+      {action:'prop',key:'max',value:5},
+      {action:'prop',key:'showScore',value:true},
+      {action:'add',type:'rate',delay:400},
+      {action:'prop',key:'label',value:'讲师评分'},
+      {action:'prop',key:'max',value:10},
+      {action:'prop',key:'allowHalf',value:true},
+      {action:'prop',key:'showScore',value:true},
+      {action:'add',type:'textarea',delay:400},
+      {action:'prop',key:'label',value:'详细反馈'},
+      {action:'prop',key:'placeholder',value:'请写下您的建议...'},
+    ]
+  },
+  'date_demo':{
+    desc:'日期组件演示',
+    steps:[
+      {action:'clear'},
+      {action:'name',value:'日期组件示例'},
+      {action:'add',type:'date',delay:400},
+      {action:'prop',key:'label',value:'出生日期'},
+      {action:'prop',key:'dateType',value:'date'},
+      {action:'prop',key:'format',value:'yyyy-MM-dd'},
+      {action:'add',type:'daterange',delay:400},
+      {action:'prop',key:'label',value:'活动时间段'},
+      {action:'prop',key:'startPlaceholder',value:'开始日期'},
+      {action:'prop',key:'endPlaceholder',value:'结束日期'},
+      {action:'add',type:'time',delay:400},
+      {action:'prop',key:'label',value:'签到时间'},
+      {action:'add',type:'timerange',delay:400},
+      {action:'prop',key:'label',value:'可用时间段'},
+    ]
+  },
+  'components_overview':{
+    desc:'全部组件类型演示',
+    steps:[
+      {action:'clear'},
+      {action:'name',value:'组件一览'},
+      {action:'add',type:'input',delay:300},
+      {action:'prop',key:'label',value:'单行文本'},
+      {action:'add',type:'textarea',delay:300},
+      {action:'prop',key:'label',value:'多行文本'},
+      {action:'add',type:'select',delay:300},
+      {action:'prop',key:'label',value:'下拉选择'},
+      {action:'add',type:'radio',delay:300},
+      {action:'prop',key:'label',value:'单选框组'},
+      {action:'add',type:'checkbox',delay:300},
+      {action:'prop',key:'label',value:'多选框组'},
+      {action:'add',type:'switch',delay:300},
+      {action:'prop',key:'label',value:'开关'},
+      {action:'add',type:'rate',delay:300},
+      {action:'prop',key:'label',value:'评分'},
+      {action:'add',type:'upload',delay:300},
+      {action:'prop',key:'label',value:'上传'},
+    ]
+  }
+};
+
+// Map quick questions to demo recipes
+const QUESTION_DEMO_MAP={
+  '如何上传图片？':'upload_image',
+  '怎么实现多列布局？':'multi_column',
+  '如何创建报名表？':'registration_form',
+  '手机号怎么验证？':'validation_demo',
+  '如何添加表单验证？':'validation_demo',
+  '开关组件怎么用？':'switch_demo',
+  '评分组件有什么配置？':'rate_demo',
+  '日期格式怎么设置？':'date_demo',
+  '有哪些组件可用？':'components_overview',
+  '有哪些组件可以使用？':'components_overview',
+};
+
+let aiDemoRunning=false;
+let aiDemoTimer=null;
+
+function executeAiDemo(recipeName){
+  const recipe=AI_DEMO_RECIPES[recipeName];
+  if(!recipe||aiDemoRunning)return;
+  aiDemoRunning=true;
+
+  // Scroll simulator into view
+  const simEl=document.getElementById('simCanvas');
+  if(simEl)simEl.scrollIntoView({behavior:'smooth',block:'center'});
+
+  const steps=recipe.steps;
+  let i=0;
+
+  function runStep(){
+    if(i>=steps.length){
+      aiDemoRunning=false;
+      return;
+    }
+    const s=steps[i];
+    const delay=s.delay||250;
+    switch(s.action){
+      case 'clear':
+        clearSimCanvas();
+        break;
+      case 'name':
+        document.getElementById('simFormName').value=s.value;
+        break;
+      case 'add':
+        addSimComp(s.type);
+        // Briefly highlight the new item
+        const canvasItems=document.querySelectorAll('.sim-canvas-item');
+        const last=canvasItems[canvasItems.length-1];
+        if(last){last.style.transition='box-shadow .3s';last.style.boxShadow='0 0 0 2px #409EFF';setTimeout(()=>{last.style.boxShadow='';},800);}
+        break;
+      case 'prop':
+        if(simSelectedIdx>=0&&simSelectedIdx<simItems.length){
+          simItems[simSelectedIdx].props[s.key]=s.value;
+          renderSimCanvas();
+          renderSimProps();
+        }
+        break;
+    }
+    i++;
+    aiDemoTimer=setTimeout(runStep,delay);
+  }
+
+  runStep();
+}
+
+function stopAiDemo(){
+  aiDemoRunning=false;
+  if(aiDemoTimer){clearTimeout(aiDemoTimer);aiDemoTimer=null;}
+}
+
+function createDemoButton(recipeName,containerEl){
+  const recipe=AI_DEMO_RECIPES[recipeName];
+  if(!recipe)return;
+  const btn=document.createElement('button');
+  btn.className='ai-demo-trigger-btn';
+  btn.innerHTML='&#9654; 在模拟器中演示';
+  btn.onclick=function(){
+    if(aiDemoRunning){stopAiDemo();}
+    executeAiDemo(recipeName);
+    btn.innerHTML='&#9654; 演示中...';
+    btn.disabled=true;
+    const checkDone=setInterval(()=>{
+      if(!aiDemoRunning){
+        clearInterval(checkDone);
+        btn.innerHTML='&#9654; 重新演示';
+        btn.disabled=false;
+      }
+    },500);
+  };
+  containerEl.appendChild(btn);
+}
+
+// Dynamic actions: AI generates custom action sequences
+function executeDynamicActions(actions){
+  if(!Array.isArray(actions)||actions.length===0||aiDemoRunning)return;
+  aiDemoRunning=true;
+  const simEl=document.getElementById('simCanvas');
+  if(simEl)simEl.scrollIntoView({behavior:'smooth',block:'center'});
+
+  let i=0;
+  function runStep(){
+    if(i>=actions.length){aiDemoRunning=false;return;}
+    const s=actions[i];
+    const act=s.a||s.action;
+    switch(act){
+      case 'clear':
+        clearSimCanvas();
+        break;
+      case 'name':
+        document.getElementById('simFormName').value=s.v||s.value||'';
+        break;
+      case 'add':
+        addSimComp(s.t||s.type);
+        const items=document.querySelectorAll('.sim-canvas-item');
+        const last=items[items.length-1];
+        if(last){last.style.transition='box-shadow .3s';last.style.boxShadow='0 0 0 2px #409EFF';setTimeout(()=>{last.style.boxShadow='';},800);}
+        break;
+      case 'prop':
+        if(simSelectedIdx>=0&&simSelectedIdx<simItems.length){
+          const key=s.k||s.key;
+          let val=s.v!==undefined?s.v:s.value;
+          // Convert string booleans
+          if(val==='true')val=true;
+          if(val==='false')val=false;
+          simItems[simSelectedIdx].props[key]=val;
+          renderSimCanvas();
+          renderSimProps();
+        }
+        break;
+      case 'select':
+        const idx=s.i!==undefined?s.i:s.index;
+        if(typeof idx==='number'&&idx>=0&&idx<simItems.length)selectSimItem(idx);
+        break;
+    }
+    i++;
+    const delay=(act==='add')?450:(act==='clear')?300:200;
+    aiDemoTimer=setTimeout(runStep,delay);
+  }
+  runStep();
+}
+
+function createDynamicDemoButton(actions,containerEl){
+  const btn=document.createElement('button');
+  btn.className='ai-demo-trigger-btn';
+  btn.innerHTML='&#9654; 在模拟器中搭建';
+  btn.onclick=function(){
+    if(aiDemoRunning){stopAiDemo();}
+    executeDynamicActions(actions);
+    btn.innerHTML='&#9654; 搭建中...';
+    btn.disabled=true;
+    const checkDone=setInterval(()=>{
+      if(!aiDemoRunning){
+        clearInterval(checkDone);
+        btn.innerHTML='&#9654; 重新搭建';
+        btn.disabled=false;
+      }
+    },500);
+  };
+  containerEl.appendChild(btn);
+}
+
+// Component type display names
+const COMP_TYPE_NAMES={input:'单行文本',textarea:'多行文本',password:'密码',counter:'计数器',select:'下拉选择',cascader:'级联选择',radio:'单选框组',checkbox:'多选框组',switch:'开关',slider:'滑块',time:'时间选择',timerange:'时间范围',date:'日期选择',daterange:'日期范围',rate:'评分',color:'颜色选择',upload:'上传',row:'行容器',button:'按钮'};
+
+function renderFieldPicker(fields,formName,containerEl){
+  const picker=document.createElement('div');
+  picker.className='ai-field-picker';
+
+  const checkedCount=()=>fields.filter(f=>f.checked).length;
+
+  // Header
+  const header=document.createElement('div');
+  header.className='ai-field-picker-header';
+  const countSpan=document.createElement('span');
+  countSpan.textContent='已选 '+checkedCount()+'/'+fields.length+' 个字段';
+  const toggleAll=document.createElement('span');
+  toggleAll.style.cssText='cursor:pointer;color:var(--blue-500)';
+  toggleAll.textContent='全选';
+  toggleAll.onclick=()=>{
+    const allChecked=fields.every(f=>f.checked);
+    fields.forEach(f=>f.checked=!allChecked);
+    toggleAll.textContent=allChecked?'全选':'取消全选';
+    refreshItems();
+  };
+  header.appendChild(countSpan);
+  header.appendChild(toggleAll);
+  picker.appendChild(header);
+
+  // Field items
+  const itemsWrap=document.createElement('div');
+  picker.appendChild(itemsWrap);
+
+  function refreshItems(){
+    itemsWrap.innerHTML='';
+    fields.forEach((f,i)=>{
+      const row=document.createElement('div');
+      row.className='ai-field-item'+(f.checked?' checked':'');
+      row.onclick=()=>{
+        f.checked=!f.checked;
+        row.classList.toggle('checked');
+        countSpan.textContent='已选 '+checkedCount()+'/'+fields.length+' 个字段';
+        buildBtn.textContent='开始搭建（'+checkedCount()+'个字段）';
+        buildBtn.disabled=checkedCount()===0;
+      };
+      const cb=document.createElement('div');
+      cb.className='ai-field-cb';
+      cb.innerHTML=f.checked?'✓':'';
+      row.appendChild(cb);
+
+      const info=document.createElement('div');
+      info.className='ai-field-info';
+      const name=document.createElement('div');
+      name.className='ai-field-name';
+      name.textContent=f.label;
+      info.appendChild(name);
+      if(f.desc){
+        const desc=document.createElement('div');
+        desc.className='ai-field-desc';
+        desc.textContent=f.desc;
+        info.appendChild(desc);
+      }
+      row.appendChild(info);
+
+      const tag=document.createElement('span');
+      tag.className='ai-field-tag';
+      tag.textContent=COMP_TYPE_NAMES[f.type]||f.type;
+      row.appendChild(tag);
+
+      // Re-bind checkbox visual on toggle
+      row.addEventListener('click',()=>{
+        cb.innerHTML=f.checked?'✓':'';
+      });
+
+      itemsWrap.appendChild(row);
+    });
+  }
+  refreshItems();
+
+  // Actions bar
+  const actionsBar=document.createElement('div');
+  actionsBar.className='ai-field-actions';
+
+  const buildBtn=document.createElement('button');
+  buildBtn.className='ai-field-build-btn';
+  buildBtn.textContent='开始搭建（'+checkedCount()+'个字段）';
+  buildBtn.onclick=function(){
+    const selected=fields.filter(f=>f.checked);
+    if(selected.length===0)return;
+    // Build actions from selected fields
+    const actions=[{a:'clear'},{a:'name',v:formName||'新建表单'}];
+    selected.forEach(f=>{
+      actions.push({a:'add',t:f.type});
+      actions.push({a:'prop',k:'label',v:f.label});
+      if(f.props){
+        Object.entries(f.props).forEach(([k,v])=>{
+          actions.push({a:'prop',k,v});
+        });
+      }
+    });
+    // Disable picker
+    buildBtn.disabled=true;
+    buildBtn.textContent='搭建中...';
+    picker.style.opacity='.7';
+    picker.style.pointerEvents='none';
+    // Execute
+    if(aiDemoRunning)stopAiDemo();
+    executeDynamicActions(actions);
+    const checkDone=setInterval(()=>{
+      if(!aiDemoRunning){
+        clearInterval(checkDone);
+        buildBtn.textContent='搭建完成 ✓';
+        // Add completion message
+        const msgs=document.getElementById('aiChatMessages');
+        const doneEl=document.createElement('div');
+        doneEl.className='ai-chat-msg bot';
+        doneEl.innerHTML=renderMd('已为你搭建好 **'+formName+'**，包含 '+selected.length+' 个字段。你可以在模拟器中查看效果。\n\n需要调整吗？');
+        // Add follow-up options
+        const wrap=document.createElement('div');
+        wrap.className='ai-option-btns';
+        ['再加一个字段','修改某个字段的属性','重新选择字段','这样就好了'].forEach(opt=>{
+          const btn=document.createElement('button');
+          btn.className='ai-option-btn';
+          btn.textContent=opt;
+          btn.onclick=function(){
+            wrap.querySelectorAll('.ai-option-btn').forEach(b=>{b.disabled=true;b.style.opacity='.5';});
+            btn.style.opacity='1';btn.style.borderColor='var(--blue-500)';btn.style.background='var(--blue-50)';
+            document.getElementById('aiChatInput').value=opt;
+            sendAiChat();
+          };
+          wrap.appendChild(btn);
+        });
+        doneEl.appendChild(wrap);
+        msgs.appendChild(doneEl);
+        aiChatHistory.push({role:'bot',text:'已搭建 '+formName+'，含'+selected.length+'个字段。'});
+        saveAiChatState();
+        scrollChatBottom();
+      }
+    },500);
+  };
+  actionsBar.appendChild(buildBtn);
+
+  picker.appendChild(actionsBar);
+  containerEl.appendChild(picker);
+  scrollChatBottom();
+}
 
 function askQuickQuestion(btn){
   const q=btn.textContent.trim();
@@ -2742,6 +3295,9 @@ function askQuickQuestion(btn){
     botEl.className='ai-chat-msg bot';
     botEl.innerHTML=renderMd(QUICK_ANSWERS[q]);
     msgs.appendChild(botEl);
+    // Add demo button if available
+    const demoKey=QUESTION_DEMO_MAP[q];
+    if(demoKey)createDemoButton(demoKey,botEl);
     aiChatHistory.push({role:'bot',text:QUICK_ANSWERS[q]});
     saveAiChatState();
     scrollChatBottom();
@@ -2772,8 +3328,8 @@ async function sendAiChat(){
   scrollChatBottom();
 
   const context=getRelevantContext(q);
-  const fullQ='表单设计器助手，基于知识简洁回答，要点用列表。\n\n'+context+'\n\n问题：'+q;
-  const body={question:fullQ,deptId:211,model:'qwen-turbo-latest',skipRag:true};
+  const fullQ='你是PomeloX表单设计器专家助手。PomeloX是Vita Global（维塔全球）旗下的核心产品，是一个面向海外中国留学生的活动管理与报名平台。Vita Global是PomeloX的母公司/品牌方。表单设计器是PomeloX管理后台中用于创建活动报名表的可视化工具。\n\n请基于以下知识库内容回答问题。给出详细、实用的回答，使用markdown格式，包含具体步骤和示例。如果涉及组件属性，列出关键配置项及其作用。如果用户询问Vita Global或PomeloX相关的问题，请基于以上背景信息回答。如果用户的问题与表单设计器、PomeloX、Vita Global完全无关（如闲聊、编程问题等），请礼貌拒绝并说明"抱歉，我是PomeloX表单设计器专属助手，只能回答与表单设计器和PomeloX平台相关的问题。"\n\n## 模拟器操控能力\n你可以操控页面上的表单模拟器来为用户实时搭建表单。\n\n### 交互流程（非常重要）\n当用户说"帮我搭建/创建/做一个XX表单"这类请求时，按以下流程处理：\n\n**第一步：智能推荐字段** — 如果用户只给了模糊描述（如"帮我做一个春节活动表单"），你应该：\n1. 根据活动场景智能分析需要收集哪些信息\n2. 输出[[FIELDS:...]]标签，提供一个字段推荐清单，让用户勾选确认\n3. 不要在这一步附加actions代码块\n4. 回复文字部分简短即可，比如"我根据春节活动场景，为你推荐了以下字段，请勾选你需要的："\n\n**FIELDS标签格式**：[[FIELDS:表单名称|JSON数组]]。JSON数组的每个元素：\n{"label":"字段标题","type":"组件类型","desc":"简短说明为什么推荐","checked":true或false,"props":{"属性名":"值"}}\n\n- checked:true 表示推荐必选（核心字段），checked:false 表示可选（额外字段）\n- props 是该组件的额外属性设置（可选），如placeholder、options、regexValidation等\n- type 使用组件类型标识：input/textarea/select/radio/checkbox/switch/date/daterange/time/timerange/upload/rate/counter/slider/cascader/color/row/button\n\n回复示例（春节活动）：\n"我根据春节活动场景，为你推荐了以下字段。默认勾选了核心字段，你可以按需增减：\n[[FIELDS:春节活动报名表|[{\"label\":\"姓名\",\"type\":\"input\",\"desc\":\"必填，收集参与者身份\",\"checked\":true,\"props\":{\"placeholder\":\"请输入真实姓名\"}},{\"label\":\"手机号\",\"type\":\"input\",\"desc\":\"必填，用于活动通知联系\",\"checked\":true,\"props\":{\"placeholder\":\"请输入手机号\",\"regexValidation\":\"/^1[3-9]\\\\d{9}$/\",\"maxlength\":\"11\"}},{\"label\":\"学校\",\"type\":\"select\",\"desc\":\"区分不同学校的参与者\",\"checked\":true,\"props\":{\"options\":\"UCLA,UCSD,UCSB,UMN,其他\"}},{\"label\":\"年级\",\"type\":\"select\",\"desc\":\"了解参与者构成\",\"checked\":true,\"props\":{\"options\":\"大一,大二,大三,大四,研究生,博士\"}},{\"label\":\"饮食偏好\",\"type\":\"checkbox\",\"desc\":\"春节聚餐需了解忌口\",\"checked\":true,\"props\":{\"options\":\"无忌口,素食,清真,不吃辣,海鲜过敏\"}},{\"label\":\"是否需要接送\",\"type\":\"switch\",\"desc\":\"大型活动可能需要安排交通\",\"checked\":false},{\"label\":\"同行人数\",\"type\":\"counter\",\"desc\":\"预估活动参与总人数\",\"checked\":false,\"props\":{\"min\":0,\"max\":10}},{\"label\":\"备注\",\"type\":\"textarea\",\"desc\":\"收集其他特殊需求\",\"checked\":true,\"props\":{\"placeholder\":\"如有特殊需求请备注\"}}]]]\"\n\n**不同场景的推荐逻辑**：\n- 活动报名：姓名+手机号+学校/年级+备注为核心，饮食/接送/上传为可选\n- 志愿者招募：姓名+手机号+可用时间+技能为核心，自我介绍/上传简历为可选\n- 满意度调查：评分+反馈为核心，具体分项评分为可选\n- 素材收集：姓名+上传为核心，说明/分类为可选\n\n**第二步** — 用户在界面上勾选完成后点击"开始搭建"，前端会自动生成操作指令并搭建表单，无需你再次回复。\n\n**第三步：后续修改** — 搭建完成后如果用户说"再加一个XX"/"把XX改成XX"，用actions代码块追加修改。也可以用[[OPTIONS:...]]提供快捷选项让用户点选。\n\n**OPTIONS标签格式**：[[OPTIONS:选项1|选项2|选项3]]，选项用|分隔，用于提供后续操作的快捷按钮。\n\n**例外情况** — 如果用户一开始就给出了明确的字段需求（如"帮我做一个有姓名、手机号和图片上传的表单"），可以跳过推荐，直接用actions搭建。\n\n### 操作指令格式\n在回答末尾输出 ```actions 代码块，内容为JSON数组。\n\n可用操作：\n- {"a":"clear"} — 清空画布\n- {"a":"name","v":"表单名称"} — 设置表单名称\n- {"a":"add","t":"组件类型"} — 添加组件。可用类型：input(单行文本), textarea(多行文本), password(密码), counter(计数器), select(下拉选择), cascader(级联选择), radio(单选框组), checkbox(多选框组), switch(开关), slider(滑块), time(时间选择), timerange(时间范围), date(日期选择), daterange(日期范围), rate(评分), color(颜色选择), upload(上传), row(行容器), button(按钮)\n- {"a":"prop","k":"属性名","v":"值"} — 设置当前选中组件的属性。常用属性：label(标题), placeholder(占位文字), field(字段名), required(必填true/false), options(选项用逗号分隔如"大一,大二,大三"), regexValidation(正则), maxlength(最大长度), spanCount(栅格宽度1-24), fileType(文件类型:图片/视频/文件), listType(列表类型:text/picture/picture-card), maxSize(大小限制如"5MB"), multiple(多选true/false), showTip(显示提示true/false), dateType(日期类型:date/week/month/year/datetime), format(格式如yyyy-MM-dd), activeText(开启文字), inactiveText(关闭文字), max(最大值), allowHalf(允许半选true/false), showScore(显示分数true/false), min(最小值), step(步长), gutter(栅格间隔)\n- {"a":"select","i":索引} — 选中画布中第i个组件(从0开始)\n\n### 搭建规则\n1. add操作后紧跟的prop操作会作用于刚添加的组件\n2. 如果要修改之前添加的组件，先用select选中\n3. 总是先clear再开始搭建\n4. 为手机号字段自动添加正则校验 /^1[3-9]\\\\d{9}$/\n5. 为邮箱字段自动添加正则校验 /^[\\\\w.-]+@[\\\\w.-]+\\\\.\\\\w+$/\n6. 下拉选择和单选/多选框组要设置合理的options选项\n7. 上传组件要设置合理的fileType、listType和maxSize\n\n### 追加修改\n如果用户在搭建完成后说"再加一个XX"/"把XX改成XX"，你应该：\n- 加组件：只输出add和prop操作（不要clear）\n- 改属性：用select选中目标组件，再用prop修改\n\n'+context+'\n\n用户问题：'+q;
+  const body={question:fullQ,deptId:211,model:'qwen-plus',skipRag:true};
   if(aiSessionId)body.session_id=aiSessionId;
 
   let fullAnswer='';
@@ -2870,7 +3426,7 @@ async function sendAiChat(){
   // Clean up stop button
   if(stopBtn)stopBtn.remove();
 
-  // Final render
+  // Final render + demo detection
   if(fullAnswer){
     if(!botEl){
       typingEl.remove();
@@ -2878,7 +3434,78 @@ async function sendAiChat(){
       botEl.className='ai-chat-msg bot';
       msgs.appendChild(botEl);
     }
+    // Extract ```actions JSON block if present
+    let parsedActions=null;
+    fullAnswer=fullAnswer.replace(/```actions\s*\n?([\s\S]*?)```/g,(_,json)=>{
+      try{parsedActions=JSON.parse(json.trim());}catch(e){}
+      return '';
+    }).trim();
+    // Also support [[DEMO:xxx]] for pre-built recipes
+    let demoRecipe=null;
+    fullAnswer=fullAnswer.replace(/\[\[DEMO:(\w+)\]\]/g,(_,name)=>{demoRecipe=name;return '';}).trim();
+    // Extract [[FIELDS:formName|JSON]] field picker
+    let fieldData=null;
+    let fieldFormName=null;
+    fullAnswer=fullAnswer.replace(/\[\[FIELDS:(.*?)\|([\s\S]*)\]\]/g,(_,name,json)=>{
+      fieldFormName=name.trim();
+      let raw=json.trim();
+      // Try parse as-is first
+      try{fieldData=JSON.parse(raw);}catch(e){
+        // AI sometimes outputs extra braces; fix common JSON errors
+        let fixed=raw
+          .replace(/\}\}\}/g,'}}')           // triple } → double }
+          .replace(/,\s*\]/g,']')            // trailing comma before ]
+          .replace(/,\s*\}/g,'}');           // trailing comma before }
+        try{fieldData=JSON.parse(fixed);}catch(e2){
+          // Last resort: extract individual objects via regex
+          try{
+            const items=[];
+            const objRe=/\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}/g;
+            let m;
+            while((m=objRe.exec(raw))!==null){
+              try{items.push(JSON.parse(m[0]));}catch(e3){}
+            }
+            if(items.length>0)fieldData=items;
+          }catch(e4){}
+        }
+      }
+      return '';
+    }).trim();
+    // Extract [[OPTIONS:a|b|c]] clickable choices
+    let optionsList=null;
+    fullAnswer=fullAnswer.replace(/\[\[OPTIONS:(.*?)\]\]/g,(_,opts)=>{
+      optionsList=opts.split('|').map(o=>o.trim()).filter(Boolean);
+      return '';
+    }).trim();
     botEl.innerHTML=renderMd(fullAnswer);
+    // Render field picker (highest priority)
+    if(fieldData&&Array.isArray(fieldData)&&fieldData.length>0){
+      renderFieldPicker(fieldData,fieldFormName,botEl);
+    }
+    // Render action buttons
+    else if(parsedActions&&Array.isArray(parsedActions)&&parsedActions.length>0){
+      createDynamicDemoButton(parsedActions,botEl);
+    }else if(demoRecipe&&AI_DEMO_RECIPES[demoRecipe]){
+      createDemoButton(demoRecipe,botEl);
+    }
+    // Render clickable options
+    if(optionsList&&optionsList.length>0){
+      const wrap=document.createElement('div');
+      wrap.className='ai-option-btns';
+      optionsList.forEach(opt=>{
+        const btn=document.createElement('button');
+        btn.className='ai-option-btn';
+        btn.textContent=opt;
+        btn.onclick=function(){
+          wrap.querySelectorAll('.ai-option-btn').forEach(b=>{b.disabled=true;b.style.opacity='.5';b.style.cursor='default';});
+          btn.style.opacity='1';btn.style.borderColor='var(--blue-500)';btn.style.background='var(--blue-50)';
+          document.getElementById('aiChatInput').value=opt;
+          sendAiChat();
+        };
+        wrap.appendChild(btn);
+      });
+      botEl.appendChild(wrap);
+    }
     aiChatHistory.push({role:'bot',text:fullAnswer});
     saveAiChatState();
   }else if(lastErr){

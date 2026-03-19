@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
+import { SearchIcon } from '../common/icons/SearchIcon';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, {
   useAnimatedStyle,
@@ -172,7 +173,7 @@ export const FloatingSearchButton: React.FC<FloatingSearchButtonProps> = ({ bott
           activeOpacity={0.7}
         >
           <Animated.View style={searchIconAnimatedStyle}>
-            <Ionicons name="search" size={22} color="#007AFF" />
+            <SearchIcon size={22} color="#007AFF" />
           </Animated.View>
         </TouchableOpacity>
       )}
@@ -180,7 +181,7 @@ export const FloatingSearchButton: React.FC<FloatingSearchButtonProps> = ({ bott
       {/* 展开状态：搜索框 */}
       {isExpanded && (
         <Animated.View style={[styles.expandedContainer, inputContainerAnimatedStyle]}>
-          <Ionicons name="search" size={18} color="#666666" style={styles.searchIcon} />
+          <SearchIcon size={18} color="#666666" />
           <TextInput
             ref={searchInputRef}
             style={styles.input}

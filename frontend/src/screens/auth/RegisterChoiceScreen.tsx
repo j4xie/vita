@@ -142,51 +142,53 @@ export const RegisterChoiceScreen: React.FC = () => {
 
         {/* Registration Options */}
         <View style={styles.optionsSection}>
-          {/* QR Code Registration - Primary */}
+          {/* Normal Registration - Primary */}
           <TouchableOpacity
-            style={[styles.optionCard, styles.primaryCard]}
-            onPress={handleQRRegister}
-            activeOpacity={0.9}
+            style={[styles.optionCard, styles.primaryCard, detectingLocation && styles.optionCardDisabled]}
+            onPress={handleNormalRegister}
+            activeOpacity={detectingLocation ? 1 : 0.9}
+            disabled={detectingLocation}
           >
             <View style={styles.cardContent}>
               <View style={styles.iconContainer}>
-                <Ionicons name="qr-code" size={48} color={theme.colors.text.inverse} />
+                <Ionicons name="person-add" size={48} color={theme.colors.text.inverse} />
               </View>
               <View style={styles.textContainer}>
-                <Text style={styles.cardTitle}>{t('auth.register.referral_registration')}</Text>
+                <Text style={styles.cardTitle}>
+                  {t('auth.register.normal_registration')}
+                </Text>
                 <Text style={styles.cardDescription}>
-                  {t('auth.register.referral_description')}
+                  {t('auth.register.normal_description')}
                 </Text>
                 <View style={styles.badge}>
-                  <Text style={styles.badgeText}>{t('auth.register.referral_badge')}</Text>
+                  <Text style={styles.badgeText}>{t('auth.register.recommended_badge')}</Text>
                 </View>
               </View>
               <Ionicons name="chevron-forward" size={24} color={theme.colors.text.inverse} />
             </View>
           </TouchableOpacity>
 
-          {/* Normal Registration */}
+          {/* QR Code Registration - Secondary */}
           <TouchableOpacity
-              style={[styles.optionCard, styles.secondaryCard, detectingLocation && styles.optionCardDisabled]}
-              onPress={handleNormalRegister}
-              activeOpacity={detectingLocation ? 1 : 0.9}
-              disabled={detectingLocation}
-            >
-              <View style={styles.cardContent}>
-                <View style={[styles.iconContainer, styles.secondaryIconContainer]}>
-                  <Ionicons name="person-add" size={40} color={theme.colors.primary} />
-                </View>
-                <View style={styles.textContainer}>
-                  <Text style={[styles.cardTitle, styles.secondaryCardTitle]}>
-                    {t('auth.register.normal_registration')}
-                  </Text>
-                  <Text style={[styles.cardDescription, styles.secondaryCardDescription]}>
-                    {t('auth.register.normal_description')}
-                  </Text>
-                </View>
-                <Ionicons name="chevron-forward" size={24} color={theme.colors.text.tertiary} />
+            style={[styles.optionCard, styles.secondaryCard]}
+            onPress={handleQRRegister}
+            activeOpacity={0.9}
+          >
+            <View style={styles.cardContent}>
+              <View style={[styles.iconContainer, styles.secondaryIconContainer]}>
+                <Ionicons name="qr-code" size={40} color={theme.colors.primary} />
               </View>
-            </TouchableOpacity>
+              <View style={styles.textContainer}>
+                <Text style={[styles.cardTitle, styles.secondaryCardTitle]}>
+                  {t('auth.register.referral_registration')}
+                </Text>
+                <Text style={[styles.cardDescription, styles.secondaryCardDescription]}>
+                  {t('auth.register.referral_description')}
+                </Text>
+              </View>
+              <Ionicons name="chevron-forward" size={24} color={theme.colors.text.tertiary} />
+            </View>
+          </TouchableOpacity>
         </View>
 
         {/* Benefits Section */}

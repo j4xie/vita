@@ -47,10 +47,17 @@ export const useStripePayment = (): UseStripePaymentReturn => {
 
       console.log('[StripePayment] Initializing payment sheet...');
 
-      // 1. Initialize payment sheet
+      // 1. Initialize payment sheet (with Apple Pay support)
       const { error: initError } = await stripe.initPaymentSheet({
         paymentIntentClientSecret: clientSecret,
         merchantDisplayName,
+        applePay: {
+          merchantCountryCode: 'US',
+        },
+        googlePay: {
+          merchantCountryCode: 'US',
+          testEnv: false,
+        },
         defaultBillingDetails: {
           name: 'PomeloX User',
         },

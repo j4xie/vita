@@ -260,7 +260,7 @@ export const AddressListScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F5F7',
+    backgroundColor: '#FAF3F1',
   },
   header: {
     flexDirection: 'row',

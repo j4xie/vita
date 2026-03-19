@@ -441,6 +441,46 @@ class PomeloXAPI {
     formData.append('password', data.password);
     formData.append('areaCode', cleanAreaCode);
 
+    console.log('🔐 [PomeloXAPI.resetPassword] 请求参数:', {
+      phonenumber: data.phonenumber,
+      verCode: data.verCode,
+      bizId: data.bizId,
+      areaCode: `${data.areaCode} -> ${cleanAreaCode}`,
+      passwordLength: data.password.length,
+      body: formData.toString(),
+    });
+
+    const response = await fetchWithRetry(`${getBaseUrl()}/app/resetPwd`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: formData.toString(),
+    });
+
+    if (!response.ok) {
+      throw new Error('重置密码失败');
+    }
+
+    return response.json();
+  }
+
+  /**
+   * 通过邮箱重置密码（后端接口就绪后即可工作）
+   */
+  async resetPasswordByEmail(data: {
+    email: string;
+    password: string;
+  }): Promise<ApiResponse> {
+    const formData = new URLSearchParams();
+    formData.append('email', data.email);
+    formData.append('password', data.password);
+
+    console.log('🔐 [PomeloXAPI.resetPasswordByEmail] 请求参数:', {
+      email: data.email,
+      passwordLength: data.password.length,
+    });
+
     const response = await fetchWithRetry(`${getBaseUrl()}/app/resetPwd`, {
       method: 'POST',
       headers: {
@@ -749,7 +789,7 @@ class PomeloXAPI {
   /**
    * 活动报名
    */
-  async enrollActivity(activityId: number, userId: number, isCancel?: boolean): Promise<ApiResponse<number>> {
+  async enrollActivity(activityId: number, userId: number, isCancel?: boolean, shareUserId?: number): Promise<ApiResponse<number>> {
     try {
       // 🔧 参数验证和类型转换
       const validActivityId = Number(activityId);
@@ -761,7 +801,7 @@ class PomeloXAPI {
 
       const action = isCancel ? '取消报名' : '报名';
       console.log(`🌐 [PomeloXAPI] 发起活动${action}请求:`, {
-        originalParams: { activityId, userId, isCancel },
+        originalParams: { activityId, userId, isCancel, shareUserId },
         validatedParams: { activityId: validActivityId, userId: validUserId, isCancel },
         url: `/app/activity/enroll?activityId=${validActivityId}&userId=${validUserId}${isCancel ? '&isCancel=1' : ''}`,
         method: 'GET',
@@ -769,7 +809,10 @@ class PomeloXAPI {
       });
 
       // 构建请求URL，根据isCancel参数决定是否添加isCancel=1
-      const url = `/app/activity/enroll?activityId=${validActivityId}&userId=${validUserId}${isCancel ? '&isCancel=1' : ''}`;
+      let url = `/app/activity/enroll?activityId=${validActivityId}&userId=${validUserId}${isCancel ? '&isCancel=1' : ''}`;
+      if (shareUserId && shareUserId > 0) {
+        url += `&shareUserId=${shareUserId}`;
+      }
 
       const response = await this.request(url, {
         method: 'GET',
@@ -819,18 +862,48 @@ class PomeloXAPI {
   }
 
   /**
+   * 获取活动报名列表 - 返回报名用户的userId等信息
+   */
+  async getActivitySignList(activityId: number): Promise<ApiResponse<any[]>> {
+    return this.request(`/app/activity/actSignList?activityId=${activityId}`, { method: 'GET' });
+  }
+
+  /**
+   * 获取单个活动详情 (通过活动列表API筛选)
+   */
+  async getActivityById(activityId: number, userId?: number): Promise<any | null> {
+    try {
+      const params: any = { pageNum: 1, pageSize: 1 };
+      if (userId) params.userId = userId;
+      const result = await this.getActivityList(params);
+      // Search in a larger set if not found
+      const allResult = await this.getActivityList({ pageNum: 1, pageSize: 100, userId });
+      if (allResult.code === 200 && allResult.data?.rows) {
+        const found = allResult.data.rows.find((a: any) => a.id === activityId);
+        return found || null;
+      }
+      return null;
+    } catch {
+      return null;
+    }
+  }
+
+  /**
    * 提交活动报名表单 (动态表单)
    * @param activityId 活动ID
    * @param userId 用户ID
    * @param formData 表单数据
    */
-  async submitActivityRegistration(activityId: number, userId: number, formData: any): Promise<ApiResponse<number>> {
+  async submitActivityRegistration(activityId: number, userId: number, formData: any, shareUserId?: number): Promise<ApiResponse<number>> {
     try {
-      console.log('📝 [PomeloXAPI] 提交活动报名表单:', { activityId, userId, formData });
+      console.log('📝 [PomeloXAPI] 提交活动报名表单:', { activityId, userId, formData, shareUserId });
 
       // 将formData转为JSON字符串并URL编码，使用GET方式提交
       const formDataStr = encodeURIComponent(JSON.stringify(formData));
-      const url = `/app/activity/enroll?activityId=${activityId}&userId=${userId}&formData=${formDataStr}`;
+      let url = `/app/activity/enroll?activityId=${activityId}&userId=${userId}&formData=${formDataStr}`;
+      if (shareUserId && shareUserId > 0) {
+        url += `&shareUserId=${shareUserId}`;
+      }
 
       const response = await this.request(url, {
         method: 'GET',

@@ -520,7 +520,7 @@ export const OrderConfirmScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F5F7',
+    backgroundColor: '#FAF3F1',
   },
   containerDark: {
     backgroundColor: '#000000',

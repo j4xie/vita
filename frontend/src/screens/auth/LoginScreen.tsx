@@ -13,7 +13,7 @@ import {
   Animated,
   Image,
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -26,12 +26,14 @@ import { pomeloXAPI } from '../../services/PomeloXAPI';
 import { useUser } from '../../context/UserContext';
 import { validateEmail, validatePassword, parseApiError } from '../../utils/formValidation';
 import { LoaderOne } from '../../components/ui/LoaderOne';
+import { KeyboardDoneAccessory, KEYBOARD_ACCESSORY_ID } from '../../components/common/KeyboardDismissWrapper';
 
 const { width, height } = Dimensions.get('window');
 
 export const LoginScreen: React.FC = () => {
   const { t } = useTranslation();
   const navigation = useNavigation<any>();
+  const route = useRoute<any>();
   const { login: userLogin } = useUser();
   const darkModeSystem = useAllDarkModeStyles();
   const { isDarkMode, styles: dmStyles, gradients: dmGradients } = darkModeSystem;
@@ -53,6 +55,14 @@ export const LoginScreen: React.FC = () => {
   const slideAnim = useRef(new Animated.Value(50)).current;
   const buttonColorAnim = useRef(new Animated.Value(0)).current;
   
+  // 从忘记密码页传入的登录账号，自动填入
+  useEffect(() => {
+    const prefill = route.params?.prefillEmail;
+    if (prefill) {
+      setEmail(prefill);
+    }
+  }, [route.params?.prefillEmail]);
+
   // 入场动画
   useEffect(() => {
     Animated.parallel([
@@ -296,18 +306,16 @@ export const LoginScreen: React.FC = () => {
                   onFocus={() => setFocusedInput('email')}
                   onBlur={() => {
                     setFocusedInput(null);
-                    // 失焦时验证邮箱格式
-                    if (email.trim().length > 0 && !email.includes('@')) {
-                      setErrors(prev => ({
-                        ...prev,
-                        email: t('auth.errors.form_validation.email_format_required')
-                      }));
+                    // 失焦时仅在含@时验证邮箱格式，纯用户名不验证
+                    if (email.trim().length > 0 && email.includes('@')) {
+                      validateEmailFormat(email);
                     }
                   }}
                   keyboardType="default"
                   autoCapitalize="none"
                   autoCorrect={false}
                   placeholderTextColor={theme.colors.text.disabled}
+                  inputAccessoryViewID={Platform.OS === 'ios' ? KEYBOARD_ACCESSORY_ID : undefined}
                 />
               </View>
               {errors.email && (
@@ -347,6 +355,7 @@ export const LoginScreen: React.FC = () => {
                   }}
                   secureTextEntry={!showPassword}
                   placeholderTextColor={theme.colors.text.disabled}
+                  inputAccessoryViewID={Platform.OS === 'ios' ? KEYBOARD_ACCESSORY_ID : undefined}
                 />
                 <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
                   <Ionicons
@@ -430,6 +439,7 @@ export const LoginScreen: React.FC = () => {
           </ScrollView>
         </KeyboardAvoidingView>
       </SafeAreaView>
+      <KeyboardDoneAccessory />
     </LinearGradient>
   );
 };

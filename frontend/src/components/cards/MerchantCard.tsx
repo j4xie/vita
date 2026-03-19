@@ -171,7 +171,7 @@ const styles = StyleSheet.create({
   categoryText: {
     color: '#FFF',
     fontSize: 10,
-    fontFamily: 'Poppins-Medium',
+    fontFamily: 'Poppins_500Medium',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
@@ -183,14 +183,14 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   title: {
-    fontFamily: 'Poppins-Bold',
+    fontFamily: 'Poppins_700Bold',
     fontSize: 17,
     color: '#000',
     lineHeight: 22,
     marginBottom: 4,
   },
   location: {
-    fontFamily: 'Poppins-Regular',
+    fontFamily: 'Poppins_400Regular',
     fontSize: 12,
     color: '#8E8E93',
     marginBottom: 12,
@@ -225,15 +225,15 @@ const styles = StyleSheet.create({
   rewardIconText: {
     color: '#FFF',
     fontSize: 10,
-    fontFamily: 'Poppins-Bold',
+    fontFamily: 'Poppins_700Bold',
   },
   rewardText: {
     color: '#D4A054', // Gold text
     fontSize: 12,
-    fontFamily: 'Poppins-SemiBold',
+    fontFamily: 'Poppins_600SemiBold',
   },
   price: {
-    fontFamily: 'Poppins-Medium',
+    fontFamily: 'Poppins_500Medium',
     fontSize: 12,
     color: '#C7C7CC',
   },

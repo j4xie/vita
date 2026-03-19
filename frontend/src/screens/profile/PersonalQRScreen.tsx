@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
 import {
   View,
   Text,
@@ -13,6 +13,9 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import QRCode from 'react-native-qrcode-svg';
+import * as MediaLibrary from 'expo-media-library';
+import * as FileSystem from 'expo-file-system';
+import { ScanIcon } from '../../components/common/icons/ScanIcon';
 import { useTranslation } from 'react-i18next';
 import { useNavigation } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -37,6 +40,7 @@ export const PersonalQRScreen: React.FC = () => {
   const { user, isAuthenticated } = useUser();
 
   const [isSaving, setIsSaving] = useState(false);
+  const qrRef = useRef<any>(null);
 
   // 生成用户身份数据
   const generateUserIdentityData = (): UserIdentityData => {
@@ -107,8 +111,8 @@ export const PersonalQRScreen: React.FC = () => {
   };
 
   // 保存到相册
-  const handleSaveToAlbum = async () => {
-    if (isSaving) return;
+  const handleSaveToAlbum = useCallback(async () => {
+    if (isSaving || !qrRef.current) return;
 
     try {
       setIsSaving(true);
@@ -117,18 +121,54 @@ export const PersonalQRScreen: React.FC = () => {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
       }
 
-      const isEnglish = t('common.brand.name') === 'Pomelo';
-      Alert.alert(
-        t('common.feature_developing', isEnglish ? 'Feature Under Development' : '功能开发中'),
-        t('qr.save_feature_developing', isEnglish ? 'QR code save feature is under development' : '二维码保存功能正在开发中，敬请期待'),
-        [{ text: t('common.got_it', isEnglish ? 'OK' : '我知道了') }]
-      );
+      // 请求相册权限
+      const { status } = await MediaLibrary.requestPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert(
+          t('common.permission_required', 'Permission Required'),
+          t('qr.album_permission', 'Please allow access to save QR code to your album'),
+          [{ text: t('common.got_it', 'OK') }]
+        );
+        return;
+      }
+
+      // 从 QRCode 组件获取 base64 数据
+      qrRef.current.toDataURL(async (base64: string) => {
+        try {
+          const filename = `${FileSystem.cacheDirectory}pomelo_qr_${Date.now()}.png`;
+          await FileSystem.writeAsStringAsync(filename, base64, {
+            encoding: FileSystem.EncodingType.Base64,
+          });
+          await MediaLibrary.saveToLibraryAsync(filename);
+          // 清理临时文件
+          await FileSystem.deleteAsync(filename, { idempotent: true });
+
+          Alert.alert(
+            t('common.success', 'Success'),
+            t('qr.save_success', 'QR code saved to album'),
+            [{ text: t('common.got_it', 'OK') }]
+          );
+        } catch (err) {
+          console.error('保存失败:', err);
+          Alert.alert(
+            t('common.error', 'Error'),
+            t('qr.save_failed', 'Failed to save QR code')
+          );
+        } finally {
+          setIsSaving(false);
+        }
+      });
+      return; // setIsSaving(false) handled in callback
     } catch (error) {
       console.error('保存失败:', error);
+      Alert.alert(
+        t('common.error', 'Error'),
+        t('qr.save_failed', 'Failed to save QR code')
+      );
     } finally {
       setIsSaving(false);
     }
-  };
+  }, [isSaving, t]);
 
   // 扫描他人二维码
   const handleScanOthers = () => {
@@ -248,6 +288,7 @@ export const PersonalQRScreen: React.FC = () => {
                     backgroundColor="#FFFFFF"
                     color="#000000"
                     quietZone={10}
+                    getRef={(ref: any) => (qrRef.current = ref)}
                   />
                 );
               } catch (error) {
@@ -288,11 +329,9 @@ export const PersonalQRScreen: React.FC = () => {
             onPress={handleScanOthers}
             activeOpacity={0.7}
           >
-            <Ionicons
-              name="scan-outline"
+            <ScanIcon
               size={20}
               color="#FFFFFF"
-              style={styles.actionButtonIcon}
             />
             <Text style={[styles.actionButtonText, styles.primaryActionButtonText]}>
               {t('common.brand.name') === 'Pomelo' ? 'Scan QR Code' : '扫一扫识别码'}
@@ -339,7 +378,7 @@ export const PersonalQRScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FDF7F2', // Light cream background
+    backgroundColor: '#FAF3F1',
   },
   header: {
     flexDirection: 'row',

@@ -31,6 +31,7 @@ interface UserContextType {
   login: (token: string) => Promise<void>;
   logout: () => Promise<void>;
   refreshUserInfo: () => Promise<void>;
+  patchUser: (fields: Partial<FrontendUser>) => void;
   hasPermission: (permission: keyof FrontendUser['permissions']) => boolean;
   // 新增权限检查功能
   permissions: PermissionChecker;
@@ -90,14 +91,6 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const adaptedData = adaptUserInfoResponse(adaptedResponse as any);
 
       if (adaptedData.success && adaptedData.user) {
-        console.log('✅ 用户信息获取成功:', {
-          userName: adaptedData.user.userName,
-          legalName: adaptedData.user.legalName,
-          school: adaptedData.user.school,
-          deptId: adaptedData.user.deptId,
-          roles: adaptedData.user.roles
-        });
-        
         setUser(adaptedData.user);
         // 更新权限信息
         updateUserPermissions(adaptedData.user);
@@ -213,6 +206,11 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  // 直接 patch user 对象的某些字段（不依赖后端刷新）
+  const patchUser = (fields: Partial<FrontendUser>) => {
+    setUser(prev => prev ? { ...prev, ...fields } : prev);
+  };
+
   const contextValue: UserContextType = {
     user,
     isAuthenticated: !!user,
@@ -220,6 +218,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     login,
     logout,
     refreshUserInfo,
+    patchUser,
     hasPermission,
     // 新增权限相关
     permissions,

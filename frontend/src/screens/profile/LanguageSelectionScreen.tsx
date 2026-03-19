@@ -196,7 +196,7 @@ export const LanguageSelectionScreen: React.FC = () => {
   const styles = StyleSheet.create({
     container: {
       flex: 1,
-      backgroundColor: isDarkMode ? '#000000' : '#f2f2f7',
+      backgroundColor: isDarkMode ? '#000000' : '#FAF3F1',
     },
     safeArea: {
       flex: 1,

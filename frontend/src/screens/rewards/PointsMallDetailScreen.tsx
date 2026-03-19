@@ -192,13 +192,47 @@ export const PointsMallDetailScreen: React.FC = () => {
         contentContainerStyle={{ paddingBottom: insets.bottom + 100 }}
         showsVerticalScrollIndicator={false}
       >
-        {/* 商品图片 */}
+        {/* 商品图片轮播 */}
         <View style={styles.imageSection}>
-          <OptimizedImage
-            source={{ uri: product.primaryImage, priority: 'high' }}
-            style={styles.productImage}
-            resizeMode="contain"
-          />
+          {product.images.length > 1 ? (
+            <>
+              <ScrollView
+                horizontal
+                pagingEnabled
+                showsHorizontalScrollIndicator={false}
+                onMomentumScrollEnd={(e) => {
+                  const idx = Math.round(e.nativeEvent.contentOffset.x / SCREEN_WIDTH);
+                  setCurrentImageIndex(idx);
+                }}
+              >
+                {product.images.map((img, idx) => (
+                  <OptimizedImage
+                    key={img.id}
+                    source={{ uri: img.url, priority: idx === 0 ? 'high' : 'normal' }}
+                    style={[styles.productImage, { width: SCREEN_WIDTH }]}
+                    resizeMode="contain"
+                  />
+                ))}
+              </ScrollView>
+              <View style={styles.imageDots}>
+                {product.images.map((_, idx) => (
+                  <View
+                    key={idx}
+                    style={[
+                      styles.imageDot,
+                      idx === currentImageIndex && styles.imageDotActive,
+                    ]}
+                  />
+                ))}
+              </View>
+            </>
+          ) : (
+            <OptimizedImage
+              source={{ uri: product.primaryImage, priority: 'high' }}
+              style={styles.productImage}
+              resizeMode="contain"
+            />
+          )}
         </View>
 
         {/* 商品信息 */}
@@ -294,7 +328,7 @@ export const PointsMallDetailScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#FAF3F1',
   },
 
   loadingContainer: {
@@ -350,6 +384,25 @@ const styles = StyleSheet.create({
   productImage: {
     width: '100%',
     height: '100%',
+  },
+  imageDots: {
+    position: 'absolute',
+    bottom: 16,
+    left: 0,
+    right: 0,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 6,
+  },
+  imageDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: 'rgba(0,0,0,0.2)',
+  },
+  imageDotActive: {
+    width: 24,
+    backgroundColor: '#000000',
   },
 
   // 信息区域

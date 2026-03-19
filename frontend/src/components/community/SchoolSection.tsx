@@ -94,7 +94,6 @@ const SchoolSectionComponent: React.FC<SchoolSectionProps> = ({
                         <Ionicons name="storefront-outline" size={28} color={isDarkMode ? '#555' : '#CCCCCC'} />
                     </View>
                     <Text style={[styles.emptyStateText, isDarkMode && styles.secondaryTextDark]}>{t('community.noMerchants')}</Text>
-                    <Text style={[styles.emptyStateSubtext, isDarkMode && styles.tertiaryTextDark]}>{t('community.comingSoon')}</Text>
                 </View>
             )}
         </View>
@@ -133,7 +132,7 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
     },
     logoText: {
-        fontFamily: 'Poppins-Bold',
+        fontFamily: 'Poppins_700Bold',
         fontSize: 18,
         color: '#666666',
     },
@@ -141,12 +140,12 @@ const styles = StyleSheet.create({
         flex: 1,
     },
     schoolName: {
-        fontFamily: 'Poppins-Bold',
+        fontFamily: 'Poppins_700Bold',
         fontSize: 16,
         color: '#1A1A1A',
     },
     schoolFullName: {
-        fontFamily: 'Poppins-Regular',
+        fontFamily: 'Poppins_400Regular',
         fontSize: 12,
         color: '#999999',
         marginTop: 2,
@@ -157,7 +156,7 @@ const styles = StyleSheet.create({
         paddingLeft: 8,
     },
     viewMoreText: {
-        fontFamily: 'Poppins-SemiBold',
+        fontFamily: 'Poppins_600SemiBold',
         fontSize: 12,
         color: '#FF7763',
     },
@@ -190,12 +189,12 @@ const styles = StyleSheet.create({
         marginRight: 12,
     },
     emptyStateText: {
-        fontFamily: 'Poppins-Medium',
+        fontFamily: 'Poppins_500Medium',
         fontSize: 14,
         color: '#999999',
     },
     emptyStateSubtext: {
-        fontFamily: 'Poppins-Regular',
+        fontFamily: 'Poppins_400Regular',
         fontSize: 12,
         color: '#CCCCCC',
         marginLeft: 8,

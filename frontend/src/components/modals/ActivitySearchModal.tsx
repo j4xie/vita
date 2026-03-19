@@ -9,10 +9,15 @@ import {
   FlatList,
   Image,
   Dimensions,
+  Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
+import { SearchIcon } from '../common/icons/SearchIcon';
+import { FunnelFilterIcon, DiagonalArrowIcon } from '../common/icons/FilterIcons';
+import { CalendarIcon } from '../icons/ActivityIcons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { KeyboardDoneAccessory, KEYBOARD_ACCESSORY_ID } from '../common/KeyboardDismissWrapper';
 import { FrontendActivity } from '../../utils/activityAdapter';
 import { useSchoolLogos, getSchoolLogoSync } from '../../hooks/useSchoolLogos';
 
@@ -79,7 +84,7 @@ const SearchResultItem = React.memo(({
           <Image source={{ uri: activity.image }} style={resultStyles.avatar} />
         ) : (
           <View style={[resultStyles.avatar, resultStyles.avatarPlaceholder]}>
-            <Ionicons name="calendar" size={18} color={COLORS.gray500} />
+            <CalendarIcon size={20} color={COLORS.gray500} />
           </View>
         )}
       </View>
@@ -93,7 +98,7 @@ const SearchResultItem = React.memo(({
           {activity.title}
         </Text>
         <View style={resultStyles.dateRow}>
-          <Ionicons name="calendar-outline" size={13} color="#949494" />
+          <CalendarIcon size={13} color="#949494" />
           <Text style={resultStyles.dateText}>
             {startDate}{timeDisplay}
           </Text>
@@ -102,7 +107,7 @@ const SearchResultItem = React.memo(({
 
       {/* Arrow */}
       <View style={resultStyles.arrowBtn}>
-        <Ionicons name="arrow-up" size={14} color="#000" style={{ transform: [{ rotate: '45deg' }] }} />
+        <DiagonalArrowIcon size={14} color="#000" />
       </View>
     </TouchableOpacity>
   );
@@ -136,12 +141,12 @@ const resultStyles = StyleSheet.create({
     gap: 2,
   },
   orgText: {
-    fontFamily: 'Poppins-Medium',
+    fontFamily: 'Poppins_500Medium',
     fontSize: 11,
     color: '#949494',
   },
   nameText: {
-    fontFamily: 'Poppins-SemiBold',
+    fontFamily: 'Poppins_600SemiBold',
     fontSize: 15,
     fontWeight: '600',
     color: COLORS.textMain,
@@ -153,7 +158,7 @@ const resultStyles = StyleSheet.create({
     gap: 6,
   },
   dateText: {
-    fontFamily: 'Poppins-Regular',
+    fontFamily: 'Poppins_400Regular',
     fontSize: 12,
     color: COLORS.gray600,
   },
@@ -206,7 +211,7 @@ export const ActivitySearchModal: React.FC<ActivitySearchModalProps> = ({
     if (!searchText.trim()) {
       return (
         <View style={styles.emptyContainer}>
-          <Ionicons name="search" size={48} color={COLORS.gray400} />
+          <SearchIcon size={48} color={COLORS.gray400} />
           <Text style={styles.emptyTitle}>
             {t('search.startSearching', 'Start searching')}
           </Text>
@@ -218,7 +223,7 @@ export const ActivitySearchModal: React.FC<ActivitySearchModalProps> = ({
     }
     return (
       <View style={styles.emptyContainer}>
-        <Ionicons name="search-outline" size={48} color={COLORS.gray400} />
+        <SearchIcon size={48} color={COLORS.gray400} />
         <Text style={styles.emptyTitle}>
           {t('search.noResults', 'No results found')}
         </Text>
@@ -238,20 +243,20 @@ export const ActivitySearchModal: React.FC<ActivitySearchModalProps> = ({
         <TouchableOpacity
           testID="search-modal-close"
           accessibilityLabel="search-modal-close"
-          style={[styles.floatingClose, { top: insets.top + 120 }]}
+          style={[styles.floatingClose, { bottom: '75%', marginBottom: 12 }]}
           onPress={handleClose}
           activeOpacity={0.7}
         >
           <Ionicons name="close" size={20} color="#000" />
         </TouchableOpacity>
 
-        {/* Search panel */}
+        {/* Search panel - matches Figma explore-search-result */}
         <View style={[styles.searchPanel, { paddingBottom: insets.bottom || 20 }]}>
           {/* Header */}
           <View style={styles.searchHeader}>
             <View style={styles.searchTitleRow}>
               <View style={styles.searchTitleLeft}>
-                <Ionicons name="funnel-outline" size={20} color="#000" />
+                <FunnelFilterIcon size={20} color="#000" />
                 <Text style={styles.searchTitle}>
                   {t('common.search', 'Search')}
                 </Text>
@@ -270,6 +275,7 @@ export const ActivitySearchModal: React.FC<ActivitySearchModalProps> = ({
                 autoCorrect={false}
                 autoFocus={true}
                 returnKeyType="search"
+                inputAccessoryViewID={Platform.OS === 'ios' ? KEYBOARD_ACCESSORY_ID : undefined}
               />
               {searchText.length > 0 && (
                 <TouchableOpacity onPress={() => setSearchText('')} style={styles.clearButton}>
@@ -277,7 +283,7 @@ export const ActivitySearchModal: React.FC<ActivitySearchModalProps> = ({
                 </TouchableOpacity>
               )}
               <View style={styles.searchIconBtn}>
-                <Ionicons name="search" size={18} color={COLORS.white} />
+                <SearchIcon size={18} color={COLORS.white} />
               </View>
             </View>
           </View>
@@ -301,6 +307,7 @@ export const ActivitySearchModal: React.FC<ActivitySearchModalProps> = ({
           />
         </View>
       </View>
+      <KeyboardDoneAccessory />
     </Modal>
   );
 };
@@ -354,7 +361,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   searchTitle: {
-    fontFamily: 'Poppins-Bold',
+    fontFamily: 'Poppins_700Bold',
     fontSize: 20,
     fontWeight: '700',
     color: '#000',
@@ -372,7 +379,7 @@ const styles = StyleSheet.create({
   },
   searchInput: {
     flex: 1,
-    fontFamily: 'Poppins-Regular',
+    fontFamily: 'Poppins_400Regular',
     fontSize: 15,
     color: '#000',
     paddingVertical: 0,
@@ -390,7 +397,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   resultCount: {
-    fontFamily: 'Poppins-Medium',
+    fontFamily: 'Poppins_500Medium',
     fontSize: 13,
     color: COLORS.gray500,
     paddingHorizontal: 20,
@@ -408,7 +415,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 40,
   },
   emptyTitle: {
-    fontFamily: 'Poppins-SemiBold',
+    fontFamily: 'Poppins_600SemiBold',
     fontSize: 17,
     fontWeight: '600',
     color: COLORS.textMain,
@@ -417,7 +424,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   emptySubtext: {
-    fontFamily: 'Poppins-Regular',
+    fontFamily: 'Poppins_400Regular',
     fontSize: 14,
     color: COLORS.gray500,
     textAlign: 'center',

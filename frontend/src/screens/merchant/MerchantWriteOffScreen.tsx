@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { ScanIcon } from '../../components/common/icons/ScanIcon';
 import { useTranslation } from 'react-i18next';
 import { CameraView, useCameraPermissions, scanFromURLAsync } from 'expo-camera';
 import * as ImagePicker from 'expo-image-picker';
@@ -28,6 +29,7 @@ import Animated, {
   ZoomIn,
 } from 'react-native-reanimated';
 import { couponAPI } from '../../services/couponAPI';
+import { KeyboardDoneAccessory, KEYBOARD_ACCESSORY_ID } from '../../components/common/KeyboardDismissWrapper';
 
 const COLORS = {
   bg: '#FAF3F1',
@@ -208,7 +210,9 @@ const ResultOverlay: React.FC<ResultOverlayProps> = ({ result, onReset }) => {
           accessibilityRole="button"
           accessibilityLabel={t('merchant.writeOff.continueScan')}
         >
-          <Ionicons name="scan-outline" size={17} color="#FFFFFF" style={{ marginRight: 7 }} />
+          <View style={{ marginRight: 7 }}>
+            <ScanIcon size={17} color="#FFFFFF" />
+          </View>
           <Text style={styles.continueButtonText}>{t('merchant.writeOff.continueScan')}</Text>
         </TouchableOpacity>
       </Animated.View>
@@ -432,6 +436,7 @@ export const MerchantWriteOffScreen: React.FC = () => {
               onSubmitEditing={() => {
                 if (couponCode.trim()) handleWriteOff(couponCode);
               }}
+              inputAccessoryViewID={Platform.OS === 'ios' ? KEYBOARD_ACCESSORY_ID : undefined}
             />
           </View>
           <TouchableOpacity
@@ -524,6 +529,7 @@ export const MerchantWriteOffScreen: React.FC = () => {
       {result.status !== 'idle' && (
         <ResultOverlay result={result} onReset={resetScan} />
       )}
+      <KeyboardDoneAccessory />
     </View>
   );
 };

@@ -3,6 +3,8 @@ import { View, Text, StyleSheet } from 'react-native';
 
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { useFonts, IBMPlexMono_400Regular, IBMPlexMono_500Medium, IBMPlexMono_600SemiBold, IBMPlexMono_700Bold } from '@expo-google-fonts/ibm-plex-mono';
+import { Poppins_300Light, Poppins_400Regular, Poppins_500Medium, Poppins_600SemiBold, Poppins_700Bold } from '@expo-google-fonts/poppins';
 // Stripe SDK 需要原生模块，在 Expo Go 中不可用，做懒加载
 let StripeProvider: any = null;
 try {
@@ -93,6 +95,17 @@ function MainApp() {
 
 export default function App() {
   const [isI18nReady, setIsI18nReady] = useState(false);
+  const [fontsLoaded] = useFonts({
+    IBMPlexMono_400Regular,
+    IBMPlexMono_500Medium,
+    IBMPlexMono_600SemiBold,
+    IBMPlexMono_700Bold,
+    Poppins_300Light,
+    Poppins_400Regular,
+    Poppins_500Medium,
+    Poppins_600SemiBold,
+    Poppins_700Bold,
+  });
 
   useEffect(() => {
     const initializeApp = async () => {
@@ -176,7 +189,7 @@ export default function App() {
     };
   }, []);
 
-  if (!isI18nReady) {
+  if (!isI18nReady || !fontsLoaded) {
     return (
       <SafeAreaProvider>
         <StatusBar style="auto" />

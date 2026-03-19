@@ -37,6 +37,7 @@ import { FormPreviewCard } from '../../components/activity/FormPreviewCard';
 import { useAIFormFilling, ChatMessage, FormField } from '../../hooks/useAIFormFilling';
 import formAutoFill from '../../utils/formAutoFill';
 import { useVoiceInput } from '../../hooks/useVoiceInput';
+import { KeyboardDoneAccessory, KEYBOARD_ACCESSORY_ID } from '../../components/common/KeyboardDismissWrapper';
 
 // ==================== 类型定义 ====================
 
@@ -62,6 +63,7 @@ export const AIFormFillerScreen: React.FC = () => {
   // 路由参数
   const activity: Activity = route.params?.activity;
   const formSchema: FormField[] = route.params?.formSchema || [];
+  const shareUserId = route.params?.shareUserId as number | undefined;
 
   // 状态
   const [inputText, setInputText] = useState('');
@@ -200,7 +202,7 @@ export const AIFormFillerScreen: React.FC = () => {
       const submitData = getSubmitData();
       console.log('[AIFormFiller] 提交表单数据:', submitData);
 
-      const result = await pomeloXAPI.submitActivityRegistration(activityIdInt, userIdInt, submitData);
+      const result = await pomeloXAPI.submitActivityRegistration(activityIdInt, userIdInt, submitData, shareUserId);
 
       if (result.code === 200 && result.data != null && Number(result.data) > 0) {
         setShowSuccessModal(true);
@@ -365,6 +367,7 @@ export const AIFormFillerScreen: React.FC = () => {
           <ScrollView
             style={styles.previewScrollView}
             showsVerticalScrollIndicator={false}
+            keyboardDismissMode="on-drag"
           >
             <FormPreviewCard
               formSchema={formSchema}
@@ -406,6 +409,7 @@ export const AIFormFillerScreen: React.FC = () => {
               style={styles.messagesScrollView}
               showsVerticalScrollIndicator={false}
               contentContainerStyle={styles.messagesContent}
+              keyboardDismissMode="on-drag"
             >
               {messages.map(renderMessage)}
 
@@ -487,6 +491,7 @@ export const AIFormFillerScreen: React.FC = () => {
                 onSubmitEditing={handleSend}
                 blurOnSubmit={false}
                 editable={!isListening}
+                inputAccessoryViewID={Platform.OS === 'ios' ? KEYBOARD_ACCESSORY_ID : undefined}
               />
               <TouchableOpacity
                 style={[
@@ -516,6 +521,7 @@ export const AIFormFillerScreen: React.FC = () => {
         confirmText={t('common.confirm')}
         icon="checkmark-circle"
       />
+      <KeyboardDoneAccessory />
     </SafeAreaView>
   );
 };

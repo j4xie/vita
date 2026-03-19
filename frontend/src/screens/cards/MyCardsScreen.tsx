@@ -20,10 +20,12 @@ import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
+import { SearchIcon } from '../../components/common/icons/SearchIcon';
 import * as Haptics from 'expo-haptics';
 import { useTranslation } from 'react-i18next';
 
 import { theme } from '../../theme';
+import { KeyboardDoneAccessory, KEYBOARD_ACCESSORY_ID } from '../../components/common/KeyboardDismissWrapper';
 import { useTheme } from '../../context/ThemeContext';
 // import { useOrganization } from '../../context/OrganizationContext'; // 移除组织功能
 import { membershipCardService } from '../../services/MembershipCardService';
@@ -129,7 +131,7 @@ export const MyCardsScreen: React.FC = () => {
         error: {
           type: 'NETWORK_ERROR',
           title: t('common.load_failed'),
-          subtitle: t('cards.feature_developing'),
+          subtitle: t('cards.load_error', 'Unable to load cards'),
           retryAction: {
             label: t('common.retry'),
             onPress: loadCards
@@ -198,8 +200,7 @@ export const MyCardsScreen: React.FC = () => {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     }
 
-    // 显示功能暂未开放提示
-    Alert.alert(t('alerts.feature_not_implemented'), t('cards.feature_developing'));
+    Alert.alert(t('cards.add_card', 'Add Card'), t('cards.scan_to_add', 'Please scan a merchant QR code to add a card'));
   }, []);
 
   const handleSearchToggle = useCallback(() => {
@@ -268,7 +269,7 @@ export const MyCardsScreen: React.FC = () => {
       {/* 搜索栏 */}
       {showSearch && (
         <View style={styles.searchContainer}>
-          <Ionicons name="search" size={16} color={theme.colors.text.secondary} />
+          <SearchIcon size={16} color={theme.colors.text.secondary} />
           <TextInput
             style={styles.searchInput}
             placeholder={t('cards.search_placeholder')}
@@ -277,6 +278,7 @@ export const MyCardsScreen: React.FC = () => {
             onChangeText={(text) => setState(prev => ({ ...prev, searchQuery: text }))}
             autoFocus
             clearButtonMode="while-editing"
+            inputAccessoryViewID={Platform.OS === 'ios' ? KEYBOARD_ACCESSORY_ID : undefined}
           />
         </View>
       )}
@@ -399,6 +401,7 @@ export const MyCardsScreen: React.FC = () => {
           />
         }
         showsVerticalScrollIndicator={false}
+        keyboardDismissMode="on-drag"
       >
         {state.loading ? (
           <LoadingState />
@@ -408,6 +411,7 @@ export const MyCardsScreen: React.FC = () => {
           renderCardList()
         )}
       </ScrollView>
+      <KeyboardDoneAccessory />
     </SafeAreaView>
   );
 };

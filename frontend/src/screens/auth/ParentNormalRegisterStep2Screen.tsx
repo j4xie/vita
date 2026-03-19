@@ -13,8 +13,10 @@ import {
   Keyboard,
   TouchableWithoutFeedback,
   Image,
+  Platform,
 } from 'react-native';
 import { LoaderOne } from '../../components/ui/LoaderOne';
+import { KeyboardDoneAccessory, KEYBOARD_ACCESSORY_ID } from '../../components/common/KeyboardDismissWrapper';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation, useRoute, CommonActions } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
@@ -38,6 +40,7 @@ import {
   checkEmailAvailability,
   validatePhoneNumber
 } from '../../services/registrationAPI';
+import emailAPI from '../../services/emailAPI';
 import {
   validateTextByLanguage,
   TextType,
@@ -60,6 +63,9 @@ interface RouteParams {
     confirmPassword: string;
     sex: '0' | '1' | '2';
     selectedSchool: SchoolData | null;
+    verifyMethod?: 'phone' | 'email';
+    phoneNumber?: string;
+    areaCode?: '86' | '1';
   };
 }
 
@@ -71,6 +77,9 @@ export const ParentNormalRegisterStep2Screen: React.FC = () => {
   
   const { step1Data } = route.params as RouteParams;
 
+  // 验证方式：默认 'phone' 保持向后兼容
+  const verifyMethod = step1Data.verifyMethod ?? 'phone';
+
   const [loading, setLoading] = useState(false);
 
   // 区域检测
@@ -80,6 +89,12 @@ export const ParentNormalRegisterStep2Screen: React.FC = () => {
   const [countdown, setCountdown] = useState(0);
   const [bizId, setBizId] = useState<string>('');
   const [smsCodeSent, setSmsCodeSent] = useState(false);
+
+  // 邮箱验证相关状态
+  const [emailVerificationCode, setEmailVerificationCode] = useState('');
+  const [emailCodeSent, setEmailCodeSent] = useState(false);
+  const [emailCodeValid, setEmailCodeValid] = useState<boolean | null>(null);
+  const [emailExpectedCode, setEmailExpectedCode] = useState<string>(''); // 后端返回的正确验证码
 
   // 成功弹窗状态
   const [showSuccessModal, setShowSuccessModal] = useState(false);
@@ -207,20 +222,28 @@ export const ParentNormalRegisterStep2Screen: React.FC = () => {
   const validateForm = (): boolean => {
     const newErrors: ValidationErrors = {};
 
-    // 验证手机号
-    if (!phoneNumber) {
-      newErrors.phoneNumber = t('validation.phone_required');
-    } else if (!validatePhoneNumber(phoneNumber, areaCode)) {
-      newErrors.phoneNumber = areaCode === '86'
-        ? t('validation.phone_china_invalid')
-        : t('validation.phone_us_invalid');
-    }
+    if (verifyMethod === 'phone') {
+      // 手机验证路径：验证手机号和验证码
+      if (!phoneNumber) {
+        newErrors.phoneNumber = t('validation.phone_required');
+      } else if (!validatePhoneNumber(phoneNumber, areaCode)) {
+        newErrors.phoneNumber = areaCode === '86'
+          ? t('validation.phone_china_invalid')
+          : t('validation.phone_us_invalid');
+      }
 
-    // 验证验证码
-    if (!verificationCode.trim()) {
-      newErrors.verificationCode = t('validation.verification_code_required');
-    } else if (!/^\d{6}$/.test(verificationCode)) {
-      newErrors.verificationCode = t('validation.verification_code_format');
+      if (!verificationCode.trim()) {
+        newErrors.verificationCode = t('validation.verification_code_required');
+      } else if (!/^\d{6}$/.test(verificationCode)) {
+        newErrors.verificationCode = t('validation.verification_code_format');
+      }
+    } else {
+      // 邮箱验证路径：验证邮箱验证码
+      if (!emailVerificationCode.trim()) {
+        newErrors.verificationCode = t('validation.verification_code_required');
+      } else if (!/^\d{6}$/.test(emailVerificationCode)) {
+        newErrors.verificationCode = t('validation.verification_code_format');
+      }
     }
 
     // 验证条款同意
@@ -324,8 +347,91 @@ export const ParentNormalRegisterStep2Screen: React.FC = () => {
     }
   };
 
+  // 邮箱验证码输入处理
+  const handleEmailVerificationCodeChange = (text: string) => {
+    setEmailVerificationCode(text);
+    if (errors.verificationCode) {
+      setErrors(prev => ({ ...prev, verificationCode: undefined }));
+    }
+    // 实时验证：格式检查 + 与后端返回的验证码比对
+    if (text.length === 0) {
+      setEmailCodeValid(null);
+    } else if (!/^\d{6}$/.test(text)) {
+      setEmailCodeValid(false);
+    } else if (emailExpectedCode) {
+      setEmailCodeValid(text === emailExpectedCode);
+    } else {
+      setEmailCodeValid(true); // 没有期望值时仅做格式校验
+    }
+  };
+
+  // 发送邮箱验证码
+  const sendEmailVerificationCode = async () => {
+    if (countdown > 0) return;
+
+    if (!agreedToTerms || !agreedToSMS) {
+      Alert.alert(t('common.error'), t('auth.register.must_agree_before_send_code'));
+      return;
+    }
+
+    const email = step1Data.email;
+    if (!email) {
+      Alert.alert(t('common.error'), t('validation.email_required'));
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const response = await emailAPI.sendEmailVercode(email);
+      console.log('📧 [sendEmailVerificationCode] Response:', response);
+
+      if (response.errorCode === 0 && response.message === 'OK') {
+        setEmailCodeSent(true);
+        // 保存后端返回的验证码，用于前端校验
+        if (response.code) {
+          setEmailExpectedCode(String(response.code));
+        }
+        Alert.alert(
+          t('auth.register.email.code_sent_title'),
+          t('auth.register.email.code_sent_message', { email })
+        );
+
+        // 开始倒计时
+        setCountdown(60);
+        const timer = setInterval(() => {
+          setCountdown(prev => {
+            if (prev <= 1) {
+              clearInterval(timer);
+              return 0;
+            }
+            return prev - 1;
+          });
+        }, 1000);
+      } else {
+        Alert.alert(
+          t('auth.register.email.send_failed_title'),
+          t('auth.register.email.send_failed_message')
+        );
+      }
+    } catch (error) {
+      console.error('❌ 发送邮箱验证码失败:', error);
+      Alert.alert(
+        t('auth.register.email.send_failed_title'),
+        `${t('auth.register.email.send_failed_message')}\n${(error as Error).message}`
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleRegister = async () => {
     if (!validateForm()) return;
+
+    // 邮箱验证码前端校验
+    if (verifyMethod === 'email' && emailExpectedCode && emailVerificationCode !== emailExpectedCode) {
+      Alert.alert(t('common.error'), t('auth.register.email.code_mismatch', { defaultValue: '验证码不正确，请重新输入' }));
+      return;
+    }
 
     // 🔧 防抖：2秒内只能点击一次
     const now = Date.now();
@@ -356,14 +462,16 @@ export const ParentNormalRegisterStep2Screen: React.FC = () => {
         legalName: nameData.legalName, // 使用生成的法定姓名
         nickName: nameData.nickName, // 使用生成的昵称（姓名拼音）
         password: step1Data.password, // 密码从Step1传递
-        phonenumber: phoneNumber, // 手机号从本页面
+        phonenumber: verifyMethod === 'phone' ? phoneNumber : (step1Data.phoneNumber ?? ''),
         email: step1Data.email, // 邮箱从Step1传递
         sex: step1Data.sex, // 性别从Step1传递
         deptId: parseInt(step1Data.selectedSchool!.id),
         area: detectedRegion, // 地理检测结果（只读）
-        areaCode: areaCode, // 使用本页面选择的区号
-        verCode: verificationCode, // 验证码从本页面
-        bizId: bizId,
+        areaCode: verifyMethod === 'phone' ? areaCode : (step1Data.areaCode ?? '86'),
+        // 手机验证传 SMS 验证码；邮箱验证传邮箱验证码
+        ...(verifyMethod === 'phone'
+          ? { verCode: verificationCode, bizId: bizId }
+          : { verCode: emailVerificationCode, isEmailVerify: 1 }),
       };
 
       // 🔧 请求去重：检测重复请求
@@ -668,35 +776,61 @@ export const ParentNormalRegisterStep2Screen: React.FC = () => {
               </Text>
             </View>
 
-            <Text style={styles.stepTitle}>{t('auth.register.form.phone_verification')}</Text>
+            <Text style={styles.stepTitle}>
+              {verifyMethod === 'email'
+                ? t('auth.register.form.email_verification')
+                : t('auth.register.form.phone_verification')
+              }
+            </Text>
             <Text style={styles.stepSubtitle}>
-              {t('auth.register.form.phone_verification_desc')}
+              {verifyMethod === 'email'
+                ? t('auth.register.form.email_verification_desc')
+                : t('auth.register.form.phone_verification_desc')
+              }
             </Text>
 
-            {/* 手机号输入 */}
-            <View style={styles.inputContainer}>
-              <Text style={styles.label}>{t('auth.register.form.phone_label')}</Text>
-              <View style={styles.phoneInputWrapper}>
-                <TouchableOpacity
-                  style={styles.areaCodeSelector}
-                  onPress={() => setShowAreaCodeModal(true)}
-                >
-                  <Text style={styles.areaCodeText}>
-                    +{areaCode}
+            {verifyMethod === 'email' ? (
+              /* 邮箱验证路径：邮箱显示 + 发送验证码 + 输入验证码 */
+              <View style={styles.inputContainer}>
+                <Text style={styles.label}>{t('auth.register.form.your_email')}</Text>
+                <View style={styles.emailConfirmContainer}>
+                  <Ionicons name="mail" size={20} color={theme.colors.primary} style={styles.emailConfirmIcon} />
+                  <Text style={styles.emailConfirmValue}>{step1Data.email}</Text>
+                </View>
+                <View style={styles.emailConfirmNotice}>
+                  <Ionicons name="information-circle-outline" size={16} color={theme.colors.text.secondary} />
+                  <Text style={styles.emailConfirmNoticeText}>
+                    {t('auth.register.form.email_confirm_notice')}
                   </Text>
-                  <Ionicons name="chevron-down" size={16} color={theme.colors.text.secondary} />
-                </TouchableOpacity>
-                <TextInput
-                  style={[styles.phoneInput, errors.phoneNumber && styles.inputError]}
-                  placeholder={getPhonePlaceholder(areaCode)}
-                  value={phoneNumber}
-                  onChangeText={setPhoneNumber}
-                  keyboardType="phone-pad"
-                  placeholderTextColor={theme.colors.text.disabled}
-                />
+                </View>
               </View>
-              {errors.phoneNumber && <Text style={styles.errorText}>{errors.phoneNumber}</Text>}
-            </View>
+            ) : (
+              /* 手机验证路径：手机号输入 */
+              <View style={styles.inputContainer}>
+                <Text style={styles.label}>{t('auth.register.form.phone_label')}</Text>
+                <View style={styles.phoneInputWrapper}>
+                  <TouchableOpacity
+                    style={styles.areaCodeSelector}
+                    onPress={() => setShowAreaCodeModal(true)}
+                  >
+                    <Text style={styles.areaCodeText}>
+                      +{areaCode}
+                    </Text>
+                    <Ionicons name="chevron-down" size={16} color={theme.colors.text.secondary} />
+                  </TouchableOpacity>
+                  <TextInput
+                    style={[styles.phoneInput, errors.phoneNumber && styles.inputError]}
+                    placeholder={getPhonePlaceholder(areaCode)}
+                    value={phoneNumber}
+                    onChangeText={setPhoneNumber}
+                    keyboardType="phone-pad"
+                    placeholderTextColor={theme.colors.text.disabled}
+                    inputAccessoryViewID={Platform.OS === 'ios' ? KEYBOARD_ACCESSORY_ID : undefined}
+                  />
+                </View>
+                {errors.phoneNumber && <Text style={styles.errorText}>{errors.phoneNumber}</Text>}
+              </View>
+            )}
 
             {/* 条款同意 */}
             <View style={styles.termsContainer}>
@@ -750,48 +884,105 @@ export const ParentNormalRegisterStep2Screen: React.FC = () => {
               )}
             </View>
 
-            {/* 短信服务条款 */}
-            <View style={styles.smsTermsContainer}>
-              <Text style={styles.smsTermsText}>
-                {t('auth.register.form.sms_terms_notice')}
-              </Text>
-            </View>
-
-            {/* 验证码输入 */}
-            <View style={styles.inputContainer}>
-              <Text style={styles.label}>{t('auth.register.form.verification_code_label')}</Text>
-              <View style={styles.verificationContainer}>
-                <TextInput
-                  style={[styles.verificationInput, errors.verificationCode && styles.inputError]}
-                  placeholder={t('auth.register.form.verification_code_placeholder')}
-                  value={verificationCode}
-                  onChangeText={setVerificationCode}
-                  keyboardType="number-pad"
-                  maxLength={6}
-                  placeholderTextColor={theme.colors.text.disabled}
-                />
-                <TouchableOpacity
-                  style={[
-                    styles.sendCodeButton,
-                    (countdown > 0 || !agreedToTerms || !agreedToSMS) && styles.sendCodeButtonDisabled
-                  ]}
-                  onPress={sendVerificationCode}
-                  disabled={countdown > 0 || loading || !agreedToTerms || !agreedToSMS}
-                >
-                  {loading ? (
-                    <LoaderOne size="small" color={theme.colors.text.inverse} />
-                  ) : (
-                    <Text style={styles.sendCodeText}>
-                      {countdown > 0
-                        ? `${countdown}s`
-                        : t('auth.register.form.send_code')
-                      }
-                    </Text>
-                  )}
-                </TouchableOpacity>
+            {/* 邮箱验证码输入 - 条款同意之后 */}
+            {verifyMethod === 'email' && (
+              <View style={styles.inputContainer}>
+                <Text style={styles.label}>{t('auth.register.form.verification_code_label')}</Text>
+                <View style={styles.verificationContainer}>
+                  <TextInput
+                    style={[
+                      styles.verificationInput,
+                      errors.verificationCode && styles.inputError,
+                      emailCodeValid === true && styles.inputSuccess,
+                    ]}
+                    placeholder={t('auth.register.form.verification_code_placeholder')}
+                    value={emailVerificationCode}
+                    onChangeText={handleEmailVerificationCodeChange}
+                    keyboardType="number-pad"
+                    maxLength={6}
+                    placeholderTextColor={theme.colors.text.disabled}
+                    returnKeyType="done"
+                    onSubmitEditing={() => Keyboard.dismiss()}
+                    inputAccessoryViewID={Platform.OS === 'ios' ? KEYBOARD_ACCESSORY_ID : undefined}
+                  />
+                  <TouchableOpacity
+                    style={[
+                      styles.sendCodeButton,
+                      (countdown > 0 || !agreedToTerms || !agreedToSMS) && styles.sendCodeButtonDisabled
+                    ]}
+                    onPress={sendEmailVerificationCode}
+                    disabled={countdown > 0 || loading || !agreedToTerms || !agreedToSMS}
+                  >
+                    {loading ? (
+                      <LoaderOne size="small" color={theme.colors.text.inverse} />
+                    ) : (
+                      <Text style={styles.sendCodeText}>
+                        {countdown > 0 ? `${countdown}s` : t('auth.register.form.send_code')}
+                      </Text>
+                    )}
+                  </TouchableOpacity>
+                </View>
+                {errors.verificationCode && <Text style={styles.errorText}>{errors.verificationCode}</Text>}
+                {!errors.verificationCode && emailVerificationCode.length > 0 && (
+                  <Text style={emailCodeValid === true ? styles.successText : emailCodeValid === false ? styles.errorText : styles.helpText}>
+                    {emailCodeValid === true
+                      ? t('auth.register.email.code_correct', { defaultValue: '验证码正确' })
+                      : emailCodeValid === false
+                        ? t('auth.register.email.code_incorrect', { defaultValue: '验证码不正确，请检查邮箱' })
+                        : t('auth.register.email.code_format_hint', { defaultValue: '请输入6位数字验证码' })
+                    }
+                  </Text>
+                )}
               </View>
-              {errors.verificationCode && <Text style={styles.errorText}>{errors.verificationCode}</Text>}
-            </View>
+            )}
+
+            {verifyMethod === 'phone' && (
+              <>
+                {/* 短信服务条款 */}
+                <View style={styles.smsTermsContainer}>
+                  <Text style={styles.smsTermsText}>
+                    {t('auth.register.form.sms_terms_notice')}
+                  </Text>
+                </View>
+
+                {/* 验证码输入 */}
+                <View style={styles.inputContainer}>
+                  <Text style={styles.label}>{t('auth.register.form.verification_code_label')}</Text>
+                  <View style={styles.verificationContainer}>
+                    <TextInput
+                      style={[styles.verificationInput, errors.verificationCode && styles.inputError]}
+                      placeholder={t('auth.register.form.verification_code_placeholder')}
+                      value={verificationCode}
+                      onChangeText={setVerificationCode}
+                      keyboardType="number-pad"
+                      maxLength={6}
+                      placeholderTextColor={theme.colors.text.disabled}
+                      inputAccessoryViewID={Platform.OS === 'ios' ? KEYBOARD_ACCESSORY_ID : undefined}
+                    />
+                    <TouchableOpacity
+                      style={[
+                        styles.sendCodeButton,
+                        (countdown > 0 || !agreedToTerms || !agreedToSMS) && styles.sendCodeButtonDisabled
+                      ]}
+                      onPress={sendVerificationCode}
+                      disabled={countdown > 0 || loading || !agreedToTerms || !agreedToSMS}
+                    >
+                      {loading ? (
+                        <LoaderOne size="small" color={theme.colors.text.inverse} />
+                      ) : (
+                        <Text style={styles.sendCodeText}>
+                          {countdown > 0
+                            ? `${countdown}s`
+                            : t('auth.register.form.send_code')
+                          }
+                        </Text>
+                      )}
+                    </TouchableOpacity>
+                  </View>
+                  {errors.verificationCode && <Text style={styles.errorText}>{errors.verificationCode}</Text>}
+                </View>
+              </>
+            )}
             {/* Register Button - 跟随内容在表单底部 */}
             <View style={styles.bottomContainer}>
               <TouchableOpacity
@@ -832,7 +1023,7 @@ export const ParentNormalRegisterStep2Screen: React.FC = () => {
         </View>
       )}
       
-      {/* 🔧 成功Modal - 与Web端保持一致的体验 */}
+      {/* 🔧 成功Modal */}
       <LiquidSuccessModal
         visible={showSuccessModal}
         onClose={handleSuccessModalClose}
@@ -848,6 +1039,7 @@ export const ParentNormalRegisterStep2Screen: React.FC = () => {
         onSelect={setAreaCode}
         onClose={() => setShowAreaCodeModal(false)}
       />
+      <KeyboardDoneAccessory />
     </SafeAreaView>
   );
 };
@@ -1314,6 +1506,35 @@ const styles = StyleSheet.create({
     fontWeight: theme.typography.fontWeight.semibold,
     color: theme.colors.primary,
     textAlign: 'center',
+  },
+  emailConfirmContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: theme.colors.primary + '10',
+    borderRadius: theme.borderRadius.lg,
+    paddingHorizontal: theme.spacing[4],
+    paddingVertical: theme.spacing[3],
+    marginBottom: theme.spacing[2],
+  },
+  emailConfirmIcon: {
+    marginRight: theme.spacing[2],
+  },
+  emailConfirmValue: {
+    fontSize: theme.typography.fontSize.base,
+    color: theme.colors.primary,
+    fontWeight: theme.typography.fontWeight.medium,
+    flex: 1,
+  },
+  emailConfirmNotice: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: theme.spacing[1],
+  },
+  emailConfirmNoticeText: {
+    fontSize: theme.typography.fontSize.xs,
+    color: theme.colors.text.secondary,
+    flex: 1,
+    lineHeight: 16,
   },
   smsTermsContainer: {
     marginBottom: theme.spacing[4],

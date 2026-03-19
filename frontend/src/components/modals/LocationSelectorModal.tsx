@@ -12,6 +12,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import { SearchIcon } from '../common/icons/SearchIcon';
 import { BlurView } from 'expo-blur';
 import { useTranslation } from 'react-i18next';
 import * as Haptics from 'expo-haptics';
@@ -374,7 +375,7 @@ export const LocationSelectorModal: React.FC<LocationSelectorModalProps> = ({
         onPress={() => setMode('search')}
         activeOpacity={0.7}
       >
-        <Ionicons name="search" size={20} color="#999" />
+        <SearchIcon size={20} color="#999" />
         <Text style={styles.fakeSearchText}>
           {t('location.search_destinations', 'Search destinations')}
         </Text>
@@ -426,7 +427,7 @@ export const LocationSelectorModal: React.FC<LocationSelectorModalProps> = ({
           {searchResults.map(result => renderSuggestionCard(result))}
           {searchQuery.trim() && searchResults.length === 0 && (
             <View style={styles.noResultsContainer}>
-              <Ionicons name="search-outline" size={48} color="#CCC" />
+              <SearchIcon size={48} color="#CCC" />
               <Text style={styles.noResultsText}>
                 {t('location.no_results', 'No results found')}
               </Text>

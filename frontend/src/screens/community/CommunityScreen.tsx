@@ -12,10 +12,13 @@ import {
   Platform,
   Dimensions,
   Animated,
+  Alert,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { SearchIcon } from '../../components/common/icons/SearchIcon';
+import { CouponIcon } from '../../components/common/icons/CommunityIcons';
 import Svg, { Path, Rect } from 'react-native-svg';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTranslation } from 'react-i18next';
@@ -50,11 +53,11 @@ const COLORS = {
   scrollTrack: '#E0E0E0',
 };
 
-// Card dimensions for carousel (same as Explore)
-const CARD_WIDTH = Math.round(screenWidth * 0.56);
+// Card dimensions for carousel - Figma specs
+const CARD_WIDTH = 220;
 const CARD_MARGIN = 23;
 const SNAP_INTERVAL = CARD_WIDTH + CARD_MARGIN;
-const SCROLL_TRACK_WIDTH = Math.min(screenWidth - 40, 340);
+const SCROLL_TRACK_WIDTH = 340;
 
 // School coordinates (lat, lng)
 const SCHOOL_COORDINATES: Record<string, { lat: number; lng: number }> = {
@@ -125,9 +128,10 @@ export const CommunityScreen: React.FC = () => {
   const { schools: allSchools, loading: schoolsLoading, loadSchools } = useSchoolData();
   const scrollX = React.useRef(new Animated.Value(0)).current;
 
-  // Location state
-  const [userLocation, setUserLocation] = useState<LocationData | null>(null);
-  const [locationLoading, setLocationLoading] = useState(true);
+  // Location - use cached location from app startup, no independent fetch
+  const [userLocation, setUserLocation] = useState<LocationData | null>(
+    () => LocationService.getCachedLocation()
+  );
 
   // UI state
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -148,20 +152,13 @@ export const CommunityScreen: React.FC = () => {
   const [loadingMerchants, setLoadingMerchants] = useState(false);
   const merchantsLoadedRef = React.useRef(false);
 
-  // Get user location
+  // If no cached location on mount, try fetching in background (non-blocking)
   useEffect(() => {
-    const fetchLocation = async () => {
-      setLocationLoading(true);
-      try {
-        const location = await LocationService.getCurrentLocation({ useCache: true });
-        setUserLocation(location);
-      } catch (error) {
-        console.warn('[CommunityScreen] Location failed:', error);
-      } finally {
-        setLocationLoading(false);
-      }
-    };
-    fetchLocation();
+    if (!userLocation) {
+      LocationService.getCurrentLocation({ useCache: true })
+        .then(loc => setUserLocation(loc))
+        .catch(() => {}); // silently fail - not critical
+    }
   }, []);
 
   // Listen for search text changes
@@ -175,9 +172,9 @@ export const CommunityScreen: React.FC = () => {
     return () => subscription.remove();
   }, []);
 
-  // Filter nearby schools
+  // Filter nearby schools - don't block on location
   const nearbySchools = useMemo(() => {
-    let filtered = allSchools.filter(school => {
+    const nonHQ = allSchools.filter(school => {
       const name = school.name.toLowerCase();
       const isHeadquarters =
         name.includes('hq') ||
@@ -189,29 +186,36 @@ export const CommunityScreen: React.FC = () => {
     });
 
     if (userLocation) {
-      filtered = filtered.filter(school => {
+      // Have location - filter by distance
+      const nearby = nonHQ.filter(school => {
         const coords = getSchoolCoordinates(school.aprName);
         if (!coords) {
           return user?.deptId?.toString() === school.deptId.toString();
         }
-        const distance = calculateDistance(
-          userLocation.latitude,
-          userLocation.longitude,
-          coords.lat,
-          coords.lng
-        );
-        return distance <= MAX_DISTANCE_METERS;
+        return calculateDistance(
+          userLocation.latitude, userLocation.longitude,
+          coords.lat, coords.lng
+        ) <= MAX_DISTANCE_METERS;
       });
 
-      if (filtered.length === 0 && user?.deptId) {
+      if (nearby.length > 0) return nearby;
+
+      // No nearby schools - fallback to user's school
+      if (user?.deptId) {
         const userSchool = allSchools.find(s => s.deptId.toString() === user.deptId?.toString());
-        if (userSchool) {
-          filtered = [userSchool];
-        }
+        if (userSchool) return [userSchool];
       }
+      return nonHQ;
     }
 
-    return filtered;
+    // No location yet (loading or failed) - use user's school immediately
+    if (user?.deptId) {
+      const userSchool = nonHQ.find(s => s.deptId.toString() === user.deptId?.toString());
+      if (userSchool) return [userSchool];
+    }
+
+    // No user school either - return all
+    return nonHQ;
   }, [allSchools, userLocation, user?.deptId]);
 
   // Load merchants for schools
@@ -238,14 +242,17 @@ export const CommunityScreen: React.FC = () => {
     }
   }, [nearbySchools]);
 
-  // Load merchants when schools change
+  // Load merchants when schools change - don't wait for location
+  const prevSchoolIdsRef = React.useRef<string>('');
   useEffect(() => {
-    if (merchantsLoadedRef.current) return;
-    if (nearbySchools.length > 0 && !locationLoading) {
-      merchantsLoadedRef.current = true;
+    if (nearbySchools.length === 0) return;
+    const schoolIds = nearbySchools.map(s => s.id).sort().join(',');
+    // Reload if school list changed (e.g. after location resolves)
+    if (schoolIds !== prevSchoolIdsRef.current) {
+      prevSchoolIdsRef.current = schoolIds;
       loadMerchantsForSchools();
     }
-  }, [nearbySchools, locationLoading]);
+  }, [nearbySchools, loadMerchantsForSchools]);
 
   // Pull to refresh
   const handleRefresh = useCallback(async () => {
@@ -369,7 +376,7 @@ export const CommunityScreen: React.FC = () => {
     setCurrentFilters(filters);
   }, []);
 
-  const isLoading = (schoolsLoading && allSchools.length === 0) || loadingMerchants || locationLoading;
+  const isLoading = (schoolsLoading && allSchools.length === 0) || loadingMerchants;
 
   // Active filter count for badge
   const activeFilterCount = useMemo(() => {
@@ -384,25 +391,34 @@ export const CommunityScreen: React.FC = () => {
     <View style={[styles.container, isDarkMode && styles.containerDark]}>
       <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} backgroundColor={isDarkMode ? '#000' : COLORS.bg} />
 
-      {/* Header - Figma Explore style */}
+      {/* Header - Merchant Community */}
       <View style={[styles.headerContainer, isDarkMode && styles.headerContainerDark, { paddingTop: insets.top }]}>
         <View style={styles.headerTopRow}>
-          <Text style={[styles.greetingText, isDarkMode && styles.textWhite]}>
-            Hi, {user?.nickName || user?.userName || 'Guest'}
-          </Text>
+          <View style={styles.headerTitleGroup}>
+            <Text style={[styles.headerTitleGray, isDarkMode && { color: '#666' }]}>Merchant</Text>
+            <Text style={[styles.headerTitleBlack, isDarkMode && styles.textWhite]}>Community</Text>
+          </View>
           <View style={styles.headerIcons}>
+            <TouchableOpacity
+              style={[styles.circleIconButton, isDarkMode && styles.circleIconButtonDark]}
+              onPress={() => {
+                navigation.navigate('MyCoupons' as never);
+              }}
+            >
+              <CouponIcon size={24} color={isDarkMode ? '#ccc' : '#949494'} />
+            </TouchableOpacity>
             <TouchableOpacity
               testID="community-search-button"
               accessibilityLabel="community-search-button"
               style={[styles.circleIconButton, isDarkMode && styles.circleIconButtonDark]}
               onPress={() => setSearchModalVisible(true)}
             >
-              <Ionicons name="search-outline" size={24} color={isDarkMode ? '#ccc' : '#888888'} />
+              <SearchIcon size={24} color={isDarkMode ? '#ccc' : '#949494'} />
             </TouchableOpacity>
           </View>
         </View>
         <Text style={[styles.sectionTitle, isDarkMode && { color: '#666' }]}>
-          {t('community.favorites', 'FEATURED MERCHANTS')}
+          {t('community.favorites', 'FAVORITES')}
         </Text>
       </View>
 
@@ -445,9 +461,7 @@ export const CommunityScreen: React.FC = () => {
         <View style={[styles.loadingContainer, { backgroundColor: isDarkMode ? '#000' : COLORS.bg }]}>
           <LoaderOne size="large" color="#FF7763" />
           <Text style={[styles.loadingText, isDarkMode && styles.textGray]}>
-            {locationLoading
-              ? t('community.locating', 'Getting location...')
-              : t('community.loadingMerchants', 'Loading merchants...')}
+            {t('community.loadingMerchants', 'Loading merchants...')}
           </Text>
         </View>
       ) : (
@@ -508,9 +522,9 @@ export const CommunityScreen: React.FC = () => {
           {/* Section Separator */}
           <View style={[styles.sectionSeparator, isDarkMode && { backgroundColor: '#333' }]} />
 
-          {/* ALL MERCHANTS Section Title */}
+          {/* MERCHANTS Section Title */}
           <Text style={[styles.merchantsSectionTitle, isDarkMode && { color: '#666' }]}>
-            {t('community.merchantsLabel', 'ALL MERCHANTS')}
+            {t('community.merchantsLabel', 'MERCHANTS')}
           </Text>
 
           {/* Filter Row - Figma Explore style */}
@@ -519,7 +533,20 @@ export const CommunityScreen: React.FC = () => {
               testID="community-filter-button"
               accessibilityLabel="community-filter-button"
               style={styles.filterIconButton}
-              onPress={() => setFilterModalVisible(true)}
+              onPress={() => {
+                if (!user?.id) {
+                  Alert.alert(
+                    t('common.loginRequired', 'Login Required'),
+                    t('common.loginRequiredMessage', 'Please login to use filters'),
+                    [
+                      { text: t('common.cancel', 'Cancel'), style: 'cancel' },
+                      { text: t('common.login', 'Login'), onPress: () => navigation.navigate('Login' as never) },
+                    ]
+                  );
+                  return;
+                }
+                setFilterModalVisible(true);
+              }}
               activeOpacity={0.8}
             >
               <Svg width="34" height="34" viewBox="0 0 34 34" fill="none">
@@ -583,9 +610,6 @@ export const CommunityScreen: React.FC = () => {
                 <Text style={[styles.emptyStateText, isDarkMode && styles.textWhite]}>
                   {t('community.noMerchants', 'No merchants yet')}
                 </Text>
-                <Text style={[styles.emptyStateSubtext, isDarkMode && styles.textGray]}>
-                  {t('community.comingSoon', 'Coming Soon')}
-                </Text>
               </View>
             )}
           </View>
@@ -643,18 +667,30 @@ const styles = StyleSheet.create({
   headerTopRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     marginBottom: 18,
     marginTop: 6,
   },
-  greetingText: {
-    fontFamily: 'Poppins-Bold',
+  headerTitleGroup: {
+    flexDirection: 'column',
+  },
+  headerTitleGray: {
+    fontFamily: 'Poppins_700Bold',
+    fontWeight: '700',
+    fontSize: 30,
+    color: '#949494',
+    lineHeight: 36,
+  },
+  headerTitleBlack: {
+    fontFamily: 'Poppins_700Bold',
+    fontWeight: '700',
     fontSize: 30,
     color: '#000000',
-    lineHeight: 45,
+    lineHeight: 36,
   },
   headerIcons: {
     flexDirection: 'row',
+    alignItems: 'center',
   },
   circleIconButton: {
     width: 42,
@@ -674,19 +710,19 @@ const styles = StyleSheet.create({
     backgroundColor: '#1c1c1e',
   },
   sectionTitle: {
-    fontFamily: 'IBM Plex Mono',
+    fontFamily: 'IBMPlexMono_600SemiBold',
     fontSize: 15,
     fontWeight: '600',
-    color: COLORS.sectionTitle,
+    color: '#949494',
     marginBottom: 4,
     textTransform: 'uppercase',
-    lineHeight: 19.5,
+    lineHeight: 20,
   },
 
   // Carousel
   carouselContent: {
-    paddingLeft: 20,
-    paddingRight: screenWidth - 20 - CARD_WIDTH,
+    paddingLeft: 26,
+    paddingRight: screenWidth - 26 - CARD_WIDTH,
     paddingBottom: 12,
     paddingTop: 8,
   },
@@ -701,9 +737,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
   },
   scrollIndicatorTrack: {
-    height: 2,
+    height: 4, // Figma: border 2px = 4px total visual weight
     width: SCROLL_TRACK_WIDTH,
-    backgroundColor: COLORS.scrollTrack,
+    backgroundColor: '#E0E0E0',
     borderRadius: 2,
     overflow: 'hidden',
   },
@@ -717,22 +753,22 @@ const styles = StyleSheet.create({
   // Section Separator
   sectionSeparator: {
     height: 1,
-    backgroundColor: COLORS.separator,
-    marginHorizontal: 20,
+    backgroundColor: '#E0E0E0',
+    marginHorizontal: 27,
     marginBottom: 16,
   },
 
   // Merchants section title
   merchantsSectionTitle: {
-    fontFamily: 'IBM Plex Mono',
+    fontFamily: 'IBMPlexMono_600SemiBold',
     fontSize: 15,
     fontWeight: '600',
-    color: COLORS.sectionTitle,
-    marginLeft: 20,
+    color: '#949494',
+    marginLeft: 27,
     marginTop: 8,
     marginBottom: 10,
     textTransform: 'uppercase',
-    lineHeight: 19.5,
+    lineHeight: 20,
   },
 
   // Filter Section - matching Figma Explore
@@ -800,7 +836,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
   },
   filterTabText: {
-    fontFamily: 'Poppins-Medium',
+    fontFamily: 'Poppins_500Medium',
     fontSize: 15,
     fontWeight: '500',
   },

@@ -9,10 +9,13 @@ import {
   Dimensions,
   RefreshControl,
   Animated,
+  Alert,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { ScanIcon } from '../../components/common/icons/ScanIcon';
+import { SearchIcon } from '../../components/common/icons/SearchIcon';
 import Svg, { Path, Rect } from 'react-native-svg';
 import { useTranslation } from 'react-i18next';
 import { pomeloXAPI } from '../../services/PomeloXAPI';
@@ -57,7 +60,7 @@ const FilterTab = ({ label, active, onPress }: { label: string; active: boolean;
 );
 
 // Card dimensions for scroll calculation (must match FeaturedActivityCard)
-const CARD_WIDTH = Math.round(screenWidth * 0.56);
+const CARD_WIDTH = Math.round(screenWidth * 0.65);
 const CARD_MARGIN = 23; // Figma gap between cards
 const SNAP_INTERVAL = CARD_WIDTH + CARD_MARGIN;
 const SCROLL_TRACK_WIDTH = Math.min(screenWidth - 40, 340);
@@ -93,7 +96,9 @@ export const ExploreScreen: React.FC = () => {
       const result = await pomeloXAPI.getActivityList(params);
 
       const responseData = result.data || result;
-      const rows = (responseData as any).rows || [];
+      const allRows = (responseData as any).rows || [];
+      // 过滤掉证书申请类活动(actType=4)，证书申请在专门的证书页面展示
+      const rows = allRows.filter((r: any) => r.actType !== 4);
       const total = (responseData as any).total || 0;
 
       const adapted = adaptActivityList({ total, rows, code: result.code, msg: result.msg }, i18n.language?.startsWith('en') ? 'en' : 'zh', forceRefresh);
@@ -209,8 +214,11 @@ export const ExploreScreen: React.FC = () => {
       {/* Header Area - Custom Background Color */}
       <View style={[styles.headerContainer, { paddingTop: insets.top }]}>
         <View style={styles.headerTopRow}>
-          {/* Greeting: Unified black per Figma */}
-          <Text style={styles.greetingText}>Hi, {user?.nickName || user?.userName || 'Guest'}</Text>
+          {/* Greeting: "Hi," in gray, name in black per Figma */}
+          <Text style={styles.greetingText}>
+            <Text style={styles.greetingHi}>Hi, </Text>
+            <Text style={styles.greetingName}>{user?.nickName || user?.userName || 'Guest'}</Text>
+          </Text>
 
           <View style={styles.headerIcons}>
             {/* Scan Icon - White Circle Button */}
@@ -218,29 +226,7 @@ export const ExploreScreen: React.FC = () => {
               style={styles.circleIconButton}
               onPress={() => navigation.navigate('QRScanner', { purpose: 'scan' })}
             >
-              <View style={{ alignItems: 'center', justifyContent: 'center', width: 28, height: 28 }}>
-                {/* Outer corners */}
-                <Ionicons name="scan-outline" size={28} color="#888888" />
-                
-                {/* Inner rounded rectangle */}
-                <View style={{
-                  position: 'absolute',
-                  width: 13,
-                  height: 13,
-                  borderWidth: 1.8,
-                  borderColor: '#888888',
-                  borderRadius: 4.5,
-                }} />
-                
-                {/* Horizontal line */}
-                <View style={{
-                  position: 'absolute',
-                  width: 17,
-                  height: 1.5,
-                  backgroundColor: '#888888',
-                  borderRadius: 1
-                }} />
-              </View>
+              <ScanIcon size={28} color="#949494" />
             </TouchableOpacity>
 
             {/* Search Icon - White Circle Button */}
@@ -250,7 +236,7 @@ export const ExploreScreen: React.FC = () => {
               style={styles.circleIconButton}
               onPress={() => setSearchModalVisible(true)}
             >
-              <Ionicons name="search-outline" size={24} color="#888888" />
+              <SearchIcon size={24} color="#949494" />
             </TouchableOpacity>
           </View>
         </View>
@@ -289,29 +275,33 @@ export const ExploreScreen: React.FC = () => {
         </ScrollView>
 
         {/* Multi-Colored Scroll Indicator */}
-        <View style={styles.scrollIndicatorContainer}>
-          <View style={styles.scrollIndicatorTrack}>
-            <Animated.View 
-              style={[
-                styles.scrollIndicatorFill,
-                {
-                  transform: [{
-                    translateX: scrollX.interpolate({
-                      // Input: from 0 to the maximum scrollable width of the carousel
-                      inputRange: [0, Math.max(1, (activities.slice(0, 5).length - 1) * SNAP_INTERVAL)],
-                      // Output: from 0 to (trackWidth - fillWidth)
-                      outputRange: [0, SCROLL_TRACK_WIDTH - 100],
-                      extrapolate: 'clamp',
-                    })
-                  }]
-                }
-              ]} 
-            />
-          </View>
-        </View>
-
-        {/* Horizontal Separator */}
-        <View style={styles.sectionSeparator} />
+        {(() => {
+          const numCards = activities.slice(0, 5).length;
+          const contentWidth = 20 + numCards * CARD_WIDTH + (numCards - 1) * CARD_MARGIN + 20;
+          const maxScrollX = Math.max(1, contentWidth - screenWidth);
+          const fillWidth = SCROLL_TRACK_WIDTH / Math.max(1, numCards);
+          return (
+            <View style={styles.scrollIndicatorContainer}>
+              <View style={styles.scrollIndicatorTrack}>
+                <Animated.View
+                  style={[
+                    styles.scrollIndicatorFill,
+                    {
+                      width: fillWidth,
+                      transform: [{
+                        translateX: scrollX.interpolate({
+                          inputRange: [0, maxScrollX],
+                          outputRange: [0, SCROLL_TRACK_WIDTH - fillWidth],
+                          extrapolate: 'clamp',
+                        })
+                      }]
+                    }
+                  ]}
+                />
+              </View>
+            </View>
+          );
+        })()}
 
         {/* ACTIVITIES Section Title */}
         <Text style={styles.activitiesSectionTitle}>ACTIVITIES</Text>
@@ -322,26 +312,39 @@ export const ExploreScreen: React.FC = () => {
           <TouchableOpacity
             testID="explore-filter-button"
             accessibilityLabel="explore-filter-button"
-            style={styles.filterIconButton}
-            onPress={() => setFilterModalVisible(true)}
+            style={[styles.filterIconButton, hasActiveFilters && styles.filterIconButtonActive]}
+            onPress={() => {
+              if (!user?.id) {
+                Alert.alert(
+                  t('common.loginRequired', 'Login Required'),
+                  t('common.loginRequiredMessage', 'Please login to use filters'),
+                  [
+                    { text: t('common.cancel', 'Cancel'), style: 'cancel' },
+                    { text: t('common.login', 'Login'), onPress: () => navigation.navigate('Login' as never) },
+                  ]
+                );
+                return;
+              }
+              setFilterModalVisible(true);
+            }}
             activeOpacity={0.8}
           >
             <Svg width="34" height="34" viewBox="0 0 34 34" fill="none">
-              <Rect width="34" height="34" rx="17" fill="#FF7763"/>
-              <Path 
-                d="M10.4 7.09998H23.6C24.7 7.09998 25.6 7.99998 25.6 9.09998V11.3C25.6 12.1 25.1 13.1 24.6 13.6L20.3 17.4C19.7 17.9 19.3 18.9 19.3 19.7V24C19.3 24.6 18.9 25.4 18.4 25.7L17 26.6C15.7 27.4 13.9 26.5 13.9 24.9V19.6C13.9 18.9 13.5 18 13.1 17.5L9.30002 13.5C8.80002 13 8.40002 12.1 8.40002 11.5V9.19998C8.40002 7.99998 9.30002 7.09998 10.4 7.09998Z" 
-                stroke="white" 
-                strokeWidth="1.5" 
-                strokeMiterlimit="10" 
-                strokeLinecap="round" 
+              <Rect width="34" height="34" rx="17" fill={hasActiveFilters ? '#FF7763' : 'white'}/>
+              <Path
+                d="M10.4 7.09998H23.6C24.7 7.09998 25.6 7.99998 25.6 9.09998V11.3C25.6 12.1 25.1 13.1 24.6 13.6L20.3 17.4C19.7 17.9 19.3 18.9 19.3 19.7V24C19.3 24.6 18.9 25.4 18.4 25.7L17 26.6C15.7 27.4 13.9 26.5 13.9 24.9V19.6C13.9 18.9 13.5 18 13.1 17.5L9.30002 13.5C8.80002 13 8.40002 12.1 8.40002 11.5V9.19998C8.40002 7.99998 9.30002 7.09998 10.4 7.09998Z"
+                stroke={hasActiveFilters ? 'white' : '#949494'}
+                strokeWidth="1.5"
+                strokeMiterlimit="10"
+                strokeLinecap="round"
                 strokeLinejoin="round"
               />
-              <Path 
-                d="M15.93 7.09998L11 15" 
-                stroke="white" 
-                strokeWidth="1.5" 
-                strokeMiterlimit="10" 
-                strokeLinecap="round" 
+              <Path
+                d="M15.93 7.09998L11 15"
+                stroke={hasActiveFilters ? 'white' : '#949494'}
+                strokeWidth="1.5"
+                strokeMiterlimit="10"
+                strokeLinecap="round"
                 strokeLinejoin="round"
               />
             </Svg>
@@ -403,7 +406,7 @@ const styles = StyleSheet.create({
   },
   headerContainer: {
     paddingHorizontal: 20,
-    paddingBottom: 20,
+    paddingBottom: 0,
     backgroundColor: COLORS.headerBg, // Light tint
     borderBottomLeftRadius: 0,
     borderBottomRightRadius: 0,
@@ -412,17 +415,22 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 18,
+    marginBottom: 9,
     marginTop: 6,
   },
   greetingText: {
-    fontFamily: 'Poppins-Bold',
+    fontFamily: 'Poppins_700Bold',
     fontSize: 30,
+  },
+  greetingHi: {
+    color: '#949494',
+  },
+  greetingName: {
     color: '#000000',
-    lineHeight: 45, // 1.5em
   },
   headerIcons: {
     flexDirection: 'row',
+    alignItems: 'center',
   },
   circleIconButton: {
     width: 42,
@@ -439,26 +447,26 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   sectionTitle: {
-    fontFamily: 'IBM Plex Mono',
+    fontFamily: 'IBMPlexMono_600SemiBold',
     fontSize: 15,
     fontWeight: '600',
     color: '#949494',
-    marginBottom: 4,
+    marginBottom: 0,
     textTransform: 'uppercase',
     lineHeight: 19.5, // 1.3em
   },
   carouselContent: {
     paddingLeft: 20,
-    paddingRight: screenWidth - 20 - CARD_WIDTH,
+    paddingRight: 20,
     paddingBottom: 12,
-    paddingTop: 8,
+    paddingTop: 9,
   },
   scrollIndicatorContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 10,
-    marginBottom: 12,
+    marginTop: 8,
+    marginBottom: 4,
     paddingHorizontal: 20,
   },
   scrollIndicatorTrack: {
@@ -469,72 +477,75 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   scrollIndicatorFill: {
+    position: 'absolute',
+    left: 0,
+    top: 0,
     height: '100%',
-    width: 100, // Figma: 100px fill indicator
     backgroundColor: COLORS.primary,
     borderRadius: 2,
   },
   sectionSeparator: {
-    height: 1,
-    backgroundColor: '#E9E2DD',
+    height: 2,
+    backgroundColor: '#E0E0E0',
     marginHorizontal: 20,
-    marginBottom: 16,
+    marginBottom: 0,
   },
   activitiesSectionTitle: {
-    fontFamily: 'IBM Plex Mono',
+    fontFamily: 'IBMPlexMono_600SemiBold',
     fontSize: 15,
     fontWeight: '600',
     color: '#949494',
     marginLeft: 20,
-    marginTop: 8,
-    marginBottom: 10,
+    marginTop: 12,
+    marginBottom: 13,
     textTransform: 'uppercase',
-    lineHeight: 19.5, // 1.3em
+    lineHeight: 20,
   },
   filterSection: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 20,
-    marginVertical: 2,
-    marginBottom: 14,
+    marginTop: 0,
+    marginBottom: 20,
   },
   filterIconButton: {
     width: 34,
     height: 34,
     borderRadius: 17,
-    // backgroundColor: COLORS.primary, // Removed as SVG handles background
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
-    elevation: 3,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.06,
+    shadowRadius: 2,
+    elevation: 2,
   },
   filterIconButtonActive: {
-    // 如果需要区分激活状态，可以加深颜色或改变阴影
-    backgroundColor: '#E67A64', 
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 4,
   },
   filterDivider: {
-    width: 1,
+    width: 2,
     height: 30,
     backgroundColor: '#E0E0E0',
-    marginHorizontal: 12,
+    borderRadius: 1,
+    marginLeft: 16,
+    marginRight: 14,
   },
   filterTabsRow: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    marginLeft: 4,
+    gap: 16,
   },
   filterScroll: {
     flexGrow: 0,
   },
   filterTab: {
-    paddingVertical: 5,
-    paddingHorizontal: 17,
-    borderRadius: 53,
-    marginHorizontal: 4,
+    flex: 1,
+    height: 34,
+    borderRadius: 17,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -546,7 +557,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
   },
   filterTabText: {
-    fontFamily: 'Poppins-Medium',
+    fontFamily: 'Poppins_500Medium',
     fontSize: 15,
     fontWeight: '500',
   },
@@ -563,6 +574,6 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     color: COLORS.textSecondary,
     marginTop: 20,
-    fontFamily: 'Poppins-Regular',
+    fontFamily: 'Poppins_400Regular',
   },
 });

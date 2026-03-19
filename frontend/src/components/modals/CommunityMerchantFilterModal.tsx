@@ -12,6 +12,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { FunnelFilterIcon, PriceFilterIcon, TypeFilterIcon, AvailabilityFilterIcon, LocationFilterIcon } from '../common/icons/FilterIcons';
 
 const { width: screenWidth } = Dimensions.get('window');
 const SIDEBAR_WIDTH = 88;
@@ -20,7 +21,7 @@ const COLORS = {
   primary: '#FF7763',
   white: '#FFFFFF',
   border: '#E8E8E8',
-  gray100: '#F8F8F8',
+  gray100: '#FAF3F1',
   textMain: '#1A1A1A',
 };
 
@@ -60,11 +61,16 @@ export const CommunityMerchantFilterModal: React.FC<CommunityMerchantFilterModal
     initialFilters?.selectedSchools || []
   );
 
+  const hasFilterChanges = selectedTypes.length > 0 ||
+    priceRange !== 'all' ||
+    sortBy !== 'points-high' ||
+    selectedSchools.length > 0;
+
   const tabs = [
-    { id: 'price', label: 'Price', icon: 'pricetag-outline' },
-    { id: 'type', label: 'Type', icon: 'grid-outline' },
-    { id: 'sort', label: 'Sort', icon: 'swap-vertical-outline' },
-    { id: 'schools', label: 'Location', icon: 'location-outline' },
+    { id: 'price', label: 'Price', IconComponent: PriceFilterIcon },
+    { id: 'type', label: 'Type', IconComponent: TypeFilterIcon },
+    { id: 'sort', label: 'Sort', IconComponent: AvailabilityFilterIcon },
+    { id: 'schools', label: 'Location', IconComponent: LocationFilterIcon },
   ];
 
   const merchantTypes = [
@@ -235,7 +241,7 @@ export const CommunityMerchantFilterModal: React.FC<CommunityMerchantFilterModal
         <TouchableOpacity
           testID="filter-modal-close"
           accessibilityLabel="filter-modal-close"
-          style={[styles.floatingClose, { top: insets.top + 120 }]}
+          style={[styles.floatingClose, { bottom: '75%', marginBottom: 12 }]}
           onPress={onClose}
           activeOpacity={0.7}
         >
@@ -246,7 +252,7 @@ export const CommunityMerchantFilterModal: React.FC<CommunityMerchantFilterModal
           {/* Header */}
           <View style={styles.header}>
             <View style={styles.headerLeft}>
-              <Ionicons name="funnel-outline" size={24} color="#000" />
+              <FunnelFilterIcon size={24} color="#000" />
               <Text style={styles.headerTitle}>Filter</Text>
             </View>
             <TouchableOpacity onPress={handleClearAll}>
@@ -266,10 +272,9 @@ export const CommunityMerchantFilterModal: React.FC<CommunityMerchantFilterModal
                   onPress={() => setActiveTab(tab.id)}
                 >
                   {activeTab === tab.id && <View style={styles.activeIndicator} />}
-                  <Ionicons
-                    name={tab.icon as any}
+                  <tab.IconComponent
                     size={22}
-                    color={activeTab === tab.id ? COLORS.primary : '#999'}
+                    color={activeTab === tab.id ? COLORS.primary : '#949494'}
                   />
                   <Text style={[styles.tabLabel, activeTab === tab.id && styles.tabLabelActive]}>
                     {tab.label}
@@ -288,8 +293,14 @@ export const CommunityMerchantFilterModal: React.FC<CommunityMerchantFilterModal
             <TouchableOpacity testID="filter-close-button" style={styles.closeButton} onPress={onClose}>
               <Text style={styles.closeButtonText}>Close</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.applyButton} onPress={handleApply}>
-              <Text style={styles.applyButtonText}>Show Results</Text>
+            <TouchableOpacity
+              style={[styles.applyButton, !hasFilterChanges && styles.applyButtonDisabled]}
+              onPress={handleApply}
+              disabled={!hasFilterChanges}
+            >
+              <Text style={[styles.applyButtonText, !hasFilterChanges && styles.applyButtonTextDisabled]}>
+                {t('filters.showResults', 'Show Results')}
+              </Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -394,7 +405,7 @@ const styles = StyleSheet.create({
   },
   rightPanel: {
     flex: 1,
-    backgroundColor: '#FFF',
+    backgroundColor: '#FAF3F1',
   },
   rightPanelContent: {
     padding: 24,
@@ -587,7 +598,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   closeButtonText: {
-    fontFamily: 'Poppins-Medium',
+    fontFamily: 'Poppins_500Medium',
     fontSize: 15,
     fontWeight: '500',
     color: '#949494',
@@ -605,10 +616,17 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 4,
   },
+  applyButtonDisabled: {
+    backgroundColor: '#D1D1D1',
+    shadowOpacity: 0,
+  },
   applyButtonText: {
-    fontFamily: 'Poppins-SemiBold',
+    fontFamily: 'Poppins_600SemiBold',
     fontSize: 15,
     fontWeight: '600',
     color: '#FFFFFF',
+  },
+  applyButtonTextDisabled: {
+    color: '#FFF',
   },
 });

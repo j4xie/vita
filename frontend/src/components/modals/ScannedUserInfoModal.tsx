@@ -186,16 +186,6 @@ export const ScannedUserInfoModal: React.FC<ScannedUserInfoModalProps> = ({
             }
           },
           {
-            text: '手动选择活动',
-            onPress: () => {
-              Alert.alert(
-                '开发中',
-                '手动选择活动功能正在开发中，敬请期待。',
-                [{ text: '确定' }]
-              );
-            }
-          },
-          {
             text: '取消',
             style: 'cancel'
           }

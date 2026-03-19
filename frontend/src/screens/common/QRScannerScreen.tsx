@@ -454,9 +454,9 @@ export const QRScannerScreen: React.FC = () => {
                   text: t('activities.registration.register_now'),
                   onPress: () => {
                     // 获取活动信息并跳转
-                    navigation.navigate('ActivityDetail', { 
+                    navigation.navigate('ActivityDetailGlobal' as never, {
                       activity: { id: activityId.toString() }
-                    });
+                    } as never);
                   },
                 },
                 {
@@ -1046,10 +1046,9 @@ export const QRScannerScreen: React.FC = () => {
     // Mock permissions removed - should use real API call
     const allowedOrganizations: string[] = [];
     
-    // Since mock permissions are removed, show service unavailable message
     showScanError(
-      t('qr.errors.service_unavailable') || '服务暂不可用',
-      t('qr.errors.merchant_permissions_developing') || '商家权限系统开发中，请联系管理员'
+      t('qr.errors.service_unavailable', 'Service Unavailable'),
+      t('qr.errors.merchant_permissions_required', 'Please contact administrator for merchant permissions')
     );
   };
 

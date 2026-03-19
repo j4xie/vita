@@ -29,6 +29,7 @@ export interface BackendActivity {
   deptId?: number; // 🔧 创建者所属部门ID（通常是总部223）
   deptIds?: string | number; // 🔧 活动所属学校ID（正确的学校ID）
   deptName?: string; // 🔧 活动所属学校名称
+  sharePoint?: number; // 分享活动对应的积分奖励
 }
 
 // 前端活动数据接口
@@ -38,8 +39,10 @@ export interface FrontendActivity {
   location: string;
   date: string;
   endDate?: string; // 添加结束日期
+  endTime?: string; // 结束时间 HH:MM
   time: string;
   image: string;
+  images: string[]; // 多图（逗号分隔解析）
   attendees: number;
   maxAttendees: number;
   registeredCount: number; // 已报名人数
@@ -65,6 +68,7 @@ export interface FrontendActivity {
   deptId?: number; // 活动所属学校ID
   deptName?: string; // 活动所属学校名称
   registeredUserAvatars?: string[]; // 已报名用户头像（后端返回时才有）
+  sharePoint?: number; // 分享活动对应的积分奖励
 }
 
 // 🚀 性能优化：预编译状态映射表
@@ -320,7 +324,7 @@ export const adaptActivity = (
 ): FrontendActivity => {
   // 快速解析时间（使用缓存）
   const { date, time } = parseDateTime(backendActivity.startTime);
-  const { date: endDate } = parseDateTime(backendActivity.endTime);
+  const { date: endDate, time: endTime } = parseDateTime(backendActivity.endTime);
 
   // 实时计算活动状态，确保准确性
   const calculateRealTimeStatus = (): 'available' | 'ended' | 'registered' | 'checked_in' => {
@@ -355,8 +359,12 @@ export const adaptActivity = (
     location: backendActivity.address,
     date,
     endDate,
+    endTime,
     time,
-    image: backendActivity.icon,
+    image: backendActivity.icon?.split(',')[0]?.trim() || '',
+    images: backendActivity.icon
+      ? backendActivity.icon.split(',').map((url: string) => url.trim()).filter(Boolean)
+      : [],
     attendees: backendActivity.registerCount ?? 0,
     maxAttendees: backendActivity.enrollment || 0,
     registeredCount: backendActivity.registerCount ?? 0,
@@ -385,6 +393,7 @@ export const adaptActivity = (
     // 🔧 学校信息 - 优先使用deptIds（活动所属学校），fallback到deptId（创建者部门）
     deptId: backendActivity.deptIds ? parseInt(String(backendActivity.deptIds), 10) : backendActivity.deptId,
     deptName: backendActivity.deptName,
+    sharePoint: backendActivity.sharePoint,
   };
 };
 

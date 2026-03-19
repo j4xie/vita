@@ -3,6 +3,7 @@ import { View, Text, Image, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { theme } from '../../theme';
 import { FrontendActivity } from '../../utils/activityAdapter';
+import { CalendarIcon, LocationIcon, ShareIcon } from '../icons/ActivityIcons';
 
 interface ActivityListItemProps {
     activity: FrontendActivity;
@@ -55,21 +56,29 @@ export const ActivityListItem: React.FC<ActivityListItemProps> = ({ activity, on
                 <Text style={styles.organizerName} numberOfLines={1}>
                     {activity.organizer?.name || 'Organizer'}
                 </Text>
-                <Text style={styles.title} numberOfLines={2}>
+                <Text style={styles.title} numberOfLines={2} adjustsFontSizeToFit minimumFontScale={0.75}>
                     {activity.title}
                 </Text>
                 <View style={styles.dateRow}>
-                    <Ionicons name="calendar-outline" size={12} color="#909399" style={{ marginRight: 4 }} />
+                    <View style={{ marginRight: 4 }}><CalendarIcon size={12} color="#909399" /></View>
                     <Text style={styles.dateText}>
                         {formatDate(activity.date, activity.time)}
                     </Text>
                 </View>
+                {activity.location ? (
+                    <View style={styles.dateRow}>
+                        <View style={{ marginRight: 4 }}><LocationIcon size={12} color="#909399" /></View>
+                        <Text style={styles.dateText} numberOfLines={1}>
+                            {activity.location}
+                        </Text>
+                    </View>
+                ) : null}
             </View>
 
             {/* Right: Arrow Action */}
             <View style={styles.actionContainer}>
                 <View style={styles.arrowButton}>
-                    <Ionicons name="arrow-forward" size={18} color="#1A1A1A" style={{ transform: [{ rotate: '-45deg' }] }} />
+                    <ShareIcon size={20} color="#949494" />
                 </View>
             </View>
         </TouchableOpacity>

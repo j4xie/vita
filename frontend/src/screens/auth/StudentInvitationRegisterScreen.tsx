@@ -10,6 +10,7 @@ import {
   Keyboard,
   TouchableWithoutFeedback,
   Alert,
+  Platform,
 } from 'react-native';
 import { useNavigation, useRoute, CommonActions } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
@@ -43,6 +44,7 @@ import {
 } from '../../utils/textValidation';
 import { i18n } from '../../utils/i18n';
 import { LoaderOne } from '../../components/ui/LoaderOne';
+import { KeyboardDoneAccessory, KEYBOARD_ACCESSORY_ID } from '../../components/common/KeyboardDismissWrapper';
 
 interface OrganizationData {
   id: number;
@@ -776,6 +778,7 @@ export const StudentInvitationRegisterScreen: React.FC = React.memo(() => {
                     updateFormData('lastName', text);
                   }}
                   placeholderTextColor={theme.colors.text.disabled}
+                  inputAccessoryViewID={Platform.OS === 'ios' ? KEYBOARD_ACCESSORY_ID : undefined}
                 />
                 {(errors.lastName || realtimeErrors.lastName) && (
                   <Text style={styles.errorText}>
@@ -798,6 +801,7 @@ export const StudentInvitationRegisterScreen: React.FC = React.memo(() => {
                     updateFormData('firstName', text);
                   }}
                   placeholderTextColor={theme.colors.text.disabled}
+                  inputAccessoryViewID={Platform.OS === 'ios' ? KEYBOARD_ACCESSORY_ID : undefined}
                 />
                 {(errors.firstName || realtimeErrors.firstName) && (
                   <Text style={styles.errorText}>
@@ -822,6 +826,7 @@ export const StudentInvitationRegisterScreen: React.FC = React.memo(() => {
                   updateFormData('nickName', text);
                 }}
                 placeholderTextColor={theme.colors.text.disabled}
+                inputAccessoryViewID={Platform.OS === 'ios' ? KEYBOARD_ACCESSORY_ID : undefined}
               />
               {(errors.nickName || realtimeErrors.nickName) && (
                 <Text style={styles.errorText}>
@@ -850,6 +855,7 @@ export const StudentInvitationRegisterScreen: React.FC = React.memo(() => {
                       autoCapitalize="none"
                       autoCorrect={false}
                       placeholderTextColor={theme.colors.text.disabled}
+                      inputAccessoryViewID={Platform.OS === 'ios' ? KEYBOARD_ACCESSORY_ID : undefined}
                     />
                     <Text style={styles.emailDomain}>{formData.selectedSchool.emailDomain}</Text>
                   </View>
@@ -872,6 +878,7 @@ export const StudentInvitationRegisterScreen: React.FC = React.memo(() => {
                     autoCapitalize="none"
                     autoCorrect={false}
                     placeholderTextColor={theme.colors.text.disabled}
+                    inputAccessoryViewID={Platform.OS === 'ios' ? KEYBOARD_ACCESSORY_ID : undefined}
                   />
                   {errors.email && <Text style={styles.errorText}>{errors.email}</Text>}
                 </View>
@@ -919,6 +926,7 @@ export const StudentInvitationRegisterScreen: React.FC = React.memo(() => {
                   onChangeText={(text) => updateFormData('phoneNumber', text)}
                   keyboardType="phone-pad"
                   placeholderTextColor={theme.colors.text.disabled}
+                  inputAccessoryViewID={Platform.OS === 'ios' ? KEYBOARD_ACCESSORY_ID : undefined}
                 />
               </View>
               {errors.phoneNumber && <Text style={styles.errorText}>{errors.phoneNumber}</Text>}
@@ -937,6 +945,7 @@ export const StudentInvitationRegisterScreen: React.FC = React.memo(() => {
                 textContentType="none"
                 passwordRules=""
                 placeholderTextColor={theme.colors.text.disabled}
+                inputAccessoryViewID={Platform.OS === 'ios' ? KEYBOARD_ACCESSORY_ID : undefined}
               />
               {errors.password && <Text style={styles.errorText}>{errors.password}</Text>}
             </View>
@@ -954,6 +963,7 @@ export const StudentInvitationRegisterScreen: React.FC = React.memo(() => {
                 textContentType="none"
                 passwordRules=""
                 placeholderTextColor={theme.colors.text.disabled}
+                inputAccessoryViewID={Platform.OS === 'ios' ? KEYBOARD_ACCESSORY_ID : undefined}
               />
               {errors.confirmPassword && <Text style={styles.errorText}>{errors.confirmPassword}</Text>}
             </View>
@@ -1027,6 +1037,7 @@ export const StudentInvitationRegisterScreen: React.FC = React.memo(() => {
         confirmText={t('auth.register.student.start_using')}
         icon="checkmark-circle"
       />
+      <KeyboardDoneAccessory />
     </SafeAreaView>
   );
 });

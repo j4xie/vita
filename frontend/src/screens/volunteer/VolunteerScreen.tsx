@@ -268,7 +268,7 @@ export const VolunteerScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: theme.colors.background.secondary,
+    backgroundColor: theme.colors.background.primary,
   },
   scrollView: {
     flex: 1,

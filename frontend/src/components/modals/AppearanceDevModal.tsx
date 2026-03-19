@@ -166,7 +166,7 @@ export const AppearanceDevModal: React.FC<AppearanceDevModalProps> = ({
                   styles.title,
                   { color: '#000000' }
                 ]}>
-                  {t('common.feature_developing')}
+                  {t('profile.general.appearance', 'Appearance')}
                 </Text>
               </View>
 

@@ -387,7 +387,7 @@ export const VolunteerHistoryScreen: React.FC = () => {
   ), [error, isDarkMode, t]);
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: isDarkMode ? '#000000' : '#F5F5F5' }]}>
+    <SafeAreaView style={[styles.container, { backgroundColor: isDarkMode ? '#000000' : '#FAF3F1' }]}>
       {/* Header section - Clean iOS style */}
       <View style={[styles.headerSection, { backgroundColor: isDarkMode ? '#1c1c1e' : '#FFFFFF' }]}>
         {/* Navigation bar */}

@@ -27,6 +27,7 @@ import * as Haptics from 'expo-haptics';
 import * as ImagePicker from 'expo-image-picker';
 
 import { theme } from '../../theme';
+import { KeyboardDoneAccessory, KEYBOARD_ACCESSORY_ID } from '../../components/common/KeyboardDismissWrapper';
 import { useTheme } from '../../context/ThemeContext';
 import { useUser } from '../../context/UserContext';
 import { uploadAvatar, getUserAvatarUrl, checkAvatarExists } from '../../services/imageUploadService';
@@ -132,6 +133,7 @@ const FormField: React.FC<FormFieldProps> = ({
         numberOfLines={multiline ? 4 : 1}
         allowFontScaling={true}
         maxFontSizeMultiplier={1.4}
+        inputAccessoryViewID={Platform.OS === 'ios' ? KEYBOARD_ACCESSORY_ID : undefined}
       />
     </View>
   );
@@ -596,7 +598,7 @@ export const EditProfileScreen: React.FC = () => {
   const styles = StyleSheet.create({
     container: {
       flex: 1,
-      backgroundColor: isDarkMode ? '#000000' : '#f2f2f7',
+      backgroundColor: isDarkMode ? '#000000' : '#FAF3F1',
     },
     safeArea: {
       flex: 1,
@@ -983,6 +985,7 @@ export const EditProfileScreen: React.FC = () => {
                     keyboardType="phone-pad"
                     returnKeyType="done"
                     onSubmitEditing={() => Keyboard.dismiss()}
+                    inputAccessoryViewID={Platform.OS === 'ios' ? KEYBOARD_ACCESSORY_ID : undefined}
                   />
                 </View>
                 {!EDITABLE_FIELDS.includes('phonenumber') && (
@@ -1077,6 +1080,7 @@ export const EditProfileScreen: React.FC = () => {
           </View>
         </Animated.View>
       </SafeAreaView>
+      <KeyboardDoneAccessory />
     </View>
   );
 };

@@ -28,7 +28,7 @@ export const UnimplementedFeature: React.FC<UnimplementedFeatureProps> = ({
   message
 }) => {
   const { t } = useTranslation();
-  const defaultMessage = `${featureName}正在开发中，敬请期待！`;
+  const defaultMessage = `${featureName}${t('common.not_available', '暂不可用')}`;
   const displayMessage = message || defaultMessage;
 
   return (
@@ -62,7 +62,7 @@ export const UnimplementedFeature: React.FC<UnimplementedFeatureProps> = ({
             </View>
 
             {/* Title */}
-            <Text style={styles.title}>{t('common.feature_developing')}</Text>
+            <Text style={styles.title}>{t('common.notice', 'Notice')}</Text>
 
             {/* Message */}
             <Text style={styles.message}>{displayMessage}</Text>

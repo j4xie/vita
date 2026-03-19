@@ -4,6 +4,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
+import { ScanIcon } from '../common/icons/ScanIcon';
 import { useTranslation } from 'react-i18next';
 
 import { useTheme } from '../../theme';
@@ -298,8 +299,7 @@ const CategoryBar: React.FC<CategoryBarProps> = ({
               activeOpacity={0.8}
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             >
-              <Ionicons
-                name="scan-outline"
+              <ScanIcon
                 size={18}
                 color="#F9A889"
               />

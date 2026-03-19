@@ -13,6 +13,7 @@ import {
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import Svg, { Path } from 'react-native-svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
@@ -22,7 +23,6 @@ import { theme } from '../../theme';
 import { LIQUID_GLASS_LAYERS } from '../../theme/core';
 import { usePerformanceDegradation } from '../../hooks/usePerformanceDegradation';
 import { ProfileInfoCard } from '../../components/profile/ProfileInfoCard';
-import { StatCard } from '../../components/profile/StatCard';
 import { VolunteerManagementCard } from '../../components/profile/VolunteerManagementCard';
 import { UserIdentityQRModal } from '../../components/modals/UserIdentityQRModal';
 import { UserActivityModal } from '../../components/modals/UserActivityModal';
@@ -41,12 +41,95 @@ import { positionService } from '../../services/positionService';
 import { apiCache } from '../../services/apiCache';
 import { useMembershipLevel } from '../../hooks/useMembershipLevel';
 
+// Custom SVG icons extracted from Figma design
+const NotificationIcon = () => (
+  <Svg width={24} height={24} viewBox="0 0 24 24" fill="none">
+    <Path
+      d="M12.02 2.91C8.71 2.91 6.02 5.6 6.02 8.91V11.8C6.02 12.41 5.76 13.34 5.45 13.86L4.3 15.77C3.59 16.95 4.08 18.26 5.38 18.7C9.69 20.14 14.34 20.14 18.65 18.7C19.86 18.3 20.39 16.87 19.73 15.77L18.58 13.86C18.28 13.34 18.02 12.41 18.02 11.8V8.91C18.02 5.61 15.32 2.91 12.02 2.91Z"
+      stroke="#FF7763"
+      strokeWidth={1.5}
+      strokeMiterlimit={10}
+      strokeLinecap="round"
+    />
+    <Path
+      d="M13.87 3.2C13.56 3.11 13.24 3.04 12.91 3C11.95 2.88 11.03 2.95 10.17 3.2C10.46 2.46 11.18 1.94 12.02 1.94C12.86 1.94 13.58 2.46 13.87 3.2Z"
+      stroke="#FF7763"
+      strokeWidth={1.5}
+      strokeMiterlimit={10}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <Path
+      d="M15.02 19.06C15.02 20.71 13.67 22.06 12.02 22.06C11.2 22.06 10.44 21.72 9.9 21.18C9.36 20.64 9.02 19.88 9.02 19.06"
+      stroke="#FF7763"
+      strokeWidth={1.5}
+      strokeMiterlimit={10}
+    />
+  </Svg>
+);
+
+const ShippingIcon = () => (
+  <Svg width={24} height={24} viewBox="0 0 24 24" fill="none">
+    <Path d="M15 2H9C7 2 6 3 6 5V19C6 21 7 22 9 22H15C17 22 18 21 18 19V5C18 3 17 2 15 2Z" stroke="#FF7763" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" />
+    <Path d="M12 18.5H12.009" stroke="#FF7763" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
+    <Path d="M10.5 2V5.5" stroke="#FF7763" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" />
+    <Path d="M13.5 2V5.5" stroke="#FF7763" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" />
+  </Svg>
+);
+
+const GeneralIcon = () => (
+  <Svg width={24} height={24} viewBox="0 0 24 24" fill="none">
+    <Path
+      d="M12 15C13.6569 15 15 13.6569 15 12C15 10.3431 13.6569 9 12 9C10.3431 9 9 10.3431 9 12C9 13.6569 10.3431 15 12 15Z"
+      stroke="#FF7763"
+      strokeWidth={1.5}
+      strokeMiterlimit={10}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <Path
+      d="M2 12.88V11.12C2 10.08 2.85 9.22 3.9 9.22C5.71 9.22 6.45 7.94 5.54 6.37C5.02 5.47 5.33 4.3 6.24 3.78L7.97 2.79C8.76 2.32 9.78 2.6 10.25 3.39L10.36 3.58C11.26 5.15 12.74 5.15 13.65 3.58L13.76 3.39C14.23 2.6 15.25 2.32 16.04 2.79L17.77 3.78C18.68 4.3 18.99 5.47 18.47 6.37C17.56 7.94 18.3 9.22 20.11 9.22C21.15 9.22 22.01 10.07 22.01 11.12V12.88C22.01 13.92 21.16 14.78 20.11 14.78C18.3 14.78 17.56 16.06 18.47 17.63C18.99 18.54 18.68 19.7 17.77 20.22L16.04 21.21C15.25 21.68 14.23 21.4 13.76 20.61L13.65 20.42C12.75 18.85 11.27 18.85 10.36 20.42L10.25 20.61C9.78 21.4 8.76 21.68 7.97 21.21L6.24 20.22C5.33 19.7 5.02 18.53 5.54 17.63C6.45 16.06 5.71 14.78 3.9 14.78C2.85 14.78 2 13.92 2 12.88Z"
+      stroke="#FF7763"
+      strokeWidth={1.5}
+      strokeMiterlimit={10}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </Svg>
+);
+
+const AboutSupportIcon = () => (
+  <Svg width={24} height={24} viewBox="0 0 24 24" fill="none">
+    <Path
+      d="M17 18.43H13L8.55 21.39C7.89 21.83 7 21.36 7 20.56V18.43C4 18.43 2 16.43 2 13.43V7.43C2 4.43 4 2.43 7 2.43H17C20 2.43 22 4.43 22 7.43V13.43C22 16.43 20 18.43 17 18.43Z"
+      stroke="#FF7763"
+      strokeWidth={1.5}
+      strokeMiterlimit={10}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <Path
+      d="M12 11.36V11.15C12 10.47 12.42 10.11 12.84 9.82C13.25 9.54 13.66 9.18 13.66 8.52C13.66 7.6 12.92 6.86 12 6.86C11.08 6.86 10.34 7.6 10.34 8.52"
+      stroke="#FF7763"
+      strokeWidth={1.5}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <Path
+      d="M11.9955 13.75H12.0045"
+      stroke="#FF7763"
+      strokeWidth={1.5}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </Svg>
+);
+
 interface SettingRowProps {
   title: string;
-  icon: keyof typeof Ionicons.glyphMap;
+  icon: React.ReactNode;
   onPress: () => void;
   value?: string;
-  isLast?: boolean;
   badgeCount?: number;
   testID?: string;
 }
@@ -56,7 +139,6 @@ const SettingRow: React.FC<SettingRowProps> = ({
   icon,
   onPress,
   value,
-  isLast = false,
   badgeCount,
   testID,
 }) => {
@@ -75,33 +157,43 @@ const SettingRow: React.FC<SettingRowProps> = ({
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
-      paddingHorizontal: 16,
-      paddingVertical: 14,
-      borderBottomWidth: isLast ? 0 : StyleSheet.hairlineWidth,
-      borderBottomColor: isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.06)',
+      paddingHorizontal: 15,
+      backgroundColor: isDarkMode ? '#2C2C2E' : '#FFFFFF',
+      borderRadius: 70,
+      height: 64,
+      marginBottom: 10,
     },
     settingRowLeft: {
       flexDirection: 'row',
       alignItems: 'center',
       flex: 1,
     },
-    // 简洁风格 - 移除图标背景
     iconBackground: {
-      width: 24,
-      height: 24,
+      width: 48,
+      height: 48,
+      borderRadius: 54,
+      backgroundColor: isDarkMode ? '#3A3A3C' : '#F8F8F8',
       alignItems: 'center',
       justifyContent: 'center',
-      marginRight: 12,
+      marginRight: 7,
     },
     settingText: {
-      fontSize: 16,
-      fontWeight: '400',
+      fontSize: 15,
+      fontWeight: '500',
       color: isDarkMode ? '#ffffff' : '#000000',
       flex: 1,
     },
     settingRowRight: {
       flexDirection: 'row',
       alignItems: 'center',
+    },
+    arrowCircle: {
+      width: 41,
+      height: 41,
+      borderRadius: 25.5,
+      backgroundColor: isDarkMode ? '#3A3A3C' : '#F8F8F8',
+      alignItems: 'center',
+      justifyContent: 'center',
     },
     settingValue: {
       fontSize: 13,
@@ -136,11 +228,7 @@ const SettingRow: React.FC<SettingRowProps> = ({
     >
       <View style={rowStyles.settingRowLeft}>
         <View style={rowStyles.iconBackground}>
-          <Ionicons
-            name={icon}
-            size={20}
-            color={isDarkMode ? '#F9A889' : '#F9A889'}
-          />
+          {icon}
         </View>
         <Text
           style={rowStyles.settingText}
@@ -167,11 +255,14 @@ const SettingRow: React.FC<SettingRowProps> = ({
             {value}
           </Text>
         )}
-        <Ionicons
-          name="chevron-forward"
-          size={16}
-          color={isDarkMode ? 'rgba(235, 235, 245, 0.3)' : '#c7c7cc'}
-        />
+        <View style={rowStyles.arrowCircle}>
+          <Ionicons
+            name="arrow-forward"
+            size={18}
+            color={isDarkMode ? '#FFFFFF' : '#000000'}
+            style={{ transform: [{ rotate: '-45deg' }] }}
+          />
+        </View>
       </View>
     </TouchableOpacity>
   );
@@ -183,7 +274,7 @@ export const ProfileHomeScreen: React.FC = () => {
   const themeContext = useTheme();
   const isDarkMode = themeContext.isDarkMode;
   const insets = useSafeAreaInsets();
-  const { user, isAuthenticated, logout, permissions } = useUser();
+  const { user, isAuthenticated, logout, permissions, refreshUserInfo } = useUser();
   const { membershipLevel, loading: membershipLoading } = useMembershipLevel();
 
   // 身份二维码状态
@@ -217,6 +308,7 @@ export const ProfileHomeScreen: React.FC = () => {
 
   // 退出登录确认模态框状态
   const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [emailVerifiedLocal, setEmailVerifiedLocal] = useState(false);
 
   // V2.0 获取分层配置
   const { getLayerConfig } = usePerformanceDegradation();
@@ -322,31 +414,6 @@ export const ProfileHomeScreen: React.FC = () => {
     setShowIdentityQR(true);
   };
 
-  // 处理未签到活动点击
-  const handleNotCheckedInPress = () => {
-    if (Platform.OS === 'ios') {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    }
-    setActivityModalType('not_checked_in');
-    setShowActivityModal(true);
-  };
-
-  // 处理已签到活动点击
-  const handleCheckedInPress = () => {
-    if (Platform.OS === 'ios') {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    }
-    setActivityModalType('checked_in');
-    setShowActivityModal(true);
-  };
-
-  // 处理未登录用户点击活动统计
-  const handleUnauthenticatedPress = () => {
-    if (Platform.OS === 'ios') {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-    }
-    setShowLoginModal(true);
-  };
 
   // 处理登录模态框中的登录按钮点击
   const handleLoginFromModal = () => {
@@ -535,7 +602,11 @@ export const ProfileHomeScreen: React.FC = () => {
   // 页面聚焦时刷新统计数据（用户从其他页面返回时）
   useFocusEffect(
     useCallback(() => {
-      console.log('📱 [PROFILE-FOCUS] 页面获得焦点，刷新统计数据');
+      console.log('📱 [PROFILE-FOCUS] 页面获得焦点，刷新统计数据和权限');
+      // 检查邮箱验证本地标记（必须在弹窗逻辑之前完成）
+      AsyncStorage.getItem('@email_verified_local').then((val) => {
+        if (val === 'true') setEmailVerifiedLocal(true);
+      });
       const userIdString = user?.userId || user?.id;
       const userIdToUse = userIdString ? parseInt(String(userIdString), 10) : undefined;
       if (isAuthenticated && userIdToUse && !isNaN(userIdToUse)) {
@@ -547,6 +618,33 @@ export const ProfileHomeScreen: React.FC = () => {
         loadActivityStats();
         loadVolunteerStats();
         loadOrganizationInfo(); // ✅ 刷新组织信息
+        // ✅ 刷新用户权限（确保菜单显隐实时更新）
+        refreshUserInfo();
+
+        // 📧 邮箱验证提示：未验证用户每次启动弹一次
+        // 先检查本地flag，再决定是否弹窗
+        AsyncStorage.getItem('@email_verified_local').then((verifiedLocal) => {
+          if ((user as any)?.isEmailVerify || verifiedLocal === 'true') return;
+          AsyncStorage.getItem('@email_verify_prompt_dismissed').then((dismissed) => {
+            if (!dismissed) {
+              Alert.alert(
+                t('profile.email_verify.prompt_title', '验证学校邮箱'),
+                t('profile.email_verify.prompt_message', '验证.edu学校邮箱即可免费获取蓝卡会员，享受专属权益！'),
+                [
+                  {
+                    text: t('profile.email_verify.prompt_later', '稍后再说'),
+                    style: 'cancel',
+                    onPress: () => AsyncStorage.setItem('@email_verify_prompt_dismissed', 'true'),
+                  },
+                  {
+                    text: t('profile.email_verify.prompt_go', '去验证'),
+                    onPress: () => navigation.navigate('EmailVerification'),
+                  },
+                ]
+              );
+            }
+          });
+        });
       }
     }, []) // 空依赖数组，只在页面聚焦时触发，避免无限刷新
   );
@@ -573,31 +671,6 @@ export const ProfileHomeScreen: React.FC = () => {
       registrationListener?.remove();
     };
   }, [isAuthenticated]);
-
-  // 处理志愿者小时点击 - 导航到历史记录页面
-  const handleVolunteerHoursPress = useCallback(() => {
-    console.log('🔍 [VOLUNTEER-HOURS] 用户点击志愿者小时:', {
-      用户: user?.userName,
-      权限级别: permissions.getPermissionLevel(),
-      志愿者小时: volunteerStats?.volunteerHours
-    });
-
-    if (Platform.OS === 'ios') {
-      Haptics.selectionAsync();
-    }
-
-    // 导航到历史记录页面
-    const userIdString = user?.userId || user?.id;
-    const userIdToUse = userIdString ? parseInt(String(userIdString), 10) : undefined;
-
-    if (userIdToUse && !isNaN(userIdToUse)) {
-      navigation.navigate('VolunteerHistory', {
-        userId: userIdToUse,
-        userName: user?.nickName || user?.legalName || user?.userName || 'User',
-        userPermission: permissions.getPermissionLevel() as 'manage' | 'part_manage' | 'staff',
-      });
-    }
-  }, [user, permissions, volunteerStats, navigation]);
 
   // 处理志愿者功能区域点击
   const handleVolunteerSectionPress = useCallback(() => {
@@ -628,6 +701,8 @@ export const ProfileHomeScreen: React.FC = () => {
 
   const performLogout = async () => {
     try {
+      // 清除邮箱验证提示标记，下次登录后重新提示
+      await AsyncStorage.removeItem('@email_verify_prompt_dismissed');
       // 使用 UserContext 的 logout 方法来正确清理所有状态
       await logout();
 
@@ -647,46 +722,34 @@ export const ProfileHomeScreen: React.FC = () => {
     {
       id: 'notifications',
       title: t('profile.menuItems.notifications'),
-      icon: 'notifications-outline' as keyof typeof Ionicons.glyphMap,
+      icon: <NotificationIcon />,
       badgeCount: 0, // 暂无通知API，显示真实的0状态
       onPress: () => navigation.navigate('Notifications'),
     },
     {
       id: 'address',
       title: t('profile.menuItems.address', '收货地址'),
-      icon: 'location-outline' as keyof typeof Ionicons.glyphMap,
+      icon: <ShippingIcon />,
       onPress: () => navigation.navigate('AddressList'),
     },
-    // Certificate Application - accessible for staff+, discoverable for common users
-    {
+    // Certificate Application - 仅 staff 及以上权限可见
+    ...(permissions.isAdmin() || permissions.isPartManager() || permissions.isStaff() ? [{
       id: 'certificate',
       title: t('profile.menuItems.certificate'),
-      icon: (permissions.isAdmin() || permissions.isPartManager() || permissions.isStaff()
-        ? 'document-text-outline' : 'lock-closed-outline') as keyof typeof Ionicons.glyphMap,
-      value: !(permissions.isAdmin() || permissions.isPartManager() || permissions.isStaff())
-        ? t('profile.menuItems.certificateLocked') : undefined,
-      onPress: () => {
-        if (permissions.isAdmin() || permissions.isPartManager() || permissions.isStaff()) {
-          navigation.navigate('CertificateList');
-        } else {
-          Alert.alert(
-            t('profile.menuItems.certificateLockedTitle'),
-            t('profile.menuItems.certificateLockedMessage'),
-          );
-        }
-      },
+      icon: <Ionicons name="document-text-outline" size={24} color="#FF7763" />,
+      onPress: () => navigation.navigate('CertificateList'),
       testID: 'certificate-application-btn',
-    },
+    }] : []),
     {
       id: 'general',
       title: t('profile.menuItems.general'),
-      icon: 'settings-outline' as keyof typeof Ionicons.glyphMap,
+      icon: <GeneralIcon />,
       onPress: () => navigation.navigate('General'),
     },
     {
       id: 'about-support',
       title: t('profile.menuItems.aboutSupport'),
-      icon: 'information-circle-outline' as keyof typeof Ionicons.glyphMap,
+      icon: <AboutSupportIcon />,
       onPress: () => navigation.navigate('AboutSupport'),
     },
   ];
@@ -694,7 +757,7 @@ export const ProfileHomeScreen: React.FC = () => {
   const styles = StyleSheet.create({
     container: {
       flex: 1,
-      backgroundColor: isDarkMode ? '#000000' : '#F5F5F5', // 浅灰背景
+      backgroundColor: isDarkMode ? '#000000' : '#FAF3F1',
     },
 
     // V2.0 背景层设计 - 避免与容器冲突
@@ -762,20 +825,6 @@ export const ProfileHomeScreen: React.FC = () => {
       color: isDarkMode ? '#9CA3AF' : '#6B7280',
     },
 
-    // 统计卡片网格样式
-    statsGrid: {
-      marginBottom: 20,
-    },
-    statsRow: {
-      flexDirection: 'row',
-      gap: 10,
-    },
-    statCardWrapper: {
-      flex: 1,
-    },
-    statCardThird: {
-      flex: 1,
-    },
     listContainer: {
       backgroundColor: isDarkMode ? '#2C2C2E' : '#FFFFFF',
       borderRadius: 16,
@@ -792,6 +841,41 @@ export const ProfileHomeScreen: React.FC = () => {
           elevation: 2,
         },
       }),
+    },
+
+    // 邮箱验证横幅
+    verifyBanner: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      backgroundColor: isDarkMode ? '#2C2C2E' : '#FFFFFF',
+      borderRadius: 14,
+      paddingHorizontal: 16,
+      paddingVertical: 14,
+      marginBottom: 10,
+      borderWidth: 1,
+      borderColor: isDarkMode ? 'rgba(164, 207, 223, 0.2)' : 'rgba(164, 207, 223, 0.3)',
+      ...Platform.select({
+        ios: {
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 1 },
+          shadowOpacity: 0.05,
+          shadowRadius: 4,
+        },
+        android: { elevation: 1 },
+      }),
+    },
+    verifyBannerLeft: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      flex: 1,
+      gap: 10,
+    },
+    verifyBannerText: {
+      fontSize: 14,
+      fontWeight: '500',
+      color: '#374151',
+      flex: 1,
     },
 
     // 小红书风格个人信息卡
@@ -813,13 +897,13 @@ export const ProfileHomeScreen: React.FC = () => {
       marginVertical: 8, // 恢复原来的间距
     },
     sectionTitle: {
-      fontSize: 14,
+      fontSize: 15,
       fontWeight: '600',
-      color: isDarkMode ? '#FFFFFF' : '#6B7280',
-      marginBottom: 8,
+      color: '#949494',
+      marginBottom: 14,
       marginLeft: 4,
-      textTransform: 'uppercase',
-      letterSpacing: 0.5,
+      fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
+      lineHeight: 20,
     },
     // 区域标题头部
     sectionHeader: {
@@ -1095,7 +1179,7 @@ export const ProfileHomeScreen: React.FC = () => {
 
     // 设置区域
     settingsSection: {
-      marginTop: 12, // 🔧 增加上边距，与"我的活动"→"我的会员"间距保持一致
+      marginTop: 6,
       marginBottom: 20, // 减少下边距，让退出按钮更靠近
     },
     settingsHeader: {
@@ -1104,7 +1188,7 @@ export const ProfileHomeScreen: React.FC = () => {
       justifyContent: 'space-between',
       paddingVertical: 12,
       paddingHorizontal: 4,
-      marginBottom: 2, // 🔧 从8减少到2，缩短标题与卡片的距离
+      marginBottom: 0,
     },
 
     // V2.0 中性写评价按钮
@@ -1259,6 +1343,13 @@ export const ProfileHomeScreen: React.FC = () => {
               avatarUrl={user.avatar}
               onEditPress={() => navigation.navigate('EditProfile')}
               onQRCodePress={() => navigation.navigate('PersonalQR' as never)}
+              onCardPress={() => {
+                if (((user as any)?.isEmailVerify || emailVerifiedLocal)) {
+                  navigation.navigate('MembershipPurchase');
+                } else {
+                  navigation.navigate('EmailVerification');
+                }
+              }}
             />
           ) : (
             /* 访客状态：显示登录引导卡片 */
@@ -1277,101 +1368,19 @@ export const ProfileHomeScreen: React.FC = () => {
             </TouchableOpacity>
           )}
 
-          {/* 统计卡片 - 单行3列布局 */}
-          <View style={styles.statsGrid}>
-            <View style={styles.statsRow}>
-              <View style={styles.statCardThird}>
-                <StatCard
-                  label={t('profile.volunteer_hours_short')}
-                  value={isAuthenticated && user?.id ? volunteerStats.volunteerHours : '--'}
-                  icon="time-outline"
-                  iconColor="#FF6B35"
-                  iconBackgroundColor="rgba(255, 107, 53, 0.1)"
-                  onPress={isAuthenticated && user?.id ? handleVolunteerHoursPress : handleUnauthenticatedPress}
-                />
-              </View>
-              <View style={styles.statCardThird}>
-                <StatCard
-                  label={t('profile.not_participated')}
-                  value={isAuthenticated && user?.id ? activityStats.notParticipated : '--'}
-                  icon="document-text-outline"
-                  iconColor="#4A90E2"
-                  iconBackgroundColor="rgba(74, 144, 226, 0.1)"
-                  onPress={isAuthenticated && user?.id ? handleNotCheckedInPress : handleUnauthenticatedPress}
-                />
-              </View>
-              <View style={styles.statCardThird}>
-                <StatCard
-                  label={t('profile.participated')}
-                  value={isAuthenticated && user?.id ? activityStats.participated : '--'}
-                  icon="checkmark-circle-outline"
-                  iconColor="#FF6B6B"
-                  iconBackgroundColor="rgba(255, 107, 107, 0.1)"
-                  onPress={isAuthenticated && user?.id ? handleCheckedInPress : handleUnauthenticatedPress}
-                />
-              </View>
-            </View>
-          </View>
+          {/* 📧 邮箱验证横幅已整合到ProfileInfoCard内部，此处不再重复显示 */}
 
           {/* 志愿者管理卡片 - 仅staff及以上显示 */}
           {isAuthenticated && permissions.hasVolunteerManagementAccess() && (
-            <VolunteerManagementCard onPress={handleVolunteerSectionPress} />
+            <VolunteerManagementCard
+              onPress={handleVolunteerSectionPress}
+              hours={volunteerStats.volunteerHours}
+              registered={activityStats.notParticipated}
+              attended={activityStats.participated}
+            />
           )}
 
-          {/* 会员卡区域 - 仅当有会员等级数据时显示 */}
-          {isAuthenticated && membershipLevel && (
-            <View style={styles.membershipSection}>
-              <Text style={styles.sectionTitle}>{t('profile.my_membership')}</Text>
-              <View style={styles.membershipCardL1}>
-                <View style={styles.membershipHeader}>
-                  <Text style={styles.membershipTitle}>
-                    {t(`membership_purchase.levels.${membershipLevel.sysUserLevel?.id}`, membershipLevel.sysUserLevel?.levelName || t('profile.membership_title'))}
-                  </Text>
-                  <View style={styles.membershipBadge}>
-                    <Text style={styles.membershipBadgeText}>
-                      {t(`membership_purchase.${membershipLevel.sysUserLevel?.acquisitionMethodType || 'register_get'}`)}
-                    </Text>
-                  </View>
-                </View>
-
-                {/* 会员权益列表 */}
-                {membershipLevel.sysUserLevel?.userLevelExEquityList && membershipLevel.sysUserLevel.userLevelExEquityList.length > 0 && (
-                  <View style={{ marginBottom: 12 }}>
-                    <Text style={{ fontSize: 13, fontWeight: '600', color: isDarkMode ? '#9CA3AF' : '#6B7280', marginBottom: 8 }}>
-                      {t('rewards.membership_level.benefits_title')}
-                    </Text>
-                    {membershipLevel.sysUserLevel.userLevelExEquityList.map((equity, index) => (
-                      <View key={index} style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4 }}>
-                        <Ionicons name="checkmark-circle" size={14} color="#FF6B35" style={{ marginRight: 6 }} />
-                        <Text style={{ fontSize: 13, color: isDarkMode ? '#D1D5DB' : '#374151', flex: 1 }}>
-                          {t(`membership_purchase.equities.${equity.equName}`, equity.equName)}
-                        </Text>
-                      </View>
-                    ))}
-                  </View>
-                )}
-
-                <View style={styles.membershipActions}>
-                  <TouchableOpacity
-                    style={styles.myCardsButton}
-                    onPress={() => navigation.navigate('MembershipPurchase')}
-                  >
-                    <Ionicons name="card-outline" size={16} color="#6B7280" />
-                    <Text style={styles.myCardsText}>{t('profile.my_cards', '我的会员卡')}</Text>
-                  </TouchableOpacity>
-
-                  <TouchableOpacity
-                    style={styles.upgradeButtonDawn}
-                    onPress={() => {
-                      navigation.navigate('MembershipPurchase');
-                    }}
-                  >
-                    <Text style={styles.upgradeTextDawn}>{t('profile.upgrade_membership')}</Text>
-                  </TouchableOpacity>
-                </View>
-              </View>
-            </View>
-          )}
+          {/* 会员卡区域已合并到 ProfileInfoCard 中 */}
 
           {/* 我的评价/笔记区 - 暂时隐藏 */}
           {/* 
@@ -1404,19 +1413,16 @@ export const ProfileHomeScreen: React.FC = () => {
             <View style={styles.settingsHeader}>
               <Text style={styles.sectionTitle}>{t('profile.settings_and_help', '设置与帮助')}</Text>
             </View>
-            <View style={styles.listContainer}>
-              {(settingItems || []).map((item, index) => (
-                <SettingRow
-                  key={item.id}
-                  title={item.title}
-                  icon={item.icon}
-                  onPress={item.onPress}
-                  badgeCount={item.badgeCount}
-                  isLast={index === settingItems.length - 1}
-                  testID={(item as any).testID}
-                />
-              ))}
-            </View>
+            {(settingItems || []).map((item) => (
+              <SettingRow
+                key={item.id}
+                title={item.title}
+                icon={item.icon}
+                onPress={item.onPress}
+                badgeCount={item.badgeCount}
+                testID={(item as any).testID}
+              />
+            ))}
           </View>
 
           {/* Logout Button - 只有登录用户才显示 */}

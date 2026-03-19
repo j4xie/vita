@@ -18,7 +18,7 @@ import { useTranslation } from 'react-i18next';
 import { theme } from '../../theme';
 import { useTheme } from '../../context/ThemeContext';
 
-const CHINESEUNION_BASE_URL = 'https://chineseunion.org';
+const CHINESEUNION_BASE_URL = 'https://www.chineseunion.org';
 
 interface ConsultingScreenProps {
   isTabRoot?: boolean;
@@ -268,7 +268,7 @@ const GRID_GAP = 12;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: '#FAF3F1',
   },
   containerDark: {
     backgroundColor: '#000000',

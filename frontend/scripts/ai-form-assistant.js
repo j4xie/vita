@@ -81,8 +81,11 @@
       if (allConversations.length > 30) allConversations = allConversations.slice(-30);
       let json = JSON.stringify(allConversations);
       // Progressive cleanup if exceeding 3MB
+      // P1 修复：跳过当前活跃对话，避免裁剪时删除用户正在使用的对话
       while (json.length > 3 * 1024 * 1024 && allConversations.length > 1) {
-        allConversations.shift();
+        var delIdx = allConversations.findIndex(function(c) { return c.id !== currentConversationId; });
+        if (delIdx === -1) break;
+        allConversations.splice(delIdx, 1);
         json = JSON.stringify(allConversations);
       }
       localStorage.setItem('ai_form_conversations', json);
@@ -293,13 +296,18 @@
     return div.innerHTML;
   }
 
-  // ===== Compact / Summary Functions =====
+  // ===== 对话压缩/摘要功能 =====
+  // 当对话超过40条消息时，自动将旧消息压缩为AI生成的摘要
+  // 摘要注入到后续请求的系统提示词中，确保AI仍了解历史上下文
+  // 同时释放 localStorage 空间（每条对话最多保留40条消息）
 
   function updateCompactHint() {
     const hint = document.getElementById('aiCompactHint');
     if (!hint) return;
     if (aiChatHistory.length > 20) {
-      hint.innerHTML = '<span>对话较长，</span><button onclick="window._aiCompactHistory && window._aiCompactHistory()">压缩历史</button><span> 可优化性能</span>';
+      hint.innerHTML = '<span>对话较长，</span><button id="aiCompactBtn">压缩历史</button><span> 可优化性能</span>';
+      var btn = document.getElementById('aiCompactBtn');
+      if (btn) btn.onclick = compactHistory;
       hint.style.display = 'flex';
     } else {
       hint.style.display = 'none';
@@ -482,7 +490,9 @@
     startNewChat();
   }
 
-  // ===== Static fallback: Component type display names =====
+  // ===== 静态回退：组件类型中文名映射 =====
+  // 当动态缓存（buildComponentCache）不可用时使用此静态表
+  // 键：组件类型标识，值：对应的中文显示名
   const COMP_TYPE_NAMES_STATIC = {
     input:'单行文本', textarea:'多行文本', password:'密码', counter:'计数器',
     select:'下拉选择', cascader:'级联选择', radio:'单选框组', checkbox:'多选框组',
@@ -493,7 +503,8 @@
     esign:'电子签名', signature:'电子签名', sign:'电子签名'
   };
 
-  // ===== Static fallback: Tag mapping =====
+  // ===== 静态回退：类型到 Element UI 标签的映射 =====
+  // 例如 'input' → 'el-input', 'date' → 'el-date-picker'
   const TYPE_TO_TAG_STATIC = {
     input: 'el-input', textarea: 'el-input', password: 'el-input',
     counter: 'el-input-number', select: 'el-select', cascader: 'el-cascader',
@@ -505,9 +516,10 @@
     esign: 'el-sign', signature: 'el-sign', sign: 'el-sign'
   };
 
-  // ===== Dynamic Component Cache =====
-  // Built at runtime from Vue instance's component arrays.
-  // Structure: { typeKey: { tag, label, tagIcon, template } }
+  // ===== 动态组件缓存 =====
+  // 运行时从 Vue 实例的组件数组中构建，30秒自动过期刷新
+  // 结构: { typeKey: { tag, label, tagIcon, template } }
+  // 优先使用此缓存，静态表仅作为回退
   let _componentCache = null;
   let _componentCacheTime = 0;
   const CACHE_TTL = 30000; // 30s — refresh if stale
@@ -575,10 +587,11 @@
     return TYPE_TO_TAG_STATIC[type] || null;
   }
 
-  // ===== Dynamic Property Schema Cache =====
-  // Detects actual component/form properties from Vue instance at runtime
-  let _propSchemaCache = null;   // { typeKey: { configKeys:[], directKeys:[], optionPaths:[] } }
-  let _formPropSchema = null;    // { key: currentValue } from vm.formConf
+  // ===== 动态属性 Schema 缓存 =====
+  // 运行时从 Vue 实例中探测每种组件可设置的属性列表
+  // 注入到系统提示词中，让 AI 知道当前设计器支持哪些属性键名
+  let _propSchemaCache = null;   // { typeKey: { configKeys:[], directKeys:[], slotKeys:[] } }
+  let _formPropSchema = null;    // 表单级属性 { key: typeof_value }，来自 vm.formConf
   let _propSchemaCacheTime = 0;
 
   /**
@@ -692,7 +705,9 @@
     return { ok: false };
   }
 
-  // ===== Learned Templates (Self-learning from user builds) =====
+  // ===== 自学习模板（从用户实际提交的表单中学习） =====
+  // 当用户点击"提交表单"时，自动提取画布上的组件结构保存到 localStorage
+  // 下次 AI 推荐字段时会参考这些历史记录（最多保留20条，显示最近5条）
   let _learnedTemplates = null;
 
   function loadLearnedTemplates() {
@@ -866,7 +881,10 @@
     return text;
   }
 
-  // ===== Form Template Library (loaded async) =====
+  // ===== 表单模板库（异步加载） =====
+  // 尝试从 /static/js/form-templates.json 加载外部模板文件
+  // 加载失败时使用内置模板（getBuiltinTemplates）
+  // 模板按复杂度分4档：简单(5-8字段)/中等(8-15)/复杂(15-25)/超复杂(25-40+)
   let FORM_TEMPLATES = null;
 
   /** Build dynamic type list string for system prompt (tells AI what types to use in FIELDS) */
@@ -915,7 +933,10 @@
     return '表单设计器提供 **' + total + ' 个组件**，分为' + sections.length + '大类：\n' + sections.join('\n');
   }
 
-  // ===== Quick Answers (local, no API needed) =====
+  // ===== 本地快速回答（无需调用 AI API） =====
+  // 对于常见问题直接返回预设答案，节省 API 调用和等待时间
+  // null 值表示运行时动态生成（如组件列表从 Vue 实例读取）
+  // 同时支持模糊关键词匹配（见 sendChat 中的 fuzzyMap）
   const QUICK_ANSWERS = {
     '有哪些组件可以使用？': null, // Will be dynamically generated
     '如何创建报名表？': '创建报名表步骤：\n1. **进入表单设计器** — 点击"创建新模板"或从模板列表进入\n2. **输入模板名称** — 填写表单标题\n3. **添加组件** — 从左侧组件面板拖拽所需组件到画布\n4. **配置属性** — 选中组件后在右侧属性面板设置必填、校验规则等\n5. **提交保存** — 点击提交按钮保存模板\n也可以直接告诉我你要做什么表单，我来帮你搭建！',
@@ -924,7 +945,7 @@
     '这样就好了': '好的！表单已搭建完成。你可以：\n1. 在画布中预览和微调各字段\n2. 点击顶部 **「提交」** 按钮保存模板\n3. 随时回来找我修改或新建表单\n\n祝活动顺利！'
   };
 
-  // ===== Knowledge Base Chunks =====
+  // ===== 知识库片段（按主题分块，按关键词匹配注入系统提示词） =====
   const KB_CHUNKS = {
     overview: '表单设计器采用经典三栏布局：\n- **左侧组件面板**：提供19个组件，分为输入型(4个)、选择型(13个)、布局型(2个)三类，点击或拖拽即可添加到画布\n- **中间画布区域**：展示已添加的组件，支持拖拽排序、复制、删除\n- **右侧属性面板**：选中画布中的组件后可配置其所有属性',
     input_components: '**输入型组件（4个）：**\n1. 单行文本 — 姓名、手机号、邮箱等\n2. 多行文本 — 自我介绍、备注\n3. 密码 — 密码输入\n4. 计数器 — 数字输入',
@@ -1343,12 +1364,17 @@
     return text;
   }
 
-  // ===== CSS Styles =====
+  // ===== CSS 样式注入 =====
+  // 将全部 CSS 通过 JS 动态创建 <style> 标签注入到页面 <head> 中
+  // 避免依赖外部 CSS 文件，确保插件独立部署
+  // 各组件样式说明见内联注释
   function injectStyles() {
+    // 防止重复注入（页面切换时 checkAndInit 可能多次调用）
     if (document.getElementById('ai-form-assistant-styles')) return;
     const style = document.createElement('style');
     style.id = 'ai-form-assistant-styles';
     style.textContent = `
+      /* ---------- 右下角浮动按钮（FAB） ---------- */
       .ai-assistant-fab {
         position: fixed; bottom: 24px; right: 24px;
         width: 56px; height: 56px; border-radius: 50%;
@@ -1360,6 +1386,7 @@
       }
       .ai-assistant-fab:hover { transform: scale(1.1); box-shadow: 0 6px 24px rgba(59,130,246,.5); }
 
+      /* ---------- 聊天主窗口（固定定位，右下角弹出） ---------- */
       .ai-assistant-window {
         position: fixed; bottom: 90px; right: 24px;
         width: 420px; height: 580px;
@@ -1377,7 +1404,7 @@
       }
       @keyframes aiSlideUp { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
 
-      /* Resize handles */
+      /* ---------- 窗口拖拽调整大小手柄（左/上/左上三个方向） ---------- */
       .ai-resize-handle {
         position: absolute; z-index: 2;
       }
@@ -1392,6 +1419,7 @@
       }
       .ai-resize-handle:hover { background: rgba(59,130,246,.15); border-radius: 3px; }
 
+      /* ---------- 窗口顶部标题栏（含新对话/历史/最大化/关闭按钮） ---------- */
       .ai-assistant-header {
         padding: 14px 16px;
         background: linear-gradient(135deg, #2563eb, #7c3aed);
@@ -1417,7 +1445,7 @@
       }
       .ai-assistant-header .ai-close-btn:hover { color: #fff; }
 
-      /* History panel - covers message area, sits inside window */
+      /* ---------- 历史对话面板（覆盖消息区域，绝对定位） ---------- */
       .ai-history-panel {
         position: absolute; top: 48px; left: 0; right: 0; bottom: 0;
         background: #fff; z-index: 10; display: flex; flex-direction: column;
@@ -1467,12 +1495,14 @@
         display: inline-block; background: #ecfdf5; color: #059669;
         font-size: 10px; padding: 1px 5px; border-radius: 6px; margin-left: 4px;
       }
+      /* ---------- 系统消息（压缩历史通知等） ---------- */
       .ai-msg.system {
         align-self: center; text-align: center;
         background: #f0fdf4; color: #16a34a; font-size: 11px;
         padding: 6px 12px; border-radius: 12px; max-width: 90%;
         margin: 4px auto;
       }
+      /* ---------- 字段推荐加载动画（AI 生成 FIELDS 时的等待提示） ---------- */
       .ai-fields-loading {
         display: flex; align-items: center; gap: 8px;
         padding: 10px 14px; margin-top: 8px;
@@ -1487,6 +1517,7 @@
       .ai-fields-loading-dots span:nth-child(2) { animation-delay: 0.2s; }
       .ai-fields-loading-dots span:nth-child(3) { animation-delay: 0.4s; }
       @keyframes ai-dot-bounce { 0%,80%,100% { opacity: 0.3; transform: scale(0.8); } 40% { opacity: 1; transform: scale(1.2); } }
+      /* ---------- 对话压缩提示条（对话过长时提示用户压缩历史） ---------- */
       .ai-compact-hint {
         display: none; align-items: center; justify-content: center; gap: 6px;
         padding: 6px 12px; background: #fefce8; border-top: 1px solid #fde68a;
@@ -1499,10 +1530,12 @@
       .ai-compact-hint button:hover { background: #d97706; }
       .ai-compact-hint button:disabled { background: #d1d5db; cursor: not-allowed; }
 
+      /* ---------- 消息列表区域（flex 纵向布局，可滚动） ---------- */
       .ai-assistant-messages {
         flex: 1; overflow-y: auto; padding: 16px;
         display: flex; flex-direction: column; gap: 12px;
       }
+      /* ---------- 聊天气泡（用户/AI/系统三种角色） ---------- */
       .ai-msg {
         max-width: 85%; padding: 10px 14px; border-radius: 12px;
         font-size: 13px; line-height: 1.6; word-break: break-word;
@@ -1524,6 +1557,7 @@
       .ai-msg.typing::after { content: '...'; animation: aiDots 1.4s infinite; }
       @keyframes aiDots { 0%,20% { content: '.'; } 40% { content: '..'; } 60%,100% { content: '...'; } }
 
+      /* ---------- AI 消息内 Markdown 渲染样式（代码块、表格、标题） ---------- */
       .ai-msg.bot pre.md-codeblock {
         background: #1f2937; color: #f3f4f6; padding: 10px 12px;
         border-radius: 6px; overflow-x: auto; font-size: 12px;
@@ -1537,6 +1571,7 @@
       .ai-msg.bot h4 { font-size: 14px; }
       .ai-msg.bot h5 { font-size: 13px; }
 
+      /* ---------- 快速操作按钮区（活动类型快捷选项，首次发消息后隐藏） ---------- */
       .ai-quick-area {
         padding: 8px 16px; display: flex; flex-wrap: wrap; gap: 6px;
         border-top: 1px solid #f3f4f6; flex-shrink: 0; max-height: 110px; overflow-y: auto;
@@ -1552,6 +1587,7 @@
       }
       .ai-quick-btn:hover { border-color: #60a5fa; color: #2563eb; background: #eff6ff; }
 
+      /* ---------- 底部输入区（textarea + 图片按钮 + 优化按钮 + 发送按钮） ---------- */
       .ai-input-area {
         padding: 12px 16px; border-top: 1px solid #e5e7eb;
         display: flex; gap: 8px; flex-shrink: 0;
@@ -1574,6 +1610,7 @@
       .ai-input-area button#aiAssistantSend:disabled { background: #d1d5db; cursor: not-allowed; }
       .ai-input-area button#aiAssistantSend svg { margin-left: 2px; }
 
+      /* ---------- 停止生成按钮（SSE 流式传输过程中显示） ---------- */
       .ai-stop-btn {
         display: none; align-self: center; padding: 5px 14px;
         border: 1px solid #d1d5db; border-radius: 16px; background: #fff;
@@ -1582,6 +1619,7 @@
       .ai-stop-btn:hover { border-color: #f87171; color: #ef4444; }
       .ai-stop-btn.visible { display: inline-flex; align-items: center; gap: 4px; }
 
+      /* ---------- "在设计器中搭建"按钮（AI 返回 actions 后的一键执行按钮） ---------- */
       .ai-build-trigger-btn {
         display: block; margin-top: 10px; padding: 6px 14px;
         border: 1px solid #93c5fd; border-radius: 16px;
@@ -1592,6 +1630,7 @@
       .ai-build-trigger-btn:hover { background: linear-gradient(135deg, #dbeafe, #e8e8ff); transform: translateY(-1px); }
       .ai-build-trigger-btn:disabled { opacity: .6; cursor: default; transform: none; }
 
+      /* ---------- 后续操作选项按钮组（搭建完成后的"再加一个字段"等） ---------- */
       .ai-option-btns { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
       .ai-option-btn {
         padding: 6px 12px; border: 1px solid #bfdbfe; border-radius: 16px;
@@ -1600,6 +1639,7 @@
       }
       .ai-option-btn:hover { background: #eff6ff; border-color: #60a5fa; transform: translateY(-1px); }
 
+      /* ---------- 字段勾选面板（AI 推荐字段后，用户勾选确认再搭建） ---------- */
       .ai-field-picker { margin-top: 10px; border: 1px solid #e5e7eb; border-radius: 10px; overflow: hidden; background: #fff; }
       .ai-field-picker-header {
         padding: 8px 12px; background: #f9fafb; border-bottom: 1px solid #e5e7eb;
@@ -1639,6 +1679,7 @@
       .ai-field-build-btn:hover { box-shadow: 0 2px 8px rgba(59,130,246,.3); transform: translateY(-1px); }
       .ai-field-build-btn:disabled { opacity: .6; cursor: default; transform: none; }
 
+      /* ---------- 组件高亮脉冲动画（搭建完成时画布组件闪烁提示） ---------- */
       .ai-highlight-pulse {
         animation: aiHighlight 1s ease-out;
       }
@@ -1648,6 +1689,7 @@
         100% { box-shadow: 0 0 0 0 rgba(59,130,246,0); }
       }
 
+      /* ---------- 底部状态栏（搭建进度、错误提示等临时消息，4秒后自动隐藏） ---------- */
       .ai-status-bar {
         padding: 4px 16px; background: #f0fdf4; border-top: 1px solid #bbf7d0;
         font-size: 11px; color: #16a34a; text-align: center; flex-shrink: 0;
@@ -1656,8 +1698,7 @@
       .ai-status-bar.visible { display: block; }
       .ai-status-bar.error { background: #fef2f2; border-color: #fecaca; color: #dc2626; }
 
-      /* Image upload */
-      /* Enhance prompt button */
+      /* ---------- 提示词优化按钮（星形图标，调 AI 优化用户输入） ---------- */
       .ai-enhance-btn {
         width: 32px; height: 32px; border-radius: 8px;
         background: transparent; color: #9ca3af; border: 1px solid #e5e7eb;
@@ -1670,6 +1711,7 @@
       .ai-enhance-btn.loading svg { animation: aiSpin .8s linear infinite; }
       @keyframes aiSpin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 
+      /* ---------- 图片上传按钮及预览区域 ---------- */
       .ai-img-btn {
         width: 32px; height: 32px; border-radius: 8px;
         background: transparent; color: #9ca3af; border: 1px solid #e5e7eb;
@@ -1697,7 +1739,7 @@
       }
       .ai-img-preview .ai-img-remove:hover { color: #ef4444; }
 
-      /* Images in bot messages */
+      /* ---------- AI 消息中的图片展示 ---------- */
       .ai-msg.bot img.md-img {
         max-width: 100%; border-radius: 8px; margin: 4px 0;
         cursor: pointer; transition: opacity .2s;
@@ -1711,7 +1753,10 @@
     document.head.appendChild(style);
   }
 
-  // ===== Markdown Renderer (lightweight) =====
+  // ===== 轻量 Markdown 渲染器 =====
+  // 自行实现而非引入第三方库，减少包体积
+  // 渲染流程：代码块占位 → 图片/链接 → 表格 → 标题 → 加粗/斜体 → 行内代码 → 列表 → 段落 → 还原代码块
+  // 所有用户可控内容均通过 escHtml() 转义，防止 XSS 注入
   function renderMd(text) {
     if (!text) return '';
     let html = text;
@@ -1752,6 +1797,12 @@
     html = html.replace(/<(?!\/?(?:h[1-6]|p|br|strong|em|code|pre|ul|li|table|thead|tbody|tr|th|td|img|a)\b)[^>]*>/g, function(tag) {
       return tag.replace(/</g, '&lt;').replace(/>/g, '&gt;');
     });
+    // P1 修复：清除允许列表标签上的事件处理属性，防止 XSS
+    // 例如 <a onmouseover="alert(1)"> 或 <img onerror="alert(1)">
+    html = html.replace(/<(a|img)(\s[^>]*)>/gi, function(_, tag, attrs) {
+      attrs = attrs.replace(/\s+on\w+\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]*)/gi, '');
+      return '<' + tag + attrs + '>';
+    });
     // Paragraphs — collapse excessive blank lines
     html = html.replace(/\n{3,}/g, '\n\n');
     html = html.replace(/\n\n/g, '</p><p>');
@@ -1764,17 +1815,35 @@
     return html;
   }
 
+  /** HTML 实体转义 —— 所有动态内容渲染前必须经过此函数 */
   function escHtml(s) {
     return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
   }
 
-  // ===== Vue Bridge Layer =====
-  // Helper: check if a Vue instance is the form designer (supports both drawingList and drawingData)
+  // ===== Vue Bridge 层（核心） =====
+  // 本模块负责与后台管理系统（RuoYi + Vue 2）的表单设计器实例进行交互
+  // 通过 DOM 查找 __vue__ 获取 Vue 实例引用，直接操作其 drawingList（组件列表）
+  //
+  // 核心调用链：
+  //   getVueInstance() → 查找并缓存 Vue 实例
+  //   findComponentTemplate(type) → 从组件面板中查找组件模板
+  //   addComponentToDesigner(type) → 克隆模板并添加到画布
+  //   setComponentProp(key, value) → 设置当前选中组件的属性
+  //   executeActions(actions) → 批量执行 AI 返回的操作指令
+  //
+  // 兼容性：同时支持 drawingList（旧版）和 drawingData（新版）两种数据结构
+  //          支持单页和多页（pages[]）表单
+
+  /** 判断一个 Vue 实例是否为表单设计器（通过是否拥有 drawingList/drawingData 判定） */
   function isDesignerVm(vm) {
     return vm && (vm.drawingList || vm.drawingData);
   }
 
-  // Helper: get the drawing list array from the designer instance (compat layer)
+  /**
+   * 获取当前页面的组件列表数组（兼容层）
+   * 优先级：drawingList/drawingData → 多页模式 pages[currentPage].components
+   * 返回的是 Vue 响应式数组的引用，对其 push/splice 会直接触发界面更新
+   */
   function getDrawingList(vm) {
     if (!vm) return null;
     // Try flat drawingList/drawingData first
@@ -1796,8 +1865,16 @@
     return dl || null;
   }
 
+  /**
+   * 查找并缓存表单设计器的 Vue 实例
+   * 查找策略（按优先级）：
+   *   1. 通过 CSS 选择器查找 DOM 元素上的 __vue__ 属性
+   *   2. 向上遍历 $parent 链（最多10层）
+   *   3. 从 #app 根实例递归遍历 $children
+   * 缓存的实例如果 _isDestroyed 则自动重新查找
+   */
   function getVueInstance() {
-    // Invalidate stale cached instance
+    // 检测缓存的实例是否已被销毁（页面切换时会发生）
     if (vueInstance && vueInstance._isDestroyed) {
       vueInstance = null;
       _componentCache = null; // Clear cache when VM is destroyed
@@ -1857,7 +1934,12 @@
     return null;
   }
 
-  // Dynamically discover all component template arrays from the Vue instance
+  /**
+   * 动态发现 Vue 实例中的所有组件模板数组
+   * 通过扫描 vm._data 中名称包含 "Component" 的数组属性
+   * 如果动态发现失败，回退到硬编码的属性名（inputComponents 等）
+   * 返回值：组件模板数组的数组，如 [[输入型模板...], [选择型模板...], [布局型模板...]]
+   */
   function getComponentSources(vm) {
     if (!vm) return [];
     // Collect all arrays that look like component templates
@@ -1880,6 +1962,12 @@
     return sources;
   }
 
+  /**
+   * 根据类型名查找对应的组件模板对象
+   * 处理歧义类型：textarea/password/input 共享 el-input 标签，通过 tagIcon 区分
+   * 同理 date/daterange 共享 el-date-picker，time/timerange 共享 el-time-picker
+   * 查找优先级：动态缓存 → 标签匹配 + 子类型匹配 → tagIcon/label 回退
+   */
   function findComponentTemplate(type) {
     const vm = vueInstance;
     if (!vm) return null;
@@ -1990,6 +2078,11 @@
     return null;
   }
 
+  /**
+   * 向设计器画布添加一个新组件
+   * 步骤：查找模板 → 深度克隆 → 生成唯一 formId → 添加到 drawingList → 设为活跃组件
+   * 注意：添加后需要延迟修复 placeholder，因为 Vue watcher 可能异步篡改值
+   */
   function addComponentToDesigner(type) {
     const vm = vueInstance;
     if (!vm) return false;
@@ -2020,7 +2113,9 @@
       if (typeof vm.addComponent === 'function') {
         vm.addComponent(comp);
       } else {
-        getDrawingList(vm).push(comp);
+        var dl = getDrawingList(vm);
+        if (!dl) { console.warn('[AI Assistant] No drawing list available'); return false; }
+        dl.push(comp);
         // Make it active
         if (typeof vm.activeFormItem === 'function') {
           vm.activeFormItem(comp);
@@ -2062,9 +2157,14 @@
     }
   }
 
-  // Track current row container for adding children into it
+  // 当前活跃的行容器引用 —— addToRow 操作会将子组件添加到此容器中
   let _activeRowContainer = null;
 
+  /**
+   * 添加行容器组件（用于多列布局）
+   * 行容器内的子组件通过 addComponentToRow() 添加，用 span 属性控制列宽
+   * 添加完成后通过 endRowContainer() 结束上下文
+   */
   function addRowContainer(type) {
     const vm = vueInstance;
     if (!vm) return false;
@@ -2124,6 +2224,7 @@
         vm.addComponent(comp);
       } else {
         var dl = getDrawingList(vm);
+        if (!dl) { console.warn('[AI Assistant] No drawing list available'); return false; }
         dl.splice(dl.length, 0, comp);
         if (typeof vm.activeFormItem === 'function') {
           vm.activeFormItem(comp);
@@ -2148,6 +2249,7 @@
     }
   }
 
+  /** 在当前活跃行容器内添加子组件（使用 splice 触发 Vue 2 响应式更新） */
   function addComponentToRow(type) {
     const vm = vueInstance;
     if (!vm || !_activeRowContainer) {
@@ -2212,6 +2314,17 @@
     return true;
   }
 
+  /**
+   * 设置当前活跃组件的属性值
+   * 此函数是 Vue Bridge 中最复杂的部分，需要处理：
+   *   1. 特殊属性（required/placeholder/label/vModel/options/regex/condition 等）各有定制逻辑
+   *   2. placeholder 防腐蚀 —— Vue watcher 会在 label 变更时自动生成 "请输入{label}" 覆盖原值
+   *   3. 范围组件（daterange/timerange）使用 start-placeholder 而非 placeholder
+   *   4. 选项归一化 —— 字符串/数组/对象统一转为 [{label, value}] 格式
+   *   5. 属性名兼容 —— 自动尝试 camelCase/kebab-case 转换和别名映射
+   *   6. 类型强转 —— 已知的布尔/数值属性自动转换类型
+   *   7. 兜底 —— 找不到属性时强制创建新属性
+   */
   function setComponentProp(key, value) {
     const vm = vueInstance;
     if (!vm || !vm.activeData) return false;
@@ -2511,8 +2624,12 @@
     }
   }
 
-  // MutationObserver-based dialog auto-dismisser
-  // Installed once and stays active while actionRunning is true
+  /**
+   * 基于 MutationObserver 的确认弹窗自动关闭器
+   * 问题背景：清空画布时 Element UI 会弹出确认对话框，阻塞后续操作
+   * 解决方案：在 actionRunning 期间监听 DOM 变化，发现确认按钮立即自动点击
+   * 只安装一次，仅在 actionRunning=true 时生效
+   */
   var _dialogDismissObserver = null;
   function installDialogAutoDismiss() {
     if (_dialogDismissObserver) return; // already installed
@@ -2527,28 +2644,38 @@
     _dialogDismissObserver.observe(document.body, { childList: true, subtree: true });
   }
 
+  /**
+   * 清空设计器画布
+   * 多层防御措施确保清空成功：
+   *   1. 安装持久化弹窗自动关闭器
+   *   2. 立即关闭已有弹窗
+   *   3. 临时覆盖 Vue.prototype.$confirm 直接返回 resolve
+   *   4. 清空 pages/drawingList/drawingData 数组
+   *   5. 500ms 后恢复原始 $confirm
+   */
   function clearDesignerCanvas() {
     const vm = vueInstance;
     if (!vm) return false;
+
+    // Monkey-patch $confirm 作为额外安全层（清空时会触发确认弹窗）
+    var Vue = vm.$root && vm.$root.constructor;
+    var origConfirm = null;
+    if (Vue && Vue.prototype.$confirm) {
+      origConfirm = Vue.prototype.$confirm;
+      Vue.prototype.$confirm = function() {
+        return Promise.resolve('confirm');
+      };
+    }
+
     try {
-      // Install persistent dialog auto-dismisser (only during action execution)
+      // 安装持久化弹窗自动关闭器
       installDialogAutoDismiss();
 
-      // Dismiss any existing dialog immediately
+      // 立即关闭已有弹窗
       var existingBtn = document.querySelector('.el-message-box__btns .el-button--primary');
       if (existingBtn) existingBtn.click();
 
-      // Monkey-patch $confirm as additional safety layer
-      var Vue = vm.$root && vm.$root.constructor;
-      var origConfirm = null;
-      if (Vue && Vue.prototype.$confirm) {
-        origConfirm = Vue.prototype.$confirm;
-        Vue.prototype.$confirm = function() {
-          return Promise.resolve('confirm');
-        };
-      }
-
-      // Directly clear data arrays
+      // 清空数据数组
       if (vm.pages && vm.pages.length > 0) {
         var rawIdx = vm.currentPage;
         var pidx = typeof rawIdx === 'string' ? parseInt(rawIdx, 10) : (rawIdx || 0);
@@ -2562,20 +2689,21 @@
       vm.activeData = null;
       vm.activeId = null;
 
-      // Restore original $confirm after action execution window
-      if (origConfirm) {
-        setTimeout(function() {
-          Vue.prototype.$confirm = origConfirm;
-        }, 500);
-      }
       return true;
     } catch (e) {
       console.error('[AI Assistant] Failed to clear canvas:', e);
       return false;
+    } finally {
+      // P0 修复：无论成功还是异常，都必须恢复原始 $confirm
+      // 否则全局所有确认弹窗会被静默跳过
+      if (origConfirm) {
+        Vue.prototype.$confirm = origConfirm;
+      }
     }
   }
 
-  // ===== Multi-page support =====
+  // ===== 多页表单支持 =====
+  /** 添加新页面（复杂表单可分多页，如 PVSA 证书申请表） */
   function addDesignerPage() {
     var vm = vueInstance;
     if (!vm) return false;
@@ -2593,6 +2721,7 @@
     return false;
   }
 
+  /** 切换到指定页面（0-based 索引） */
   function switchDesignerPage(pageIndex) {
     var vm = vueInstance;
     if (!vm) return false;
@@ -2608,8 +2737,12 @@
     return false;
   }
 
+  /**
+   * 设置表单名称
+   * 优先通过 Vue 数据绑定设置 formConf.formRef（最可靠）
+   * 回退方案：查找 DOM 中的表单名称输入框，通过原生 setter 触发 input 事件
+   */
   function setFormName(name) {
-    // Primary: set via Vue model binding (most reliable)
     const vm = vueInstance;
     if (vm && vm.formConf) {
       vm.$set ? vm.$set(vm.formConf, 'formRef', name) : (vm.formConf.formRef = name);
@@ -2620,8 +2753,13 @@
     // Fallback: try to find the form name input (narrow selector to avoid icon inputs)
     const inputs = document.querySelectorAll('input[placeholder*="表单名"], input[placeholder*="模板名"]');
     for (const input of inputs) {
-      const nativeInputValueSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
-      nativeInputValueSetter.call(input, name);
+      // P2 修复：添加 null 检查，兼容非标准浏览器环境
+      const desc = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value');
+      if (desc && desc.set) {
+        desc.set.call(input, name);
+      } else {
+        input.value = name;
+      }
       input.dispatchEvent(new Event('input', { bubbles: true }));
       input.dispatchEvent(new Event('change', { bubbles: true }));
       return true;
@@ -2629,6 +2767,12 @@
     return false;
   }
 
+  /**
+   * 设置表单级属性（非组件属性）
+   * 支持：labelPosition/labelWidth/gutter/size 等表单布局属性
+   *       appearance.* 前缀的外观属性（背景色等）
+   *       bgColor/backgroundColor 直接映射到 appearance 对象
+   */
   function setFormProperty(key, value) {
     const vm = vueInstance;
     if (!vm) return false;
@@ -2751,6 +2895,7 @@
     return true;
   }
 
+  /** 选中画布上的指定组件（支持数字索引或 vModel/label 字符串查找） */
   function selectComponent(index) {
     const vm = vueInstance;
     const dl = getDrawingList(vm);
@@ -2775,6 +2920,7 @@
     return true;
   }
 
+  /** 删除画布上的指定组件（支持数字索引或 vModel/label 字符串查找） */
   function removeComponent(index) {
     const vm = vueInstance;
     const dl = getDrawingList(vm);
@@ -2807,9 +2953,21 @@
     return true;
   }
 
-  // ===== Action Executor (bridges AI actions to Vue designer) =====
-  let actionRunning = false;
+  // ===== 操作执行器（将 AI 返回的 actions 指令逐条执行到设计器） =====
+  // AI 返回的 actions 是一个 JSON 数组，每条指令有 {a: 操作类型, ...参数}
+  // 执行器按顺序逐条执行，每步之间有延迟（add=450ms, clear=300ms, 其他=200ms）
+  // 全部执行完后只调用一次 $forceUpdate() 刷新界面（性能优化）
+  let actionRunning = false;  // 防止并发执行
 
+  /**
+   * 批量执行 AI 操作指令
+   * @param {Array} actions - 操作指令数组，如 [{a:'clear'}, {a:'add',t:'input'}, {a:'prop',k:'label',v:'姓名'}]
+   * @param {Function} onComplete - 全部执行完成后的回调
+   *
+   * 预处理：多个 remove 操作按索引降序排列，避免删除时索引偏移
+   * 执行中：显示 "搭建中... (X/Y)" 进度条
+   * 安全措施：前一个 select 失败时跳过后续 prop 操作，防止修改错误组件
+   */
   function executeActions(actions, onComplete) {
     if (!actions || !Array.isArray(actions) || actions.length === 0) {
       if (onComplete) onComplete();
@@ -2862,6 +3020,11 @@
     function runStep() {
       if (i >= actions.length) {
         actionRunning = false;
+        // P1 修复：操作完成后断开 MutationObserver，避免持续监听全 DOM
+        if (_dialogDismissObserver) {
+          _dialogDismissObserver.disconnect();
+          _dialogDismissObserver = null;
+        }
         // Single forceUpdate after all actions complete
         const vm = vueInstance;
         if (vm && vm.$forceUpdate) vm.$forceUpdate();
@@ -2878,26 +3041,28 @@
       const act = s.a || s.action;
       let ok = false;
 
+      // P2 修复：每个 case 用 {} 包裹，防止 const/let 声明在 strict mode 下的作用域隐患
       switch (act) {
-        case 'clear':
+        case 'clear': {
           ok = clearDesignerCanvas();
           break;
-        case 'name':
+        }
+        case 'name': {
           ok = setFormName(s.v || s.value);
           break;
-        case 'add':
+        }
+        case 'add': {
           var addType = s.t || s.type;
           if (addType === 'row') {
-            // Route row type to addRowContainer instead of generic add
             ok = addRowContainer(s.t || 'default');
             if (ok) successCount++;
           } else {
             ok = addComponentToDesigner(addType);
-            if (ok) { successCount++; lastSelectOk = true; } // add auto-selects new component
+            if (ok) { successCount++; lastSelectOk = true; }
           }
           break;
-        case 'prop':
-          // Skip if previous select failed (would modify wrong component)
+        }
+        case 'prop': {
           if (!lastSelectOk) {
             console.warn('[AI Form Assistant] Skipping prop — previous select failed');
             break;
@@ -2909,47 +3074,55 @@
           ok = setComponentProp(key, val);
           if (ok) modifyCount++;
           break;
-        case 'select':
+        }
+        case 'select': {
           const idx = s.i !== undefined ? s.i : s.index;
           ok = selectComponent(idx);
           lastSelectOk = ok;
-          if (!ok) {
-            console.warn('[AI Form Assistant] Select failed for:', idx);
-          }
+          if (!ok) console.warn('[AI Form Assistant] Select failed for:', idx);
           break;
-        case 'formProp':
+        }
+        case 'formProp': {
           const fKey = s.k || s.key;
           const fVal = s.v !== undefined ? s.v : s.value;
           ok = setFormProperty(fKey, fVal);
           if (ok) modifyCount++;
           break;
-        case 'addPage':
+        }
+        case 'addPage': {
           ok = addDesignerPage();
           break;
+        }
         case 'switchPage':
-        case 'page':
+        case 'page': {
           const pi = s.i !== undefined ? s.i : (s.v !== undefined ? parseInt(s.v) : 0);
           ok = switchDesignerPage(pi);
           break;
-        case 'condition':
+        }
+        case 'condition': {
           ok = setComponentCondition(s.i, s.field, s.op || 'eq', s.val);
           break;
+        }
         case 'remove':
-        case 'delete':
+        case 'delete': {
           ok = removeComponent(s.i !== undefined ? s.i : s.index);
           if (ok) removeCount++;
           break;
-        case 'addRow':
+        }
+        case 'addRow': {
           ok = addRowContainer(s.t || s.type || 'default');
           if (ok) { successCount++; lastSelectOk = true; }
           break;
-        case 'addToRow':
+        }
+        case 'addToRow': {
           ok = addComponentToRow(s.t || s.type);
           if (ok) successCount++;
           break;
-        case 'endRow':
+        }
+        case 'endRow': {
           ok = endRowContainer();
           break;
+        }
       }
 
       i++;
@@ -2964,7 +3137,8 @@
     runStep();
   }
 
-  // ===== Status Bar =====
+  // ===== 状态栏 =====
+  /** 显示临时状态消息（4秒后自动隐藏），isError=true 时显示为红色 */
   function updateStatus(msg, isError) {
     const bar = document.getElementById('aiAssistantStatus');
     if (!bar) return;
@@ -2973,7 +3147,9 @@
     setTimeout(() => { bar.className = 'ai-status-bar'; }, 4000);
   }
 
-  // ===== UI Creation =====
+  // ===== UI 创建 =====
+  // 动态创建完整的聊天界面 DOM 结构（不依赖任何模板文件）
+  // 包括：FAB 按钮、聊天窗口（标题栏 + 消息区 + 快捷按钮 + 状态栏 + 输入区）
   function createUI() {
     if (uiInjected) return;
     uiInjected = true;
@@ -3021,7 +3197,7 @@
       </div>
       <div class="ai-status-bar" id="aiAssistantStatus"></div>
       <div class="ai-compact-hint" id="aiCompactHint">
-        <span>对话较长，</span><button onclick="window._aiCompactHistory && window._aiCompactHistory()">压缩历史</button><span> 可优化性能</span>
+        <span>对话较长，</span><button id="aiCompactBtn">压缩历史</button><span> 可优化性能</span>
       </div>
       <div class="ai-img-preview" id="aiImgPreview" style="display:none">
         <img id="aiImgThumb" src="" alt="preview">
@@ -3059,8 +3235,9 @@
     document.getElementById('aiImgRemove').onclick = clearPendingImage;
     document.getElementById('aiEnhanceBtn').onclick = enhancePrompt;
 
-    // Expose compact function for inline onclick
-    window._aiCompactHistory = compactHistory;
+    // P2 修复：通过 DOM 事件绑定而非暴露全局函数
+    var compactBtn = document.getElementById('aiCompactBtn');
+    if (compactBtn) compactBtn.onclick = compactHistory;
 
     // Escape to close
     document.addEventListener('keydown', function(e) {
@@ -3149,6 +3326,11 @@
     }
   }
 
+  /**
+   * 智能滚动到底部
+   * 只有用户当前位于底部附近（80px 内）时才自动滚动
+   * 用户手动向上滚动查看历史时不强制拉回底部
+   */
   function scrollChatBottom() {
     const msgs = document.getElementById('aiAssistantMessages');
     if (!msgs) return;
@@ -3174,7 +3356,8 @@
     scrollChatBottom();
   }
 
-  // ===== Window Resize =====
+  // ===== 窗口拖拽缩放 =====
+  /** 为聊天窗口添加拖拽调整大小功能（左/上/左上三个方向），尺寸持久化到 localStorage */
   function setupResize(win) {
     const handles = win.querySelectorAll('.ai-resize-handle');
     let isResizing = false;
@@ -3238,7 +3421,12 @@
     } catch(e) {}
   }
 
-  // ===== Canvas State Reader (for follow-up modifications) =====
+  // ===== 画布状态读取器（用于后续修改请求的上下文） =====
+  /**
+   * 读取当前设计器画布上所有组件的状态，格式化为文本摘要
+   * 注入到系统提示词中，让 AI 了解画布上已有哪些组件
+   * 这样用户说"把邮箱改成必填"时，AI 能用 select+prop 操作精准修改
+   */
   function getCurrentCanvasState() {
     var vm = vueInstance;
     if (!vm) return '';
@@ -3280,7 +3468,12 @@
     return '\n\n## 当前画布状态（' + allFields.length + '个组件）\n以下是设计器画布中已有的组件，用户的修改请求基于此状态：\n' + lines.join('\n') + '\n\n**修改已有组件时**：先用 {"a":"select","i":"vModel值"} 选中，再用 {"a":"prop",...} 修改。新增用 {"a":"add",...}。删除用 {"a":"remove","i":"vModel值"}。';
   }
 
-  // ===== Context Builder =====
+  // ===== 上下文构建器 =====
+  /**
+   * 根据用户问题的关键词匹配相关知识库片段
+   * 用于补充系统提示词中的设计器使用知识
+   * 最多返回3个片段，避免 token 超预算
+   */
   function getRelevantContext(question) {
     const q = question.toLowerCase();
     const matches = [];
@@ -3309,7 +3502,18 @@
     return matches.slice(0, 3).join('\n\n');
   }
 
-  // ===== Field Picker Renderer =====
+  // ===== 字段勾选面板渲染器 =====
+  /**
+   * 当 AI 返回 [[FIELDS:...]] 标签时，渲染一个可勾选的字段列表面板
+   * 用户可以：全选/取消全选、逐个勾选/取消、查看每个字段的类型标签
+   * 点击"开始搭建"后，将选中的字段转换为 actions 指令数组交给 executeActions() 执行
+   *
+   * 性能优化：全选/取消时原地更新已有 DOM 行（toggleClass），不重建整个列表
+   *
+   * @param {Array} fields - AI 推荐的字段数组，每项 {label, type, desc, checked, props, children?}
+   * @param {string} formName - 表单名称（用于 clear+name 操作）
+   * @param {HTMLElement} containerEl - 面板挂载的父 DOM 元素（通常是 bot 消息气泡）
+   */
   function renderFieldPicker(fields, formName, containerEl) {
     const picker = document.createElement('div');
     picker.className = 'ai-field-picker';
@@ -3337,6 +3541,13 @@
     // Items
     const itemsWrap = document.createElement('div');
     picker.appendChild(itemsWrap);
+
+    // P1 修复：将 buildBtn 声明移到 updateCounters 之前，消除 TDZ 隐患
+    const actionsBar = document.createElement('div');
+    actionsBar.className = 'ai-field-actions';
+    const buildBtn = document.createElement('button');
+    buildBtn.className = 'ai-field-build-btn';
+    buildBtn.textContent = '开始搭建（' + checkedCount() + '个字段）';
 
     function updateCounters() {
       countSpan.textContent = '已选 ' + checkedCount() + '/' + fields.length + ' 个字段';
@@ -3395,13 +3606,6 @@
         itemsWrap.appendChild(row);
       });
     }
-
-    // Build button (declared before refreshItems so updateCounters can reference it)
-    const actionsBar = document.createElement('div');
-    actionsBar.className = 'ai-field-actions';
-    const buildBtn = document.createElement('button');
-    buildBtn.className = 'ai-field-build-btn';
-    buildBtn.textContent = '开始搭建（' + checkedCount() + '个字段）';
 
     refreshItems();
     buildBtn.onclick = function() {
@@ -3568,7 +3772,16 @@
     scrollChatBottom();
   }
 
-  // ===== System Prompt =====
+  // ===== 系统提示词构建 =====
+  /**
+   * 动态构建发送给 AI 的系统提示词
+   * 包含以下动态注入的上下文（按优先级排序，超长时截断低优先级部分）：
+   *   1. 画布当前状态（已有组件列表） —— 修改请求的关键上下文
+   *   2. 匹配的表单模板 —— 根据用户描述匹配的推荐模板
+   *   3. 模板库知识 —— 通用的模板参考
+   *   4. 自学习历史 —— 用户之前成功提交的表单结构
+   * 总字符数超过 MAX_PROMPT_CHARS（12000）时自动截断
+   */
   function buildSystemPrompt(question) {
     const context = getRelevantContext(question);
     const templateKnowledge = formatTemplateKnowledge();
@@ -3627,7 +3840,8 @@
 
     // Assemble variable-length sections (will be truncated if too long)
     var dynamicSections = templateKnowledge + matchHint + learnedSection + canvasState;
-    var tail = '\n\n' + context + '\n\n用户问题：' + question;
+    // P2 修复：不再在 system_prompt 尾部重复用户问题（message 字段已单独携带）
+    var tail = '\n\n' + context;
 
     // Token budget: truncate dynamic sections if total prompt exceeds limit
     var total = systemBase.length + dynamicSections.length + tail.length;
@@ -3659,7 +3873,8 @@
     return systemBase + dynamicSections + tail;
   }
 
-  // ===== Image Handling =====
+  // ===== 图片上传处理 =====
+  /** 处理用户选择的图片文件，转为 base64 用于发送给视觉模型（qwen-vl-plus） */
   function handleImageSelect(e) {
     const file = e.target.files && e.target.files[0];
     if (!file) return;
@@ -3694,7 +3909,8 @@
     document.getElementById('aiImgName').textContent = '';
   }
 
-  // ===== Error Friendly Messages =====
+  // ===== 错误信息友好化 =====
+  /** 将技术性错误信息转为用户可读的中文提示 */
   function friendlyError(msg) {
     if (!msg) return '服务异常，请稍后重试';
     if (msg.includes('image length and width') || msg.includes('must be larger than'))
@@ -3712,7 +3928,12 @@
     return msg;
   }
 
-  // ===== Enhance Prompt =====
+  // ===== 提示词优化 =====
+  /**
+   * 调用 AI 将用户简短描述扩展为更具体的表单需求
+   * 例如 "春节活动" → "帮我搭建一个春节联欢晚会报名表，包含姓名、手机号、微信号、饮食偏好、是否携带朋友"
+   * 使用通用聊天接口（非表单设计器接口），skipRag=true 跳过知识库检索
+   */
   async function enhancePrompt() {
     const input = document.getElementById('aiAssistantInput');
     const btn = document.getElementById('aiEnhanceBtn');
@@ -3792,15 +4013,35 @@
     }
   }
 
-  // ===== Chat Send =====
+  // ===== 消息发送与流式接收 =====
+  /**
+   * 核心函数 —— 处理用户消息发送和 AI 响应接收的完整流程
+   *
+   * 执行流程：
+   *   1. 防重复发送检查（aiIsTyping/actionRunning）
+   *   2. 尝试本地快速回答匹配（精确 → 模糊关键词）
+   *   3. 未匹配则调用后端 AI 接口（SSE 流式传输）
+   *   4. 流式渲染（100ms 防抖，避免频繁 DOM 更新导致闪烁）
+   *   5. 解析 AI 响应中的特殊标记：
+   *      - ```actions 代码块 → 渲染"在设计器中搭建"按钮
+   *      - [[FIELDS:名称|JSON]] → 渲染字段勾选面板
+   *      - [[OPTIONS:选项1|选项2]] → 渲染后续操作选项按钮
+   *   6. 错误处理：自动重试1次、15秒慢响应提示、45秒超时中止
+   *   7. 中途停止：清理未闭合的标签，保留已接收内容
+   *
+   * SSE 数据格式：data:{"type":"chunk","content":"..."} 或 {"type":"start/done/error",...}
+   * 含图片时自动切换到视觉模型 qwen-vl-plus
+   */
   async function sendChat() {
     if (aiIsTyping || actionRunning) return;
-    aiIsTyping = true;  // Set immediately to prevent double-click race
+    aiIsTyping = true;  // 立即设置，防止双击竞态
     const input = document.getElementById('aiAssistantInput');
+    if (!input) { aiIsTyping = false; return; }
     const q = input.value.trim();
     if (!q) { aiIsTyping = false; return; }
     input.value = '';
     input.style.height = 'auto';
+    try { // P0 修复：try/finally 确保异常时 aiIsTyping 一定被重置
 
     // Hide quick area on first message
     const quickArea = document.querySelector('.ai-quick-area');
@@ -3865,8 +4106,7 @@
       updateCompactHint();
       saveCurrentMessages();
       scrollChatBottom();
-      aiIsTyping = false;
-      return;
+      return; // finally 块会自动重置 aiIsTyping
     }
 
     // AI streaming
@@ -3899,7 +4139,8 @@
         var ctx = {};
         // Role: manage=总管理员(多校), part_manage=分管理员(单校), etc.
         var roles = user.roles || store.getters && store.getters.roles;
-        if (roles && roles.length) ctx.roles = roles;
+        // P1 修复：只发送角色标识，不泄露完整权限对象
+        if (roles && roles.length) ctx.roles = roles.map(function(r) { return r.key || r.roleKey || r; }).filter(Boolean);
         // User name
         if (user.name) ctx.userName = user.name;
         if (user.nickName) ctx.nickName = user.nickName;
@@ -4359,22 +4600,30 @@
       msgs.appendChild(errEl);
     }
 
-    aiIsTyping = false;
-    aiAbortController = null;
-    document.getElementById('aiAssistantSend').disabled = false;
-    scrollChatBottom();
+    } finally {
+      // P0 修复：无论正常完成还是异常，都必须重置状态，防止 UI 永久锁死
+      aiIsTyping = false;
+      aiAbortController = null;
+      var sendBtnFinal = document.getElementById('aiAssistantSend');
+      if (sendBtnFinal) sendBtnFinal.disabled = false;
+      scrollChatBottom();
+    }
   }
 
-  // ===== Route Fix Note =====
-  // The admin DB sys_menu has been updated: menu_id 2121 (活动表单模板)
-  // component changed from system/model/index (missing) to tool/build/index (form designer).
-  // No runtime route patching needed - the form designer loads directly via /active/model.
+  // ===== 路由修复说明 =====
+  // 后台数据库 sys_menu 表已更新：menu_id 2121（活动表单模板）
+  // component 从 system/model/index（不存在）改为 tool/build/index（表单设计器）
+  // 现在表单设计器通过 /active/model 直接加载，无需运行时路由补丁
   function patchFormDesignerRoute() {
     // No-op: route is now correctly configured in the database
     console.log('[AI Form Assistant] Form designer route configured via DB (tool/build/index)');
   }
 
-  // ===== Page Detection & Initialization =====
+  // ===== 页面检测与初始化 =====
+  /**
+   * 通过 DOM 选择器判断当前页面是否为表单设计器页面
+   * 检测标志：存在 .drawing-board / .center-board / .left-board 之一
+   */
   function isFormDesignerPage() {
     // Only show AI assistant when the form designer canvas is actually rendered
     // This means we need the drawing-board or center-board DOM elements
@@ -4411,12 +4660,24 @@
         const win = document.getElementById('aiAssistantWindow');
         if (fab) fab.style.display = 'none';
         if (win) win.classList.remove('open');
+        // 离开页面时清理 MutationObserver，释放资源
+        if (_dialogDismissObserver) {
+          _dialogDismissObserver.disconnect();
+          _dialogDismissObserver = null;
+        }
         console.log('[AI Form Assistant] Left designer page, hiding UI');
       }
     }
   }
 
-  // ===== Bootstrap =====
+  // ===== 启动入口 =====
+  /**
+   * 插件初始化：加载模板库 → 立即检测页面 → 注册路由监听
+   * 三重检测机制确保 SPA 路由切换时能正确显示/隐藏 AI 助手：
+   *   1. hashchange 事件（Vue Router hash 模式）
+   *   2. popstate 事件（浏览器前进/后退）
+   *   3. 3秒定时轮询（兜底：编程式导航可能不触发上述事件）
+   */
   function init() {
     console.log('[AI Form Assistant] Script loaded, watching for form designer page...');
 

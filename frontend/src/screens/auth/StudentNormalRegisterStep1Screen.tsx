@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   View,
   Text,
@@ -12,6 +12,7 @@ import {
   TouchableWithoutFeedback,
   Modal,
   FlatList,
+  Platform,
 } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
@@ -33,6 +34,7 @@ import {
 } from '../../utils/schoolData';
 import { SchoolSelector } from '../../components/common/SchoolSelector';
 import { OrganizationSelector } from '../../components/common/OrganizationSelector';
+import { AreaCodePickerModal, getPhonePlaceholder } from '../../components/common/AreaCodePickerModal';
 import SchoolEmailService from '../../services/schoolEmailService';
 import {
   fetchSchoolList,
@@ -41,6 +43,7 @@ import {
 } from '../../services/registrationAPI';
 import RegionDetectionService from '../../services/RegionDetectionService';
 import UserRegionPreferences from '../../services/UserRegionPreferences';
+import { checkPhoneAvailability, checkEmailAvailability } from '../../services/registrationAPI';
 import {
   validateTextByLanguage,
   TextType,
@@ -49,6 +52,7 @@ import {
 } from '../../utils/textValidation';
 import { isChinese, i18n } from '../../utils/i18n';
 import { LoaderOne } from '../../components/ui/LoaderOne';
+import { KeyboardDoneAccessory, KEYBOARD_ACCESSORY_ID } from '../../components/common/KeyboardDismissWrapper';
 
 export const StudentNormalRegisterStep1Screen: React.FC = () => {
   const navigation = useNavigation<any>();
@@ -62,6 +66,14 @@ export const StudentNormalRegisterStep1Screen: React.FC = () => {
 
   // UCLA学生类型选择
   const [studentType, setStudentType] = useState<'undergraduate' | 'graduate'>('undergraduate');
+
+  // 验证方式：统一使用手机验证，邮箱验证注册后在会员卡处进行
+  const [verifyMethod, setVerifyMethod] = useState<'phone' | 'email'>('phone');
+
+  // 邮箱验证路径下的手机号（无需验证，仅收集）
+  const [emailPathPhoneNumber, setEmailPathPhoneNumber] = useState('');
+  const [emailPathAreaCode, setEmailPathAreaCode] = useState<'86' | '1'>('86');
+  const [showEmailPathAreaCodeModal, setShowEmailPathAreaCodeModal] = useState(false);
   
   // 扩展 formData 以包含新字段
   interface ExtendedFormData extends RegistrationStep1Data {
@@ -192,9 +204,10 @@ export const StudentNormalRegisterStep1Screen: React.FC = () => {
         return getUCLAEmailDomain(studentType);
       }
 
-      // 2. 使用后端返回的mailDomain
+      // 2. 使用后端返回的mailDomain（自动补 @ 前缀）
       if (school.mailDomain && school.mailDomain.trim()) {
-        return school.mailDomain;
+        const domain = school.mailDomain.trim();
+        return domain.startsWith('@') ? domain : `@${domain}`;
       }
 
       // 3. 备用：使用前端映射表
@@ -319,20 +332,29 @@ export const StudentNormalRegisterStep1Screen: React.FC = () => {
       newErrors.selectedSchool = t('validation.university_required');
     }
 
-    // 验证邮箱用户名（普通注册必填）
+    // 两种路径都需要填写邮箱用户名（邮箱作为账号标识）
     if (!emailUsername.trim()) {
       newErrors.email = t('validation.email_username_required');
     } else if (emailUsername.length < 3) {
       newErrors.email = t('validation.email_username_too_short');
     } else if (!/^[a-zA-Z0-9._-]+$/.test(emailUsername)) {
       newErrors.email = t('validation.email_username_invalid');
-    }
-
-    // 验证生成的邮箱格式（接受任何后缀）
-    if (formData.generatedEmail) {
+    } else if (formData.generatedEmail) {
+      // 验证生成的邮箱格式（接受任何后缀）
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(formData.generatedEmail)) {
         newErrors.email = t('validation.email_format_error');
+      }
+    }
+
+    // 邮箱验证路径：额外验证手机号格式（仅格式检查，无需短信验证）
+    if (verifyMethod === 'email') {
+      if (!emailPathPhoneNumber.trim()) {
+        newErrors.phoneNumber = t('validation.phone_required');
+      } else if (!validatePhoneNumber(emailPathPhoneNumber, emailPathAreaCode)) {
+        newErrors.phoneNumber = emailPathAreaCode === '86'
+          ? t('validation.phone_china_invalid')
+          : t('validation.phone_us_invalid');
       }
     }
 
@@ -344,7 +366,38 @@ export const StudentNormalRegisterStep1Screen: React.FC = () => {
     if (validateForm()) {
       try {
         setLoading(true);
-        
+
+        // 唯一性检查：邮箱和手机号
+        if (verifyMethod === 'email') {
+          // 邮箱路径：检查生成的邮箱 + 手机号
+          if (formData.generatedEmail) {
+            const emailCheck = await checkEmailAvailability(formData.generatedEmail);
+            if (!emailCheck.available) {
+              setErrors(prev => ({ ...prev, email: t('auth.register.errors.email_already_registered', { defaultValue: '该邮箱已被注册' }) }));
+              setLoading(false);
+              return;
+            }
+          }
+          if (emailPathPhoneNumber) {
+            const phoneCheck = await checkPhoneAvailability(emailPathPhoneNumber);
+            if (!phoneCheck.available) {
+              setErrors(prev => ({ ...prev, phoneNumber: t('auth.register.errors.phone_already_registered', { defaultValue: '该手机号已被注册' }) }));
+              setLoading(false);
+              return;
+            }
+          }
+        } else {
+          // 手机路径：检查生成的邮箱
+          if (formData.generatedEmail) {
+            const emailCheck = await checkEmailAvailability(formData.generatedEmail);
+            if (!emailCheck.available) {
+              setErrors(prev => ({ ...prev, email: t('auth.register.errors.email_already_registered', { defaultValue: '该邮箱已被注册' }) }));
+              setLoading(false);
+              return;
+            }
+          }
+        }
+
         // 执行地理位置检测（用于初始化区域偏好）
         console.log('注册流程：开始地理位置检测...');
         const detectionResult = await RegionDetectionService.detectRegion();
@@ -359,6 +412,9 @@ export const StudentNormalRegisterStep1Screen: React.FC = () => {
           step1Data: {
             ...formData,
             legalName: `${formData.lastName} ${formData.firstName}`.trim(),
+            verifyMethod: verifyMethod,
+            phoneNumber: verifyMethod === 'email' ? emailPathPhoneNumber : undefined,
+            areaCode: verifyMethod === 'email' ? emailPathAreaCode : undefined,
           },
           regionDetection: detectionResult, // 传递地理检测结果
         });
@@ -369,6 +425,9 @@ export const StudentNormalRegisterStep1Screen: React.FC = () => {
           step1Data: {
             ...formData,
             legalName: `${formData.lastName} ${formData.firstName}`.trim(),
+            verifyMethod: verifyMethod,
+            phoneNumber: verifyMethod === 'email' ? emailPathPhoneNumber : undefined,
+            areaCode: verifyMethod === 'email' ? emailPathAreaCode : undefined,
           },
           regionDetection: null, // 检测失败
         });
@@ -429,6 +488,70 @@ export const StudentNormalRegisterStep1Screen: React.FC = () => {
     );
   };
 
+  // 处理邮箱验证路径手机号输入
+  const handleEmailPathPhoneChange = useCallback((text: string) => {
+    setEmailPathPhoneNumber(text);
+    if (errors.phoneNumber) {
+      setErrors(prev => ({ ...prev, phoneNumber: undefined }));
+    }
+  }, [errors.phoneNumber]);
+
+  // 验证方式选择器
+  const renderVerifyMethodSelector = () => (
+    <View style={styles.inputContainer}>
+      <Text style={styles.label}>{t('auth.register.form.verify_method_label')}</Text>
+      <View style={styles.studentTypeContainer}>
+        <TouchableOpacity
+          style={[styles.studentTypeButton, verifyMethod === 'phone' && styles.studentTypeButtonActive]}
+          onPress={() => setVerifyMethod('phone')}
+        >
+          <Text style={[styles.studentTypeButtonText, verifyMethod === 'phone' && styles.studentTypeButtonTextActive]}>
+            {t('auth.register.form.verify_phone')}
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.studentTypeButton, verifyMethod === 'email' && styles.studentTypeButtonActive]}
+          onPress={() => setVerifyMethod('email')}
+        >
+          <Text style={[styles.studentTypeButtonText, verifyMethod === 'email' && styles.studentTypeButtonTextActive]}>
+            {t('auth.register.form.verify_email')}
+          </Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+
+  // 邮箱验证路径：手机号输入（无需验证，仅收集）
+  const renderEmailPathPhoneInput = () => (
+    <View style={styles.inputContainer}>
+      <Text style={styles.label}>{t('auth.register.form.phone_number_label')}</Text>
+      <View style={styles.phoneInputWrapper}>
+        <TouchableOpacity
+          style={styles.areaCodeSelector}
+          onPress={() => setShowEmailPathAreaCodeModal(true)}
+        >
+          <Text style={styles.areaCodeText}>+{emailPathAreaCode}</Text>
+          <Ionicons name="chevron-down" size={16} color={theme.colors.text.secondary} />
+        </TouchableOpacity>
+        <TextInput
+          style={[
+            styles.phoneInput,
+            errors.phoneNumber && styles.inputError,
+          ]}
+          placeholder={getPhonePlaceholder(emailPathAreaCode)}
+          value={emailPathPhoneNumber}
+          onChangeText={handleEmailPathPhoneChange}
+          keyboardType="phone-pad"
+          placeholderTextColor={theme.colors.text.disabled}
+          returnKeyType="done"
+          onSubmitEditing={() => Keyboard.dismiss()}
+          inputAccessoryViewID={Platform.OS === 'ios' ? KEYBOARD_ACCESSORY_ID : undefined}
+        />
+      </View>
+      {errors.phoneNumber && <Text style={styles.errorText}>{errors.phoneNumber}</Text>}
+    </View>
+  );
+
   const renderEmailPreview = () => {
     if (!formData.selectedSchool) return null;
 
@@ -443,13 +566,21 @@ export const StudentNormalRegisterStep1Screen: React.FC = () => {
             style={[styles.emailUsernameInput, errors.email && styles.inputError]}
             placeholder={t('auth.register.form.email_username_placeholder')}
             value={emailUsername}
-            onChangeText={setEmailUsername}
+            onChangeText={(text) => {
+              // 过滤掉 @ 及其后面的内容，用户只需输入用户名部分
+              const cleanUsername = text.replace(/@.*$/, '');
+              setEmailUsername(cleanUsername);
+              if (errors.email) {
+                setErrors(prev => ({ ...prev, email: undefined }));
+              }
+            }}
             autoCapitalize="none"
             autoCorrect={false}
             placeholderTextColor={theme.colors.text.disabled}
             keyboardType="email-address"
             returnKeyType="next"
             onSubmitEditing={() => Keyboard.dismiss()}
+            inputAccessoryViewID={Platform.OS === 'ios' ? KEYBOARD_ACCESSORY_ID : undefined}
           />
           <Text style={styles.emailDomain}>{formData.selectedSchool.emailDomain}</Text>
         </View>
@@ -499,13 +630,16 @@ export const StudentNormalRegisterStep1Screen: React.FC = () => {
               {t('auth.register.form.step1_description')}
             </Text>
 
+            {/* 验证方式选择器 */}
+            {renderVerifyMethodSelector()}
+
             {/* 姓名输入 */}
             <View style={styles.nameRow}>
               <View style={[styles.inputContainer, styles.nameInput]}>
                 <Text style={styles.label}>{t('auth.register.form.last_name_label')}</Text>
                 <TextInput
                   style={[
-                    styles.input, 
+                    styles.input,
                     (errors.lastName || realtimeErrors.lastName) && styles.inputError
                   ]}
                   placeholder={getInputPlaceholder(TextType.LAST_NAME, t)}
@@ -515,6 +649,7 @@ export const StudentNormalRegisterStep1Screen: React.FC = () => {
                     updateFormData('lastName', text);
                   }}
                   placeholderTextColor={theme.colors.text.disabled}
+                  inputAccessoryViewID={Platform.OS === 'ios' ? KEYBOARD_ACCESSORY_ID : undefined}
                 />
                 {(errors.lastName || realtimeErrors.lastName) && (
                   <Text style={styles.errorText}>
@@ -527,7 +662,7 @@ export const StudentNormalRegisterStep1Screen: React.FC = () => {
                 <Text style={styles.label}>{t('auth.register.form.first_name_label')}</Text>
                 <TextInput
                   style={[
-                    styles.input, 
+                    styles.input,
                     (errors.firstName || realtimeErrors.firstName) && styles.inputError
                   ]}
                   placeholder={getInputPlaceholder(TextType.FIRST_NAME, t)}
@@ -537,6 +672,7 @@ export const StudentNormalRegisterStep1Screen: React.FC = () => {
                     updateFormData('firstName', text);
                   }}
                   placeholderTextColor={theme.colors.text.disabled}
+                  inputAccessoryViewID={Platform.OS === 'ios' ? KEYBOARD_ACCESSORY_ID : undefined}
                 />
                 {(errors.firstName || realtimeErrors.firstName) && (
                   <Text style={styles.errorText}>
@@ -552,8 +688,11 @@ export const StudentNormalRegisterStep1Screen: React.FC = () => {
             {/* UCLA学生类型选择（仅UCLA时显示） */}
             {renderStudentTypeSelector()}
 
-            {/* 邮箱预览 */}
+            {/* 邮箱预览（两种验证路径都需要建立学校邮箱账号） */}
             {renderEmailPreview()}
+
+            {/* 手机号输入（仅邮箱验证路径） */}
+            {verifyMethod === 'email' && renderEmailPathPhoneInput()}
 
             {/* 常用名输入 */}
             <View style={styles.inputContainer}>
@@ -570,6 +709,7 @@ export const StudentNormalRegisterStep1Screen: React.FC = () => {
                   updateFormData('nickName', text);
                 }}
                 placeholderTextColor={theme.colors.text.disabled}
+                inputAccessoryViewID={Platform.OS === 'ios' ? KEYBOARD_ACCESSORY_ID : undefined}
               />
               {(errors.nickName || realtimeErrors.nickName) && (
                 <Text style={styles.errorText}>
@@ -591,6 +731,7 @@ export const StudentNormalRegisterStep1Screen: React.FC = () => {
                 textContentType="none"
                 passwordRules=""
                 placeholderTextColor={theme.colors.text.disabled}
+                inputAccessoryViewID={Platform.OS === 'ios' ? KEYBOARD_ACCESSORY_ID : undefined}
               />
               {errors.password && <Text style={styles.errorText}>{errors.password}</Text>}
             </View>
@@ -608,6 +749,7 @@ export const StudentNormalRegisterStep1Screen: React.FC = () => {
                 textContentType="none"
                 passwordRules=""
                 placeholderTextColor={theme.colors.text.disabled}
+                inputAccessoryViewID={Platform.OS === 'ios' ? KEYBOARD_ACCESSORY_ID : undefined}
               />
               {errors.confirmPassword && <Text style={styles.errorText}>{errors.confirmPassword}</Text>}
             </View>
@@ -658,6 +800,15 @@ export const StudentNormalRegisterStep1Screen: React.FC = () => {
           </ScrollView>
         </TouchableWithoutFeedback>
       </View>
+
+      <AreaCodePickerModal
+        visible={showEmailPathAreaCodeModal}
+        selectedCode={emailPathAreaCode}
+        onSelect={setEmailPathAreaCode}
+        onClose={() => setShowEmailPathAreaCodeModal(false)}
+      />
+
+      <KeyboardDoneAccessory />
 
       {/* Fixed Bottom Button */}
       <View style={styles.fixedBottomContainer}>
@@ -923,6 +1074,37 @@ const styles = StyleSheet.create({
   genderButtonTextActive: {
     color: theme.colors.primary,
     fontWeight: theme.typography.fontWeight.medium,
+  },
+  phoneInputWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: theme.colors.background.secondary,
+    borderRadius: theme.borderRadius.lg,
+    borderWidth: 1,
+    borderColor: theme.colors.border.primary,
+    overflow: 'hidden',
+  },
+  areaCodeSelector: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: theme.spacing[3],
+    paddingVertical: theme.spacing[4],
+    borderRightWidth: 1,
+    borderRightColor: theme.colors.border.primary,
+    gap: theme.spacing[1],
+  },
+  areaCodeText: {
+    fontSize: theme.typography.fontSize.base,
+    color: theme.colors.text.primary,
+    fontWeight: theme.typography.fontWeight.medium,
+  },
+  phoneInput: {
+    flex: 1,
+    paddingHorizontal: theme.spacing[4],
+    paddingVertical: theme.spacing[4],
+    fontSize: theme.typography.fontSize.base,
+    color: theme.colors.text.primary,
+    minHeight: 52,
   },
   selectorInput: {
     flexDirection: 'row',

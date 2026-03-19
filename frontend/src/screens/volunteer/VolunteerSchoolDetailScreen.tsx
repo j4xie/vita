@@ -16,6 +16,7 @@ import { useRoute, useNavigation, useFocusEffect } from '@react-navigation/nativ
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import { SearchIcon } from '../../components/common/icons/SearchIcon';
 import { BlurView } from 'expo-blur';
 import { useTranslation } from 'react-i18next';
 import { Glass } from '../../ui/glass/GlassTheme';
@@ -2004,7 +2005,7 @@ export const VolunteerSchoolDetailScreen: React.FC = () => {
           {/* 志愿者搜索功能 */}
           <View style={styles.searchSection}>
             <View style={styles.searchInputContainer}>
-              <Ionicons name="search" size={20} color="#8E8E93" style={styles.searchInputIcon} />
+              <SearchIcon size={20} color="#8E8E93" />
               <TextInput
                 style={[styles.searchInput, dmStyles.text.primary]}
                 value={searchQuery}

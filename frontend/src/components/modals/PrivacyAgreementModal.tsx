@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, memo } from 'react';
 import {
   View,
   Text,
@@ -9,25 +9,26 @@ import {
   SafeAreaView,
   NativeScrollEvent,
   NativeSyntheticEvent,
+  Animated,
 } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
+import { LinearGradient } from 'expo-linear-gradient';
 import { theme } from '../../theme';
-import { LIQUID_GLASS_LAYERS } from '../../theme/core';
+import { LIQUID_GLASS_LAYERS, CORE_SHADOWS, DAWN_GRADIENTS } from '../../theme/core';
 import { useMemoizedDarkMode, useBlurViewConfig } from '../../hooks/useDarkMode';
-import { useTheme } from '../../context/ThemeContext';
 
 interface PrivacyAgreementModalProps {
   visible: boolean;
   onAccept: () => void;
   onDecline: () => void;
-  userArea?: 'zh' | 'en' | 'combined'; // 用户地域选择
-  allowRegionSwitch?: boolean; // 是否允许手动切换地域
-  onRegionChange?: (region: 'zh' | 'en' | 'combined') => void; // 地域切换回调
+  userArea?: 'zh' | 'en' | 'combined';
+  allowRegionSwitch?: boolean;
+  onRegionChange?: (region: 'zh' | 'en' | 'combined') => void;
 }
 
-export const PrivacyAgreementModal: React.FC<PrivacyAgreementModalProps> = ({
+export const PrivacyAgreementModal: React.FC<PrivacyAgreementModalProps> = memo(({
   visible,
   onAccept,
   onDecline,
@@ -40,13 +41,21 @@ export const PrivacyAgreementModal: React.FC<PrivacyAgreementModalProps> = ({
   const [scrollProgress, setScrollProgress] = useState(0);
   const [currentRegion, setCurrentRegion] = useState<'zh' | 'en' | 'combined'>(userArea);
   const scrollViewRef = useRef<ScrollView>(null);
+  const progressAnim = useRef(new Animated.Value(0)).current;
 
-  // 当userArea改变时更新currentRegion
   useEffect(() => {
     setCurrentRegion(userArea);
   }, [userArea]);
-  
-  // 🌙 Dark Mode Support
+
+  // Animate progress bar
+  useEffect(() => {
+    Animated.timing(progressAnim, {
+      toValue: scrollProgress,
+      duration: 150,
+      useNativeDriver: false,
+    }).start();
+  }, [scrollProgress]);
+
   const darkMode = useMemoizedDarkMode();
   const blurConfig = useBlurViewConfig();
   const { isDarkMode } = darkMode;
@@ -55,108 +64,69 @@ export const PrivacyAgreementModal: React.FC<PrivacyAgreementModalProps> = ({
     const { contentOffset, contentSize, layoutMeasurement } = event.nativeEvent;
     const scrollY = contentOffset.y;
     const scrollHeight = contentSize.height - layoutMeasurement.height;
-    
-    // 滚动进度计算
-    
-    // 计算滚动进度 (0-1)
+
     const progress = scrollHeight > 0 ? Math.min(scrollY / scrollHeight, 1) : 1;
     setScrollProgress(progress);
-    
-    // 🚀 更宽松的底部检测 (允许20px的误差)
+
     const isAtBottom = scrollHeight <= 20 || scrollY >= scrollHeight - 20;
     setHasScrolledToBottom(isAtBottom);
-    
-    // 如果内容不够长无需滚动，直接标记为已读完
+
     if (scrollHeight <= 0) {
       setHasScrolledToBottom(true);
     }
   };
 
   const handleModalShow = () => {
-    // 重置状态当模态框显示时
     setHasScrolledToBottom(false);
     setScrollProgress(0);
-    
-    // 检查内容高度
-    setTimeout(() => {
-      if (scrollViewRef.current) {
-        scrollViewRef.current.measure(() => {
-          // 内容高度检查
-        });
-      }
-    }, 500);
   };
 
-  // 完整的Markdown转换函数
   const convertMarkdownToText = (markdownText: string): string => {
     if (!markdownText) return '';
-    
     return markdownText
-      // 移除所有标题标记 - 强化清理
       .replace(/#{1,6}\s*/g, '')
-      .replace(/##\s*/g, '')
-      .replace(/#\s*/g, '')
-      // 移除粗体标记
       .replace(/\*\*(.*?)\*\*/g, '$1')
-      // 移除斜体标记
       .replace(/\*(.*?)\*/g, '$1')
-      // 移除链接格式
       .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
-      // 移除代码块
       .replace(/```[\s\S]*?```/g, '')
       .replace(/`([^`]+)`/g, '$1')
-      // 处理列表项
       .replace(/^[\s]*[•\-*+]\s*/gm, '• ')
       .replace(/^[\s]*\d+\.\s*/gm, '• ')
-      // 清理格式
       .replace(/•\s*•\s*/g, '• ')
       .replace(/\n{3,}/g, '\n\n')
       .split('\n').map(line => line.trim()).join('\n')
       .trim();
   };
 
-  // 🌍 根据用户语言 + 地理位置选择隐私内容
   const getPrivacyContent = () => {
-    // 获取当前语言设置
-    const currentLanguage = t('common.brand.name') === 'PomeloX' ? 'zh' : 'en';
-    
-    // 根据语言 + 地理位置组合决定显示的隐私协议版本
     let rawContent: string;
     if (currentRegion === 'zh') {
-      // 用户选择中国版
       rawContent = t('legal.privacy.content_china');
     } else if (currentRegion === 'en') {
-      // 用户选择美国版
       rawContent = t('legal.privacy.content_usa');
     } else {
-      // 默认显示合并版本
       rawContent = t('legal.privacy.full_content');
     }
-    
-    // 转换Markdown为纯文本
     return convertMarkdownToText(rawContent);
   };
 
-  // 处理地域切换
   const handleRegionSwitch = (region: 'zh' | 'en' | 'combined') => {
     setCurrentRegion(region);
-    // 重置滚动状态，要求用户重新阅读
     setHasScrolledToBottom(false);
     setScrollProgress(0);
-    // 回调给父组件
     onRegionChange?.(region);
   };
 
-  // 🌙 Dynamic Styles - 基于Dark Mode动态生成关键样式
-  const dynamicModalContainer = {
-    ...styles.modalContainer,
-    backgroundColor: isDarkMode ? darkMode.elevatedBackground : LIQUID_GLASS_LAYERS.L1.background.light,
-    borderColor: isDarkMode ? 'rgba(84, 84, 88, 0.6)' : LIQUID_GLASS_LAYERS.L1.border.color.light,
-  };
-
+  const dynamicBg = isDarkMode ? darkMode.elevatedBackground : '#FFFFFF';
+  const dynamicBorder = isDarkMode ? 'rgba(84, 84, 88, 0.6)' : 'rgba(0, 0, 0, 0.06)';
   const dynamicIconColor = isDarkMode ? darkMode.brandPrimary : theme.colors.primary;
   const dynamicTextColor = isDarkMode ? darkMode.primaryText : theme.colors.text.primary;
   const dynamicSecondaryTextColor = isDarkMode ? darkMode.secondaryText : theme.colors.text.secondary;
+
+  const progressBarWidth = progressAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0%', '100%'],
+  });
 
   return (
     <Modal
@@ -169,94 +139,85 @@ export const PrivacyAgreementModal: React.FC<PrivacyAgreementModalProps> = ({
       <BlurView intensity={blurConfig.intensity} tint={blurConfig.tint} style={StyleSheet.absoluteFill}>
         <SafeAreaView style={styles.container}>
           <View style={styles.overlay}>
-            <View style={dynamicModalContainer}>
-              {/* Header - 🌙 Dark Mode适配 */}
-              <View style={[styles.header, { borderBottomColor: dynamicSecondaryTextColor }]}>
-                <View style={[styles.iconContainer, { backgroundColor: dynamicIconColor + '15' }]}>
-                  <Ionicons 
-                    name="shield-checkmark" 
-                    size={24} 
-                    color={dynamicIconColor}
-                  />
+            <View style={[styles.modalContainer, { backgroundColor: dynamicBg, borderColor: dynamicBorder }]}>
+
+              {/* Header */}
+              <View style={styles.header}>
+                {/* Icon with gradient ring */}
+                <View style={styles.iconOuter}>
+                  <LinearGradient
+                    colors={['#FF6B35', '#FF8F65']}
+                    style={styles.iconGradient}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 1 }}
+                  >
+                    <Ionicons name="shield-checkmark" size={28} color="#FFFFFF" />
+                  </LinearGradient>
                 </View>
+
                 <Text style={[styles.title, { color: dynamicTextColor }]}>
                   {t('auth.register.privacy.title')}
                 </Text>
-                <Text style={styles.subtitle}>
+                <Text style={[styles.subtitle, { color: dynamicSecondaryTextColor }]}>
                   {t('auth.register.privacy.subtitle_simple') || 'Privacy Policy'}
                 </Text>
-                
-                {/* 移除地理检测结果显示 - 用户不需要看到检测方法 */}
-                
-                {/* 地域切换器 */}
+
+                {/* Region switcher */}
                 {allowRegionSwitch && (
                   <View style={styles.regionSwitcher}>
-                    <Text style={[styles.regionLabel, { color: dynamicSecondaryTextColor }]}>
-                      {t('auth.register.privacy.version_label')}
-                    </Text>
-                    <View style={styles.regionButtons}>
+                    {(['combined', 'zh', 'en'] as const).map((region) => (
                       <TouchableOpacity
+                        key={region}
                         style={[
                           styles.regionButton,
-                          currentRegion === 'combined' && [styles.regionButtonActive, { backgroundColor: dynamicIconColor, borderColor: dynamicIconColor }]
+                          currentRegion === region && styles.regionButtonActive,
                         ]}
-                        onPress={() => handleRegionSwitch('combined')}
+                        onPress={() => handleRegionSwitch(region)}
                       >
                         <Text style={[
                           styles.regionButtonText,
-                          { color: dynamicSecondaryTextColor },
-                          currentRegion === 'combined' && styles.regionButtonTextActive
+                          currentRegion === region && styles.regionButtonTextActive,
                         ]}>
-                          {t('auth.register.privacy.version_combined')}
+                          {t(`auth.register.privacy.version_${region === 'combined' ? 'combined' : region === 'zh' ? 'china' : 'usa'}`)}
                         </Text>
                       </TouchableOpacity>
-                      <TouchableOpacity
-                        style={[
-                          styles.regionButton,
-                          currentRegion === 'zh' && [styles.regionButtonActive, { backgroundColor: dynamicIconColor, borderColor: dynamicIconColor }]
-                        ]}
-                        onPress={() => handleRegionSwitch('zh')}
-                      >
-                        <Text style={[
-                          styles.regionButtonText,
-                          { color: dynamicSecondaryTextColor },
-                          currentRegion === 'zh' && styles.regionButtonTextActive
-                        ]}>
-                          {t('auth.register.privacy.version_china')}
-                        </Text>
-                      </TouchableOpacity>
-                      <TouchableOpacity
-                        style={[
-                          styles.regionButton,
-                          currentRegion === 'en' && [styles.regionButtonActive, { backgroundColor: dynamicIconColor, borderColor: dynamicIconColor }]
-                        ]}
-                        onPress={() => handleRegionSwitch('en')}
-                      >
-                        <Text style={[
-                          styles.regionButtonText,
-                          { color: dynamicSecondaryTextColor },
-                          currentRegion === 'en' && styles.regionButtonTextActive
-                        ]}>
-                          {t('auth.register.privacy.version_usa')}
-                        </Text>
-                      </TouchableOpacity>
-                    </View>
+                    ))}
                   </View>
                 )}
               </View>
 
-              {/* Scroll Progress Indicator */}
-              <View style={styles.progressIndicatorContainer}>
-                <View style={styles.progressIndicator}>
-                  <View style={[styles.progressBar, { width: `${scrollProgress * 100}%` }]} />
+              {/* Progress bar */}
+              <View style={styles.progressSection}>
+                <View style={styles.progressTrack}>
+                  <Animated.View
+                    style={[
+                      styles.progressFill,
+                      {
+                        width: progressBarWidth,
+                        backgroundColor: hasScrolledToBottom ? '#2ED573' : theme.colors.primary,
+                      },
+                    ]}
+                  />
                 </View>
-                <Text style={styles.progressText}>
-                  {hasScrolledToBottom ? t('auth.register.privacy.read_complete') : t('auth.register.privacy.please_scroll')}
-                </Text>
+                <View style={styles.progressLabelRow}>
+                  <Ionicons
+                    name={hasScrolledToBottom ? 'checkmark-circle' : 'arrow-down-circle-outline'}
+                    size={14}
+                    color={hasScrolledToBottom ? '#2ED573' : theme.colors.text.tertiary}
+                  />
+                  <Text style={[
+                    styles.progressText,
+                    hasScrolledToBottom && styles.progressTextDone,
+                  ]}>
+                    {hasScrolledToBottom
+                      ? t('auth.register.privacy.read_complete')
+                      : t('auth.register.privacy.please_scroll')}
+                  </Text>
+                </View>
               </View>
 
-              {/* Privacy Content */}
-              <ScrollView 
+              {/* Scrollable content */}
+              <ScrollView
                 ref={scrollViewRef}
                 style={styles.contentScrollView}
                 contentContainerStyle={styles.contentContainer}
@@ -264,48 +225,31 @@ export const PrivacyAgreementModal: React.FC<PrivacyAgreementModalProps> = ({
                 onScroll={handleScroll}
                 scrollEventThrottle={16}
                 bounces={true}
-                alwaysBounceVertical={true}
                 nestedScrollEnabled={true}
-                scrollEnabled={true}
                 keyboardShouldPersistTaps="handled"
-                onContentSizeChange={() => {
-                  // 内容尺寸变化处理
-                }}
-                onLayout={() => {
-                  // 容器布局处理
-                }}
               >
-                <Text style={styles.contentText}>
+                <Text style={[styles.contentText, { color: dynamicTextColor }]}>
                   {getPrivacyContent()}
                 </Text>
 
-                <View style={styles.highlightBox}>
-                  <Ionicons 
-                    name="information-circle" 
-                    size={20} 
-                    color={theme.colors.primary} 
-                  />
-                  <Text style={styles.highlightText}>
+                <View style={[styles.highlightBox, { borderLeftColor: dynamicIconColor }]}>
+                  <Ionicons name="information-circle" size={18} color={dynamicIconColor} />
+                  <Text style={[styles.highlightText, { color: dynamicTextColor }]}>
                     {t('auth.register.privacy.data_usage_highlight')}
                   </Text>
                 </View>
 
-                <Text style={styles.contentText}>
+                <Text style={[styles.contentText, { color: dynamicTextColor }]}>
                   {t('auth.register.privacy.data_protection')}
                 </Text>
 
-                {/* SMS Consent Section */}
-                <View style={[styles.smsConsentBox, {
-                  backgroundColor: isDarkMode
-                    ? dynamicIconColor + '12'
-                    : theme.colors.primary + '08',
-                  borderLeftColor: dynamicIconColor,
-                }]}>
+                {/* SMS Consent */}
+                <View style={[styles.smsConsentBox, { borderLeftColor: dynamicIconColor }]}>
                   <Text style={[styles.smsConsentTitle, { color: dynamicIconColor }]}>
-                    📱 {t('auth.register.sms.consent_title')}
+                    {t('auth.register.sms.consent_title')}
                   </Text>
                   <Text style={[styles.smsConsentText, { color: dynamicTextColor }]}>
-                    ✅ <Text style={styles.smsConsentBold}>{t('auth.register.sms.consent_text')}</Text> - {t('auth.register.sms.consent_description')}
+                    {t('auth.register.sms.consent_text')} - {t('auth.register.sms.consent_description')}
                   </Text>
                   <View style={styles.smsPurposesList}>
                     <Text style={[styles.smsPurposeItem, { color: dynamicTextColor }]}>• {t('auth.register.sms.consent_purposes.authentication')}</Text>
@@ -313,20 +257,21 @@ export const PrivacyAgreementModal: React.FC<PrivacyAgreementModalProps> = ({
                     <Text style={[styles.smsPurposeItem, { color: dynamicTextColor }]}>• {t('auth.register.sms.consent_purposes.services')}</Text>
                   </View>
                   <Text style={[styles.smsNoticeText, { color: dynamicSecondaryTextColor }]}>
-                    <Text style={styles.smsNoticeBold}>
-                      {t('auth.register.sms.notice_prefix')}
-                    </Text>
+                    <Text style={styles.smsNoticeBold}>{t('auth.register.sms.notice_prefix')}</Text>
                     {t('auth.register.sms.consent_notice')}
                   </Text>
                 </View>
+
+                {/* Bottom spacer for scroll detection */}
+                <View style={{ height: 8 }} />
               </ScrollView>
 
-              {/* Action Buttons */}
+              {/* Action buttons */}
               <View style={styles.buttonContainer}>
                 <TouchableOpacity
-                  style={[styles.button, styles.declineButton]}
+                  style={styles.declineButton}
                   onPress={onDecline}
-                  activeOpacity={0.8}
+                  activeOpacity={0.7}
                 >
                   <Text style={styles.declineButtonText}>
                     {t('auth.register.privacy.decline_button')}
@@ -335,20 +280,33 @@ export const PrivacyAgreementModal: React.FC<PrivacyAgreementModalProps> = ({
 
                 <TouchableOpacity
                   style={[
-                    styles.button, 
                     styles.acceptButton,
-                    !hasScrolledToBottom && styles.acceptButtonDisabled
+                    !hasScrolledToBottom && styles.acceptButtonDisabled,
                   ]}
                   onPress={onAccept}
                   activeOpacity={hasScrolledToBottom ? 0.8 : 1}
                   disabled={!hasScrolledToBottom}
                 >
-                  <Text style={[
-                    styles.acceptButtonText,
-                    !hasScrolledToBottom && styles.acceptButtonTextDisabled
-                  ]}>
-                    {hasScrolledToBottom ? (t('auth.register.privacy.accept_simple') || 'Agree') : t('auth.register.privacy.scroll_to_accept')}
-                  </Text>
+                  {hasScrolledToBottom ? (
+                    <LinearGradient
+                      colors={['#FF6B35', '#FF8F65']}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 0 }}
+                      style={styles.acceptButtonGradient}
+                    >
+                      <Ionicons name="checkmark-circle" size={18} color="#FFFFFF" style={{ marginRight: 6 }} />
+                      <Text style={styles.acceptButtonText}>
+                        {t('auth.register.privacy.accept_simple') || 'Agree'}
+                      </Text>
+                    </LinearGradient>
+                  ) : (
+                    <View style={styles.acceptButtonInner}>
+                      <Ionicons name="lock-closed" size={14} color={theme.colors.text.disabled} style={{ marginRight: 6 }} />
+                      <Text style={styles.acceptButtonTextDisabled}>
+                        {t('auth.register.privacy.scroll_to_accept')}
+                      </Text>
+                    </View>
+                  )}
                 </TouchableOpacity>
               </View>
             </View>
@@ -357,7 +315,7 @@ export const PrivacyAgreementModal: React.FC<PrivacyAgreementModalProps> = ({
       </BlurView>
     </Modal>
   );
-};
+});
 
 const styles = StyleSheet.create({
   container: {
@@ -367,212 +325,224 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: theme.spacing[4],
+    paddingHorizontal: 20,
   },
   modalContainer: {
     width: '100%',
     maxWidth: 400,
-    height: '80%', // 🚀 使用固定高度比例确保布局稳定
-    backgroundColor: LIQUID_GLASS_LAYERS.L1.background.light,
-    borderRadius: 20,
-    borderWidth: LIQUID_GLASS_LAYERS.L1.border.width,
-    borderColor: LIQUID_GLASS_LAYERS.L1.border.color.light,
+    height: '80%',
+    borderRadius: LIQUID_GLASS_LAYERS.L3.borderRadius.modal,
+    borderWidth: 1,
     overflow: 'hidden',
-    ...theme.shadows.lg,
+    ...CORE_SHADOWS.lg,
   },
+
+  // Header
   header: {
-    paddingHorizontal: theme.spacing[6],
-    paddingTop: theme.spacing[4],
-    paddingBottom: theme.spacing[3],
     alignItems: 'center',
-    borderBottomWidth: 1,
-    borderBottomColor: theme.colors.border.primary,
+    paddingTop: 24,
+    paddingBottom: 16,
+    paddingHorizontal: 24,
   },
-  iconContainer: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: theme.colors.primary + '15',
+  iconOuter: {
+    marginBottom: 14,
+    ...CORE_SHADOWS.button,
+  },
+  iconGradient: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: theme.spacing[3],
   },
   title: {
-    fontSize: theme.typography.fontSize['2xl'],
-    fontWeight: theme.typography.fontWeight.bold,
-    color: theme.colors.text.primary,
+    fontSize: 20,
+    fontWeight: '700',
     textAlign: 'center',
-    marginBottom: theme.spacing[2],
+    marginBottom: 4,
   },
   subtitle: {
-    fontSize: theme.typography.fontSize.base,
-    color: theme.colors.text.secondary,
+    fontSize: 14,
     textAlign: 'center',
-    lineHeight: theme.typography.fontSize.base * theme.typography.lineHeight.relaxed,
   },
+
+  // Region switcher
+  regionSwitcher: {
+    flexDirection: 'row',
+    marginTop: 14,
+    backgroundColor: '#F3F4F6',
+    borderRadius: 10,
+    padding: 3,
+  },
+  regionButton: {
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    borderRadius: 8,
+  },
+  regionButtonActive: {
+    backgroundColor: '#FFFFFF',
+    ...CORE_SHADOWS.xs,
+  },
+  regionButtonText: {
+    fontSize: 12,
+    fontWeight: '500',
+    color: theme.colors.text.tertiary,
+  },
+  regionButtonTextActive: {
+    color: theme.colors.primary,
+    fontWeight: '600',
+  },
+
+  // Progress
+  progressSection: {
+    paddingHorizontal: 24,
+    paddingVertical: 10,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderColor: 'rgba(0, 0, 0, 0.06)',
+  },
+  progressTrack: {
+    height: 3,
+    backgroundColor: '#F3F4F6',
+    borderRadius: 2,
+    overflow: 'hidden',
+  },
+  progressFill: {
+    height: '100%',
+    borderRadius: 2,
+  },
+  progressLabelRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 8,
+    gap: 4,
+  },
+  progressText: {
+    fontSize: 12,
+    color: theme.colors.text.tertiary,
+  },
+  progressTextDone: {
+    color: '#2ED573',
+    fontWeight: '500',
+  },
+
+  // Content
   contentScrollView: {
     flex: 1,
   },
   contentContainer: {
-    padding: theme.spacing[6],
+    padding: 24,
   },
   contentText: {
-    fontSize: theme.typography.fontSize.sm,
-    color: theme.colors.text.primary,
-    lineHeight: theme.typography.fontSize.sm * theme.typography.lineHeight.relaxed,
-    marginBottom: theme.spacing[4],
+    fontSize: 14,
+    lineHeight: 22,
+    marginBottom: 16,
   },
   highlightBox: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    backgroundColor: theme.colors.primary + '10',
-    padding: theme.spacing[4],
-    borderRadius: theme.borderRadius.lg,
+    backgroundColor: 'rgba(255, 107, 53, 0.06)',
+    padding: 14,
+    borderRadius: 12,
     borderLeftWidth: 3,
-    borderLeftColor: theme.colors.primary,
-    marginVertical: theme.spacing[4],
+    marginVertical: 12,
+    gap: 10,
   },
   highlightText: {
     flex: 1,
-    fontSize: theme.typography.fontSize.sm,
-    color: theme.colors.text.primary,
-    fontWeight: theme.typography.fontWeight.medium,
-    marginLeft: theme.spacing[2],
-    lineHeight: theme.typography.fontSize.sm * theme.typography.lineHeight.relaxed,
+    fontSize: 13,
+    fontWeight: '500',
+    lineHeight: 20,
   },
-  buttonContainer: {
-    flexDirection: 'row',
-    padding: theme.spacing[6],
-    borderTopWidth: 1,
-    borderTopColor: theme.colors.border.primary,
-  },
-  button: {
-    flex: 1,
-    paddingVertical: theme.spacing[4],
-    borderRadius: theme.borderRadius.lg,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginHorizontal: theme.spacing[2],
-  },
-  declineButton: {
-    backgroundColor: theme.colors.background.secondary,
-    borderWidth: 1,
-    borderColor: theme.colors.border.secondary,
-  },
-  acceptButton: {
-    backgroundColor: theme.colors.primary,
-  },
-  declineButtonText: {
-    fontSize: theme.typography.fontSize.base,
-    fontWeight: theme.typography.fontWeight.medium,
-    color: theme.colors.text.secondary,
-  },
-  acceptButtonText: {
-    fontSize: theme.typography.fontSize.base,
-    fontWeight: theme.typography.fontWeight.semibold,
-    color: theme.colors.text.inverse,
-  },
-  acceptButtonDisabled: {
-    backgroundColor: theme.colors.border.secondary,
-    opacity: 0.6,
-  },
-  acceptButtonTextDisabled: {
-    color: theme.colors.text.disabled,
-  },
-  progressIndicatorContainer: {
-    paddingHorizontal: theme.spacing[6],
-    paddingVertical: theme.spacing[3],
-    borderBottomWidth: 1,
-    borderBottomColor: theme.colors.border.primary,
-  },
-  progressIndicator: {
-    height: 3,
-    backgroundColor: theme.colors.border.secondary,
-    borderRadius: 2,
-    overflow: 'hidden',
-  },
-  progressBar: {
-    height: '100%',
-    backgroundColor: theme.colors.primary,
-    borderRadius: 2,
-  },
-  progressText: {
-    fontSize: theme.typography.fontSize.xs,
-    color: theme.colors.text.tertiary,
-    textAlign: 'center',
-    marginTop: theme.spacing[2],
-  },
-  // 地域切换器样式
-  regionSwitcher: {
-    marginTop: theme.spacing[3],
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: theme.spacing[2],
-  },
-  regionLabel: {
-    fontSize: theme.typography.fontSize.xs,
-    color: theme.colors.text.secondary,
-  },
-  regionButtons: {
-    flexDirection: 'row',
-    gap: theme.spacing[1],
-  },
-  regionButton: {
-    paddingHorizontal: theme.spacing[3],
-    paddingVertical: theme.spacing[1],
-    borderRadius: 99,
-    borderWidth: 1,
-    borderColor: theme.colors.border.secondary,
-    backgroundColor: theme.colors.background.secondary,
-  },
-  regionButtonActive: {
-    backgroundColor: theme.colors.primary,
-    borderColor: theme.colors.primary,
-  },
-  regionButtonText: {
-    fontSize: theme.typography.fontSize.xs,
-    color: theme.colors.text.secondary,
-    fontWeight: theme.typography.fontWeight.medium,
-  },
-  regionButtonTextActive: {
-    color: theme.colors.text.inverse,
-  },
-  // SMS Consent Styles
+
+  // SMS Consent
   smsConsentBox: {
-    borderLeftWidth: 4,
-    padding: theme.spacing[4],
-    marginVertical: theme.spacing[4],
-    borderRadius: theme.borderRadius.lg,
+    borderLeftWidth: 3,
+    padding: 14,
+    marginVertical: 12,
+    borderRadius: 12,
+    backgroundColor: 'rgba(255, 107, 53, 0.04)',
   },
   smsConsentTitle: {
-    fontSize: theme.typography.fontSize.base,
-    fontWeight: theme.typography.fontWeight.bold,
-    marginBottom: theme.spacing[3],
+    fontSize: 15,
+    fontWeight: '700',
+    marginBottom: 8,
   },
   smsConsentText: {
-    fontSize: theme.typography.fontSize.sm,
-    lineHeight: theme.typography.fontSize.sm * theme.typography.lineHeight.relaxed,
-    marginBottom: theme.spacing[2],
-  },
-  smsConsentBold: {
-    fontWeight: theme.typography.fontWeight.bold,
+    fontSize: 13,
+    lineHeight: 20,
+    marginBottom: 8,
   },
   smsPurposesList: {
-    marginVertical: theme.spacing[2],
-    paddingLeft: theme.spacing[2],
+    marginVertical: 6,
+    paddingLeft: 4,
   },
   smsPurposeItem: {
-    fontSize: theme.typography.fontSize.sm,
-    lineHeight: theme.typography.fontSize.sm * theme.typography.lineHeight.relaxed,
-    marginBottom: theme.spacing[1],
+    fontSize: 13,
+    lineHeight: 20,
+    marginBottom: 3,
   },
   smsNoticeText: {
-    fontSize: theme.typography.fontSize.xs,
-    lineHeight: theme.typography.fontSize.xs * theme.typography.lineHeight.relaxed,
-    marginTop: theme.spacing[2],
+    fontSize: 11,
+    lineHeight: 17,
+    marginTop: 8,
   },
   smsNoticeBold: {
-    fontWeight: theme.typography.fontWeight.bold,
+    fontWeight: '700',
+  },
+
+  // Buttons
+  buttonContainer: {
+    flexDirection: 'row',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    paddingBottom: 20,
+    gap: 12,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: 'rgba(0, 0, 0, 0.06)',
+  },
+  declineButton: {
+    flex: 0.4,
+    paddingVertical: 14,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#F3F4F6',
+  },
+  declineButtonText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: theme.colors.text.secondary,
+  },
+  acceptButton: {
+    flex: 0.6,
+    borderRadius: 14,
+    overflow: 'hidden',
+  },
+  acceptButtonGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 14,
+  },
+  acceptButtonText: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#FFFFFF',
+  },
+  acceptButtonDisabled: {
+    backgroundColor: '#F3F4F6',
+  },
+  acceptButtonInner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 14,
+  },
+  acceptButtonTextDisabled: {
+    fontSize: 13,
+    fontWeight: '500',
+    color: theme.colors.text.disabled,
   },
 });

@@ -8,6 +8,7 @@ import {
   SafeAreaView,
   Alert,
   Keyboard,
+  Platform,
 } from 'react-native';
 import { useNavigation, useRoute, CommonActions } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
@@ -21,6 +22,7 @@ import { login } from '../../services/authAPI';
 import { LiquidSuccessModal } from '../../components/modals/LiquidSuccessModal';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { LoaderOne } from '../../components/ui/LoaderOne';
+import { KeyboardDoneAccessory, KEYBOARD_ACCESSORY_ID } from '../../components/common/KeyboardDismissWrapper';
 
 export const VerificationScreen: React.FC = () => {
   const navigation = useNavigation<any>();
@@ -299,6 +301,7 @@ export const VerificationScreen: React.FC = () => {
                     Keyboard.dismiss();
                   }
                 }}
+                inputAccessoryViewID={Platform.OS === 'ios' ? KEYBOARD_ACCESSORY_ID : undefined}
               />
             ))}
           </View>
@@ -342,6 +345,7 @@ export const VerificationScreen: React.FC = () => {
         confirmText={t('auth.register.success.start_using')}
         icon="checkmark-circle"
       />
+      <KeyboardDoneAccessory />
     </SafeAreaView>
   );
 };

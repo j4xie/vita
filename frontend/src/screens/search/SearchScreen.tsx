@@ -15,6 +15,7 @@ import {
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import { SearchIcon } from '../../components/common/icons/SearchIcon';
 import * as Haptics from 'expo-haptics';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
@@ -27,6 +28,7 @@ import Animated, {
 } from 'react-native-reanimated';
 
 import { theme } from '../../theme';
+import { KeyboardDoneAccessory, KEYBOARD_ACCESSORY_ID } from '../../components/common/KeyboardDismissWrapper';
 import { useAllDarkModeStyles } from '../../hooks/useDarkModeStyles';
 import { SimpleActivityCard } from '../../components/cards/SimpleActivityCard';
 import { pomeloXAPI } from '../../services/PomeloXAPI';
@@ -160,7 +162,7 @@ export const SearchScreen: React.FC = ({ route }: any) => {
           styles.searchInputContainer,
           dmStyles.card.contentSection
         ]}>
-          <Ionicons name="search" size={20} color={dmIcons.secondary} />
+          <SearchIcon size={20} color={dmIcons.secondary} />
           <TextInput
             ref={searchInputRef}
             style={[styles.searchInput, dmStyles.text.primary]}
@@ -178,6 +180,7 @@ export const SearchScreen: React.FC = ({ route }: any) => {
                 handleSearch(searchText);
               }
             }}
+            inputAccessoryViewID={Platform.OS === 'ios' ? KEYBOARD_ACCESSORY_ID : undefined}
           />
         </View>
         
@@ -197,13 +200,13 @@ export const SearchScreen: React.FC = ({ route }: any) => {
           </View>
         ) : searchText.trim().length === 0 ? (
           <View style={styles.emptyContainer}>
-            <Ionicons name="search-outline" size={64} color={dmIcons.tertiary} />
+            <SearchIcon size={64} color={dmIcons.tertiary} />
             <Text style={[styles.emptyTitle, dmStyles.text.primary]}>{t('accessibility.searchActivities')}</Text>
             <Text style={[styles.emptySubtitle, dmStyles.text.secondary]}>{t('accessibility.searchActivitiesHint')}</Text>
           </View>
         ) : searchResults.length === 0 ? (
           <View style={styles.emptyContainer}>
-            <Ionicons name="search-outline" size={64} color={dmIcons.tertiary} />
+            <SearchIcon size={64} color={dmIcons.tertiary} />
             <Text style={[styles.emptyTitle, dmStyles.text.primary]}>{t('filters.noResults')}</Text>
             <Text style={[styles.emptySubtitle, dmStyles.text.secondary]}>{t('cards.try_different_search')}</Text>
           </View>
@@ -213,20 +216,21 @@ export const SearchScreen: React.FC = ({ route }: any) => {
             contentContainerStyle={styles.resultsContent}
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
-            onScrollBeginDrag={Keyboard.dismiss}
+            keyboardDismissMode="on-drag"
           >
             {searchResults.map((activity, index) => (
               <SimpleActivityCard
                 key={activity.id}
                 activity={activity}
                 onPress={() => {
-                  navigation.navigate('ActivityDetail', { activity });
+                  navigation.navigate('ActivityDetailGlobal' as never, { activity } as never);
                 }}
               />
             ))}
           </ScrollView>
         )}
       </Animated.View>
+      <KeyboardDoneAccessory />
     </SafeAreaView>
   );
 };

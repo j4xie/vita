@@ -6,7 +6,7 @@
     },
     "name": "西柚Pomelo",
     "slug": "vitaglobal",
-    "version": "1.0.8",
+    "version": "1.1.8",
     "owner": "pomelox",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -26,7 +26,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.pomelotech.pomelo",
-      "buildNumber": "10008",
+      "buildNumber": "10108",
       "deploymentTarget": "13.0",
       "infoPlist": {
         "NSAppTransportSecurity": {
@@ -117,7 +117,8 @@
           "merchantIdentifier": "merchant.com.pomelotech.pomelo",
           "enableGooglePay": false
         }
-      ]
+      ],
+      "expo-font"
     ],
     "extra": {
       "eas": {

@@ -47,7 +47,15 @@ export const sendSMSVerificationCode = async (phoneNumber: string, areaCode: '86
       throw new Error(`HTTP error! status: ${response.status}, response: ${errorText}`);
     }
 
-    const data = await response.json();
+    const responseText = await response.text();
+    console.log('📱 [sendSMSVerificationCode] 后端原始响应:', responseText);
+
+    if (!responseText || responseText.trim() === '') {
+      console.error('📱 [sendSMSVerificationCode] 后端返回空响应');
+      throw new Error('服务器返回空响应，请稍后重试');
+    }
+
+    const data = JSON.parse(responseText);
     console.log('📱 [sendSMSVerificationCode] 后端返回数据:', data);
     return data;
   } catch (error) {
@@ -202,7 +210,9 @@ export const checkUserNameAvailability = async (userName: string): Promise<{ ava
       if (data.code === 200) {
         return { available: data.available !== false };
       } else {
-        return { available: false, message: data.msg || '用户名检查失败' };
+        // 🔧 非200的code（如401认证失败）说明接口不可用，降级放行
+        console.warn(`checkUserName接口返回code=${data.code}，降级放行`);
+        return { available: true };
       }
     } else {
       // 如果接口不存在，只做格式验证
@@ -247,7 +257,9 @@ export const checkEmailAvailability = async (email: string): Promise<{ available
       if (data.code === 200) {
         return { available: data.available !== false };
       } else {
-        return { available: false, message: data.msg || '邮箱检查失败' };
+        // 🔧 非200的code（如401认证失败）说明接口不可用，降级放行，不阻塞注册
+        console.warn(`checkEmail接口返回code=${data.code}，降级放行`);
+        return { available: true, skipValidation: true };
       }
     } else if (response.status === 404) {
       // 🔧 接口不存在 - 优雅降级，不阻塞注册流程
@@ -265,6 +277,48 @@ export const checkEmailAvailability = async (email: string): Promise<{ available
       console.warn('邮箱检查超时，跳过验证');
     }
     return { available: true };
+  }
+};
+
+/**
+ * 验证手机号是否已被注册
+ * @param phone 手机号
+ * @returns 是否可用
+ */
+export const checkPhoneAvailability = async (phone: string): Promise<{ available: boolean; message?: string }> => {
+  try {
+    if (!phone || phone.trim().length < 6) {
+      return { available: true }; // 格式不完整时不检查
+    }
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000);
+
+    const response = await fetch(`${getBaseUrl()}/app/user/checkPhone?phonenumber=${encodeURIComponent(phone)}`, {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' },
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeoutId);
+
+    if (response.ok) {
+      const data = await response.json();
+      if (data.code === 200) {
+        return { available: data.available !== false };
+      }
+      // 🔧 非200的code（如401认证失败）说明接口不可用，降级放行
+      console.warn(`checkPhone接口返回code=${data.code}，降级放行`);
+      return { available: true };
+    } else if (response.status === 404) {
+      // 接口不存在 - 降级，不阻塞注册流程
+      console.warn('⚠️ checkPhone接口不存在(404)，跳过实时验证');
+      return { available: true };
+    }
+    return { available: true };
+  } catch (error) {
+    console.warn('检查手机号可用性失败:', error);
+    return { available: true }; // 网络错误不阻塞
   }
 };
 

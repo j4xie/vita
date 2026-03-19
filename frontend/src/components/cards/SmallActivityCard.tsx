@@ -1,16 +1,17 @@
 import React, { memo, useMemo } from 'react';
 import { View, Text, Image, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-
 import { FrontendActivity } from '../../utils/activityAdapter';
 import { useSchoolLogos, getSchoolLogoSync } from '../../hooks/useSchoolLogos';
+import { formatDateRange } from '../../utils/cardUtils';
+import { CalendarIcon, ShareIcon } from '../icons/ActivityIcons';
 
 interface SmallActivityCardProps {
     activity: FrontendActivity;
     onPress: () => void;
 }
 
-// Figma: SmallActivityCard 340×84, mode: none (absolute positioning)
+// Figma: SmallActivityCard 340×84
 const CARD_HEIGHT = 84;
 const CIRCLE_SIZE = 119;
 const ARROW_SIZE = 41;
@@ -32,18 +33,8 @@ const SmallActivityCardComponent = ({ activity, onPress }: SmallActivityCardProp
         return null;
     }, [activity.title, activity.location, activity.organizer?.avatar, schoolsLoading]);
 
-    const formatDate = (date: string | undefined) => {
-        if (!date) return '';
-        return date.replace(/-/g, '/');
-    };
-
-    const startDate = formatDate(activity.date);
-    const endDate = formatDate(activity.endDate);
-    const dateDisplay = endDate && endDate !== startDate
-        ? `${startDate} - ${endDate}`
-        : startDate;
-
-    const timeDisplay = activity.time ? ` ${activity.time}` : '';
+    const dateDisplay = formatDateRange(activity.date || '', activity.endDate, { padZero: true });
+    const timeSuffix = activity.time && activity.time !== '00:00' ? ` ${activity.time}` : '';
 
     return (
         <TouchableOpacity style={styles.container} onPress={onPress} activeOpacity={0.7}>
@@ -56,31 +47,27 @@ const SmallActivityCardComponent = ({ activity, onPress }: SmallActivityCardProp
                 />
             </View>
 
-            {/* Text Frame — Figma: (98, 8), width 180, column gap 9px */}
+            {/* 文案区：组织者、标题、日期 — Figma: Frame 22 */}
             <View style={styles.textFrame}>
-                {/* Name + Title group — Figma: column gap 3px */}
                 <View style={styles.nameGroup}>
                     <Text style={styles.organizer} numberOfLines={1}>
                         {activity.organizer?.name || 'PomeloX'}
                     </Text>
-                    <Text style={styles.title} numberOfLines={2}>
+                    <Text style={styles.title} numberOfLines={2} adjustsFontSizeToFit minimumFontScale={0.75}>
                         {activity.title || ''}
                     </Text>
                 </View>
-
-                {/* Date Row — Figma: row, align center, gap 9px */}
                 <View style={styles.dateRow}>
-                    <Ionicons name="calendar-outline" size={14} color="#949494" />
-                    <Text style={styles.dateText}>
-                        {`${dateDisplay || ''}${timeDisplay || ''}`}
-                    </Text>
+                    <CalendarIcon size={14} color="#949494" />
+                    <Text style={styles.metaText} numberOfLines={1}>{dateDisplay}</Text>
+                    {timeSuffix ? <Text style={styles.metaText} numberOfLines={1}>{timeSuffix.trim()}</Text> : null}
                 </View>
             </View>
 
             {/* Arrow — Figma: (299, 22), 41×41, borderRadius 25.5 */}
             <View style={styles.arrowWrapper}>
                 <View style={styles.arrowCircle}>
-                    <Ionicons name="arrow-up" size={18} color="#000" style={{ transform: [{ rotate: '45deg' }] }} />
+                    <ShareIcon size={20} color="#949494" />
                 </View>
             </View>
         </TouchableOpacity>
@@ -120,37 +107,39 @@ const styles = StyleSheet.create({
         top: 8,
         right: ARROW_SIZE + 12,
         gap: 9,
+        minWidth: 0,
     },
-    // Figma: Frame 23, column, gap 3px
     nameGroup: {
-        gap: 3,
+        gap: 9,
     },
-    // Figma: Poppins Medium 12px, #949494, lineHeight 1.5em
+    // Figma: Poppins Medium 12px/18px, #949494
     organizer: {
-        fontFamily: 'Poppins-Medium',
+        fontFamily: 'Poppins_500Medium',
         fontSize: 12,
         lineHeight: 18,
         color: '#949494',
     },
-    // Figma: Poppins SemiBold 15px, #000, lineHeight 1.5em
+    // Figma: Poppins SemiBold 15px/22px, #000
     title: {
-        fontFamily: 'Poppins-SemiBold',
+        fontFamily: 'Poppins_600SemiBold',
         fontSize: 15,
-        lineHeight: 22.5,
+        lineHeight: 22,
         color: '#000',
     },
-    // Figma: Frame 14, row, align center, gap 9px
+    // Figma: Frame 14, row, gap 9px
     dateRow: {
         flexDirection: 'row',
         alignItems: 'center',
         gap: 9,
+        minWidth: 0,
     },
-    // Figma: Poppins Medium 12px, #949494
-    dateText: {
-        fontFamily: 'Poppins-Medium',
+    // Figma: Poppins Medium 12px/18px, #949494
+    metaText: {
+        fontFamily: 'Poppins_500Medium',
         fontSize: 12,
         lineHeight: 18,
         color: '#949494',
+        flexShrink: 1,
     },
     // Figma: Frame 24 at (299, 22) → right: 0, top: 22
     arrowWrapper: {

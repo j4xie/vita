@@ -161,25 +161,18 @@ export const PVSADynamicFormScreen: React.FC = () => {
   }, [navigation]);
 
   const handleFormSubmit = useCallback((formData: Record<string, any>) => {
-    const packageType = formData.packageType as 'basic' | 'standard' | 'premium' | undefined;
     const paymentMethod = formData.paymentMethod as 'stripe' | 'alipay' | undefined;
-
-    if (!packageType) {
-      Alert.alert(
-        t('pvsa.error.no_package_title', 'Missing Package'),
-        t('pvsa.error.no_package_desc', 'Please select a package type before submitting.')
-      );
-      return;
-    }
 
     if (!paymentMethod) {
       Alert.alert(
-        t('pvsa.error.no_payment_title', 'Missing Payment Method'),
-        t('pvsa.error.no_payment_desc', 'Please select a payment method before submitting.')
+        t('pvsa.error.no_payment_title', { defaultValue: 'Missing Payment Method' }),
+        t('pvsa.error.no_payment_desc', { defaultValue: 'Please select a payment method before submitting.' })
       );
       return;
     }
 
+    // Package removed from form — default to 'basic'
+    const packageType = (formData.packageType as 'basic' | 'standard' | 'premium') || 'basic';
     const orderItem = pvsaToOrderItem(activity.id, packageType, activity.name);
     const preselectedPayment = paymentMethod === 'alipay' ? 'alipay' : 'stripe';
 
@@ -247,9 +240,10 @@ export const PVSADynamicFormScreen: React.FC = () => {
         <DynamicFormRenderer
           modelContent={activity.modelContent}
           onSubmit={handleFormSubmit}
-          submitLabel={t('pvsa.submit_and_pay', 'Submit & Proceed to Payment')}
+          submitLabel={t('pvsa.submit_and_pay', { defaultValue: 'Submit & Pay' })}
           loading={submitting}
           initialData={initialData}
+          wizardMode={true}
           headerComponent={
             <CertificateInfoBanner
               activity={activity}
@@ -266,7 +260,7 @@ export const PVSADynamicFormScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: '#FAF3F1',
   },
   containerDark: {
     backgroundColor: '#000000',

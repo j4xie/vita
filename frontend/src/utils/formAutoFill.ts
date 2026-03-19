@@ -3,8 +3,7 @@
  * 自动从用户信息填充表单字段
  */
 
-import { FrontendUser } from '../types/user';
-import { FormField, UserProfile } from '../types/form';
+import { FormField, FormFieldOption, UserProfile } from '../types/form';
 
 // ==================== 字段映射 ====================
 
@@ -68,14 +67,118 @@ const FIELD_MAPPING: Record<string, keyof UserProfile> = {
   'grade': 'grade',
   'year': 'grade',
   '年级': 'grade',
+
+  // 性别相关
+  'gender': 'gender',
+  'sex': 'gender',
+  '性别': 'gender',
+
+  // 微信相关
+  'wechatId': 'wechatId',
+  'wechat': 'wechatId',
+  'weixin': 'wechatId',
+  '微信': 'wechatId',
+  '微信号': 'wechatId',
 };
+
+// ==================== 选项智能匹配 ====================
+
+/**
+ * 性别值到常见选项文本的映射
+ */
+const GENDER_MAP: Record<string, string[]> = {
+  'male': ['男', '男性', '男 Male', 'Male', '男生'],
+  'female': ['女', '女性', '女 Female', 'Female', '女生'],
+};
+
+/**
+ * 学校简称到全称的映射
+ */
+const SCHOOL_ALIASES: Record<string, string[]> = {
+  'UCSD': ['UC San Diego', 'University of California San Diego', '加州大学圣地亚哥分校'],
+  'UCLA': ['UC Los Angeles', 'University of California Los Angeles', '加州大学洛杉矶分校'],
+  'UCSB': ['UC Santa Barbara', 'University of California Santa Barbara', '加州大学圣塔芭芭拉分校'],
+  'UMN': ['University of Minnesota', '明尼苏达大学'],
+  'USC': ['University of Southern California', '南加州大学'],
+  'UCI': ['UC Irvine', 'University of California Irvine', '加州大学欧文分校'],
+  'UCB': ['UC Berkeley', 'University of California Berkeley', '加州大学伯克利分校'],
+  'UCD': ['UC Davis', 'University of California Davis', '加州大学戴维斯分校'],
+  'UCSC': ['UC Santa Cruz', 'University of California Santa Cruz', '加州大学圣克鲁兹分校'],
+  'UW': ['University of Washington', '华盛顿大学'],
+  'NYU': ['New York University', '纽约大学'],
+  'Rutgers': ['Rutgers University', '罗格斯大学'],
+};
+
+/**
+ * 智能匹配用户值到选项值
+ * 处理场景：
+ *   gender='male' → opt.value='男' or '男 Male'
+ *   schoolName='UCSD' → opt.value='UC San Diego' or 'UCSD'
+ */
+function matchOptionValue(
+  userValue: string,
+  options: FormFieldOption[]
+): string | number | null {
+  if (!userValue || !options?.length) return null;
+
+  // 1. 精确匹配
+  const exact = options.find(o => String(o.value) === userValue);
+  if (exact) return exact.value;
+
+  // 2. 忽略大小写匹配
+  const caseInsensitive = options.find(
+    o => String(o.value).toLowerCase() === userValue.toLowerCase()
+  );
+  if (caseInsensitive) return caseInsensitive.value;
+
+  // 3. 性别特殊映射
+  if (GENDER_MAP[userValue]) {
+    const genderMatch = options.find(o =>
+      GENDER_MAP[userValue].some(g =>
+        String(o.value) === g || o.label === g
+      )
+    );
+    if (genderMatch) return genderMatch.value;
+  }
+
+  // 4. 包含匹配（学校名等）
+  const contains = options.find(o => {
+    const sv = String(o.value);
+    return sv.includes(userValue) || userValue.includes(sv) ||
+      (o.label && (o.label.includes(userValue) || userValue.includes(o.label)));
+  });
+  if (contains) return contains.value;
+
+  // 5. 学校简称映射
+  const directAliases = SCHOOL_ALIASES[userValue];
+  if (directAliases) {
+    for (const alias of directAliases) {
+      const match = options.find(o =>
+        String(o.value).includes(alias) || (o.label && o.label.includes(alias))
+      );
+      if (match) return match.value;
+    }
+  }
+  // 反向查找：用户值是全称，选项是简称
+  for (const [abbr, fullNames] of Object.entries(SCHOOL_ALIASES)) {
+    if (fullNames.includes(userValue)) {
+      const match = options.find(o =>
+        String(o.value).includes(abbr) || (o.label && o.label.includes(abbr))
+      );
+      if (match) return match.value;
+    }
+  }
+
+  return null;
+}
 
 // ==================== 工具函数 ====================
 
 /**
- * 从 FrontendUser 提取 UserProfile
+ * 从用户对象提取 UserProfile
+ * 兼容 FrontendUser (types/user.ts) 和 FrontendUser (userAdapter.ts) 两种类型
  */
-export function extractUserProfile(user: FrontendUser | null): UserProfile {
+export function extractUserProfile(user: any | null): UserProfile {
   if (!user) {
     return {};
   }
@@ -83,11 +186,12 @@ export function extractUserProfile(user: FrontendUser | null): UserProfile {
   return {
     realName: user.legalName || user.nickName || user.userName,
     nickName: user.nickName,
-    phone: user.phonenumber,
+    phone: user.phonenumber || user.phone,
     email: user.email,
-    schoolName: user.department?.deptName,
+    schoolName: user.department?.deptName || user.dept?.deptName || user.school?.name,
     studentId: user.studentId,
-    // major 和 grade 可能需要从其他字段获取
+    gender: user.gender || (user.sex === '0' ? 'male' : user.sex === '1' ? 'female' : undefined),
+    wechatId: user.wechatId,
   };
 }
 
@@ -96,7 +200,7 @@ export function extractUserProfile(user: FrontendUser | null): UserProfile {
  */
 export function getAutoFillData(
   formSchema: FormField[],
-  user: FrontendUser | null
+  user: any | null
 ): {
   autoFilled: Record<string, unknown>;
   remainingFields: FormField[];
@@ -126,9 +230,23 @@ export function getAutoFillData(
     const userValue = userKey ? userProfile[userKey] : null;
 
     if (userValue) {
-      autoFilled[field.vModel] = userValue;
-      if (field.label) {
-        autoFilledLabels.push(field.label);
+      // 选择类组件需要匹配选项值
+      if (field.options?.length && (field.tag === 'el-radio-group' || field.tag === 'el-select')) {
+        const matchedValue = matchOptionValue(String(userValue), field.options);
+        if (matchedValue) {
+          autoFilled[field.vModel] = matchedValue;
+          if (field.label) {
+            autoFilledLabels.push(field.label);
+          }
+        } else {
+          remainingFields.push(field);
+        }
+      } else {
+        // 文本类组件直接赋值
+        autoFilled[field.vModel] = userValue;
+        if (field.label) {
+          autoFilledLabels.push(field.label);
+        }
       }
     } else {
       remainingFields.push(field);
@@ -143,7 +261,7 @@ export function getAutoFillData(
  */
 export function shouldRecommendAI(
   formSchema: FormField[],
-  user: FrontendUser | null
+  user: any | null
 ): {
   recommend: boolean;
   reason: string;
@@ -251,6 +369,7 @@ const formAutoFill = {
   shouldRecommendAI,
   calculateProgress,
   checkRequiredFields,
+  matchOptionValue,
   FIELD_MAPPING,
 };
 

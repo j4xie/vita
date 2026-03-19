@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text } from 'react-native';
-import { NavigationContainer } from '@react-navigation/native';
+import React, { useEffect, useState, useMemo } from 'react';
+import { View, Text, Linking } from 'react-native';
+import { NavigationContainer, LinkingOptions } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { getFocusedRouteNameFromRoute } from '@react-navigation/native';
@@ -34,7 +34,7 @@ import { AddressEditScreen } from '../screens/rewards/AddressEditScreen';
 import { AddressSelectScreen } from '../screens/rewards/AddressSelectScreen';
 import { LoginScreen } from '../screens/auth/LoginScreen';
 import { ForgotPasswordScreen } from '../screens/auth/ForgotPasswordScreen';
-import { SetNewPasswordScreen } from '../screens/auth/SetNewPasswordScreen';
+// SetNewPasswordScreen merged into ForgotPasswordScreen (single-page reset flow)
 import { RegisterChoiceScreen } from '../screens/auth/RegisterChoiceScreen';
 import { IdentityChoiceScreen } from '../screens/auth/IdentityChoiceScreen';
 import { ParentInvitationRegisterScreen } from '../screens/auth/ParentInvitationRegisterScreen';
@@ -55,6 +55,7 @@ import { GeneralScreen } from '../screens/profile/GeneralScreen';
 import { AboutSupportScreen } from '../screens/profile/AboutSupportScreen';
 import { LanguageSelectionScreen } from '../screens/profile/LanguageSelectionScreen';
 import { EditProfileScreen } from '../screens/profile/EditProfileScreen';
+import { EmailVerificationScreen } from '../screens/profile/EmailVerificationScreen';
 import { CertificateListScreen } from '../screens/profile/CertificateListScreen';
 import { PVSADynamicFormScreen } from '../screens/certificate/PVSADynamicFormScreen';
 import { ActivityLayoutSelectionScreen } from '../screens/profile/ActivityLayoutSelectionScreen';
@@ -137,13 +138,7 @@ const AuthNavigator = () => {
           ...pageTransitions.slideFromRight,
         }}
       />
-      <AuthStack.Screen
-        name="SetNewPassword"
-        component={SetNewPasswordScreen}
-        options={{
-          ...pageTransitions.slideFromRight,
-        }}
-      />
+      {/* SetNewPassword merged into ForgotPasswordScreen */}
       <AuthStack.Screen
         name="RegisterChoice"
         component={RegisterChoiceScreen}
@@ -584,6 +579,13 @@ const ProfileNavigator = () => {
         }}
       />
       <ProfileStack.Screen
+        name="EmailVerification"
+        component={EmailVerificationScreen}
+        options={{
+          headerShown: false,
+        }}
+      />
+      <ProfileStack.Screen
         name="CertificateList"
         component={CertificateListScreen}
         options={{
@@ -1010,7 +1012,22 @@ export const AppNavigator = () => {
       <LanguageProvider>
         <ThemeProvider>
           <VolunteerProvider>
-            <NavigationContainer>
+            <NavigationContainer
+              linking={{
+                prefixes: ['pomelox://'],
+                config: {
+                  screens: {
+                    ActivityDetailGlobal: {
+                      path: 'activity/:activityId',
+                      parse: {
+                        activityId: String,
+                        shareUserId: Number,
+                      },
+                    },
+                  },
+                },
+              }}
+            >
               <RootStack.Navigator
                 {...({ id: "root" } as any)}
                 screenOptions={{
@@ -1092,13 +1109,7 @@ export const AppNavigator = () => {
                     ...pageTransitions.slideFromRight,
                   }}
                 />
-                <RootStack.Screen
-                  name="SetNewPassword"
-                  component={SetNewPasswordScreen}
-                  options={{
-                    ...pageTransitions.slideFromRight,
-                  }}
-                />
+                {/* SetNewPassword merged into ForgotPasswordScreen */}
                 <RootStack.Screen
                   name="RegisterChoice"
                   component={RegisterChoiceScreen}
@@ -1203,6 +1214,42 @@ export const AppNavigator = () => {
                 <RootStack.Screen
                   name="PaymentResultGlobal"
                   component={PaymentResultScreen}
+                  options={{
+                    ...pageTransitions.slideFromRight,
+                  }}
+                />
+
+                {/* Global PointsMallList - for cross-tab navigation (e.g. Membership → PointsMallList) */}
+                <RootStack.Screen
+                  name="PointsMallList"
+                  component={PointsMallListScreen}
+                  options={{
+                    ...pageTransitions.slideFromRight,
+                  }}
+                />
+
+                {/* Global MyCoupons - for cross-tab navigation (e.g. Community → MyCoupons) */}
+                <RootStack.Screen
+                  name="MyCoupons"
+                  component={MyCouponsScreen}
+                  options={{
+                    ...pageTransitions.slideFromRight,
+                  }}
+                />
+
+                {/* Global ActivityDetail - for RootStack screens (Search, QRScanner) */}
+                <RootStack.Screen
+                  name="ActivityDetailGlobal"
+                  component={ActivityDetailScreen}
+                  options={{
+                    ...pageTransitions.slideFromRight,
+                  }}
+                />
+
+                {/* Global ActivityRegistrationForm - for global ActivityDetail flow */}
+                <RootStack.Screen
+                  name="ActivityRegistrationForm"
+                  component={ActivityRegistrationFormScreen}
                   options={{
                     ...pageTransitions.slideFromRight,
                   }}

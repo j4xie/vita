@@ -184,7 +184,20 @@
       "sendFailed": "发送失败",
       "sendFailedMessage": "验证码发送失败，请重试"
     },
-    "referralCode": "推荐码："
+    "referralCode": "推荐码：",
+    "wizard": {
+      "steps": {
+        "personal": "个人信息",
+        "contact": "联系方式",
+        "payment": "支付与地址",
+        "award": "奖项与材料",
+        "other": "其他信息"
+      },
+      "next": "下一步",
+      "previous": "上一步",
+      "step_of": "第 {{current}} 步，共 {{total}} 步",
+      "complete_required": "请填写本页所有必填项后再继续"
+    }
   },
   "auth": {
     "login": {
@@ -225,7 +238,15 @@
       "verify_code_error": "验证码验证失败，请稍后重试",
       "us_phone_not_supported_title": "暂不支持美国手机号重置",
       "us_phone_not_supported_message": "当前不支持美国手机号码重置密码",
-      "contact_admin": "请联系管理员获取帮助"
+      "contact_admin": "请联系管理员获取帮助",
+      "reset_mode_label": "选择验证方式",
+      "reset_mode_phone": "手机验证",
+      "reset_mode_email": "邮箱验证",
+      "subtitle_email": "请输入您的注册邮箱，我们将发送验证码帮助您重置密码",
+      "email_label": "邮箱地址",
+      "email_placeholder": "请输入注册邮箱",
+      "email_invalid": "请输入有效的邮箱地址",
+      "email_code_sent": "验证码已发送至您的邮箱，请查收"
     },
     "reset_password": {
       "title": "重置密码",
@@ -239,6 +260,7 @@
       "reset_button": "重置密码",
       "success_title": "密码重置成功",
       "success_message": "您的密码已成功重置，请使用新密码登录",
+      "login_account": "您的登录账号：{{account}}",
       "reset_failed": "密码重置失败，请稍后重试",
       "errors": {
         "password_format_rejected": "密码格式不符合要求",
@@ -319,6 +341,7 @@
       "referral_registration": "推荐码注册",
       "referral_description": "扫描推荐码快速注册",
       "referral_badge": "推荐使用",
+      "recommended_badge": "推荐使用",
       "normal_registration": "普通注册",
       "normal_description": "直接填写信息注册",
       "benefits_title": "注册后您可以：",
@@ -474,7 +497,16 @@
         "school_placeholder": "请选择您的学校",
         "gender_male": "男",
         "gender_female": "女",
-        "gender_unknown": "其他"
+        "gender_unknown": "其他",
+        "verify_method_label": "验证方式",
+        "verify_phone": "手机验证",
+        "verify_email": "邮箱验证",
+        "email_verification": "邮箱确认",
+        "email_verification_desc": "确认您的学校邮箱信息",
+        "email_confirm_notice": "注册后请查收学校邮箱确认邮件",
+        "your_email": "您的邮箱",
+        "phone_number_label": "手机号码",
+        "phone_number_placeholder": "请输入手机号码（无需验证）"
       },
       "success": {
         "title": "注册成功",
@@ -496,6 +528,12 @@
           "重新获取验证码",
           "检查短信"
         ]
+      },
+      "email": {
+        "code_sent_title": "验证码已发送",
+        "code_sent_message": "验证码已发送至 {{email}}，请查收邮箱",
+        "send_failed_title": "发送失败",
+        "send_failed_message": "邮箱验证码发送失败，请稍后重试"
       },
       "sms": {
         "code_sent_title": "验证码已发送",
@@ -626,7 +664,9 @@
         "password_mismatch_hint": "请确保两次输入的密码完全相同",
         "username_min_length": "用户名至少需要3位字符",
         "password_min_length": "密码至少需要6位字符",
-        "email_format_required": "请输入有效的邮箱地址"
+        "email_format_required": "请输入有效的邮箱地址",
+        "phone_valid": "✓ 手机号格式正确",
+        "verification_code_valid": "✓ 验证码格式正确"
       },
       "registration": {
         "username_taken": "用户名已被使用",
@@ -681,7 +721,7 @@
       "community": "社区",
       "rewards": "会员",
       "profile": "个人",
-      "wellbeing": "咨询",
+      "wellbeing": "CU",
       "qr_code": "扫码",
       "merchantDashboard": "工作台",
       "merchantWriteOff": "核销",
@@ -858,6 +898,7 @@
       "submit_button": "确认报名",
       "success_title": "报名成功",
       "success_message": "您已成功报名该活动，现场请扫描签到二维码完成签到",
+      "success_message_with_points": "您已成功报名该活动，现场请扫描签到二维码完成签到\n+{{points}} 积分",
       "checkin_option": "立即签到",
       "checkin_prompt_title": "开始志愿服务",
       "checkin_prompt_message": "报名成功！是否立即前往签到页面开始志愿服务？",
@@ -973,6 +1014,34 @@
     "no_reviews": "暂无评价",
     "review_after_activity": "参加活动后可以写评价",
     "school_info": "学校信息",
+    "verify_email_for_membership": "验证学校邮箱，免费获取蓝卡会员",
+    "email_verify": {
+      "title": "验证学校邮箱",
+      "heading": "验证学校邮箱",
+      "subtitle": "验证.edu邮箱即可免费获取蓝卡会员资格",
+      "email_label": "学校邮箱",
+      "code_label": "验证码",
+      "code_placeholder": "输入6位验证码",
+      "edu_hint": "仅支持.edu后缀的学校邮箱",
+      "send": "发送",
+      "resend": "重新发送",
+      "submit": "验证并获取会员",
+      "code_sent": "验证码已发送，请查收邮件",
+      "error_empty": "请输入学校邮箱",
+      "error_not_edu": "请输入.edu后缀的学校邮箱",
+      "error_send_failed": "发送失败，请稍后重试",
+      "error_code_empty": "请输入验证码",
+      "error_code_wrong": "验证码不正确",
+      "error_not_logged_in": "请先登录",
+      "error_verify_failed": "验证失败，请稍后重试",
+      "success_title": "蓝卡会员已激活",
+      "success_message": "恭喜！您已成功验证学校邮箱，免费蓝卡会员已激活。享受专属权益吧！",
+      "prompt_title": "验证学校邮箱",
+      "prompt_message": "验证.edu学校邮箱即可免费获取蓝卡会员，享受专属权益！",
+      "prompt_later": "稍后再说",
+      "prompt_go": "去验证",
+      "banner": "验证学校邮箱，免费获取蓝卡会员"
+    },
     "menuItems": {
       "accountSecurity": "账户与安全",
       "notifications": "通知",
@@ -2170,7 +2239,11 @@
     "more_options_coming_soon": "更多选项即将上线",
     "door_code": "门牌号",
     "map_open_failed": "无法打开地图",
-    "verified": "已认证"
+    "verified": "已认证",
+    "ongoing": "进行中",
+    "upcoming": "即将开始",
+    "ended": "已结束",
+    "checkedIn": "已签到"
   },
   "volunteerHome": {
     "quickActions": "快捷操作",
@@ -2738,6 +2811,24 @@
     "tap_to_select_for_signin": "点击选择此活动进行签到",
     "select_activity_first": "请先选择一个活动"
   },
+  "activity_share": {
+    "title": "分享",
+    "earn_points": "分享此活动可获得 {{points}} 积分",
+    "earn_prefix": "分享可获得 ",
+    "points_word": "积分",
+    "earn_suffix": " 奖励",
+    "points_note": "积分将在对方报名成功后发放",
+    "qr_hint": "扫描或分享此二维码邀请他人",
+    "copy_link": "复制链接",
+    "save_album": "保存到相册",
+    "copied_title": "已复制",
+    "copied_message": "链接已复制到剪贴板",
+    "permission_title": "需要权限",
+    "permission_message": "请允许访问相册以保存二维码",
+    "saved_title": "已保存",
+    "saved_message": "二维码已保存到相册",
+    "save_failed": "保存失败，请重试"
+  },
   "qr": {
     "generation_failed": "二维码生成失败",
     "camera": {
@@ -2950,23 +3041,25 @@
     },
     "membership_card": {
       "title": "会员卡",
-      "coming_soon": "下一版本上线"
+      "explore": "探索会员权益"
     },
     "points": {
       "title": "我的积分",
       "balance": "积分余额",
-      "coming_soon": "即将上线"
+      "view_balance": "查看积分"
     },
     "coupons": {
       "title": "我的优惠券",
       "my_coupons": "优惠券中心",
-      "coming_soon": "即将上线",
+      "view_coupons": "查看优惠券",
       "tab_unused": "未使用",
       "tab_used": "已使用",
       "tab_expired": "已过期",
+      "tab_used_expired": "已使用·已过期",
       "empty_unused": "暂无未使用的优惠券",
       "empty_used": "暂无已使用的优惠券",
       "empty_expired": "暂无已过期的优惠券",
+      "empty_used_expired": "暂无已使用或已过期的优惠券",
       "discount_amount": "减${{amount}}",
       "discount_rate": "{{rate}}折",
       "min_amount": "满${{amount}}可用",
@@ -2979,13 +3072,29 @@
       "load_failed": "加载优惠券失败",
       "points": "积分",
       "verified_by": "核销商家",
-      "verified_at": "使用时间"
+      "verified_at": "使用时间",
+      "available_points": "可用积分",
+      "pts": "积分",
+      "blue_card": "蓝卡",
+      "earn_multiplier": "赚 × {{rate}}",
+      "use_now": "立即使用",
+      "view_detail": "查看",
+      "order_no": "订单: {{no}}",
+      "support_dine_in": "支持堂食",
+      "stamp_redeemed": "已使用",
+      "stamp_expired": "已过期",
+      "max_discount": "最高优惠 ${{amount}}",
+      "earn_back_points": "返还 {{points}} 积分",
+      "points_unit": "积分",
+      "no_minimum": "无门槛",
+      "source_merchant": "商家券",
+      "source_platform": "平台券"
     },
     "mall": {
       "title": "积分商城",
       "home_title": "积分商城",
       "points_mall": "积分兑换",
-      "coming_soon": "即将上线",
+      "browse_items": "浏览商品",
       "my_points": "我的积分",
       "earn_points": "赚取积分",
       "exchange_now": "立即兑换",
@@ -3035,6 +3144,12 @@
       },
       "membership": {
         "card_title": "PomeloX会员卡",
+        "card_level": {
+          "blue": "BLUE CARD",
+          "red": "RED CARD",
+          "red_black": "RED BLACK CARD",
+          "black": "BLACK CARD"
+        },
         "bronze_member": "青铜会员",
         "silver_member": "白银会员",
         "gold_member": "黄金会员",
@@ -3165,6 +3280,7 @@
   "membership_purchase": {
     "title": "会员等级",
     "current_level": "当前等级",
+    "to_next_tier": "升级进度",
     "purchase": "购买",
     "price_tbd": "价格待定",
     "contact_purchase": "联系我们",
@@ -3172,6 +3288,12 @@
     "buy_get": "可购买",
     "grant_get": "邀请制",
     "no_levels": "暂无会员等级",
+    "card_labels": {
+      "4": "蓝卡会员 | BLUE CARD",
+      "5": "红卡会员 | RED CARD",
+      "6": "红黑卡会员 | RED-BLACK CARD",
+      "7": "黑卡会员 | BLACK CARD"
+    },
     "benefits": "权益",
     "no_benefits": "暂无权益",
     "purchase_confirm": "确认购买 {{level}} 会员？",
@@ -3194,6 +3316,39 @@
       "5": "可领商家券+平台券；可积分商城兑换商品",
       "6": "每月1次霸王餐活动；社媒种草任务；开屏广告权益抽选",
       "7": "全部权益 + 专属VIP服务"
+    }
+  },
+  "membership_screen": {
+    "title": "会员中心",
+    "benefits_title": "会员权益",
+    "view_all": "查看全部",
+    "privileges_title": "特权服务",
+    "points_mall": "积分商城",
+    "points_mall_subtitle": "专属好礼",
+    "points_mall_desc": "用积分兑换精选好物",
+    "my_coupons": "我的优惠券",
+    "my_coupons_subtitle": "查看可用",
+    "my_coupons_desc": "查看和使用优惠券",
+    "refer_friends": "邀请好友",
+    "refer_friends_subtitle": "赚积分",
+    "refer_friends_desc": "邀请好友赢取奖励",
+    "coming_soon": "即将上线",
+    "refer_coming_soon_desc": "邀请好友功能即将上线，敬请期待！",
+    "benefits": {
+      "open_events": "公开活动",
+      "official_updates": "官方资讯",
+      "starter_library": "新生指南",
+      "community_hub": "社区中心",
+      "early_alerts": "优先通知",
+      "check_in": "签到",
+      "partner_deal": "商家特惠",
+      "birthday_perk": "生日特权",
+      "priority_rsvp": "优先报名",
+      "badge": "专属徽章",
+      "member_pin": "会员勋章",
+      "impact_points": "影响力积分",
+      "partner_alerts": "商家提醒",
+      "more_benefits": "更多权益"
     }
   },
   "activity_payment": {
@@ -3260,7 +3415,7 @@
     "loading_form": "正在准备表单...",
     "no_form_title": "表单暂不可用",
     "no_form_template": "表单模板尚未配置，请联系管理员。",
-    "submit_and_pay": "提交并前往支付",
+    "submit_and_pay": "提交并支付",
     "error": {
       "no_package_title": "未选择套餐",
       "no_package_desc": "请在提交前选择一个套餐类型。",
@@ -3272,6 +3427,12 @@
     "auto_filled": "已自动填写",
     "placeholder_input": "请输入{{label}}",
     "placeholder_select": "请选择{{label}}",
+    "fill_in_placeholder": "请输入...",
+    "proof_upload_hint": "请联系你的社团/分部负责人，提供服务记录截图或其他证明材料。",
+    "start_date": "开始日期",
+    "end_date": "结束日期",
+    "start_time": "开始时间",
+    "end_time": "结束时间",
     "validation": {
       "required": "{{label}}为必填项",
       "format_error": "{{label}}格式不正确"

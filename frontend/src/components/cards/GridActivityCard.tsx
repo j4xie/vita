@@ -107,7 +107,7 @@ const GridActivityCardComponent: React.FC<GridActivityCardProps> = ({
   const containerWidth = currentScreenWidth - 8; // 减去waterfallContainer的paddingHorizontal: 4 (左右共8px)
   const cardWidth = containerWidth * 0.48; // 瀑布流布局，每列占48%
   const imageHeight = cardWidth * (675 / 1200); // 精确的图片高度
-  const infoHeight = 90; // 底部信息区固定高度
+  const infoHeight = 110; // 底部信息区固定高度（增大以容纳长标题）
   const cardHeight = imageHeight + infoHeight; // 动态卡片总高度，消除留白
 
   // 手势开始动画
@@ -616,15 +616,15 @@ const styles = StyleSheet.create({
     borderBottomLeftRadius: theme.borderRadius.card,
     borderBottomRightRadius: theme.borderRadius.card,
     zIndex: 2,
-    minHeight: 90, // 增加最小高度以容纳新元素
+    minHeight: 110, // 增加最小高度以容纳长标题
   },
   title: {
-    fontSize: 15, // 紧凑布局使用稍小字体
+    fontSize: 14, // 紧凑布局使用稍小字体
     fontWeight: '700',
     color: '#1A1A1A',
-    marginBottom: 4,
-    lineHeight: 20, // 优化行高，改善两行显示效果
-    marginTop: 6, // 与组织者信息的间距
+    marginBottom: 3,
+    lineHeight: 19, // 优化行高，改善两行显示效果
+    marginTop: 4, // 与组织者信息的间距
   },
   // 时间和地点布局
   detailsRow: {
@@ -648,7 +648,7 @@ const styles = StyleSheet.create({
     fontSize: 12, // 紧凑布局使用更小字体
     color: '#666666', // 深灰色文字，更协调的视觉层级
     marginTop: 2,
-    marginBottom: 6, // 与操作按钮的间距
+    marginBottom: 4, // 与操作按钮的间距
   },
 
   // 右上角三点菜单

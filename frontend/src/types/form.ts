@@ -10,7 +10,7 @@
  */
 export interface FormFieldOption {
   label: string;
-  value: string;
+  value: string | number;
 }
 
 /**
@@ -25,6 +25,8 @@ export interface UserProfile {
   studentId?: string;
   major?: string;
   grade?: string;
+  gender?: string;
+  wechatId?: string;
 }
 
 // ==================== 表单字段类型 ====================
@@ -92,6 +94,37 @@ export interface FormFieldSchema extends FormField {
 
   // 日期格式
   format?: string;
+
+  // Row container (layout)
+  layout?: 'rowFormItem' | 'colFormItem' | string;
+  children?: FormFieldSchema[];
+  gutter?: number;
+  span?: number;  // Column width within row (1-24 grid)
+
+  // Condition display
+  changeTag?: string;   // Condition: show when another field equals a value (format: "vModel=value")
+
+  // Internal tag icon (used for normalization)
+  tagIcon?: string;
+
+  // Cascader
+  dataType?: string;    // 'dynamic' or 'static'
+  separator?: string;   // Display separator for cascader
+
+  // Wizard grouping
+  section?: string;       // Optional grouping key (e.g., "personal", "contact")
+  sectionOrder?: number;  // Optional explicit ordering within section
+  description?: string;   // Optional field-level description text
+}
+
+/**
+ * 表单步骤配置（用于向导模式）
+ */
+export interface FormStepConfig {
+  id: string;
+  titleKey: string;      // i18n key
+  iconName?: string;     // Ionicons name
+  fields: FormFieldSchema[];
 }
 
 // ==================== 表单状态类型 ====================

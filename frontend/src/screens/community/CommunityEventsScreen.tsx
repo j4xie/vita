@@ -403,7 +403,7 @@ export const CommunityEventsScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#FAF3F1',
   },
 
   // 顶部导航栏 - Shangri-La 风格

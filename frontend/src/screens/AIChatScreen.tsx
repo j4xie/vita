@@ -122,6 +122,9 @@ export const AIChatScreen: React.FC<Props> = ({ navigation, route }) => {
   const [typingText, setTypingText] = useState('');
   const typingIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
+  // SSE 进度提示
+  const [progressMessage, setProgressMessage] = useState<string | null>(null);
+
   // AbortController ref - 用于中断AI思考
   const abortControllerRef = useRef<AbortController | null>(null);
 
@@ -321,8 +324,12 @@ export const AIChatScreen: React.FC<Props> = ({ navigation, route }) => {
         const response = await sendMessageStream(
           text,
           {
+            onProgress: (_stage, msg) => {
+              setProgressMessage(msg);
+            },
             onStart: (newSessionId) => {
               console.log('[AIChatScreen] SSE 开始, sessionId:', newSessionId);
+              setProgressMessage(null);
               setSessionId(newSessionId);
             },
             onChunk: (_chunk, accumulated) => {
@@ -372,6 +379,7 @@ export const AIChatScreen: React.FC<Props> = ({ navigation, route }) => {
                 clearTimeout(updateTimer);
                 updateTimer = null;
               }
+              setProgressMessage(null);
               console.log('[AIChatScreen] SSE 完成, 内容长度:', fullContent.length);
               // 最终更新使用完整内容
               setMessages(prev => {
@@ -384,6 +392,7 @@ export const AIChatScreen: React.FC<Props> = ({ navigation, route }) => {
               });
             },
             onError: (errorMsg) => {
+              setProgressMessage(null);
               console.error('[AIChatScreen] SSE 错误:', errorMsg);
             },
           },
@@ -504,6 +513,7 @@ export const AIChatScreen: React.FC<Props> = ({ navigation, route }) => {
     } finally {
       setIsLoading(false);
       setIsStreaming(false);
+      setProgressMessage(null);
       abortControllerRef.current = null;
     }
   };
@@ -931,7 +941,16 @@ export const AIChatScreen: React.FC<Props> = ({ navigation, route }) => {
       />
 
       {/* 加载指示器 - 仅在等待首个chunk时显示，流式传输中不显示 */}
-      {isLoading && !isStreaming && <ThinkingIndicator estimatedTime={3} />}
+      {isLoading && !isStreaming && (
+        <View>
+          {progressMessage && (
+            <View style={styles.progressContainer}>
+              <Text style={styles.progressText}>{progressMessage}</Text>
+            </View>
+          )}
+          <ThinkingIndicator estimatedTime={3} />
+        </View>
+      )}
 
       {/* 错误提示 */}
       {error && (
@@ -1166,6 +1185,16 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontWeight: '500',
     lineHeight: 18,
+  },
+  progressContainer: {
+    alignItems: 'center',
+    paddingVertical: 6,
+    paddingHorizontal: 16,
+  },
+  progressText: {
+    fontSize: 13,
+    color: '#8e8e93',
+    fontStyle: 'italic',
   },
   loadingContainer: {
     flexDirection: 'row',

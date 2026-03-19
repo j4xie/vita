@@ -18,6 +18,7 @@ import { useTranslation } from 'react-i18next';
 import * as Haptics from 'expo-haptics';
 
 import { Address, addAddress, updateAddress, AddAddressParams, UpdateAddressParams } from '../../services/addressAPI';
+import { KeyboardDoneAccessory, KEYBOARD_ACCESSORY_ID } from '../../components/common/KeyboardDismissWrapper';
 
 interface RouteParams {
   address?: Address;
@@ -304,6 +305,7 @@ export const AddressEditScreen: React.FC = () => {
           contentContainerStyle={styles.contentContainer}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
+          keyboardDismissMode="on-drag"
         >
           {/* 收件人姓名 */}
           <View style={styles.formGroup}>
@@ -315,6 +317,7 @@ export const AddressEditScreen: React.FC = () => {
               placeholder={t('address.form.name_placeholder', 'Enter recipient name')}
               placeholderTextColor="#C7C7CC"
               maxLength={50}
+              inputAccessoryViewID={Platform.OS === 'ios' ? KEYBOARD_ACCESSORY_ID : undefined}
             />
           </View>
 
@@ -346,6 +349,7 @@ export const AddressEditScreen: React.FC = () => {
                 placeholderTextColor="#C7C7CC"
                 keyboardType="phone-pad"
                 maxLength={15}
+                inputAccessoryViewID={Platform.OS === 'ios' ? KEYBOARD_ACCESSORY_ID : undefined}
               />
             </View>
           </View>
@@ -363,6 +367,7 @@ export const AddressEditScreen: React.FC = () => {
               numberOfLines={2}
               textAlignVertical="top"
               maxLength={200}
+              inputAccessoryViewID={Platform.OS === 'ios' ? KEYBOARD_ACCESSORY_ID : undefined}
             />
           </View>
 
@@ -379,6 +384,7 @@ export const AddressEditScreen: React.FC = () => {
               numberOfLines={2}
               textAlignVertical="top"
               maxLength={200}
+              inputAccessoryViewID={Platform.OS === 'ios' ? KEYBOARD_ACCESSORY_ID : undefined}
             />
           </View>
 
@@ -392,6 +398,7 @@ export const AddressEditScreen: React.FC = () => {
               placeholder={t('address.placeholder_city', 'City name')}
               placeholderTextColor="#C7C7CC"
               maxLength={100}
+              inputAccessoryViewID={Platform.OS === 'ios' ? KEYBOARD_ACCESSORY_ID : undefined}
             />
           </View>
 
@@ -425,6 +432,7 @@ export const AddressEditScreen: React.FC = () => {
                 placeholderTextColor="#C7C7CC"
                 keyboardType="number-pad"
                 maxLength={5}
+                inputAccessoryViewID={Platform.OS === 'ios' ? KEYBOARD_ACCESSORY_ID : undefined}
               />
             </View>
           </View>
@@ -459,6 +467,7 @@ export const AddressEditScreen: React.FC = () => {
           </TouchableOpacity>
         </View>
       </View>
+      <KeyboardDoneAccessory />
     </KeyboardAvoidingView>
   );
 };
@@ -466,7 +475,7 @@ export const AddressEditScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F5F7',
+    backgroundColor: '#FAF3F1',
   },
   header: {
     flexDirection: 'row',

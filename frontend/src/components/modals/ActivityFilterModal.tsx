@@ -15,6 +15,8 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
+import { SearchIcon } from '../common/icons/SearchIcon';
+import { FunnelFilterIcon, PriceFilterIcon, TypeFilterIcon, AvailabilityFilterIcon, LocationFilterIcon, NavigateArrowIcon, SchoolCapIcon } from '../common/icons/FilterIcons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const { width: screenWidth } = Dimensions.get('window');
@@ -26,7 +28,7 @@ const COLORS = {
   primaryLight: '#FFE0D9',
   primaryBg: '#FFF5F2',
   white: '#FFFFFF',
-  gray100: '#F8F8F8', // 侧边栏背景色：浅灰
+  gray100: '#FAF3F1', // 侧边栏背景色：暖灰
   gray200: '#F2F2F2',
   gray300: '#E5E5E5',
   gray400: '#D1D1D1',
@@ -59,8 +61,9 @@ export const ActivityFilterModal: React.FC<ActivityFilterModalProps> = ({
   onApply,
   initialFilters,
 }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const insets = useSafeAreaInsets();
+  const isEnglish = i18n.language?.startsWith('en');
 
   const [activeTab, setActiveTab] = useState('price');
   const [priceRange, setPriceRange] = useState<ActivityFilterOptions['priceRange']>(
@@ -77,6 +80,12 @@ export const ActivityFilterModal: React.FC<ActivityFilterModalProps> = ({
   );
 
   const [locationSearch, setLocationSearch] = useState('');
+
+  // Track if any filter has been changed from defaults
+  const hasFilterChanges = priceRange !== 'all' ||
+    selectedTypes.length > 0 ||
+    availability !== 'all' ||
+    location.type !== 'all';
 
   // Price slider state
   const SLIDER_WIDTH = screenWidth - SIDEBAR_WIDTH - 48 - 24; // 考虑padding
@@ -178,10 +187,10 @@ export const ActivityFilterModal: React.FC<ActivityFilterModalProps> = ({
 
   // Tab configuration
   const tabs = [
-    { id: 'price', label: t('filters.price', 'Price'), icon: 'apps-outline' },
-    { id: 'type', label: t('filters.type', 'Type'), icon: 'grid-outline' },
-    { id: 'availability', label: t('filters.availability', 'Availability'), icon: 'people-outline' },
-    { id: 'location', label: t('filters.location', 'Location'), icon: 'location-outline' },
+    { id: 'price', label: t('filters.price', 'Price'), IconComponent: PriceFilterIcon },
+    { id: 'type', label: t('filters.type', 'Type'), IconComponent: TypeFilterIcon },
+    { id: 'availability', label: t('filters.availability', 'Availability'), IconComponent: AvailabilityFilterIcon },
+    { id: 'location', label: t('filters.location', 'Location'), IconComponent: LocationFilterIcon },
   ];
 
   const priceChips: { id: ActivityFilterOptions['priceRange']; label: string }[] = [
@@ -337,34 +346,38 @@ export const ActivityFilterModal: React.FC<ActivityFilterModalProps> = ({
 
   const renderAvailabilityContent = () => (
     <View>
-      <Text style={styles.sectionTitle}>Availability</Text>
+      <Text style={styles.sectionTitle}>{t('filters.availability', 'Availability')}</Text>
       <View style={styles.availabilityChips}>
         <TouchableOpacity
           style={[
-            styles.availabilityChip,
-            availability === 'all' && styles.chipSelected,
+            styles.availabilityPill,
+            availability === 'all'
+              ? styles.availabilityPillSelected
+              : styles.availabilityPillUnselected,
           ]}
           onPress={() => setAvailability('all')}
         >
           <Text style={[
-            styles.chipText,
-            availability === 'all' && styles.chipTextSelected,
+            styles.availabilityPillText,
+            availability === 'all' && styles.availabilityPillTextSelected,
           ]}>
-            All
+            {t('filters.all', 'All')}
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={[
-            styles.availabilityChip,
-            availability === 'available' && styles.chipSelected,
+            styles.availabilityPill,
+            availability === 'available'
+              ? styles.availabilityPillSelected
+              : styles.availabilityPillUnselected,
           ]}
           onPress={() => setAvailability('available')}
         >
           <Text style={[
-            styles.chipText,
-            availability === 'available' && styles.chipTextSelected,
+            styles.availabilityPillText,
+            availability === 'available' && styles.availabilityPillTextSelected,
           ]}>
-            Available only
+            {t('filters.availableOnly', 'Available only')}
           </Text>
         </TouchableOpacity>
       </View>
@@ -385,7 +398,7 @@ export const ActivityFilterModal: React.FC<ActivityFilterModalProps> = ({
           onChangeText={setLocationSearch}
         />
         <View style={styles.searchIconCircle}>
-          <Ionicons name="search" size={20} color="#000" />
+          <SearchIcon size={20} color="#000" />
         </View>
       </View>
       
@@ -396,9 +409,11 @@ export const ActivityFilterModal: React.FC<ActivityFilterModalProps> = ({
         ]}
         onPress={() => setLocation({ type: 'current', value: 'New York, Ithaca, Cornell' })}
       >
-        <Ionicons name="navigate-outline" size={24} color={COLORS.primary} style={styles.locationIcon} />
+        <View style={styles.locationIconWrapper}>
+          <NavigateArrowIcon size={24} color={COLORS.primary} />
+        </View>
         <View style={styles.locationTextContent}>
-          <Text style={styles.locationTitle}>Use my current location</Text>
+          <Text style={styles.locationTitle}>{t('filters.useCurrentLocation', 'Use my current location')}</Text>
           <Text style={styles.locationSubtitle}>New York, Ithaca, Cornell</Text>
         </View>
       </TouchableOpacity>
@@ -408,12 +423,14 @@ export const ActivityFilterModal: React.FC<ActivityFilterModalProps> = ({
           styles.locationItem,
           location.type === 'school' && styles.locationItemActive,
         ]}
-        onPress={() => setLocation({ type: 'school', value: 'CU总部' })}
+        onPress={() => setLocation({ type: 'school', value: isEnglish ? 'CU HQ' : 'CU总部' })}
       >
-        <Ionicons name="school-outline" size={24} color={COLORS.primary} style={styles.locationIcon} />
+        <View style={styles.locationIconWrapper}>
+          <SchoolCapIcon size={24} color={COLORS.primary} />
+        </View>
         <View style={styles.locationTextContent}>
-          <Text style={styles.locationTitle}>My School</Text>
-          <Text style={styles.locationSubtitle}>CU总部</Text>
+          <Text style={styles.locationTitle}>{t('filters.mySchool', 'My School')}</Text>
+          <Text style={styles.locationSubtitle}>{t('profile.school.cu_headquarters', isEnglish ? 'CU HQ' : 'CU总部')}</Text>
         </View>
       </TouchableOpacity>
 
@@ -454,7 +471,7 @@ export const ActivityFilterModal: React.FC<ActivityFilterModalProps> = ({
         <TouchableOpacity
           testID="filter-modal-close"
           accessibilityLabel="filter-modal-close"
-          style={[styles.floatingClose, { top: insets.top + 120 }]}
+          style={[styles.floatingClose, { bottom: '75%', marginBottom: 12 }]}
           onPress={onClose}
           activeOpacity={0.7}
         >
@@ -463,7 +480,7 @@ export const ActivityFilterModal: React.FC<ActivityFilterModalProps> = ({
         <View style={styles.container}>
           <View style={styles.header}>
             <View style={styles.headerLeft}>
-              <Ionicons name="funnel-outline" size={24} color="#000" />
+              <FunnelFilterIcon size={24} color="#000" />
               <Text style={styles.headerTitle}>Filter</Text>
             </View>
             <TouchableOpacity onPress={handleClearAll}>
@@ -481,10 +498,9 @@ export const ActivityFilterModal: React.FC<ActivityFilterModalProps> = ({
                   onPress={() => setActiveTab(tab.id)}
                 >
                   {activeTab === tab.id && <View style={styles.activeIndicator} />}
-                  <Ionicons
-                    name={tab.icon as any}
+                  <tab.IconComponent
                     size={22}
-                    color={activeTab === tab.id ? COLORS.primary : '#999'}
+                    color={activeTab === tab.id ? COLORS.primary : '#949494'}
                   />
                   <Text style={[styles.tabLabel, activeTab === tab.id && styles.tabLabelActive]}>
                     {tab.label}
@@ -500,8 +516,14 @@ export const ActivityFilterModal: React.FC<ActivityFilterModalProps> = ({
             <TouchableOpacity testID="filter-close-button" style={styles.closeButton} onPress={onClose}>
               <Text style={styles.closeButtonText}>Close</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.applyButton} onPress={handleApply}>
-              <Text style={styles.applyButtonText}>Show Results</Text>
+            <TouchableOpacity
+              style={[styles.applyButton, !hasFilterChanges && styles.applyButtonDisabled]}
+              onPress={handleApply}
+              disabled={!hasFilterChanges}
+            >
+              <Text style={[styles.applyButtonText, !hasFilterChanges && styles.applyButtonTextDisabled]}>
+                {t('filters.showResults', 'Show Results')}
+              </Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -534,7 +556,7 @@ const styles = StyleSheet.create({
   },
   container: {
     height: '75%',
-    backgroundColor: '#FFF',
+    backgroundColor: '#FFFFFF',
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     overflow: 'hidden',
@@ -547,6 +569,7 @@ const styles = StyleSheet.create({
     paddingVertical: 18,
     borderBottomWidth: 1,
     borderBottomColor: COLORS.border,
+    backgroundColor: '#FFFFFF',
   },
   headerLeft: {
     flexDirection: 'row',
@@ -569,7 +592,7 @@ const styles = StyleSheet.create({
   },
   sidebar: {
     width: SIDEBAR_WIDTH,
-    backgroundColor: '#F8F8F8',
+    backgroundColor: '#FAF3F1',
     borderRightWidth: 1,
     borderRightColor: COLORS.border,
   },
@@ -606,7 +629,7 @@ const styles = StyleSheet.create({
   },
   rightPanel: {
     flex: 1,
-    backgroundColor: '#FFF',
+    backgroundColor: '#FAF3F1',
   },
   rightPanelContent: {
     padding: 24,
@@ -709,7 +732,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   closeButtonText: {
-    fontFamily: 'Poppins-Medium',
+    fontFamily: 'Poppins_500Medium',
     fontSize: 15,
     fontWeight: '500',
     color: '#949494',
@@ -722,10 +745,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  applyButtonDisabled: {
+    backgroundColor: '#D1D1D1',
+  },
   applyButtonText: {
-    fontFamily: 'Poppins-Medium',
+    fontFamily: 'Poppins_500Medium',
     fontSize: 15,
     fontWeight: '500',
+    color: '#FFF',
+  },
+  applyButtonTextDisabled: {
     color: '#FFF',
   },
   priceContent: {
@@ -776,15 +805,30 @@ const styles = StyleSheet.create({
   availabilityChips: {
     flexDirection: 'row',
     gap: 12,
+    marginTop: 4,
   },
-  availabilityChip: {
-    flex: 1,
-    paddingVertical: 14,
-    borderRadius: 12,
-    borderWidth: 1.5,
-    borderColor: COLORS.border,
+  availabilityPill: {
+    height: 35,
+    paddingHorizontal: 24,
+    borderRadius: 17.5,
     alignItems: 'center',
+    justifyContent: 'center',
+  },
+  availabilityPillSelected: {
+    backgroundColor: '#FF7763',
+  },
+  availabilityPillUnselected: {
     backgroundColor: '#FFF',
+    borderWidth: 1,
+    borderColor: '#949494',
+  },
+  availabilityPillText: {
+    fontSize: 15,
+    fontWeight: '500',
+    color: '#000',
+  },
+  availabilityPillTextSelected: {
+    color: '#FFF',
   },
   locationOption: {
     flexDirection: 'row',
@@ -869,12 +913,19 @@ const styles = StyleSheet.create({
   locationItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 12,
+    paddingVertical: 16,
     borderBottomWidth: 1,
     borderBottomColor: '#F0F0F0',
   },
   locationItemActive: {
     backgroundColor: 'rgba(255, 119, 99, 0.05)',
+  },
+  locationIconWrapper: {
+    width: 36,
+    height: 36,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 14,
   },
   locationIcon: {
     width: 32,

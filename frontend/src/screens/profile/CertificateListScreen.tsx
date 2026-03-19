@@ -312,8 +312,12 @@ export const CertificateListScreen: React.FC = () => {
 
     if (isPVSA) {
       navigation.navigate('PVSADynamicForm', { activity });
+    } else if (activity.modelContent) {
+      // Has dynamic form - go directly to registration form
+      navigation.navigate('ActivityRegistrationForm', { activity });
     } else {
-      navigation.navigate('ActivityDetail', { activityId: activity.id });
+      // No form - go to activity detail
+      navigation.navigate('ActivityDetail', { activity });
     }
   }, [navigation, t]);
 
@@ -456,7 +460,7 @@ export const CertificateListScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: '#FAF3F1',
   },
   containerDark: {
     backgroundColor: '#000000',

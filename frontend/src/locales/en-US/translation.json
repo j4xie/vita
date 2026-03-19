@@ -189,7 +189,20 @@
       "sendFailed": "Send Failed",
       "sendFailedMessage": "Send failed, try again"
     },
-    "referralCode": "Referral Code: "
+    "referralCode": "Referral Code: ",
+    "wizard": {
+      "steps": {
+        "personal": "Personal Info",
+        "contact": "Contact",
+        "payment": "Payment & Address",
+        "award": "Award & Documents",
+        "other": "Additional Info"
+      },
+      "next": "Next",
+      "previous": "Previous",
+      "step_of": "Step {{current}} of {{total}}",
+      "complete_required": "Please complete all required fields before continuing"
+    }
   },
   "auth": {
     "login": {
@@ -230,7 +243,15 @@
       "verify_code_error": "Verification code validation failed, please try again later",
       "us_phone_not_supported_title": "US Phone Reset Not Supported",
       "us_phone_not_supported_message": "We currently do not support password reset for US phone numbers",
-      "contact_admin": "Please contact administrator for assistance"
+      "contact_admin": "Please contact administrator for assistance",
+      "reset_mode_label": "Verification Method",
+      "reset_mode_phone": "Phone",
+      "reset_mode_email": "Email",
+      "subtitle_email": "Enter your registered email and we'll send you a verification code to help reset your password",
+      "email_label": "Email Address",
+      "email_placeholder": "Enter your registered email",
+      "email_invalid": "Please enter a valid email address",
+      "email_code_sent": "Verification code sent to your email, please check your inbox"
     },
     "reset_password": {
       "title": "Reset Password",
@@ -244,6 +265,7 @@
       "reset_button": "Reset Password",
       "success_title": "Password Reset Successfully",
       "success_message": "Your password has been reset successfully. Please login with your new password",
+      "login_account": "Your login account: {{account}}",
       "reset_failed": "Password reset failed, please try again later",
       "errors": {
         "password_format_rejected": "Password format does not meet requirements",
@@ -319,7 +341,9 @@
         "password_mismatch_hint": "Please ensure both passwords are exactly the same",
         "username_min_length": "Username must be at least 3 characters",
         "password_min_length": "Password must be at least 6 characters",
-        "email_format_required": "Please enter a valid email address"
+        "email_format_required": "Please enter a valid email address",
+        "phone_valid": "✓ Phone number format is valid",
+        "verification_code_valid": "✓ Verification code format is valid"
       },
       "registration": {
         "username_taken": "Username is already taken",
@@ -412,6 +436,7 @@
       "referral_registration": "Referral Registration",
       "referral_description": "Quick signup with referral",
       "referral_badge": "Recommended",
+      "recommended_badge": "Recommended",
       "normal_registration": "Normal Registration",
       "normal_description": "Sign up directly",
       "benefits_title": "After registration, you can:",
@@ -567,7 +592,16 @@
         "school_placeholder": "Select your school",
         "gender_male": "Male",
         "gender_female": "Female",
-        "gender_unknown": "Other"
+        "gender_unknown": "Other",
+        "verify_method_label": "Verification Method",
+        "verify_phone": "Phone Verification",
+        "verify_email": "Email Verification",
+        "email_verification": "Email Confirmation",
+        "email_verification_desc": "Confirm your school email",
+        "email_confirm_notice": "Please check your school email after registration",
+        "your_email": "Your Email",
+        "phone_number_label": "Phone Number",
+        "phone_number_placeholder": "Enter phone number (no verification needed)"
       },
       "success": {
         "title": "Registration Successful",
@@ -589,6 +623,12 @@
           "Get new verification code",
           "Check SMS"
         ]
+      },
+      "email": {
+        "code_sent_title": "Verification Code Sent",
+        "code_sent_message": "Verification code sent to {{email}}, please check your inbox",
+        "send_failed_title": "Send Failed",
+        "send_failed_message": "Failed to send email verification code, please try again later"
       },
       "sms": {
         "code_sent_title": "Verification Code Sent",
@@ -688,7 +728,7 @@
       "community": "Community",
       "rewards": "Rewards",
       "profile": "Profile",
-      "wellbeing": "Consulting",
+      "wellbeing": "CU",
       "qr_code": "QR Code",
       "merchantDashboard": "Dashboard",
       "merchantWriteOff": "Verify",
@@ -864,6 +904,7 @@
       "submit_button": "Confirm Registration",
       "success_title": "Registration Successful",
       "success_message": "You have successfully registered for this activity. Please scan the check-in QR code on-site to complete check-in.",
+      "success_message_with_points": "You have successfully registered for this activity. Please scan the check-in QR code on-site.\n+{{points}} Points",
       "checkin_option": "Check-in Now",
       "checkin_prompt_title": "Start Volunteer Service",
       "checkin_prompt_message": "Registration successful! Would you like to go to the check-in page to start your volunteer service?",
@@ -1026,6 +1067,34 @@
     "no_reviews": "No reviews yet",
     "review_after_activity": "Write reviews after attending activities",
     "school_info": "School Information",
+    "verify_email_for_membership": "Verify school email for free Blue Card",
+    "email_verify": {
+      "title": "Verify School Email",
+      "heading": "Verify School Email",
+      "subtitle": "Verify your .edu email to get a free Blue Card membership",
+      "email_label": "School Email",
+      "code_label": "Verification Code",
+      "code_placeholder": "Enter 6-digit code",
+      "edu_hint": "Only .edu school emails are supported",
+      "send": "Send",
+      "resend": "Resend",
+      "submit": "Verify & Get Membership",
+      "code_sent": "Code sent, please check your email",
+      "error_empty": "Please enter your school email",
+      "error_not_edu": "Please enter a .edu school email",
+      "error_send_failed": "Failed to send, please try again later",
+      "error_code_empty": "Please enter the verification code",
+      "error_code_wrong": "Incorrect verification code",
+      "error_not_logged_in": "Please log in first",
+      "error_verify_failed": "Verification failed, please try again later",
+      "success_title": "Blue Card Activated",
+      "success_message": "Congratulations! Your school email has been verified and your free Blue Card membership is now active. Enjoy your exclusive benefits!",
+      "prompt_title": "Verify School Email",
+      "prompt_message": "Verify your .edu school email to get a free Blue Card membership with exclusive benefits!",
+      "prompt_later": "Later",
+      "prompt_go": "Verify Now",
+      "banner": "Verify school email for free Blue Card"
+    },
     "activity": {
       "not_checked_in_title": "Pending Check-in",
       "checked_in_title": "Checked-in Activities",
@@ -1886,6 +1955,24 @@
       "go_to_settings": "Go to Settings"
     }
   },
+  "activity_share": {
+    "title": "Share",
+    "earn_points": "You can earn {{points}} points for this sharing.",
+    "earn_prefix": "You can earn ",
+    "points_word": "points",
+    "earn_suffix": " for this sharing.",
+    "points_note": "Points are awarded after your invite is accepted.",
+    "qr_hint": "Scan or share this QR code to invite others.",
+    "copy_link": "Copy Link",
+    "save_album": "Save to Album",
+    "copied_title": "Copied",
+    "copied_message": "Link copied to clipboard",
+    "permission_title": "Permission Required",
+    "permission_message": "Please allow photo library access to save QR code.",
+    "saved_title": "Saved",
+    "saved_message": "QR code saved to album",
+    "save_failed": "Failed to save, please try again"
+  },
   "qr": {
     "generation_failed": "QR code generation failed",
     "camera": {
@@ -2253,7 +2340,11 @@
     "map_open_failed": "Failed to open map",
     "verified": "Verified",
     "open_scanner_failed": "Cannot Open Scanner",
-    "open_scanner_failed_message": "Unable to start scan function, please check camera permission"
+    "open_scanner_failed_message": "Unable to start scan function, please check camera permission",
+    "ongoing": "on-going",
+    "upcoming": "upcoming",
+    "ended": "ended",
+    "checkedIn": "checked-in"
   },
   "volunteerHome": {
     "quickActions": "Quick Actions",
@@ -2992,23 +3083,25 @@
     },
     "membership_card": {
       "title": "Membership Card",
-      "coming_soon": "Coming in Next Version"
+      "explore": "Explore membership benefits"
     },
     "points": {
       "title": "My Points",
       "balance": "Points Balance",
-      "coming_soon": "Coming Soon"
+      "view_balance": "View points"
     },
     "coupons": {
       "title": "My Coupons",
       "my_coupons": "Coupon Center",
-      "coming_soon": "Coming Soon",
+      "view_coupons": "View coupons",
       "tab_unused": "Unused",
       "tab_used": "Used",
       "tab_expired": "Expired",
+      "tab_used_expired": "Used·Expired",
       "empty_unused": "No unused coupons",
       "empty_used": "No used coupons",
       "empty_expired": "No expired coupons",
+      "empty_used_expired": "No used or expired coupons",
       "discount_amount": "${{amount}} OFF",
       "discount_rate": "{{rate}}% OFF",
       "min_amount": "Min. ${{amount}}",
@@ -3021,13 +3114,29 @@
       "load_failed": "Failed to load coupons",
       "points": "pts",
       "verified_by": "Verified by",
-      "verified_at": "Used on"
+      "verified_at": "Used on",
+      "available_points": "Available Points",
+      "pts": "PTS",
+      "blue_card": "Blue Card",
+      "earn_multiplier": "Earn × {{rate}}",
+      "use_now": "Use Now",
+      "view_detail": "View",
+      "order_no": "Order: {{no}}",
+      "support_dine_in": "Dine-in supported",
+      "stamp_redeemed": "REDEEMED",
+      "stamp_expired": "EXPIRED",
+      "max_discount": "Max discount ${{amount}}",
+      "earn_back_points": "Earn back {{points}} points",
+      "points_unit": "Points",
+      "no_minimum": "No minimum",
+      "source_merchant": "Merchant",
+      "source_platform": "Platform"
     },
     "mall": {
       "title": "Points Mall",
       "home_title": "Points Mall",
       "points_mall": "Redeem with Points",
-      "coming_soon": "Coming Soon",
+      "browse_items": "Browse items",
       "my_points": "My Points",
       "earn_points": "Earn Points",
       "exchange_now": "Redeem Now",
@@ -3077,6 +3186,12 @@
       },
       "membership": {
         "card_title": "PomeloX Membership Card",
+        "card_level": {
+          "blue": "BLUE CARD",
+          "red": "RED CARD",
+          "red_black": "RED BLACK CARD",
+          "black": "BLACK CARD"
+        },
         "bronze_member": "Bronze Member",
         "silver_member": "Silver Member",
         "gold_member": "Gold Member",
@@ -3207,6 +3322,7 @@
   "membership_purchase": {
     "title": "Membership Levels",
     "current_level": "Current Level",
+    "to_next_tier": "to Next Tier",
     "purchase": "Purchase",
     "price_tbd": "Price TBD",
     "contact_purchase": "Contact Us",
@@ -3214,6 +3330,12 @@
     "buy_get": "Available for Purchase",
     "grant_get": "By Invitation",
     "no_levels": "No membership levels available",
+    "card_labels": {
+      "4": "蓝卡会员 | BLUE CARD",
+      "5": "红卡会员 | RED CARD",
+      "6": "红黑卡会员 | RED-BLACK CARD",
+      "7": "黑卡会员 | BLACK CARD"
+    },
     "benefits": "Benefits",
     "no_benefits": "No benefits available yet",
     "purchase_confirm": "Confirm purchase {{level}} membership?",
@@ -3236,6 +3358,39 @@
       "5": "Merchant & platform coupons; Points mall redemption",
       "6": "Monthly free meal event; Content creation tasks; Ad placement lottery",
       "7": "All benefits + VIP exclusive service"
+    }
+  },
+  "membership_screen": {
+    "title": "Membership",
+    "benefits_title": "Member Benefits",
+    "view_all": "View All",
+    "privileges_title": "Privileges & Services",
+    "points_mall": "Points Mall",
+    "points_mall_subtitle": "Exclusive Rewards",
+    "points_mall_desc": "Redeem curated items with points",
+    "my_coupons": "My Coupons",
+    "my_coupons_subtitle": "View Active",
+    "my_coupons_desc": "View and use your coupons",
+    "refer_friends": "Refer Friends",
+    "refer_friends_subtitle": "Earn",
+    "refer_friends_desc": "Invite friends to earn rewards",
+    "coming_soon": "Coming Soon",
+    "refer_coming_soon_desc": "Refer friends feature is coming soon!",
+    "benefits": {
+      "open_events": "Open Events",
+      "official_updates": "Official Updates",
+      "starter_library": "Welcome Kit",
+      "community_hub": "Community Hub",
+      "early_alerts": "Priority Access",
+      "check_in": "Check-in",
+      "partner_deal": "Partner Deal",
+      "birthday_perk": "Birthday Perk",
+      "priority_rsvp": "Priority RSVP",
+      "badge": "Badge",
+      "member_pin": "Member Pin",
+      "impact_points": "Impact Points",
+      "partner_alerts": "Partner Alerts",
+      "more_benefits": "More Benefits"
     }
   },
   "activity_payment": {
@@ -3311,7 +3466,7 @@
     "loading_form": "Preparing your form...",
     "no_form_title": "Form Not Available",
     "no_form_template": "Form template is not configured yet. Please contact the administrator.",
-    "submit_and_pay": "Submit & Proceed to Payment",
+    "submit_and_pay": "Submit & Pay",
     "error": {
       "no_package_title": "Missing Package",
       "no_package_desc": "Please select a package type before submitting.",
@@ -3323,6 +3478,12 @@
     "auto_filled": "Auto-filled",
     "placeholder_input": "Enter {{label}}",
     "placeholder_select": "Select {{label}}",
+    "fill_in_placeholder": "Please enter...",
+    "proof_upload_hint": "Please ask your club/division president for a screenshot of your service record or other supporting documents.",
+    "start_date": "Start date",
+    "end_date": "End date",
+    "start_time": "Start time",
+    "end_time": "End time",
     "validation": {
       "required": "{{label}} is required",
       "format_error": "{{label}} format is incorrect"

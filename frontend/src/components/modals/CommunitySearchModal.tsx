@@ -12,6 +12,8 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
+import { SearchIcon } from '../common/icons/SearchIcon';
+import { FunnelFilterIcon } from '../common/icons/FilterIcons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const { width: screenWidth } = Dimensions.get('window');
@@ -144,12 +146,12 @@ const resultStyles = StyleSheet.create({
     gap: 2,
   },
   orgText: {
-    fontFamily: 'Poppins-Medium',
+    fontFamily: 'Poppins_500Medium',
     fontSize: 11,
     color: '#949494',
   },
   nameText: {
-    fontFamily: 'Poppins-SemiBold',
+    fontFamily: 'Poppins_600SemiBold',
     fontSize: 15,
     fontWeight: '600',
     color: COLORS.textMain,
@@ -161,7 +163,7 @@ const resultStyles = StyleSheet.create({
     gap: 6,
   },
   locationText: {
-    fontFamily: 'Poppins-Regular',
+    fontFamily: 'Poppins_400Regular',
     fontSize: 12,
     color: COLORS.gray600,
   },
@@ -215,7 +217,7 @@ const CommunitySearchModalInner: React.FC<CommunitySearchModalProps> = ({
     if (!searchText.trim()) {
       return (
         <View style={styles.emptyContainer}>
-          <Ionicons name="search" size={48} color={COLORS.gray400} />
+          <SearchIcon size={48} color={COLORS.gray400} />
           <Text style={styles.emptyTitle}>
             {t('search.startSearching', 'Start searching')}
           </Text>
@@ -227,7 +229,7 @@ const CommunitySearchModalInner: React.FC<CommunitySearchModalProps> = ({
     }
     return (
       <View style={styles.emptyContainer}>
-        <Ionicons name="search-outline" size={48} color={COLORS.gray400} />
+        <SearchIcon size={48} color={COLORS.gray400} />
         <Text style={styles.emptyTitle}>
           {t('community.search.noResults', 'No results found')}
         </Text>
@@ -247,7 +249,7 @@ const CommunitySearchModalInner: React.FC<CommunitySearchModalProps> = ({
         <TouchableOpacity
           testID="search-modal-close"
           accessibilityLabel="search-modal-close"
-          style={[styles.floatingClose, { top: insets.top + 120 }]}
+          style={[styles.floatingClose, { bottom: '75%', marginBottom: 12 }]}
           onPress={handleClose}
           activeOpacity={0.7}
         >
@@ -260,7 +262,7 @@ const CommunitySearchModalInner: React.FC<CommunitySearchModalProps> = ({
           <View style={styles.searchHeader}>
             <View style={styles.searchTitleRow}>
               <View style={styles.searchTitleLeft}>
-                <Ionicons name="funnel-outline" size={20} color="#000" />
+                <FunnelFilterIcon size={20} color="#000" />
                 <Text style={styles.searchTitle}>
                   {t('community.search.title', 'Search')}
                 </Text>
@@ -286,7 +288,7 @@ const CommunitySearchModalInner: React.FC<CommunitySearchModalProps> = ({
                 </TouchableOpacity>
               )}
               <View style={styles.searchIconBtn}>
-                <Ionicons name="search" size={18} color={COLORS.white} />
+                <SearchIcon size={18} color={COLORS.white} />
               </View>
             </View>
           </View>
@@ -365,7 +367,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   searchTitle: {
-    fontFamily: 'Poppins-Bold',
+    fontFamily: 'Poppins_700Bold',
     fontSize: 20,
     fontWeight: '700',
     color: '#000',
@@ -383,7 +385,7 @@ const styles = StyleSheet.create({
   },
   searchInput: {
     flex: 1,
-    fontFamily: 'Poppins-Regular',
+    fontFamily: 'Poppins_400Regular',
     fontSize: 15,
     color: '#000',
     paddingVertical: 0,
@@ -401,7 +403,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   resultCount: {
-    fontFamily: 'Poppins-Medium',
+    fontFamily: 'Poppins_500Medium',
     fontSize: 13,
     color: COLORS.gray500,
     paddingHorizontal: 20,
@@ -419,7 +421,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 40,
   },
   emptyTitle: {
-    fontFamily: 'Poppins-SemiBold',
+    fontFamily: 'Poppins_600SemiBold',
     fontSize: 17,
     fontWeight: '600',
     color: COLORS.textMain,
@@ -428,7 +430,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   emptySubtext: {
-    fontFamily: 'Poppins-Regular',
+    fontFamily: 'Poppins_400Regular',
     fontSize: 14,
     color: COLORS.gray500,
     textAlign: 'center',

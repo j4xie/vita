@@ -479,11 +479,12 @@ export const getCachedMessages = async (): Promise<ChatMessage[]> => {
  * SSE 流式事件类型
  */
 export interface SSEEvent {
-  type: 'start' | 'chunk' | 'done' | 'error';
+  type: 'start' | 'chunk' | 'done' | 'error' | 'progress';
   content?: string;
   session_id?: string;
   full_content?: string;
   message?: string;
+  stage?: 'retrieving' | 'generating';
 }
 
 /**
@@ -494,6 +495,7 @@ export interface StreamCallbacks {
   onDone?: (fullContent: string, sessionId: string) => void;
   onError?: (error: string) => void;
   onStart?: (sessionId: string) => void;
+  onProgress?: (stage: string, message: string) => void;
 }
 
 /**
@@ -630,6 +632,10 @@ export const sendMessageStream = async (
           if (!event) continue;
 
           switch (event.type) {
+            case 'progress':
+              callbacks.onProgress?.(event.stage || '', event.message || '');
+              break;
+
             case 'start':
               if (event.session_id) {
                 finalSessionId = event.session_id;
@@ -686,6 +692,9 @@ export const sendMessageStream = async (
         if (!event) continue;
 
         switch (event.type) {
+          case 'progress':
+            callbacks.onProgress?.(event.stage || '', event.message || '');
+            break;
           case 'start':
             if (event.session_id) {
               finalSessionId = event.session_id;

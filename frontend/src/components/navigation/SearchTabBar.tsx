@@ -12,6 +12,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { LinearGradient } from 'expo-linear-gradient';
+import { SearchIcon } from '../common/icons/SearchIcon';
 import { BlurView } from 'expo-blur';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, {
@@ -312,7 +313,7 @@ export const SearchTabBar: React.FC<SearchTabBarProps> = ({
         {/* 搜索区域 */}
         <Animated.View style={[styles.searchArea, searchAreaAnimatedStyle]}>
           <Animated.View style={[styles.searchInputContainer, searchInputAnimatedStyle]}>
-            <Ionicons name="search" size={18} color="#9CA3AF" />
+            <SearchIcon size={18} color="#9CA3AF" />
             <TextInput
               ref={searchInputRef}
               style={styles.searchInput}
@@ -346,8 +347,7 @@ export const SearchTabBar: React.FC<SearchTabBarProps> = ({
               onPress={handleSearchPress}
               activeOpacity={0.8}
             >
-              <Ionicons
-                name="search"
+              <SearchIcon
                 size={22}
                 color="#007AFF"
               />

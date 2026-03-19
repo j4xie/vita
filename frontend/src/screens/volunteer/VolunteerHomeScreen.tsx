@@ -46,6 +46,7 @@ import {
 import { useSchoolData } from '../../hooks/useSchoolData';
 import { timeService } from '../../utils/UnifiedTimeService';
 import { SafeAlert } from '../../utils/SafeAlert';
+import { KeyboardDoneAccessory, KEYBOARD_ACCESSORY_ID } from '../../components/common/KeyboardDismissWrapper';
 
 const { width: screenWidth } = Dimensions.get('window');
 
@@ -362,7 +363,7 @@ export const VolunteerHomeScreen: React.FC = () => {
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: isDarkMode ? '#000000' : '#FDF7F2' }]}>
+    <View style={[styles.container, { backgroundColor: isDarkMode ? '#000000' : '#FAF3F1' }]}>
       {/* Header */}
       <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
         <TouchableOpacity
@@ -549,6 +550,7 @@ export const VolunteerHomeScreen: React.FC = () => {
                       returnKeyType="done"
                       blurOnSubmit={true}
                       onSubmitEditing={() => Keyboard.dismiss()}
+                      inputAccessoryViewID={Platform.OS === 'ios' ? KEYBOARD_ACCESSORY_ID : undefined}
                     />
                     <Text style={styles.characterCount}>
                       {workDescription.length}/100
@@ -591,6 +593,7 @@ export const VolunteerHomeScreen: React.FC = () => {
           </TouchableWithoutFeedback>
         </KeyboardAvoidingView>
       </Modal>
+      <KeyboardDoneAccessory />
     </View>
   );
 };

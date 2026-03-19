@@ -27,6 +27,7 @@ import { performTimeEntry, getPersonalVolunteerRecords } from '../../services/vo
 import { timeService } from '../../utils/UnifiedTimeService';
 import { SafeAlert } from '../../utils/SafeAlert';
 import { LoaderOne } from '../../components/ui/LoaderOne';
+import { KeyboardDoneAccessory, KEYBOARD_ACCESSORY_ID } from '../../components/common/KeyboardDismissWrapper';
 
 export const TimeEntryScreen: React.FC = () => {
   const { t } = useTranslation();
@@ -469,6 +470,7 @@ export const TimeEntryScreen: React.FC = () => {
           showsVerticalScrollIndicator={false}
           style={styles.scrollContent}
           keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag"
         >
           {/* 日期选择卡片 */}
           <TouchableOpacity
@@ -545,6 +547,7 @@ export const TimeEntryScreen: React.FC = () => {
               value={location}
               onChangeText={setLocation}
               maxLength={50}
+              inputAccessoryViewID={Platform.OS === 'ios' ? KEYBOARD_ACCESSORY_ID : undefined}
             />
           </View>
 
@@ -559,6 +562,7 @@ export const TimeEntryScreen: React.FC = () => {
               onChangeText={setDescription}
               multiline
               maxLength={200}
+              inputAccessoryViewID={Platform.OS === 'ios' ? KEYBOARD_ACCESSORY_ID : undefined}
             />
           </View>
         </ScrollView>
@@ -685,6 +689,7 @@ export const TimeEntryScreen: React.FC = () => {
                     maxLength={5}
                     returnKeyType="done"
                     onSubmitEditing={() => Keyboard.dismiss()}
+                    inputAccessoryViewID={Platform.OS === 'ios' ? KEYBOARD_ACCESSORY_ID : undefined}
                   />
 
                   {/* 完成按钮 - 主操作 */}
@@ -753,6 +758,7 @@ export const TimeEntryScreen: React.FC = () => {
           </View>
         </View>
       )}
+      <KeyboardDoneAccessory />
     </SafeAreaView>
   );
 };
@@ -760,7 +766,7 @@ export const TimeEntryScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F5F7',
+    backgroundColor: '#FAF3F1',
   },
   header: {
     flexDirection: 'row',

@@ -6,6 +6,9 @@ import Svg, { Path } from 'react-native-svg';
 import { useTranslation } from 'react-i18next';
 import { FrontendActivity } from '../../utils/activityAdapter';
 import { useSchoolLogos, getSchoolLogoSync } from '../../hooks/useSchoolLogos';
+import { formatDateRange } from '../../utils/cardUtils';
+import { CalendarIcon, LocationIcon, ShareIcon } from '../icons/ActivityIcons';
+import { useRegisteredAvatars, getAvatarColor } from '../../hooks/useRegisteredAvatars';
 
 interface FeaturedActivityCardProps {
     activity: FrontendActivity;
@@ -13,11 +16,11 @@ interface FeaturedActivityCardProps {
 }
 
 const { width: screenWidth } = Dimensions.get('window');
-const CARD_WIDTH = Math.round(screenWidth * 0.56);
+const CARD_WIDTH = Math.round(screenWidth * 0.65);
 const CARD_HEIGHT = Math.round(CARD_WIDTH * 1.286);
 
-// 底部面板几何参数 - Figma: 34.5%
-const BOTTOM_PANEL_HEIGHT = Math.round(CARD_HEIGHT * 0.345);
+// 底部面板几何参数
+const BOTTOM_PANEL_HEIGHT = Math.round(CARD_HEIGHT * 0.30);
 const PANEL_TOP_Y = CARD_HEIGHT - BOTTOM_PANEL_HEIGHT;
 
 const LOGO_SIZE = 59;
@@ -25,6 +28,13 @@ const LOGO_RADIUS = LOGO_SIZE / 2;
 const LOGO_LEFT = 13;
 const NOTCH_RADIUS = 36;
 const CORNER_R = 32;
+
+// 底部信息区域
+const CONTENT_PADDING = 12;
+
+// 两列布局
+const COL_GAP = 8;
+const LEFT_COL_WIDTH = Math.round((CARD_WIDTH - 2 * CONTENT_PADDING - COL_GAP) * 0.42);
 
 // Logo 垂直位置：极高位悬浮
 const LOGO_CENTER_Y = -7;
@@ -38,6 +48,7 @@ const INTERCEPT_X = Math.sqrt(Math.pow(NOTCH_RADIUS, 2) - Math.pow(INTERCEPT_Y -
 const FeaturedActivityCardComponent = ({ activity, onPress }: FeaturedActivityCardProps) => {
     const { t } = useTranslation();
     const { loading: schoolsLoading } = useSchoolLogos();
+    const { users: registeredUsers } = useRegisteredAvatars(activity.id?.toString());
 
     const logoUrl = useMemo(() => {
         // 优先：通过活动标题/地点文本匹配（缓存加载后）
@@ -60,6 +71,12 @@ const FeaturedActivityCardComponent = ({ activity, onPress }: FeaturedActivityCa
     const maxCount = activity.maxAttendees || 100;
     const progress = maxCount > 0 ? Math.min(registeredCount / maxCount, 1) : 0;
 
+    // 是否有真实报名用户数据
+    const hasRealUsers = registeredUsers.length > 0;
+    const dateDisplay = formatDateRange(activity.date || '', activity.endDate, { padZero: true });
+    const timeDisplay = activity.time && activity.time !== '00:00' ? activity.time : '';
+    const dateTimeDisplay = timeDisplay ? `${dateDisplay}  ${timeDisplay}` : dateDisplay;
+
     return (
         <TouchableOpacity style={styles.container} onPress={onPress} activeOpacity={0.95}>
             {/* 【层级 0】 底层背景照片 */}
@@ -67,16 +84,9 @@ const FeaturedActivityCardComponent = ({ activity, onPress }: FeaturedActivityCa
 
             {/* 【层级 1】 半透明蒙版层 - Figma: 白色 80% */}
             <View style={[styles.bottomPanelContainer, { overflow: 'visible' }]}>
-                <Svg height={BOTTOM_PANEL_HEIGHT + 1} width={CARD_WIDTH + 1} style={[StyleSheet.absoluteFill, { left: 0, bottom: -1 }]}>
+                <Svg height={BOTTOM_PANEL_HEIGHT} width={CARD_WIDTH} style={StyleSheet.absoluteFill}>
                     <Path
-                        d={`M0,${BOTTOM_PANEL_HEIGHT + 1}
-                           L0,0
-                           L${Math.max(0, NOTCH_CENTER_X - INTERCEPT_X - CORNER_R)},0
-                           Q${NOTCH_CENTER_X - INTERCEPT_X},0 ${NOTCH_CENTER_X - INTERCEPT_X},${INTERCEPT_Y}
-                           A ${NOTCH_RADIUS},${NOTCH_RADIUS} 0 0 0 ${NOTCH_CENTER_X + INTERCEPT_X},${INTERCEPT_Y}
-                           Q${NOTCH_CENTER_X + INTERCEPT_X},0 ${Math.min(CARD_WIDTH + 1, NOTCH_CENTER_X + INTERCEPT_X + CORNER_R)},0
-                           L${CARD_WIDTH + 1},0
-                           L${CARD_WIDTH + 1},${BOTTOM_PANEL_HEIGHT + 1} Z`}
+                        d={`M${CARD_WIDTH} ${BOTTOM_PANEL_HEIGHT}H0V0H1.19923C3.99109 0 6.366 1.94728 7.33869 4.56422C12.6425 18.8336 26.3839 29 42.5 29C58.6161 29 72.3575 18.8336 77.6613 4.56422C78.634 1.94729 81.0089 0 83.8008 0H${CARD_WIDTH}L${CARD_WIDTH} ${BOTTOM_PANEL_HEIGHT}Z`}
                         fill="rgba(255, 255, 255, 0.8)"
                     />
                 </Svg>
@@ -93,96 +103,120 @@ const FeaturedActivityCardComponent = ({ activity, onPress }: FeaturedActivityCa
                 </View>
             </View>
 
-            {/* 【层级 2】 内容层 */}
+            {/* 【层级 2】 右上箭头 */}
             <View style={styles.topRightArrow}>
-                <Ionicons name="arrow-up" size={18} color="#111" style={{ transform: [{ rotate: '45deg' }] }} />
+                <ShareIcon size={20} color="#949494" />
             </View>
 
-            <View style={styles.contentOverlay}>
-                {/* 左上角：状态提示 - 优先级：活动结束 > 停止报名 > 开放报名 */}
-                {(() => {
-                    const now = new Date();
-                    const regStartTime = activity.registrationStartTime ? new Date(activity.registrationStartTime) : null;
-                    const regEndTime = activity.registrationEndTime ? new Date(activity.registrationEndTime) : null;
+            {/* 状态徽章 — 直接在卡片层级，绝对定位 */}
+            {(() => {
+                const now = new Date();
+                const regEndTime = activity.registrationEndTime ? new Date(activity.registrationEndTime) : null;
 
-                    // 计算活动是否已结束 - 基于活动结束时间
-                    const activityEndDate = activity.endDate || activity.date;
-                    const activityEndTime = activityEndDate ? new Date(activityEndDate.replace(/-/g, '/') + ' 23:59:59') : null;
-                    const isActivityEnded = activity.status === 'ended' || (activityEndTime && !isNaN(activityEndTime.getTime()) && now > activityEndTime);
+                // 计算活动是否已结束 - 基于活动结束时间
+                const activityEndDate = activity.endDate || activity.date;
+                const activityEndTime = activityEndDate ? new Date(activityEndDate.replace(/-/g, '/') + ' 23:59:59') : null;
+                const isActivityEnded = activity.status === 'ended' || (activityEndTime && !isNaN(activityEndTime.getTime()) && now > activityEndTime);
 
-                    // 最高优先级：活动结束
-                    if (isActivityEnded) {
-                        return (
-                            <BlurView intensity={80} tint="light" style={[styles.deadlineTopLeft, styles.deadlineBadge]}>
-                                <Text style={styles.activityEndedHint}>{t('activities.activity_ended', '活动结束')}</Text>
-                            </BlurView>
-                        );
-                    }
-
-                    // 第二优先级：停止报名
-                    if (regEndTime && now > regEndTime) {
-                        return (
-                            <BlurView intensity={80} tint="light" style={[styles.deadlineTopLeft, styles.deadlineBadge]}>
-                                <Text style={styles.deadlineHint}>{t('activities.status.registration_closed', '停止报名')}</Text>
-                            </BlurView>
-                        );
-                    }
-
-                    // 第三优先级：开放报名（默认状态）
+                // 最高优先级：活动结束
+                if (isActivityEnded) {
                     return (
                         <BlurView intensity={80} tint="light" style={[styles.deadlineTopLeft, styles.deadlineBadge]}>
-                            <Text style={styles.registrationOpenHint}>{t('activities.status.registration_open', '开放报名')}</Text>
+                            <Text style={styles.activityEndedHint}>{t('activities.activity_ended', '活动结束')}</Text>
                         </BlurView>
                     );
-                })()}
+                }
 
+                // 第二优先级：停止报名
+                if (regEndTime && now > regEndTime) {
+                    return (
+                        <BlurView intensity={80} tint="light" style={[styles.deadlineTopLeft, styles.deadlineBadge]}>
+                            <Text style={styles.deadlineHint}>{t('activities.status.registration_closed', '停止报名')}</Text>
+                        </BlurView>
+                    );
+                }
+
+                // 第三优先级：开放报名（默认状态）
+                return (
+                    <BlurView intensity={80} tint="light" style={[styles.deadlineTopLeft, styles.deadlineBadge]}>
+                        <Text style={styles.registrationOpenHint}>{t('activities.status.registration_open', '开放报名')}</Text>
+                    </BlurView>
+                );
+            })()}
+
+            {/* 【层级 3】 底部内容层 */}
+            <View style={styles.bottomContent}>
+                {/* 标题 — 固定2行高度，左边界对齐 logo 右侧 */}
+                <View style={styles.titleContainer}>
+                    <Text style={styles.activityTitle} numberOfLines={2}>
+                        {activity.title || 'Activity Title'}
+                    </Text>
+                </View>
+
+                {/* 两列: 左=头像+胶囊, 右=日期时间+地点 */}
                 <View style={styles.infoGrid}>
-                    {/* 左侧：头像堆（有真实数据时）+ 报名数字和状态栏 */}
                     <View style={styles.leftColumn}>
-                        {activity.registeredUserAvatars && activity.registeredUserAvatars.length > 0 && (
-                            <View style={styles.avatarStack}>
-                                {activity.registeredUserAvatars.slice(0, 3).map((avatarUrl, i) => (
-                                    <Image
-                                        key={i}
-                                        source={{ uri: avatarUrl }}
-                                        style={[styles.miniAvatar, { marginLeft: i === 0 ? 0 : -3, zIndex: 3 - i }]}
-                                    />
-                                ))}
-                                {registeredCount > 3 && (
-                                    <View style={[styles.miniAvatar, styles.moreAvatar, { marginLeft: -3, zIndex: 0 }]}>
-                                        <Text style={styles.moreAvatarText}>+{Math.min(registeredCount - 3, 99)}</Text>
-                                    </View>
-                                )}
-                            </View>
-                        )}
-                        <View style={styles.registrationSection}>
-                            <View style={styles.registrationRow}>
-                                <Text style={styles.progressNum}>{registeredCount}/{maxCount}</Text>
-                                <Text style={styles.progressLabel}>Registered</Text>
-                            </View>
-                            <View style={styles.progressBarBg}>
-                                <View style={[styles.progressBarFill, { width: `${progress * 100}%` }]} />
+                        {/* 胶囊 + 头像：头像从胶囊垂直中心向上铺开 */}
+                        <View style={[styles.registrationWrapper, (hasRealUsers || registeredCount > 0) && styles.registrationWrapperWithAvatars]}>
+                            {(hasRealUsers || registeredCount > 0) && (
+                                <View style={styles.avatarStack}>
+                                    {hasRealUsers ? (
+                                        registeredUsers.slice(0, 3).map((user, i) => (
+                                            user.avatar ? (
+                                                <Image
+                                                    key={user.userId}
+                                                    source={{ uri: user.avatar }}
+                                                    style={[styles.miniAvatar, { marginLeft: i === 0 ? 0 : -5, zIndex: 3 - i }]}
+                                                />
+                                            ) : (
+                                                <View
+                                                    key={user.userId}
+                                                    style={[styles.miniAvatar, { marginLeft: i === 0 ? 0 : -5, zIndex: 3 - i, backgroundColor: getAvatarColor(user.userId), justifyContent: 'center', alignItems: 'center' }]}
+                                                >
+                                                    <Text style={{ color: '#fff', fontSize: 12, fontWeight: '700' }}>{user.initial}</Text>
+                                                </View>
+                                            )
+                                        ))
+                                    ) : (
+                                        Array.from({ length: Math.min(registeredCount, 3) }, (_, i) => (
+                                            <Image
+                                                key={i}
+                                                source={{ uri: `https://ui-avatars.com/api/?name=${['A','B','C'][i]}&background=${['FF6B6B','4ECDC4','FFE66D'][i]}&color=fff&size=52&bold=true` }}
+                                                style={[styles.miniAvatar, { marginLeft: i === 0 ? 0 : -5, zIndex: 3 - i }]}
+                                            />
+                                        ))
+                                    )}
+                                    {registeredCount > 3 && (
+                                        <View style={[styles.miniAvatar, styles.moreAvatar, { marginLeft: -5, zIndex: 0 }]}>
+                                            <Text style={styles.moreAvatarText}>+{Math.min(registeredCount - 3, 99)}</Text>
+                                        </View>
+                                    )}
+                                </View>
+                            )}
+                            <View style={styles.registrationSection}>
+                                <Text style={styles.registrationText} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
+                                    <Text style={styles.progressNum}>{registeredCount}/{maxCount} </Text>
+                                    <Text style={styles.progressLabel}>Registered</Text>
+                                </Text>
+                                <View style={styles.progressBarBg}>
+                                    <View style={[styles.progressBarFill, { width: `${progress * 100}%`, backgroundColor: progress >= 0.75 ? '#FE654F' : '#2FD573' }]} />
+                                </View>
                             </View>
                         </View>
                     </View>
 
-                    {/* 中间和右侧：活动名字、日期、地点 */}
                     <View style={styles.rightColumn}>
-                        {/* 活动名字 - 自适应，最多2行 */}
-                        <Text style={styles.activityTitle} numberOfLines={2}>
-                            {activity.title || "Activity Title"}
-                        </Text>
-
-                        {/* 日期 */}
                         <View style={styles.metaRow}>
-                            <Ionicons name="calendar-clear-outline" size={14} color="#666" style={{marginRight: 4}} />
-                            <Text style={styles.metaText} numberOfLines={2}>{activity.date?.replace(/-/g, '/')}{activity.endDate ? `\n- ${activity.endDate.replace(/-/g, '/')}` : ''}</Text>
+                            <View style={styles.metaIcon}>
+                                <CalendarIcon />
+                            </View>
+                            <Text style={styles.dateText} numberOfLines={2}>{dateTimeDisplay}</Text>
                         </View>
-
-                        {/* 地点 */}
-                        <View style={[styles.metaRow, {alignItems: 'flex-start'}]}>
-                            <Ionicons name="location-outline" size={14} color="#666" style={{marginRight: 4, marginTop: 1}} />
-                            <Text style={[styles.metaText, {flexShrink: 1}]} numberOfLines={2}>{activity.location || "Location"}</Text>
+                        <View style={styles.metaRow}>
+                            <View style={styles.metaIcon}>
+                                <LocationIcon />
+                            </View>
+                            <Text style={styles.locationText} numberOfLines={1}>{activity.location || 'Location'}</Text>
                         </View>
                     </View>
                 </View>
@@ -210,12 +244,16 @@ const styles = StyleSheet.create({
         borderBottomLeftRadius: 20,
         borderBottomRightRadius: 20,
     },
-    contentOverlay: {
-        ...StyleSheet.absoluteFillObject,
-        paddingHorizontal: 14,
-        paddingBottom: 16,
-        paddingTop: 12,
-        justifyContent: 'flex-end',
+    bottomContent: {
+        position: 'absolute',
+        bottom: 0,
+        left: 0,
+        right: 0,
+        height: BOTTOM_PANEL_HEIGHT,
+        paddingHorizontal: CONTENT_PADDING,
+        paddingTop: 8,
+        paddingBottom: 10,
+        overflow: 'hidden',
     },
     deadlineTopLeft: {
         position: 'absolute',
@@ -241,30 +279,51 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         zIndex: 30,
     },
+    titleContainer: {
+        maxHeight: 40, // 最多2行 × lineHeight 20
+        marginLeft: LOGO_LEFT + LOGO_SIZE - CONTENT_PADDING + 19,
+        alignItems: 'center',
+    },
     infoGrid: {
         flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'flex-end',
-        marginHorizontal: -13, // extend to near card edges (14-1=13px)
+        alignItems: 'stretch',
+        gap: COL_GAP,
+        marginTop: 1,
+        flex: 1,
     },
     leftColumn: {
-        width: 96,
-        alignItems: 'flex-start',
+        width: LEFT_COL_WIDTH,
+        justifyContent: 'center',
+    },
+    registrationWrapper: {
+        position: 'relative',
+        alignSelf: 'stretch',
+    },
+    registrationWrapperWithAvatars: {
+        // 头像(26px) + 间距(1px) = 27px 预留空间
+        paddingTop: 27,
     },
     rightColumn: {
-        width: 122,
-        alignItems: 'flex-start',
+        flex: 1,
+        justifyContent: 'center',
+        gap: 6,
     },
     avatarStack: {
         flexDirection: 'row',
-        marginBottom: 4,
         alignItems: 'center',
-        paddingLeft: 4,
+        position: 'absolute',
+        // 头像在胶囊上方2px，水平居中
+        // 胶囊从 paddingTop(28) 开始，头像底部 = 28 - 2 = 26，头像顶部 = 26 - 26 = 0
+        top: 0,
+        left: 0,
+        right: 0,
+        justifyContent: 'center',
+        zIndex: 2,
     },
     miniAvatar: {
-        width: 18,
-        height: 18,
-        borderRadius: 9,
+        width: 26,
+        height: 26,
+        borderRadius: 13,
         borderWidth: 1.5,
         borderColor: '#fff',
     },
@@ -274,34 +333,32 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
     },
     moreAvatarText: {
-        fontSize: 6,
+        fontSize: 8,
         color: '#fff',
         fontWeight: '900',
     },
     registrationSection: {
-        backgroundColor: 'rgba(255, 255, 255, 0.85)',
-        borderRadius: 84,
+        backgroundColor: 'rgba(255, 255, 255, 0.4)',
+        borderRadius: 13,
         paddingHorizontal: 10,
         paddingVertical: 4,
-        width: 96,
+        alignSelf: 'stretch',
     },
-    registrationRow: {
-        flexDirection: 'row',
-        alignItems: 'baseline',
-        marginBottom: 2,
+    registrationText: {
+        lineHeight: 18,
     },
     progressNum: {
-        fontSize: 8,
-        fontWeight: '400',
-        color: '#1a1a1a',
-        lineHeight: 12,
+        fontSize: 13,
+        fontWeight: '600',
+        color: '#1B1B1B',
+        lineHeight: 18,
     },
     progressLabel: {
-        fontSize: 8,
-        color: '#939393',
+        fontSize: 12,
+        color: '#949494',
         marginLeft: 4,
         fontWeight: '400',
-        lineHeight: 12,
+        lineHeight: 18,
     },
     deadlineHint: {
         fontSize: 12,
@@ -322,34 +379,46 @@ const styles = StyleSheet.create({
         height: 5,
         backgroundColor: '#F8F8F8',
         borderRadius: 2.5,
-        width: 77,
+        width: '100%',
         overflow: 'hidden',
-        marginTop: 2,
+        marginTop: 3,
     },
     progressBarFill: {
         height: 5,
         borderRadius: 2.5,
-        backgroundColor: '#2FD573',
+        backgroundColor: '#FE654F',
     },
     activityTitle: {
         fontSize: 15,
-        fontFamily: 'Poppins-SemiBold',
+        fontFamily: 'Poppins_600SemiBold',
         fontWeight: '600',
-        color: '#000',
-        marginBottom: 4,
-        lineHeight: 22.5,
+        color: '#111827',
+        lineHeight: 20,
+        textAlign: 'center',
     },
     metaRow: {
         flexDirection: 'row',
-        alignItems: 'center',
-        marginBottom: 2,
+        alignItems: 'flex-start',
     },
-    metaText: {
-        fontSize: 10,
-        fontFamily: 'Poppins-Regular',
+    metaIcon: {
+        marginRight: 4,
+        marginTop: 1,
+    },
+    dateText: {
+        fontSize: 12,
+        fontFamily: 'Poppins_400Regular',
         fontWeight: '400',
-        color: '#000',
-        lineHeight: 15,
+        color: '#4B5563',
+        lineHeight: 16,
+        flex: 1,
+    },
+    locationText: {
+        fontSize: 12,
+        fontFamily: 'Poppins_400Regular',
+        fontWeight: '400',
+        color: '#4B5563',
+        lineHeight: 16,
+        flex: 1,
     },
     logoContainer: {
         position: 'absolute',

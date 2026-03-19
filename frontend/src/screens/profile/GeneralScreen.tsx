@@ -512,7 +512,7 @@ export const GeneralScreen: React.FC = () => {
   const styles = StyleSheet.create({
     container: {
       flex: 1,
-      backgroundColor: '#f2f2f7', // Default light background
+      backgroundColor: '#FAF3F1',
     },
     safeArea: {
       flex: 1,

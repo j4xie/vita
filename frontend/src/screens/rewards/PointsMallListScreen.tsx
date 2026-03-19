@@ -11,6 +11,7 @@ import {
 import { useNavigation } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { SearchIcon } from '../../components/common/icons/SearchIcon';
 import { useTranslation } from 'react-i18next';
 import { Product, ProductCategory } from '../../types/pointsMall';
 import { CategoryTabBar, Category } from '../../components/rewards/CategoryTabBar';
@@ -201,7 +202,7 @@ export const PointsMallListScreen: React.FC = () => {
         </Text>
         <View style={styles.headerRight}>
           <TouchableOpacity style={styles.iconButton}>
-            <Ionicons name="search-outline" size={24} color="#000000" />
+            <SearchIcon size={24} color="#000000" />
           </TouchableOpacity>
         </View>
       </View>
@@ -252,7 +253,7 @@ export const PointsMallListScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F5F7',
+    backgroundColor: '#FAF3F1',
   },
 
   // 顶部导航

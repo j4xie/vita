@@ -7,10 +7,11 @@ import {
     StyleSheet,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { DiagonalArrowIcon } from '../common/icons/FilterIcons';
+import { SchoolMarkerIcon } from '../common/icons/CommunityIcons';
 
-const CARD_HEIGHT = 84;
-const CIRCLE_SIZE = 119;
-const ARROW_SIZE = 41;
+const IMAGE_SIZE = 90;
+const ARROW_SIZE = 38;
 
 interface CommunityMerchantCardProps {
     merchant: {
@@ -40,9 +41,24 @@ export const CommunityMerchantCard: React.FC<CommunityMerchantCardProps> = React
 }) => {
     const merchantName = merchant.title || merchant.name || 'Merchant';
     const orgName = merchant.schoolName || '';
-    const category = merchant.category || '';
     const distance = merchant.distance || '';
     const earnMultiplier = merchant.earnPoints || 1;
+    const rating = merchant.rating || 0;
+    const reviewCount = merchant.reviewCount || 0;
+    const category = merchant.category || '';
+
+    const reviewDisplay = reviewCount > 0 ? `(${reviewCount}+)` : '';
+
+    // Build tags list
+    const displayTags: string[] = [];
+    if (earnMultiplier >= 1) {
+        // Earn tag handled separately with special styling
+    }
+    if (merchant.tags && merchant.tags.length > 0) {
+        displayTags.push(...merchant.tags.slice(0, 2));
+    } else if (category) {
+        displayTags.push(...category.split(',').map(t => t.trim()).filter(Boolean).slice(0, 2));
+    }
 
     return (
         <TouchableOpacity
@@ -50,62 +66,68 @@ export const CommunityMerchantCard: React.FC<CommunityMerchantCardProps> = React
             onPress={onPress}
             activeOpacity={0.7}
         >
-            {/* Circle Image - matching Figma SmallActivityCard Ellipse */}
-            <View style={styles.circleWrapper}>
+            {/* Rectangular Image */}
+            <View style={styles.imageWrapper}>
                 <Image
                     source={{
                         uri: merchant.image || 'https://images.unsplash.com/photo-1497366216548-37526070297c?w=200',
                     }}
-                    style={styles.circleImage}
+                    style={styles.image}
                     resizeMode="cover"
                 />
             </View>
 
-            {/* Text Frame - matching Figma list item layout */}
+            {/* Text Content */}
             <View style={styles.textFrame}>
-                {/* Name + Title group */}
-                <View style={styles.nameGroup}>
-                    {/* Row 1: School/Org info (gray small text) */}
-                    <View style={styles.orgRow}>
-                        <Ionicons name="school-outline" size={12} color={isDarkMode ? '#777' : '#949494'} />
-                        <Text style={[styles.orgText, isDarkMode && styles.orgTextDark]} numberOfLines={1}>
-                            {orgName}{distance ? ` · ${distance}` : ''}
-                        </Text>
-                    </View>
-
-                    {/* Row 2: Merchant Name (bold) */}
-                    <Text style={[styles.merchantName, isDarkMode && styles.textWhite]} numberOfLines={2}>
-                        {merchantName}
+                {/* Row 1: School + Distance */}
+                <View style={styles.orgRow}>
+                    <SchoolMarkerIcon size={12} color={isDarkMode ? '#777' : '#949494'} />
+                    <Text style={[styles.orgText, isDarkMode && styles.orgTextDark]} numberOfLines={1}>
+                        {orgName}{distance ? ` · ${distance}` : ''}
                     </Text>
                 </View>
 
-                {/* Row 3: Location + Earn badge */}
-                <View style={styles.metaRow}>
-                    {merchant.location ? (
-                        <View style={styles.locationRow}>
-                            <Ionicons name="location-outline" size={13} color={isDarkMode ? '#777' : '#949494'} />
-                            <Text style={[styles.locationText, isDarkMode && styles.orgTextDark]} numberOfLines={1}>
-                                {merchant.location}
+                {/* Row 2: Name + Rating */}
+                <View style={styles.nameRatingRow}>
+                    <Text style={[styles.merchantName, isDarkMode && styles.textWhite]} numberOfLines={1}>
+                        {merchantName}
+                    </Text>
+                    {rating > 0 && (
+                        <View style={styles.ratingRow}>
+                            <Ionicons name="star" size={14} color="#FFB800" />
+                            <Text style={[styles.ratingText, isDarkMode && styles.textWhite]}>
+                                {rating.toFixed(1)}
+                            </Text>
+                            {reviewDisplay ? (
+                                <Text style={[styles.reviewCountText, isDarkMode && styles.orgTextDark]}>
+                                    {reviewDisplay}
+                                </Text>
+                            ) : null}
+                        </View>
+                    )}
+                </View>
+
+                {/* Row 3: Tags */}
+                <View style={styles.tagsRow}>
+                    {earnMultiplier >= 1 && (
+                        <View style={[styles.earnTag, earnMultiplier > 1 && styles.earnTagMultiplier]}>
+                            <Text style={styles.earnTagText}>
+                                {earnMultiplier > 1 ? `Earn × ${earnMultiplier}` : 'Earn'}
                             </Text>
                         </View>
-                    ) : (
-                        earnMultiplier > 1 ? (
-                            <View style={styles.earnBadge}>
-                                <Text style={styles.earnText}>Earn x {earnMultiplier}</Text>
-                            </View>
-                        ) : category ? (
-                            <View style={[styles.categoryTag, isDarkMode && styles.categoryTagDark]}>
-                                <Text style={[styles.categoryTagText, isDarkMode && styles.categoryTagTextDark]}>{category}</Text>
-                            </View>
-                        ) : null
                     )}
+                    {displayTags.map((tag, index) => (
+                        <View key={`${tag}-${index}`} style={[styles.categoryTag, isDarkMode && styles.categoryTagDark]}>
+                            <Text style={[styles.categoryTagText, isDarkMode && styles.categoryTagTextDark]}>{tag}</Text>
+                        </View>
+                    ))}
                 </View>
             </View>
 
             {/* Arrow Button - right side */}
             <View style={styles.arrowWrapper}>
                 <View style={[styles.arrowCircle, isDarkMode && styles.arrowCircleDark]}>
-                    <Ionicons name="arrow-up" size={18} color={isDarkMode ? '#fff' : '#000'} style={{ transform: [{ rotate: '45deg' }] }} />
+                    <DiagonalArrowIcon size={16} color={isDarkMode ? '#fff' : '#949494'} />
                 </View>
             </View>
         </TouchableOpacity>
@@ -116,40 +138,31 @@ CommunityMerchantCard.displayName = 'CommunityMerchantCard';
 
 const styles = StyleSheet.create({
     container: {
-        height: CARD_HEIGHT,
-        marginBottom: 20,
-        overflow: 'hidden',
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: 16,
         backgroundColor: 'transparent',
     },
 
-    // Circle image - matching SmallActivityCard
-    circleWrapper: {
-        position: 'absolute',
-        left: -36,
-        top: -19,
-        width: CIRCLE_SIZE,
-        height: CIRCLE_SIZE,
-        borderRadius: CIRCLE_SIZE / 2,
+    // Rectangular image
+    imageWrapper: {
+        width: IMAGE_SIZE,
+        height: IMAGE_SIZE,
+        borderRadius: 14,
         overflow: 'hidden',
-        alignItems: 'center',
-        justifyContent: 'center',
-        zIndex: 1,
+        backgroundColor: '#eee',
     },
-    circleImage: {
-        ...StyleSheet.absoluteFillObject,
+    image: {
+        width: '100%',
+        height: '100%',
     },
 
     // Text frame
     textFrame: {
-        position: 'absolute',
-        left: 98,
-        top: 6,
-        right: ARROW_SIZE + 12,
-        gap: 6,
-    },
-
-    nameGroup: {
-        gap: 3,
+        flex: 1,
+        marginLeft: 14,
+        marginRight: 8,
+        gap: 4,
     },
 
     orgRow: {
@@ -158,57 +171,76 @@ const styles = StyleSheet.create({
         gap: 4,
     },
     orgText: {
-        fontFamily: 'Poppins-Medium',
+        fontFamily: 'Poppins_500Medium',
         fontSize: 11,
         color: '#949494',
         lineHeight: 16,
         flexShrink: 1,
     },
 
+    nameRatingRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+    },
     merchantName: {
-        fontFamily: 'Poppins-SemiBold',
+        fontFamily: 'Poppins_600SemiBold',
         fontSize: 15,
         color: '#000',
         lineHeight: 22,
-    },
-
-    metaRow: {
-        flexDirection: 'row',
-        alignItems: 'center',
-    },
-    locationRow: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 4,
         flex: 1,
     },
-    locationText: {
-        fontFamily: 'Poppins-Medium',
+    ratingRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 3,
+        marginLeft: 6,
+    },
+    ratingText: {
+        fontFamily: 'Poppins_600SemiBold',
+        fontWeight: '600',
+        fontSize: 13,
+        color: '#000',
+        lineHeight: 18,
+    },
+    reviewCountText: {
+        fontFamily: 'Poppins_400Regular',
+        fontWeight: '400',
         fontSize: 11,
         color: '#949494',
         lineHeight: 16,
-        flexShrink: 1,
     },
-    earnBadge: {
-        backgroundColor: '#E8734A',
+
+    tagsRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 6,
+        marginTop: 2,
+    },
+    earnTag: {
+        backgroundColor: '#4CAF50',
         paddingHorizontal: 8,
         paddingVertical: 2,
         borderRadius: 20,
     },
-    earnText: {
-        fontFamily: 'Poppins-Medium',
-        fontSize: 11,
+    earnTagMultiplier: {
+        backgroundColor: '#E8734A',
+    },
+    earnTagText: {
+        fontFamily: 'Poppins_500Medium',
+        fontWeight: '500',
+        fontSize: 10,
         color: '#FFFFFF',
-        lineHeight: 16,
+        lineHeight: 15,
     },
     categoryTag: {
-        backgroundColor: '#EEEEEE',
+        backgroundColor: '#F0F0F0',
         paddingHorizontal: 8,
         paddingVertical: 2,
         borderRadius: 20,
     },
     categoryTagText: {
-        fontFamily: 'Poppins-Medium',
+        fontFamily: 'Poppins_500Medium',
         fontSize: 10,
         color: '#949494',
         lineHeight: 15,
@@ -216,14 +248,12 @@ const styles = StyleSheet.create({
 
     // Arrow button - right side
     arrowWrapper: {
-        position: 'absolute',
-        right: 0,
-        top: 22,
+        marginLeft: 'auto',
     },
     arrowCircle: {
         width: ARROW_SIZE,
         height: ARROW_SIZE,
-        borderRadius: 20.5,
+        borderRadius: ARROW_SIZE / 2,
         backgroundColor: '#FFFFFF',
         alignItems: 'center',
         justifyContent: 'center',

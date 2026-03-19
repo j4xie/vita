@@ -92,14 +92,16 @@ const adaptBackendGoodToProduct = (backendGood: BackendGood): Product => {
     marketPrice: undefined, // 后端暂无此字段
     earnPoints: undefined, // 后端暂无此字段，可以后续根据规则计算
     stock: backendGood.quantity || 0,
-    images: [
-      {
-        id: '1',
-        url: backendGood.goodIcon,
-        thumbnailUrl: backendGood.goodIcon,
-      },
-    ],
-    primaryImage: backendGood.goodIcon,
+    images: (backendGood.goodIcon || '')
+      .split(',')
+      .map((url: string, idx: number) => url.trim())
+      .filter(Boolean)
+      .map((url: string, idx: number) => ({
+        id: String(idx + 1),
+        url,
+        thumbnailUrl: url,
+      })),
+    primaryImage: backendGood.goodIcon?.split(',')[0]?.trim() || '',
     variants: undefined,
     createdAt: backendGood.createTime || new Date().toISOString(),
     updatedAt: backendGood.updateTime || backendGood.createTime || new Date().toISOString(),

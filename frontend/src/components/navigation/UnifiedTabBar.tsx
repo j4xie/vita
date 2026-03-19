@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
+import { SearchIcon } from '../common/icons/SearchIcon';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -333,8 +334,7 @@ export const UnifiedTabBar: React.FC<UnifiedTabBarProps> = ({
               activeOpacity={0.7}
             >
               <View style={styles.searchButtonContent}>
-                <Ionicons
-                  name="search"
+                <SearchIcon
                   size={22}
                   color={Glass.system.iosBlue}
                 />
@@ -366,7 +366,7 @@ export const UnifiedTabBar: React.FC<UnifiedTabBarProps> = ({
           searchOverlayAnimatedStyle
         ]}>
           <View style={styles.searchOverlayContent}>
-            <Ionicons name="search" size={18} color="#666666" />
+            <SearchIcon size={18} color="#666666" />
             <TextInput
               ref={searchInputRef}
               style={styles.searchOverlayInput}

@@ -1,7 +1,7 @@
 // School Service - 学校数据管理
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { pomeloXAPI } from './PomeloXAPI';
-import { getApiUrl } from '../utils/environment';
+import { getApiUrl, getImagesCdnUrl } from '../utils/environment';
 
 interface SchoolData {
   deptId: number;
@@ -311,10 +311,10 @@ class SchoolService {
       return `${baseUrl}/assets/logos/default.png`;
     }
 
-    // 如果是相对路径，添加API前缀
+    // 如果是相对路径，使用CDN地址
     if (school.logo.startsWith('/')) {
-      const baseUrl = getApiUrl();
-      const url = `${baseUrl}${school.logo}`;
+      const cdnUrl = getImagesCdnUrl();
+      const url = `${cdnUrl}${school.logo}`;
       console.log(`✅ [schoolService] 相对路径logo: ${url}`);
       return url;
     }
@@ -325,9 +325,9 @@ class SchoolService {
       return school.logo;
     }
 
-    // 否则，假设是相对路径，添加API前缀
-    const baseUrl = getApiUrl();
-    const url = `${baseUrl}/${school.logo}`;
+    // 否则，假设是相对路径，使用CDN地址
+    const cdnUrl = getImagesCdnUrl();
+    const url = `${cdnUrl}/${school.logo}`;
     console.log(`✅ [schoolService] 构建logo URL: ${url}`);
     return url;
   }

@@ -18,6 +18,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import { SearchIcon } from '../common/icons/SearchIcon';
 import { useTranslation } from 'react-i18next';
 import { theme } from '../../theme';
 import { LIQUID_GLASS_LAYERS, DAWN_GRADIENTS } from '../../theme/core';
@@ -410,7 +411,7 @@ export const FilterBottomSheet: React.FC<FilterBottomSheetProps> = ({
         <View style={styles.searchContainer}>
           <View style={styles.searchInputShadowContainer}>
             <View style={styles.searchInputContainer}>
-              <Ionicons name="search" size={20} color={theme.colors.text.disabled} />
+              <SearchIcon size={20} color={theme.colors.text.disabled} />
               <TextInput
                 ref={searchInputRef}
                 style={styles.searchInput}

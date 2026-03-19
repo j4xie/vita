@@ -14,6 +14,7 @@ import { useTranslation } from 'react-i18next';
 import * as Haptics from 'expo-haptics';
 import { theme } from '../../theme';
 import { LIQUID_GLASS_LAYERS } from '../../theme/core';
+import { CalendarIcon, LocationIcon } from '../icons/ActivityIcons';
 import { pomeloXAPI } from '../../services/PomeloXAPI';
 import { useUser } from '../../context/UserContext';
 import { handleAPIError } from '../../utils/errorHandler';
@@ -181,7 +182,7 @@ export const UserActivityCard: React.FC<UserActivityCardProps> = ({
             />
           ) : (
             <View style={styles.placeholderImage}>
-              <Ionicons name="calendar-outline" size={24} color="#9CA3AF" />
+              <CalendarIcon size={24} color="#9CA3AF" />
             </View>
           )}
         </View>
@@ -195,7 +196,7 @@ export const UserActivityCard: React.FC<UserActivityCardProps> = ({
             {formatActivityTime(activity.startTime, activity.endTime)}
           </Text>
           <Text style={styles.activityLocation} numberOfLines={1}>
-            <Ionicons name="location-outline" size={12} color="#9CA3AF" />
+            <LocationIcon size={12} color="#9CA3AF" />
             {' '}{activity.address}
           </Text>
         </View>

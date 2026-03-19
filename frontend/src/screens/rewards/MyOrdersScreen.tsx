@@ -460,7 +460,7 @@ export const MyOrdersScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFF5F2',
+    backgroundColor: '#FAF3F1',
   },
 
   // Header
@@ -470,7 +470,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 16,
     paddingBottom: 12,
-    backgroundColor: '#FFF5F2',
+    backgroundColor: '#FAF3F1',
   },
   backButton: {
     width: 40,
@@ -657,7 +657,7 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#FFF5F2',
+    backgroundColor: '#FAF3F1',
   },
   loadingText: {
     fontSize: 14,

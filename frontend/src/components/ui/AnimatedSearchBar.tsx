@@ -2,6 +2,7 @@ import React, { useRef, useEffect } from 'react';
 import { View, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
 import { MaterialIcons as Icon } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
+import { SearchIcon } from '../common/icons/SearchIcon';
 import Reanimated, {
   useAnimatedStyle,
   useSharedValue,
@@ -143,11 +144,9 @@ const AnimatedSearchBar: React.FC<AnimatedSearchBarProps> = ({
   return (
     <Reanimated.View style={[styles.container, searchBarAnimatedStyle]}>
       <View style={styles.searchInputContainer}>
-        <Icon
-          name="search"
+        <SearchIcon
           size={20}
           color={isDarkMode ? 'rgba(235, 235, 245, 0.6)' : theme.colors.text.secondary}
-          style={styles.searchIcon}
         />
         <TextInput
           ref={inputRef}

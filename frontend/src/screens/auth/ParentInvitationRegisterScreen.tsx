@@ -10,8 +10,10 @@ import {
   Alert,
   Keyboard,
   TouchableWithoutFeedback,
+  Platform,
 } from 'react-native';
 import { LoaderOne } from '../../components/ui/LoaderOne';
+import { KeyboardDoneAccessory, KEYBOARD_ACCESSORY_ID } from '../../components/common/KeyboardDismissWrapper';
 import { useNavigation, useRoute, CommonActions } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
@@ -645,7 +647,7 @@ export const ParentInvitationRegisterScreen: React.FC = () => {
                   <Text style={styles.label}>{t('auth.register.parent.first_name_label')}</Text>
                   <TextInput
                     style={[
-                      styles.input, 
+                      styles.input,
                       (errors.firstName || realtimeErrors.firstName) && styles.inputError
                     ]}
                     placeholder={getInputPlaceholder(TextType.FIRST_NAME, t)}
@@ -655,6 +657,7 @@ export const ParentInvitationRegisterScreen: React.FC = () => {
                       updateFormData('firstName', text);
                     }}
                     placeholderTextColor={theme.colors.text.disabled}
+                    inputAccessoryViewID={Platform.OS === 'ios' ? KEYBOARD_ACCESSORY_ID : undefined}
                   />
                   {(errors.firstName || realtimeErrors.firstName) && (
                     <Text style={styles.errorText}>
@@ -667,7 +670,7 @@ export const ParentInvitationRegisterScreen: React.FC = () => {
                   <Text style={styles.label}>{t('auth.register.parent.last_name_label')}</Text>
                   <TextInput
                     style={[
-                      styles.input, 
+                      styles.input,
                       (errors.lastName || realtimeErrors.lastName) && styles.inputError
                     ]}
                     placeholder={getInputPlaceholder(TextType.LAST_NAME, t)}
@@ -677,6 +680,7 @@ export const ParentInvitationRegisterScreen: React.FC = () => {
                       updateFormData('lastName', text);
                     }}
                     placeholderTextColor={theme.colors.text.disabled}
+                    inputAccessoryViewID={Platform.OS === 'ios' ? KEYBOARD_ACCESSORY_ID : undefined}
                   />
                   {(errors.lastName || realtimeErrors.lastName) && (
                     <Text style={styles.errorText}>
@@ -698,6 +702,7 @@ export const ParentInvitationRegisterScreen: React.FC = () => {
                   autoCapitalize="none"
                   autoCorrect={false}
                   placeholderTextColor={theme.colors.text.disabled}
+                  inputAccessoryViewID={Platform.OS === 'ios' ? KEYBOARD_ACCESSORY_ID : undefined}
                 />
                 <Text style={styles.helpText}>{t('auth.register.parent.email_help')}</Text>
                 {errors.email && <Text style={styles.errorText}>{errors.email}</Text>}
@@ -735,6 +740,7 @@ export const ParentInvitationRegisterScreen: React.FC = () => {
                     onChangeText={(text) => updateFormData('phoneNumber', text)}
                     keyboardType="phone-pad"
                     placeholderTextColor={theme.colors.text.disabled}
+                    inputAccessoryViewID={Platform.OS === 'ios' ? KEYBOARD_ACCESSORY_ID : undefined}
                   />
                 </View>
                 {errors.phoneNumber && <Text style={styles.errorText}>{errors.phoneNumber}</Text>}
@@ -753,6 +759,7 @@ export const ParentInvitationRegisterScreen: React.FC = () => {
                       keyboardType="number-pad"
                       maxLength={6}
                       placeholderTextColor={theme.colors.text.disabled}
+                      inputAccessoryViewID={Platform.OS === 'ios' ? KEYBOARD_ACCESSORY_ID : undefined}
                     />
                     <TouchableOpacity
                       style={[styles.sendCodeButton, countdown > 0 && styles.sendCodeButtonDisabled]}
@@ -788,6 +795,7 @@ export const ParentInvitationRegisterScreen: React.FC = () => {
                   autoComplete="off"
                   textContentType="none"
                   passwordRules=""
+                  inputAccessoryViewID={Platform.OS === 'ios' ? KEYBOARD_ACCESSORY_ID : undefined}
                 />
                 {errors.password && <Text style={styles.errorText}>{errors.password}</Text>}
               </View>
@@ -805,6 +813,7 @@ export const ParentInvitationRegisterScreen: React.FC = () => {
                   autoComplete="off"
                   textContentType="none"
                   passwordRules=""
+                  inputAccessoryViewID={Platform.OS === 'ios' ? KEYBOARD_ACCESSORY_ID : undefined}
                 />
                 {errors.confirmPassword && <Text style={styles.errorText}>{errors.confirmPassword}</Text>}
               </View>
@@ -848,6 +857,7 @@ export const ParentInvitationRegisterScreen: React.FC = () => {
         confirmText={t('auth.register.parent.start_using')}
         icon="checkmark-circle"
       />
+      <KeyboardDoneAccessory />
     </SafeAreaView>
   );
 };

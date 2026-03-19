@@ -66,7 +66,7 @@ export const colors = {
   
   // 背景色 - PomeloX 温暖主题
   background: {
-    primary: '#FFFFFF',      // 主背景 - 纯白
+    primary: '#FAF3F1',      // 主背景 - 温暖米色
     secondary: '#fff5f2',    // 次背景 - 淡橙白色
     tertiary: '#fef2ef',     // 三级背景 - 更淡橙白色
     dawn: '#fef7f0',         // 朝霞背景 - 温暖色调

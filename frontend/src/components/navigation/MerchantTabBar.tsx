@@ -151,13 +151,23 @@ export const MerchantTabBar: React.FC<BottomTabBarProps> = ({
   if (!state || !state.routes) return null;
 
   const currentRoute = state.routes[state.index];
-  const tabBarOpts = descriptors[currentRoute?.key]?.options?.tabBarStyle;
-  const shouldHide =
-    tabBarOpts &&
-    typeof tabBarOpts === 'object' &&
-    'display' in tabBarOpts &&
-    tabBarOpts.display === 'none';
-  if (shouldHide) return null;
+
+  // Derive focused route name from live navigation state (not stale descriptor options)
+  const getFocusedRouteName = (route: any): string => {
+    if (route.state) {
+      const nestedRoute = route.state.routes[route.state.index];
+      return getFocusedRouteName(nestedRoute);
+    }
+    return route.name;
+  };
+  const focusedRouteName = currentRoute ? getFocusedRouteName(currentRoute) : 'unknown';
+
+  // Merchant tab bar visible pages
+  const merchantVisiblePages = [
+    'MerchantDashboard', 'MerchantDashboardHome',
+    'MerchantActivitiesHome', 'ProfileHome',
+  ];
+  if (!merchantVisiblePages.includes(focusedRouteName)) return null;
 
   return (
     <Animated.View

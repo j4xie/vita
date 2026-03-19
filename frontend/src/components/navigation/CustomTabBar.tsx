@@ -11,7 +11,6 @@ import {
   DeviceEventEmitter,
   Dimensions,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
 import { typography } from '../../theme/typography';
 import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { useTranslation } from 'react-i18next';
@@ -29,7 +28,16 @@ import { theme } from '../../theme';
 import { useFilter } from '../../context/FilterContext';
 import { shouldShowTabBar } from '../../config/tabBarConfig';
 import { CenterTabButton } from './CenterTabButton';
-import { ExploreIcon } from '../common/icons/ExploreIcon';
+import {
+  ExploreTabIcon,
+  CommunityTabIcon,
+  CUTabIcon,
+  ProfileTabIcon,
+} from '../common/icons/TabBarIcons';
+
+// Active tab color from Figma design
+const ACTIVE_COLOR = '#FF7763';
+const INACTIVE_COLOR = '#000000';
 
 interface CustomTabBarProps extends BottomTabBarProps {
 }
@@ -61,7 +69,7 @@ export const CustomTabBar: React.FC<CustomTabBarProps> = ({
     AccessibilityInfo.isReduceMotionEnabled().then(setIsReduceMotionEnabled);
   }, []);
 
-  // Tab scale animations
+  // Tab scale animations (5 for compatibility with existing 5-tab structure)
   const tabScale0 = useSharedValue(1);
   const tabScale1 = useSharedValue(1);
   const tabScale2 = useSharedValue(1);
@@ -160,23 +168,6 @@ export const CustomTabBar: React.FC<CustomTabBarProps> = ({
     };
   }, [state]);
 
-  const getIconName = (routeName: string, focused: boolean): keyof typeof Ionicons.glyphMap => {
-    switch (routeName) {
-      case 'Explore':
-        return focused ? 'navigate' : 'navigate-outline';
-      case 'Community':
-        return focused ? 'business' : 'business-outline';
-      case 'Rewards':
-        return focused ? 'card' : 'card-outline';
-      case 'Wellbeing':
-        return focused ? 'chatbubbles' : 'chatbubbles-outline';
-      case 'Profile':
-        return focused ? 'person-circle' : 'person-circle-outline';
-      default:
-        return 'compass-outline';
-    }
-  };
-
   const getTabLabel = (routeName: string): string => {
     switch (routeName) {
       case 'Explore':
@@ -191,6 +182,24 @@ export const CustomTabBar: React.FC<CustomTabBarProps> = ({
         return t('navigation.tabs.profile');
       default:
         return routeName;
+    }
+  };
+
+  const renderTabIcon = (routeName: string, focused: boolean) => {
+    const iconSize = 24;
+    const color = focused ? ACTIVE_COLOR : INACTIVE_COLOR;
+
+    switch (routeName) {
+      case 'Explore':
+        return <ExploreTabIcon size={iconSize} color={color} filled={focused} />;
+      case 'Community':
+        return <CommunityTabIcon size={iconSize} color={color} filled={focused} />;
+      case 'Wellbeing':
+        return <CUTabIcon size={iconSize} color={color} filled={focused} />;
+      case 'Profile':
+        return <ProfileTabIcon size={iconSize} color={color} filled={focused} />;
+      default:
+        return <ExploreTabIcon size={iconSize} color={color} filled={focused} />;
     }
   };
 
@@ -212,13 +221,17 @@ export const CustomTabBar: React.FC<CustomTabBarProps> = ({
     return null;
   }
 
-  const tabBarStyle = descriptors[currentRoute?.key]?.options?.tabBarStyle;
-  const shouldHideByStyle = tabBarStyle && typeof tabBarStyle === 'object' && 'display' in tabBarStyle && tabBarStyle.display === 'none';
+  // Use only our own focusedRouteName (derived from live navigation state)
+  // to decide visibility. The Tab.Screen options tabBarStyle can be stale
+  // after navigating back from nested screens, causing the tab bar to stay hidden.
   const shouldShowByConfig = shouldShowTabBar(focusedRouteName);
 
-  if (shouldHideByStyle || !shouldShowByConfig) {
+  if (!shouldShowByConfig) {
     return null;
   }
+
+  // Tabs to display (skip Rewards which has center floating button)
+  const visibleTabs = state.routes.filter(route => route.name !== 'Rewards');
 
   return (
     <Animated.View style={[
@@ -227,31 +240,22 @@ export const CustomTabBar: React.FC<CustomTabBarProps> = ({
       animatedTabBarStyle,
       isFilterOpen && styles.hidden
     ]}>
-      {/* Top shadow line */}
-      <View style={styles.topShadowLine} />
-
       {/* Tab items */}
       <View style={styles.tabsRow}>
-        {state.routes.map((route, index) => {
+        {visibleTabs.map((route) => {
           if (!route || !route.key) return null;
 
           const descriptor = descriptors[route.key];
           if (!descriptor) return null;
 
-          const isFocused = state.index === index;
-
-          // Rewards Tab - center button placeholder
-          if (route.name === 'Rewards') {
-            return <View key={route.key} style={styles.centerPlaceholder} />;
-          }
-
-          const iconName = getIconName(route.name, isFocused);
+          const originalIndex = state.routes.findIndex(r => r.key === route.key);
+          const isFocused = state.index === originalIndex;
           const label = getTabLabel(route.name);
 
           return (
             <Animated.View
               key={route.key}
-              style={[styles.tabItem, tabAnimStyles[index]]}
+              style={[styles.tabItem, tabAnimStyles[originalIndex]]}
             >
               <TouchableOpacity
                 accessibilityRole="tab"
@@ -261,29 +265,17 @@ export const CustomTabBar: React.FC<CustomTabBarProps> = ({
                 style={styles.tabTouchable}
                 activeOpacity={0.7}
               >
-                {/* Active indicator line */}
+                {/* Active indicator line at top */}
                 {isFocused && <View style={styles.activeIndicator} />}
 
                 <View style={styles.tabContent}>
-                  {route.name === 'Explore' ? (
-                    <ExploreIcon
-                      size={isFocused ? 22 : 20}
-                      color={isFocused ? '#FF8A72' : '#555555'}
-                      filled={isFocused}
-                    />
-                  ) : (
-                    <Ionicons
-                      name={iconName}
-                      size={isFocused ? 22 : 20}
-                      color={isFocused ? '#FF8A72' : '#555555'}
-                    />
-                  )}
+                  {renderTabIcon(route.name, isFocused)}
                   <Text
                     style={[
                       styles.tabLabel,
                       {
-                        color: isFocused ? '#FF8A72' : '#555555',
-                        fontWeight: isFocused ? '600' : '500',
+                        color: isFocused ? ACTIVE_COLOR : INACTIVE_COLOR,
+                        fontWeight: isFocused ? '700' : '500',
                       }
                     ]}
                     numberOfLines={1}
@@ -300,7 +292,7 @@ export const CustomTabBar: React.FC<CustomTabBarProps> = ({
         })}
       </View>
 
-      {/* Floating center button */}
+      {/* Floating center button for Rewards (hidden visually but keeps navigation working) */}
       {(() => {
         const rewardsRoute = state.routes.find(route => route.name === 'Rewards');
         if (!rewardsRoute) return null;
@@ -308,16 +300,8 @@ export const CustomTabBar: React.FC<CustomTabBarProps> = ({
         const rewardsIndex = state.routes.findIndex(route => route.name === 'Rewards');
         const isFocused = state.index === rewardsIndex;
 
-        return (
-          <View style={styles.floatingCenterButton} pointerEvents="box-none">
-            <CenterTabButton
-              focused={isFocused}
-              onPress={() => handleTabPress(rewardsRoute, isFocused)}
-              icon="crown-outline"
-              badge={0}
-            />
-          </View>
-        );
+        // Keep the center button but hide it - the Rewards tab is still in navigation
+        return null;
       })()}
     </Animated.View>
   );
@@ -337,21 +321,12 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
 
-  topShadowLine: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    height: StyleSheet.hairlineWidth,
-    backgroundColor: 'rgba(0,0,0,0.08)',
-  },
-
   tabsRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-around',
     height: 56,
-    paddingHorizontal: 4,
+    paddingHorizontal: 8,
   },
 
   tabItem: {
@@ -375,42 +350,30 @@ const styles = StyleSheet.create({
   tabContent: {
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 2,
+    gap: 3,
+    marginTop: 12,
   },
 
   activeIndicator: {
     position: 'absolute',
-    top: 2,
-    width: 20,
-    height: 2.5,
-    borderRadius: 1.25,
-    backgroundColor: '#FF8A72',
+    top: 0,
+    width: 37,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: ACTIVE_COLOR,
   },
 
   tabLabel: {
-    fontSize: Platform.OS === 'ios' && (Dimensions.get('window').width >= 768) ? 24 : 10,
+    fontSize: Platform.OS === 'ios' && (Dimensions.get('window').width >= 768) ? 24 : 11,
     fontWeight: '500',
     textAlign: 'center',
-    lineHeight: Platform.OS === 'ios' && (Dimensions.get('window').width >= 768) ? 30 : 13,
+    lineHeight: Platform.OS === 'ios' && (Dimensions.get('window').width >= 768) ? 30 : 14,
   },
 
   hidden: {
     opacity: 0,
     pointerEvents: 'none',
     transform: [{ translateY: 200 }],
-  },
-
-  centerPlaceholder: {
-    width: 70,
-    height: '100%',
-  },
-
-  floatingCenterButton: {
-    position: 'absolute',
-    top: -22,
-    left: '50%',
-    marginLeft: -30,
-    zIndex: 1001,
   },
 });
 

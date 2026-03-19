@@ -13,6 +13,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { BlurView } from 'expo-blur';
+import { SearchIcon } from '../common/icons/SearchIcon';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { PanGestureHandler, State } from 'react-native-gesture-handler';
@@ -412,7 +413,7 @@ currentTabIndex.value = targetIndex;
           onPress={handleSearchPress}
           activeOpacity={0.7}
         >
-          <Ionicons name="search" size={24} color="#007AFF" />
+          <SearchIcon size={24} color="#007AFF" />
           {/* 临时显示按钮状态 */}
           <Text style={{fontSize: 8, color: '#007AFF'}}>
             {showSearchButton ? 'Show' : 'Hide'}
@@ -439,7 +440,7 @@ currentTabIndex.value = targetIndex;
       
       {/* 搜索框 */}
       <View style={[styles.searchBar, { width: geometry.searchBarWidth }]}>
-        <Ionicons name="search" size={18} color="#666666" />
+        <SearchIcon size={18} color="#666666" />
         <TextInput
           ref={searchInputRef}
           style={styles.searchInput}

@@ -75,6 +75,7 @@ export interface BackendUserInfo {
   admin: boolean;
   area?: string; // 地域字段
   alternateEmail?: string; // 第二邮箱/工作邮箱/学校邮箱
+  isEmailVerify?: number; // 邮箱是否验证（-1否 1是）
 }
 
 // 前端用户数据接口（简化格式）
@@ -138,6 +139,7 @@ export interface FrontendUser {
   verified?: boolean;
   area?: 'zh' | 'en'; // 地域选择
   points?: number; // 积分
+  isEmailVerify?: boolean; // 是否已验证学校邮箱
 
   // 兼容types/user.ts FrontendUser接口所需的字段
   permissionLevel: PermissionLevel;
@@ -307,6 +309,7 @@ export const adaptUserInfo = (backendUser: BackendUserInfo): FrontendUser => {
     name: backendUser.legalName,
     verified: true, // 默认已验证
     area: (backendUser.area as 'zh' | 'en') || 'zh', // 地域字段，默认中国
+    isEmailVerify: backendUser.isEmailVerify === 1, // 邮箱验证状态
 
     // 积分 (Added to fix type error)
     points: (backendUser as any).points || 0,

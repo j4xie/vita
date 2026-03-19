@@ -85,35 +85,17 @@ export const CommunityDevModal: React.FC<CommunityDevModalProps> = ({
             </TouchableOpacity>
           </View>
 
-          {/* 开发状态 */}
+          {/* 社区介绍 */}
           <View style={{
             alignItems: 'center',
             marginBottom: 20,
           }}>
-            <View style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              backgroundColor: 'rgba(255, 107, 53, 0.1)',
-              paddingHorizontal: 12,
-              paddingVertical: 6,
-              borderRadius: 16,
-              marginBottom: 12,
-            }}>
-              <Text style={{ fontSize: 16, marginRight: 6 }}>🚧</Text>
-              <Text style={{
-                fontSize: 14,
-                fontWeight: '600',
-                color: '#FF6B35',
-              }}>
-                Coming Soon
-              </Text>
-            </View>
             <Text style={{
               fontSize: 16,
               color: '#333',
               textAlign: 'center',
             }}>
-              Building a warm student community
+              {t('community.school_community_desc', 'Your campus community hub')}
             </Text>
           </View>
 
@@ -126,7 +108,7 @@ export const CommunityDevModal: React.FC<CommunityDevModalProps> = ({
               marginBottom: 16,
               textAlign: 'center',
             }}>
-              Upcoming Features
+              {t('community.features', 'Features')}
             </Text>
             
             {/* 功能项 */}

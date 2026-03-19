@@ -267,7 +267,8 @@ export const PaymentResultScreen: React.FC = () => {
 
     if (paymentStatus === 'paid') {
       if (pvsaActivityId) {
-        navigation.navigate('Main', { screen: 'ProfileTab', params: { screen: 'CertificateList' } });
+        // Navigate to Profile tab — CertificateList is inside Profile stack
+        navigation.navigate('Main', { screen: 'Profile', params: { screen: 'CertificateList' } });
       } else {
         navigation.navigate('Main');
       }
@@ -365,7 +366,7 @@ export const PaymentResultScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#FAF3F1',
   },
   containerDark: {
     backgroundColor: '#000000',

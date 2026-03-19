@@ -279,6 +279,13 @@ import { NavigationContainer } from '@react-navigation/native';
 ### **⚠️ React Native Reanimated Warning**
 **NEVER use `useAnimatedScrollHandler` with FlatList/SectionList** - Causes "onScroll is not a function" error. Use `useCallback` instead.
 
+### **🚫 Navigation Cross-Stack Rules (CRITICAL)**
+- ❌ **NEVER navigate to Tab 内部屏幕 from RootStack 全局屏幕** - 会导致 `goBack()` 回到错误页面
+- ❌ **NEVER use `navigate('TabName', { screen: 'SubScreen' })` 跨 Tab 导航** - goBack 不会返回来源页面
+- ✅ **从 RootStack 屏幕（Search、QRScanner 等）导航时，使用 RootStack 上注册的全局屏幕**（如 `ActivityDetailGlobal`、`MyCoupons`）
+- ✅ **Tab 内部页面之间导航，直接使用同 Stack 内的屏幕名**（如 Rewards Tab 内的 `MyCoupons`、`MyOrders`）
+- ✅ **新增跨模块入口时，先在 RootStack 注册全局屏幕**，再从来源页面 `navigate` 到全局屏幕名
+
 ## 🚀 **环境切换与发布流程**
 
 ### 🔄 **环境切换**
@@ -393,12 +400,22 @@ frontend/
 - **Utils**: Helper functions in `src/utils/`
 - **Environment**: All API URLs through `src/utils/environment.ts` - **NO hardcoding allowed**
 
+## 🎨 **UI 样式规范 (写样式前必读)**
+
+编写或修改任何 UI 样式时，**必须先查阅** `docs/UI_DESIGN_SYSTEM.md` 中的对应章节：
+
+- **写卡片组件** → 查阅 **Section 15 (卡片变体规格矩阵)**，选择正确的变体，使用对应的圆角/阴影/内边距
+- **写颜色值** → 查阅 **Section 18 (灰度色值查找表)**，禁止使用硬编码灰值 (`#666`, `#999`, `#949494` 等)，必须使用 theme token
+- **写输入框** → 查阅 **Section 17 (输入框状态矩阵)**，确保 5 种状态样式一致
+- **写药丸/徽章** → 查阅 **Section 16 (胶囊/药丸/徽章规格)**，参考已有变体尺寸
+- **写阴影** → 使用 `CORE_SHADOWS` token (`theme.shadows.sm/md/lg`)，禁止自定义 shadow 值
+
 ## 📚 **Related Documentation**
 
 - [API Guide](docs/API_GUIDE.md) - Complete API reference
 - [Performance Guide](docs/PERFORMANCE_GUIDE.md) - Optimization techniques
 - [Version Release](docs/VERSION_RELEASE.md) - TestFlight and App Store process
-- [UI Design System](docs/UI_DESIGN_SYSTEM.md) - Design specifications
+- [UI Design System](docs/UI_DESIGN_SYSTEM.md) - Design specifications (Section 15-18: 组件级规格)
 
 ---
 

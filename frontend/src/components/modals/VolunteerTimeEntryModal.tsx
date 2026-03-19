@@ -30,6 +30,7 @@ import { timeService } from '../../utils/UnifiedTimeService';
 import { SafeAlert } from '../../utils/SafeAlert';
 import { LoaderOne } from '../ui/LoaderOne';
 import { CalendarPicker } from '../ui/CalendarPicker';
+import { KeyboardDoneAccessory, KEYBOARD_ACCESSORY_ID } from '../common/KeyboardDismissWrapper';
 
 interface VolunteerTimeEntryModalProps {
   visible: boolean;
@@ -772,6 +773,7 @@ export const VolunteerTimeEntryModal: React.FC<VolunteerTimeEntryModalProps> = (
                         returnKeyType="done"
                         blurOnSubmit={true}
                         onSubmitEditing={() => Keyboard.dismiss()}
+                        inputAccessoryViewID={Platform.OS === 'ios' ? KEYBOARD_ACCESSORY_ID : undefined}
                       />
                     </View>
                     <Text style={styles.charCount}>
@@ -919,6 +921,7 @@ export const VolunteerTimeEntryModal: React.FC<VolunteerTimeEntryModalProps> = (
                         maxLength={5}
                         returnKeyType="done"
                         onSubmitEditing={() => Keyboard.dismiss()}
+                        inputAccessoryViewID={Platform.OS === 'ios' ? KEYBOARD_ACCESSORY_ID : undefined}
                       />
                     ) : (
                       /* 日期输入（保持原样） */
@@ -931,6 +934,7 @@ export const VolunteerTimeEntryModal: React.FC<VolunteerTimeEntryModalProps> = (
                         autoCapitalize="none"
                         autoCorrect={false}
                         autoFocus={true}
+                        inputAccessoryViewID={Platform.OS === 'ios' ? KEYBOARD_ACCESSORY_ID : undefined}
                       />
                     )}
                     <TouchableOpacity
@@ -1004,6 +1008,7 @@ export const VolunteerTimeEntryModal: React.FC<VolunteerTimeEntryModalProps> = (
           </View>
         )}
       </View>
+      <KeyboardDoneAccessory />
     </Modal>
   );
 };

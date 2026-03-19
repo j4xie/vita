@@ -94,7 +94,7 @@ export const RewardsHomeScreen: React.FC = () => {
                   {t('rewards.membership_card.title', '会员卡')}
                 </Text>
                 <Text style={styles.placeholderSubtitle}>
-                  {t('rewards.membership_card.coming_soon', '下一版本上线')}
+                  {t('rewards.membership_card.explore', '探索会员权益')}
                 </Text>
               </View>
             </BlurView>
@@ -116,7 +116,7 @@ export const RewardsHomeScreen: React.FC = () => {
                   {t('rewards.points.balance', '积分余额')}
                 </Text>
                 <Text style={styles.boxSubtitle}>
-                  {t('rewards.points.coming_soon', '即将上线')}
+                  {t('rewards.points.view_balance', '查看积分')}
                 </Text>
               </View>
             </BlurView>
@@ -138,7 +138,7 @@ export const RewardsHomeScreen: React.FC = () => {
                   {t('rewards.coupons.my_coupons', '优惠券中心')}
                 </Text>
                 <Text style={styles.boxSubtitle}>
-                  {t('rewards.coupons.coming_soon', '即将上线')}
+                  {t('rewards.coupons.view_coupons', '查看优惠券')}
                 </Text>
               </View>
             </BlurView>
@@ -160,7 +160,7 @@ export const RewardsHomeScreen: React.FC = () => {
                   {t('rewards.mall.points_mall', '积分兑换')}
                 </Text>
                 <Text style={styles.boxSubtitle}>
-                  {t('rewards.mall.coming_soon', '即将上线')}
+                  {t('rewards.mall.browse_items', '浏览商品')}
                 </Text>
               </View>
             </BlurView>
@@ -174,7 +174,7 @@ export const RewardsHomeScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8F9FA',
+    backgroundColor: '#FAF3F1',
   },
 
   backgroundGradient: {

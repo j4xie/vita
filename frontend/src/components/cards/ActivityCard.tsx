@@ -13,6 +13,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useTranslation } from 'react-i18next';
 import { theme } from '../../theme';
 import { BRAND_GLASS, BRAND_INTERACTIONS, BRAND_GRADIENT } from '../../theme/core';
+import { CalendarIcon, LocationIcon } from '../icons/ActivityIcons';
 import { scaleIn, scaleOut, bounce } from '../../utils/animations';
 import { usePerformanceDegradation } from '../../hooks/usePerformanceDegradation';
 import { useMemoizedDarkMode } from '../../hooks/useDarkMode';
@@ -22,6 +23,7 @@ import EventTracker, { analytics, Events } from '../../analytics/EventTracker';
 import { useSmartGesture } from '../../hooks/useSmartGesture';
 import { useCardPress } from '../../hooks/useCardPress';
 import { useSchoolLogos, getSchoolLogoSync } from '../../hooks/useSchoolLogos';
+import { useRegisteredAvatars, getAvatarColor } from '../../hooks/useRegisteredAvatars';
 
 const { width: screenWidth } = Dimensions.get('window');
 const cardWidth = screenWidth - theme.spacing.lg * 2; // 使用语义化间距
@@ -101,6 +103,7 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({
   const { isDarkMode, styles: dmStyles, gradients: dmGradients, icons: dmIcons } = darkModeStyles;
 
   const { loading: schoolsLoading } = useSchoolLogos();
+  const { users: registeredUsers } = useRegisteredAvatars(activity?.id?.toString());
 
   // ========== ALL HOOKS MUST BE CALLED BEFORE ANY EARLY RETURNS ==========
   // 基础动画值
@@ -434,12 +437,6 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({
       textShadowRadius: 2,
     },
     
-    participantText: {
-      fontSize: theme.typography.fontSize.sm,
-      fontWeight: theme.typography.fontWeight.medium,
-      marginLeft: theme.spacing.xs,
-    },
-    
     availableText: {
       fontSize: theme.typography.fontSize.sm,
       fontWeight: theme.typography.fontWeight.medium,
@@ -564,7 +561,12 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({
             )}
 
             {/* Activity Title - 🌙 Dark Mode适配 */}
-            <Text style={dmStyles.text.title} numberOfLines={2}>
+            <Text
+              style={[dmStyles.text.title, styles.titleAdaptive]}
+              numberOfLines={2}
+              adjustsFontSizeToFit
+              minimumFontScale={0.7}
+            >
               {safeActivity.title}
             </Text>
             
@@ -573,7 +575,7 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({
             <View style={styles.metaContainer}>
               <View style={styles.metaRow}>
                 <View style={styles.metaItem}>
-                  <Ionicons name="calendar-outline" size={14} color={dmIcons.secondary} />
+                  <CalendarIcon size={14} color={dmIcons.secondary} />
                   <Text style={[
                     staticStyles.metaText,
                     { color: isDarkMode ? dmStyles.text.secondary.color : theme.colors.text.secondary }
@@ -590,7 +592,7 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({
               
               <View style={styles.metaRow}>
                 <View style={styles.metaItem}>
-                  <Ionicons name="location-outline" size={14} color={dmIcons.secondary} />
+                  <LocationIcon size={14} color={dmIcons.secondary} />
                   <Text style={[
                     staticStyles.metaText,
                     { color: isDarkMode ? dmStyles.text.secondary.color : theme.colors.text.secondary }
@@ -619,16 +621,52 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({
         ]} />
         <View style={styles.participantInfo}>
           <View style={styles.participantRow}>
-            <Ionicons name="people-outline" size={18} color={dmIcons.secondary} />
-            <Text style={[
-              staticStyles.participantText,
-              { color: isDarkMode ? dmStyles.text.secondary.color : theme.colors.text.secondary }
-            ]}>
-              {safeString(safeActivity.attendees)}/{safeString(safeActivity.maxAttendees)} people
-            </Text>
-            
+            {/* Avatar Stack Pill */}
+            <View style={styles.avatarPill}>
+              {registeredUsers.length > 0 ? (
+                <>
+                  {registeredUsers.slice(0, 2).map((user, i) => (
+                    user.avatar ? (
+                      <Image
+                        key={user.userId}
+                        source={{ uri: user.avatar }}
+                        style={[
+                          styles.avatarCircle,
+                          i > 0 && styles.avatarCircleOverlap,
+                          { backgroundColor: '#E0E0E0' },
+                        ]}
+                      />
+                    ) : (
+                      <View
+                        key={user.userId}
+                        style={[
+                          styles.avatarCircle,
+                          i > 0 && styles.avatarCircleOverlap,
+                          { backgroundColor: getAvatarColor(user.userId), justifyContent: 'center', alignItems: 'center' },
+                        ]}
+                      >
+                        <Text style={styles.avatarInitialText}>{user.initial}</Text>
+                      </View>
+                    )
+                  ))}
+                </>
+              ) : (
+                <>
+                  <View style={[styles.avatarCircle, { backgroundColor: '#F4C4A8' }]}>
+                    <Text style={styles.avatarInitialText}>A</Text>
+                  </View>
+                  <View style={[styles.avatarCircle, styles.avatarCircleOverlap, { backgroundColor: '#F9A789' }]}>
+                    <Text style={styles.avatarInitialText}>B</Text>
+                  </View>
+                </>
+              )}
+              <View style={styles.avatarCountCircle}>
+                <Text style={styles.avatarCountText}>+{safeActivity.attendees}</Text>
+              </View>
+            </View>
+            <Text style={styles.activitiesLabel}>ACTIVITIES</Text>
           </View>
-          
+
           <Text style={[
             staticStyles.availableText,
             { color: isDarkMode ? dmStyles.text.tertiary.color : theme.colors.text.tertiary },
@@ -768,6 +806,7 @@ const styles = StyleSheet.create({
   // Overlay Content
   overlayContent: {
     alignItems: 'flex-start',
+    width: '100%',
   },
   organizerRow: {
     flexDirection: 'row',
@@ -800,6 +839,9 @@ const styles = StyleSheet.create({
     textShadowColor: 'rgba(0, 0, 0, 0.8)',
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 2,
+  },
+  titleAdaptive: {
+    width: '100%',
   },
   
   // Meta Information
@@ -852,12 +894,52 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: theme.spacing.xs / 2,
   },
-  participantText: {
-    fontSize: theme.typography.fontSize.base,
-    fontWeight: theme.typography.fontWeight.semibold,
-    color: '#1A1A1A', // 小红书风格深灰色
-    marginLeft: theme.spacing.xs,
-    marginRight: theme.spacing.sm,
+  avatarPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(249, 167, 137, 0.2)',
+    borderRadius: 14,
+    paddingVertical: 3,
+    paddingLeft: 3,
+    paddingRight: 3,
+  },
+  avatarCircle: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    borderWidth: 1.5,
+    borderColor: 'rgba(249, 167, 137, 0.2)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  avatarInitialText: {
+    fontSize: 10,
+    fontWeight: '600' as const,
+    color: '#FFFFFF',
+  },
+  avatarCircleOverlap: {
+    marginLeft: -8,
+  },
+  avatarCountCircle: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: '#F9A789',
+    marginLeft: -8,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  avatarCountText: {
+    fontSize: 9,
+    fontWeight: '700' as const,
+    color: '#FFFFFF',
+  },
+  activitiesLabel: {
+    fontFamily: 'IBMPlexMono_600SemiBold',
+    fontSize: 11,
+    color: '#949494',
+    letterSpacing: 1.2,
+    marginLeft: 6,
   },
   availableText: {
     fontSize: theme.typography.fontSize.sm,

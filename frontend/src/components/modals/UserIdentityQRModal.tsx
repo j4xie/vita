@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   Modal,
   View,
@@ -12,9 +12,8 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import QRCode from 'react-native-qrcode-svg';
-// import * as MediaLibrary from 'expo-media-library';
-// import * as FileSystem from 'expo-file-system';
-// import { captureRef } from 'react-native-view-shot';
+import * as MediaLibrary from 'expo-media-library';
+import * as FileSystem from 'expo-file-system';
 import { useTranslation } from 'react-i18next';
 import * as Haptics from 'expo-haptics';
 
@@ -57,29 +56,53 @@ export const UserIdentityQRModal: React.FC<IdentityQRCodeProps> = ({
     }
   };
 
-  const handleSaveQRCode = async () => {
-    if (isSaving) return;
+  const handleSaveQRCode = useCallback(async () => {
+    if (isSaving || !qrRef) return;
 
     try {
       setIsSaving(true);
-      
-      // 触觉反馈
+
       if (Platform.OS === 'ios') {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
       }
 
-      // 暂时禁用保存功能，显示提示
-      Alert.alert(
-        '功能开发中',
-        '二维码保存功能正在开发中，敬请期待'
-      );
+      const { status } = await MediaLibrary.requestPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert(
+          t('common.permission_required', 'Permission Required'),
+          t('qr.album_permission', 'Please allow access to save QR code to your album')
+        );
+        return;
+      }
 
+      qrRef.toDataURL(async (base64: string) => {
+        try {
+          const filename = `${FileSystem.cacheDirectory}pomelo_qr_${Date.now()}.png`;
+          await FileSystem.writeAsStringAsync(filename, base64, {
+            encoding: FileSystem.EncodingType.Base64,
+          });
+          await MediaLibrary.saveToLibraryAsync(filename);
+          await FileSystem.deleteAsync(filename, { idempotent: true });
+
+          Alert.alert(
+            t('common.success', 'Success'),
+            t('qr.save_success', 'QR code saved to album')
+          );
+        } catch (err) {
+          console.error('保存失败:', err);
+          Alert.alert(t('common.error', 'Error'), t('qr.save_failed', 'Failed to save QR code'));
+        } finally {
+          setIsSaving(false);
+        }
+      });
+      return;
     } catch (error) {
       console.error('Error saving QR code:', error);
+      Alert.alert(t('common.error', 'Error'), t('qr.save_failed', 'Failed to save QR code'));
     } finally {
       setIsSaving(false);
     }
-  };
+  }, [isSaving, qrRef, t]);
 
   const handleShareQRCode = async () => {
     try {
@@ -413,6 +436,7 @@ export const UserIdentityQRModal: React.FC<IdentityQRCodeProps> = ({
                       logoMargin={2}
                       logoBorderRadius={8}
                       quietZone={10}
+                      getRef={(ref: any) => setQrRef(ref)}
                     />
                   );
                 } catch (error) {

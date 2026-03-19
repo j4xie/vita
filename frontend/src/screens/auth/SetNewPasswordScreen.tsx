@@ -13,6 +13,7 @@ import {
   Animated,
 } from 'react-native';
 import { LoaderOne } from '../../components/ui/LoaderOne';
+import { KeyboardDoneAccessory, KEYBOARD_ACCESSORY_ID } from '../../components/common/KeyboardDismissWrapper';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -405,6 +406,7 @@ const SetNewPasswordScreenComponent: React.FC = () => {
                     onBlur={() => setFocusedInput(null)}
                     secureTextEntry={!showNewPassword}
                     placeholderTextColor={theme.colors.text.disabled}
+                    inputAccessoryViewID={Platform.OS === 'ios' ? KEYBOARD_ACCESSORY_ID : undefined}
                   />
                   <TouchableOpacity onPress={() => setShowNewPassword(!showNewPassword)}>
                     <Ionicons
@@ -467,6 +469,7 @@ const SetNewPasswordScreenComponent: React.FC = () => {
                     onBlur={() => setFocusedInput(null)}
                     secureTextEntry={!showConfirmPassword}
                     placeholderTextColor={theme.colors.text.disabled}
+                    inputAccessoryViewID={Platform.OS === 'ios' ? KEYBOARD_ACCESSORY_ID : undefined}
                   />
                   <TouchableOpacity onPress={() => setShowConfirmPassword(!showConfirmPassword)}>
                     <Ionicons
@@ -504,6 +507,7 @@ const SetNewPasswordScreenComponent: React.FC = () => {
           </ScrollView>
         </KeyboardAvoidingView>
       </SafeAreaView>
+      <KeyboardDoneAccessory />
     </LinearGradient>
   );
 };

@@ -11,6 +11,7 @@ import {
   DeviceEventEmitter,
   Keyboard,
   TouchableWithoutFeedback,
+  Platform,
 } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
@@ -23,9 +24,9 @@ import { pomeloXAPI } from '../../services/PomeloXAPI';
 import { useTabBarVerification } from '../../hooks/useTabBarStateGuard';
 import { DynamicFormRenderer } from '../../components/activity/DynamicFormRenderer';
 import { LiquidSuccessModal } from '../../components/modals/LiquidSuccessModal';
-import { FormModeSelector } from '../../components/activity/FormModeSelector';
 import formAutoFill from '../../utils/formAutoFill';
 import { FormField } from '../../hooks/useAIFormFilling';
+import { KeyboardDoneAccessory, KEYBOARD_ACCESSORY_ID } from '../../components/common/KeyboardDismissWrapper';
 
 interface RegistrationFormData {
   legalName: string;
@@ -128,9 +129,7 @@ export const ActivityRegistrationFormScreen: React.FC = () => {
   const { user } = useUser();
   const { isDarkMode } = useTheme();
   const activity = route.params?.activity;
-
-  // Mode Selection State
-  const [modeSelected, setModeSelected] = useState(false);
+  const shareUserId = route.params?.shareUserId as number | undefined;
 
   // Static Form State
   const [formData, setFormData] = useState<RegistrationFormData>({
@@ -155,26 +154,14 @@ export const ActivityRegistrationFormScreen: React.FC = () => {
     }
   }, [activity?.modelContent]);
 
-  // Calculate auto-fill data and recommendation
-  const { remainingFields, autoFilledLabels } = useMemo(() => {
-    return formAutoFill.getAutoFillData(formSchema, user);
-  }, [formSchema, user]);
 
-  const { recommend: recommendAI } = useMemo(() => {
-    return formAutoFill.shouldRecommendAI(formSchema, user);
-  }, [formSchema, user]);
 
-  // Auto-fill initial data for DynamicFormRenderer
+  // Auto-fill initial data for DynamicFormRenderer (uses smart matching for select/radio)
   const initialData = useMemo(() => {
-    if (!user) return {};
-    const data: Record<string, string> = {};
-    if (user.legalName) data.legalName = user.legalName;
-    if (user.nickName) data.nickName = user.nickName;
-    if (user.email) data.email = user.email;
-    if (user.phonenumber) data.phonenumber = user.phonenumber;
-    if (user.dept?.deptName) data.schoolName = user.dept.deptName;
-    return data;
-  }, [user]);
+    if (!user || !formSchema.length) return {};
+    const { autoFilled } = formAutoFill.getAutoFillData(formSchema, user);
+    return autoFilled;
+  }, [formSchema, user]);
 
   // 🛡️ TabBar状态守护：确保报名表单页面TabBar始终隐藏
   useTabBarVerification('ActivityRegistrationForm', { debugLogs: false });
@@ -238,7 +225,7 @@ export const ActivityRegistrationFormScreen: React.FC = () => {
         return;
       }
 
-      const result = await pomeloXAPI.enrollActivity(activityIdInt, userIdInt);
+      const result = await pomeloXAPI.enrollActivity(activityIdInt, userIdInt, false, shareUserId);
 
       if (result.code === 200 && result.data != null && result.data > 0) {
         setShowSuccessModal(true);
@@ -270,7 +257,7 @@ export const ActivityRegistrationFormScreen: React.FC = () => {
         return;
       }
 
-      const result = await pomeloXAPI.submitActivityRegistration(activityIdInt, userIdInt, dynamicFormData);
+      const result = await pomeloXAPI.submitActivityRegistration(activityIdInt, userIdInt, dynamicFormData, shareUserId);
 
       if (result.code === 200 && result.data != null && Number(result.data) > 0) {
         setShowSuccessModal(true);
@@ -285,26 +272,9 @@ export const ActivityRegistrationFormScreen: React.FC = () => {
   }
 
   const handleBack = () => {
-    if (modeSelected && hasDynamicForm) {
-      // If mode was selected, go back to mode selection
-      setModeSelected(false);
-    } else {
-      navigation.goBack();
-    }
+    navigation.goBack();
   };
 
-  // Handle AI mode selection - navigate to AIFormFillerScreen
-  const handleSelectAIMode = () => {
-    navigation.navigate('AIFormFiller', {
-      activity,
-      formSchema,
-    });
-  };
-
-  // Handle traditional mode selection - show the form
-  const handleSelectTraditionalMode = () => {
-    setModeSelected(true);
-  };
 
   const handleSuccessModalClose = () => {
     setShowSuccessModal(false);
@@ -349,16 +319,7 @@ export const ActivityRegistrationFormScreen: React.FC = () => {
         {/* Activity Info */}
         <ActivityInfoBanner activity={activity} isDarkMode={dk} t={t} />
 
-        {hasDynamicForm && !modeSelected ? (
-          <FormModeSelector
-            onSelectAI={handleSelectAIMode}
-            onSelectTraditional={handleSelectTraditionalMode}
-            recommendAI={recommendAI}
-            autoFilledCount={autoFilledLabels.length}
-            remainingCount={remainingFields.length}
-          />
-        ) : (
-          <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
             <ScrollView
               style={styles.scrollView}
               showsVerticalScrollIndicator={false}
@@ -392,6 +353,7 @@ export const ActivityRegistrationFormScreen: React.FC = () => {
                       onChangeText={(value) => updateFormField('legalName', value)}
                       placeholder={t('auth.register.form.legal_name_placeholder')}
                       placeholderTextColor={dk ? '#6B7280' : theme.colors.text.disabled}
+                      inputAccessoryViewID={Platform.OS === 'ios' ? KEYBOARD_ACCESSORY_ID : undefined}
                     />
                     {errors.legalName && <Text style={styles.errorText}>{errors.legalName}</Text>}
                   </View>
@@ -405,6 +367,7 @@ export const ActivityRegistrationFormScreen: React.FC = () => {
                       onChangeText={(value) => updateFormField('nickName', value)}
                       placeholder={t('auth.register.form.nickname_placeholder')}
                       placeholderTextColor={dk ? '#6B7280' : theme.colors.text.disabled}
+                      inputAccessoryViewID={Platform.OS === 'ios' ? KEYBOARD_ACCESSORY_ID : undefined}
                     />
                     {errors.nickName && <Text style={styles.errorText}>{errors.nickName}</Text>}
                   </View>
@@ -419,6 +382,7 @@ export const ActivityRegistrationFormScreen: React.FC = () => {
                       placeholder={t('auth.register.form.phone_placeholder')}
                       placeholderTextColor={dk ? '#6B7280' : theme.colors.text.disabled}
                       keyboardType="phone-pad"
+                      inputAccessoryViewID={Platform.OS === 'ios' ? KEYBOARD_ACCESSORY_ID : undefined}
                     />
                     {errors.phone && <Text style={styles.errorText}>{errors.phone}</Text>}
                   </View>
@@ -434,6 +398,7 @@ export const ActivityRegistrationFormScreen: React.FC = () => {
                       placeholderTextColor={dk ? '#6B7280' : theme.colors.text.disabled}
                       keyboardType="email-address"
                       autoCapitalize="none"
+                      inputAccessoryViewID={Platform.OS === 'ios' ? KEYBOARD_ACCESSORY_ID : undefined}
                     />
                     {errors.email && <Text style={styles.errorText}>{errors.email}</Text>}
                   </View>
@@ -448,6 +413,7 @@ export const ActivityRegistrationFormScreen: React.FC = () => {
                       placeholder={t('auth.register.form.school_placeholder')}
                       placeholderTextColor={dk ? '#6B7280' : theme.colors.text.disabled}
                       editable={false}
+                      inputAccessoryViewID={Platform.OS === 'ios' ? KEYBOARD_ACCESSORY_ID : undefined}
                     />
                   </View>
 
@@ -459,7 +425,6 @@ export const ActivityRegistrationFormScreen: React.FC = () => {
               </View>
             </ScrollView>
           </TouchableWithoutFeedback>
-        )}
       </View>
 
       {/* Fixed Submit Button - Only show generic submit if Static Form */}
@@ -482,10 +447,18 @@ export const ActivityRegistrationFormScreen: React.FC = () => {
         visible={showSuccessModal}
         onClose={handleSuccessModalClose}
         title={t('activities.registration.success_title')}
-        message={t('activities.registration.success_message')}
+        message={
+          shareUserId && activity?.sharePoint
+            ? t('activities.registration.success_message_with_points', {
+                points: activity.sharePoint,
+                defaultValue: `${t('activities.registration.success_message')}\n+${activity.sharePoint} ${t('rewards.menu.points', 'Points')}`,
+              })
+            : t('activities.registration.success_message')
+        }
         confirmText={t('common.confirm')}
         icon="checkmark-circle"
       />
+      <KeyboardDoneAccessory />
     </SafeAreaView>
   );
 };

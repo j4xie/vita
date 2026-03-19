@@ -11,6 +11,7 @@ import {
 import { useNavigation } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { ScanIcon } from '../../components/common/icons/ScanIcon';
 import { useTranslation } from 'react-i18next';
 import Animated, {
   useSharedValue,
@@ -332,7 +333,7 @@ export const MerchantDashboardScreen: React.FC = () => {
 
             <View style={styles.scanButtonContent}>
               <View style={styles.scanIconCircle}>
-                <Ionicons name="scan-outline" size={26} color="#FFFFFF" />
+                <ScanIcon size={26} color="#FFFFFF" />
               </View>
               <View style={styles.scanTextContainer}>
                 <Text style={styles.scanButtonTitle}>{t('merchant.writeOff.title')}</Text>

@@ -312,7 +312,7 @@ export const PointsMallHomeScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFF5F2', // Pinkish background
+    backgroundColor: '#FAF3F1',
   },
   darkHeaderBg: {
     backgroundColor: '#111', // Dark background for the top part

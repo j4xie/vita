@@ -39,7 +39,7 @@ export const CORE_COLORS = {
   
   // 背景色系
   background: {
-    primary: '#FFFFFF',
+    primary: '#FAF3F1',
     secondary: '#F9FAFB',
     tertiary: '#F3F4F6',
   },
@@ -1134,11 +1134,11 @@ export const getBackgroundColor = (level: 'system' | 'secondary' | 'tertiary' | 
     }
   } else {
     switch (level) {
-      case 'system': return '#FFFFFF';
+      case 'system': return '#FAF3F1';
       case 'secondary': return '#F9FAFB';
       case 'tertiary': return '#F3F4F6';
       case 'elevated': return '#FFFFFF';
-      default: return '#FFFFFF';
+      default: return '#FAF3F1';
     }
   }
 };
