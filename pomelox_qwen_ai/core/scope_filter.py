@@ -1,6 +1,7 @@
 """
 Lightweight scope filter for AI chat.
-Rejects off-topic questions BEFORE RAG/LLM to save time and cost.
+- Rejects off-topic questions BEFORE RAG/LLM to save time and cost.
+- Detects simple chat (greetings, thanks, confirmations) to skip RAG entirely.
 """
 import re
 
@@ -50,6 +51,103 @@ _OFF_TOPIC_PATTERNS = [
 ]
 
 _compiled_off_topic = [re.compile(p) for p in _OFF_TOPIC_PATTERNS]
+
+
+# ==================== Simple Chat Detection ====================
+# These patterns match greetings, thanks, confirmations, and follow-ups
+# that do NOT need RAG retrieval — just a quick LLM reply (or canned reply).
+
+_SIMPLE_CHAT_EXACT = {
+    # Greetings
+    '你好', '您好', 'hi', 'hello', 'hey', '嗨', '哈喽', '在吗', '在不在',
+    # Thanks
+    '谢谢', '感谢', '谢谢你', '谢谢啦', '多谢', 'thanks', 'thank you', 'thx',
+    # Confirmations
+    '好的', '好', 'ok', 'okay', '知道了', '明白了', '了解', '收到',
+    '嗯', '嗯嗯', '好吧', '行', '可以', '没问题',
+    # Farewells
+    '再见', '拜拜', 'bye', '88', '886',
+    # Affirmations / reactions
+    '哦', '哦哦', '噢', '是的', '对', '对的', '没错',
+    # Filler
+    '嘿', '喂',
+}
+
+_SIMPLE_CHAT_PATTERNS = [
+    r'^(你好|您好|hi|hello|hey).{0,6}$',           # 你好呀 / hello!
+    r'^谢谢.{0,4}$',                                # 谢谢啦 / 谢谢你
+    r'^(好的|收到|明白|了解|知道了).{0,4}$',           # 好的谢谢
+    r'^(还有吗|还有呢|还有别的吗|就这些吗)$',           # follow-up expecting more
+    r'^(可以了|够了|不用了|没有了|没了)$',              # done / no more
+    r'^(哈哈|haha|lol|😂|👍|🙏).{0,4}$',            # emoji / laughter
+]
+_compiled_simple = [re.compile(p, re.IGNORECASE) for p in _SIMPLE_CHAT_PATTERNS]
+
+# Canned replies keyed by intent — avoids LLM call entirely for ultra-fast response
+_SIMPLE_REPLIES = {
+    'greeting': '你好！我是{school}的留学助手，有什么留学相关的问题可以问我哦～',
+    'thanks': '不客气！如果还有其他留学相关的问题，随时问我～',
+    'farewell': '再见，祝一切顺利！有问题随时回来找我～',
+    'confirm': None,   # None means: skip RAG but still call LLM with history (for natural continuation)
+    'followup': None,  # same — LLM with history, no RAG
+}
+
+
+def classify_simple_chat(question: str):
+    """
+    Classify whether a message is simple chat that doesn't need RAG.
+
+    Returns:
+        str intent key ('greeting', 'thanks', 'farewell', 'confirm', 'followup')
+        or None if the message is a real question that needs RAG.
+    """
+    q = question.strip()
+    q_lower = q.lower()
+
+    # Exact match (fastest path)
+    if q_lower in _SIMPLE_CHAT_EXACT:
+        # Determine intent
+        if q_lower in {'你好', '您好', 'hi', 'hello', 'hey', '嗨', '哈喽', '在吗', '在不在', '嘿', '喂'}:
+            return 'greeting'
+        if q_lower in {'谢谢', '感谢', '谢谢你', '谢谢啦', '多谢', 'thanks', 'thank you', 'thx'}:
+            return 'thanks'
+        if q_lower in {'再见', '拜拜', 'bye', '88', '886'}:
+            return 'farewell'
+        if q_lower in {'还有吗', '还有呢', '还有别的吗', '就这些吗'}:
+            return 'followup'
+        return 'confirm'
+
+    # Regex match (slightly slower but catches variants)
+    for pattern in _compiled_simple:
+        if pattern.search(q):
+            if any(kw in q_lower for kw in ['谢', 'thank', 'thx']):
+                return 'thanks'
+            if any(kw in q_lower for kw in ['你好', '您好', 'hi', 'hello', 'hey']):
+                return 'greeting'
+            if any(kw in q_lower for kw in ['再见', '拜拜', 'bye', '88']):
+                return 'farewell'
+            if any(kw in q_lower for kw in ['还有', '别的']):
+                return 'followup'
+            return 'confirm'
+
+    return None
+
+
+def get_simple_reply(intent: str, dept_id: int):
+    """
+    Get a canned reply for simple chat intent.
+
+    Returns:
+        str reply text, or None if LLM should handle (with skipRag=True).
+    """
+    template = _SIMPLE_REPLIES.get(intent)
+    if template is None:
+        return None  # caller should use LLM without RAG
+
+    from config import Config
+    school_name = Config.DEPARTMENTS.get(dept_id, {}).get('name_cn') or \
+                  Config.ALL_SCHOOL_NAMES.get(dept_id, '你的学校')
+    return template.format(school=school_name)
 
 
 def is_off_topic(question):

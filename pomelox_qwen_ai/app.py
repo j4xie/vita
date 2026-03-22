@@ -15,7 +15,7 @@ import threading
 import fcntl
 from core.rag_service import retrieve, get_system_prompt
 from core.cache_service import get_cached_response, set_cached_response, get_cache_stats, clear_all_cache, clear_cache_by_dept, reset_stats
-from core.scope_filter import is_off_topic, get_off_topic_reply
+from core.scope_filter import is_off_topic, get_off_topic_reply, classify_simple_chat, get_simple_reply
 from core.form_knowledge_service import match_forms, build_form_designer_prompt, get_kb_stats, format_form_examples
 from database import get_database
 
@@ -23,9 +23,9 @@ from database import get_database
 app = Flask(__name__)
 CORS(app)  # Enable CORS for cross-origin requests
 
-# Set Qwen API key
+# Set Qwen API key (from Config if available, otherwise from env)
 if dashscope is not None:
-    dashscope.api_key = Config.DASHSCOPE_API_KEY
+    dashscope.api_key = getattr(Config, 'DASHSCOPE_API_KEY', None) or os.environ.get('DASHSCOPE_API_KEY', '')
 
 # Chat history storage path
 CHAT_HISTORY_PATH = os.path.join(os.path.dirname(__file__), 'data', 'chat_history.json')
@@ -288,7 +288,27 @@ def ask_ai():
 
         t_start = time.time()
 
-        # Check cache first (exact match)
+        # Simple chat fast path (FIRST): skip cache, RAG, and LLM for greetings/thanks/confirmations
+        simple_intent = classify_simple_chat(question)
+        if simple_intent:
+            canned = get_simple_reply(simple_intent, dept_id)
+            if canned:
+                # Canned reply — no cache lookup, no LLM call, instant response
+                print(f"[SimpleChat] Canned reply ({simple_intent}): {question[:30]} [{time.time() - t_start:.3f}s]", flush=True)
+                append_messages(session_id, question, canned)
+                user_msg_id = f"msg_{uuid.uuid4().hex[:12]}"
+                return jsonify({
+                    'session_id': session_id,
+                    'question': question,
+                    'answer': canned,
+                    'dept_id': dept_id,
+                    'rag_score': 0,
+                    'source_type': 'simple_chat',
+                    'message_id': user_msg_id
+                })
+            # else: confirm/followup — fall through to LLM-only path below
+
+        # Check cache (exact + semantic match)
         cached = get_cached_response(question, dept_id)
         if cached:
             print(f"[Timing /ask] Cache HIT: {time.time() - t_start:.3f}s", flush=True)
@@ -315,6 +335,29 @@ def ask_ai():
                 'dept_id': dept_id,
                 'rag_score': 0,
                 'source_type': 'scope_filter',
+                'message_id': user_msg_id
+            })
+
+        # Simple chat LLM-only path (confirm/followup): skip RAG, use LLM with history
+        if simple_intent:
+            # LLM without RAG — natural continuation with conversation history
+            print(f"[SimpleChat] LLM-only ({simple_intent}), skipping RAG: {question[:30]}", flush=True)
+            system_prompt = get_system_prompt(dept_id, "", False)
+            messages = [{'role': 'system', 'content': system_prompt}]
+            messages.extend(get_store_messages(session_id))
+            messages.append({'role': 'user', 'content': question})
+            t_llm = time.time()
+            answer, _ = call_ai_with_web_search(messages, enable_search=False)
+            print(f"[Timing /ask] SimpleChat LLM: {time.time() - t_llm:.2f}s | Total: {time.time() - t_start:.2f}s", flush=True)
+            append_messages(session_id, question, answer)
+            user_msg_id = f"msg_{uuid.uuid4().hex[:12]}"
+            return jsonify({
+                'session_id': session_id,
+                'question': question,
+                'answer': answer,
+                'dept_id': dept_id,
+                'rag_score': 0,
+                'source_type': 'simple_chat',
                 'message_id': user_msg_id
             })
 
@@ -593,13 +636,22 @@ def api_ai_chat():
 
         ensure_session(session_id, dept_id)
 
+        # Simple chat fast path (FIRST): skip cache, RAG, and LLM for canned replies
+        simple_intent = classify_simple_chat(message)
+        if simple_intent:
+            canned = get_simple_reply(simple_intent, dept_id)
+            if canned:
+                print(f"[SimpleChat] Canned reply ({simple_intent}): {message[:30]}", flush=True)
+                append_messages(session_id, message, canned)
+                return jsonify({'response': canned, 'session_id': session_id, 'source_type': 'simple_chat'})
+
         # Scope filter: reject off-topic before RAG/LLM
         if is_off_topic(message):
             reply = get_off_topic_reply(dept_id)
             print("[Scope] OFF-TOPIC rejected (non-stream): %s" % message[:30], flush=True)
             return jsonify({'answer': reply, 'session_id': session_id, 'source_type': 'scope_filter'})
 
-        # Check cache first (exact + semantic match)
+        # Check cache (exact + semantic match)
         cached = get_cached_response(message, dept_id)
         if cached:
             return jsonify({
@@ -608,6 +660,17 @@ def api_ai_chat():
                 'source_type': 'cache',
                 'message_count': len(get_store_messages(session_id))
             })
+
+        # Simple chat LLM-only path (confirm/followup): skip RAG, use LLM with history
+        if simple_intent:
+            print(f"[SimpleChat] LLM-only ({simple_intent}): {message[:30]}", flush=True)
+            system_prompt = get_system_prompt(dept_id, "", False)
+            messages_list = [{'role': 'system', 'content': system_prompt}]
+            messages_list.extend(get_store_messages(session_id))
+            messages_list.append({'role': 'user', 'content': message})
+            answer, _ = call_ai_with_web_search(messages_list, enable_search=False)
+            append_messages(session_id, message, answer)
+            return jsonify({'response': answer, 'session_id': session_id, 'source_type': 'simple_chat'})
 
         skip_rag = data.get('skipRag', False)
         if skip_rag:
@@ -672,6 +735,19 @@ def api_ai_chat_stream():
             try:
                 t_start = time.time()
 
+                # Simple chat fast path (FIRST): instant canned reply, no cache/RAG/LLM
+                simple_intent = classify_simple_chat(message)
+                if simple_intent:
+                    canned = get_simple_reply(simple_intent, dept_id)
+                    if canned:
+                        print(f"[SimpleChat] Canned reply (stream, {simple_intent}): {message[:30]}", flush=True)
+                        ensure_session(session_id, dept_id)
+                        append_messages(session_id, message, canned)
+                        yield f"data: {json.dumps({'type': 'start', 'session_id': session_id})}\n\n"
+                        yield f"data: {json.dumps({'type': 'chunk', 'content': canned})}\n\n"
+                        yield f"data: {json.dumps({'type': 'done', 'session_id': session_id, 'full_content': canned})}\n\n"
+                        return
+
                 # Scope filter: reject off-topic before RAG/LLM
                 if is_off_topic(message):
                     reply = get_off_topic_reply(dept_id)
@@ -680,6 +756,41 @@ def api_ai_chat_stream():
                     yield f"data: {json.dumps({'type': 'chunk', 'content': reply})}\n\n"
                     yield f"data: {json.dumps({'type': 'done', 'session_id': session_id, 'full_content': reply})}\n\n"
                     return
+
+                # Simple chat LLM-only path (confirm/followup): skip RAG, stream with history
+                if simple_intent and not get_simple_reply(simple_intent, dept_id):
+                    # LLM without RAG — stream directly, skip retrieval stage
+                        print(f"[SimpleChat] LLM-only stream ({simple_intent}): {message[:30]}", flush=True)
+                        ensure_session(session_id, dept_id)
+                        yield f"data: {json.dumps({'type': 'progress', 'stage': 'generating', 'message': '正在生成回答...'})}\n\n"
+                        system_prompt = get_system_prompt(dept_id, "", False)
+                        messages_list = [{'role': 'system', 'content': system_prompt}]
+                        messages_list.extend(get_store_messages(session_id))
+                        messages_list.append({'role': 'user', 'content': message})
+                        yield f"data: {json.dumps({'type': 'start', 'session_id': session_id})}\n\n"
+                        full_content = ''
+                        call_params = {
+                            'model': model,
+                            'messages': messages_list,
+                            'result_format': 'message',
+                            'stream': True,
+                            'incremental_output': True,
+                            'max_tokens': 768
+                        }
+                        responses = dashscope.Generation.call(**call_params)
+                        for response in responses:
+                            if response.status_code == 200:
+                                if response.output and response.output.choices:
+                                    chunk = response.output.choices[0].message.content
+                                    if chunk:
+                                        full_content += chunk
+                                        yield f"data: {json.dumps({'type': 'chunk', 'content': chunk})}\n\n"
+                            else:
+                                yield f"data: {json.dumps({'type': 'error', 'message': response.message})}\n\n"
+                                return
+                        append_messages(session_id, message, full_content)
+                        yield f"data: {json.dumps({'type': 'done', 'session_id': session_id, 'full_content': full_content})}\n\n"
+                        return
 
                 # Check cache first (exact match) - stream cached response as chunks
                 if not skip_rag:
