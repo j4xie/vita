@@ -23,6 +23,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="tag != null  and tag != ''"> and tag = #{tag}</if>
             <if test="orderNum != null "> and order_num = #{orderNum}</if>
         </where>
+        order by order_num asc
     </select>
     
     <select id="selectActivityTypeById" parameterType="Long" resultMap="ActivityTypeResult">

@@ -17,6 +17,7 @@ import com.ruoyi.framework.web.service.SysLoginService;
 import com.ruoyi.framework.web.service.SysPermissionService;
 import com.ruoyi.framework.web.service.TokenService;
 import com.ruoyi.system.domain.Invitation;
+import com.ruoyi.system.email.EmailCheckService;
 import com.ruoyi.system.service.IInvitationService;
 import com.ruoyi.system.service.ISysConfigService;
 import com.ruoyi.system.service.ISysMenuService;
@@ -72,25 +73,44 @@ public class AppSysLoginController extends BaseController
 
     /**
      * 重置密码
+     * flag   验证方式：1 手机号验证     -1 邮箱验证
      * @return
      */
     @PostMapping("/resetPwd")
-    public AjaxResult resetPwd(String verCode, String bizId, String password, String phonenumber, String areaCode)
+    public AjaxResult resetPwd(String verCode, String bizId, String password, String phonenumber, String areaCode, String email, int flag)
     {
 
-        //先判断是否存在当前手机号码的用户
-        if(!TextUtils.isEmpty(phonenumber)){
-            SysUser user = userService.selectUserByPhoneNumber(phonenumber);
-            if(null == user){
+        if(1 == flag){
+            //手机号验证
+            //先判断是否存在当前手机号码的用户
+            if(!TextUtils.isEmpty(phonenumber)){
+                SysUser user = userService.selectUserByPhoneNumber(phonenumber);
+                if(null == user){
+                    AjaxResult ajaxResult = AjaxResult.error();
+                    ajaxResult.put("msg", "输入的手机号用户不存在");
+                    return ajaxResult;
+                }
+            }else{
                 AjaxResult ajaxResult = AjaxResult.error();
-                ajaxResult.put("msg", "输入的手机号用户不存在");
+                ajaxResult.put("msg", "请输入手机号");
+                return ajaxResult;
+            }
+        }else if(-1 == flag){
+            //邮箱验证
+            boolean res = EmailCheckService.getInstance().hasEmailVeryCode(email, verCode);
+            if(res){
+                //邮箱验证码验证成功
+            }else{
+                AjaxResult ajaxResult = AjaxResult.error();
+                ajaxResult.put("msg", "邮箱验证码不正确");
                 return ajaxResult;
             }
         }else{
             AjaxResult ajaxResult = AjaxResult.error();
-            ajaxResult.put("msg", "请输入手机号");
+            ajaxResult.put("msg", "验证方式有误");
             return ajaxResult;
         }
+
 
         if(TextUtils.isEmpty(verCode) || verCode.length() != 6){
             AjaxResult ajaxResult = AjaxResult.error();
@@ -103,40 +123,46 @@ public class AppSysLoginController extends BaseController
             return ajaxResult;
         }
 
-
-        if(TextUtils.isEmpty(areaCode) || "86".equals(areaCode) || "+86".equals(areaCode)){
-            //String bizId = UR
-            QuerySendDetailsResponse querySendDetailsResponse = aliyunSmsSenderServiceImpl.querySendDetails(bizId,
-                    phonenumber, 10L, 1L);
-            if ("OK".equals(querySendDetailsResponse.getCode()) && !querySendDetailsResponse.getSmsSendDetailDTOs().isEmpty()
-                    && querySendDetailsResponse.getSmsSendDetailDTOs().size() > 0){
-                String content = querySendDetailsResponse.getSmsSendDetailDTOs().get(0).getContent();
-                if(!content.contains(verCode)){
-                    //验证码不对
+        if(1 == flag){
+            if(TextUtils.isEmpty(areaCode) || "86".equals(areaCode) || "+86".equals(areaCode)){
+                //String bizId = UR
+                QuerySendDetailsResponse querySendDetailsResponse = aliyunSmsSenderServiceImpl.querySendDetails(bizId,
+                        phonenumber, 10L, 1L);
+                if ("OK".equals(querySendDetailsResponse.getCode()) && !querySendDetailsResponse.getSmsSendDetailDTOs().isEmpty()
+                        && querySendDetailsResponse.getSmsSendDetailDTOs().size() > 0){
+                    String content = querySendDetailsResponse.getSmsSendDetailDTOs().get(0).getContent();
+                    if(!content.contains(verCode)){
+                        //验证码不对
+                        AjaxResult ajaxResult = AjaxResult.error();
+                        ajaxResult.put("msg", "验证码不正确");
+                        return ajaxResult;
+                    }
+                }else{
                     AjaxResult ajaxResult = AjaxResult.error();
                     ajaxResult.put("msg", "验证码不正确");
                     return ajaxResult;
                 }
             }else{
-                AjaxResult ajaxResult = AjaxResult.error();
-                ajaxResult.put("msg", "验证码不正确");
-                return ajaxResult;
-            }
-        }else{
-            QueryMessageResponse querySendDetailsResponse = aliyunSmsSenderServiceImpl.queryGlobeSendDetails(bizId);
-            if(null != querySendDetailsResponse && "OK".equals(querySendDetailsResponse.getBody().responseCode)){
-                if(!verCode.equals(querySendDetailsResponse.getBody().message)){
+                QueryMessageResponse querySendDetailsResponse = aliyunSmsSenderServiceImpl.queryGlobeSendDetails(bizId);
+                if(null != querySendDetailsResponse && "OK".equals(querySendDetailsResponse.getBody().responseCode)){
+                    if(null != querySendDetailsResponse && null != querySendDetailsResponse.getBody() || null != querySendDetailsResponse.getBody().message){
+                        if(!querySendDetailsResponse.getBody().message.contains(verCode)){
+                            AjaxResult ajaxResult = AjaxResult.error();
+                            ajaxResult.put("msg", "验证码不正确");
+                            return ajaxResult;
+                        }
+                    }else{
+                        AjaxResult ajaxResult = AjaxResult.error();
+                        ajaxResult.put("msg", "验证码不正确");
+                        return ajaxResult;
+                    }
+                }else{
                     AjaxResult ajaxResult = AjaxResult.error();
                     ajaxResult.put("msg", "验证码不正确");
                     return ajaxResult;
                 }
-            }else{
-                AjaxResult ajaxResult = AjaxResult.error();
-                ajaxResult.put("msg", "验证码不正确");
-                return ajaxResult;
             }
         }
-
 
         return toAjax(userService.resetUserPwdByPhoneNumber(phonenumber, SecurityUtils.encryptPassword(password)));
     }

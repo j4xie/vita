@@ -22,6 +22,7 @@ import com.ruoyi.system.domain.Invitation;
 import com.ruoyi.system.domain.SysUserExLevel;
 import com.ruoyi.system.domain.SysUserRole;
 import com.ruoyi.system.domain.UserExtendsData;
+import com.ruoyi.system.email.EmailCheckService;
 import com.ruoyi.system.service.*;
 import com.ruoyi.system.service.impl.AliyunSmsSenderServiceImpl;
 import org.apache.http.util.TextUtils;
@@ -70,6 +71,8 @@ public class AppSysUserController extends BaseController {
     @Autowired
     private IUserExtendsDataLogService userExtendsDataLogService;
 
+
+
     /**
      * 新增用户
      * @param  isEmailVerify  传1表示邮箱验证，否则不传
@@ -98,6 +101,14 @@ public class AppSysUserController extends BaseController {
             if(!TextUtils.isEmpty(isEmailVerify) && "1".equals(isEmailVerify)){
                 //邮箱验证
                 user.setIsEmailVerify(1);
+                boolean res = EmailCheckService.getInstance().hasEmailVeryCode(user.getEmail(), user.getVerCode());
+                if(res){
+                    //邮箱验证码验证成功
+                }else{
+                    AjaxResult ajaxResult = AjaxResult.error();
+                    ajaxResult.put("msg", "邮箱验证码不正确");
+                    return ajaxResult;
+                }
             }else{
 
                 //验证邀请码
@@ -147,7 +158,7 @@ public class AppSysUserController extends BaseController {
                     }else{
                         QueryMessageResponse querySendDetailsResponse = aliyunSmsSenderServiceImpl.queryGlobeSendDetails(user.getBizId());
                         if(null != querySendDetailsResponse && "OK".equals(querySendDetailsResponse.getBody().responseCode)){
-                            if(!user.getVerCode().equals(querySendDetailsResponse.getBody().message)){
+                            if(null == querySendDetailsResponse.getBody() || TextUtils.isEmpty(querySendDetailsResponse.getBody().message) || !querySendDetailsResponse.getBody().message.contains(user.getVerCode())){
                                 AjaxResult ajaxResult = AjaxResult.error();
                                 ajaxResult.put("msg", "验证码不正确");
                                 return ajaxResult;
@@ -166,7 +177,16 @@ public class AppSysUserController extends BaseController {
 
             //用户端注册的默认全部为普通用户
             SysRole sysRole = new SysRole();
-            sysRole.setRoleKey("common");
+            if(!TextUtils.isEmpty(isEmailVerify) && "1".equals(isEmailVerify)){
+                if(user.getEmail().endsWith("@chineseunion.org")){
+                    //为内部员工
+                    sysRole.setRoleKey("staff");
+                }else{
+                    sysRole.setRoleKey("common");
+                }
+            }else{
+                sysRole.setRoleKey("common");
+            }
             SysRole sysRoleDTO = roleService.selectRoleByCon(sysRole);
             if(null != sysRoleDTO){
                 Long [] rolIds = {sysRoleDTO.getRoleId()};
@@ -398,4 +418,94 @@ public class AppSysUserController extends BaseController {
         ajaxResult.put("point", result);
         return ajaxResult;
     }
+
+
+    /**
+     * 校验用户名
+     * @param userName
+     * @return
+     */
+    @PostMapping(value = { "/checkUserName" })
+    public AjaxResult checkUserName(String userName)
+    {
+        AjaxResult ajax = null;
+        SysUser user = new SysUser();
+        user.setUserName(userName);
+        try{
+            if (!userService.checkUserNameUnique(user))
+            {
+                return error("新增用户'" + user.getUserName() + "'失败，登录账号已存在");
+            }else{
+                ajax = AjaxResult.success();
+                ajax.put("msg", "用户名可用");
+            }
+        }catch (Exception e){
+            //强制事务回滚
+            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+            ajax = AjaxResult.error();
+            ajax.put("msg", "注册失败");
+            return ajax;
+        }
+        return ajax;
+    }
+
+    /**
+     * 校验手机号
+     * @param phonenumber
+     * @return
+     */
+    @PostMapping(value = { "/checkPhonenumber" })
+    public AjaxResult checkPhonenumber(String phonenumber)
+    {
+        AjaxResult ajax = null;
+        SysUser user = new SysUser();
+        user.setPhonenumber(phonenumber);
+        try{
+            if (StringUtils.isNotEmpty(user.getPhonenumber()) && !userService.checkPhoneUnique(user))
+            {
+                return error("手机号码已存在");
+            }else{
+                ajax = AjaxResult.success();
+                ajax.put("msg", "手机号可用");
+            }
+        }catch (Exception e){
+            //强制事务回滚
+            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+            ajax = AjaxResult.error();
+            ajax.put("msg", "注册失败");
+            return ajax;
+        }
+        return ajax;
+    }
+
+    /**
+     * 校验手机号
+     * @param email
+     * @return
+     */
+    @PostMapping(value = { "/checkEmail" })
+    public AjaxResult checkEmail(String email)
+    {
+        AjaxResult ajax = null;
+        SysUser user = new SysUser();
+        user.setEmail(email);
+        try{
+            if (StringUtils.isNotEmpty(user.getEmail()) && !userService.checkEmailUnique(user))
+            {
+                return error("邮箱账号已存在");
+            }else{
+                ajax = AjaxResult.success();
+                ajax.put("msg", "邮箱可用");
+            }
+        }catch (Exception e){
+            //强制事务回滚
+            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+            ajax = AjaxResult.error();
+            ajax.put("msg", "注册失败");
+            return ajax;
+        }
+        return ajax;
+    }
+
+
 }

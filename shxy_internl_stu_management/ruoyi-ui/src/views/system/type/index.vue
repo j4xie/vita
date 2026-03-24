@@ -112,8 +112,8 @@
         <el-form-item label="标识" prop="tag">
           <el-input v-model="form.tag" placeholder="请输入标识" />
         </el-form-item>
-        <el-form-item label="显示顺序" prop="orderNum">
-          <el-input v-model="form.orderNum" placeholder="请输入显示顺序" />
+        <el-form-item label="显示排序" prop="orderNum">
+          <el-input-number v-model="form.orderNum" controls-position="right" :min="0" />
         </el-form-item>
       </el-form>
       <div slot="footer" class="dialog-footer">
@@ -161,6 +161,15 @@ export default {
       form: {},
       // 表单校验
       rules: {
+        name: [
+          { required: true, message: "类型名称不能为空", trigger: "blur" }
+        ],
+        tag: [
+          { required: true, message: "标识不能为空", trigger: "blur" }
+        ],
+        orderNum: [
+          { required: true, message: "显示排序不能为空", trigger: "blur" }
+        ],
       }
     }
   },

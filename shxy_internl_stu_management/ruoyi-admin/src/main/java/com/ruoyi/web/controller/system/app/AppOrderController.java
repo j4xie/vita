@@ -110,18 +110,20 @@ public class AppOrderController extends BaseController
 
             if(null != sysOrder){
                 if(sysOrder.getOrderType() == 1){//如果是积分兑换，需要判断用户积分是否够兑换
-                    //查询当前用户积分
-                    UserExtendsData userExtendsData = userExtendsDataService.selectUserExtendsDataByUserId(getUserId());
-                    if(null == userExtendsData){
-                        AjaxResult ajaxResult = AjaxResult.error();
-                        ajaxResult.put("msg", "没有足够积分");
-                        return ajaxResult;
-                    }
-                    totalPointPrice = sysOrder.getPrice().multiply(new BigDecimal(sysOrder.getNum()));
-                    if (totalPointPrice.compareTo(userExtendsData.getUserPoint()) > 0) {
-                        AjaxResult ajaxResult = AjaxResult.error();
-                        ajaxResult.put("msg", "没有足够积分");
-                        return ajaxResult;
+                    if(sysOrder.getPayMode() == 2){
+                        //查询当前用户积分
+                        UserExtendsData userExtendsData = userExtendsDataService.selectUserExtendsDataByUserId(getUserId());
+                        if(null == userExtendsData){
+                            AjaxResult ajaxResult = AjaxResult.error();
+                            ajaxResult.put("msg", "没有足够积分");
+                            return ajaxResult;
+                        }
+                        totalPointPrice = sysOrder.getPrice().multiply(new BigDecimal(sysOrder.getNum()));
+                        if (totalPointPrice.compareTo(userExtendsData.getUserPoint()) > 0) {
+                            AjaxResult ajaxResult = AjaxResult.error();
+                            ajaxResult.put("msg", "没有足够积分");
+                            return ajaxResult;
+                        }
                     }
                 }else if(sysOrder.getOrderType() == 2){
                     //判断活动名额是否已满
@@ -151,21 +153,100 @@ public class AppOrderController extends BaseController
             count = sysOrderService.insertSysOrder(sysOrder);
             if(count > 0){//创建订单成功，金额支付的调用支付接口
                 if(sysOrder.getOrderType() == 1){
-                    //积分兑换
-                    //扣除积分
-                    UserExtendsData userExtendsData = userExtendsDataService.selectUserExtendsDataByUserId(getUserId());
-                    userExtendsData.setUserPoint(userExtendsData.getUserPoint().subtract(totalPointPrice));
-                    int pointCount = userExtendsDataService.updateUserExtendsData(userExtendsData);
-                    if(pointCount > 0){
-                        //记录积分变更日志
-                        UserExtendsDataLog userExtendsDataLog = new UserExtendsDataLog();
-                        userExtendsDataLog.setUserId(userExtendsData.getUserId());
-                        userExtendsDataLog.setExType(1L);
-                        userExtendsDataLog.setExRemark("积分兑换商品");
-                        userExtendsDataLog.setExPoint("-"+totalPointPrice);
-                        iUserExtendsDataLogService.insertUserExtendsDataLog(userExtendsDataLog);
-                    }
+                    if(sysOrder.getPayMode() == 2){//积分兑换
+                        //扣除积分
+                        UserExtendsData userExtendsData = userExtendsDataService.selectUserExtendsDataByUserId(getUserId());
+                        userExtendsData.setUserPoint(userExtendsData.getUserPoint().subtract(totalPointPrice));
+                        int pointCount = userExtendsDataService.updateUserExtendsData(userExtendsData);
+                        if(pointCount > 0){
+                            //记录积分变更日志
+                            UserExtendsDataLog userExtendsDataLog = new UserExtendsDataLog();
+                            userExtendsDataLog.setUserId(userExtendsData.getUserId());
+                            userExtendsDataLog.setExType(1L);
+                            userExtendsDataLog.setExRemark("积分兑换商品");
+                            userExtendsDataLog.setExPoint("-"+totalPointPrice);
+                            iUserExtendsDataLogService.insertUserExtendsDataLog(userExtendsDataLog);
+                        }
+                    }else{
+                        String currency = "";
+                        if(sysOrder.getPayMode() == 1){//美元
+                            currency = "USD";
+                        }else{
+                            currency = "CNY";
+                        }
+                        if(sysOrder.getPayChannel() == 1){
+                            //支付宝支付
+                            try {
+                                AlipayTradeAppPayResponse response = AlipayUtils.getInstance().appPay(sysOrder.getTitle(), sysOrder.getPrice().toString(), sysOrder.getOrderNo(), currency);
+                                String orderStr = response.getBody();
+                                System.out.println(orderStr);
+                                if (response.isSuccess()) {
+                                    System.out.println("调用成功");
+                                    Map<String, Object> result = new HashMap<>();
+                                    result.put("orderString", response.getBody());
+                                    result.put("outTradeNo", sysOrder.getOrderNo());
+                                    log.info("订单创建成功，商户订单号: {}", sysOrder.getOrderNo());
 
+                                    SysOrder sysOrderDTO = new SysOrder();
+                                    sysOrderDTO.setId(sysOrder.getId());
+                                    sysOrderDTO.setOrderStr(response.getBody());
+                                    sysOrderService.updateSysOrder(sysOrderDTO);
+
+                                    return AjaxResult.success("订单创建成功", result);
+                                } else {
+                                    System.out.println("调用失败");
+                                    log.error("订单创建失败: {}，错误码: {}，子错误码: {}，子错误信息: {}",
+                                            response.getMsg(), response.getCode(), response.getSubCode(), response.getSubMsg());
+                                    return AjaxResult.error("订单创建失败: " + response.getMsg() +
+                                            " (错误码: " + response.getCode() +
+                                            ", 子错误码: " + response.getSubCode() +
+                                            ", 子错误信息: " + response.getSubMsg() + ")");
+                                    // sdk版本是"4.38.0.ALL"及以上,可以参考下面的示例获取诊断链接
+                                    // String diagnosisUrl = DiagnosisUtils.getDiagnosisUrl(response);
+                                    // System.out.println(diagnosisUrl);
+                                }
+                            } catch (Exception e) {
+                                log.error("创建订单过程中发生未预期的异常", e);
+                                return AjaxResult.error("创建订单过程中发生未预期的异常: " + e.getMessage());
+                            }
+                        }else if(sysOrder.getPayChannel() == 2){// Stripe支付
+                            try {
+                                Integer amount = ((sysOrder.getPrice()).multiply(BigDecimal.valueOf(100))).intValue();
+                                //String currency = "usd";
+                                if(sysOrder.getPayMode() == 1){//美元
+                                    currency = "usd";
+                                }else{//人民币
+                                    currency = "cny";
+                                }
+                                String customerId = "";//"cus_"+getUserId();
+                                String description = sysOrder.getTitle();
+
+                                if (amount == null || amount <= 0) {
+                                    return AjaxResult.success(ResponseEntity.badRequest().body("Amount must be greater than 0"));
+                                }
+
+                                // 创建支付意图
+                                PaymentIntent paymentIntent = stripeService.createPaymentIntent(amount, currency, customerId, description);
+
+                                Map<String, Object> response = new HashMap<>();
+                                response.put("client_secret", paymentIntent.getClientSecret());
+                                response.put("payment_intent_id", paymentIntent.getId());
+                                response.put("status", paymentIntent.getStatus());
+
+                                log.info("Stripe订单创建成功，商户订单号: {}", sysOrder.getOrderNo());
+
+                                SysOrder sysOrderDTO = new SysOrder();
+                                sysOrderDTO.setId(sysOrder.getId());
+                                sysOrderDTO.setClientSecret(paymentIntent.getClientSecret());
+                                sysOrderDTO.setPaymentIntentId(paymentIntent.getId());
+                                sysOrderService.updateSysOrder(sysOrderDTO);
+
+                                return AjaxResult.success(ResponseEntity.ok(response));
+                            } catch (StripeException e) {
+                                return AjaxResult.success(ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage()));
+                            }
+                        }
+                    }
                     //减商品库存
                     MallPointGoods mallPointGoods = mallPointGoodsService.selectMallPointGoodsById(sysOrder.getGoodsId());
                     MallPointGoods mallPointGoodsDTO= new MallPointGoods();
@@ -180,10 +261,16 @@ public class AppOrderController extends BaseController
                     activityExUser.setSignStatus(-1L);
                     activityExUser.setStatus(-1L);
                     activityExUserService.insertActivityExUser(activityExUser);
+                    String currency = "";
+                    if(sysOrder.getPayMode() == 1){//美元
+                        currency = "USD";
+                    }else{//人民币
+                        currency = "CNY";
+                    }
                     if(sysOrder.getPayChannel() == 1){
                         //支付宝支付
                         try {
-                            AlipayTradeAppPayResponse response = AlipayUtils.getInstance().appPay(sysOrder.getTitle(), sysOrder.getPrice().toString(), sysOrder.getOrderNo());
+                            AlipayTradeAppPayResponse response = AlipayUtils.getInstance().appPay(sysOrder.getTitle(), sysOrder.getPrice().toString(), sysOrder.getOrderNo(), currency);
                             String orderStr = response.getBody();
                             System.out.println(orderStr);
                             if (response.isSuccess()) {
@@ -218,7 +305,12 @@ public class AppOrderController extends BaseController
                     }else if(sysOrder.getPayChannel() == 2){// Stripe支付
                         try {
                             Integer amount = ((sysOrder.getPrice()).multiply(BigDecimal.valueOf(100))).intValue();
-                            String currency = "usd";
+                            //String currency = "usd";
+                            if(sysOrder.getPayMode() == 1){//美元
+                                currency = "usd";
+                            }else{//人民币
+                                currency = "cny";
+                            }
                             String customerId = "";//"cus_"+getUserId();
                             String description = sysOrder.getTitle();
 
@@ -249,10 +341,16 @@ public class AppOrderController extends BaseController
                     }
                 }else if(sysOrder.getOrderType() == 3){
                     //购买会员等级
+                    String currency = "";
+                    if(sysOrder.getPayMode() == 1){//美元
+                        currency = "USD";
+                    }else{//人民币
+                        currency = "CNY";
+                    }
                     if(sysOrder.getPayChannel() == 1){
                         //支付宝支付
                         try {
-                            AlipayTradeAppPayResponse response = AlipayUtils.getInstance().appPay(sysOrder.getTitle(), sysOrder.getPrice().toString(), sysOrder.getOrderNo());
+                            AlipayTradeAppPayResponse response = AlipayUtils.getInstance().appPay(sysOrder.getTitle(), sysOrder.getPrice().toString(), sysOrder.getOrderNo(), currency);
                             String orderStr = response.getBody();
                             System.out.println(orderStr);
                             if (response.isSuccess()) {
@@ -287,7 +385,12 @@ public class AppOrderController extends BaseController
                     }else if(sysOrder.getPayChannel() == 2){// Stripe支付
                         try {
                             Integer amount = ((sysOrder.getPrice()).multiply(BigDecimal.valueOf(100))).intValue();
-                            String currency = "usd";
+                            //String currency = "usd";
+                            if(sysOrder.getPayMode() == 1){//美元
+                                currency = "usd";
+                            }else{//人民币
+                                currency = "cny";
+                            }
                             String customerId = "";//""cus_"+getUserId();
                             String description = sysOrder.getTitle();
 

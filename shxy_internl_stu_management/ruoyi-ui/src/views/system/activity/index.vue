@@ -9,6 +9,16 @@
           @keyup.enter.native="handleQuery"
         />
       </el-form-item>
+      <el-form-item label="活动类型" prop="actType">
+        <el-select v-model="queryParams.actType" clearable placeholder="请选择活动类型">
+          <el-option
+            v-for="item in actTypeList"
+            :key="item.id"
+            :label="item.name"
+            :value="item.id">
+          </el-option>
+        </el-select>
+      </el-form-item>
       <!-- <el-form-item label="活动开始时间" prop="startTime">
         <el-date-picker clearable
           v-model="queryParams.startTime"
@@ -89,9 +99,10 @@
               style="height: 60px;"
             />
           </div>
-          <span v-else>无图片</span>
+          <span v-else></span>
         </template>
       </el-table-column>
+      <el-table-column label="活动类型" align="center" prop="typeName" width="180" :show-overflow-tooltip="true"/>
       <el-table-column label="活动时间" align="center" prop="startTime" width="200">
         <template slot-scope="scope">
           <div style="display: flex; flex-direction: column;">
@@ -241,17 +252,21 @@
               <el-select v-model="form.actType" clearable placeholder="请选择">
                 <el-option
                   v-for="item in actTypeList"
-                  :key="item.value"
-                  :label="item.label"
-                  :value="item.value">
+                  :key="item.id"
+                  :label="item.name"
+                  :value="item.id">
                 </el-option>
               </el-select>
             </el-form-item>
           </el-col>
           <el-col :span="12">
             <el-form-item label="活动费用" prop="price">
-              <el-input v-model="form.price" placeholder="请输入活动费用">
-                <template slot="append">美元</template>
+              <el-input v-model="form.price" maxlength="12" placeholder="请输入活动费用" class="input-with-select">
+                <!-- <template slot="append">美元</template> -->
+                <el-select v-model="form.priceUnit" slot="append" placeholder="请选择">
+                  <el-option label="人民币" :value="1"></el-option>
+                  <el-option label="美元" :value="2"></el-option>
+                </el-select>
               </el-input>
             </el-form-item>
           </el-col>
@@ -380,6 +395,7 @@
 <script>
 import { listActivity, getActivity, delActivity, addActivity, updateActivity, listModel, listSchool } from "@/api/system/activity"
 import { allListType } from "@/api/system/type"
+import { listRole } from "@/api/system/role"
 import {quillEditor} from 'vue-quill-editor'
 import 'quill/dist/quill.core.css'
 import 'quill/dist/quill.snow.css'
@@ -593,6 +609,7 @@ export default {
     this.getModelList();
     this.getSchoolList();
     this.getAllTypeList();
+    this.listRole();
   },
   methods: {
     getSimpleDate(date) {
@@ -629,6 +646,11 @@ export default {
         this.schoolList = response.data
       })
     },
+    listRole(){
+      listRole({}).then(response => {
+        this.roleList = response.rows
+      })
+    },
     /** 查询活动类型列表 */
     getAllTypeList() {
       this.loading = true
@@ -638,6 +660,7 @@ export default {
         this.loading = false
       })
     },
+
     // 取消按钮
     cancel() {
       this.open = false
@@ -661,7 +684,8 @@ export default {
         createTime: null,
         updateTime: null,
         deptIds: null,
-        deptIdArr: []
+        deptIdArr: [],
+        priceUnit: 1
       }
       this.signTime = null
       this.actTime = null
@@ -723,6 +747,8 @@ export default {
         }
         this.$set(this.form, "deptIdArr", _tempDeptArr)
         //this.form.deptIdArr = _tempDeptArr
+        var _tempAccessPermissionArr = this.form.accessPermission ? this.form.accessPermission.split(",") : []
+        this.$set(this.form, "accessPermissionArr", _tempAccessPermissionArr)
       })
     },
     /** 提交按钮 */
@@ -982,5 +1008,52 @@ export default {
   }
   ::v-deep .el-select{
     width: 100%;
+  }
+
+  .input-with-select .el-input-group__prepend {
+    background-color: #fff;
+  }
+  /* 优化活动费用输入框的单位选择器样式 */
+  ::v-deep .input-with-select .el-input-group__append {
+    background-color: transparent;
+    padding: 0;
+    border: 0;
+  }
+  ::v-deep .input-with-select .el-input-group__append .el-select {
+    width: 106px;
+  }
+  ::v-deep .input-with-select .el-input-group__append .el-select .el-input__inner {
+    border: 1px solid #DCDFE6;
+    border-left: 0;
+    border-radius: 0 4px 4px 0;
+    height: 40px;
+    line-height: 40px;
+    padding: 0 15px;
+    background-color: #f5f7fa;
+    color: #606266;
+    transition: all .3s;
+  }
+  ::v-deep .input-with-select .el-input-group__append .el-select .el-input__inner:hover {
+    background-color: #eef1f6;
+    border-color: #c0c4cc;
+  }
+  ::v-deep .input-with-select .el-input__inner {
+    border-right: 0;
+    border-radius: 4px 0 0 4px;
+    height: 40px;
+    line-height: 40px;
+  }
+  /* 聚焦时的样式 */
+  ::v-deep .input-with-select.is-focus .el-input__inner,
+  ::v-deep .input-with-select.is-focus .el-select .el-input__inner {
+    border-color: #409EFF;
+  }
+  /* 确保下拉按钮正确显示 */
+  ::v-deep .input-with-select .el-select .el-input .el-input__suffix {
+    right: 8px;
+  }
+  ::v-deep .el-input-group__append .el-select, .el-input-group__append .el-button, .el-input-group__prepend .el-select, .el-input-group__prepend .el-button {
+    display: inline-block;
+    margin: -10px -1px !important;
   }
 </style>

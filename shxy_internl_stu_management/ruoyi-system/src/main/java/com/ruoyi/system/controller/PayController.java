@@ -47,7 +47,7 @@ public class PayController extends BaseController {
                                   @RequestParam(required = false) String body) {
         try {
             log.info("开始处理创建订单请求，订单标题: {}, 总金额: {}, 商户订单号: {}", subject, totalAmount, outTradeNo);
-            AlipayTradeAppPayResponse response = AlipayUtils.getInstance().appPay(subject, totalAmount, outTradeNo);
+            AlipayTradeAppPayResponse response = AlipayUtils.getInstance().appPay(subject, totalAmount, outTradeNo, "");
             String orderStr = response.getBody();
             System.out.println(orderStr);
             if (response.isSuccess()) {

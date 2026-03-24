@@ -78,7 +78,13 @@
       </el-table-column>
       <el-table-column label="商品所属分类" align="center" prop="classifyName" />
       <el-table-column label="商品简介" align="center" prop="goodDesc" />
-      <el-table-column label="商品价格(积分)" align="center" prop="price" />
+      <el-table-column label="商品价格" align="center" prop="price">
+        <template slot-scope="scope">
+          <span v-if="scope.row.priceUnit === 1">{{scope.row.price}} 积分</span>
+          <span v-if="scope.row.priceUnit === 2">{{scope.row.price}} ¥</span>
+          <span v-if="scope.row.priceUnit === 3">{{scope.row.price}} $</span>
+        </template>
+      </el-table-column>
       <el-table-column label="库存数量" align="center" prop="quantity">
         <template slot-scope="scope">
           <span v-if="scope.row.unit">{{scope.row.quantity + scope.row.unit}}</span>
@@ -151,16 +157,23 @@
         <el-form-item label="商品简介" prop="goodDesc">
           <el-input v-model="form.goodDesc" type="textarea" placeholder="请输入商品简介" maxlength="200"/>
         </el-form-item>
-        <el-form-item label="商品价格" prop="price">
+        <el-form-item label="商品价格" prop="price" class="half-width">
           <el-input v-model="form.price" placeholder="请输入商品价格" maxlength="8">
-            <template slot="append">积分</template>
+            <!-- <template slot="append">积分</template> -->
           </el-input>
+        </el-form-item>
+        <el-form-item label="价格单位" prop="priceUnit" class="half-width">
+          <el-select v-model="form.priceUnit" clearable placeholder="请选择商品价格单位">
+            <el-option :key="1" label="积分" :value="1"></el-option>
+            <el-option :key="2" label="人民币" :value="2"></el-option>
+            <el-option :key="3" label="美元" :value="3"></el-option>
+          </el-select>
         </el-form-item>
         <el-form-item label="库存数量" prop="quantity" class="half-width">
           <el-input v-model="form.quantity" placeholder="请输入库存数量" maxlength="5">
           </el-input>
         </el-form-item>
-        <el-form-item label="单位" prop="unit" class="half-width">
+        <el-form-item label="库存单位" prop="unit" class="half-width">
           <el-input v-model="form.unit" placeholder="请输入库存数量单位" maxlength="6">
           </el-input>
         </el-form-item>
@@ -255,7 +268,10 @@ export default {
             message: "库存数量只能为大于等于0的正整数",
             trigger: "blur"
           }
-        ]
+        ],
+        priceUnit: [
+          { required: true, message: "请选择商品价格单位", trigger: "change" }
+        ],
       },
       editorOption: {
           modules: {
@@ -385,7 +401,8 @@ export default {
         createTime: null,
         createBy: null,
         updateTime: null,
-        updateBy: null
+        updateBy: null,
+        priceUnit: 1
       }
       this.resetForm("form")
     },

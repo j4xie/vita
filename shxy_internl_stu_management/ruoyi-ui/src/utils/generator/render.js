@@ -26,6 +26,12 @@ function vModel(self, dataObject, defaultValue) {
 }
 
 const componentChild = {
+  'span': {
+    // span标签渲染默认值内容
+    render(h, conf) {
+      return conf.defaultValue || ''
+    }
+  },
   'el-button': {
     default(h, conf, key) {
       return conf[key]
@@ -87,7 +93,92 @@ const componentChild = {
   }
 }
 
+// 处理el-upload组件的上传事件
+function handleUpload(self, dataObject, conf) {
+  // 上传成功后，更新内部file-list状态
+  const handleSuccess = function(response, file, fileList) {
+    let fileUrl = ''
+    if (typeof response === 'string') {
+      fileUrl = response
+    } else if (response) {
+      // 优先取响应中的data字段（后端返回格式：{code: 200, msg: '成功', data: 'url'}）
+      fileUrl = response.data || response.url || response
+    }
+    // 清理URL，去除多余的空格和反引号
+    if (typeof fileUrl === 'string') {
+      fileUrl = fileUrl.trim().replace(/^`|`$/g, '')
+    }
+    // 更新内部状态，确保图片能显示
+    self.innerFileList = [{
+      name: file.name,
+      url: fileUrl,
+      status: 'success'
+    }]
+    self.$emit('input', fileUrl)
+  }
+  
+  // 文件删除时清空内部状态
+  const handleRemove = function(file, fileList) {
+    self.innerFileList = []
+    self.$emit('input', null)
+  }
+  
+  // 绑定事件处理器
+  dataObject.props['on-success'] = handleSuccess
+  dataObject.props['on-remove'] = handleRemove
+}
+
+// 根据defaultValue生成回显的文件列表
+function getUploadFileList(defaultValue) {
+  if (!defaultValue) return []
+  let fileUrl = ''
+  if (typeof defaultValue === 'string') {
+    fileUrl = defaultValue
+  } else if (typeof defaultValue === 'object') {
+    // 如果defaultValue是对象格式（如后端返回的响应对象），尝试提取data或url字段
+    fileUrl = defaultValue.data || defaultValue.url || ''
+  }
+  // 清理URL
+  if (typeof fileUrl === 'string') {
+    fileUrl = fileUrl.trim().replace(/^`|`$/g, '')
+  }
+  if (fileUrl) {
+    return [{
+      name: 'image',
+      url: fileUrl,
+      status: 'success'
+    }]
+  }
+  return []
+}
+
 export default {
+  data() {
+    return {
+      // 为el-upload维护内部的文件列表状态
+      innerFileList: []
+    }
+  },
+  created() {
+    // 初始化时如果有默认值，设置回显
+    if (this.conf.tag === 'el-upload' && this.conf.defaultValue) {
+      this.innerFileList = getUploadFileList(this.conf.defaultValue)
+    }
+  },
+  watch: {
+    'conf.defaultValue': {
+      handler(newVal) {
+        if (this.conf.tag === 'el-upload') {
+          // 只有当新值和当前显示的不一致时才更新，避免覆盖刚上传的图片
+          const newFileList = getUploadFileList(newVal)
+          if (JSON.stringify(newFileList) !== JSON.stringify(this.innerFileList)) {
+            this.innerFileList = newFileList
+          }
+        }
+      },
+      immediate: false
+    }
+  },
   render(h) {
     const dataObject = {
       attrs: {},
@@ -100,12 +191,17 @@ export default {
 
     const childObjs = componentChild[confClone.tag]
     if (childObjs) {
-      Object.keys(childObjs).forEach(key => {
-        const childFunc = childObjs[key]
-        if (confClone[key]) {
-          children.push(childFunc(h, confClone, key))
-        }
-      })
+      // 对于span等原生标签，如果有render方法，直接调用
+      if (childObjs.render) {
+        children.push(childObjs.render(h, confClone))
+      } else {
+        Object.keys(childObjs).forEach(key => {
+          const childFunc = childObjs[key]
+          if (confClone[key]) {
+            children.push(childFunc(h, confClone, key))
+          }
+        })
+      }
     }
 
     Object.keys(confClone).forEach(key => {
@@ -115,11 +211,21 @@ export default {
       } else if (dataObject[key]) {
         dataObject[key] = val
       } else if (!isAttr(key)) {
-        dataObject.props[key] = val
+        // 对于el-upload，先不要覆盖on-*事件处理器，后面会统一设置
+        if (!(confClone.tag === 'el-upload' && (key === 'on-success' || key === 'on-change' || key === 'on-remove'))) {
+          dataObject.props[key] = val
+        }
       } else {
         dataObject.attrs[key] = val
       }
     })
+
+    // 对于el-upload组件，添加上传事件处理和文件列表回显（放在最后确保不被覆盖）
+    if (confClone.tag === 'el-upload') {
+      handleUpload(this, dataObject, confClone)
+      // 使用内部状态维护file-list
+      dataObject.props['file-list'] = this.innerFileList
+    }
     return h(this.conf.tag, dataObject, children)
   },
   props: ['conf']

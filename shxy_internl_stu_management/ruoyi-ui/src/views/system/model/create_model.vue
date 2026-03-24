@@ -9,6 +9,28 @@
       <el-scrollbar class="left-scrollbar">
         <div class="components-list">
           <div class="components-title">
+            <svg-icon icon-class="component" />常用组件
+          </div>
+          <draggable
+            class="components-draggable"
+            :list="processedCommonComponents"
+            :group="{ name: 'componentsGroup', pull: 'clone', put: false }"
+            :clone="cloneComponent"
+            draggable=".components-item"
+            :sort="false"
+            @end="onEnd"
+          >
+            <div
+              v-for="(element, index) in processedCommonComponents" :key="index" class="components-item"
+              @click="addComponent(element)"
+            >
+              <div class="components-body">
+                <svg-icon :icon-class="element.tagIcon" />
+                {{ element.label }}
+              </div>
+            </div>
+          </draggable>
+          <div class="components-title">
             <svg-icon icon-class="component" />输入型组件
           </div>
           <draggable
@@ -175,7 +197,7 @@ import beautifier from 'js-beautify'
 import ClipboardJS from 'clipboard'
 import render from '@/utils/generator/render'
 import RightPanel from '@/views/tool/build/RightPanel'
-import { processedInputComponents, processedSelectComponents, layoutComponents, formConf } from '@/utils/generator/config'
+import { processedInputComponents, processedSelectComponents, layoutComponents, formConf, processedCommonComponents } from '@/utils/generator/config'
 import { beautifierConf, titleCase } from '@/utils/index'
 import { makeUpHtml, vueTemplate, vueScript, cssStyle } from '@/utils/generator/html'
 import { makeUpJs } from '@/utils/generator/js'
@@ -205,6 +227,7 @@ export default {
       processedInputComponents,
       processedSelectComponents,
       layoutComponents,
+      processedCommonComponents,
       labelWidth: 100,
       pages: [{
         id: '1',

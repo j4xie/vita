@@ -11,6 +11,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <result property="classifyId"    column="classify_id"    />
         <result property="goodDesc"    column="good_desc"    />
         <result property="price"    column="price"    />
+        <result property="priceUnit"    column="price_unit"    />
         <result property="quantity"    column="quantity"    />
         <result property="unit"    column="unit"    />
         <result property="goodDetail"    column="good_detail"    />
@@ -23,7 +24,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     </resultMap>
 
     <sql id="selectMallPointGoodsVo">
-        select mpg.id, mpg.good_name, mpg.good_icon, mpg.classify_id, mpg.good_desc, mpg.price, mpg.quantity, mpg.unit, mpg.good_detail,
+        select mpg.id, mpg.good_name, mpg.good_icon, mpg.classify_id, mpg.good_desc, mpg.price, mpg.price_unit, mpg.quantity, mpg.unit, mpg.good_detail,
                mpg.create_time, mpg.create_by, mpg.create_user_id, mpg.update_time, mpg.update_by, mc.cat_name
         from mall_point_goods mpg
         left join mall_classify mc on mc.id = mpg.classify_id
@@ -36,10 +37,12 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="classifyId != null  and classifyId != ''"> and mpg.classify_id = #{classifyId}</if>
             <if test="goodDesc != null  and goodDesc != ''"> and mpg.good_desc = #{goodDesc}</if>
             <if test="price != null "> and mpg.price = #{price}</if>
+            <if test="priceUnit != null  and priceUnit != ''"> and mpg.price_unit = #{priceUnit}</if>
             <if test="quantity != null "> and mpg.quantity = #{quantity}</if>
             <if test="unit != null "> and mpg.unit = #{unit}</if>
             <if test="goodDetail != null  and goodDetail != ''"> and mpg.good_detail = #{goodDetail}</if>
         </where>
+        order by mpg.create_time desc
     </select>
     
     <select id="selectMallPointGoodsById" parameterType="Long" resultMap="MallPointGoodsResult">
@@ -55,6 +58,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="classifyId != null">classify_id,</if>
             <if test="goodDesc != null">good_desc,</if>
             <if test="price != null">price,</if>
+            <if test="priceUnit != null">price_unit,</if>
             <if test="quantity != null">quantity,</if>
             <if test="unit != null">unit,</if>
             <if test="goodDetail != null">good_detail,</if>
@@ -70,6 +74,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="classifyId != null">#{classifyId},</if>
             <if test="goodDesc != null">#{goodDesc},</if>
             <if test="price != null">#{price},</if>
+            <if test="priceUnit != null">#{priceUnit},</if>
             <if test="quantity != null">#{quantity},</if>
             <if test="unit != null">#{unit},</if>
             <if test="goodDetail != null">#{goodDetail},</if>
@@ -89,6 +94,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="classifyId != null">classify_id = #{classifyId},</if>
             <if test="goodDesc != null">good_desc = #{goodDesc},</if>
             <if test="price != null">price = #{price},</if>
+            <if test="priceUnit != null">price_unit = #{priceUnit},</if>
             <if test="quantity != null">quantity = #{quantity},</if>
             <if test="unit != null">unit = #{unit},</if>
             <if test="goodDetail != null">good_detail = #{goodDetail},</if>

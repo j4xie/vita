@@ -41,7 +41,14 @@ public class MallPointGoods extends BaseEntity
 
     /** 商品价格 */
     @Excel(name = "商品价格")
-    private Long price;
+    private Double price;
+
+    /** 商品价格单位 1-积分   2-人民币    3-美元*/
+    @Excel(name = "商品价格单位", readConverterExp = "1=积分,2=人民币,3=美元")
+    private int priceUnit;
+
+    /** 商品价格单位 */
+    private String priceUnitText;
 
     /** 库存数量 */
     @Excel(name = "库存数量")
@@ -57,6 +64,29 @@ public class MallPointGoods extends BaseEntity
 
     /** 创建人user_id */
     private Long createUserId;
+
+    public int getPriceUnit() {
+        if(priceUnit == 1){
+            setPriceUnitText("积分");
+        }else if(priceUnit == 2){
+            setPriceUnitText("人民币");
+        }else if(priceUnit == 3){
+            setPriceUnitText("美元");
+        }
+        return priceUnit;
+    }
+
+    public void setPriceUnit(int priceUnit) {
+        this.priceUnit = priceUnit;
+    }
+
+    public String getPriceUnitText() {
+        return priceUnitText;
+    }
+
+    public void setPriceUnitText(String priceUnitText) {
+        this.priceUnitText = priceUnitText;
+    }
 
     public Long getQuantity() {
         return quantity;
@@ -130,12 +160,12 @@ public class MallPointGoods extends BaseEntity
         return goodDesc;
     }
 
-    public void setPrice(Long price) 
+    public void setPrice(Double price)
     {
         this.price = price;
     }
 
-    public Long getPrice() 
+    public Double getPrice()
     {
         return price;
     }

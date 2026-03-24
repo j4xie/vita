@@ -141,6 +141,28 @@ public class Activity extends BaseEntity
 
     private String accessRoleKey;
 
+    //活动类型名称
+    private String typeName;
+
+    //费用单位。1-人民币   2-美元
+    private Integer priceUnit;
+
+    public Integer getPriceUnit() {
+        return priceUnit;
+    }
+
+    public void setPriceUnit(Integer priceUnit) {
+        this.priceUnit = priceUnit;
+    }
+
+    public String getTypeName() {
+        return typeName;
+    }
+
+    public void setTypeName(String typeName) {
+        this.typeName = typeName;
+    }
+
     public BigDecimal getSharePoint() {
         return sharePoint;
     }

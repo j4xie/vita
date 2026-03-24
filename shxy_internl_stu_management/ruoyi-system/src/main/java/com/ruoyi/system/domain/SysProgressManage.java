@@ -18,12 +18,34 @@ public class SysProgressManage extends BaseEntity
     /** 主键 */
     private Long id;
 
+    /** 流程管理JSON */
+    private String progressContent;
+
+    /** 是否可用：  1 可用      -1 不可用 */
+    private Integer enabled;
+
     public void setId(Long id) 
     {
         this.id = id;
     }
 
-    public Long getId() 
+    public String getProgressContent() {
+        return progressContent;
+    }
+
+    public void setProgressContent(String progressContent) {
+        this.progressContent = progressContent;
+    }
+
+    public Integer getEnabled() {
+        return enabled;
+    }
+
+    public void setEnabled(Integer enabled) {
+        this.enabled = enabled;
+    }
+
+    public Long getId()
     {
         return id;
     }

@@ -205,7 +205,9 @@
                   v-for="component in formComponents" 
                   :key="component.id"
                   class="component-item"
+                  :draggable="true"
                   @click="addFormComponent(component.id, component.label)"
+                  @dragstart="handleDragStart($event, component)"
                 >
                   <div class="component-icon" :style="{ backgroundColor: component.color }">
                     <i :class="component.icon" style="color: white"></i>
@@ -216,7 +218,10 @@
             </div>
             
             <!-- 表单设计区域 -->
-            <div class="form-design-area">
+            <div 
+              class="form-design-area"
+              :class="{ 'drag-over': isDragOver }"
+            >
               <div class="design-header">
                 <div class="header-left">
                   <h4>审批表单</h4>
@@ -227,12 +232,17 @@
                   <el-button size="small" icon="el-icon-document">保存</el-button>
                 </div>
               </div>
-              <div class="form-preview">
+              <div 
+                class="form-preview"
+                @dragover="handleDragOver($event)"
+                @drop="handleDrop($event)"
+                @dragleave="handleDragLeave($event)"
+              >
                 <div v-if="form.formItems.length === 0" class="empty-form">
                   <div class="empty-icon">
                     <i class="el-icon-plus"></i>
                   </div>
-                  <p>从左侧点击组件添加到此处开始设计表单</p>
+                  <p>从左侧拖拽或点击组件添加到此处开始设计表单</p>
                 </div>
                 <div v-else class="form-content">
                   <div 
@@ -492,7 +502,7 @@
                             </div>
                           </div>
                           <div class="branch-line-vertical">
-                            <div class="add-btn" @click="showAddNodeMenu($event, 'afterCondition', conditionIndex, index)">
+                            <div class="add-btn" @click="addCondition(index, conditionIndex)">
                               <i class="el-icon-plus"></i>
                             </div>
                           </div>
@@ -958,6 +968,9 @@ export default {
       currentAddGroupIndex: null,
       currentAddIndex: null,
       currentAddSubIndex: null,
+      // 拖拽状态
+      isDragOver: false,
+      dragComponent: null,
       // 表单校验
       rules: {
         name: [
@@ -1237,9 +1250,10 @@ export default {
     },
     
     /** 添加条件 */
-    addCondition(groupIndex) {
+    addCondition(groupIndex, conditionIndex) {
       const conditionBranchNode = this.flowNodes[groupIndex]
       if (conditionBranchNode && conditionBranchNode.type === 'conditionBranch') {
+        const insertIndex = conditionIndex !== undefined ? conditionIndex + 1 : conditionBranchNode.conditions.length
         const newCondition = {
           id: Date.now(),
           name: `条件${conditionBranchNode.conditions.length + 1}`,
@@ -1247,7 +1261,12 @@ export default {
           priority: conditionBranchNode.conditions.length + 1,
           nodes: []
         }
-        conditionBranchNode.conditions.push(newCondition)
+        conditionBranchNode.conditions.splice(insertIndex, 0, newCondition)
+        // 更新所有条件的优先级和名称
+        conditionBranchNode.conditions.forEach((condition, idx) => {
+          condition.priority = idx + 1
+          condition.name = `条件${idx + 1}`
+        })
         this.$message.success('添加条件成功')
       }
     },
@@ -1314,16 +1333,21 @@ export default {
     },
     
     /** 在并行分支节点内添加分支 */
-    addBranchToParallel(groupIndex) {
+    addBranchToParallel(groupIndex, branchIndex) {
       const parallelBranchNode = this.flowNodes[groupIndex]
       if (parallelBranchNode && parallelBranchNode.type === 'parallelBranch') {
+        const insertIndex = branchIndex !== undefined ? branchIndex + 1 : parallelBranchNode.branches.length
         const newBranch = {
           id: Date.now(),
           name: `分支${parallelBranchNode.branches.length + 1}`,
           content: '并行任务（同时进行）',
           nodes: []
         }
-        parallelBranchNode.branches.push(newBranch)
+        parallelBranchNode.branches.splice(insertIndex, 0, newBranch)
+        // 更新所有分支的名称
+        parallelBranchNode.branches.forEach((branch, idx) => {
+          branch.name = `分支${idx + 1}`
+        })
         this.$message.success('添加分支成功')
       }
     },
@@ -1412,6 +1436,36 @@ export default {
       }).catch(() => {
         this.$message.info('取消添加')
       })
+    },
+    
+    /** 开始拖拽 */
+    handleDragStart(event, component) {
+      this.dragComponent = component
+      event.dataTransfer.effectAllowed = 'copy'
+      event.dataTransfer.setData('text/plain', JSON.stringify(component))
+    },
+    
+    /** 拖拽经过 */
+    handleDragOver(event) {
+      event.preventDefault()
+      event.dataTransfer.dropEffect = 'copy'
+      this.isDragOver = true
+    },
+    
+    /** 拖拽离开 */
+    handleDragLeave(event) {
+      this.isDragOver = false
+    },
+    
+    /** 放置组件 */
+    handleDrop(event) {
+      event.preventDefault()
+      this.isDragOver = false
+      
+      if (this.dragComponent) {
+        this.addFormComponent(this.dragComponent.id, this.dragComponent.label)
+        this.dragComponent = null
+      }
     },
     
     /** 添加表单组件 */
@@ -1548,23 +1602,56 @@ export default {
     
     /** 提交按钮 */
     submitForm() {
-      this.$refs["form"].validate(valid => {
-        if (valid) {
-          if (this.form.id != null) {
-            updateManage(this.form).then(response => {
-              this.$message.success("修改成功")
-              this.open = false
-              this.getList()
-            })
-          } else {
-            addManage(this.form).then(response => {
-              this.$message.success("新增成功")
-              this.open = false
-              this.getList()
-            })
-          }
+      // 收集三个模块的数据
+      const progressContent = {
+        // 1. 基础设置数据
+        basicSettings: {
+          name: this.form.name,
+          group: this.form.group,
+          description: this.form.description,
+          settings: this.form.settings,
+          active: this.form.active,
+          logo: this.form.logo,
+          type: this.form.type
+        },
+        // 2. 审批表单数据
+        approvalForm: {
+          formItems: this.form.formItems,
+          formCount: this.form.formItems.length
+        },
+        // 3. 审批流程数据
+        approvalProcess: {
+          flowNodes: this.flowNodes,
+          startNodeConfig: this.startNodeConfig,
+          nodeCount: this.flowNodes.length
         }
-      })
+      }
+      
+      // 在控制台打印收集的数据
+      console.log('==================== 流程管理 - 提交数据 ====================')
+      console.log('progressContent:', JSON.parse(JSON.stringify(progressContent)))
+      console.log('=========================================================')
+      
+      // 构建提交数据，将收集的内容用 progressContent 参数名包装
+      const submitParams = {
+        ...this.form,
+        progressContent: JSON.stringify(progressContent)
+      }
+      
+      // 表单验证和提交逻辑
+      if (this.form.id != null) {
+        updateManage(submitParams).then(response => {
+          this.$message.success("修改成功")
+          this.open = false
+          this.getList()
+        })
+      } else {
+        addManage(submitParams).then(response => {
+          this.$message.success("新增成功")
+          this.open = false
+          this.getList()
+        })
+      }
     },
     
     /** 取消按钮 */
@@ -2315,6 +2402,25 @@ export default {
   box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
   display: flex;
   flex-direction: column;
+  transition: all 0.3s ease;
+}
+.form-design-area.drag-over {
+  border: 2px dashed #409EFF;
+  background-color: #ecf5ff;
+  box-shadow: 0 2px 12px 0 rgba(64, 158, 255, 0.3);
+}
+/* 组件拖拽时的样式 */
+.component-item {
+  cursor: grab;
+  user-select: none;
+  transition: all 0.2s ease;
+}
+.component-item:active {
+  cursor: grabbing;
+}
+.component-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 .design-header {

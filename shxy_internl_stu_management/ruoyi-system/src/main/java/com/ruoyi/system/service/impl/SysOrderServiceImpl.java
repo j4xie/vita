@@ -106,7 +106,12 @@ public class SysOrderServiceImpl implements ISysOrderService
                         MallPointGoods mallPointGoods = mallPointGoodsMapper.selectMallPointGoodsById(sysOrder.getGoodsId());
                         if(null != mallPointGoods){
                             sysOrder.setTitle(mallPointGoods.getGoodName());
-                            sysOrder.setOrderDesc("兑换积分商品：" + mallPointGoods.getGoodName() + " x" + sysOrder.getNum() + (!TextUtils.isEmpty(mallPointGoods.getUnit()) ? mallPointGoods.getUnit() : ""));
+                            if(sysOrder.getPayMode() == 2){
+                                sysOrder.setOrderDesc("积分兑换商品：" + mallPointGoods.getGoodName() + " x" + sysOrder.getNum() + (!TextUtils.isEmpty(mallPointGoods.getUnit()) ? mallPointGoods.getUnit() : ""));
+                            }else{
+                                sysOrder.setOrderDesc("购买商品：" + mallPointGoods.getGoodName() + " x" + sysOrder.getNum() + (!TextUtils.isEmpty(mallPointGoods.getUnit()) ? mallPointGoods.getUnit() : ""));
+                            }
+
                         }
                     }
                     sysOrder.setOrderStatus(5L);

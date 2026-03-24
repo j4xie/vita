@@ -42,7 +42,7 @@ public class AlipayUtils {
      * @param outTradeNo
      * @return
      */
-    public AlipayTradeAppPayResponse appPay(String subject, String totalAmount, String outTradeNo) {
+    public AlipayTradeAppPayResponse appPay(String subject, String totalAmount, String outTradeNo, String currency) {
         log.info("开始处理创建订单请求，订单标题: {}, 总金额: {}, 商户订单号: {}", subject, totalAmount, outTradeNo);
         AlipayClient alipayClient = createAlipayClient();
         AlipayTradeAppPayRequest request = new AlipayTradeAppPayRequest();
@@ -50,6 +50,11 @@ public class AlipayUtils {
         model.setOutTradeNo(outTradeNo);
         model.setTotalAmount(totalAmount);
         model.setSubject(subject);
+        if(currency == "USD"){
+            model.setBusinessParams("{\"currency\":\"USD\"}");
+        }else{
+            model.setBusinessParams("{\"currency\":\"CNY\"}");
+        }
         request.setBizModel(model);
         AlipayTradeAppPayResponse response = null;
         try {

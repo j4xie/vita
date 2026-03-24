@@ -6,15 +6,24 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     
     <resultMap type="SysProgressManage" id="SysProgressManageResult">
         <result property="id"    column="id"    />
+        <result property="progressContent"      column="progress_content"     />
+        <result property="enabled"      column="enabled"     />
+        <result property="createTime"    column="create_time"   />
     </resultMap>
 
     <sql id="selectSysProgressManageVo">
-        select id from sys_progress_manage
+        select id, progress_content, enabled, create_time from sys_progress_manage
     </sql>
 
     <select id="selectSysProgressManageList" parameterType="SysProgressManage" resultMap="SysProgressManageResult">
         <include refid="selectSysProgressManageVo"/>
-        <where>  
+        <where>
+            <if test="progressContent != null and progressContent != ''">
+                AND progress_content = #{progressContent}
+            </if>
+            <if test="enabled != null and enabled != ''">
+                AND enabled = #{enabled}
+            </if>
         </where>
     </select>
     
@@ -24,17 +33,23 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     </select>
 
     <insert id="insertSysProgressManage" parameterType="SysProgressManage" useGeneratedKeys="true" keyProperty="id">
-        insert into sys_progress_manage
-        <trim prefix="(" suffix=")" suffixOverrides=",">
-         </trim>
-        <trim prefix="values (" suffix=")" suffixOverrides=",">
-         </trim>
+        insert into sys_progress_manage(
+            <if test="progressContent != null">progress_content,</if>
+            <if test="enabled != null and enabled != ''">enabled,</if>
+            create_time
+        )values(
+            <if test="progressContent != null">#{progressContent},</if>
+            <if test="enabled != null and enabled != ''">#{enabled},</if>
+            sysdate()
+        )
     </insert>
 
     <update id="updateSysProgressManage" parameterType="SysProgressManage">
         update sys_progress_manage
-        <trim prefix="SET" suffixOverrides=",">
-        </trim>
+        <set>
+            <if test="progressContent != null and progressContent != ''">progress_content = #{progressContent},</if>
+            <if test="enabled != null and enabled != ''">enabled = #{enabled},</if>
+        </set>
         where id = #{id}
     </update>
 

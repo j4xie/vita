@@ -64,76 +64,7 @@ export const inputComponents = [
     changeTag: true,
     document: 'https://element.eleme.cn/#/zh-CN/component/input'
   },
-  {
-    label: '密码',
-    tag: 'el-input',
-    tagIcon: 'password',
-    placeholder: '请输入',
-    defaultValue: undefined,
-    span: 24,
-    'show-password': true,
-    labelWidth: null,
-    style: { width: '100%' },
-    clearable: true,
-    prepend: '',
-    append: '',
-    'prefix-icon': '',
-    'suffix-icon': '',
-    maxlength: null,
-    'show-word-limit': false,
-    readonly: false,
-    disabled: false,
-    required: true,
-    regList: [],
-    changeTag: true,
-    document: 'https://element.eleme.cn/#/zh-CN/component/input'
-  },
-  {
-    label: '手机号',
-    tag: 'el-input',
-    tagIcon: 'phone',
-    placeholder: '请输入手机号',
-    defaultValue: undefined,
-    span: 24,
-    labelWidth: null,
-    style: { width: '100%' },
-    clearable: true,
-    'prefix-icon': 'el-icon-phone',
-    maxlength: 11,
-    'show-word-limit': true,
-    readonly: false,
-    disabled: false,
-    required: true,
-    regList: [{
-      pattern: '/^1(3|4|5|7|8|9)\\d{9}$/',
-      message: '手机号格式错误'
-    }],
-    changeTag: true,
-    document: 'https://element.eleme.cn/#/zh-CN/component/input'
-  },
-  {
-    label: '邮箱',
-    tag: 'el-input',
-    tagIcon: 'email',
-    placeholder: '请输入邮箱',
-    defaultValue: undefined,
-    span: 24,
-    labelWidth: null,
-    style: { width: '100%' },
-    clearable: true,
-    'prefix-icon': 'el-icon-message',
-    maxlength: null,
-    'show-word-limit': false,
-    readonly: false,
-    disabled: false,
-    required: true,
-    regList: [{
-      pattern: '/^([a-zA-Z0-9_-])+@([a-zA-Z0-9_-])+(\\.[a-zA-Z0-9_-])+$/',
-      message: '邮箱格式错误'
-    }],
-    changeTag: true,
-    document: 'https://element.eleme.cn/#/zh-CN/component/input'
-  },
+
   {
     label: '计数器',
     tag: 'el-input-number',
@@ -536,7 +467,146 @@ const addConditionProps = (components) => {
   }))
 }
 
+// 常用组件
+export const commonComponents = [
+  {
+    label: '文本展示',
+    tag: 'span',
+    tagIcon: 'textarea',
+    defaultValue: '文本展示内容',
+    span: 24,
+    labelWidth: null,
+    style: { width: '100%' },
+    disabled: false,
+    required: false,
+    regList: [],
+    changeTag: false,
+    document: ''
+  },
+  {
+    label: '价格输入',
+    tag: 'el-input',
+    tagIcon: 'number',
+    placeholder: '请输入价格',
+    defaultValue: undefined,
+    span: 24,
+    labelWidth: null,
+    style: { width: '100%' },
+    clearable: true,
+    prepend: '¥',
+    append: '',
+    'prefix-icon': '',
+    'suffix-icon': '',
+    maxlength: null,
+    'show-word-limit': false,
+    readonly: false,
+    disabled: false,
+    required: true,
+    regList: [{
+      pattern: '/^\\d+(\\.\\d{1,2})?$/',
+      message: '请输入正确的价格格式'
+    }],
+    changeTag: true,
+    document: 'https://element.eleme.cn/#/zh-CN/component/input'
+  },
+  {
+    label: '图片展示',
+    tag: 'el-upload',
+    tagIcon: 'upload',
+    action: process.env.VUE_APP_BASE_API + '/file/upload',
+    defaultValue: null,
+    span: 24,
+    labelWidth: null,
+    disabled: false,
+    required: false,
+    accept: 'image/*',
+    name: 'file',
+    'auto-upload': true,
+    showTip: false,
+    buttonText: '点击上传图片',
+    fileSize: 2,
+    sizeUnit: 'MB',
+    'list-type': 'picture-card',
+    multiple: false,
+    limit: 1,
+    regList: [],
+    changeTag: true,
+    document: 'https://element.eleme.cn/#/zh-CN/component/upload'
+  },
+  {
+    label: '密码',
+    tag: 'el-input',
+    tagIcon: 'password',
+    placeholder: '请输入',
+    defaultValue: undefined,
+    span: 24,
+    'show-password': true,
+    labelWidth: null,
+    style: { width: '100%' },
+    clearable: true,
+    prepend: '',
+    append: '',
+    'prefix-icon': '',
+    'suffix-icon': '',
+    maxlength: null,
+    'show-word-limit': false,
+    readonly: false,
+    disabled: false,
+    required: true,
+    regList: [],
+    changeTag: true,
+    document: 'https://element.eleme.cn/#/zh-CN/component/input'
+  },
+  {
+    label: '手机号',
+    tag: 'el-input',
+    tagIcon: 'phone',
+    placeholder: '请输入手机号',
+    defaultValue: undefined,
+    span: 24,
+    labelWidth: null,
+    style: { width: '100%' },
+    clearable: true,
+    'prefix-icon': 'el-icon-phone',
+    maxlength: 11,
+    'show-word-limit': true,
+    readonly: false,
+    disabled: false,
+    required: true,
+    regList: [{
+      pattern: '/^1(3|4|5|7|8|9)\\d{9}$/',
+      message: '手机号格式错误'
+    }],
+    changeTag: true,
+    document: 'https://element.eleme.cn/#/zh-CN/component/input'
+  },
+  {
+    label: '邮箱',
+    tag: 'el-input',
+    tagIcon: 'email',
+    placeholder: '请输入邮箱',
+    defaultValue: undefined,
+    span: 24,
+    labelWidth: null,
+    style: { width: '100%' },
+    clearable: true,
+    'prefix-icon': 'el-icon-message',
+    maxlength: null,
+    'show-word-limit': false,
+    readonly: false,
+    disabled: false,
+    required: true,
+    regList: [{
+      pattern: '/^([a-zA-Z0-9_-])+@([a-zA-Z0-9_-])+(\\.[a-zA-Z0-9_-])+$/',
+      message: '邮箱格式错误'
+    }],
+    changeTag: true,
+    document: 'https://element.eleme.cn/#/zh-CN/component/input'
+  }
+]
+
 // 处理后的组件列表
 export const processedInputComponents = addConditionProps(inputComponents)
 export const processedSelectComponents = addConditionProps(selectComponents)
 export const processedLayoutComponents = addConditionProps(layoutComponents)
+export const processedCommonComponents = addConditionProps(commonComponents)

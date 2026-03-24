@@ -29,6 +29,11 @@
             :label="'积分'"
             :value="2">
           </el-option>
+          <el-option
+            :key="3"
+            :label="'人民币'"
+            :value="3">
+          </el-option>
         </el-select>
       </el-form-item>
       <el-form-item label="订单状态" prop="orderStatus">
@@ -142,6 +147,7 @@
         <template slot-scope="scope">
           <span v-if="scope.row.payMode == 1">美元</span>
           <span v-else-if="scope.row.payMode == 2">积分</span>
+          <span v-else-if="scope.row.payMode == 3">人民币</span>
         </template>
       </el-table-column>
       <el-table-column label="订单描述" align="center" prop="orderDesc" width="200"/>

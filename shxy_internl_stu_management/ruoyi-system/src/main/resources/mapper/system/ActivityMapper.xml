@@ -7,6 +7,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     <resultMap type="Activity" id="ActivityResult">
         <result property="id"    column="id"    />
         <result property="name"    column="name"    />
+        <result property="typeName"    column="type_name"    />
         <result property="icon"    column="icon"    />
         <result property="startTime"    column="start_time"    />
         <result property="endTime"    column="end_time"    />
@@ -23,6 +24,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <result property="modelName"    column="model_name"    />
         <result property="modelContent"    column="model_content"    />
         <result property="status"    column="status"    />
+        <result property="accessPermission"    column="access_permission"    />
         <result property="sharePoint"    column="share_point"    />
         <result property="enabled"    column="enabled"    />
         <result property="createTime"    column="create_time"    />
@@ -36,10 +38,11 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <result property="deptId"    column="dept_id"    />
         <result property="deptIds"    column="dept_ids"    />
         <result property="deptName"    column="dept_name"    />
+        <result property="priceUnit"    column="price_unit"    />
     </resultMap>
 
     <sql id="selectActivityVo">
-        select act.id, act.name, act.icon, act.start_time, act.end_time, act.address, act.enrollment, act.detail, act.sign_start_time, act.sign_end_time, act.time_zone, act.price, act.point, act.act_type,
+        select act.id, act.name, atype.name as type_name, act.icon, act.start_time, act.end_time, act.address, act.enrollment, act.detail, act.sign_start_time, act.sign_end_time, act.time_zone, act.price, act.price_unit, act.point, act.act_type,
                act.model_id, act.model_name, act.model_content, act.status, act.dept_ids, act.access_permission, act.share_point, act.enabled, act.create_time, act.update_time, act.create_user_id, act.create_name, act.create_nick_name, d.dept_id,
                (SELECT count(1) from activity_ex_user aeu WHERE aeu.activity_id = act.id) as register_count,
                CASE
@@ -49,6 +52,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         from activity act
         left join sys_user u on u.user_id = act.create_user_id
         left join sys_dept d on u.dept_id = d.dept_id
+        left join activity_type atype on atype.id = act.act_type
     </sql>
 
     <select id="selectActivityList" parameterType="Activity" resultMap="ActivityResult">
@@ -64,10 +68,12 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <if test="signStartTime != null "> and act.sign_start_time = #{signStartTime}</if>
         <if test="signEndTime != null "> and act.sign_end_time = #{signEndTime}</if>
         <if test="timeZone != null "> and act.time_zone = #{timeZone}</if>
+        <if test="priceUnit != null "> and act.price_unit = #{priceUnit}</if>
         <if test="actType != null "> and act.act_type = #{actType}</if>
         <if test="modelId != null "> and act.model_id = #{modelId}</if>
         <if test="status != null "> and act.status = #{status}</if>
         <if test="deptId != null "> and FIND_IN_SET(#{deptId}, act.dept_ids) > 0</if>
+        <if test="accessPermission != null "> and act.access_permission = #{accessPermission}</if>
         <if test="enabled != null "> and act.enabled = #{enabled}</if>
         <if test="createUserId != null "> and act.create_user_id = #{createUserId}</if>
         <if test="createName != null "> and act.create_name = #{createName}</if>
@@ -78,7 +84,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     </select>
 
     <select id="selectActivityListForApp" parameterType="Activity" resultMap="ActivityResult">
-        select act.id, act.name, act.icon, act.start_time, act.end_time, act.address, act.enrollment, act.detail, act.sign_start_time, act.sign_end_time, act.time_zone, act.status, act.price, act.point, act.act_type, act.model_id, act.model_name, act.model_content,
+        select act.id, act.name, act.icon, act.start_time, act.end_time, act.address, act.enrollment, act.detail, act.sign_start_time, act.sign_end_time, act.time_zone, act.status, act.price, act.price_unit, act.point, act.act_type, act.model_id, act.model_name, act.model_content,
         act.dept_ids, act.access_permission, act.share_point, act.enabled, act.create_time, act.update_time, act.create_user_id, act.create_name, act.create_nick_name, d.dept_id,
         (SELECT count(1) from activity_ex_user aeu WHERE aeu.activity_id = act.id) as register_count,
         COALESCE((select sign_status from activity_ex_user aeu where act.id = aeu.activity_id and aeu.user_id = #{userId}), 0) as sign_status,
@@ -105,10 +111,12 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="signStartTime != null "> and act.sign_start_time = #{signStartTime}</if>
             <if test="signEndTime != null "> and act.sign_end_time = #{signEndTime}</if>
             <if test="timeZone != null "> and act.time_zone = #{timeZone}</if>
+            <if test="priceUnit != null "> and act.price_unit = #{priceUnit}</if>
             <if test="actType != null "> and act.act_type = #{actType}</if>
             <if test="modelId != null "> and act.model_id = #{modelId}</if>
             <if test="status != null "> and act.status = #{status}</if>
             <if test="deptId != null "> and FIND_IN_SET(#{deptId}, act.dept_ids) > 0</if>
+            <if test="accessRoleKey != null "> and FIND_IN_SET(#{accessRoleKey}, act.access_permission) > 0</if>
             <if test="enabled != null "> and act.enabled = #{enabled}</if>
             <if test="createUserId != null "> and act.create_user_id = #{createUserId}</if>
             <if test="createName != null "> and act.create_name = #{createName}</if>
@@ -118,7 +126,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     </select>
 
     <select id="selectActivityListByUser" parameterType="Activity" resultMap="ActivityResult">
-        select act.id, act.name, act.icon, act.start_time, act.end_time, act.address, act.enrollment, act.detail, act.sign_start_time, act.sign_end_time, act.time_zone, act.price, act.point, act.act_type, act.model_id, act.model_name, act.model_content, act.status,
+        select act.id, act.name, act.icon, act.start_time, act.end_time, act.address, act.enrollment, act.detail, act.sign_start_time, act.sign_end_time, act.time_zone, act.price, act.price_unit, act.point, act.act_type, act.model_id, act.model_name, act.model_content, act.status,
         act.dept_ids, act.access_permission, act.share_point, act.enabled, act.create_time, act.update_time, act.create_user_id,
         act.create_name, act.create_nick_name, aeu.sign_status,
         (SELECT count(1) from activity_ex_user aeu WHERE aeu.activity_id = act.id) as register_count,
@@ -155,6 +163,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="signEndTime != null">sign_end_time,</if>
             <if test="timeZone != null">time_zone,</if>
             <if test="price != null">price,</if>
+            <if test="priceUnit != null">price_unit,</if>
             <if test="point != null">point,</if>
             <if test="actType != null">act_type,</if>
             <if test="modelId != null">model_id,</if>
@@ -183,6 +192,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="signEndTime != null">#{signEndTime},</if>
             <if test="timeZone != null">#{timeZone},</if>
             <if test="price != null">#{price},</if>
+            <if test="priceUnit != null">#{priceUnit},</if>
             <if test="point != null">#{point},</if>
             <if test="actType != null">#{actType},</if>
             <if test="modelId != null">#{modelId},</if>
@@ -215,6 +225,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="signEndTime != null">sign_end_time = #{signEndTime},</if>
             <if test="timeZone != null">time_zone = #{timeZone},</if>
             <if test="price != null">price = #{price},</if>
+            <if test="priceUnit != null">price_unit = #{priceUnit},</if>
             <if test="point != null">point = #{point},</if>
             <if test="actType != null">act_type = #{actType},</if>
             <if test="modelId != null">model_id = #{modelId},</if>
