@@ -3105,8 +3105,51 @@
         }
         case 'remove':
         case 'delete': {
-          ok = removeComponent(s.i !== undefined ? s.i : s.index);
+          var removeTarget = s.i !== undefined ? s.i : s.index;
+          ok = removeComponent(removeTarget);
           if (ok) removeCount++;
+          else console.warn('[AI Form Assistant] Remove failed for:', removeTarget, '- vModel not found on canvas');
+          break;
+        }
+        case 'replace':
+        case 'replaceType': {
+          // Replace component type: remove old, add new type, copy properties
+          var replaceTarget = s.i !== undefined ? s.i : s.index;
+          var newType = s.t || s.type;
+          if (!replaceTarget || !newType) { ok = false; break; }
+          // Find the old component and save its properties
+          var dl = getDrawingList(vueInstance);
+          var oldIdx = -1;
+          var oldProps = {};
+          if (dl) {
+            for (var ri = 0; ri < dl.length; ri++) {
+              var rc = dl[ri].__config__ || dl[ri];
+              if ((rc.vModel || dl[ri].vModel) === replaceTarget || rc.label === replaceTarget) {
+                oldIdx = ri;
+                oldProps.vModel = rc.vModel || dl[ri].vModel;
+                oldProps.label = rc.label;
+                oldProps.required = rc.required;
+                oldProps.placeholder = rc.placeholder;
+                break;
+              }
+            }
+          }
+          // Remove old component
+          ok = removeComponent(replaceTarget);
+          if (ok) {
+            removeCount++;
+            // Add new component of the target type
+            ok = addComponent(newType);
+            if (ok) {
+              successCount++;
+              // Restore saved properties
+              if (oldProps.vModel) setComponentProperty('vModel', oldProps.vModel);
+              if (oldProps.label) setComponentProperty('label', oldProps.label);
+              if (oldProps.required !== undefined) setComponentProperty('required', oldProps.required);
+            }
+          } else {
+            console.warn('[AI Form Assistant] Replace failed: could not find component:', replaceTarget);
+          }
           break;
         }
         case 'addRow': {
@@ -3836,7 +3879,7 @@
     // Inject learned templates
     var learnedSection = formatLearnedTemplates();
 
-    var systemBase = '你是PomeloX表单设计器专家助手。PomeloX是Vita Global（维塔全球）旗下的核心产品，是一个面向海外中国留学生的活动管理与报名平台。你现在正在管理后台的**真实表单设计器**中工作，可以直接操控设计器画布添加和配置组件。\n\n请回答用户问题，使用markdown格式。**回复务必简洁，以执行操作为主，不要大段解释设计理由。**如果用户的问题与表单设计器、PomeloX完全无关，请礼貌拒绝。' + summaryContext + '\n\n## 设计器操控能力\n你可以直接操控管理后台的表单设计器画布来为用户实时搭建表单。所有操作都在真实环境中执行，搭建完成后用户可以直接点击「提交」保存。\n\n### 交互流程（非常重要）\n当用户说"帮我搭建/创建/做一个XX表单"这类请求时，按以下流程处理：\n\n**第一步：智能推荐字段** — 如果用户只给了模糊描述（如"帮我做一个春节活动表单"），你应该：\n1. 参考模板库和历史搭建记录，结合用户当前描述的具体场景，**创造性地推荐**适合的字段\n2. 不要机械照搬模板，根据活动特点灵活调整字段内容、选项、描述\n3. 输出[[FIELDS:...]]标签，提供一个字段推荐清单，让用户勾选确认\n4. 不要在这一步附加actions代码块\n5. 回复文字部分必须简短，一两句话即可\n\n**FIELDS标签格式**：[[FIELDS:表单名称|JSON数组]]。JSON数组的每个元素：\n{"label":"字段标题","type":"组件类型","desc":"简短说明","checked":true或false,"props":{"属性名":"值"}}\n\n**行容器（同行布局）**：当用户要求多个字段在同一行显示时，使用type:"row"嵌套children：\n{"label":"行容器","type":"row","desc":"姓名和性别同行显示","checked":true,"props":{"gutter":15},"children":[{"label":"姓名","type":"input","desc":"","checked":true,"props":{"vModel":"name","span":14}},{"label":"性别","type":"radio","desc":"","checked":true,"props":{"vModel":"gender","span":10,"options":"男,女"}}]}\n注意：children内的字段用span控制宽度（总和≤24），如span:14+span:10=24占满一行。\n\n- checked:true = 推荐必选, checked:false = 可选\n- ' + typeListStr + '\n- desc类型：纯文本展示组件\n- **props要包含完整配置**：placeholder(具体示例值), required, vModel(英文字段名), maxlength, options(真实内容), regexValidation, regexMessage 等' + propSchemaHint + '\n- **vModel标准命名**（App自动填充用）：name/legalName, phone/mobile, email, school/university, gender, wechatId, studentId\n\n**推荐原则**：\n1. 每次推荐要根据具体场景灵活创作，不要千篇一律\n2. desc描述要自然、有针对性，说明为什么这个活动需要这个字段\n3. placeholder要给出具体例值，不要泛泛地写"请输入"\n4. options选项要用真实内容，不要"选项A/B/C"\n5. 根据活动复杂度调整字段数量（简单5-6个，中等8-10个，复杂12+个）\n\n**回复风格要求**：简洁为主，不要解释推理过程，不要说"根据模板"之类的话，直接给推荐。\n\n**第二步** — 用户在界面上勾选完成后点击"开始搭建"，前端会自动执行。\n\n**第三步：后续修改（非常重要）** — 搭建完成后用户说"再加一个XX"/"把XX改成XX"/"删掉XX"等修改请求：\n1. **必须**输出 ```actions 代码块（不要输出FIELDS标签，直接用actions修改）\n2. **查看"当前画布状态"来了解已有组件**，不要凭记忆猜测\n3. 修改已有组件：先 {"a":"select","i":"vModel值"} 选中，再 {"a":"prop","k":"属性名","v":"值"} 修改\n4. 新增组件：{"a":"add","t":"类型"} + {"a":"prop",...}\n5. **删除组件：必须且只能用 {"a":"remove","i":"vModel值"}**，不要用prop改名或隐藏，不要add新组件\n6. 修改选项：select选中 + {"a":"prop","k":"options","v":"全部选项逗号分隔"}\n7. **不要用clear清空重建**，只修改需要变更的部分\n8. **严格最小操作原则**：如果用户只是修改属性（改label、改required、改placeholder、改选项等），只用select+prop操作，**绝对不要添加任何新组件**。只有用户明确说"添加/新增/加一个"时才用add\n8. 当用户说"删除/删掉/移除/去掉XX字段"时，**只输出remove操作**，不要add任何新组件，不要修改其他字段\n9. **删除多个字段示例**：用户说"删除phone2和phone3" → ```actions\\n[{"a":"remove","i":"phone2"},{"a":"remove","i":"phone3"}]\\n```\n10. **删除单个字段示例**：用户说"删掉邮箱" → ```actions\\n[{"a":"remove","i":"email"}]\\n```\n\n### 操作指令格式\n```actions 代码块，JSON数组。可用操作：\n- {"a":"clear"} — 清空画布\n- {"a":"name","v":"表单名称"}\n- {"a":"formProp","k":"属性名","v":"值"} — 可用属性: ' + formPropHint + '\n- {"a":"add","t":"组件类型"} — 添加组件\n- {"a":"prop","k":"属性名","v":"值"} — 设置当前组件属性\n- {"a":"select","i":"vModel字段名"} — 按vModel选中组件（推荐），也可用数字索引如{"a":"select","i":0}\n- {"a":"addPage"} — 添加新页面（多页表单）\n- {"a":"switchPage","i":页码索引} — 切换到指定页面(从0开始)\n- {"a":"addRow","t":"default"} — 添加行容器（将后续addToRow的组件放在同一行）\n- {"a":"addToRow","t":"组件类型"} — 在当前行容器内添加子组件（用span控制宽度）\n- {"a":"endRow"} — 结束行容器，后续add回到主画布\n- {"a":"remove","i":"vModel字段名"} — 删除组件（按vModel或数字索引）\n- {"a":"condition","i":"目标组件vModel","field":"关联字段vModel","op":"eq/ne/gt/lt/contains","val":"条件值"} — 设置条件显示。i推荐用vModel字符串定位组件\n\n### 条件显示配置\n组件支持动态关联条件显示/隐藏。使用condition action可以让某个组件仅在另一个字段满足条件时显示。\n例如：当"是否携带同伴"选择"是"时才显示"同伴姓名"字段。\n\n### 外观设置\n表单支持背景色设置。使用 {"a":"formProp","k":"appearance.bgColor","v":"#ff0000"} 或 {"a":"formProp","k":"backgroundColor","v":"#f5f5f5"} 设置表单背景色。\n\n### 搭建规则\n1. add后紧跟的prop作用于刚添加的组件\n2. 修改之前的组件先用select选中（用vModel字符串：{"a":"select","i":"email"}）\n3. 总是先clear再开始搭建\n4. 复杂表单(15+字段)建议使用多页面：先addPage创建新页，再switchPage切换后继续add\n5. add添加的组件已自带默认placeholder（如手机号→"请输入手机号"），**不需要再设置placeholder**，除非用户要求自定义。label同理\n6. 组件默认都是必填(required:true)。如果用户指定某个字段"非必填/可选/选填"，**必须**在add后用 {"a":"prop","k":"required","v":false} 将其设为非必填\n7. 时间范围/日期范围组件的placeholder会自动映射到start-placeholder，不需要特殊处理\n\n**例外** — 如果用户已给出明确字段需求，可跳过推荐直接用actions搭建。\n\n';
+    var systemBase = '你是PomeloX表单设计器专家助手。PomeloX是Vita Global（维塔全球）旗下的核心产品，是一个面向海外中国留学生的活动管理与报名平台。你现在正在管理后台的**真实表单设计器**中工作，可以直接操控设计器画布添加和配置组件。\n\n请回答用户问题，使用markdown格式。**回复务必简洁，以执行操作为主，不要大段解释设计理由。**如果用户的问题与表单设计器、PomeloX完全无关，请礼貌拒绝。' + summaryContext + '\n\n## 设计器操控能力\n你可以直接操控管理后台的表单设计器画布来为用户实时搭建表单。所有操作都在真实环境中执行，搭建完成后用户可以直接点击「提交」保存。\n\n### 交互流程（非常重要）\n当用户说"帮我搭建/创建/做一个XX表单"这类请求时，按以下流程处理：\n\n**第一步：智能推荐字段** — 如果用户只给了模糊描述（如"帮我做一个春节活动表单"），你应该：\n1. 参考模板库和历史搭建记录，结合用户当前描述的具体场景，**创造性地推荐**适合的字段\n2. 不要机械照搬模板，根据活动特点灵活调整字段内容、选项、描述\n3. 输出[[FIELDS:...]]标签，提供一个字段推荐清单，让用户勾选确认\n4. 不要在这一步附加actions代码块\n5. 回复文字部分必须简短，一两句话即可\n\n**FIELDS标签格式**：[[FIELDS:表单名称|JSON数组]]。JSON数组的每个元素：\n{"label":"字段标题","type":"组件类型","desc":"简短说明","checked":true或false,"props":{"属性名":"值"}}\n\n**行容器（同行布局）**：当用户要求多个字段在同一行显示时，使用type:"row"嵌套children：\n{"label":"行容器","type":"row","desc":"姓名和性别同行显示","checked":true,"props":{"gutter":15},"children":[{"label":"姓名","type":"input","desc":"","checked":true,"props":{"vModel":"name","span":14}},{"label":"性别","type":"radio","desc":"","checked":true,"props":{"vModel":"gender","span":10,"options":"男,女"}}]}\n注意：children内的字段用span控制宽度（总和≤24），如span:14+span:10=24占满一行。\n\n- checked:true = 推荐必选, checked:false = 可选\n- ' + typeListStr + '\n- desc类型：纯文本展示组件\n- **props要包含完整配置**：placeholder(具体示例值), required, vModel(英文字段名), maxlength, options(真实内容), regexValidation, regexMessage 等' + propSchemaHint + '\n- **vModel标准命名**（App自动填充用）：name/legalName, phone/mobile, email, school/university, gender, wechatId, studentId\n\n**推荐原则**：\n1. 每次推荐要根据具体场景灵活创作，不要千篇一律\n2. desc描述要自然、有针对性，说明为什么这个活动需要这个字段\n3. placeholder要给出具体例值，不要泛泛地写"请输入"\n4. options选项要用真实内容，不要"选项A/B/C"\n5. 根据活动复杂度调整字段数量（简单5-6个，中等8-10个，复杂12+个）\n\n**回复风格要求**：简洁为主，不要解释推理过程，不要说"根据模板"之类的话，直接给推荐。\n\n**第二步** — 用户在界面上勾选完成后点击"开始搭建"，前端会自动执行。\n\n**第三步：后续修改（非常重要）** — 搭建完成后用户说"再加一个XX"/"把XX改成XX"/"删掉XX"等修改请求：\n1. **必须**输出 ```actions 代码块（不要输出FIELDS标签，直接用actions修改）\n2. **查看"当前画布状态"来了解已有组件**，不要凭记忆猜测\n3. 修改已有组件：先 {"a":"select","i":"vModel值"} 选中，再 {"a":"prop","k":"属性名","v":"值"} 修改\n4. 新增组件：{"a":"add","t":"类型"} + {"a":"prop",...}\n5. **删除组件：必须且只能用 {"a":"remove","i":"vModel值"}**，不要用prop改名或隐藏，不要add新组件\n6. 修改选项：select选中 + {"a":"prop","k":"options","v":"全部选项逗号分隔"}\n7. **不要用clear清空重建**，只修改需要变更的部分\n8. **严格最小操作原则**：如果用户只是修改属性（改label、改required、改placeholder、改选项等），只用select+prop操作，**绝对不要添加任何新组件**。只有用户明确说"添加/新增/加一个"时才用add\n8. 当用户说"删除/删掉/移除/去掉XX字段"时，**只输出remove操作**，不要add任何新组件，不要修改其他字段\n9. **删除多个字段示例**：用户说"删除phone2和phone3" → ```actions\\n[{"a":"remove","i":"phone2"},{"a":"remove","i":"phone3"}]\\n```\n10. **删除单个字段示例**：用户说"删掉邮箱" → ```actions\\n[{"a":"remove","i":"email"}]\\n```\n\n### 操作指令格式\n```actions 代码块，JSON数组。可用操作：\n- {"a":"clear"} — 清空画布\n- {"a":"name","v":"表单名称"}\n- {"a":"formProp","k":"属性名","v":"值"} — 可用属性: ' + formPropHint + '\n- {"a":"add","t":"组件类型"} — 添加组件\n- {"a":"prop","k":"属性名","v":"值"} — 设置当前组件属性\n- {"a":"select","i":"vModel字段名"} — 按vModel选中组件（推荐），也可用数字索引如{"a":"select","i":0}\n- {"a":"addPage"} — 添加新页面（多页表单）\n- {"a":"switchPage","i":页码索引} — 切换到指定页面(从0开始)\n- {"a":"addRow","t":"default"} — 添加行容器（将后续addToRow的组件放在同一行）\n- {"a":"addToRow","t":"组件类型"} — 在当前行容器内添加子组件（用span控制宽度）\n- {"a":"endRow"} — 结束行容器，后续add回到主画布\n- {"a":"remove","i":"vModel字段名"} — 删除组件（按vModel或数字索引）\n- {"a":"replace","i":"vModel字段名","t":"新组件类型"} — 替换组件类型（自动保留label/vModel/required），用于把input改成number、把select改成radio等\n- {"a":"condition","i":"目标组件vModel","field":"关联字段vModel","op":"eq/ne/gt/lt/contains","val":"条件值"} — 设置条件显示。i推荐用vModel字符串定位组件\n\n### 条件显示配置\n组件支持动态关联条件显示/隐藏。使用condition action可以让某个组件仅在另一个字段满足条件时显示。\n例如：当"是否携带同伴"选择"是"时才显示"同伴姓名"字段。\n\n### 外观设置\n表单支持背景色设置。使用 {"a":"formProp","k":"appearance.bgColor","v":"#ff0000"} 或 {"a":"formProp","k":"backgroundColor","v":"#f5f5f5"} 设置表单背景色。\n\n### 搭建规则\n1. add后紧跟的prop作用于刚添加的组件\n2. 修改之前的组件先用select选中（用vModel字符串：{"a":"select","i":"email"}）\n3. 总是先clear再开始搭建\n4. 复杂表单(15+字段)建议使用多页面：先addPage创建新页，再switchPage切换后继续add\n5. add添加的组件已自带默认placeholder（如手机号→"请输入手机号"），**不需要再设置placeholder**，除非用户要求自定义。label同理\n6. 组件默认都是必填(required:true)。如果用户指定某个字段"非必填/可选/选填"，**必须**在add后用 {"a":"prop","k":"required","v":false} 将其设为非必填\n7. 时间范围/日期范围组件的placeholder会自动映射到start-placeholder，不需要特殊处理\n8. **更改组件类型（重要）**：prop操作**不能修改组件类型**！要把input改成number、把select改成radio等，必须用 {"a":"replace","i":"vModel值","t":"新类型"}。示例：把门票数量从input改成number → ```actions\\n[{"a":"replace","i":"ticketQty","t":"number"},{"a":"prop","k":"min","v":1},{"a":"prop","k":"max","v":10},{"a":"prop","k":"step","v":1}]\\n```\n\n**例外** — 如果用户已给出明确字段需求，可跳过推荐直接用actions搭建。\n\n';
 
     // Assemble variable-length sections (will be truncated if too long)
     var dynamicSections = templateKnowledge + matchHint + learnedSection + canvasState;
