@@ -1002,9 +1002,20 @@ def api_form_designer_chat_stream():
                 messages_list = [{'role': 'system', 'content': full_system_prompt}]
                 messages_list.extend(get_store_messages(session_id))
                 # Build user message - multimodal if image is present
-                if image_data and model.startswith('qwen-vl'):
+                use_multimodal = bool(image_data and model.startswith('qwen-vl'))
+                if use_multimodal:
+                    import tempfile, base64 as b64mod
+                    # Strip data URI prefix if present
+                    img_b64 = image_data.split(',', 1)[-1] if ',' in image_data else image_data
+                    tmp_img = tempfile.NamedTemporaryFile(suffix='.png', delete=False)
+                    tmp_img.write(b64mod.b64decode(img_b64))
+                    tmp_img.close()
+                    # MultiModalConversation requires all content to be list format
+                    for msg in messages_list:
+                        if isinstance(msg.get('content'), str):
+                            msg['content'] = [{'text': msg['content']}]
                     user_content = [
-                        {'image': image_data},
+                        {'image': 'file://' + tmp_img.name},
                         {'text': user_message}
                     ]
                     messages_list.append({'role': 'user', 'content': user_content})
@@ -1014,24 +1025,35 @@ def api_form_designer_chat_stream():
                 yield f"data: {json.dumps({'type': 'start', 'session_id': session_id})}\n\n"
 
                 full_content = ''
-                call_params = {
-                    'model': model,
-                    'messages': messages_list,
-                    'result_format': 'message',
-                    'stream': True,
-                    'incremental_output': True,
-                    'max_tokens': 6000
-                }
-
-                responses = dashscope.Generation.call(**call_params)
+                if use_multimodal:
+                    responses = dashscope.MultiModalConversation.call(
+                        model=model, messages=messages_list,
+                        stream=True, incremental_output=True, max_tokens=6000
+                    )
+                else:
+                    call_params = {
+                        'model': model,
+                        'messages': messages_list,
+                        'result_format': 'message',
+                        'stream': True,
+                        'incremental_output': True,
+                        'max_tokens': 6000
+                    }
+                    responses = dashscope.Generation.call(**call_params)
                 for response in responses:
                     if response.status_code == 200:
                         if response.output and response.output.choices:
-                            chunk = response.output.choices[0].message.content
+                            raw_content = response.output.choices[0].message.content
+                            # MultiModalConversation returns content as list of dicts
+                            if isinstance(raw_content, list):
+                                chunk = ''.join(item.get('text', '') for item in raw_content if isinstance(item, dict))
+                            else:
+                                chunk = raw_content
                             if chunk:
                                 full_content += chunk
                                 yield f"data: {json.dumps({'type': 'chunk', 'content': chunk})}\n\n"
                     else:
+                        print(f'[FormDesigner ERROR] status={response.status_code} model={model} msg={response.message}', flush=True)
                         yield f"data: {json.dumps({'type': 'error', 'message': response.message})}\n\n"
                         return
 
