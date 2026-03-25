@@ -2083,11 +2083,22 @@
    * 步骤：查找模板 → 深度克隆 → 生成唯一 formId → 添加到 drawingList → 设为活跃组件
    * 注意：添加后需要延迟修复 placeholder，因为 Vue watcher 可能异步篡改值
    */
+  // AI/backend type names → designer internal type names
+  const TYPE_ALIASES = {
+    'number': 'counter', 'inputNumber': 'counter', 'input-number': 'counter',
+    'text': 'input', 'phone': 'input', 'email': 'input',
+    'edit': 'esign', 'signature': 'esign',
+    'date-range': 'daterange', 'time-range': 'timerange'
+  };
+
   function addComponentToDesigner(type) {
     const vm = vueInstance;
     if (!vm) return false;
 
-    const tpl = findComponentTemplate(type);
+    // Resolve type aliases
+    var resolvedType = TYPE_ALIASES[type] || type;
+    if (resolvedType !== type) console.log('[AI Form Assistant] Type alias:', type, '→', resolvedType);
+    const tpl = findComponentTemplate(resolvedType);
     if (!tpl) {
       console.warn('[AI Assistant] Component template not found for type:', type);
       return false;
