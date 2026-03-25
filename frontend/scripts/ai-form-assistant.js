@@ -3139,13 +3139,13 @@
           if (ok) {
             removeCount++;
             // Add new component of the target type
-            ok = addComponent(newType);
+            ok = addComponentToDesigner(newType);
             if (ok) {
               successCount++;
               // Restore saved properties
-              if (oldProps.vModel) setComponentProperty('vModel', oldProps.vModel);
-              if (oldProps.label) setComponentProperty('label', oldProps.label);
-              if (oldProps.required !== undefined) setComponentProperty('required', oldProps.required);
+              if (oldProps.vModel) setComponentProp('vModel', oldProps.vModel);
+              if (oldProps.label) setComponentProp('label', oldProps.label);
+              if (oldProps.required !== undefined) setComponentProp('required', oldProps.required);
             }
           } else {
             console.warn('[AI Form Assistant] Replace failed: could not find component:', replaceTarget);
