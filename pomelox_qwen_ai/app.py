@@ -753,7 +753,10 @@ def api_ai_chat_stream():
                     reply = get_off_topic_reply(dept_id)
                     print("[Scope] OFF-TOPIC rejected (stream): %s" % message[:30], flush=True)
                     yield f"data: {json.dumps({'type': 'start', 'session_id': session_id})}\n\n"
-                    yield f"data: {json.dumps({'type': 'chunk', 'content': reply})}\n\n"
+                    # Simulate streaming for off-topic replies
+                    for i in range(0, len(reply), 30):
+                        yield f"data: {json.dumps({'type': 'chunk', 'content': reply[i:i+30]})}\n\n"
+                        time.sleep(0.02)
                     yield f"data: {json.dumps({'type': 'done', 'session_id': session_id, 'full_content': reply})}\n\n"
                     return
 
@@ -798,8 +801,12 @@ def api_ai_chat_stream():
                     if cached:
                         print(f"[Timing] Cache HIT (stream): {time.time() - t_start:.3f}s", flush=True)
                         yield f"data: {json.dumps({'type': 'start', 'session_id': session_id})}\n\n"
-                        yield f"data: {json.dumps({'type': 'chunk', 'content': cached['answer']})}\n\n"
-                        yield f"data: {json.dumps({'type': 'done', 'session_id': session_id, 'full_content': cached['answer']})}\n\n"
+                        # Simulate streaming for cached responses
+                        answer = cached['answer']
+                        for i in range(0, len(answer), 30):
+                            yield f"data: {json.dumps({'type': 'chunk', 'content': answer[i:i+30]})}\n\n"
+                            time.sleep(0.02)
+                        yield f"data: {json.dumps({'type': 'done', 'session_id': session_id, 'full_content': answer})}\n\n"
                         return
 
                 ensure_session(session_id, dept_id)
@@ -957,6 +964,7 @@ def api_form_designer_chat_stream():
         message = data.get('message', '') or data.get('question', '')
         session_id = data.get('session_id', str(uuid.uuid4()))
         model = data.get('model', 'qwen-plus')
+        image_data = data.get('image', None)  # base64 image from frontend (vision model)
         designer_context = data.get('designer_context', '')  # Current form state, type hints, etc.
         system_prompt_override = data.get('system_prompt', '')  # Full system prompt from frontend (existing behavior)
         supported_types = data.get('supported_types', None)  # Frontend-supported component types (dynamic)
@@ -993,7 +1001,15 @@ def api_form_designer_chat_stream():
 
                 messages_list = [{'role': 'system', 'content': full_system_prompt}]
                 messages_list.extend(get_store_messages(session_id))
-                messages_list.append({'role': 'user', 'content': user_message})
+                # Build user message - multimodal if image is present
+                if image_data and model.startswith('qwen-vl'):
+                    user_content = [
+                        {'image': image_data},
+                        {'text': user_message}
+                    ]
+                    messages_list.append({'role': 'user', 'content': user_content})
+                else:
+                    messages_list.append({'role': 'user', 'content': user_message})
 
                 yield f"data: {json.dumps({'type': 'start', 'session_id': session_id})}\n\n"
 
@@ -1004,7 +1020,7 @@ def api_form_designer_chat_stream():
                     'result_format': 'message',
                     'stream': True,
                     'incremental_output': True,
-                    'max_tokens': 2048
+                    'max_tokens': 6000
                 }
 
                 responses = dashscope.Generation.call(**call_params)

@@ -13,7 +13,7 @@
   const AI_FORM_DESIGNER_URL = 'https://www.vitaglobal.icu/ai/api/ai/form-designer/chat/stream';
   const AI_DEPT_ID = 211;
   const AI_MODEL = 'qwen-plus';
-  const MAX_PROMPT_CHARS = 12000; // ~3000 tokens budget for system prompt
+  const MAX_PROMPT_CHARS = 20000; // ~5000 tokens budget for system prompt (increased for comprehensive forms)
 
   // ===== Auth Helper =====
   function getAuthToken() {
@@ -1780,16 +1780,16 @@
       const rows = body.trim().split('\n').map(r => '<tr>' + r.split('|').filter(Boolean).map(c => '<td>' + escHtml(c.trim()) + '</td>').join('') + '</tr>').join('');
       return '<table class="md-table"><thead><tr>' + ths + '</tr></thead><tbody>' + rows + '</tbody></table>';
     });
-    // Headings (escape content to prevent XSS)
-    html = html.replace(/^####\s+(.+)$/gm, (_, t) => '<h5>' + escHtml(t) + '</h5>');
-    html = html.replace(/^###\s+(.+)$/gm, (_, t) => '<h4>' + escHtml(t) + '</h4>');
+    // Headings — don't escHtml so inline markdown (bold/code) rendered earlier is preserved
+    html = html.replace(/^####\s+(.+)$/gm, (_, t) => '<h5>' + t + '</h5>');
+    html = html.replace(/^###\s+(.+)$/gm, (_, t) => '<h4>' + t + '</h4>');
     // Bold + italic (escape content to prevent XSS)
     html = html.replace(/\*\*(.+?)\*\*/g, (_, t) => '<strong>' + escHtml(t) + '</strong>');
     html = html.replace(/\*(.+?)\*/g, (_, t) => '<em>' + escHtml(t) + '</em>');
     // Inline code (escape content to prevent XSS)
     html = html.replace(/`([^`]+)`/g, (_, t) => '<code>' + escHtml(t) + '</code>');
-    // Unordered lists
-    html = html.replace(/^[-*]\s+(.+)$/gm, (_, t) => '<li>' + escHtml(t) + '</li>');
+    // Unordered lists — preserve already-rendered inline HTML (strong, em, code, a, img)
+    html = html.replace(/^[-*]\s+(.+)$/gm, (_, t) => '<li>' + t + '</li>');
     html = html.replace(/((?:<li>.*<\/li>\n?)+)/g, '<ul>$1</ul>');
     // Escape any remaining raw HTML tags in paragraph text (XSS protection)
     // At this point, all intentional HTML (headings, bold, code, lists, tables, images)
@@ -4261,6 +4261,15 @@
                   if (optionsStart !== -1) {
                     displayText = displayText.substring(0, optionsStart).trim();
                   }
+                  // Also hide ```json blocks that look like field arrays during streaming
+                  if (!showFieldsLoading) {
+                    var jsonBlockMatch = displayText.match(/```json\s*\n?\s*\[\s*\{[\s\S]*$/);
+                    if (jsonBlockMatch) {
+                      displayText = displayText.substring(0, jsonBlockMatch.index).trim();
+                      if (!displayText) displayText = '正在生成表单字段...';
+                      showFieldsLoading = true;
+                    }
+                  }
                   botEl.innerHTML = renderMd(displayText);
                   // Append loading indicator via DOM (not markdown) so HTML isn't mangled
                   if (showFieldsLoading || showActionsLoading) {
@@ -4489,6 +4498,41 @@
             // Remove the entire [[FIELDS:...]] from fullAnswer
             const fullTagEnd = fieldsIdx + fieldsMarker.length + endIdx + 2; // +2 for ]]
             fullAnswer = (fullAnswer.substring(0, fieldsIdx) + fullAnswer.substring(fullTagEnd)).trim();
+          }
+        }
+      }
+
+      // Fallback: if no [[FIELDS:...]] found, try to extract fields from ```json code blocks
+      if (!fieldData && fullAnswer) {
+        const jsonBlockRegex = /```json\s*\n?([\s\S]*?)```/g;
+        let jsonMatch;
+        while ((jsonMatch = jsonBlockRegex.exec(fullAnswer)) !== null) {
+          try {
+            // Strip JS-style comments that AI sometimes adds (// ...)
+            var rawJson = jsonMatch[1].trim().replace(/\/\/[^\n]*/g, '');
+            // Remove trailing commas before ] or }
+            rawJson = rawJson.replace(/,\s*([}\]])/g, '$1');
+            let candidate = JSON.parse(rawJson);
+            if (candidate && !Array.isArray(candidate)) candidate = [candidate];
+            // Validate: must be array of objects with "label" and "type" (field-like structure)
+            if (Array.isArray(candidate) && candidate.length > 0 &&
+                candidate[0].label && candidate[0].type &&
+                typeof candidate[0].type === 'string') {
+              fieldData = candidate;
+              // Try to extract form name from nearby text (e.g. "FIELDS 推荐" heading or "签到表单")
+              var beforeBlock = fullAnswer.substring(0, jsonMatch.index);
+              var nameMatch = beforeBlock.match(/(?:FIELDS\s*推荐|搭建|创建|设计)[：:\s]*[「""]?([^「""」\n]{2,20})[」""]?/i)
+                || beforeBlock.match(/[「""]([^「""」\n]{2,20})表单[」""]?/);
+              fieldFormName = nameMatch ? nameMatch[1].replace(/表单$/, '').trim() : '表单';
+              // Remove the JSON block from display
+              fullAnswer = (fullAnswer.substring(0, jsonMatch.index) + fullAnswer.substring(jsonMatch.index + jsonMatch[0].length)).trim();
+              // Also remove other ```json blocks that are not field arrays (e.g. formProps)
+              fullAnswer = fullAnswer.replace(/```json\s*\n?\{[\s\S]*?\}[\s\S]*?```/g, '').trim();
+              console.log('[AI Form Assistant] Fallback: extracted', fieldData.length, 'fields from ```json block');
+              break;
+            }
+          } catch (e) {
+            // Not valid field JSON, skip this block
           }
         }
       }
