@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.SysProgressNodeMapper">
+    
+    <resultMap type="SysProgressNode" id="SysProgressNodeResult">
+        <result property="id"    column="id"    />
+        <result property="instanceId"    column="instance_id"    />
+        <result property="type"    column="type"    />
+        <result property="multiMode"    column="multi_mode"    />
+        <result property="content"    column="content"    />
+        <result property="status"    column="status"    />
+        <result property="orderNum"    column="order_num"    />
+        <result property="finishTime"    column="finish_time"    />
+        <result property="createTime"    column="create_time"    />
+    </resultMap>
+
+    <sql id="selectSysProgressNodeVo">
+        select id, instance_id, type, multi_mode, content, status, order_num, finish_time, create_time from sys_progress_node
+    </sql>
+
+    <select id="selectSysProgressNodeList" parameterType="SysProgressNode" resultMap="SysProgressNodeResult">
+        <include refid="selectSysProgressNodeVo"/>
+        <where>  
+            <if test="instanceId != null "> and instance_id = #{instanceId}</if>
+            <if test="type != null  and type != ''"> and type = #{type}</if>
+            <if test="multiMode != null  and multiMode != ''"> and multi_mode = #{multiMode}</if>
+            <if test="content != null  and content != ''"> and content = #{content}</if>
+            <if test="status != null "> and status = #{status}</if>
+            <if test="orderNum != null "> and order_num = #{orderNum}</if>
+            <if test="finishTime != null "> and finish_time = #{finishTime}</if>
+        </where>
+    </select>
+    
+    <select id="selectSysProgressNodeById" parameterType="Long" resultMap="SysProgressNodeResult">
+        <include refid="selectSysProgressNodeVo"/>
+        where id = #{id}
+    </select>
+
+    <insert id="insertSysProgressNode" parameterType="SysProgressNode" useGeneratedKeys="true" keyProperty="id">
+        insert into sys_progress_node
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="instanceId != null">instance_id,</if>
+            <if test="type != null">type,</if>
+            <if test="multiMode != null">multi_mode,</if>
+            <if test="content != null">content,</if>
+            <if test="status != null">status,</if>
+            <if test="orderNum != null">order_num,</if>
+            <if test="finishTime != null">finish_time,</if>
+            <if test="createTime != null">create_time,</if>
+         </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="instanceId != null">#{instanceId},</if>
+            <if test="type != null">#{type},</if>
+            <if test="multiMode != null">#{multiMode},</if>
+            <if test="content != null">#{content},</if>
+            <if test="status != null">#{status},</if>
+            <if test="orderNum != null">#{orderNum},</if>
+            <if test="finishTime != null">#{finishTime},</if>
+            <if test="createTime != null">#{createTime},</if>
+         </trim>
+    </insert>
+
+    <update id="updateSysProgressNode" parameterType="SysProgressNode">
+        update sys_progress_node
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="instanceId != null">instance_id = #{instanceId},</if>
+            <if test="type != null">type = #{type},</if>
+            <if test="multiMode != null">multi_mode = #{multiMode},</if>
+            <if test="content != null">content = #{content},</if>
+            <if test="status != null">status = #{status},</if>
+            <if test="orderNum != null">order_num = #{orderNum},</if>
+            <if test="finishTime != null">finish_time = #{finishTime},</if>
+            <if test="createTime != null">create_time = #{createTime},</if>
+        </trim>
+        where id = #{id}
+    </update>
+
+    <delete id="deleteSysProgressNodeById" parameterType="Long">
+        delete from sys_progress_node where id = #{id}
+    </delete>
+
+    <delete id="deleteSysProgressNodeByIds" parameterType="String">
+        delete from sys_progress_node where id in 
+        <foreach item="id" collection="array" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+</mapper>

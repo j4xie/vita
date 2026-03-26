@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.SysProgressInstanceMapper">
+    
+    <resultMap type="SysProgressInstance" id="SysProgressInstanceResult">
+        <result property="id"    column="id"    />
+        <result property="templateId"    column="template_id"    />
+        <result property="title"    column="title"    />
+        <result property="formData"    column="form_data"    />
+        <result property="status"    column="status"    />
+        <result property="urgency"    column="urgency"    />
+        <result property="promoterUserId"    column="promoter_user_id"    />
+        <result property="promoterLegalName"    column="promoter_legal_name"    />
+        <result property="currentNodeId"    column="current_node_id"    />
+        <result property="finishTime"    column="finish_time"    />
+        <result property="createTime"    column="create_time"    />
+        <result property="updateTime"    column="update_time"    />
+    </resultMap>
+
+    <sql id="selectSysProgressInstanceVo">
+        select id, template_id, title, form_data, status, urgency, promoter_user_id, promoter_legal_name, current_node_id, finish_time, create_time, update_time from sys_progress_instance
+    </sql>
+
+    <select id="selectSysProgressInstanceList" parameterType="SysProgressInstance" resultMap="SysProgressInstanceResult">
+        <include refid="selectSysProgressInstanceVo"/>
+        <where>  
+            <if test="templateId != null "> and template_id = #{templateId}</if>
+            <if test="title != null  and title != ''"> and title = #{title}</if>
+            <if test="formData != null  and formData != ''"> and form_data = #{formData}</if>
+            <if test="status != null "> and status = #{status}</if>
+            <if test="urgency != null "> and urgency = #{urgency}</if>
+            <if test="promoterUserId != null "> and promoter_user_id = #{promoterUserId}</if>
+            <if test="promoterLegalName != null  and promoterLegalName != ''"> and promoter_legal_name like concat('%', #{promoterLegalName}, '%')</if>
+            <if test="currentNodeId != null "> and current_node_id = #{currentNodeId}</if>
+            <if test="finishTime != null "> and finish_time = #{finishTime}</if>
+        </where>
+    </select>
+    
+    <select id="selectSysProgressInstanceById" parameterType="Long" resultMap="SysProgressInstanceResult">
+        <include refid="selectSysProgressInstanceVo"/>
+        where id = #{id}
+    </select>
+
+    <insert id="insertSysProgressInstance" parameterType="SysProgressInstance" useGeneratedKeys="true" keyProperty="id">
+        insert into sys_progress_instance
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="templateId != null">template_id,</if>
+            <if test="title != null">title,</if>
+            <if test="formData != null">form_data,</if>
+            <if test="status != null">status,</if>
+            <if test="urgency != null">urgency,</if>
+            <if test="promoterUserId != null">promoter_user_id,</if>
+            <if test="promoterLegalName != null">promoter_legal_name,</if>
+            <if test="currentNodeId != null">current_node_id,</if>
+            <if test="finishTime != null">finish_time,</if>
+            <if test="createTime != null">create_time,</if>
+            <if test="updateTime != null">update_time,</if>
+         </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="templateId != null">#{templateId},</if>
+            <if test="title != null">#{title},</if>
+            <if test="formData != null">#{formData},</if>
+            <if test="status != null">#{status},</if>
+            <if test="urgency != null">#{urgency},</if>
+            <if test="promoterUserId != null">#{promoterUserId},</if>
+            <if test="promoterLegalName != null">#{promoterLegalName},</if>
+            <if test="currentNodeId != null">#{currentNodeId},</if>
+            <if test="finishTime != null">#{finishTime},</if>
+            <if test="createTime != null">#{createTime},</if>
+            <if test="updateTime != null">#{updateTime},</if>
+         </trim>
+    </insert>
+
+    <update id="updateSysProgressInstance" parameterType="SysProgressInstance">
+        update sys_progress_instance
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="templateId != null">template_id = #{templateId},</if>
+            <if test="title != null">title = #{title},</if>
+            <if test="formData != null">form_data = #{formData},</if>
+            <if test="status != null">status = #{status},</if>
+            <if test="urgency != null">urgency = #{urgency},</if>
+            <if test="promoterUserId != null">promoter_user_id = #{promoterUserId},</if>
+            <if test="promoterLegalName != null">promoter_legal_name = #{promoterLegalName},</if>
+            <if test="currentNodeId != null">current_node_id = #{currentNodeId},</if>
+            <if test="finishTime != null">finish_time = #{finishTime},</if>
+            <if test="createTime != null">create_time = #{createTime},</if>
+            <if test="updateTime != null">update_time = #{updateTime},</if>
+        </trim>
+        where id = #{id}
+    </update>
+
+    <delete id="deleteSysProgressInstanceById" parameterType="Long">
+        delete from sys_progress_instance where id = #{id}
+    </delete>
+
+    <delete id="deleteSysProgressInstanceByIds" parameterType="String">
+        delete from sys_progress_instance where id in 
+        <foreach item="id" collection="array" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+</mapper>

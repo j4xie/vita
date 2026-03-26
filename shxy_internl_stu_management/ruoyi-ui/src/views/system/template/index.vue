@@ -2,25 +2,26 @@
   <div class="app-container">
     <el-form :model="queryParams" ref="queryForm" size="small" :inline="true" v-show="showSearch" label-width="68px">
       <el-form-item label="流程名称" prop="name">
-        <el-input v-model="queryParams.name" placeholder="请输入流程名称" clearable style="width: 240px" @keyup.enter.native="handleQuery" />
+        <el-input v-model="queryParams.progressName" placeholder="请输入流程名称" clearable style="width: 240px" @keyup.enter.native="handleQuery" />
       </el-form-item>
       <el-form-item label="适用类型" prop="type">
-        <el-select v-model="queryParams.type" placeholder="请选择适用类型" clearable style="width: 240px">
-          <el-option label="费用报销" value="expense" />
+        <el-select v-model="queryParams.typeId" placeholder="请选择适用类型" clearable style="width: 240px">
+          <!-- <el-option label="费用报销" value="expense" />
           <el-option label="请假申请" value="leave" />
           <el-option label="采购申请" value="purchase" />
-          <el-option label="出差申请" value="business" />
+          <el-option label="出差申请" value="business" /> -->
+          <el-option v-for="item in typeList" :label="item.name" :key="item.id" :value="item.id" />
         </el-select>
       </el-form-item>
       <el-form-item label="状态" prop="active">
-        <el-select v-model="queryParams.active" placeholder="请选择状态" clearable style="width: 240px">
-          <el-option label="启用" :value="true" />
-          <el-option label="停用" :value="false" />
+        <el-select v-model="queryParams.enabled" placeholder="请选择状态" clearable style="width: 240px">
+          <el-option label="启用" :value="1" />
+          <el-option label="停用" :value="-1" />
         </el-select>
       </el-form-item>
-      <el-form-item label="创建时间">
+      <!-- <el-form-item label="创建时间">
         <el-date-picker v-model="dateRange" style="width: 240px" value-format="yyyy-MM-dd" type="daterange" range-separator="-" start-placeholder="开始日期" end-placeholder="结束日期"></el-date-picker>
-      </el-form-item>
+      </el-form-item> -->
       <el-form-item>
         <el-button type="primary" icon="el-icon-search" size="mini" @click="handleQuery">搜索</el-button>
         <el-button icon="el-icon-refresh" size="mini" @click="resetQuery">重置</el-button>
@@ -76,20 +77,22 @@
     <el-table v-loading="loading" :data="manageList" @selection-change="handleSelectionChange">
       <el-table-column type="selection" width="55" align="center" />
       <el-table-column label="流程编号" align="center" prop="id" v-if="columns.id.visible" />
-      <el-table-column label="流程名称" align="center" prop="name" v-if="columns.name.visible" :show-overflow-tooltip="true" />
-      <el-table-column label="适用类型" align="center" prop="type" v-if="columns.type.visible">
+      <el-table-column label="流程名称" align="center" prop="progressName" v-if="columns.progressName.visible" :show-overflow-tooltip="true" />
+      <el-table-column label="适用类型" align="center" prop="typeName" v-if="columns.typeId.visible"></el-table-column>
+      <el-table-column label="描述" align="center" prop="progressDesc" v-if="columns.progressDesc.visible" :show-overflow-tooltip="true" />
+      <el-table-column label="状态" align="center" prop="enabled" v-if="columns.enabled.visible">
         <template slot-scope="scope">
-          <span>{{ getProcessTypeLabel(scope.row.type) }}</span>
-        </template>
-      </el-table-column>
-      <el-table-column label="描述" align="center" prop="description" v-if="columns.description.visible" :show-overflow-tooltip="true" />
-      <el-table-column label="状态" align="center" prop="active" v-if="columns.active.visible">
-        <template slot-scope="scope">
-          <el-switch
-            v-model="scope.row.active"
-            @change="toggleProcess(scope.row.id, scope.row.active)"
+          <!-- <el-switch
+            v-model="scope.row.enabled"
+            @change="toggleProcess(scope.row.id, scope.row.enabled)"
             active-text="启用"
             inactive-text="停用"
+          /> -->
+          <el-switch 
+            v-model="scope.row.enabled" 
+            :active-value="1" 
+            :inactive-value="-1" 
+            @change="toggleProcess(scope.row.id, scope.row.enabled)"
           />
         </template>
       </el-table-column>
@@ -134,26 +137,27 @@
         <el-tab-pane label="基础设置" name="basic">
           <div class="wflow-basic-setting">
             <div class="setting-section">
-              <div class="section-title">表单名称</div>
+              <div class="section-title">表单名称 <span style="color: red; margin-left: 4px;">*</span></div>
               <el-input v-model="form.name" placeholder="请输入流程名称" style="width: 300px" />
             </div>
             
             <div class="setting-section">
-              <div class="section-title">所在分组</div>
+              <div class="section-title">适用分类 <span style="color: red; margin-left: 4px;">*</span></div>
               <div class="group-setting">
-                <el-select v-model="form.group" placeholder="请选择分组" style="width: 300px">
-                  <el-option label="人事" value="1" />
+                <el-select v-model="form.typeId" placeholder="请选择分类" style="width: 300px">
+                  <!-- <el-option label="人事" value="1" />
                   <el-option label="财务" value="2" />
                   <el-option label="行政" value="3" />
-                  <el-option label="其他" value="4" />
+                  <el-option label="其他" value="4" /> -->
+                  <el-option v-for="item in typeList" :label="item.name" :key="item.id" :value="item.id" />
                 </el-select>
-                <el-button type="primary" size="small" style="margin-left: 10px" @click="addGroup">新增分组</el-button>
+                <!-- <el-button type="primary" size="small" style="margin-left: 10px" @click="addGroup">新增分组</el-button> -->
               </div>
             </div>
             
             <div class="setting-section">
               <div class="section-title">表单说明</div>
-              <el-input v-model="form.description" type="textarea" placeholder="请输入描述" style="width: 500px" :maxlength="500" show-word-limit />
+              <el-input v-model="form.progressDesc" type="textarea" placeholder="请输入描述" style="width: 500px" :maxlength="250" show-word-limit />
             </div>
             
             <div class="setting-section">
@@ -171,23 +175,23 @@
               <el-input v-model="form.settings.notify.title" placeholder="请输入通知标题" style="width: 300px" />
             </div>
             
-            <div class="setting-section">
+            <!-- <div class="setting-section">
               <div class="section-title">谁可以发起提交</div>
               <el-select v-model="form.settings.commiter" multiple placeholder="请选择" style="width: 300px">
                 <el-option label="部门" value="department" />
                 <el-option label="角色" value="role" />
                 <el-option label="用户" value="user" />
               </el-select>
-            </div>
+            </div> -->
             
-            <div class="setting-section">
+            <!-- <div class="setting-section">
               <div class="section-title">谁可以编辑此流程</div>
               <el-select v-model="form.settings.admin" multiple placeholder="请选择" style="width: 300px">
                 <el-option label="部门" value="department" />
                 <el-option label="角色" value="role" />
                 <el-option label="用户" value="user" />
               </el-select>
-            </div>
+            </div> -->
           </div>
         </el-tab-pane>
         
@@ -729,7 +733,7 @@
                 <i class="el-icon-s-grid"></i>
                 <span>条件分支</span>
               </div>
-              <div class="add-node-item" @click="addParallelBranch">
+              <!-- <div class="add-node-item" @click="addParallelBranch">
                 <i class="el-icon-s-unfold"></i>
                 <span>并行分支</span>
               </div>
@@ -740,7 +744,7 @@
               <div class="add-node-item" @click="addNode('trigger')">
                 <i class="el-icon-s-marketing"></i>
                 <span>触发器</span>
-              </div>
+              </div> -->
             </div>
           </div>
         </el-tab-pane>
@@ -806,7 +810,8 @@
 </template>
 
 <script>
-import { listManage, getManage, delManage, addManage, updateManage } from "@/api/system/manage"
+import { listManage, getManage, delManage, addManage, updateManage } from "@/api/system/template"
+import { listType } from "@/api/system/progress_type"
 import LogicFlow from '@logicflow/core'
 import '@logicflow/core/lib/style/index.css'
 import { Selection, Dnd, Transform, AdjustLine, Snapline } from '@logicflow/extension'
@@ -833,6 +838,7 @@ export default {
       total: 0,
       // 流程管理表格数据
       manageList: [],
+      typeList: [],
       // 弹出层标题
       title: "",
       // 是否显示弹出层
@@ -844,10 +850,10 @@ export default {
       // 列信息
       columns: {
         id: { label: '流程编号', visible: true },
-        name: { label: '流程名称', visible: true },
-        type: { label: '适用类型', visible: true },
-        description: { label: '描述', visible: true },
-        active: { label: '状态', visible: true },
+        progressName: { label: '流程名称', visible: true },
+        typeId: { label: '适用类型', visible: true },
+        progressDesc: { label: '描述', visible: true },
+        enabled: { label: '状态', visible: true },
         createTime: { label: '创建时间', visible: true }
       },
       // 查询参数
@@ -862,9 +868,10 @@ export default {
       form: {
         id: null,
         name: '',
+        typeId: '',
         type: '',
         description: '',
-        active: true,
+        enabled: 1,
         group: '',
         remark: '',
         logo: {
@@ -976,8 +983,8 @@ export default {
         name: [
           { required: true, message: '请输入流程名称', trigger: 'blur' }
         ],
-        type: [
-          { required: true, message: '请选择适用类型', trigger: 'change' }
+        typeId: [
+          { required: true, message: '请选择适用分类', trigger: 'change' }
         ]
       }
     }
@@ -994,6 +1001,7 @@ export default {
   },
   created() {
     this.getList()
+    this.getTypeList()
   },
   mounted() {
     // 当流程设计标签页激活时初始化 LogicFlow
@@ -1415,7 +1423,7 @@ export default {
       }).then(() => {
         const data = {
           id: id,
-          active: status
+          enabled: status
         }
         updateManage(data).then(response => {
           this.$message.success('修改成功')
@@ -1568,6 +1576,12 @@ export default {
         this.loading = false
       })
     },
+
+    getTypeList() {
+      listType(this.queryParams).then(response => {
+        this.typeList = response.rows
+      })
+    },
     
     /** 搜索按钮操作 */
     handleQuery() {
@@ -1602,6 +1616,16 @@ export default {
     
     /** 提交按钮 */
     submitForm() {
+      // 表单验证：检查必填项
+      if (!this.form.name || !this.form.name.trim()) {
+        this.$message.error('请输入表单名称')
+        return
+      }
+      if (!this.form.typeId) {
+        this.$message.error('请选择适用分类')
+        return
+      }
+      
       // 收集三个模块的数据
       const progressContent = {
         // 1. 基础设置数据
@@ -1612,7 +1636,8 @@ export default {
           settings: this.form.settings,
           active: this.form.active,
           logo: this.form.logo,
-          type: this.form.type
+          type: this.form.type,
+          typeId: this.form.typeId
         },
         // 2. 审批表单数据
         approvalForm: {
@@ -1628,10 +1653,14 @@ export default {
       }
       
       // 在控制台打印收集的数据
+      var jsonStr = JSON.parse(JSON.stringify(progressContent))
       console.log('==================== 流程管理 - 提交数据 ====================')
-      console.log('progressContent:', JSON.parse(JSON.stringify(progressContent)))
+      console.log('progressContent:', jsonStr)
       console.log('=========================================================')
       
+      var _name = jsonStr.basicSettings.name;
+      this.form.progressName = _name;
+
       // 构建提交数据，将收集的内容用 progressContent 参数名包装
       const submitParams = {
         ...this.form,
@@ -1665,9 +1694,10 @@ export default {
       this.form = {
         id: null,
         name: '',
+        typeId: '',
         type: '',
         description: '',
-        active: true,
+        enabled: 1,
         group: '',
         remark: '',
         logo: {
@@ -1687,6 +1717,27 @@ export default {
         formItems: [],
         processNodes: []
       }
+      // 初始化默认流程节点：审批人、抄送人
+      this.flowNodes = [
+        {
+          id: Date.now(),
+          type: 'approver',
+          config: {
+            approver: 'specified',
+            mode: 'or',
+            emptyAction: 'pass'
+          },
+          content: '请设置审批人'
+        },
+        {
+          id: Date.now() + 1,
+          type: 'cc',
+          config: {
+            cc: 'specified'
+          },
+          content: '请设置抄送人'
+        }
+      ]
       this.resetForm("form")
     },
     
@@ -1731,9 +1782,9 @@ export default {
 <style scoped>
 /* 弹层样式 - 上下撑满 */
 .process-design-dialog >>> .el-dialog {
-  margin-top: 5vh !important;
-  margin-bottom: 5vh !important;
-  height: 90vh;
+  margin-top: 1vh !important;
+  margin-bottom: 1vh !important;
+  height: 98vh;
   display: flex;
   flex-direction: column;
 }
@@ -2261,7 +2312,8 @@ export default {
   padding: 8px;
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
-  grid-template-rows: repeat(2, 1fr);
+  /* grid-template-rows: repeat(2, 1fr); */
+  grid-template-rows: repeat(1, 1fr);
   gap: 8px;
   min-width: 280px;
 }

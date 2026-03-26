@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.SysProgressTemplateMapper">
+    
+    <resultMap type="SysProgressTemplate" id="SysProgressTemplateResult">
+        <result property="id"    column="id"    />
+        <result property="progressName"      column="progress_name"     />
+        <result property="typeId"      column="type_id"     />
+        <result property="progressContent"      column="progress_content"     />
+        <result property="progressDesc"      column="progress_desc"     />
+        <result property="accessFlag"      column="access_flag"     />
+        <result property="accessIds"      column="access_ids"     />
+        <result property="enabled"      column="enabled"     />
+        <result property="createByUserId"      column="create_by_user_id"     />
+        <result property="createByLegalName"      column="create_by_legal_name"     />
+        <result property="createTime"    column="create_time"   />
+        <result property="updateByUserId"      column="update_by_user_id"     />
+        <result property="updateByLegalName"      column="update_by_legal_name"     />
+        <result property="updateTime"    column="update_time"   />
+        <result property="typeName"    column="type_name"   />
+    </resultMap>
+
+    <sql id="selectSysProgressTemplateVo">
+        select spm.id, spm.progress_name, spm.type_id, spm.progress_content, spm.progress_desc, spm.access_flag, spm.access_ids, spm.enabled, spm.create_by_user_id,
+               spm.create_by_legal_name, spm.create_time, spm.update_by_user_id, spm.update_by_legal_name, spm.update_time, spt.name as type_name from sys_progress_template spm
+        LEFT JOIN sys_progress_type spt on spt.id = spm.type_id
+    </sql>
+
+    <select id="selectSysProgressTemplateList" parameterType="SysProgressTemplate" resultMap="SysProgressTemplateResult">
+        <include refid="selectSysProgressTemplateVo"/>
+        <where>
+            <if test="progressName != null and progressName != ''">
+                AND progress_name = #{progressName}
+            </if>
+            <if test="typeId != null and typeId != ''">
+                AND type_id = #{typeId}
+            </if>
+            <if test="progressContent != null and progressContent != ''">
+                AND progress_content = #{progressContent}
+            </if>
+            <if test="progressDesc != null and progressDesc != ''">
+                AND progress_desc = #{progressDesc}
+            </if>
+            <if test="accessFlag != null and accessFlag != ''">
+                AND access_flag = #{accessFlag}
+            </if>
+            <if test="accessIds != null and accessIds != ''">
+                AND access_ids = #{accessIds}
+            </if>
+            <if test="enabled != null and enabled != ''">
+                AND enabled = #{enabled}
+            </if>
+            <if test="createByUserId != null and createByUserId != ''">
+                AND create_by_user_id = #{createByUserId}
+            </if>
+            <if test="updateByUserId != null and updateByUserId != ''">
+                AND update_by_user_id = #{updateByUserId}
+            </if>
+        </where>
+    </select>
+    
+    <select id="selectSysProgressTemplateById" parameterType="Long" resultMap="SysProgressTemplateResult">
+        <include refid="selectSysProgressTemplateVo"/>
+        where id = #{id}
+    </select>
+
+    <insert id="insertSysProgressTemplate" parameterType="SysProgressTemplate" useGeneratedKeys="true" keyProperty="id">
+        insert into sys_progress_template(
+            <if test="progressName != null">progress_name,</if>
+            <if test="typeId != null">type_id,</if>
+            <if test="progressContent != null">progress_content,</if>
+            <if test="progressDesc != null">progress_desc,</if>
+            <if test="accessFlag != null">access_flag,</if>
+            <if test="accessIds != null">access_ids,</if>
+            <if test="enabled != null and enabled != ''">enabled,</if>
+            <if test="createByUserId != null">create_by_user_id,</if>
+            <if test="createByLegalName != null">create_by_legal_name,</if>
+            create_time
+        )values(
+            <if test="progressName != null">#{progressName},</if>
+            <if test="typeId != null">#{typeId},</if>
+            <if test="progressContent != null">#{progressContent},</if>
+            <if test="progressDesc != null">#{progressDesc},</if>
+            <if test="accessFlag != null">#{accessFlag},</if>
+            <if test="accessIds != null">#{accessIds},</if>
+            <if test="enabled != null and enabled != ''">#{enabled},</if>
+            <if test="createByUserId != null and createByUserId != ''">#{createByUserId},</if>
+            <if test="createByLegalName != null and createByLegalName != ''">#{createByLegalName},</if>
+            sysdate()
+        )
+    </insert>
+
+    <update id="updateSysProgressTemplate" parameterType="SysProgressTemplate">
+        update sys_progress_template
+        <set>
+            <if test="progressName != null and progressName != ''">progress_name = #{progressName},</if>
+            <if test="typeId != null and typeId != ''">type_id = #{typeId},</if>
+            <if test="progressContent != null and progressContent != ''">progress_content = #{progressContent},</if>
+            <if test="progressDesc != null and progressDesc != ''">progress_desc = #{progressDesc},</if>
+            <if test="accessFlag != null and accessFlag != ''">access_flag = #{accessFlag},</if>
+            <if test="accessIds != null and accessIds != ''">access_ids = #{accessIds},</if>
+            <if test="enabled != null and enabled != ''">enabled = #{enabled},</if>
+            <if test="updateByUserId != null and updateByUserId != ''">update_by_user_id = #{updateByUserId},</if>
+            <if test="updateByLegalName != null and updateByLegalName != ''">update_by_legal_name = #{updateByLegalName},</if>
+            update_time = sysdate()
+        </set>
+        where id = #{id}
+    </update>
+
+    <delete id="deleteSysProgressTemplateById" parameterType="Long">
+        delete from sys_progress_template where id = #{id}
+    </delete>
+
+    <delete id="deleteSysProgressTemplateByIds" parameterType="String">
+        delete from sys_progress_template where id in
+        <foreach item="id" collection="array" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+</mapper>

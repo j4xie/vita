@@ -16,8 +16,8 @@ import com.ruoyi.common.annotation.Log;
 import com.ruoyi.common.core.controller.BaseController;
 import com.ruoyi.common.core.domain.AjaxResult;
 import com.ruoyi.common.enums.BusinessType;
-import com.ruoyi.system.domain.SysProgressManage;
-import com.ruoyi.system.service.ISysProgressManageService;
+import com.ruoyi.system.domain.SysProgressTemplate;
+import com.ruoyi.system.service.ISysProgressTemplateService;
 import com.ruoyi.common.utils.poi.ExcelUtil;
 import com.ruoyi.common.core.page.TableDataInfo;
 
@@ -28,77 +28,77 @@ import com.ruoyi.common.core.page.TableDataInfo;
  * @date 2026-02-28
  */
 @RestController
-@RequestMapping("/system/manage")
-public class SysProgressManageController extends BaseController
+@RequestMapping("/system/template")
+public class SysProgressTemplateController extends BaseController
 {
     @Autowired
-    private ISysProgressManageService sysProgressManageService;
+    private ISysProgressTemplateService sysProgressTemplateService;
 
     /**
      * 查询流程管理列表
      */
-    @PreAuthorize("@ss.hasPermi('system:manage:list')")
+    @PreAuthorize("@ss.hasPermi('system:template:list')")
     @GetMapping("/list")
-    public TableDataInfo list(SysProgressManage sysProgressManage)
+    public TableDataInfo list(SysProgressTemplate sysProgressTemplate)
     {
         startPage();
-        List<SysProgressManage> list = sysProgressManageService.selectSysProgressManageList(sysProgressManage);
+        List<SysProgressTemplate> list = sysProgressTemplateService.selectSysProgressTemplateList(sysProgressTemplate);
         return getDataTable(list);
     }
 
     /**
      * 导出流程管理列表
      */
-    @PreAuthorize("@ss.hasPermi('system:manage:export')")
+    @PreAuthorize("@ss.hasPermi('system:template:export')")
     @Log(title = "流程管理", businessType = BusinessType.EXPORT)
     @PostMapping("/export")
-    public void export(HttpServletResponse response, SysProgressManage sysProgressManage)
+    public void export(HttpServletResponse response, SysProgressTemplate sysProgressTemplate)
     {
-        List<SysProgressManage> list = sysProgressManageService.selectSysProgressManageList(sysProgressManage);
-        ExcelUtil<SysProgressManage> util = new ExcelUtil<SysProgressManage>(SysProgressManage.class);
+        List<SysProgressTemplate> list = sysProgressTemplateService.selectSysProgressTemplateList(sysProgressTemplate);
+        ExcelUtil<SysProgressTemplate> util = new ExcelUtil<SysProgressTemplate>(SysProgressTemplate.class);
         util.exportExcel(response, list, "流程管理数据");
     }
 
     /**
      * 获取流程管理详细信息
      */
-    @PreAuthorize("@ss.hasPermi('system:manage:query')")
+    @PreAuthorize("@ss.hasPermi('system:template:query')")
     @GetMapping(value = "/{id}")
     public AjaxResult getInfo(@PathVariable("id") Long id)
     {
-        return success(sysProgressManageService.selectSysProgressManageById(id));
+        return success(sysProgressTemplateService.selectSysProgressTemplateById(id));
     }
 
     /**
      * 新增流程管理
      */
-    @PreAuthorize("@ss.hasPermi('system:manage:add')")
+    @PreAuthorize("@ss.hasPermi('system:template:add')")
     @Log(title = "流程管理", businessType = BusinessType.INSERT)
     @PostMapping
-    public AjaxResult add(@RequestBody SysProgressManage sysProgressManage)
+    public AjaxResult add(@RequestBody SysProgressTemplate sysProgressTemplate)
     {
-        return toAjax(sysProgressManageService.insertSysProgressManage(sysProgressManage));
+        return toAjax(sysProgressTemplateService.insertSysProgressTemplate(sysProgressTemplate));
     }
 
     /**
      * 修改流程管理
      */
-    @PreAuthorize("@ss.hasPermi('system:manage:edit')")
+    @PreAuthorize("@ss.hasPermi('system:template:edit')")
     @Log(title = "流程管理", businessType = BusinessType.UPDATE)
     @PutMapping
-    public AjaxResult edit(@RequestBody SysProgressManage sysProgressManage)
+    public AjaxResult edit(@RequestBody SysProgressTemplate sysProgressTemplate)
     {
-        return toAjax(sysProgressManageService.updateSysProgressManage(sysProgressManage));
+        return toAjax(sysProgressTemplateService.updateSysProgressTemplate(sysProgressTemplate));
     }
 
     /**
      * 删除流程管理
      */
-    @PreAuthorize("@ss.hasPermi('system:manage:remove')")
+    @PreAuthorize("@ss.hasPermi('system:template:remove')")
     @Log(title = "流程管理", businessType = BusinessType.DELETE)
 	@DeleteMapping("/{ids}")
     public AjaxResult remove(@PathVariable Long[] ids)
     {
-        return toAjax(sysProgressManageService.deleteSysProgressManageByIds(ids));
+        return toAjax(sysProgressTemplateService.deleteSysProgressTemplateByIds(ids));
     }
 }
