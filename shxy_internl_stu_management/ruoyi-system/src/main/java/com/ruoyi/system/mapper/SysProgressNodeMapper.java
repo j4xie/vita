@@ -44,6 +44,14 @@ public interface SysProgressNodeMapper
     public int updateSysProgressNode(SysProgressNode sysProgressNode);
 
     /**
+     * 审批操作
+     *
+     * @param sysProgressNode 流程节点
+     * @return 结果
+     */
+    public int approvalOperationProgressNode(SysProgressNode sysProgressNode);
+
+    /**
      * 删除流程节点
      * 
      * @param id 流程节点主键

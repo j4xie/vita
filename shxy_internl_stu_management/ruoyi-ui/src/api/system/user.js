@@ -134,3 +134,12 @@ export function deptTreeSelect() {
     method: 'get'
   })
 }
+
+// 无分页查询全部用户列表
+export function listAllUser(query) {
+  return request({
+    url: '/system/user/allList',
+    method: 'get',
+    params: query
+  })
+}

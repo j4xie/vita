@@ -1,7 +1,9 @@
 package com.ruoyi.system.service.impl;
 
+import java.text.DecimalFormat;
 import java.util.List;
 import com.ruoyi.common.utils.DateUtils;
+import org.apache.http.util.TextUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import com.ruoyi.system.mapper.PlateformDataMapper;
@@ -92,5 +94,37 @@ public class PlateformDataServiceImpl implements IPlateformDataService
     public int deletePlateformDataById(Long id)
     {
         return plateformDataMapper.deletePlateformDataById(id);
+    }
+
+    /**
+     * 美元转换成人民币
+     * @param usdPrice
+     * @return
+     */
+    @Override
+    public Double usdToRmbExchange(String usdPrice)
+    {
+        PlateformData plateformData = new PlateformData();
+        plateformData.setDataKey("RMB_USD_EXCHANGE_RATE");
+        List<PlateformData> plateformDataList = plateformDataMapper.selectPlateformDataList(plateformData);
+        double exchangeRate = 0;
+        if(plateformDataList.size() >= 0){
+            String exchangeRateStr = plateformDataList.get(0).getDataValue();
+            if(!TextUtils.isEmpty(exchangeRateStr)){
+                exchangeRate = Double.parseDouble(exchangeRateStr);
+            }
+        }
+
+        double rmbPrice = 0;
+
+        if(!TextUtils.isEmpty(usdPrice)){
+            rmbPrice = Double.parseDouble(usdPrice)*exchangeRate;
+        }
+
+        DecimalFormat df = new DecimalFormat("#.##"); // 或者使用 "0.00" 来确保总是显示两位小数，即使为零也是如此。
+        String formattedNumber = df.format(rmbPrice);
+        rmbPrice = Double.parseDouble(formattedNumber);
+
+        return rmbPrice;
     }
 }

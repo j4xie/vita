@@ -2,7 +2,7 @@
   <div class="app-container">
     <el-divider content-position="left">金额积分比例设置</el-divider>
     <div class="set-item-div">
-      <el-form ref="form" :model="form" :rules="rules" label-width="110px" style="width: 420px;">
+      <el-form ref="form" :model="form" :rules="rules" label-width="135px" style="width: 420px;">
         <el-form-item label="金额积分比例：" prop="pointAmountRate">
           <el-input v-model="pointAmountRate" placeholder="" style="width: 250px;" class="center-input" maxlength="6">
             <template slot="prepend">1美元 ≈ </template>
@@ -11,6 +11,19 @@
         </el-form-item>
       </el-form>
       <el-button type="primary" style="height: 36px;" @click="submitForm(1)">保存</el-button>
+    </div>
+
+    <el-divider content-position="left">人民币/美元汇率设置</el-divider>
+    <div class="set-item-div">
+      <el-form ref="form" :model="form" :rules="rules" label-width="135px" style="width: 520px;">
+        <el-form-item label="人民币/美元汇率：" prop="exchangeRate">
+          <el-input v-model="exchangeRate" placeholder="" style="width: 350px;" class="center-input" maxlength="10">
+            <template slot="prepend">1美元 ≈ </template>
+            <template slot="append">人民币</template>  
+          </el-input>
+        </el-form-item>
+      </el-form>
+      <el-button type="primary" style="height: 36px;" @click="submitForm(2)">保存</el-button>
     </div>
 
   </div>
@@ -54,7 +67,8 @@ export default {
       // 表单校验
       rules: {
       },
-      pointAmountRate: ''
+      pointAmountRate: '',
+      exchangeRate: ''
     }
   },
   created() {
@@ -72,6 +86,9 @@ export default {
         for(var i = 0;i < this.dataList.length; i++){
           if(this.dataList[i].dataKey == "AMOUNT_POINTS_RATIO"){
             this.pointAmountRate = this.dataList[i].dataValue
+          }
+          if(this.dataList[i].dataKey == "RMB_USD_EXCHANGE_RATE"){
+            this.exchangeRate = this.dataList[i].dataValue
           }
         }
       })
@@ -136,7 +153,17 @@ export default {
             this.form.dataValue = this.pointAmountRate
           }
         }
+      }else if(_flag == 2){
+        //保存人民币/美元汇率
+        this.form = {}
+        for(var i = 0;i < this.dataList.length; i++){
+          if(this.dataList[i].dataKey == "RMB_USD_EXCHANGE_RATE"){
+            this.form.id = this.dataList[i].id
+            this.form.dataValue = this.exchangeRate
+          }
+        }
       }
+
       this.$refs["form"].validate(valid => {
         if (valid) {
           if (this.form.id != null) {

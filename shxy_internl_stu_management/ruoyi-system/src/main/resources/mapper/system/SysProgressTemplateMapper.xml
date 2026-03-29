@@ -32,38 +32,71 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <include refid="selectSysProgressTemplateVo"/>
         <where>
             <if test="progressName != null and progressName != ''">
-                AND progress_name = #{progressName}
+                AND spm.progress_name = #{progressName}
             </if>
             <if test="typeId != null and typeId != ''">
-                AND type_id = #{typeId}
+                AND spm.type_id = #{typeId}
             </if>
             <if test="progressContent != null and progressContent != ''">
-                AND progress_content = #{progressContent}
+                AND spm.progress_content = #{progressContent}
             </if>
             <if test="progressDesc != null and progressDesc != ''">
-                AND progress_desc = #{progressDesc}
+                AND spm.progress_desc = #{progressDesc}
             </if>
             <if test="accessFlag != null and accessFlag != ''">
-                AND access_flag = #{accessFlag}
+                AND spm.access_flag = #{accessFlag}
             </if>
             <if test="accessIds != null and accessIds != ''">
-                AND access_ids = #{accessIds}
+                AND spm.access_ids = #{accessIds}
             </if>
             <if test="enabled != null and enabled != ''">
-                AND enabled = #{enabled}
+                AND spm.enabled = #{enabled}
             </if>
             <if test="createByUserId != null and createByUserId != ''">
-                AND create_by_user_id = #{createByUserId}
+                AND spm.create_by_user_id = #{createByUserId}
             </if>
             <if test="updateByUserId != null and updateByUserId != ''">
-                AND update_by_user_id = #{updateByUserId}
+                AND spm.update_by_user_id = #{updateByUserId}
             </if>
         </where>
     </select>
-    
+
+    <select id="selectSysProgressTemplateForAppList" parameterType="SysProgressTemplate" resultMap="SysProgressTemplateResult">
+        <include refid="selectSysProgressTemplateVo"/>
+        <where>
+            <if test="progressName != null and progressName != ''">
+                AND spm.progress_name = #{progressName}
+            </if>
+            <if test="typeId != null and typeId != ''">
+                AND spm.type_id = #{typeId}
+            </if>
+            <if test="progressContent != null and progressContent != ''">
+                AND spm.progress_content = #{progressContent}
+            </if>
+            <if test="progressDesc != null and progressDesc != ''">
+                AND spm.progress_desc = #{progressDesc}
+            </if>
+            <if test="accessFlag != null and accessFlag != ''">
+                AND spm.access_flag = #{accessFlag}
+            </if>
+            <if test="accessIds != null and accessIds != ''">
+                AND spm.access_ids = #{accessIds}
+            </if>
+            <if test="enabled != null and enabled != ''">
+                AND spm.enabled = #{enabled}
+            </if>
+            <if test="createByUserId != null and createByUserId != ''">
+                AND spm.create_by_user_id = #{createByUserId}
+            </if>
+            <if test="updateByUserId != null and updateByUserId != ''">
+                AND spm.update_by_user_id = #{updateByUserId}
+            </if>
+        </where>
+    </select>
+
     <select id="selectSysProgressTemplateById" parameterType="Long" resultMap="SysProgressTemplateResult">
         <include refid="selectSysProgressTemplateVo"/>
-        where id = #{id}
+        where spm.id = #{id}
     </select>
 
     <insert id="insertSysProgressTemplate" parameterType="SysProgressTemplate" useGeneratedKeys="true" keyProperty="id">

@@ -58,4 +58,11 @@ public interface PlateformDataMapper
      * @return 结果
      */
     public int deletePlateformDataByIds(Long[] ids);
+
+    /**
+     * 美元转换成人民币
+     * @param usdPrice
+     * @return
+     */
+    public Double usdToRmbExchange(String usdPrice);
 }

@@ -115,8 +115,20 @@
       <!-- <el-table-column label="流程模板id" align="center" prop="templateId" /> -->
       <el-table-column label="审批标题" align="center" prop="title" />
       <!-- <el-table-column label="提交表单数据" align="center" prop="formData" /> -->
-      <el-table-column label="状态" align="center" prop="status" />
-      <el-table-column label="类型" align="center" prop="urgency" />
+      <el-table-column label="状态" align="center" prop="status">
+        <template slot-scope="scope">
+          <span v-if="scope.row.status == 1">审批中</span>
+          <span v-else-if="scope.row.status == 2">审批通过</span>
+          <span v-else-if="scope.row.status == 3">审批驳回</span>
+          <span v-else-if="scope.row.status == 4">已取消</span>
+        </template>
+      </el-table-column>
+      <el-table-column label="类型" align="center" prop="urgency">
+        <template slot-scope="scope">
+          <span v-if="scope.row.urgency == 1">普通</span>
+          <span v-else-if="scope.row.urgency == 2">加急</span>
+        </template>
+      </el-table-column>
       <!-- <el-table-column label="发起人user_id" align="center" prop="promoterUserId" /> -->
       <el-table-column label="发起人" align="center" prop="promoterLegalName" />
       <el-table-column label="当前审批节点" align="center" prop="currentNodeId" />

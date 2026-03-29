@@ -81,7 +81,7 @@
       <el-table-column label="商品价格" align="center" prop="price">
         <template slot-scope="scope">
           <span v-if="scope.row.priceUnit === 1">{{scope.row.price}} 积分</span>
-          <span v-if="scope.row.priceUnit === 2">{{scope.row.price}} ¥</span>
+          <!-- <span v-if="scope.row.priceUnit === 2">{{scope.row.price}} ¥</span> -->
           <span v-if="scope.row.priceUnit === 3">{{scope.row.price}} $</span>
         </template>
       </el-table-column>
@@ -165,7 +165,7 @@
         <el-form-item label="价格单位" prop="priceUnit" class="half-width">
           <el-select v-model="form.priceUnit" clearable placeholder="请选择商品价格单位">
             <el-option :key="1" label="积分" :value="1"></el-option>
-            <el-option :key="2" label="人民币" :value="2"></el-option>
+            <!-- <el-option :key="2" label="人民币" :value="2"></el-option> -->
             <el-option :key="3" label="美元" :value="3"></el-option>
           </el-select>
         </el-form-item>

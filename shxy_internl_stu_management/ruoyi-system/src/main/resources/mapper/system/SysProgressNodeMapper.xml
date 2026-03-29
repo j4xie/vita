@@ -7,9 +7,14 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     <resultMap type="SysProgressNode" id="SysProgressNodeResult">
         <result property="id"    column="id"    />
         <result property="instanceId"    column="instance_id"    />
+        <result property="processId"    column="process_id"    />
         <result property="type"    column="type"    />
         <result property="multiMode"    column="multi_mode"    />
         <result property="content"    column="content"    />
+        <result property="operateMethod"    column="operate_method"    />
+        <result property="operateId"    column="operate_id"    />
+        <result property="emptyAction"    column="empty_action"    />
+        <result property="remark"    column="remark"    />
         <result property="status"    column="status"    />
         <result property="orderNum"    column="order_num"    />
         <result property="finishTime"    column="finish_time"    />
@@ -17,13 +22,14 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     </resultMap>
 
     <sql id="selectSysProgressNodeVo">
-        select id, instance_id, type, multi_mode, content, status, order_num, finish_time, create_time from sys_progress_node
+        select id, instance_id, process_id, type, multi_mode, content, operate_method, operate_id, empty_action, remark, status, order_num, finish_time, create_time from sys_progress_node
     </sql>
 
     <select id="selectSysProgressNodeList" parameterType="SysProgressNode" resultMap="SysProgressNodeResult">
         <include refid="selectSysProgressNodeVo"/>
         <where>  
             <if test="instanceId != null "> and instance_id = #{instanceId}</if>
+            <if test="processId != null "> and process_id = #{processId}</if>
             <if test="type != null  and type != ''"> and type = #{type}</if>
             <if test="multiMode != null  and multiMode != ''"> and multi_mode = #{multiMode}</if>
             <if test="content != null  and content != ''"> and content = #{content}</if>
@@ -42,9 +48,14 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         insert into sys_progress_node
         <trim prefix="(" suffix=")" suffixOverrides=",">
             <if test="instanceId != null">instance_id,</if>
+            <if test="processId != null">process_id,</if>
             <if test="type != null">type,</if>
             <if test="multiMode != null">multi_mode,</if>
             <if test="content != null">content,</if>
+            <if test="operateMethod != null">operate_method,</if>
+            <if test="operateId != null">operate_id,</if>
+            <if test="emptyAction != null">empty_action,</if>
+            <if test="remark != null">remark,</if>
             <if test="status != null">status,</if>
             <if test="orderNum != null">order_num,</if>
             <if test="finishTime != null">finish_time,</if>
@@ -52,9 +63,14 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
          </trim>
         <trim prefix="values (" suffix=")" suffixOverrides=",">
             <if test="instanceId != null">#{instanceId},</if>
+            <if test="processId != null">#{processId},</if>
             <if test="type != null">#{type},</if>
             <if test="multiMode != null">#{multiMode},</if>
             <if test="content != null">#{content},</if>
+            <if test="operateMethod != null">#{operateMethod},</if>
+            <if test="operateId != null">#{operateId},</if>
+            <if test="emptyAction != null">#{emptyAction},</if>
+            <if test="remark != null">#{remark},</if>
             <if test="status != null">#{status},</if>
             <if test="orderNum != null">#{orderNum},</if>
             <if test="finishTime != null">#{finishTime},</if>
@@ -66,15 +82,30 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         update sys_progress_node
         <trim prefix="SET" suffixOverrides=",">
             <if test="instanceId != null">instance_id = #{instanceId},</if>
+            <if test="processId != null">process_id = #{processId},</if>
             <if test="type != null">type = #{type},</if>
             <if test="multiMode != null">multi_mode = #{multiMode},</if>
             <if test="content != null">content = #{content},</if>
+            <if test="operateMethod != null">operate_method = #{operateMethod},</if>
+            <if test="operateId != null">operate_id = #{operateId},</if>
+            <if test="emptyAction != null">empty_action = #{emptyAction},</if>
+            <if test="remark != null">remark = #{remark},</if>
             <if test="status != null">status = #{status},</if>
             <if test="orderNum != null">order_num = #{orderNum},</if>
             <if test="finishTime != null">finish_time = #{finishTime},</if>
             <if test="createTime != null">create_time = #{createTime},</if>
         </trim>
         where id = #{id}
+    </update>
+
+    <update id="approvalOperationProgressNode" parameterType="SysProgressNode">
+        update sys_progress_node
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="remark != null">remark = #{remark},</if>
+            <if test="status != null">status = #{status},</if>
+            finish_time = sysdate()
+        </trim>
+        where instance_id = #{instanceId} and id = #{id}
     </update>
 
     <delete id="deleteSysProgressNodeById" parameterType="Long">

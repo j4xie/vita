@@ -70,6 +70,18 @@ public class SysProgressNodeServiceImpl implements ISysProgressNodeService
     }
 
     /**
+     * 审批操作
+     *
+     * @param sysProgressNode 流程节点
+     * @return 结果
+     */
+    @Override
+    public int approvalOperationProgressNode(SysProgressNode sysProgressNode)
+    {
+        return sysProgressNodeMapper.approvalOperationProgressNode(sysProgressNode);
+    }
+
+    /**
      * 批量删除流程节点
      * 
      * @param ids 需要删除的流程节点主键

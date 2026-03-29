@@ -14,33 +14,42 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <result property="promoterUserId"    column="promoter_user_id"    />
         <result property="promoterLegalName"    column="promoter_legal_name"    />
         <result property="currentNodeId"    column="current_node_id"    />
+        <result property="snapshotTemplateName"    column="snapshot_template_name"    />
+        <result property="snapshotTemplateContent"    column="snapshot_template_content"    />
         <result property="finishTime"    column="finish_time"    />
         <result property="createTime"    column="create_time"    />
         <result property="updateTime"    column="update_time"    />
     </resultMap>
 
     <sql id="selectSysProgressInstanceVo">
-        select id, template_id, title, form_data, status, urgency, promoter_user_id, promoter_legal_name, current_node_id, finish_time, create_time, update_time from sys_progress_instance
+        select spi.id, spi.template_id, spi.title, spi.form_data, spi.status, spi.urgency, spi.promoter_user_id, spi.promoter_legal_name, spi.current_node_id,
+               spi.snapshot_template_name, spi.snapshot_template_content, spi.finish_time, spi.create_time, spi.update_time
+        from sys_progress_instance  spi
+                 LEFT JOIN sys_progress_node spn on spn.id = spi.current_node_id
+
     </sql>
 
     <select id="selectSysProgressInstanceList" parameterType="SysProgressInstance" resultMap="SysProgressInstanceResult">
         <include refid="selectSysProgressInstanceVo"/>
         <where>  
-            <if test="templateId != null "> and template_id = #{templateId}</if>
-            <if test="title != null  and title != ''"> and title = #{title}</if>
-            <if test="formData != null  and formData != ''"> and form_data = #{formData}</if>
-            <if test="status != null "> and status = #{status}</if>
-            <if test="urgency != null "> and urgency = #{urgency}</if>
-            <if test="promoterUserId != null "> and promoter_user_id = #{promoterUserId}</if>
-            <if test="promoterLegalName != null  and promoterLegalName != ''"> and promoter_legal_name like concat('%', #{promoterLegalName}, '%')</if>
-            <if test="currentNodeId != null "> and current_node_id = #{currentNodeId}</if>
-            <if test="finishTime != null "> and finish_time = #{finishTime}</if>
+            <if test="templateId != null "> and spi.template_id = #{templateId}</if>
+            <if test="title != null  and title != ''"> and spi.title = #{title}</if>
+            <if test="formData != null  and formData != ''"> and spi.form_data = #{formData}</if>
+            <if test="status != null "> and spi.status = #{status}</if>
+            <if test="urgency != null "> and spi.urgency = #{urgency}</if>
+            <if test="promoterUserId != null "> and spi.promoter_user_id = #{promoterUserId}</if>
+            <if test="promoterLegalName != null  and promoterLegalName != ''"> and spi.promoter_legal_name like concat('%', #{promoterLegalName}, '%')</if>
+            <if test="currentNodeId != null "> and spi.current_node_id = #{currentNodeId}</if>
+            <if test="snapshotTemplateName != null "> and spi.snapshot_template_name = #{snapshotTemplateName}</if>
+            <if test="snapshotTemplateContent != null "> and spi.snapshot_template_content = #{snapshotTemplateContent}</if>
+            <if test="finishTime != null "> and spi.finish_time = #{finishTime}</if>
+            <if test="operateId != null "> and spn.operate_id = #{operateId}</if>
         </where>
     </select>
     
     <select id="selectSysProgressInstanceById" parameterType="Long" resultMap="SysProgressInstanceResult">
         <include refid="selectSysProgressInstanceVo"/>
-        where id = #{id}
+        where spi.id = #{id}
     </select>
 
     <insert id="insertSysProgressInstance" parameterType="SysProgressInstance" useGeneratedKeys="true" keyProperty="id">
@@ -54,6 +63,8 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="promoterUserId != null">promoter_user_id,</if>
             <if test="promoterLegalName != null">promoter_legal_name,</if>
             <if test="currentNodeId != null">current_node_id,</if>
+            <if test="snapshotTemplateName != null">snapshot_template_name,</if>
+            <if test="snapshotTemplateContent != null">snapshot_template_content,</if>
             <if test="finishTime != null">finish_time,</if>
             <if test="createTime != null">create_time,</if>
             <if test="updateTime != null">update_time,</if>
@@ -67,6 +78,8 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="promoterUserId != null">#{promoterUserId},</if>
             <if test="promoterLegalName != null">#{promoterLegalName},</if>
             <if test="currentNodeId != null">#{currentNodeId},</if>
+            <if test="snapshotTemplateName != null">#{snapshotTemplateName},</if>
+            <if test="snapshotTemplateContent != null">#{snapshotTemplateContent},</if>
             <if test="finishTime != null">#{finishTime},</if>
             <if test="createTime != null">#{createTime},</if>
             <if test="updateTime != null">#{updateTime},</if>
@@ -84,6 +97,8 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="promoterUserId != null">promoter_user_id = #{promoterUserId},</if>
             <if test="promoterLegalName != null">promoter_legal_name = #{promoterLegalName},</if>
             <if test="currentNodeId != null">current_node_id = #{currentNodeId},</if>
+            <if test="snapshotTemplateName != null">snapshot_template_name = #{snapshotTemplateName},</if>
+            <if test="snapshotTemplateContent != null">snapshot_template_content = #{snapshotTemplateContent},</if>
             <if test="finishTime != null">finish_time = #{finishTime},</if>
             <if test="createTime != null">create_time = #{createTime},</if>
             <if test="updateTime != null">update_time = #{updateTime},</if>

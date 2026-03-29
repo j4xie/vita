@@ -147,7 +147,7 @@
                     ref="form"
                   >
                     <draggable class="drawing-board" :list="currentPageComponents" :animation="340" group="componentsGroup">
-                      <draggable-item
+                      <!-- <draggable-item
                         v-for="(element, index) in currentPageComponents"
                         :key="element.renderKey"
                         :drawing-list="currentPageComponents"
@@ -158,7 +158,10 @@
                         @activeItem="activeFormItem"
                         @copyItem="drawingItemCopy"
                         @deleteItem="drawingItemDelete"
-                      />
+                      /> -->
+                      <div v-for="(element, index) in currentPageComponents" :key="element.renderKey" class="components-item">
+                        {{ element.label }}
+                      </div>
                     </draggable>
                     <div v-show="!currentPageComponents.length" class="empty-info">
                       从左侧拖入或点选组件进行表单设计
@@ -172,7 +175,7 @@
       </div>
     </div>
 
-    <right-panel
+    <!-- <right-panel
       :active-data="activeData"
       :form-conf="formConf"
       :show-field="!!currentPageComponents.length"
@@ -186,7 +189,7 @@
       title="选择生成类型"
       :show-file-name="showFileName"
       @confirm="generate"
-    />
+    /> -->
     <input id="copyNode" type="hidden">
   </div>
 </template>
@@ -196,7 +199,7 @@ import draggable from 'vuedraggable'
 import beautifier from 'js-beautify'
 import ClipboardJS from 'clipboard'
 import render from '@/utils/generator/render'
-import RightPanel from '@/views/tool/build/RightPanel'
+// import RightPanel from '@/views/tool/build/RightPanel'
 import { processedInputComponents, processedSelectComponents, layoutComponents, formConf, processedCommonComponents } from '@/utils/generator/config'
 import { beautifierConf, titleCase } from '@/utils/index'
 import { makeUpHtml, vueTemplate, vueScript, cssStyle } from '@/utils/generator/html'
@@ -204,8 +207,8 @@ import { makeUpJs } from '@/utils/generator/js'
 import { makeUpCss } from '@/utils/generator/css'
 import drawingDefault from '@/utils/generator/drawingDefault'
 import logo from '@/assets/logo/logo.png'
-import CodeTypeDialog from '@/views/tool/build/CodeTypeDialog'
-import DraggableItem from '@/views/tool/build/DraggableItem'
+// import CodeTypeDialog from '@/views/tool/build/CodeTypeDialog'
+// import DraggableItem from '@/views/tool/build/DraggableItem'
 import { listModel, getModel, delModel, addModel, updateModel } from "@/api/system/model"
 
 let oldActiveId
@@ -214,10 +217,10 @@ let tempActiveData
 export default {
   components: {
     draggable,
-    render,
-    RightPanel,
-    CodeTypeDialog,
-    DraggableItem
+    render
+    // RightPanel,
+    // CodeTypeDialog,
+    // DraggableItem
   },
   data() {
     return {

@@ -261,12 +261,12 @@
           </el-col>
           <el-col :span="12">
             <el-form-item label="活动费用" prop="price">
-              <el-input v-model="form.price" maxlength="12" placeholder="请输入活动费用" class="input-with-select">
-                <!-- <template slot="append">美元</template> -->
-                <el-select v-model="form.priceUnit" slot="append" placeholder="请选择">
+              <el-input v-model="form.price" maxlength="12" placeholder="请输入活动费用">
+                <template slot="append">美元</template>
+                <!-- <el-select v-model="form.priceUnit" slot="append" placeholder="请选择">
                   <el-option label="人民币" :value="1"></el-option>
                   <el-option label="美元" :value="2"></el-option>
-                </el-select>
+                </el-select> -->
               </el-input>
             </el-form-item>
           </el-col>
@@ -1010,50 +1010,5 @@ export default {
     width: 100%;
   }
 
-  .input-with-select .el-input-group__prepend {
-    background-color: #fff;
-  }
-  /* 优化活动费用输入框的单位选择器样式 */
-  ::v-deep .input-with-select .el-input-group__append {
-    background-color: transparent;
-    padding: 0;
-    border: 0;
-  }
-  ::v-deep .input-with-select .el-input-group__append .el-select {
-    width: 106px;
-  }
-  ::v-deep .input-with-select .el-input-group__append .el-select .el-input__inner {
-    border: 1px solid #DCDFE6;
-    border-left: 0;
-    border-radius: 0 4px 4px 0;
-    height: 40px;
-    line-height: 40px;
-    padding: 0 15px;
-    background-color: #f5f7fa;
-    color: #606266;
-    transition: all .3s;
-  }
-  ::v-deep .input-with-select .el-input-group__append .el-select .el-input__inner:hover {
-    background-color: #eef1f6;
-    border-color: #c0c4cc;
-  }
-  ::v-deep .input-with-select .el-input__inner {
-    border-right: 0;
-    border-radius: 4px 0 0 4px;
-    height: 40px;
-    line-height: 40px;
-  }
-  /* 聚焦时的样式 */
-  ::v-deep .input-with-select.is-focus .el-input__inner,
-  ::v-deep .input-with-select.is-focus .el-select .el-input__inner {
-    border-color: #409EFF;
-  }
-  /* 确保下拉按钮正确显示 */
-  ::v-deep .input-with-select .el-select .el-input .el-input__suffix {
-    right: 8px;
-  }
-  ::v-deep .el-input-group__append .el-select, .el-input-group__append .el-button, .el-input-group__prepend .el-select, .el-input-group__prepend .el-button {
-    display: inline-block;
-    margin: -10px -1px !important;
-  }
+
 </style>

@@ -422,13 +422,13 @@
             <div class="approval-flow-canvas">
               <div class="approval-flow-container">
                 <!-- 发起人节点 -->
-                <div class="flow-node start-node" @click="selectNode('start')">
+                <div class="flow-node start-node">
                   <div class="node-header">
                     <i class="el-icon-user"></i>
                     <span>发起人</span>
                   </div>
                   <div class="node-content">
-                    <span class="node-text">所有人</span>
+                    <span class="node-text">申请人就是发起人</span>
                     <i class="el-icon-arrow-right"></i>
                   </div>
                 </div>
@@ -612,11 +612,19 @@
                     <el-form-item label="审批人">
                       <el-select v-model="selectedNode.config.approver" placeholder="请选择审批人">
                         <el-option label="指定人员" value="specified"></el-option>
-                        <el-option label="发起人自选" value="selfSelect"></el-option>
-                        <el-option label="连续多级主管" value="multiLevel"></el-option>
-                        <el-option label="主管" value="manager"></el-option>
-                        <el-option label="角色" value="role"></el-option>
-                        <el-option label="发起人自己" value="initiator"></el-option>
+                        <!-- <el-option label="指定角色" value="role"></el-option> -->
+                        <!-- <el-option label="发起人自己" value="initiator"></el-option> -->
+                        <!-- <el-option label="发起人自选" value="selfSelect"></el-option> -->
+                      </el-select>
+                    </el-form-item>
+                    <el-form-item v-if="selectedNode.config.approver === 'specified'" label="选择人员">
+                      <el-select v-model="selectedNode.config.operateUsers" filterable placeholder="请选择审批人员" style="width: 100%">
+                        <el-option v-for="user in userList" :key="user.userId" :label="user.legalName" :value="user.userId"></el-option>
+                      </el-select>
+                    </el-form-item>
+                    <el-form-item v-if="selectedNode.config.approver === 'role'" label="选择角色">
+                      <el-select v-model="selectedNode.config.approverRoles" filterable placeholder="请选择审批角色" style="width: 100%">
+                        <el-option v-for="role in roleList" :key="role.id" :label="role.name" :value="role.id"></el-option>
                       </el-select>
                     </el-form-item>
                     <el-form-item label="审批方式">
@@ -629,7 +637,6 @@
                       <el-select v-model="selectedNode.config.emptyAction">
                         <el-option label="自动通过" value="pass"></el-option>
                         <el-option label="自动驳回" value="reject"></el-option>
-                        <el-option label="转交管理员" value="transfer"></el-option>
                       </el-select>
                     </el-form-item>
                   </el-form>
@@ -639,11 +646,13 @@
                 <template v-if="selectedNode.type === 'cc'">
                   <el-form label-width="80px">
                     <el-form-item label="抄送人">
-                      <el-select v-model="selectedNode.config.cc" placeholder="请设置抄送人">
+                      <el-select v-model="selectedNode.config.approver" placeholder="请设置抄送人">
                         <el-option label="指定人员" value="specified"></el-option>
-                        <el-option label="发起人自选" value="selfSelect"></el-option>
-                        <el-option label="主管" value="manager"></el-option>
-                        <el-option label="角色" value="role"></el-option>
+                      </el-select>
+                    </el-form-item>
+                    <el-form-item v-if="selectedNode.config.approver === 'specified'" label="选择人员">
+                      <el-select v-model="selectedNode.config.operateUsers" filterable placeholder="请选择抄送人员" style="width: 100%">
+                        <el-option v-for="user in userList" :key="user.userId" :label="user.legalName" :value="user.userId"></el-option>
                       </el-select>
                     </el-form-item>
                   </el-form>
@@ -729,10 +738,10 @@
                 <i class="el-icon-s-promotion"></i>
                 <span>抄送人</span>
               </div>
-              <div class="add-node-item" @click="addConditionBranch">
+              <!-- <div class="add-node-item" @click="addConditionBranch">
                 <i class="el-icon-s-grid"></i>
                 <span>条件分支</span>
-              </div>
+              </div> -->
               <!-- <div class="add-node-item" @click="addParallelBranch">
                 <i class="el-icon-s-unfold"></i>
                 <span>并行分支</span>
@@ -812,6 +821,8 @@
 <script>
 import { listManage, getManage, delManage, addManage, updateManage } from "@/api/system/template"
 import { listType } from "@/api/system/progress_type"
+import { listAllUser } from "@/api/system/user"
+import { listRole } from "@/api/system/role"
 import LogicFlow from '@logicflow/core'
 import '@logicflow/core/lib/style/index.css'
 import { Selection, Dnd, Transform, AdjustLine, Snapline } from '@logicflow/extension'
@@ -966,6 +977,24 @@ export default {
       approverLevel: 1,
       emptyApproverAction: '自动通过',
       approvalTimeout: 24,
+      // 用户列表
+      userList: [
+        { id: 1, name: '张三' },
+        { id: 2, name: '李四' },
+        { id: 3, name: '王五' },
+        { id: 4, name: '赵六' },
+        { id: 5, name: '钱七' }
+      ],
+      // 角色列表
+      roleList: [
+        { id: 1, name: '管理员' },
+        { id: 2, name: '部门主管' },
+        { id: 3, name: '普通员工' },
+        { id: 4, name: '财务人员' },
+        { id: 5, name: '人力资源' }
+      ],
+      // 加载状态
+      loading: false,
       // 表单权限设置对话框
       permissionDialogVisible: false,
       // 添加节点菜单
@@ -1010,6 +1039,10 @@ export default {
         this.initLogicFlow()
       }
     })
+    // 初始化用户列表
+    this.initUserList()
+    // 初始化角色列表
+    this.initRoleList()
   },
   watch: {
     activeTab(newTab) {
@@ -1140,7 +1173,7 @@ export default {
         }
       } else if (type === 'cc') {
         newNode.config = {
-          cc: 'specified'
+          approver: 'specified'
         }
       } else if (type === 'delay') {
         newNode.config = {
@@ -1434,6 +1467,41 @@ export default {
       })
     },
     
+    /** 查询用户 */
+    queryUsers(query) {
+      if (query) {
+        // 使用真实接口查询用户数据
+        listAllUser({ name: query }).then(response => {
+          this.userList = response.data.map(user => ({
+            id: user.userId,
+            name: user.userName
+          }))
+        })
+      } else {
+        this.userList = []
+      }
+    },
+    
+    /** 初始化用户列表 */
+    initUserList() {
+      // 加载所有用户
+      listAllUser().then(response => {
+        console.log("response==", response)
+        this.userList = response.rows
+      })
+    },
+    
+    /** 初始化角色列表 */
+    initRoleList() {
+      // 加载所有角色
+      listRole().then(response => {
+        this.roleList = response.rows.map(role => ({
+          id: role.roleId,
+          name: role.roleName
+        }))
+      })
+    },
+    
     /** 新增分组 */
     addGroup() {
       this.$prompt('请输入分组名称', '新增分组', {
@@ -1629,7 +1697,7 @@ export default {
       // 收集三个模块的数据
       const progressContent = {
         // 1. 基础设置数据
-        basicSettings: {
+        /*basicSettings: {
           name: this.form.name,
           group: this.form.group,
           description: this.form.description,
@@ -1638,7 +1706,7 @@ export default {
           logo: this.form.logo,
           type: this.form.type,
           typeId: this.form.typeId
-        },
+        },*/
         // 2. 审批表单数据
         approvalForm: {
           formItems: this.form.formItems,
@@ -1658,7 +1726,7 @@ export default {
       console.log('progressContent:', jsonStr)
       console.log('=========================================================')
       
-      var _name = jsonStr.basicSettings.name;
+      var _name = this.form.name;
       this.form.progressName = _name;
 
       // 构建提交数据，将收集的内容用 progressContent 参数名包装

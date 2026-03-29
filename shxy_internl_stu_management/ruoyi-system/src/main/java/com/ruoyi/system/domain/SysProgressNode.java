@@ -24,6 +24,9 @@ public class SysProgressNode extends BaseEntity
     @Excel(name = "流程实例的id")
     private Long instanceId;
 
+    /** 流程模板中节点的id */
+    private String processId;
+
     /** 节点类型 */
     @Excel(name = "节点类型")
     private String type;
@@ -35,6 +38,18 @@ public class SysProgressNode extends BaseEntity
     /** 内容 */
     @Excel(name = "内容")
     private String content;
+
+    /** 处理人/角色选择标识 */
+    private String operateMethod;
+
+    /** 处理人/角色等id */
+    private Long operateId;
+
+    /** 未处理时自动退回/自动通过 */
+    private String emptyAction;
+
+    /** 备注 */
+    private String remark;
 
     /** 节点状态（1-待审核   2-审核通过   3-审核驳回） */
     @Excel(name = "节点状态", readConverterExp = "1=-待审核,2=-审核通过,3=-审核驳回")
@@ -49,7 +64,17 @@ public class SysProgressNode extends BaseEntity
     @Excel(name = "完成时间", width = 30, dateFormat = "yyyy-MM-dd")
     private Date finishTime;
 
-    public void setId(Long id) 
+    @Override
+    public String getRemark() {
+        return remark;
+    }
+
+    @Override
+    public void setRemark(String remark) {
+        this.remark = remark;
+    }
+
+    public void setId(Long id)
     {
         this.id = id;
     }
@@ -127,6 +152,38 @@ public class SysProgressNode extends BaseEntity
     public Date getFinishTime() 
     {
         return finishTime;
+    }
+
+    public String getProcessId() {
+        return processId;
+    }
+
+    public void setProcessId(String processId) {
+        this.processId = processId;
+    }
+
+    public String getOperateMethod() {
+        return operateMethod;
+    }
+
+    public void setOperateMethod(String operateMethod) {
+        this.operateMethod = operateMethod;
+    }
+
+    public Long getOperateId() {
+        return operateId;
+    }
+
+    public void setOperateId(Long operateId) {
+        this.operateId = operateId;
+    }
+
+    public String getEmptyAction() {
+        return emptyAction;
+    }
+
+    public void setEmptyAction(String emptyAction) {
+        this.emptyAction = emptyAction;
     }
 
     @Override

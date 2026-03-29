@@ -58,4 +58,11 @@ public interface IPlateformDataService
      * @return 结果
      */
     public int deletePlateformDataById(Long id);
+
+    /**
+     * 美元转换成人民币
+     * @param usdPrice
+     * @return
+     */
+    public Double usdToRmbExchange(String usdPrice);
 }
