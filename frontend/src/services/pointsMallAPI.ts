@@ -27,6 +27,9 @@ interface BackendGood {
   price: number;
   quantity: number | null;
   unit: string | null;
+  priceUnit?: string;    // 价格单位: 'USD' | 'CNY' | 'points'
+  priceUSD?: number;     // USD价格
+  priceCNY?: number;     // CNY价格
   goodDetail: string;
   createUserId: number;
   createBy?: string;
@@ -89,8 +92,10 @@ const adaptBackendGoodToProduct = (backendGood: BackendGood): Product => {
       ? ProductStatus.AVAILABLE
       : ProductStatus.OUT_OF_STOCK,
     pointsPrice: backendGood.price,
-    marketPrice: undefined, // 后端暂无此字段
-    earnPoints: undefined, // 后端暂无此字段，可以后续根据规则计算
+    marketPrice: backendGood.priceUSD || undefined,
+    earnPoints: undefined,
+    priceUSD: backendGood.priceUSD,
+    priceCNY: backendGood.priceCNY,
     stock: backendGood.quantity || 0,
     images: (backendGood.goodIcon || '')
       .split(',')

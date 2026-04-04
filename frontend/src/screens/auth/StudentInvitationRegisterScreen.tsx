@@ -415,52 +415,52 @@ export const StudentInvitationRegisterScreen: React.FC = React.memo(() => {
     if (formData.selectedSchool) {
       // 有选择学校时，验证邮箱前缀
       if (!emailUsername.trim()) {
-        newErrors.email = t('validation.email_username_required');
+        newErrors.email = t('auth.validation.email_username_required');
       } else if (emailUsername.length < 3) {
-        newErrors.email = t('validation.email_username_too_short');
+        newErrors.email = t('auth.validation.email_username_too_short');
       } else if (!/^[a-zA-Z0-9._-]+$/.test(emailUsername)) {
-        newErrors.email = t('validation.email_username_invalid');
+        newErrors.email = t('auth.validation.email_username_invalid');
       } else if (!formData.generatedEmail) {
-        newErrors.email = t('validation.email_generation_failed');
+        newErrors.email = t('auth.validation.email_generation_failed');
       }
     } else {
       // 没有选择学校时，验证完整邮箱
       if (!formData.email.trim()) {
-        newErrors.email = t('validation.email_required');
+        newErrors.email = t('auth.validation.email_required');
       } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-        newErrors.email = t('validation.email_invalid');
+        newErrors.email = t('auth.validation.email_invalid');
       }
     }
 
     // 验证密码
     if (!formData.password) {
-      newErrors.password = t('validation.password_required');
+      newErrors.password = t('auth.validation.password_required');
     } else if (formData.password.length < 6 || formData.password.length > 20) {
-      newErrors.password = t('validation.password_length_6_20');
+      newErrors.password = t('auth.validation.password_length_6_20');
     }
 
     // 验证确认密码
     if (formData.password !== formData.confirmPassword) {
-      newErrors.confirmPassword = t('validation.password_mismatch');
+      newErrors.confirmPassword = t('auth.validation.password_mismatch');
     }
 
     // 验证学校
     if (!formData.selectedSchool) {
-      newErrors.selectedSchool = t('validation.university_required');
+      newErrors.selectedSchool = t('auth.validation.university_required');
     }
 
     // 验证组织
     if (!formData.selectedOrganization) {
-      newErrors.selectedOrganization = t('validation.organization_required');
+      newErrors.selectedOrganization = t('auth.validation.organization_required');
     }
 
     // 验证手机号
     if (!formData.phoneNumber) {
-      newErrors.phoneNumber = t('validation.phone_required');
+      newErrors.phoneNumber = t('auth.validation.phone_required');
     } else if (!validatePhoneNumber(formData.phoneNumber, formData.areaCode)) {
       newErrors.phoneNumber = formData.areaCode === '86'
-        ? t('validation.phone_invalid_china')
-        : t('validation.phone_invalid_usa');
+        ? t('auth.validation.phone_invalid_china')
+        : t('auth.validation.phone_invalid_usa');
     }
 
     setErrors(newErrors);
@@ -509,7 +509,7 @@ export const StudentInvitationRegisterScreen: React.FC = React.memo(() => {
 
       if (formData.email.length > MAX_EMAIL_LENGTH) {
         console.error(`❌ [StudentInvitationRegister] Email too long: ${formData.email.length} chars`);
-        Alert.alert(t('common.error'), '邮箱地址过长，请选择缩写更短的学校或缩短邮箱用户名');
+        Alert.alert(t('common.error'), t('auth.validation.email_too_long', { defaultValue: 'Email address is too long. Please choose a school with a shorter abbreviation or shorten your email username.' }));
         setLoading(false);
         return;
       }

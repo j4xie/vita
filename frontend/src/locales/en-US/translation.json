@@ -130,78 +130,18 @@
     "english": "English"
   },
   "form": {
-    "errors": {
-      "legalNameRequired": "Please enter legal name",
-      "englishNicknameRequired": "Enter preferred name",
-      "universityRequired": "Please enter university",
-      "emailRequired": "Enter school email",
-      "emailInvalid": "Invalid school email",
-      "passwordRequired": "Enter password",
-      "passwordMinLength": "Password too short",
-      "passwordMismatch": "Passwords do not match",
-      "phoneRequired": "Please enter phone number",
-      "phoneInvalidCN": "Invalid Chinese number",
-      "phoneInvalidUS": "Invalid US number"
-    },
-    "labels": {
-      "legalName": "Legal Name *",
-      "englishNickname": "Preferred Name *",
-      "university": "University *",
-      "schoolEmail": "School Email * (login account)",
-      "password": "Set Password *",
-      "confirmPassword": "Confirm Password *",
-      "phoneNumber": "Phone Number *"
-    },
-    "placeholders": {
-      "legalName": "Enter full name",
-      "englishNickname": "Enter preferred name",
-      "university": "Enter university",
-      "password": "8+ chars, letters & numbers",
-      "confirmPassword": "Confirm password"
-    },
-    "steps": {
-      "step": "Step",
-      "basicInfo": "Basic Information",
-      "basicInfoDesc": "Fill in your information",
-      "accountSetup": "Account Setup",
-      "accountSetupDesc": "Set up login credentials",
-      "contact": "Contact",
-      "contactDesc": "Enter your phone number"
-    },
-    "buttons": {
-      "next": "Next",
-      "sendCode": "Send Code",
-      "register": "Register"
-    },
-    "phoneType": {
-      "china": "🇨🇳 China Number",
-      "usa": "🇺🇸 US Number"
-    },
-    "terms": {
-      "agree": "I have read and agree to",
-      "service": " Terms of Service ",
-      "and": "and",
-      "privacy": " Privacy Policy"
-    },
-    "alerts": {
-      "codeSent": "Code Sent",
-      "codeSentMessage": "Verification code sent to",
-      "sendFailed": "Send Failed",
-      "sendFailedMessage": "Send failed, try again"
-    },
-    "referralCode": "Referral Code: ",
-    "wizard": {
-      "steps": {
-        "personal": "Personal Info",
-        "contact": "Contact",
-        "payment": "Payment & Address",
-        "award": "Award & Documents",
-        "other": "Additional Info"
-      },
-      "next": "Next",
-      "previous": "Previous",
-      "step_of": "Step {{current}} of {{total}}",
-      "complete_required": "Please complete all required fields before continuing"
+    "auto_filled": "Auto-filled",
+    "placeholder_input": "Enter {{label}}",
+    "placeholder_select": "Select {{label}}",
+    "fill_in_placeholder": "Please enter...",
+    "proof_upload_hint": "Please ask your club/division president for a screenshot of your service record or other supporting documents.",
+    "start_date": "Start date",
+    "end_date": "End date",
+    "start_time": "Start time",
+    "end_time": "End time",
+    "validation": {
+      "required": "{{label}} is required",
+      "format_error": "{{label}} format is incorrect"
     }
   },
   "auth": {
@@ -378,7 +318,11 @@
         "change_phone": "Change Phone"
       },
       "school_load_failed": "Failed to load school list, please try again",
-      "unknown_error": "An unknown error occurred, please try again later"
+      "unknown_error": "An unknown error occurred, please try again later",
+      "registration_timeout": "Registration request timed out, the network may be unstable",
+      "network_suggestion": "Check WiFi/data connection, try again later, or contact support",
+      "email_taken_title": "Email Already Registered",
+      "email_taken_message": "This email is already registered. You may already have an account."
     },
     "register": {
       "choice_title": "Choose Registration Type",
@@ -410,19 +354,19 @@
         "form_title": "Parent Account Registration",
         "description": "Register a parent account to monitor your child's activities",
         "invitation_description": "Use invitation code to create parent account for monitoring child's activities",
-        "first_name_label": "First Name *",
+        "first_name_label": "First Name",
         "first_name_placeholder": "Enter your first name",
-        "last_name_label": "Last Name *",
+        "last_name_label": "Last Name",
         "last_name_placeholder": "Enter your last name",
         "email_label": "Email Address * (will be used as login username)",
         "email_placeholder": "Enter your email address",
         "email_help": "This email will be used as your login username. Please ensure you can receive emails",
-        "phone_label": "Phone Number *",
+        "phone_label": "Phone Number",
         "phone_label_optional": "Phone Number *",
         "select_area_code": "Select Country Code",
         "area_code_china": "🇨🇳 +86 China",
         "area_code_usa": "🇺🇸 +1 USA",
-        "child_school_label": "Child's School *",
+        "child_school_label": "Child's School",
         "child_school_placeholder": "Select your child's school",
         "register_button": "Create Parent Account",
         "registering_title": "Creating Parent Account",
@@ -520,14 +464,14 @@
         "read_and_agree": "Read and agree",
         "and": "and",
         "referral_code": "Referral Code: {{code}}",
-        "username_label": "Username *",
+        "username_label": "Username",
         "username_placeholder": "e.g. alex123, sophia_wang (6-20 alphanumeric)",
-        "legal_name_label": "Legal Name *",
+        "legal_name_label": "Legal Name",
         "legal_name_placeholder": "e.g. Zhang San or John Smith (as on passport/ID)",
         "legal_name_description": "Please use your full name as shown on passport or ID",
-        "english_nickname_label": "Preferred Name *",
+        "english_nickname_label": "Preferred Name",
         "english_nickname_placeholder": "e.g. Alex, Sophia (commonly used preferred name)",
-        "university_label": "University *",
+        "university_label": "University",
         "university_placeholder": "Select your university",
         "student_type_label": "Student Type",
         "undergraduate": "Undergraduate",
@@ -535,14 +479,14 @@
         "gender_label": "Gender",
         "male": "Male",
         "female": "Female",
-        "password_label": "Password *",
+        "password_label": "Password",
         "password_placeholder": "Enter password (6-20 characters)",
-        "confirm_password_label": "Confirm Password *",
+        "confirm_password_label": "Confirm Password",
         "confirm_password_placeholder": "Re-enter password",
         "phone_china": "🇨🇳 China Mobile",
         "phone_usa": "🇺🇸 US Number",
         "us_phone_contact_info": "If you don't have a Chinese phone number, please get a referral code through a recommended organization.",
-        "phone_label": "Phone Number *",
+        "phone_label": "Phone Number",
         "phone_placeholder": "Enter your phone number",
         "terms_checkbox": "I have read and agree to",
         "agree_sms": "I agree to receive text messages",
@@ -557,9 +501,9 @@
         "network_error_message": "Network connection failed, please check your network settings and try again",
         "register": "Register Account",
         "step1_description": "Please fill in your basic information, we will generate a school email for you",
-        "first_name_label": "First Name *",
+        "first_name_label": "First Name",
         "first_name_placeholder": "Enter your first name",
-        "last_name_label": "Last Name *",
+        "last_name_label": "Last Name",
         "last_name_placeholder": "Enter your last name",
         "school_email_preview": "School Email Preview",
         "email_help_text": "Enter your school email username (the part before @)",
@@ -572,7 +516,7 @@
         "invitation_step1_description": "Invitation registration: Please fill in your basic information",
         "invitation_step2_description": "Set up your account information, no verification code needed",
         "phone_label_optional": "Phone Number *",
-        "nickname_label": "Preferred Name *",
+        "nickname_label": "Preferred Name",
         "nickname_placeholder": "Enter your preferred name",
         "last_name_placeholder_chinese": "Enter Chinese surname",
         "first_name_placeholder_chinese": "Enter Chinese first name",
@@ -580,15 +524,16 @@
         "common_name_placeholder": "Enter English common name (e.g. xiaoming)",
         "gender_other": "Other",
         "select_organization": "Please select your organization",
-        "verification_code_label": "SMS Verification Code *",
+        "search_organizations": "Search organizations...",
+        "verification_code_label": "SMS Verification Code",
         "verification_code_placeholder": "Enter 6-digit code",
-        "organization_label": "Referral Organization *",
+        "organization_label": "Referral Organization",
         "organization_placeholder": "Select your organization",
         "loading_organizations": "Loading organizations...",
         "email_help": "This email will be your login account",
-        "email_label": "Email *",
+        "email_label": "Email",
         "email_placeholder": "example@university.edu",
-        "school_label": "School *",
+        "school_label": "School",
         "school_placeholder": "Select your school",
         "gender_male": "Male",
         "gender_female": "Female",
@@ -622,7 +567,9 @@
         "retry_solutions": [
           "Get new verification code",
           "Check SMS"
-        ]
+        ],
+        "email_already_registered": "This email is already registered",
+        "phone_already_registered": "This phone number is already registered"
       },
       "email": {
         "code_sent_title": "Verification Code Sent",
@@ -714,7 +661,12 @@
       "common_name_too_short": "Common name must be at least 2 characters",
       "common_name_too_long": "Common name cannot exceed 20 characters",
       "common_name_letters_only": "Common name can only contain letters (no punctuation, spaces, or numbers)",
-      "invalid_text_type": "Invalid text type"
+      "invalid_text_type": "Invalid text type",
+      "field_required": "{{field}} is required",
+      "field_min_length": "{{field}} must be at least {{min}} characters",
+      "field_max_length": "{{field}} cannot exceed {{max}} characters",
+      "field_format_invalid": "{{field}} format is invalid",
+      "field_validation_failed": "{{field}} validation failed"
     },
     "login_required": "Please login first",
     "login_required_message": "Login to bookmark and track activities",
@@ -913,6 +865,25 @@
       "auth_failed": "Authentication failed, please log in again",
       "param_error": "Parameter error, please try again",
       "register_now": "Register Now"
+    },
+    "ticket": {
+      "title": "My Ticket",
+      "my_ticket": "My Ticket",
+      "scan_hint": "Show this to staff for check-in",
+      "order_no": "Order No",
+      "amount": "Amount",
+      "status": "Status",
+      "paid": "Paid",
+      "pending": "Pending",
+      "ticket_type": "Ticket",
+      "ticket_single": "ticket",
+      "tickets": "tickets",
+      "payment_pending": "Please complete payment to get your ticket",
+      "go_pay": "Go to Pay",
+      "edit_info": "Edit Info",
+      "cancel_order": "Cancel Order",
+      "per_ticket": "/ ticket",
+      "no_paid_order": "No paid order found for this activity"
     },
     "status": {
       "registered": "Registered",
@@ -1133,6 +1104,9 @@
       "status_inactive": "Not Available",
       "deadline": "Deadline",
       "applicants": "applicants",
+      "available_applications": "AVAILABLE APPLICATIONS",
+      "people_registered": "People Registered",
+      "hero_subtitle_full": "Apply for certificates to recognize your achievements.",
       "pvsa": {
         "title": "PVSA Certificate Application",
         "steps": {
@@ -1537,9 +1511,13 @@
     "iKnow": "Got it",
     "page_title": "Student Consulting",
     "hero_title": "ChineseUnion Consulting",
+    "hero_banner_title": "ChineseUnion\nConsulting",
     "hero_subtitle": "Comprehensive enrollment consulting and life guidance services for international students to help you adapt quickly",
     "visit_website": "Visit Website",
     "services_title": "Our Services",
+    "our_services": "OUR SERVICES",
+    "quick_links_title": "QUICK LINKS",
+    "album_subtitle": "Capturing your first milestones",
     "services": {
       "academic": "New Student Access",
       "academic_desc": "Enrollment prep, freshman info, official discussion groups",
@@ -1548,13 +1526,17 @@
       "arrival": "Airport Pickup",
       "arrival_desc": "Free airport pickup and enrollment check-in guide",
       "community": "Meet the New Students",
-      "community_desc": "In-person welcome events, make new friends"
+      "community_desc": "In-person welcome events, make new friends",
+      "new_student": "NEW STUDENT",
+      "rentals": "RENTALS",
+      "pickup": "PICKUP",
+      "community_group": "COMMUNITY"
     },
     "quick_links": "Quick Links",
     "links": {
       "safety_plan": "Peace of Mind Program",
       "student_notes": "Notes for New Students",
-      "freshers_album": "Freshers' Album"
+      "freshers_album": "Fresher's Album"
     },
     "contact_info": "For more information, visit chineseunion.org or contact our consulting team"
   },
@@ -2021,6 +2003,8 @@
       "not_registered_message": "You haven't registered for this activity, cannot sign in",
       "already_signed_in_title": "Already Signed In",
       "already_signed_in_message": "You have already signed in for this activity",
+      "payment_required_title": "Payment Required",
+      "payment_required_message": "Please complete payment before checking in",
       "unknown_status_message": "Activity status unknown, please try again later",
       "check_status_failed": "Failed to check activity status",
       "scan_result": "Scan Result"
@@ -3247,9 +3231,11 @@
       "payment_method": "Payment Method",
       "points_exchange": "Points Exchange",
       "current_points": "Current Points: {{points}}",
-      "alipay_payment": "Alipay",
-      "stripe_payment": "Credit/Debit Card",
+      "alipay_payment": "Alipay (CNY)",
+      "stripe_payment": "Credit/Debit Card (USD)",
       "stripe_payment_desc": "Visa, Mastercard, etc.",
+      "cny_payment_desc": "Pay with Alipay QR code",
+      "exchange_rate_hint": "Exchange rate: 1 USD ≈ {{rate}} CNY",
       "order_summary": "Order Summary",
       "product_total": "Product Total",
       "earn_points_label": "Points Earned",
@@ -3261,6 +3247,7 @@
       "insufficient_points_warning": "Insufficient points, please select another payment method",
       "product_error": "Product information error",
       "exchange_success": "Exchange Successful!",
+      "view_orders": "View Orders",
       "exchange_failed": "Exchange failed, please try again later",
       "create_order_failed": "Failed to create order, please try again later",
       "cannot_open_payment": "Cannot open payment page, please check if Alipay is installed",
@@ -3278,6 +3265,7 @@
       "waiting_stripe": "Processing payment...",
       "success": "Payment Successful!",
       "success_exchange": "{{product}} redeemed successfully",
+      "success_activity": "{{activity}} booked successfully",
       "success_default": "Order payment successful",
       "cancelled": "Payment Cancelled",
       "cancelled_desc": "You have cancelled the payment, you can try again",
@@ -3286,6 +3274,7 @@
       "return_home": "Return Home",
       "retry_payment": "Retry Payment",
       "view_orders": "View Orders",
+      "view_activity": "View Activity",
       "leave_temporarily": "Leave Temporarily",
       "leave_hint": "Payment may take some time, you can check the result in Order Center later",
       "continue_waiting": "Continue Waiting",
@@ -3371,6 +3360,8 @@
     "my_coupons": "My Coupons",
     "my_coupons_subtitle": "View Active",
     "my_coupons_desc": "View and use your coupons",
+    "my_orders": "My Orders",
+    "my_orders_subtitle": "Track Orders",
     "refer_friends": "Refer Friends",
     "refer_friends_subtitle": "Earn",
     "refer_friends_desc": "Invite friends to earn rewards",
@@ -3472,21 +3463,6 @@
       "no_package_desc": "Please select a package type before submitting.",
       "no_payment_title": "Missing Payment Method",
       "no_payment_desc": "Please select a payment method before submitting."
-    }
-  },
-  "form": {
-    "auto_filled": "Auto-filled",
-    "placeholder_input": "Enter {{label}}",
-    "placeholder_select": "Select {{label}}",
-    "fill_in_placeholder": "Please enter...",
-    "proof_upload_hint": "Please ask your club/division president for a screenshot of your service record or other supporting documents.",
-    "start_date": "Start date",
-    "end_date": "End date",
-    "start_time": "Start time",
-    "end_time": "End time",
-    "validation": {
-      "required": "{{label}} is required",
-      "format_error": "{{label}} format is incorrect"
     }
   }
 }

@@ -21,10 +21,12 @@ import Animated, {
   FadeInDown,
   FadeIn,
 } from 'react-native-reanimated';
+import * as Location from 'expo-location';
 import { pomeloXAPI } from '../../services/PomeloXAPI';
 import { adaptActivityList, FrontendActivity } from '../../utils/activityAdapter';
 import { useUser } from '../../context/UserContext';
 import { SmallActivityCard } from '../../components/cards/SmallActivityCard';
+import { sortActivitiesByLocation, findNearestSchool, LocationInfo } from '../../utils/locationUtils';
 
 const COLORS = {
   bg: '#FAF3F1',
@@ -58,13 +60,14 @@ const FILTER_PILLS: FilterPill[] = [
 // ─── Filter logic ─────────────────────────────────────────────────────────────
 
 function filterActivities(activities: FrontendActivity[], filter: FilterKey): FrontendActivity[] {
-  if (filter === 'all') return activities;
   const now = new Date();
   const today = now.toISOString().slice(0, 10);
 
   return activities.filter(a => {
     const start = a.date || '';
     const end = a.endDate || a.date || '';
+    // "全部"默认隐藏过期活动，只有"已结束"tab 显示过期
+    if (filter === 'all') return end >= today;
     if (filter === 'upcoming') return start > today;
     if (filter === 'ongoing') return start <= today && end >= today;
     if (filter === 'past') return end < today;
@@ -197,6 +200,31 @@ export const MerchantActivitiesScreen: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [activeFilter, setActiveFilter] = useState<FilterKey>('all');
+  const [userLocation, setUserLocation] = useState<LocationInfo | null>(null);
+
+  // 获取用户地理位置（用于按距离排序）
+  useEffect(() => {
+    (async () => {
+      try {
+        const { status } = await Location.requestForegroundPermissionsAsync();
+        if (status !== 'granted') return;
+        const loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Low });
+        const nearest = findNearestSchool(loc.coords.latitude, loc.coords.longitude);
+        setUserLocation({
+          lat: loc.coords.latitude,
+          lng: loc.coords.longitude,
+          school: nearest?.school,
+          source: 'gps',
+        });
+      } catch (e) {
+        // 定位失败，使用用户所属学校作为回退
+        const deptName = user?.dept?.deptName || user?.deptName;
+        if (deptName) {
+          setUserLocation({ school: deptName, source: 'userSchool' });
+        }
+      }
+    })();
+  }, [user]);
 
   const fetchActivities = useCallback(async () => {
     try {
@@ -210,10 +238,14 @@ export const MerchantActivitiesScreen: React.FC = () => {
       if (result.code === 200) {
         const responseData = (result.data || result) as { rows?: any[]; total?: number };
         const rows = responseData.rows || [];
-        const total = responseData.total ?? 0;
-        const adapted = adaptActivityList({ total, rows, code: result.code, msg: result.msg });
+        // 过滤掉证书类活动（actType=4），只显示学校活动
+        const filteredRows = rows.filter((r: any) => r.actType !== 4);
+        const total = filteredRows.length;
+        const adapted = adaptActivityList({ total, rows: filteredRows, code: result.code, msg: result.msg });
         if (adapted.success) {
-          setActivities(adapted.activities);
+          // 按学校地理位置排序，过期活动排到最后
+          const sorted = sortActivitiesByLocation(adapted.activities, user?.dept?.deptName, userLocation);
+          setActivities(sorted);
         }
       }
     } catch (error) {
@@ -222,7 +254,7 @@ export const MerchantActivitiesScreen: React.FC = () => {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [user]);
+  }, [user, userLocation]);
 
   useEffect(() => { fetchActivities(); }, [fetchActivities]);
 

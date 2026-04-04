@@ -17,6 +17,7 @@ import {
     KeyboardAvoidingView,
     TouchableWithoutFeedback,
     Modal,
+    Image,
 } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { theme } from '../../theme';
@@ -568,7 +569,11 @@ export const DynamicFormRenderer: React.FC<DynamicFormRendererProps> = ({
         if (modelContent) {
             try {
                 const parsed = JSON.parse(modelContent);
-                if (parsed.fields && Array.isArray(parsed.fields)) {
+                // Support both { fields: [...] } and { pages: [{ components: [...] }] } formats
+                const rawFields = parsed.fields
+                    || (parsed.pages && parsed.pages[0] && parsed.pages[0].components)
+                    || [];
+                if (Array.isArray(rawFields) && rawFields.length > 0) {
                     // Normalize fields recursively (handles row container children)
                     const normalizeField = (f: any): any => {
                         const normalized = (!f.options && f.slot?.options)
@@ -595,7 +600,7 @@ export const DynamicFormRenderer: React.FC<DynamicFormRendererProps> = ({
                         }
                         return normalized;
                     };
-                    const normalizedFields = parsed.fields.map(normalizeField);
+                    const normalizedFields = rawFields.map(normalizeField);
                     setFields(normalizedFields);
                     
                     // Initialize default values if not present in initialData
@@ -603,6 +608,10 @@ export const DynamicFormRenderer: React.FC<DynamicFormRendererProps> = ({
                     normalizedFields.forEach((field: FormFieldSchema) => {
                         if (field.defaultValue !== undefined && initialData[field.vModel] === undefined) {
                             defaultValues[field.vModel] = field.defaultValue;
+                        }
+                        // Initialize el-input-number fields with min value if not set
+                        if (field.tag === 'el-input-number' && initialData[field.vModel] === undefined && defaultValues[field.vModel] === undefined) {
+                            defaultValues[field.vModel] = typeof field.min === 'number' ? field.min : 0;
                         }
                     });
                     
@@ -617,8 +626,23 @@ export const DynamicFormRenderer: React.FC<DynamicFormRendererProps> = ({
     }, [modelContent]);
 
     // 🔧 处理表单字段值变化
+    // Check if form has ticketQty + unitPrice combo for auto-calculation
+    const hasTicketPricing = useMemo(() => {
+        const vModels = fields.map(f => f.vModel);
+        return vModels.includes('ticketQty') && vModels.includes('unitPrice');
+    }, [fields]);
+
     const handleChange = (vModel: string, value: any) => {
-        setFormData((prev: any) => ({ ...prev, [vModel]: value }));
+        setFormData((prev: any) => {
+            const next = { ...prev, [vModel]: value };
+            // Auto-calculate totalAmount when ticketQty or unitPrice changes
+            if (hasTicketPricing && (vModel === 'ticketQty' || vModel === 'unitPrice')) {
+                const qty = Number(vModel === 'ticketQty' ? value : next.ticketQty) || 0;
+                const price = Number(vModel === 'unitPrice' ? value : next.unitPrice) || 0;
+                next.totalAmount = Math.round(qty * price * 100) / 100;
+            }
+            return next;
+        });
         // 清除该字段的错误
         if (errors[vModel]) {
             setErrors(prev => ({ ...prev, [vModel]: '' }));
@@ -853,8 +877,9 @@ export const DynamicFormRenderer: React.FC<DynamicFormRendererProps> = ({
                 );
 
             case 'el-radio-group': {
-                // Check if any option has a long description — use full-width layout
-                const hasLongLabels = (field.options || []).some(opt => {
+                // Check if any option has a long description or only 1 option — use full-width layout
+                const optionCount = (field.options || []).length;
+                const hasLongLabels = optionCount <= 1 || (field.options || []).some(opt => {
                     const parsed = parseOptionLabel(opt.label);
                     return !!parsed.description || opt.label.length > 30;
                 });
@@ -1000,27 +1025,45 @@ export const DynamicFormRenderer: React.FC<DynamicFormRendererProps> = ({
                 const numMax = typeof field.max === 'number' ? field.max : Infinity;
                 const numStep = typeof field.step === 'number' ? field.step : 1;
                 const numValue = typeof value === 'number' ? value : (numMin || 0);
+
+                // Disabled number field → show as price tag (e.g. unitPrice)
+                if (isDisabled) {
+                    const isPrice = field.vModel === 'unitPrice' || (field.label || '').toLowerCase().includes('price') || (field.label || '').includes('单价');
+                    return (
+                        <View key={index} style={styles.fieldContainer}>
+                            <View style={styles.labelContainer}>
+                                <Text style={styles.label}>{field.label}</Text>
+                            </View>
+                            <View style={{ backgroundColor: '#FFF7ED', borderRadius: 12, paddingVertical: 14, paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderColor: '#FFEDD5' }}>
+                                {isPrice && <Text style={{ fontSize: 18, fontWeight: '700', color: '#FF6B35', marginRight: 2 }}>$</Text>}
+                                <Text style={{ fontSize: 18, fontWeight: '700', color: '#FF6B35' }}>{numValue}</Text>
+                                {isPrice && <Text style={{ fontSize: 12, color: '#9CA3AF', marginLeft: 8 }}>{t('activities.ticket.per_ticket', '/ ticket')}</Text>}
+                            </View>
+                        </View>
+                    );
+                }
+
                 return (
                     <View key={index} style={styles.fieldContainer}>
                         <View style={styles.labelContainer}>
                             <Text style={styles.label}>{field.label}</Text>
                             {field.required && <View style={styles.requiredDot} />}
                         </View>
-                        <View style={[styles.numberInputContainer, isDisabled && { backgroundColor: '#F3F4F6' }]}>
+                        <View style={styles.numberInputContainer}>
                             <TouchableOpacity
                                 style={styles.numberButton}
                                 onPress={() => handleChange(field.vModel, Math.max(numMin, numValue - numStep))}
-                                disabled={isDisabled || numValue <= numMin}
+                                disabled={numValue <= numMin}
                             >
-                                <Ionicons name="remove" size={20} color={isDisabled || numValue <= numMin ? '#9CA3AF' : theme.colors.text.primary} />
+                                <Ionicons name="remove" size={20} color={numValue <= numMin ? '#9CA3AF' : theme.colors.text.primary} />
                             </TouchableOpacity>
-                            <Text style={[styles.numberValue, isDisabled && { color: '#9CA3AF' }]}>{numValue}</Text>
+                            <Text style={styles.numberValue}>{numValue}</Text>
                             <TouchableOpacity
                                 style={styles.numberButton}
                                 onPress={() => handleChange(field.vModel, Math.min(numMax, numValue + numStep))}
-                                disabled={isDisabled || numValue >= numMax}
+                                disabled={numValue >= numMax}
                             >
-                                <Ionicons name="add" size={20} color={isDisabled || numValue >= numMax ? '#9CA3AF' : theme.colors.text.primary} />
+                                <Ionicons name="add" size={20} color={numValue >= numMax ? '#9CA3AF' : theme.colors.text.primary} />
                             </TouchableOpacity>
                         </View>
                         {errors[field.vModel] && (
@@ -1358,6 +1401,105 @@ export const DynamicFormRenderer: React.FC<DynamicFormRendererProps> = ({
                 );
             }
 
+            case 'text-display': {
+                // 只读文本展示
+                return (
+                    <View key={index} style={styles.fieldContainer}>
+                        <View style={styles.labelContainer}>
+                            <Text style={styles.label}>{field.label}</Text>
+                        </View>
+                        <Text style={{ fontSize: 15, color: '#374151', lineHeight: 22, paddingVertical: 8 }}>
+                            {String(field.defaultValue ?? value ?? '')}
+                        </Text>
+                    </View>
+                );
+            }
+
+            case 'price': {
+                // 价格输入 - 数字输入 + 货币符号
+                const currencySymbol = field.prepend === '¥' || field.prepend === 'CNY' ? '¥' : '$';
+                return (
+                    <View key={index} style={styles.fieldContainer}>
+                        <View style={styles.labelContainer}>
+                            <Text style={styles.label}>{field.label}</Text>
+                            {field.required && <View style={styles.requiredDot} />}
+                        </View>
+                        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                            <Text style={{ fontSize: 18, fontWeight: '600', color: '#374151', marginRight: 6 }}>
+                                {currencySymbol}
+                            </Text>
+                            <TextInput
+                                style={[
+                                    styles.input,
+                                    { flex: 1 },
+                                    errors[field.vModel] && { borderColor: theme.colors.danger },
+                                    isDisabled && { backgroundColor: '#F9FAFB', opacity: 0.6 },
+                                ]}
+                                value={value != null ? String(value) : ''}
+                                onChangeText={(text) => {
+                                    const numeric = text.replace(/[^0-9.]/g, '');
+                                    handleChange(field.vModel, numeric);
+                                }}
+                                keyboardType="decimal-pad"
+                                placeholder={field.placeholder || '0.00'}
+                                placeholderTextColor="#9CA3AF"
+                                editable={!isDisabled}
+                                inputAccessoryViewID={KEYBOARD_ACCESSORY_ID}
+                            />
+                        </View>
+                        {errors[field.vModel] && (
+                            <Animated.View entering={FadeInUp.duration(300)} style={styles.errorContainer}>
+                                <Ionicons name="alert-circle" size={14} color={theme.colors.danger} />
+                                <Text style={styles.errorText}>{errors[field.vModel]}</Text>
+                            </Animated.View>
+                        )}
+                    </View>
+                );
+            }
+
+            case 'image-display': {
+                // 只读图片展示
+                const imageUrl = String(field.defaultValue ?? value ?? '');
+                return (
+                    <View key={index} style={styles.fieldContainer}>
+                        <View style={styles.labelContainer}>
+                            <Text style={styles.label}>{field.label}</Text>
+                        </View>
+                        {imageUrl ? (
+                            <Image
+                                source={{ uri: imageUrl }}
+                                style={{ width: '100%', height: 200, borderRadius: 12 }}
+                                resizeMode="contain"
+                            />
+                        ) : (
+                            <Text style={{ fontSize: 14, color: '#9CA3AF', paddingVertical: 8 }}>
+                                {t('form.no_image', { defaultValue: 'No image' })}
+                            </Text>
+                        )}
+                    </View>
+                );
+            }
+
+            // Desc / span: pure text display component (notices, disclaimers, etc.)
+            case 'span':
+            case 'desc': {
+                const descText = field.defaultValue || field.label || '';
+                if (!descText) return null;
+                return (
+                    <View key={index} style={styles.fieldContainer}>
+                        {field.label && field.tag !== 'span' && (
+                            <Text style={styles.label}>{field.label}</Text>
+                        )}
+                        {field.label && field.tag === 'span' && (
+                            <Text style={[styles.label, { marginBottom: 8 }]}>{field.label}</Text>
+                        )}
+                        <View style={{ backgroundColor: '#F9F9F9', borderRadius: 10, padding: 12 }}>
+                            <Text style={{ fontSize: 13, color: '#6B7280', lineHeight: 20 }}>{field.defaultValue || ''}</Text>
+                        </View>
+                    </View>
+                );
+            }
+
             default: {
                 // 🔧 Row container: detect by layout or children presence
                 if (field.layout === 'rowFormItem' || (field.children && Array.isArray(field.children) && field.children.length > 0)) {
@@ -1673,7 +1815,7 @@ const styles = StyleSheet.create({
         flex: 1,
     },
     contentContainer: {
-        paddingBottom: 40,
+        paddingBottom: 120,
         paddingHorizontal: 20,
     },
     fieldContainer: {

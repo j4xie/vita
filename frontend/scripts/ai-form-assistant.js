@@ -1030,20 +1030,21 @@
       // ===== 中等 Medium (8-15 fields) =====
       {
         id: 'paid_activity', name: '付费活动报名', nameEn: 'Paid Activity Registration',
-        keywords: ['篝火','烧烤','BBQ','聚餐','晚餐','火锅','旅行','露营','camping','付费','门票','票价','收费'],
+        keywords: ['篝火','烧烤','BBQ','聚餐','晚餐','火锅','旅行','露营','camping','付费','门票','票价','收费','夜市','市集','嘉年华'],
         complexity: 'medium', fieldCount: '8-12',
         fields: [
-          { title:'姓名 Name', type:'input', required:true, props:{placeholder:'请输入姓名',vModel:'name',required:true} },
-          { title:'性别 Gender', type:'radio', required:true, props:{vModel:'gender',required:true,options:['男 Male','女 Female','保密 Prefer not to say']} },
-          { title:'手机号 Phone', type:'input', required:true, desc:'中国手机号加86，美国加1', props:{placeholder:'请输入手机号',vModel:'phone',required:true} },
-          { title:'微信号 WeChat ID', type:'input', required:true, props:{placeholder:'请输入微信号（不是微信名）',vModel:'wechatId',required:true} },
-          { title:'邮箱 Email', type:'input', required:true, desc:'尽量使用.edu邮箱', props:{placeholder:'xxx@ucsd.edu',vModel:'email',required:true,regexValidation:'/^[\\w.-]+@[\\w.-]+\\.\\w+$/',regexMessage:'请输入正确的邮箱格式'} },
-          { title:'是否携带朋友', type:'select', required:true, desc:'需统计总人数', props:{vModel:'companions',required:true,placeholder:'请选择',options:['0人（仅本人）','1人','2人','3人及以上']} },
-          { title:'饮食偏好/忌口', type:'textarea', required:false, desc:'有想吃的或忌口的请告诉我们', props:{placeholder:'如：不吃辣、素食、海鲜过敏等',vModel:'dietaryPreference',maxlength:200} },
-          { title:'想问学长学姐的问题', type:'textarea', required:false, desc:'有问题可以提前提交', props:{placeholder:'关于选课、生活、实习等问题',vModel:'questions',maxlength:300} },
-          { title:'备注 Remarks', type:'textarea', required:false, props:{placeholder:'其他需要说明的事项',vModel:'remarks',maxlength:200} }
+          { title:'购票数量', type:'counter', required:true, desc:'请选择您要购买的票数（1-10张）', props:{vModel:'ticketQty',required:true,min:1,max:10,step:1} },
+          { title:'单价（USD）', type:'counter', required:true, desc:'当前活动单价，不可修改', props:{vModel:'unitPrice',required:true,disabled:true} },
+          { title:'姓名 Name', type:'input', required:true, desc:'用于票务核验与电子票发送', props:{placeholder:'请输入姓名',vModel:'name',required:true} },
+          { title:'手机号 Phone Number', type:'input', required:true, desc:'用于接收购票确认短信及紧急联系', props:{placeholder:'请输入手机号',vModel:'phone',required:true} },
+          { title:'邮箱 Email', type:'input', required:true, desc:'电子票、发票及活动通知将发送至此邮箱', props:{placeholder:'xxx@ucsd.edu',vModel:'email',required:true,regexValidation:'/^[\\w.-]+@[\\w.-]+\\.\\w+$/',regexMessage:'请输入正确的邮箱格式'} },
+          { title:'微信号 WeChat ID', type:'input', required:true, desc:'用于拉群通知及售后沟通', props:{placeholder:'请输入微信号（不是微信名）',vModel:'wechatId',required:true} },
+          { title:'学校 University', type:'select', required:true, desc:'便于统计参与院校分布', props:{vModel:'university',required:true,placeholder:'请选择学校',options:['UCSD','UCLA','UCSB','UCI','USC','UMN','UCR','UCD','Stanford','其他 Other']} },
+          { title:'备注 Remarks', type:'desc', required:false, desc:'如有特殊需求（如座位偏好、同行人信息等），请在此说明', props:{placeholder:'其他需要说明的事项',vModel:'remarks',maxlength:200} },
+          { title:'活动须知与免责声明', type:'desc', required:false, desc:'展示完整协议文本', props:{vModel:'disclaimer'} },
+          { title:'我已阅读并同意以上活动须知与免责条款', type:'radio', required:true, desc:'法律效力确认', props:{vModel:'agreeTerms',required:true,options:['是 Yes']} }
         ],
-        features: ['payment','dietary_preference','interactive_qa']
+        features: ['payment','ticket_pricing','terms_agreement']
       },
       {
         id: 'social_event', name: '社交活动报名', nameEn: 'Social Event Registration',

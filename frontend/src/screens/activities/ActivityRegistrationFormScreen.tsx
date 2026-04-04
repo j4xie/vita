@@ -24,6 +24,7 @@ import { pomeloXAPI } from '../../services/PomeloXAPI';
 import { useTabBarVerification } from '../../hooks/useTabBarStateGuard';
 import { DynamicFormRenderer } from '../../components/activity/DynamicFormRenderer';
 import { LiquidSuccessModal } from '../../components/modals/LiquidSuccessModal';
+import { activityToOrderItem } from '../../types/order';
 import formAutoFill from '../../utils/formAutoFill';
 import { FormField } from '../../hooks/useAIFormFilling';
 import { KeyboardDoneAccessory, KEYBOARD_ACCESSORY_ID } from '../../components/common/KeyboardDismissWrapper';
@@ -130,6 +131,7 @@ export const ActivityRegistrationFormScreen: React.FC = () => {
   const { isDarkMode } = useTheme();
   const activity = route.params?.activity;
   const shareUserId = route.params?.shareUserId as number | undefined;
+  const isPaidActivity = route.params?.isPaidActivity as boolean | undefined;
 
   // Static Form State
   const [formData, setFormData] = useState<RegistrationFormData>({
@@ -148,7 +150,9 @@ export const ActivityRegistrationFormScreen: React.FC = () => {
     if (!activity?.modelContent) return [];
     try {
       const parsed = JSON.parse(activity.modelContent);
-      return parsed.fields || [];
+      return parsed.fields
+        || (parsed.pages && parsed.pages[0] && parsed.pages[0].components)
+        || [];
     } catch {
       return [];
     }
@@ -158,10 +162,17 @@ export const ActivityRegistrationFormScreen: React.FC = () => {
 
   // Auto-fill initial data for DynamicFormRenderer (uses smart matching for select/radio)
   const initialData = useMemo(() => {
-    if (!user || !formSchema.length) return {};
-    const { autoFilled } = formAutoFill.getAutoFillData(formSchema, user);
-    return autoFilled;
-  }, [formSchema, user]);
+    const base: any = {};
+    if (user && formSchema.length) {
+      const { autoFilled } = formAutoFill.getAutoFillData(formSchema, user);
+      Object.assign(base, autoFilled);
+    }
+    // Override unitPrice with activity price (single source of truth)
+    if (activity?.price && activity.price > 0) {
+      base.unitPrice = activity.price;
+    }
+    return base;
+  }, [formSchema, user, activity?.price]);
 
   // 🛡️ TabBar状态守护：确保报名表单页面TabBar始终隐藏
   useTabBarVerification('ActivityRegistrationForm', { debugLogs: false });
@@ -254,6 +265,23 @@ export const ActivityRegistrationFormScreen: React.FC = () => {
 
       if (isNaN(activityIdInt) || isNaN(userIdInt) || userIdInt <= 0) {
         Alert.alert(t('activities.registration.failed_title'), t('activities.registration.param_error'));
+        return;
+      }
+
+      // Paid activity → go to payment first (registration happens after payment succeeds)
+      const isPaid = isPaidActivity || (activity.price && activity.price > 0);
+      if (isPaid) {
+        const quantity = dynamicFormData.ticketQty ? Number(dynamicFormData.ticketQty) : 1;
+        const orderItem = activityToOrderItem(activity);
+        orderItem.quantity = quantity;
+        // Navigate to payment — pass form data so registration happens after payment
+        navigation.replace('OrderConfirmGlobal', {
+          orderItem,
+          quantity,
+          shareUserId,
+          registrationFormData: dynamicFormData,
+          registrationActivityId: activityIdInt,
+        });
         return;
       }
 

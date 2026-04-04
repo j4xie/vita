@@ -240,35 +240,35 @@ export const validateField = (
   if (options.required && (!value || value.trim().length === 0)) {
     return {
       isValid: false,
-      errorMessage: `${fieldName}是必填项`,
+      errorMessage: t('auth.validation.field_required', { field: fieldName, defaultValue: `${fieldName} is required` }),
     };
   }
 
   if (options.minLength && value.length < options.minLength) {
     return {
       isValid: false,
-      errorMessage: `${fieldName}至少需要${options.minLength}个字符`,
+      errorMessage: t('auth.validation.field_min_length', { field: fieldName, min: options.minLength, defaultValue: `${fieldName} must be at least ${options.minLength} characters` }),
     };
   }
 
   if (options.maxLength && value.length > options.maxLength) {
     return {
       isValid: false,
-      errorMessage: `${fieldName}不能超过${options.maxLength}个字符`,
+      errorMessage: t('auth.validation.field_max_length', { field: fieldName, max: options.maxLength, defaultValue: `${fieldName} cannot exceed ${options.maxLength} characters` }),
     };
   }
 
   if (options.pattern && !options.pattern.test(value)) {
     return {
       isValid: false,
-      errorMessage: `${fieldName}格式不正确`,
+      errorMessage: t('auth.validation.field_format_invalid', { field: fieldName, defaultValue: `${fieldName} format is invalid` }),
     };
   }
 
   if (options.customValidator && !options.customValidator(value)) {
     return {
       isValid: false,
-      errorMessage: `${fieldName}验证失败`,
+      errorMessage: t('auth.validation.field_validation_failed', { field: fieldName, defaultValue: `${fieldName} validation failed` }),
     };
   }
 
@@ -328,11 +328,11 @@ export const parseApiError = (
     errorMessage.includes('连接')
   ) {
     return {
-      title: '🌐 网络错误',
+      title: t('auth.errors.network_error_title', { defaultValue: 'Network Error' }),
       message: errorMessage.includes('超时') || errorMessage.includes('timeout')
-        ? '注册请求超时（30秒无响应），可能是网络不稳定或服务器繁忙'
+        ? t('auth.errors.registration_timeout', { defaultValue: 'Registration request timed out (30s), the network may be unstable or the server is busy' })
         : t('auth.errors.network.connection_failed'),
-      suggestion: '建议：✓ 检查WiFi/数据连接 ✓ 稍后重试 ✓ 联系客服',
+      suggestion: t('auth.errors.network_suggestion', { defaultValue: 'Suggestion: Check WiFi/data connection, try again later, or contact support' }),
       action: t('auth.errors.actions.retry'),
     };
   }
@@ -376,10 +376,10 @@ export const parseApiError = (
 
     if (isEmailConflict || containsEmailAddress) {
       return {
-        title: '📧 邮箱已注册',
-        message: '此邮箱已经注册过账号，您可能已经有账户了',
-        suggestion: '建议：✓ 使用此邮箱直接登录 ✓ 点击"忘记密码"重置密码 ✓ 使用其他邮箱注册',
-        action: '去登录',
+        title: t('auth.errors.email_taken_title', { defaultValue: 'Email Already Registered' }),
+        message: t('auth.errors.email_taken_message', { defaultValue: 'This email is already registered. You may already have an account.' }),
+        suggestion: t('auth.errors.email_taken_suggestion', { defaultValue: 'Try logging in with this email, reset your password, or use a different email' }),
+        action: t('auth.errors.actions.go_to_login', { defaultValue: 'Go to Login' }),
         actionType: 'login',
       };
     }

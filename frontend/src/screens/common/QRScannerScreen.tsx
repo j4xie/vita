@@ -27,6 +27,7 @@ import { MerchantQRScanResult, ParsedMerchantQR } from '../../types/cards';
 import { Organization } from '../../types/organization';
 import { UserIdentityData, ParsedUserQRCode } from '../../types/userIdentity';
 import { pomeloXAPI } from '../../services/PomeloXAPI';
+import { getOrderList } from '../../services/orderAPI';
 import { useUser } from '../../context/UserContext';
 import { extractActivityIdFromHash, isActivityHash } from '../../utils/hashActivityDecoder';
 
@@ -469,7 +470,26 @@ export const QRScannerScreen: React.FC = () => {
             break;
             
           case -1:
-            // 已报名未签到，执行签到
+            // 已报名未签到 — 检查是否为付费活动且已支付
+            try {
+              const activityOrders = await getOrderList({ orderType: '2' });
+              const paidOrder = activityOrders.find(
+                (o) => String(o.activityId) === String(activityId) && o.orderStatus === 2
+              );
+              const unpaidOrder = activityOrders.find(
+                (o) => String(o.activityId) === String(activityId) && o.orderStatus === 1
+              );
+              if (unpaidOrder && !paidOrder) {
+                Alert.alert(
+                  t('qr.results.payment_required_title', 'Payment Required'),
+                  t('qr.results.payment_required_message', 'Please complete payment before checking in'),
+                  [{ text: t('common.confirm'), onPress: () => setScanned(false) }]
+                );
+                break;
+              }
+            } catch (e) {
+              // If order check fails, allow sign-in (free activities have no orders)
+            }
             await performSignIn(activityId);
             break;
             

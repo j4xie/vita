@@ -1,4 +1,4 @@
-import React, { memo, useMemo } from 'react';
+import React, { memo, useCallback } from 'react';
 import {
   View,
   Text,
@@ -7,7 +7,7 @@ import {
   StyleSheet,
   Platform,
   Linking,
-  useWindowDimensions,
+  Image,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -15,8 +15,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import { useTranslation } from 'react-i18next';
-import { theme } from '../../theme';
 import { useTheme } from '../../context/ThemeContext';
+import { NewStudentIcon, RentalsIcon, PickupIcon, CommunityIcon, HeartIcon, ArchiveBookIcon } from '../../components/common/icons/ConsultingServiceIcons';
 
 const CHINESEUNION_BASE_URL = 'https://www.chineseunion.org';
 
@@ -24,123 +24,115 @@ interface ConsultingScreenProps {
   isTabRoot?: boolean;
 }
 
-// 2x2 grid service card
-const ServiceCard = memo(({
-  icon,
-  title,
-  desc,
-  color,
-  onPress,
-  isDarkMode,
-  cardWidth,
-}: {
-  icon: keyof typeof Ionicons.glyphMap;
-  title: string;
-  desc: string;
-  color: string;
-  onPress: () => void;
-  isDarkMode: boolean;
-  cardWidth: number;
-}) => (
-  <TouchableOpacity
-    style={[styles.gridCard, { width: cardWidth }, isDarkMode && styles.gridCardDark]}
-    onPress={onPress}
-    activeOpacity={0.7}
-  >
-    <View style={[styles.gridIconWrap, { backgroundColor: color + '12' }]}>
-      <Ionicons name={icon} size={24} color={color} />
-    </View>
-    <Text style={[styles.gridCardTitle, isDarkMode && styles.textWhite]} numberOfLines={2}>
-      {title}
-    </Text>
-    <Text style={[styles.gridCardDesc, isDarkMode && styles.textGrayDark]} numberOfLines={3}>
-      {desc}
-    </Text>
-    <View style={styles.gridCardArrow}>
-      <Ionicons name="arrow-forward" size={14} color={color} />
-    </View>
-  </TouchableOpacity>
-));
-
-// Quick link pill
-const QuickLink = memo(({
-  icon,
+/* ─── Circular Service Icon Button ─── */
+const ServiceIconButton = memo(({
+  IconComponent,
+  iconSize = 28,
   label,
   onPress,
   isDarkMode,
 }: {
-  icon: keyof typeof Ionicons.glyphMap;
+  IconComponent: React.FC<{ size?: number; color?: string }>;
+  iconSize?: number;
   label: string;
   onPress: () => void;
   isDarkMode: boolean;
 }) => (
   <TouchableOpacity
-    style={[styles.quickLink, isDarkMode && styles.quickLinkDark]}
+    style={styles.serviceIconButton}
     onPress={onPress}
     activeOpacity={0.7}
   >
-    <Ionicons name={icon} size={16} color={theme.colors.primary} />
-    <Text style={[styles.quickLinkText, isDarkMode && styles.textWhite]}>{label}</Text>
-    <Ionicons name="open-outline" size={12} color={isDarkMode ? '#666' : '#bbb'} />
+    <View style={[styles.serviceCircle, isDarkMode && styles.serviceCircleDark]}>
+      <IconComponent size={iconSize} color="#FF7763" />
+    </View>
+    <Text
+      style={[styles.serviceLabel, isDarkMode && styles.textMutedDark]}
+      numberOfLines={2}
+    >
+      {label}
+    </Text>
   </TouchableOpacity>
 ));
 
+/* ─── Quick Link Card ─── */
+const QuickLinkCard = memo(({
+  IconComponent,
+  label,
+  onPress,
+  isDarkMode,
+}: {
+  IconComponent: React.FC<{ size?: number; color?: string }>;
+  label: string;
+  onPress: () => void;
+  isDarkMode: boolean;
+}) => (
+  <TouchableOpacity
+    style={[styles.quickLinkCard, isDarkMode && styles.quickLinkCardDark]}
+    onPress={onPress}
+    activeOpacity={0.75}
+  >
+    <View style={styles.quickLinkTopRow}>
+      <IconComponent size={24} color="#FF7763" />
+      <View style={[styles.quickLinkArrow, isDarkMode && styles.quickLinkArrowDark]}>
+        <Ionicons name="arrow-forward" size={14} color={isDarkMode ? '#fff' : '#000'} style={{ transform: [{ rotate: '-45deg' }] }} />
+      </View>
+    </View>
+    <Text
+      style={[styles.quickLinkCardText, isDarkMode && styles.textWhite]}
+      numberOfLines={2}
+    >
+      {label}
+    </Text>
+  </TouchableOpacity>
+));
+
+/* ─── Main Screen ─── */
 export const ConsultingScreen: React.FC<ConsultingScreenProps> = ({ isTabRoot = false }) => {
   const { t } = useTranslation();
   const navigation = useNavigation<any>();
   const insets = useSafeAreaInsets();
   const { isDarkMode } = useTheme();
-  const { width: windowWidth } = useWindowDimensions();
-  const gridCardWidth = useMemo(() => (windowWidth - 40 - GRID_GAP) / 2, [windowWidth]);
 
-  const handleGoBack = () => {
+  const handleGoBack = useCallback(() => {
     if (Platform.OS === 'ios') Haptics.selectionAsync();
     navigation.goBack();
-  };
+  }, [navigation]);
 
-  const handleOpenUrl = (url: string) => {
+  const handleOpenUrl = useCallback((url: string) => {
     if (Platform.OS === 'ios') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     Linking.openURL(url);
-  };
+  }, []);
 
   const services = [
     {
-      icon: 'compass-outline' as const,
-      titleKey: 'consulting.services.academic',
-      descKey: 'consulting.services.academic_desc',
-      color: '#4285F4',
+      IconComponent: NewStudentIcon,
+      labelKey: 'consulting.services.new_student',
       url: `${CHINESEUNION_BASE_URL}/%e5%ad%a6%e7%94%9f%e6%9c%8d%e5%8a%a1-3/%e6%96%b0%e7%94%9f%e9%80%9a%e9%81%93/`,
     },
     {
-      icon: 'home-outline' as const,
-      titleKey: 'consulting.services.housing',
-      descKey: 'consulting.services.housing_desc',
-      color: '#34A853',
+      IconComponent: RentalsIcon,
+      labelKey: 'consulting.services.rentals',
       url: `${CHINESEUNION_BASE_URL}/%e6%a0%a1%e5%a4%96%e7%a7%9f%e6%88%bf-3/`,
     },
     {
-      icon: 'airplane-outline' as const,
-      titleKey: 'consulting.services.arrival',
-      descKey: 'consulting.services.arrival_desc',
-      color: '#E8A317',
+      IconComponent: PickupIcon,
+      iconSize: 24,
+      labelKey: 'consulting.services.pickup',
       url: `${CHINESEUNION_BASE_URL}/%e6%8e%a5%e6%9c%ba%e6%9c%8d%e5%8a%a1-2/`,
     },
     {
-      icon: 'hand-left-outline' as const,
-      titleKey: 'consulting.services.community',
-      descKey: 'consulting.services.community_desc',
-      color: '#EA4335',
+      IconComponent: CommunityIcon,
+      labelKey: 'consulting.services.community_group',
       url: `${CHINESEUNION_BASE_URL}/%e6%96%b0%e7%94%9f%e8%a7%81%e9%9d%a2%e4%bc%9a/`,
     },
   ];
 
   return (
     <View style={[styles.container, isDarkMode && styles.containerDark]}>
-      {/* Header */}
-      <View style={[styles.header, isDarkMode && styles.headerDark, { paddingTop: insets.top + 8 }]}>
-        {isTabRoot ? (
-          <View style={styles.backButton} />
-        ) : (
+      {/* Minimal header (back button only, no center title) */}
+      {!isTabRoot && (
+        <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
           <TouchableOpacity
             style={styles.backButton}
             onPress={handleGoBack}
@@ -148,113 +140,139 @@ export const ConsultingScreen: React.FC<ConsultingScreenProps> = ({ isTabRoot = 
           >
             <Ionicons name="chevron-back" size={28} color={isDarkMode ? '#fff' : '#000'} />
           </TouchableOpacity>
-        )}
-        <Text style={[styles.headerTitle, isDarkMode && styles.headerTitleDark]}>
-          {t('consulting.page_title')}
-        </Text>
-        <View style={styles.headerRight} />
-      </View>
+        </View>
+      )}
+
+      {/* If used as tab root, add top safe-area spacing */}
+      {isTabRoot && <View style={{ height: insets.top }} />}
 
       <ScrollView
         style={styles.scrollView}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: insets.bottom + 100 }}
       >
-        {/* Hero Banner */}
-        <View style={styles.heroBannerWrap}>
+        {/* ── Page Title ── */}
+        <Text style={[styles.pageTitle, isDarkMode && styles.textWhite]}>
+          {t('consulting.page_title')}
+        </Text>
+
+        {/* ── Hero Banner ── */}
+        <TouchableOpacity
+          style={styles.heroBannerWrap}
+          onPress={() => handleOpenUrl(CHINESEUNION_BASE_URL)}
+          activeOpacity={0.85}
+        >
           <LinearGradient
             colors={isDarkMode
-              ? ['#2A1A10', '#1a1a1a']
-              : ['#FFF5F0', '#FFE8DB']}
+              ? ['#8B3A2A', '#A06040']
+              : ['#FF7763', '#F9A789']}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={styles.heroBanner}
           >
-            {/* Decorative circles */}
-            <View style={[styles.heroCircle, styles.heroCircle1]} />
-            <View style={[styles.heroCircle, styles.heroCircle2]} />
+            {/* 3D consulting illustration – soft-light blend simulated via opacity */}
+            <Image
+              source={require('../../../assets/images/consulting-hero.png')}
+              style={styles.heroImage}
+              resizeMode="contain"
+            />
 
             <View style={styles.heroContent}>
-              <View style={styles.heroBadge}>
-                <Ionicons name="school" size={14} color={theme.colors.primary} />
-                <Text style={styles.heroBadgeText}>ChineseUnion</Text>
-              </View>
-              <Text style={[styles.heroTitle, isDarkMode && styles.textWhite]}>
-                {t('consulting.hero_title')}
+              <Text style={styles.heroBannerTitle}>
+                {t('consulting.hero_banner_title')}
               </Text>
-              <Text style={[styles.heroSubtitle, isDarkMode && styles.textGrayDark]}>
-                {t('consulting.hero_subtitle')}
-              </Text>
-              <TouchableOpacity
-                style={styles.ctaButton}
-                onPress={() => handleOpenUrl(CHINESEUNION_BASE_URL)}
-                activeOpacity={0.85}
-              >
-                <LinearGradient
-                  colors={['#FF6B35', '#FF8F65']}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 0 }}
-                  style={styles.ctaGradient}
-                >
-                  <Ionicons name="globe-outline" size={18} color="#fff" />
-                  <Text style={styles.ctaText}>{t('consulting.visit_website')}</Text>
-                  <Ionicons name="arrow-forward" size={16} color="rgba(255,255,255,0.85)" />
-                </LinearGradient>
-              </TouchableOpacity>
+            </View>
+
+            {/* Arrow circle button */}
+            <View style={styles.heroArrowCircle}>
+              <Ionicons name="arrow-forward" size={16} color="#000" style={{ transform: [{ rotate: '-45deg' }] }} />
             </View>
           </LinearGradient>
-        </View>
+        </TouchableOpacity>
 
-        {/* Services Grid */}
+        {/* ── OUR SERVICES ── */}
         <View style={styles.sectionWrap}>
-          <Text style={[styles.sectionTitle, isDarkMode && styles.textWhite]}>
-            {t('consulting.services_title')}
+          <Text style={[styles.sectionLabel, isDarkMode && styles.sectionLabelDark]}>
+            {t('consulting.our_services')}
           </Text>
-          <View style={styles.gridContainer}>
+          <View style={styles.servicesRow}>
             {services.map((service, index) => (
-              <ServiceCard
+              <ServiceIconButton
                 key={index}
-                icon={service.icon}
-                title={t(service.titleKey)}
-                desc={t(service.descKey)}
-                color={service.color}
+                IconComponent={service.IconComponent}
+                iconSize={'iconSize' in service ? service.iconSize : undefined}
+                label={t(service.labelKey)}
                 onPress={() => handleOpenUrl(service.url)}
                 isDarkMode={isDarkMode}
-                cardWidth={gridCardWidth}
               />
             ))}
           </View>
         </View>
 
-        {/* Quick Links */}
+        {/* ── QUICK LINKS ── */}
         <View style={styles.sectionWrap}>
-          <Text style={[styles.sectionTitle, isDarkMode && styles.textWhite]}>
-            {t('consulting.quick_links')}
+          <Text style={[styles.sectionLabel, isDarkMode && styles.sectionLabelDark]}>
+            {t('consulting.quick_links_title')}
           </Text>
-          <QuickLink
-            icon="shield-checkmark-outline"
-            label={t('consulting.links.safety_plan')}
-            onPress={() => handleOpenUrl(`${CHINESEUNION_BASE_URL}/%e5%ae%89%e5%bf%83%e8%ae%a1%e5%88%92%ef%bc%88new%ef%bc%89/`)}
-            isDarkMode={isDarkMode}
-          />
-          <QuickLink
-            icon="book-outline"
-            label={t('consulting.links.student_notes')}
-            onPress={() => handleOpenUrl(`${CHINESEUNION_BASE_URL}/%e6%96%b0%e7%94%9f%e7%ac%94%e8%ae%b0-%e3%80%90%e5%ad%90%e8%8f%9c%e5%8d%95%e3%80%91/`)}
-            isDarkMode={isDarkMode}
-          />
-          <QuickLink
-            icon="images-outline"
-            label={t('consulting.links.freshers_album')}
-            onPress={() => handleOpenUrl(`${CHINESEUNION_BASE_URL}/%e6%96%b0%e7%94%9f%e7%9b%b8%e5%86%8c%e3%80%90%e5%ad%90%e8%8f%9c%e5%8d%95%e3%80%91/`)}
-            isDarkMode={isDarkMode}
-          />
+          <View style={styles.quickLinksRow}>
+            <QuickLinkCard
+              IconComponent={HeartIcon}
+              label={t('consulting.links.safety_plan')}
+              onPress={() => handleOpenUrl(`${CHINESEUNION_BASE_URL}/%e5%ae%89%e5%bf%83%e8%ae%a1%e5%88%92%ef%bc%88new%ef%bc%89/`)}
+              isDarkMode={isDarkMode}
+            />
+            <QuickLinkCard
+              IconComponent={ArchiveBookIcon}
+              label={t('consulting.links.student_notes')}
+              onPress={() => handleOpenUrl(`${CHINESEUNION_BASE_URL}/%e6%96%b0%e7%94%9f%e7%ac%94%e8%ae%b0-%e3%80%90%e5%ad%90%e8%8f%9c%e5%8d%95%e3%80%91/`)}
+              isDarkMode={isDarkMode}
+            />
+          </View>
         </View>
 
-        {/* Footer Info */}
+        {/* ── Fresher's Album Banner ── */}
+        <View style={styles.sectionWrap}>
+          <TouchableOpacity
+            style={[styles.albumBanner, isDarkMode && styles.albumBannerDark]}
+            onPress={() => handleOpenUrl(`${CHINESEUNION_BASE_URL}/%e6%96%b0%e7%94%9f%e7%9b%b8%e5%86%8c%e3%80%90%e5%ad%90%e8%8f%9c%e5%8d%95%e3%80%91/`)}
+            activeOpacity={0.8}
+          >
+            {/* Campus building photo on the right with gradient overlay */}
+            <View style={styles.albumImageWrap}>
+              <Image
+                source={require('../../../assets/images/campus-building.jpg')}
+                style={styles.albumImage}
+                resizeMode="cover"
+                blurRadius={2}
+              />
+              <LinearGradient
+                colors={isDarkMode
+                  ? ['#1c1c1e', 'rgba(28,28,30,0)', 'transparent']
+                  : ['#FFFFFF', 'rgba(255,255,255,0)', 'transparent']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                locations={[0, 0.739, 1]}
+                style={StyleSheet.absoluteFillObject}
+              />
+            </View>
+            <View style={styles.albumContent}>
+              <Text style={[styles.albumTitle, isDarkMode && styles.textWhite]}>
+                {t('consulting.links.freshers_album')}
+              </Text>
+              <Text style={[styles.albumSubtitle, isDarkMode && styles.textMutedDark]}>
+                {t('consulting.album_subtitle')}
+              </Text>
+            </View>
+            <View style={[styles.albumArrowCircle, isDarkMode && styles.albumArrowCircleDark]}>
+              <Ionicons name="arrow-forward" size={16} color={isDarkMode ? '#fff' : '#000'} style={{ transform: [{ rotate: '-45deg' }] }} />
+            </View>
+          </TouchableOpacity>
+        </View>
+
+        {/* ── Footer Info ── */}
         <View style={[styles.footerCard, isDarkMode && styles.footerCardDark]}>
           <Ionicons name="information-circle-outline" size={18} color={isDarkMode ? '#666' : '#9CA3AF'} />
-          <Text style={[styles.footerText, isDarkMode && styles.textGrayDark]}>
+          <Text style={[styles.footerText, isDarkMode && styles.textMutedDark]}>
             {t('consulting.contact_info')}
           </Text>
         </View>
@@ -263,9 +281,11 @@ export const ConsultingScreen: React.FC<ConsultingScreenProps> = ({ isTabRoot = 
   );
 };
 
-const GRID_GAP = 12;
-
+/* ════════════════════════════════════════════════════════════════
+   STYLES
+   ════════════════════════════════════════════════════════════════ */
 const styles = StyleSheet.create({
+  /* ── Layout ── */
   container: {
     flex: 1,
     backgroundColor: '#FAF3F1',
@@ -273,222 +293,248 @@ const styles = StyleSheet.create({
   containerDark: {
     backgroundColor: '#000000',
   },
-
-  // Header
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingBottom: 8,
-    backgroundColor: '#F5F5F5',
-  },
-  headerDark: {
-    backgroundColor: '#000000',
-  },
-  backButton: {
-    width: 40,
-    alignItems: 'flex-start',
-  },
-  headerTitle: {
-    fontSize: 17,
-    fontWeight: '600',
-    color: '#000',
-    textAlign: 'center',
-  },
-  headerTitleDark: {
-    color: '#fff',
-  },
-  headerRight: {
-    width: 40,
-  },
-
   scrollView: {
     flex: 1,
   },
 
-  // Hero Banner
+  /* ── Header (back button only) ── */
+  header: {
+    paddingHorizontal: 16,
+    paddingBottom: 4,
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'flex-start',
+  },
+
+  /* ── Page Title ── */
+  pageTitle: {
+    fontSize: 30,
+    fontWeight: '800',
+    color: '#000',
+    paddingHorizontal: 20,
+    paddingTop: 8,
+    paddingBottom: 20,
+    letterSpacing: -0.3,
+  },
+
+  /* ── Hero Banner ── */
   heroBannerWrap: {
     paddingHorizontal: 20,
-    paddingTop: 4,
-    marginBottom: 24,
+    marginBottom: 28,
   },
   heroBanner: {
-    borderRadius: 24,
+    borderRadius: 26,
     overflow: 'hidden',
     position: 'relative',
-  },
-  heroCircle: {
-    position: 'absolute',
-    borderRadius: 999,
-    backgroundColor: 'rgba(255, 107, 53, 0.08)',
-  },
-  heroCircle1: {
-    width: 180,
-    height: 180,
-    top: -60,
-    right: -40,
-  },
-  heroCircle2: {
-    width: 120,
-    height: 120,
-    bottom: -30,
-    left: -20,
+    height: 166,
+    justifyContent: 'flex-end',
   },
   heroContent: {
     padding: 24,
-    paddingTop: 28,
     paddingBottom: 28,
+    paddingRight: 70,
   },
-  heroBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    alignSelf: 'flex-start',
-    backgroundColor: 'rgba(255, 107, 53, 0.1)',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 20,
-    gap: 6,
-    marginBottom: 16,
-  },
-  heroBadgeText: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#FF6B35',
-  },
-  heroTitle: {
+  heroBannerTitle: {
+    fontFamily: 'Poppins_700Bold',
     fontSize: 24,
-    fontWeight: '800',
-    color: '#1A1A1A',
-    marginBottom: 8,
-    letterSpacing: -0.3,
-  },
-  heroSubtitle: {
-    fontSize: 14,
-    color: '#6B7280',
-    lineHeight: 21,
-    marginBottom: 20,
-  },
-  ctaButton: {
-    alignSelf: 'flex-start',
-    borderRadius: 14,
-    overflow: 'hidden',
-  },
-  ctaGradient: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 13,
-    gap: 8,
-  },
-  ctaText: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: '#fff',
-  },
-
-  // Section
-  sectionWrap: {
-    paddingHorizontal: 20,
-    marginBottom: 24,
-  },
-  sectionTitle: {
-    fontSize: 18,
     fontWeight: '700',
-    color: '#1A1A1A',
-    marginBottom: 14,
+    color: '#fff',
+    lineHeight: 32,
   },
-
-  // Grid
-  gridContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: GRID_GAP,
+  heroImage: {
+    position: 'absolute',
+    right: -40,
+    top: -30,
+    width: 280,
+    height: 252,
+    opacity: 0.55,
   },
-  gridCard: {
+  heroArrowCircle: {
+    position: 'absolute',
+    top: 15,
+    right: 15,
+    width: 41,
+    height: 41,
+    borderRadius: 20.5,
     backgroundColor: '#fff',
-    borderRadius: 18,
-    padding: 18,
-    minHeight: 170,
+    justifyContent: 'center',
+    alignItems: 'center',
     ...Platform.select({
       ios: {
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.06,
-        shadowRadius: 8,
+        shadowOpacity: 0.10,
+        shadowRadius: 4,
       },
       android: {
         elevation: 3,
       },
     }),
   },
-  gridCardDark: {
-    backgroundColor: '#1c1c1e',
+
+  /* ── Section ── */
+  sectionWrap: {
+    paddingHorizontal: 20,
+    marginBottom: 28,
   },
-  gridIconWrap: {
-    width: 44,
-    height: 44,
-    borderRadius: 13,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 10,
-  },
-  gridCardTitle: {
-    fontSize: 15,
+  sectionLabel: {
+    fontSize: 13,
     fontWeight: '700',
-    color: '#1A1A1A',
-    marginBottom: 4,
+    color: '#949494',
+    letterSpacing: 2,
+    textTransform: 'uppercase',
+    marginBottom: 16,
   },
-  gridCardDesc: {
-    fontSize: 12,
-    color: '#9CA3AF',
-    lineHeight: 17,
-    flex: 1,
-  },
-  gridCardArrow: {
-    alignSelf: 'flex-end',
-    marginTop: 8,
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: 'rgba(0,0,0,0.03)',
-    justifyContent: 'center',
-    alignItems: 'center',
+  sectionLabelDark: {
+    color: '#666',
   },
 
-  // Quick Links
-  quickLink: {
+  /* ── Service Icon Buttons ── */
+  servicesRow: {
     flexDirection: 'row',
+    gap: 8,
+  },
+  serviceIconButton: {
     alignItems: 'center',
+    width: 80,
+    gap: 1,
+  },
+  serviceCircle: {
+    width: 59,
+    height: 59,
+    borderRadius: 37,
     backgroundColor: '#fff',
-    borderRadius: 14,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    marginBottom: 8,
-    gap: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
     ...Platform.select({
       ios: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.04,
-        shadowRadius: 4,
+        shadowColor: '#F7A587',
+        shadowOffset: { width: 0, height: 8 },
+        shadowOpacity: 0.1,
+        shadowRadius: 11.5,
       },
       android: {
-        elevation: 1,
+        elevation: 4,
       },
     }),
   },
-  quickLinkDark: {
+  serviceCircleDark: {
     backgroundColor: '#1c1c1e',
   },
-  quickLinkText: {
-    flex: 1,
-    fontSize: 15,
+  serviceLabel: {
+    fontSize: 10,
     fontWeight: '500',
-    color: '#1A1A1A',
+    color: '#000',
+    textAlign: 'center',
+    textTransform: 'uppercase',
+    lineHeight: 28,
   },
 
-  // Footer
+  /* ── Quick Link Cards ── */
+  quickLinksRow: {
+    flexDirection: 'row',
+    gap: 13,
+  },
+  quickLinkCard: {
+    flex: 1,
+    backgroundColor: '#fff',
+    borderRadius: 26,
+    paddingTop: 14,
+    paddingRight: 10,
+    paddingBottom: 29,
+    paddingLeft: 15,
+    height: 122,
+    justifyContent: 'space-between',
+  },
+  quickLinkCardDark: {
+    backgroundColor: '#1c1c1e',
+  },
+  quickLinkTopRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  quickLinkCardText: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#000',
+    lineHeight: 16,
+  },
+  quickLinkArrow: {
+    width: 41,
+    height: 41,
+    borderRadius: 20.5,
+    backgroundColor: '#FAF3F1',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  quickLinkArrowDark: {
+    backgroundColor: '#2c2c2e',
+  },
+
+  /* ── Fresher's Album Banner ── */
+  albumBanner: {
+    backgroundColor: '#fff',
+    borderRadius: 26,
+    overflow: 'hidden',
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 16,
+    paddingLeft: 16,
+    paddingRight: 16,
+    minHeight: 122,
+    position: 'relative',
+  },
+  albumBannerDark: {
+    backgroundColor: '#1c1c1e',
+  },
+  albumImageWrap: {
+    position: 'absolute',
+    top: -15,
+    right: 0,
+    width: 205,
+    height: 137,
+    overflow: 'hidden',
+  },
+  albumImage: {
+    width: '100%',
+    height: '100%',
+  },
+  albumContent: {
+    flex: 1,
+    zIndex: 2,
+  },
+  albumTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    fontStyle: 'italic',
+    color: '#000',
+    marginBottom: 4,
+  },
+  albumSubtitle: {
+    fontSize: 12,
+    fontWeight: '300',
+    color: '#949494',
+    lineHeight: 14.4,
+  },
+  albumArrowCircle: {
+    width: 41,
+    height: 41,
+    borderRadius: 21,
+    backgroundColor: '#FAF3F1',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginLeft: 12,
+    zIndex: 2,
+  },
+  albumArrowCircleDark: {
+    backgroundColor: 'rgba(44,44,46,0.9)',
+  },
+
+  /* ── Footer ── */
   footerCard: {
     flexDirection: 'row',
     alignItems: 'flex-start',
@@ -509,11 +555,11 @@ const styles = StyleSheet.create({
     lineHeight: 18,
   },
 
-  // Shared text modifiers
+  /* ── Shared text modifiers ── */
   textWhite: {
     color: '#fff',
   },
-  textGrayDark: {
+  textMutedDark: {
     color: '#777',
   },
 });

@@ -8,6 +8,7 @@ import os
 import logging
 import numpy as np
 from typing import List, Dict, Any, Optional, Tuple
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from config import Config
 
 logger = logging.getLogger(__name__)
@@ -190,7 +191,8 @@ def _compute_and_store_embeddings(entries, Settings, db):
 def retrieve_from_database_kb(
     dept_id: int,
     query: str,
-    similarity_threshold: float = 0.2
+    similarity_threshold: float = 0.2,
+    query_embedding: List[float] = None
 ) -> List[Dict[str, Any]]:
     """
     Retrieve unindexed knowledge entries from database.
@@ -201,6 +203,7 @@ def retrieve_from_database_kb(
         dept_id: Department ID
         query: User question
         similarity_threshold: Similarity threshold
+        query_embedding: Pre-computed query embedding (avoids duplicate API call)
 
     Returns:
         List of retrieval results [{
@@ -221,16 +224,19 @@ def retrieve_from_database_kb(
     if not knowledge_entries:
         return []
 
-    # Vectorize query (1 API call, uses TEXT_TYPE_QUERY via Settings.embed_model)
-    try:
-        StorageContext, load_index_from_storage, Settings, _, _ = _init_llama_index()
-        if Settings is None or not hasattr(Settings, 'embed_model'):
-            print("[Database Retrieval] Embedding model not available, skipping vector retrieval")
+    # Use provided embedding or compute it (1 API call)
+    if query_embedding is None:
+        try:
+            StorageContext, load_index_from_storage, Settings, _, _ = _init_llama_index()
+            if Settings is None or not hasattr(Settings, 'embed_model'):
+                print("[Database Retrieval] Embedding model not available, skipping vector retrieval")
+                return []
+            query_embedding = Settings.embed_model.get_text_embedding(query)
+        except Exception as e:
+            print(f"[Database Retrieval] Query vectorization failed: {e}")
             return []
-        query_embedding = Settings.embed_model.get_text_embedding(query)
-    except Exception as e:
-        print(f"[Database Retrieval] Query vectorization failed: {e}")
-        return []
+    else:
+        StorageContext, load_index_from_storage, Settings, _, _ = _init_llama_index()
 
     # Batch compute any missing embeddings (0 API calls if all cached)
     computed = _compute_and_store_embeddings(knowledge_entries, Settings, db)
@@ -322,51 +328,86 @@ def retrieve(dept_id: int, query: str, chunk_count: int = None, similarity_thres
     all_results = []
     max_score = 0.0
 
-    # ==================== Part 1: Vector Index Retrieval ====================
+    # P2: Pre-compute query embedding once for both retrieval paths
     StorageContext, load_index_from_storage, Settings, DashScopeRerank, HAS_RERANK = _init_llama_index()
-    if StorageContext is not None:
-        index = load_index(dept_id)
-        if index is not None:
-            try:
-                # Create retriever (reduced from 20 to 10 for faster reranking)
-                retriever = index.as_retriever(similarity_top_k=10)
-                nodes = retriever.retrieve(query)
+    query_embedding = None
+    if Settings is not None and hasattr(Settings, 'embed_model'):
+        try:
+            query_embedding = Settings.embed_model.get_text_embedding(query)
+        except Exception as e:
+            logger.error(f"[Retrieve] Query embedding failed: {e}")
 
-                if nodes:
-                    # Use DashScope Rerank for reranking if available
-                    if HAS_RERANK and DashScopeRerank:
-                        try:
-                            reranker = DashScopeRerank(top_n=chunk_count, return_documents=True)
-                            reranked_nodes = reranker.postprocess_nodes(nodes, query_str=query)
-                        except Exception as e:
-                            logger.warning(f"[Vector Rerank] Rerank failed, falling back to cosine ordering: {e}")
+    # P2: Define retrieval functions for parallel execution
+    def _vector_retrieve():
+        """Part 1: Vector Index Retrieval"""
+        results = []
+        v_max_score = 0.0
+        if StorageContext is not None:
+            index = load_index(dept_id)
+            if index is not None:
+                try:
+                    retriever = index.as_retriever(similarity_top_k=10)
+                    nodes = retriever.retrieve(query)
+
+                    if nodes:
+                        top1_score = getattr(nodes[0], 'score', 0.0) if nodes else 0.0
+                        skip_rerank = top1_score > 0.85
+
+                        if skip_rerank:
+                            logger.info(f"[Vector Rerank] Skipped - top1 cosine score {top1_score:.3f} > 0.85")
                             reranked_nodes = nodes[:chunk_count]
-                    else:
-                        # Skip reranking if not available
-                        print("[Vector Rerank] Rerank not available, using original results")
-                        reranked_nodes = nodes[:chunk_count]
+                        elif HAS_RERANK and DashScopeRerank:
+                            try:
+                                reranker = DashScopeRerank(top_n=chunk_count, return_documents=True)
+                                reranked_nodes = reranker.postprocess_nodes(nodes, query_str=query)
+                            except Exception as e:
+                                logger.warning(f"[Vector Rerank] Rerank failed, falling back to cosine ordering: {e}")
+                                reranked_nodes = nodes[:chunk_count]
+                        else:
+                            print("[Vector Rerank] Rerank not available, using original results")
+                            reranked_nodes = nodes[:chunk_count]
 
-                    # Convert to unified format
-                    for node in reranked_nodes:
-                        score = getattr(node, 'score', 0.7)
-                        if score >= similarity_threshold:
-                            all_results.append({
-                                'content': node.text,
-                                'score': score,
-                                'source': 'vector_index'
-                            })
-                            max_score = max(max_score, score)
+                        for node in reranked_nodes:
+                            score = getattr(node, 'score', 0.7)
+                            if score >= similarity_threshold:
+                                results.append({
+                                    'content': node.text,
+                                    'score': score,
+                                    'source': 'vector_index'
+                                })
+                                v_max_score = max(v_max_score, score)
 
-            except Exception as e:
-                logger.error(f"[Vector Retrieval] Failed [{dept_id}]: {e}")
-    else:
-        print("[Vector Retrieval] LlamaIndex not available, skipping vector retrieval")
+                except Exception as e:
+                    logger.error(f"[Vector Retrieval] Failed [{dept_id}]: {e}")
+        else:
+            print("[Vector Retrieval] LlamaIndex not available, skipping vector retrieval")
+        return results, v_max_score
 
-    # ==================== Part 2: Database Retrieval (Unindexed Knowledge) ====================
-    db_results = retrieve_from_database_kb(dept_id, query, similarity_threshold)
-    for db_result in db_results:
-        all_results.append(db_result)
-        max_score = max(max_score, db_result['score'])
+    def _database_retrieve():
+        """Part 2: Database Retrieval (Unindexed Knowledge)"""
+        return retrieve_from_database_kb(dept_id, query, similarity_threshold, query_embedding=query_embedding)
+
+    # P2: Execute both retrieval paths in parallel using ThreadPoolExecutor
+    with ThreadPoolExecutor(max_workers=2) as executor:
+        future_vector = executor.submit(_vector_retrieve)
+        future_db = executor.submit(_database_retrieve)
+
+        # Collect vector results
+        try:
+            vector_results, vector_max_score = future_vector.result(timeout=10)
+            all_results.extend(vector_results)
+            max_score = max(max_score, vector_max_score)
+        except Exception as e:
+            logger.error(f"[Vector Retrieval] Parallel execution failed: {e}")
+
+        # Collect database results
+        try:
+            db_results = future_db.result(timeout=10)
+            for db_result in db_results:
+                all_results.append(db_result)
+                max_score = max(max_score, db_result['score'])
+        except Exception as e:
+            logger.error(f"[Database Retrieval] Parallel execution failed: {e}")
 
     # ==================== Part 3: Normalize and Merge Results ====================
     if not all_results:
@@ -424,6 +465,19 @@ def get_system_prompt(dept_id: int, retrieved_content: str, use_web_search: bool
         # RAG mode: content retrieved from knowledge base
         prompt = f"""You are PomeloX AI Assistant, an expert advisor dedicated to {school_name}. You help Chinese international students with questions about campus life, academics, housing, visa, activities, and local information.
 
+## Scope (STRICT)
+You ONLY answer questions related to:
+- Campus life, academics, courses, majors, GPA
+- Housing, dining, transportation
+- Visa, immigration, I-20, OPT, CPT
+- Tuition, fees, scholarships, financial aid
+- Student activities, clubs, organizations
+- Local life tips (food, shopping, safety) near the school
+- Application, admission, transfer
+
+If the user asks something OUTSIDE this scope (e.g., write poems, code, jokes, personal opinions, politics, unrelated topics), politely decline:
+"我是{school_name}的留学助手，主要帮助解答校园生活、学业、签证、住宿等留学相关问题。请问有什么留学方面的问题我可以帮你？"
+
 ## Your Role
 - You are knowledgeable, patient, and friendly
 - You provide accurate, specific, and actionable advice
@@ -438,33 +492,39 @@ The following knowledge base entries are relevant to the user's question. Use th
 ## Response Guidelines
 
 ### How to Think (Chain of Thought)
-1. First, identify what the user is specifically asking about
-2. Check if the reference materials contain relevant information
-3. If yes, synthesize the information into a clear, structured answer
-4. If partially relevant, use what's available and clearly note what's missing
-5. If not relevant, honestly say so and provide general guidance
+1. First, check if the question is within scope. If not, decline politely.
+2. Identify what the user is specifically asking about
+3. Check if the reference materials contain relevant information
+4. If yes, synthesize the information into a clear, structured answer
+5. If partially relevant, use what's available and clearly note what's missing
+6. If not relevant, honestly say so and provide general guidance
 
-### Response Format
-- Use clear structure with bullet points or numbered lists for multi-part answers
-- Keep responses concise but complete (aim for 100-300 words)
-- Include specific details (dates, locations, contacts, URLs) when available in references
-- If the question has multiple aspects, address each one
+### Response Format — CRITICAL LENGTH RULES
+- **HARD LIMIT: 200-400 Chinese characters (中文) or 150-250 English words**
+- **Exceeding 500 characters is FORBIDDEN — be ruthlessly concise**
+- Use bullet points, not lengthy paragraphs
+- ONE key point per bullet, no sub-sub-bullets
+- Skip greetings, skip closings like "希望对你有帮助" or "欢迎继续提问"
+- Do NOT repeat or rephrase the same information
+- Go straight to the answer, no preamble
+
+### Source Attribution
+- When using reference materials, end with: 📚 *以上信息来源于{school_name}知识库*
+- When using general knowledge (not from references), end with: ℹ️ *以上为通用建议，具体请咨询学校官方*
+- NEVER mix the two without clearly distinguishing them
 
 ### Important Rules
 1. PRIORITIZE reference materials - they contain school-specific, verified information
-2. If references don't cover the topic, clearly state: "Based on my general knowledge..." before providing advice
+2. If references don't cover the topic, clearly state: "根据通用经验..." before providing advice
 3. NEVER fabricate specific school policies, dates, or contact information
 4. For time-sensitive info (deadlines, events), remind students to verify with official channels
-5. When answering in Chinese, use natural conversational Chinese (not machine-translated)
-
-### Example Response Pattern
-User: "UCSD的宿舍怎么申请？"
-Good response: "UCSD宿舍申请流程如下：\n1. **申请时间**: [specific dates from reference]\n2. **申请方式**: [steps from reference]\n3. **注意事项**: [key tips]\n\n建议尽早申请，热门宿舍区域很快就会满额。"
-
-Bad response: "您可以去学校官网查看宿舍信息。" (too vague, doesn't use references)"""
+5. When answering in Chinese, use natural conversational Chinese (not machine-translated)"""
     elif use_web_search:
         # Web search mode: no high-quality RAG results, web search enabled
         prompt = f"""You are PomeloX AI Assistant, an expert advisor dedicated to {school_name}. You help Chinese international students with questions about campus life, academics, housing, visa, activities, and local information.
+
+## Scope (STRICT)
+You ONLY answer questions related to campus life, academics, housing, visa, tuition, student activities, local life tips, and applications for {school_name}. For off-topic requests (poems, code, jokes, etc.), politely decline and redirect to study-abroad topics.
 
 ## Current Context
 The knowledge base did not contain highly relevant information for this question. Web search has been enabled to find up-to-date information.
@@ -472,20 +532,19 @@ The knowledge base did not contain highly relevant information for this question
 ## Response Guidelines
 1. Answer based on web search results, ensuring accuracy and timeliness
 2. Clearly distinguish between verified facts and general advice
-3. Include source references at the end when citing web information
-4. If search results are not highly relevant, honestly inform the user
-5. Always respond in the SAME LANGUAGE as the user's question
-6. Keep responses structured and actionable
-7. Remind students to verify time-sensitive information with official channels
+3. Always respond in the SAME LANGUAGE as the user's question
+4. **HARD LIMIT: 200-400 Chinese characters or 150-250 English words. No exceptions.**
+5. Skip greetings and closings like "希望对你有帮助"
+6. Remind students to verify time-sensitive information with official channels
 
-## Response Format
-- Lead with the most relevant answer
-- Use bullet points for clarity
-- Add source citations: [Source: website name]
-- End with a brief disclaimer if information may be outdated"""
+## Source Attribution
+- End with: 🔍 *以上信息来自网络搜索，请以学校官方信息为准*"""
     else:
         # No content mode
         prompt = f"""You are PomeloX AI Assistant, an expert advisor dedicated to {school_name}. You help Chinese international students with questions about campus life, academics, housing, visa, activities, and local information.
+
+## Scope (STRICT)
+You ONLY answer questions related to campus life, academics, housing, visa, tuition, student activities, local life tips, and applications for {school_name}. For off-topic requests (poems, code, jokes, etc.), politely decline and redirect to study-abroad topics.
 
 ## Current Context
 No relevant reference materials were found in the knowledge base for this question.
@@ -493,13 +552,13 @@ No relevant reference materials were found in the knowledge base for this questi
 ## Response Guidelines
 1. Answer based on your general knowledge about {school_name} and US campus life
 2. Clearly state that this is general advice, not school-verified information
-3. For school-specific policies or information, suggest consulting official channels:
-   - School official website
-   - International Student Office (ISSO/OIS)
-   - Academic advisors
-   - Student organizations (especially Chinese student associations like CSSA)
-4. Always respond in the SAME LANGUAGE as the user's question
-5. Be helpful but honest about the limitations of your knowledge"""
+3. **HARD LIMIT: 200-400 Chinese characters or 150-250 English words. No exceptions.**
+4. Skip greetings and closings — go straight to the answer
+5. Always respond in the SAME LANGUAGE as the user's question
+6. For school-specific policies, suggest: school website, ISSO/OIS, or CSSA
+
+## Source Attribution
+- End with: ℹ️ *以上为通用建议，具体请咨询{school_name}官方*"""
 
     return prompt
 

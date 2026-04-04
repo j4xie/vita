@@ -68,7 +68,7 @@ export const validateChineseText = (
   if (!text || text.trim().length === 0) {
     return {
       isValid: false,
-      message: t('validation.name_required')
+      message: t('auth.validation.name_required')
     };
   }
 
@@ -77,21 +77,21 @@ export const validateChineseText = (
   if (trimmedText.length < minLength) {
     return {
       isValid: false,
-      message: t('validation.name_too_short', { min: minLength })
+      message: t('auth.validation.name_too_short', { min: minLength })
     };
   }
 
   if (trimmedText.length > maxLength) {
     return {
       isValid: false,
-      message: t('validation.name_too_long', { max: maxLength })
+      message: t('auth.validation.name_too_long', { max: maxLength })
     };
   }
 
   if (!CHINESE_REGEX.test(trimmedText)) {
     return {
       isValid: false,
-      message: t('validation.chinese_only')
+      message: t('auth.validation.chinese_only')
     };
   }
 
@@ -114,7 +114,7 @@ export const validateEnglishText = (
   if (!text || text.trim().length === 0) {
     return {
       isValid: false,
-      message: t('validation.name_required')
+      message: t('auth.validation.name_required')
     };
   }
 
@@ -123,21 +123,21 @@ export const validateEnglishText = (
   if (trimmedText.length < minLength) {
     return {
       isValid: false,
-      message: t('validation.name_too_short', { min: minLength })
+      message: t('auth.validation.name_too_short', { min: minLength })
     };
   }
 
   if (trimmedText.length > maxLength) {
     return {
       isValid: false,
-      message: t('validation.name_too_long', { max: maxLength })
+      message: t('auth.validation.name_too_long', { max: maxLength })
     };
   }
 
   if (!ENGLISH_REGEX.test(trimmedText)) {
     return {
       isValid: false,
-      message: t('validation.english_letters_only')
+      message: t('auth.validation.english_letters_only')
     };
   }
 
@@ -153,7 +153,7 @@ export const validateCommonName = (text: string, t: TFunction): ValidationResult
   if (!text || text.trim().length === 0) {
     return {
       isValid: false,
-      message: t('validation.common_name_required')
+      message: t('auth.validation.common_name_required')
     };
   }
 
@@ -162,21 +162,21 @@ export const validateCommonName = (text: string, t: TFunction): ValidationResult
   if (trimmedText.length < 2) {
     return {
       isValid: false,
-      message: t('validation.common_name_too_short')
+      message: t('auth.validation.common_name_too_short')
     };
   }
 
   if (trimmedText.length > 20) {
     return {
       isValid: false,
-      message: t('validation.common_name_too_long')
+      message: t('auth.validation.common_name_too_long')
     };
   }
 
   if (!ENGLISH_ALPHANUMERIC_ONLY_REGEX.test(trimmedText)) {
     return {
       isValid: false,
-      message: t('validation.common_name_letters_only')
+      message: t('auth.validation.common_name_letters_only')
     };
   }
 
@@ -256,7 +256,7 @@ export const validateTextByLanguage = (
         if (!trimmedText) {
           return {
             isValid: false,
-            message: t('validation.name_required')
+            message: t('auth.validation.name_required')
           };
         }
         
@@ -278,7 +278,7 @@ export const validateTextByLanguage = (
       if (!trimmedText) {
         return {
           isValid: false,
-          message: t('validation.nickname_required')
+          message: t('auth.validation.nickname_required')
         };
       }
       
@@ -291,7 +291,7 @@ export const validateTextByLanguage = (
     default:
       return {
         isValid: false,
-        message: t('validation.invalid_text_type')
+        message: t('auth.validation.invalid_text_type')
       };
   }
 };

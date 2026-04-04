@@ -38,9 +38,14 @@ export const PaymentResultScreen: React.FC = () => {
   const orderId = route.params?.orderId;
   const productName = route.params?.productName;
   const paymentMethod: 'stripe' | 'alipay' | 'points' = route.params?.paymentMethod ?? 'alipay';
+  const orderType = route.params?.orderType as string | undefined;
+  const activityId = route.params?.activityId as string | undefined;
   const pvsaFormData = route.params?.pvsaFormData as Record<string, string> | undefined;
   const pvsaActivityId = route.params?.pvsaActivityId as number | undefined;
-  const isPVSAFlow = !!pvsaActivityId;
+  const registrationFormData = route.params?.registrationFormData as Record<string, string> | undefined;
+  const registrationActivityId = route.params?.registrationActivityId as number | undefined;
+  const isCertificateFlow = route.params?.isCertificateFlow === true || !!pvsaActivityId;
+  const isActivityPayment = orderType === '2' && !!activityId;
 
   const [loading, setLoading] = useState(true);
   const [paymentStatus, setPaymentStatus] = useState<'pending' | 'paid' | 'cancelled' | 'refunded'>('pending');
@@ -126,6 +131,24 @@ export const PaymentResultScreen: React.FC = () => {
     })();
   }, [paymentStatus, pvsaFormData, pvsaActivityId, user?.id]);
 
+  // Submit activity registration form after payment success (non-PVSA)
+  const regSubmittedRef = useRef(false);
+  useEffect(() => {
+    if (paymentStatus !== 'paid') return;
+    if (!registrationFormData || !registrationActivityId || !user?.id) return;
+    if (regSubmittedRef.current) return;
+    regSubmittedRef.current = true;
+
+    (async () => {
+      try {
+        await pomeloXAPI.submitActivityRegistration(registrationActivityId, Number(user.id), registrationFormData);
+        DeviceEventEmitter.emit('activityRegistrationChanged', { activityId: registrationActivityId });
+      } catch (e) {
+        console.warn('[PaymentResult] Registration form submission failed:', e);
+      }
+    })();
+  }, [paymentStatus, registrationFormData, registrationActivityId, user?.id]);
+
   const renderContent = () => {
     if (loading && paymentStatus === 'pending') {
       const waitingDesc = paymentMethod === 'stripe'
@@ -158,7 +181,7 @@ export const PaymentResultScreen: React.FC = () => {
 
     if (paymentStatus === 'paid') {
       // PVSA-specific enriched success state
-      if (isPVSAFlow) {
+      if (isCertificateFlow) {
         return (
           <Animated.View entering={FadeInUp.duration(600).springify()} style={styles.statusContainer}>
             <LinearGradient
@@ -222,9 +245,11 @@ export const PaymentResultScreen: React.FC = () => {
             {t('rewards.payment.success')}
           </Text>
           <Text style={[styles.statusDesc, isDarkMode && styles.statusDescDark]}>
-            {productName
-              ? t('rewards.payment.success_exchange', { product: productName })
-              : t('rewards.payment.success_default')}
+            {isActivityPayment && productName
+              ? t('rewards.payment.success_activity', { activity: productName, defaultValue: `${productName} booked successfully` })
+              : productName
+                ? t('rewards.payment.success_exchange', { product: productName })
+                : t('rewards.payment.success_default')}
           </Text>
         </Animated.View>
       );
@@ -267,10 +292,30 @@ export const PaymentResultScreen: React.FC = () => {
 
     if (paymentStatus === 'paid') {
       if (pvsaActivityId) {
-        // Navigate to Profile tab — CertificateList is inside Profile stack
-        navigation.navigate('Main', { screen: 'Profile', params: { screen: 'CertificateList' } });
+        // Reset navigation to Profile → CertificateList, clearing PVSADynamicForm from stack
+        navigation.reset({
+          index: 0,
+          routes: [{
+            name: 'Main',
+            state: {
+              routes: [{
+                name: 'Profile',
+                state: {
+                  routes: [
+                    { name: 'ProfileHome' },
+                    { name: 'CertificateList' },
+                  ],
+                },
+              }],
+            },
+          }],
+        });
       } else {
-        navigation.navigate('Main');
+        // Reset to Main to clear any stale stack state in tabs
+        navigation.reset({
+          index: 0,
+          routes: [{ name: 'Main' }],
+        });
       }
     } else if (paymentStatus === 'cancelled') {
       navigation.goBack();
@@ -281,7 +326,7 @@ export const PaymentResultScreen: React.FC = () => {
 
   const getButtonText = () => {
     if (paymentStatus === 'paid') {
-      if (isPVSAFlow) return t('rewards.payment.view_application', 'View My Applications');
+      if (isCertificateFlow) return t('rewards.payment.view_application', 'View My Applications');
       return t('rewards.payment.return_home');
     }
     if (paymentStatus === 'cancelled') return t('rewards.payment.retry_payment');
@@ -292,12 +337,7 @@ export const PaymentResultScreen: React.FC = () => {
     <View style={[styles.container, isDarkMode && styles.containerDark, { paddingTop: insets.top }]}>
       {/* Header */}
       <View style={[styles.header, isDarkMode && styles.headerDark]}>
-        <TouchableOpacity
-          onPress={() => navigation.navigate('Main')}
-          style={styles.closeButton}
-        >
-          <Ionicons name="close" size={24} color={isDarkMode ? '#fff' : '#000'} />
-        </TouchableOpacity>
+        <View style={{ width: 40 }} />
         <Text style={[styles.headerTitle, isDarkMode && styles.headerTitleDark]}>
           {t('rewards.payment.result_title')}
         </Text>
@@ -325,10 +365,18 @@ export const PaymentResultScreen: React.FC = () => {
             {paymentStatus === 'paid' && (
               <TouchableOpacity
                 style={[styles.secondaryButton, isDarkMode && styles.secondaryButtonDark]}
-                onPress={() => navigation.navigate('MyOrders')}
+                onPress={() => {
+                  if (isActivityPayment) {
+                    navigation.navigate('ActivityDetailGlobal', { activity: { id: activityId } });
+                  } else {
+                    navigation.navigate('MyOrders');
+                  }
+                }}
               >
                 <Text style={[styles.secondaryButtonText, isDarkMode && styles.secondaryButtonTextDark]}>
-                  {t('rewards.payment.view_orders')}
+                  {isActivityPayment
+                    ? t('rewards.payment.view_activity', 'View Activity')
+                    : t('rewards.payment.view_orders')}
                 </Text>
               </TouchableOpacity>
             )}

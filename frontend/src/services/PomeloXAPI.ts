@@ -808,14 +808,14 @@ class PomeloXAPI {
         timestamp: new Date().toISOString()
       });
 
-      // 构建请求URL，根据isCancel参数决定是否添加isCancel=1
+      // 构建请求URL，使用POST方法（后端已更新为POST）
       let url = `/app/activity/enroll?activityId=${validActivityId}&userId=${validUserId}${isCancel ? '&isCancel=1' : ''}`;
       if (shareUserId && shareUserId > 0) {
         url += `&shareUserId=${shareUserId}`;
       }
 
       const response = await this.request(url, {
-        method: 'GET',
+        method: 'POST',
       });
 
       console.log(`📡 [PomeloXAPI] 活动${action}响应:`, {
@@ -898,7 +898,7 @@ class PomeloXAPI {
     try {
       console.log('📝 [PomeloXAPI] 提交活动报名表单:', { activityId, userId, formData, shareUserId });
 
-      // 将formData转为JSON字符串并URL编码，使用GET方式提交
+      // 将formData转为JSON字符串并URL编码，使用POST方法（后端已更新为POST）
       const formDataStr = encodeURIComponent(JSON.stringify(formData));
       let url = `/app/activity/enroll?activityId=${activityId}&userId=${userId}&formData=${formDataStr}`;
       if (shareUserId && shareUserId > 0) {
@@ -906,7 +906,7 @@ class PomeloXAPI {
       }
 
       const response = await this.request(url, {
-        method: 'GET',
+        method: 'POST',
       });
 
       if (response.code === 200 && response.data != null && Number(response.data) > 0) {

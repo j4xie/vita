@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import {
   View,
   Text,
@@ -42,6 +42,7 @@ import {
   validatePhoneNumber
 } from '../../services/registrationAPI';
 import emailAPI from '../../services/emailAPI';
+import { checkPhoneAvailability } from '../../services/registrationAPI';
 import {
   validateTextByLanguage,
   TextType,
@@ -214,6 +215,30 @@ export const StudentNormalRegisterStep2Screen: React.FC = () => {
     }
   };
 
+  // 🔧 手机号格式验证通过后，防抖1秒自动检查是否已被注册
+  const phoneCheckTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    if (phoneCheckTimer.current) clearTimeout(phoneCheckTimer.current);
+    if (!phoneNumber || phoneNumber.trim().length < 6) return;
+    const validation = validatePhone(phoneNumber, areaCode, t);
+    if (!validation.isValid) return;
+
+    phoneCheckTimer.current = setTimeout(async () => {
+      try {
+        const result = await checkPhoneAvailability(phoneNumber);
+        if (!result.available) {
+          setErrors(prev => ({ ...prev, phoneNumber: t('auth.register.errors.phone_already_registered', { defaultValue: 'This phone number is already registered' }) }));
+        }
+      } catch (e) {
+        // 网络错误不阻塞
+      }
+    }, 1000);
+
+    return () => {
+      if (phoneCheckTimer.current) clearTimeout(phoneCheckTimer.current);
+    };
+  }, [phoneNumber, areaCode]);
+
   // 验证码输入处理
   const handleVerificationCodeChange = (text: string) => {
     setVerificationCode(text);
@@ -303,10 +328,10 @@ export const StudentNormalRegisterStep2Screen: React.FC = () => {
 
     // 验证条款同意
     if (!agreedToTerms) {
-      newErrors.terms = t('validation.must_agree_terms');
+      newErrors.terms = t('auth.validation.must_agree_terms');
     }
     if (!agreedToSMS) {
-      newErrors.sms = t('validation.must_agree_sms');
+      newErrors.sms = t('auth.validation.must_agree_sms');
     }
 
     setErrors(newErrors);
@@ -336,7 +361,7 @@ export const StudentNormalRegisterStep2Screen: React.FC = () => {
     // 验证手机号
     if (!phoneNumber) {
       console.log('❌ [sendVerificationCode] 手机号为空');
-      Alert.alert(t('common.error'), t('validation.phone_required'));
+      Alert.alert(t('common.error'), t('auth.validation.phone_required'));
       return;
     }
 
@@ -348,7 +373,7 @@ export const StudentNormalRegisterStep2Screen: React.FC = () => {
       console.log('❌ [sendVerificationCode] 前端验证失败');
       Alert.alert(
         t('common.error'),
-        areaCode === '86' ? t('validation.phone_china_invalid') : t('validation.phone_us_invalid')
+        areaCode === '86' ? t('auth.validation.phone_china_invalid') : t('auth.validation.phone_us_invalid')
       );
       return;
     }
@@ -431,7 +456,7 @@ export const StudentNormalRegisterStep2Screen: React.FC = () => {
 
     const email = step1Data.generatedEmail;
     if (!email) {
-      Alert.alert(t('common.error'), t('validation.email_required'));
+      Alert.alert(t('common.error'), t('auth.validation.email_required'));
       return;
     }
 
@@ -1148,7 +1173,17 @@ export const StudentNormalRegisterStep2Screen: React.FC = () => {
       <AreaCodePickerModal
         visible={showAreaCodeModal}
         selectedCode={areaCode}
-        onSelect={setAreaCode}
+        onSelect={(code: '86' | '1') => {
+          setAreaCode(code);
+          // 切换区号后重新验证当前手机号
+          if (phoneNumber) {
+            const validation = validatePhone(phoneNumber, code, t);
+            setPhoneNumberValid(validation.isValid);
+            if (!validation.isValid) {
+              setErrors(prev => ({ ...prev, phoneNumber: undefined }));
+            }
+          }
+        }}
         onClose={() => setShowAreaCodeModal(false)}
       />
       <KeyboardDoneAccessory />

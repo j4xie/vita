@@ -52,7 +52,7 @@ export const sendSMSVerificationCode = async (phoneNumber: string, areaCode: '86
 
     if (!responseText || responseText.trim() === '') {
       console.error('📱 [sendSMSVerificationCode] 后端返回空响应');
-      throw new Error('服务器返回空响应，请稍后重试');
+      throw new Error('Server returned empty response, please try again later');
     }
 
     const data = JSON.parse(responseText);
@@ -178,7 +178,7 @@ export const registerUser = async (registrationData: RegistrationAPIRequest): Pr
     console.error('用户注册失败:', error);
     // 🔧 增强超时错误提示
     if ((error as Error).name === 'AbortError') {
-      throw new Error('注册请求超时，请检查网络后重试');
+      throw new Error('Registration request timed out, please check your network and try again');
     }
     throw error;
   }
@@ -194,28 +194,39 @@ export const checkUserNameAvailability = async (userName: string): Promise<{ ava
     // 基础格式验证
     const userNameRegex = /^[a-zA-Z0-9]{6,20}$/;
     if (!userNameRegex.test(userName)) {
-      return { available: false, message: '用户名格式不正确' };
+      return { available: false, message: 'Invalid username format' };
     }
 
-    // 调用后端接口检查用户名是否已存在
-    const response = await fetch(`${getBaseUrl()}/app/user/checkUserName?userName=${userName}`, {
-      method: 'GET',
+    // 🔧 调用后端POST接口检查用户名是否已存在
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000);
+
+    const body = new URLSearchParams();
+    body.append('userName', userName);
+
+    const response = await fetch(`${getBaseUrl()}/app/user/checkUserName`, {
+      method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
+        'Content-Type': 'application/x-www-form-urlencoded',
       },
+      body: body.toString(),
+      signal: controller.signal,
     });
-    
+
+    clearTimeout(timeoutId);
+
     if (response.ok) {
       const data = await response.json();
       if (data.code === 200) {
-        return { available: data.available !== false };
+        return { available: true };
+      } else if (data.code === 500) {
+        // code 500 表示已存在
+        return { available: false, message: data.msg || 'Username already exists' };
       } else {
-        // 🔧 非200的code（如401认证失败）说明接口不可用，降级放行
         console.warn(`checkUserName接口返回code=${data.code}，降级放行`);
         return { available: true };
       }
     } else {
-      // 如果接口不存在，只做格式验证
       console.warn('用户名检查接口不存在，只进行格式验证');
       return { available: true };
     }
@@ -234,19 +245,23 @@ export const checkUserNameAvailability = async (userName: string): Promise<{ ava
 export const checkEmailAvailability = async (email: string): Promise<{ available: boolean; message?: string; skipValidation?: boolean }> => {
   try {
     if (!validateEmailFormat(email)) {
-      return { available: false, message: '邮箱格式不正确' };
+      return { available: false, message: 'Invalid email format' };
     }
 
     // 🔧 添加10秒超时保护 - 防止实时验证卡住
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 10000);
 
-    // 调用后端接口检查邮箱是否已被注册
-    const response = await fetch(`${getBaseUrl()}/app/user/checkEmail?email=${encodeURIComponent(email)}`, {
-      method: 'GET',
+    // 🔧 调用后端POST接口检查邮箱是否已被注册
+    const body = new URLSearchParams();
+    body.append('email', email);
+
+    const response = await fetch(`${getBaseUrl()}/app/user/checkEmail`, {
+      method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
+        'Content-Type': 'application/x-www-form-urlencoded',
       },
+      body: body.toString(),
       signal: controller.signal,
     });
 
@@ -255,18 +270,18 @@ export const checkEmailAvailability = async (email: string): Promise<{ available
     if (response.ok) {
       const data = await response.json();
       if (data.code === 200) {
-        return { available: data.available !== false };
+        return { available: true };
+      } else if (data.code === 500) {
+        // code 500 表示已存在
+        return { available: false, message: data.msg || 'Email already registered' };
       } else {
-        // 🔧 非200的code（如401认证失败）说明接口不可用，降级放行，不阻塞注册
         console.warn(`checkEmail接口返回code=${data.code}，降级放行`);
         return { available: true, skipValidation: true };
       }
     } else if (response.status === 404) {
-      // 🔧 接口不存在 - 优雅降级，不阻塞注册流程
       console.warn('⚠️ checkEmail接口不存在(404)，跳过实时验证');
       return { available: true, skipValidation: true };
     } else {
-      // 其他HTTP错误
       console.warn(`checkEmail接口错误(${response.status})，跳过实时验证`);
       return { available: true };
     }
@@ -294,9 +309,14 @@ export const checkPhoneAvailability = async (phone: string): Promise<{ available
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 10000);
 
-    const response = await fetch(`${getBaseUrl()}/app/user/checkPhone?phonenumber=${encodeURIComponent(phone)}`, {
-      method: 'GET',
-      headers: { 'Content-Type': 'application/json' },
+    // 🔧 调用后端POST接口检查手机号是否已被注册
+    const body = new URLSearchParams();
+    body.append('phonenumber', phone);
+
+    const response = await fetch(`${getBaseUrl()}/app/user/checkPhonenumber`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: body.toString(),
       signal: controller.signal,
     });
 
@@ -305,13 +325,14 @@ export const checkPhoneAvailability = async (phone: string): Promise<{ available
     if (response.ok) {
       const data = await response.json();
       if (data.code === 200) {
-        return { available: data.available !== false };
+        return { available: true };
+      } else if (data.code === 500) {
+        // code 500 表示已存在
+        return { available: false, message: data.msg || 'Phone number already registered' };
       }
-      // 🔧 非200的code（如401认证失败）说明接口不可用，降级放行
       console.warn(`checkPhone接口返回code=${data.code}，降级放行`);
       return { available: true };
     } else if (response.status === 404) {
-      // 接口不存在 - 降级，不阻塞注册流程
       console.warn('⚠️ checkPhone接口不存在(404)，跳过实时验证');
       return { available: true };
     }
@@ -421,15 +442,16 @@ export const validatePhoneNumber = (phoneNumber: string, areaCode: '86' | '1' = 
  * @param password 密码
  * @returns 验证结果和提示信息
  */
-export const validatePassword = (password: string): { isValid: boolean; message: string } => {
+export const validatePassword = (password: string, t?: (key: string, options?: any) => string): { isValid: boolean; message: string } => {
+  const tr = (key: string, fallback: string) => t ? t(key, { defaultValue: fallback }) : fallback;
   if (password.length < 6) {
-    return { isValid: false, message: '密码长度至少6位' };
+    return { isValid: false, message: tr('validation.password_min_length', 'Password must be at least 6 characters') };
   }
   if (password.length > 20) {
-    return { isValid: false, message: '密码长度不能超过20位' };
+    return { isValid: false, message: tr('validation.password_length_6_20', 'Password must be 6-20 characters') };
   }
   if (!/(?=.*[a-zA-Z])(?=.*\d)/.test(password)) {
-    return { isValid: false, message: '密码必须包含字母和数字' };
+    return { isValid: false, message: tr('auth.register.errors.password_format', 'Password must contain both letters and numbers') };
   }
   return { isValid: true, message: '' };
 };

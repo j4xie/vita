@@ -16,7 +16,7 @@ const getBaseUrl = () => getApiUrl();
 export type OrderType = '1' | '2' | '3'; // 1-积分商城消费 2-活动支付 3-会员等级支付
 
 // 支付方式
-export type PayMode = '1' | '2'; // 1-金额 2-积分
+export type PayMode = '1' | '2' | '3'; // 1-美元 2-积分 3-人民币
 
 // 支付渠道
 export type PayChannel = '1' | '2'; // 1-支付宝 2-Stripe
@@ -423,7 +423,9 @@ export const getUserPoints = async (): Promise<number> => {
     console.log('[OrderAPI] 用户积分:', result);
 
     if (result.code === 200) {
-      return result.data ?? 0;
+      // API returns { point: "880" } not { data: 880 }
+      const point = (result as any).point ?? result.data;
+      return Number(point) || 0;
     }
     return 0;
   } catch (error) {

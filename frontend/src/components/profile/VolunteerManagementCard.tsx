@@ -15,6 +15,8 @@ import { useTheme } from '../../context/ThemeContext';
 
 interface VolunteerManagementCardProps {
   onPress: () => void;
+  onRegisteredPress?: () => void;
+  onAttendedPress?: () => void;
   hours: number | string;
   registered: number | string;
   attended: number | string;
@@ -113,6 +115,8 @@ const statStyles = StyleSheet.create({
 
 export const VolunteerManagementCard: React.FC<VolunteerManagementCardProps> = ({
   onPress,
+  onRegisteredPress,
+  onAttendedPress,
   hours,
   registered,
   attended,
@@ -160,8 +164,12 @@ export const VolunteerManagementCard: React.FC<VolunteerManagementCardProps> = (
 
       <View style={styles.statsRow}>
         <StatColumn value={hours} label={t('profile.volunteer_hours_short')} isDarkMode={isDarkMode} />
-        <StatColumn value={registered} label={t('profile.not_participated')} isDarkMode={isDarkMode} />
-        <StatColumn value={attended} label={t('profile.participated')} isDarkMode={isDarkMode} />
+        <TouchableOpacity onPress={onRegisteredPress} activeOpacity={0.6} style={{ flex: 1 }}>
+          <StatColumn value={registered} label={t('profile.not_participated')} isDarkMode={isDarkMode} />
+        </TouchableOpacity>
+        <TouchableOpacity onPress={onAttendedPress} activeOpacity={0.6} style={{ flex: 1 }}>
+          <StatColumn value={attended} label={t('profile.participated')} isDarkMode={isDarkMode} />
+        </TouchableOpacity>
       </View>
     </TouchableOpacity>
   );

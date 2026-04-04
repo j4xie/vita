@@ -200,42 +200,42 @@ export const ParentNormalRegisterScreen: React.FC = () => {
 
     // 验证邮箱
     if (!formData.email.trim()) {
-      newErrors.email = t('validation.email_required');
+      newErrors.email = t('auth.validation.email_required');
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      newErrors.email = t('validation.email_invalid');
+      newErrors.email = t('auth.validation.email_invalid');
     }
 
     // 验证手机号
     if (!formData.phoneNumber) {
-      newErrors.phoneNumber = t('validation.phone_required');
+      newErrors.phoneNumber = t('auth.validation.phone_required');
     } else if (!validatePhoneNumber(formData.phoneNumber, formData.areaCode)) {
       newErrors.phoneNumber = formData.areaCode === '86' 
-        ? t('validation.phone_china_invalid')
-        : t('validation.phone_us_invalid');
+        ? t('auth.validation.phone_china_invalid')
+        : t('auth.validation.phone_us_invalid');
     }
 
     // 验证密码
     if (!formData.password) {
-      newErrors.password = t('validation.password_required');
+      newErrors.password = t('auth.validation.password_required');
     } else if (formData.password.length < 6 || formData.password.length > 20) {
-      newErrors.password = t('validation.password_length_6_20');
+      newErrors.password = t('auth.validation.password_length_6_20');
     }
 
     // 验证确认密码
     if (formData.password !== formData.confirmPassword) {
-      newErrors.confirmPassword = t('validation.password_mismatch');
+      newErrors.confirmPassword = t('auth.validation.password_mismatch');
     }
 
     // 验证学校
     if (!formData.selectedSchool) {
-      newErrors.selectedSchool = t('validation.university_required');
+      newErrors.selectedSchool = t('auth.validation.university_required');
     }
 
     // 验证验证码
     if (!formData.verificationCode.trim()) {
-      newErrors.verificationCode = t('validation.verification_code_required');
+      newErrors.verificationCode = t('auth.validation.verification_code_required');
     } else if (!/^\d{6}$/.test(formData.verificationCode)) {
-      newErrors.verificationCode = t('validation.verification_code_format');
+      newErrors.verificationCode = t('auth.validation.verification_code_format');
     }
 
     setErrors(newErrors);

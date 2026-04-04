@@ -178,6 +178,38 @@ export const StudentNormalRegisterStep1Screen: React.FC = () => {
     }
   }, [emailUsername, formData.selectedSchool]);
 
+  // 🔧 邮箱失焦时实时校验是否已被注册
+  const handleEmailBlur = useCallback(async () => {
+    const email = formData.generatedEmail;
+    if (!email || emailUsername.length < 3) return;
+    try {
+      const result = await checkEmailAvailability(email);
+      if (!result.available) {
+        setErrors(prev => ({ ...prev, email: t('auth.register.errors.email_already_registered', { defaultValue: 'This email is already registered' }) }));
+      }
+    } catch (e) {
+      // 网络错误不阻塞
+    }
+  }, [formData.generatedEmail, emailUsername, t]);
+
+  // 🔧 手机号格式验证通过后，防抖1秒自动检查是否已被注册
+  useEffect(() => {
+    if (!emailPathPhoneNumber || emailPathPhoneNumber.trim().length < 6) return;
+    if (!validatePhoneNumber(emailPathPhoneNumber, emailPathAreaCode)) return;
+
+    const timer = setTimeout(async () => {
+      try {
+        const result = await checkPhoneAvailability(emailPathPhoneNumber);
+        if (!result.available) {
+          setErrors(prev => ({ ...prev, phoneNumber: t('auth.register.errors.phone_already_registered', { defaultValue: 'This phone number is already registered' }) }));
+        }
+      } catch (e) {
+        // 网络错误不阻塞
+      }
+    }, 1000);
+
+    return () => clearTimeout(timer);
+  }, [emailPathPhoneNumber, emailPathAreaCode]);
 
   const updateFormData = <K extends keyof ExtendedFormData>(
     field: K,
@@ -233,7 +265,7 @@ export const StudentNormalRegisterStep1Screen: React.FC = () => {
       ...prev,
       selectedSchool: schoolData,
       selectedSchoolId: school.deptId.toString(),
-      selectedSchoolName: school.deptName
+      selectedSchoolName: i18n.language === 'en' ? (school.aprName || school.deptName) : school.deptName
     }));
 
     // 清除学校选择相关错误
@@ -312,49 +344,49 @@ export const StudentNormalRegisterStep1Screen: React.FC = () => {
     }
 
     // 验证密码
-    const passwordValidation = validatePassword(formData.password);
+    const passwordValidation = validatePassword(formData.password, t);
     if (!passwordValidation.isValid) {
       newErrors.password = passwordValidation.message;
     }
 
     // 验证确认密码
     if (formData.password !== formData.confirmPassword) {
-      newErrors.confirmPassword = t('validation.password_mismatch');
+      newErrors.confirmPassword = t('auth.validation.password_mismatch');
     }
 
     // 验证组织选择
     if (!formData.selectedOrganization) {
-      newErrors.selectedOrganization = t('validation.organization_required');
+      newErrors.selectedOrganization = t('auth.validation.organization_required');
     }
 
     // 验证学校
     if (!formData.selectedSchool) {
-      newErrors.selectedSchool = t('validation.university_required');
+      newErrors.selectedSchool = t('auth.validation.university_required');
     }
 
     // 两种路径都需要填写邮箱用户名（邮箱作为账号标识）
     if (!emailUsername.trim()) {
-      newErrors.email = t('validation.email_username_required');
+      newErrors.email = t('auth.validation.email_username_required');
     } else if (emailUsername.length < 3) {
-      newErrors.email = t('validation.email_username_too_short');
+      newErrors.email = t('auth.validation.email_username_too_short');
     } else if (!/^[a-zA-Z0-9._-]+$/.test(emailUsername)) {
-      newErrors.email = t('validation.email_username_invalid');
+      newErrors.email = t('auth.validation.email_username_invalid');
     } else if (formData.generatedEmail) {
       // 验证生成的邮箱格式（接受任何后缀）
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(formData.generatedEmail)) {
-        newErrors.email = t('validation.email_format_error');
+        newErrors.email = t('auth.validation.email_format_error');
       }
     }
 
     // 邮箱验证路径：额外验证手机号格式（仅格式检查，无需短信验证）
     if (verifyMethod === 'email') {
       if (!emailPathPhoneNumber.trim()) {
-        newErrors.phoneNumber = t('validation.phone_required');
+        newErrors.phoneNumber = t('auth.validation.phone_required');
       } else if (!validatePhoneNumber(emailPathPhoneNumber, emailPathAreaCode)) {
         newErrors.phoneNumber = emailPathAreaCode === '86'
-          ? t('validation.phone_china_invalid')
-          : t('validation.phone_us_invalid');
+          ? t('auth.validation.phone_china_invalid')
+          : t('auth.validation.phone_us_invalid');
       }
     }
 
@@ -579,6 +611,7 @@ export const StudentNormalRegisterStep1Screen: React.FC = () => {
             placeholderTextColor={theme.colors.text.disabled}
             keyboardType="email-address"
             returnKeyType="next"
+            onBlur={handleEmailBlur}
             onSubmitEditing={() => Keyboard.dismiss()}
             inputAccessoryViewID={Platform.OS === 'ios' ? KEYBOARD_ACCESSORY_ID : undefined}
           />
@@ -927,14 +960,14 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing[2],
   },
   input: {
-    backgroundColor: theme.colors.background.secondary,
+    backgroundColor: '#F5F5F5',
     borderRadius: theme.borderRadius.lg,
     paddingHorizontal: theme.spacing[4],
     paddingVertical: theme.spacing[4],
     fontSize: theme.typography.fontSize.base,
     color: theme.colors.text.primary,
     borderWidth: 1,
-    borderColor: theme.colors.border.primary,
+    borderColor: '#E8E8E8',
     minHeight: 52,
   },
   inputError: {

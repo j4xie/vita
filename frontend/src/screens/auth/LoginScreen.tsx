@@ -43,19 +43,39 @@ export const LoginScreen: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
-  
+
   // 表单验证状态
   const [errors, setErrors] = useState<{email?: string; password?: string}>({});
   const [focusedInput, setFocusedInput] = useState<string | null>(null);
   const [formValid, setFormValid] = useState(false);
   const [loginError, setLoginError] = useState<string>('');
-  
+
   // 动画状态
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(50)).current;
   const buttonColorAnim = useRef(new Animated.Value(0)).current;
-  
-  // 从忘记密码页传入的登录账号，自动填入
+
+  // 从 AsyncStorage 读取记住的账号和勾选状态
+  useEffect(() => {
+    const loadSavedCredentials = async () => {
+      try {
+        const [savedRemember, savedEmail] = await Promise.all([
+          AsyncStorage.getItem('rememberMe'),
+          AsyncStorage.getItem('userEmail'),
+        ]);
+        const shouldRemember = savedRemember !== 'false'; // 默认记住
+        setRememberMe(shouldRemember);
+        if (shouldRemember && savedEmail) {
+          setEmail(savedEmail);
+        }
+      } catch (e) {
+        // 读取失败不影响登录流程
+      }
+    };
+    loadSavedCredentials();
+  }, []);
+
+  // 从忘记密码页传入的登录账号，自动填入（优先级高于记住的账号）
   useEffect(() => {
     const prefill = route.params?.prefillEmail;
     if (prefill) {
@@ -174,13 +194,13 @@ export const LoginScreen: React.FC = () => {
         // 登录成功，通过UserContext获取用户信息
         await userLogin(result.data.token);
         
-        // 保存用户邮箱（如果选择记住我）
+        // 保存/清除记住的账号
         if (rememberMe) {
           await AsyncStorage.setItem('userEmail', email);
           await AsyncStorage.setItem('rememberMe', 'true');
         } else {
           await AsyncStorage.removeItem('userEmail');
-          await AsyncStorage.removeItem('rememberMe');
+          await AsyncStorage.setItem('rememberMe', 'false');
         }
         
         // 导航到主页或返回之前的页面

@@ -161,6 +161,13 @@ def _semantic_lookup(question, dept_id, r):
         if best_score > 0:
             print("[Cache] SEMANTIC MISS for dept=%s best=%.3f (threshold=%.2f) time=%.3fs" % (
                 dept_id, best_score, SEMANTIC_SIMILARITY_THRESHOLD, elapsed), flush=True)
+            # Record best_score for threshold tuning analysis
+            # View with: redis-cli LRANGE pomelo:score_log 0 -1
+            try:
+                r.lpush(STATS_PREFIX + "score_log", "%.4f:%s:%s" % (best_score, dept_id, time.strftime("%m%d")))
+                r.ltrim(STATS_PREFIX + "score_log", 0, 999)  # Keep last 1000 entries
+            except Exception:
+                pass
 
     except Exception as e:
         logger.warning("[Semantic Cache] Lookup error: %s", e)
@@ -311,6 +318,26 @@ def get_cache_stats():
         total = hits + misses
         hit_rate = round(hits / total * 100, 1) if total > 0 else 0
 
+        # Score distribution from semantic MISS logs
+        score_log = r.lrange(STATS_PREFIX + "score_log", 0, -1) or []
+        scores = []
+        for entry in score_log:
+            try:
+                scores.append(float(entry.split(":")[0]))
+            except Exception:
+                pass
+
+        score_dist = {}
+        if scores:
+            score_dist = {
+                "count": len(scores),
+                "avg": round(sum(scores) / len(scores), 4),
+                "max": round(max(scores), 4),
+                "min": round(min(scores), 4),
+                "above_085": sum(1 for s in scores if s >= 0.85),
+                "above_090": sum(1 for s in scores if s >= 0.90),
+            }
+
         return {
             "available": True,
             "cached_entries": exact_count,
@@ -320,7 +347,8 @@ def get_cache_stats():
             "hits_semantic": hits_semantic,
             "misses": misses,
             "hit_rate_pct": hit_rate,
-            "semantic_threshold": SEMANTIC_SIMILARITY_THRESHOLD
+            "semantic_threshold": SEMANTIC_SIMILARITY_THRESHOLD,
+            "score_distribution": score_dist
         }
     except Exception:
         return {"available": False}

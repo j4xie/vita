@@ -8,6 +8,9 @@ class Config:
     # Flask configuration
     SECRET_KEY = os.environ.get('SECRET_KEY') or 'dev-secret-key'
 
+    # DashScope API Key
+    DASHSCOPE_API_KEY = os.environ.get('DASHSCOPE_API_KEY') or 'your-api-key-here'
+
     # Server configuration
     HOST = '0.0.0.0'
     PORT = int(os.environ.get('PORT', 8087))
@@ -46,7 +49,12 @@ class Config:
         218: 'University of Washington',
         219: 'Berklee College of Music',
         220: 'UC Santa Barbara',
+        223: 'PomeloX HQ',
+        224: 'Rutgers University',
         226: 'New York University',
+        230: 'Cornell University',
+        231: 'Ohio State University',
+        232: 'University of Pennsylvania',
     }
 
     # RAG configuration

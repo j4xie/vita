@@ -96,6 +96,8 @@ export interface Product {
   pointsPrice: number;           // 积分价格
   marketPrice?: number;          // 市场价（用于显示优惠力度）
   earnPoints?: number;           // 兑换后可额外获得的积分（类似参考图 "Earn 20%"）
+  priceUSD?: number;             // USD价格（非积分商品）
+  priceCNY?: number;             // CNY价格（非积分商品）
 
   // 库存信息
   stock: number;

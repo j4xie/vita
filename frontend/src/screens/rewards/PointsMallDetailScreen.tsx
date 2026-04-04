@@ -18,6 +18,7 @@ import { OptimizedImage } from '../../components/common/OptimizedImage';
 import { ColorSelector } from '../../components/rewards/ColorSelector';
 import { pointsMallAPI } from '../../services/pointsMallAPI';
 import { useUser } from '../../context/UserContext';
+import { getUserPoints } from '../../services/orderAPI';
 import { LoaderOne } from '../../components/ui/LoaderOne';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -94,7 +95,7 @@ export const PointsMallDetailScreen: React.FC = () => {
   }, []);
 
   // 处理兑换
-  const handleExchange = useCallback(() => {
+  const handleExchange = useCallback(async () => {
     if (!product) return;
 
     // 检查库存
@@ -106,8 +107,8 @@ export const PointsMallDetailScreen: React.FC = () => {
       return;
     }
 
-    // 检查积分是否足够（从用户信息获取）
-    const userPoints = user?.points || 0;
+    // 实时查询积分余额
+    const userPoints = await getUserPoints();
     if (userPoints < product.pointsPrice) {
       Alert.alert(
         t('rewards.mall.insufficient_points', '积分不足'),
@@ -116,13 +117,15 @@ export const PointsMallDetailScreen: React.FC = () => {
       return;
     }
 
-    // 跳转到订单确认页面
-    navigation.navigate('OrderConfirm', {
+    // 跳转到订单确认页面 (try RewardsStack first, fallback to RootStack global)
+    const state = navigation.getState();
+    const screenName = state?.routeNames?.includes('OrderConfirm') ? 'OrderConfirm' : 'OrderConfirmGlobal';
+    navigation.navigate(screenName, {
       product: product,
       quantity: 1,
       selectedVariants: selectedVariantId ? { variant: selectedVariantId } : {},
     });
-  }, [product, user, t, navigation, selectedVariantId]);
+  }, [product, t, navigation, selectedVariantId]);
 
   // 库存状态
   const getStockText = () => {

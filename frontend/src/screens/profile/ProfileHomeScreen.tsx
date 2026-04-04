@@ -1374,6 +1374,14 @@ export const ProfileHomeScreen: React.FC = () => {
           {isAuthenticated && permissions.hasVolunteerManagementAccess() && (
             <VolunteerManagementCard
               onPress={handleVolunteerSectionPress}
+              onRegisteredPress={() => {
+                setActivityModalType('not_checked_in');
+                setShowActivityModal(true);
+              }}
+              onAttendedPress={() => {
+                setActivityModalType('checked_in');
+                setShowActivityModal(true);
+              }}
               hours={volunteerStats.volunteerHours}
               registered={activityStats.notParticipated}
               attended={activityStats.participated}

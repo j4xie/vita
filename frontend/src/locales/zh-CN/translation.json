@@ -125,78 +125,18 @@
     "english": "English"
   },
   "form": {
-    "errors": {
-      "legalNameRequired": "请输入法定名",
-      "englishNicknameRequired": "请输入常用名",
-      "universityRequired": "请输入所属学校",
-      "emailRequired": "请输入学校邮箱",
-      "emailInvalid": "请输入有效的学校邮箱",
-      "passwordRequired": "请输入密码",
-      "passwordMinLength": "密码长度至少8位",
-      "passwordMismatch": "两次密码输入不一致",
-      "phoneRequired": "请输入电话号码",
-      "phoneInvalidCN": "请输入有效的中国手机号",
-      "phoneInvalidUS": "请输入有效的美国电话号码"
-    },
-    "labels": {
-      "legalName": "法定名 *",
-      "englishNickname": "常用名 *",
-      "university": "所属学校 *",
-      "schoolEmail": "学校邮箱 * (作为登录账号)",
-      "password": "设置密码 *",
-      "confirmPassword": "确认密码 *",
-      "phoneNumber": "电话号码 *"
-    },
-    "placeholders": {
-      "legalName": "请输入您的法定全名",
-      "englishNickname": "请输入您的常用名",
-      "university": "请输入您的学校名称",
-      "password": "至少8位，包含字母和数字",
-      "confirmPassword": "请再次输入密码"
-    },
-    "steps": {
-      "step": "步骤",
-      "basicInfo": "基本信息",
-      "basicInfoDesc": "请填写您的真实信息",
-      "accountSetup": "账号设置",
-      "accountSetupDesc": "设置您的登录账号和密码",
-      "contact": "联系方式",
-      "contactDesc": "请选择并填写您的电话号码"
-    },
-    "buttons": {
-      "next": "下一步",
-      "sendCode": "发送验证码",
-      "register": "注册"
-    },
-    "phoneType": {
-      "china": "🇨🇳 中国号码",
-      "usa": "🇺🇸 美国号码"
-    },
-    "terms": {
-      "agree": "我已阅读并同意",
-      "service": " 服务条款 ",
-      "and": "和",
-      "privacy": " 隐私政策"
-    },
-    "alerts": {
-      "codeSent": "验证码已发送",
-      "codeSentMessage": "验证码已发送至",
-      "sendFailed": "发送失败",
-      "sendFailedMessage": "验证码发送失败，请重试"
-    },
-    "referralCode": "推荐码：",
-    "wizard": {
-      "steps": {
-        "personal": "个人信息",
-        "contact": "联系方式",
-        "payment": "支付与地址",
-        "award": "奖项与材料",
-        "other": "其他信息"
-      },
-      "next": "下一步",
-      "previous": "上一步",
-      "step_of": "第 {{current}} 步，共 {{total}} 步",
-      "complete_required": "请填写本页所有必填项后再继续"
+    "auto_filled": "已自动填写",
+    "placeholder_input": "请输入{{label}}",
+    "placeholder_select": "请选择{{label}}",
+    "fill_in_placeholder": "请输入...",
+    "proof_upload_hint": "请联系你的社团/分部负责人，提供服务记录截图或其他证明材料。",
+    "start_date": "开始日期",
+    "end_date": "结束日期",
+    "start_time": "开始时间",
+    "end_time": "结束时间",
+    "validation": {
+      "required": "{{label}}为必填项",
+      "format_error": "{{label}}格式不正确"
     }
   },
   "auth": {
@@ -315,19 +255,19 @@
         "form_title": "家长账户注册",
         "description": "注册家长账户，关注孩子的活动参与情况",
         "invitation_description": "通过推荐码注册家长账户，管理和关注孩子的活动",
-        "first_name_label": "名字 *",
+        "first_name_label": "名字",
         "first_name_placeholder": "请输入您的名字",
-        "last_name_label": "姓氏 *",
+        "last_name_label": "姓氏",
         "last_name_placeholder": "请输入您的姓氏",
         "email_label": "邮箱地址 *（将作为登录用户名）",
         "email_placeholder": "请输入您的常用邮箱",
         "email_help": "该邮箱将作为您的登录用户名，请确保可以正常接收邮件",
-        "phone_label": "手机号码 *",
+        "phone_label": "手机号码",
         "phone_label_optional": "手机号码 *",
         "select_area_code": "选择国际区号",
         "area_code_china": "🇨🇳 +86 中国",
         "area_code_usa": "🇺🇸 +1 美国",
-        "child_school_label": "孩子的学校 *",
+        "child_school_label": "孩子的学校",
         "child_school_placeholder": "请选择孩子就读的学校",
         "register_button": "创建家长账户",
         "registering_title": "正在注册家长账户",
@@ -425,14 +365,14 @@
         "read_and_agree": "阅读并同意",
         "and": "和",
         "referral_code": "推荐码：{{code}}",
-        "username_label": "用户名 *",
+        "username_label": "用户名",
         "username_placeholder": "如：alex123、sophia_wang（6-20位字母数字）",
-        "legal_name_label": "法定姓名 *",
+        "legal_name_label": "法定姓名",
         "legal_name_placeholder": "如：张三 或 Zhang San（护照/身份证姓名）",
         "legal_name_description": "请使用护照或身份证上显示的完整姓名",
-        "english_nickname_label": "常用名 *",
+        "english_nickname_label": "常用名",
         "english_nickname_placeholder": "如：Alex、Sophia（日常使用的英文名）",
-        "university_label": "所属学校 *",
+        "university_label": "所属学校",
         "university_placeholder": "请选择您的学校",
         "student_type_label": "学生类型",
         "undergraduate": "本科生",
@@ -440,14 +380,14 @@
         "gender_label": "性别",
         "male": "男",
         "female": "女",
-        "password_label": "密码 *",
+        "password_label": "密码",
         "password_placeholder": "请输入密码(6-20位)",
-        "confirm_password_label": "确认密码 *",
+        "confirm_password_label": "确认密码",
         "confirm_password_placeholder": "请再次输入密码",
         "phone_china": "🇨🇳 中国手机号",
         "phone_usa": "🇺🇸 美国号码",
         "us_phone_contact_info": "如果没有中国手机号码，请通过推荐组织获取推荐码注册。",
-        "phone_label": "电话号码 *",
+        "phone_label": "电话号码",
         "phone_placeholder": "请输入您的电话号码",
         "terms_checkbox": "我已阅读并同意",
         "agree_sms": "我同意接收短信消息",
@@ -462,9 +402,9 @@
         "network_error_message": "网络连接失败，请检查网络设置后重试",
         "register": "注册账户",
         "step1_description": "请填写您的基本信息，我们将为您生成学校邮箱",
-        "first_name_label": "名 *",
+        "first_name_label": "名",
         "first_name_placeholder": "请输入您的名",
-        "last_name_label": "姓 *",
+        "last_name_label": "姓",
         "last_name_placeholder": "请输入您的姓",
         "school_email_preview": "学校邮箱预览",
         "email_help_text": "请输入您的学校邮箱用户名（@符号前的部分）",
@@ -477,7 +417,7 @@
         "invitation_step1_description": "邀请码注册：请填写您的基本信息",
         "invitation_step2_description": "设置您的账号信息，无需验证码",
         "phone_label_optional": "手机号码 *",
-        "nickname_label": "常用名 *",
+        "nickname_label": "常用名",
         "nickname_placeholder": "请输入您的常用名",
         "last_name_placeholder_chinese": "请输入中文姓氏",
         "first_name_placeholder_chinese": "请输入中文名字",
@@ -485,15 +425,16 @@
         "common_name_placeholder": "请输入英文常用名（如：xiaoming）",
         "gender_other": "其他",
         "select_organization": "请选择您的组织",
-        "verification_code_label": "手机验证码 *",
+        "search_organizations": "搜索组织...",
+        "verification_code_label": "手机验证码",
         "verification_code_placeholder": "请输入6位验证码",
-        "organization_label": "推荐组织 *",
+        "organization_label": "推荐组织",
         "organization_placeholder": "请选择您的组织",
         "loading_organizations": "加载组织列表中...",
         "email_help": "该邮箱将作为您的登录账号",
-        "email_label": "邮箱 *",
+        "email_label": "邮箱",
         "email_placeholder": "请输入您的邮箱",
-        "school_label": "学校 *",
+        "school_label": "学校",
         "school_placeholder": "请选择您的学校",
         "gender_male": "男",
         "gender_female": "女",
@@ -527,7 +468,9 @@
         "retry_solutions": [
           "重新获取验证码",
           "检查短信"
-        ]
+        ],
+        "email_already_registered": "该邮箱已被注册",
+        "phone_already_registered": "该手机号已被注册"
       },
       "email": {
         "code_sent_title": "验证码已发送",
@@ -619,7 +562,12 @@
       "common_name_too_short": "常用名至少2位字符",
       "common_name_too_long": "常用名不能超过20位",
       "common_name_letters_only": "常用名只能输入字母（不允许标点符号和空格数字）",
-      "invalid_text_type": "无效的文本类型"
+      "invalid_text_type": "无效的文本类型",
+      "field_required": "{{field}}是必填项",
+      "field_min_length": "{{field}}至少需要{{min}}个字符",
+      "field_max_length": "{{field}}不能超过{{max}}个字符",
+      "field_format_invalid": "{{field}}格式不正确",
+      "field_validation_failed": "{{field}}验证失败"
     },
     "errors": {
       "login_failed": "登录失败",
@@ -701,7 +649,11 @@
         "change_phone": "更换手机号"
       },
       "school_load_failed": "加载学校列表失败，请重试",
-      "unknown_error": "发生未知错误，请稍后重试"
+      "unknown_error": "发生未知错误，请稍后重试",
+      "registration_timeout": "注册请求超时，网络可能不稳定或服务器繁忙",
+      "network_suggestion": "建议：检查WiFi/数据连接，稍后重试，或联系客服",
+      "email_taken_title": "邮箱已注册",
+      "email_taken_message": "此邮箱已经注册过账号，您可能已经有账户了"
     },
     "verification": {
       "title": "短信验证",
@@ -908,6 +860,25 @@
       "param_error": "参数解析失败，请重试",
       "register_now": "立即报名"
     },
+    "ticket": {
+      "title": "我的入场码",
+      "my_ticket": "我的入场码",
+      "scan_hint": "请向工作人员出示此码签到入场",
+      "order_no": "订单号",
+      "amount": "支付金额",
+      "status": "状态",
+      "paid": "已支付",
+      "pending": "待支付",
+      "ticket_type": "票券",
+      "ticket_single": "张",
+      "tickets": "张",
+      "payment_pending": "请先完成支付以获取入场码",
+      "go_pay": "去支付",
+      "edit_info": "修改信息",
+      "cancel_order": "取消订单",
+      "per_ticket": "/ 张",
+      "no_paid_order": "未找到该活动的支付订单"
+    },
     "status": {
       "registered": "已报名",
       "checked_in": "已签到",
@@ -1072,6 +1043,9 @@
       "status_inactive": "暂未开放",
       "deadline": "截止日期",
       "applicants": "申请人",
+      "available_applications": "可申请项目",
+      "people_registered": "人已报名",
+      "hero_subtitle_full": "申请证书，记录你的成就与贡献。",
       "pvsa": {
         "title": "PVSA证书申请",
         "steps": {
@@ -1526,9 +1500,13 @@
     "expectedLaunch": "预计开放：{{time}}",
     "page_title": "新生咨询",
     "hero_title": "ChineseUnion 新生咨询",
+    "hero_banner_title": "ChineseUnion\nConsulting",
     "hero_subtitle": "为海外留学生提供全方位的入学咨询和生活指导服务，帮助你快速适应海外学习生活",
     "visit_website": "访问咨询网站",
     "services_title": "咨询服务",
+    "our_services": "我们的服务",
+    "quick_links_title": "快捷链接",
+    "album_subtitle": "记录你的第一个里程碑",
     "services": {
       "academic": "新生通道",
       "academic_desc": "入学准备、新生资讯、官方讨论群",
@@ -1537,7 +1515,11 @@
       "arrival": "接机服务",
       "arrival_desc": "免费接机服务、入学报到指引",
       "community": "新生见面会",
-      "community_desc": "线下迎新活动、结识新朋友"
+      "community_desc": "线下迎新活动、结识新朋友",
+      "new_student": "新生通道",
+      "rentals": "校外租房",
+      "pickup": "接机",
+      "community_group": "社区"
     },
     "quick_links": "快捷链接",
     "links": {
@@ -2877,6 +2859,8 @@
       "not_registered_message": "您尚未注册此活动，无法签到",
       "already_signed_in_title": "已签到",
       "already_signed_in_message": "您已完成此活动的签到",
+      "payment_required_title": "需要完成支付",
+      "payment_required_message": "请先完成活动支付后再签到入场",
       "unknown_status_message": "活动状态未知，请稍后重试",
       "check_status_failed": "检查活动状态失败",
       "scan_result": "扫描结果"
@@ -3205,9 +3189,11 @@
       "payment_method": "支付方式",
       "points_exchange": "积分兑换",
       "current_points": "当前积分: {{points}}",
-      "alipay_payment": "支付宝支付",
-      "stripe_payment": "银行卡支付",
+      "alipay_payment": "支付宝支付（人民币）",
+      "stripe_payment": "银行卡支付（美元）",
       "stripe_payment_desc": "支持Visa、Mastercard等",
+      "cny_payment_desc": "支持支付宝扫码支付",
+      "exchange_rate_hint": "参考汇率: 1 USD ≈ {{rate}} CNY",
       "order_summary": "订单总计",
       "product_total": "商品总价",
       "earn_points_label": "可获得积分",
@@ -3219,6 +3205,7 @@
       "insufficient_points_warning": "积分不足，请选择其他支付方式",
       "product_error": "商品信息错误",
       "exchange_success": "兑换成功！",
+      "view_orders": "查看订单",
       "exchange_failed": "兑换失败，请稍后重试",
       "create_order_failed": "创建订单失败，请稍后重试",
       "cannot_open_payment": "无法打开支付页面，请检查是否安装了支付宝应用",
@@ -3236,6 +3223,7 @@
       "waiting_stripe": "正在处理支付...",
       "success": "支付成功！",
       "success_exchange": "{{product}} 兑换成功",
+      "success_activity": "{{activity}} 报名成功",
       "success_default": "订单支付成功",
       "cancelled": "支付已取消",
       "cancelled_desc": "您已取消支付，可以重新尝试",
@@ -3244,6 +3232,7 @@
       "return_home": "返回首页",
       "retry_payment": "重新支付",
       "view_orders": "查看订单",
+      "view_activity": "查看活动",
       "leave_temporarily": "暂时离开",
       "leave_hint": "支付可能需要一些时间，您可以稍后在订单中心查看支付结果",
       "continue_waiting": "继续等待",
@@ -3329,6 +3318,8 @@
     "my_coupons": "我的优惠券",
     "my_coupons_subtitle": "查看可用",
     "my_coupons_desc": "查看和使用优惠券",
+    "my_orders": "我的订单",
+    "my_orders_subtitle": "查看订单",
     "refer_friends": "邀请好友",
     "refer_friends_subtitle": "赚积分",
     "refer_friends_desc": "邀请好友赢取奖励",
@@ -3421,21 +3412,6 @@
       "no_package_desc": "请在提交前选择一个套餐类型。",
       "no_payment_title": "未选择支付方式",
       "no_payment_desc": "请在提交前选择一种支付方式。"
-    }
-  },
-  "form": {
-    "auto_filled": "已自动填写",
-    "placeholder_input": "请输入{{label}}",
-    "placeholder_select": "请选择{{label}}",
-    "fill_in_placeholder": "请输入...",
-    "proof_upload_hint": "请联系你的社团/分部负责人，提供服务记录截图或其他证明材料。",
-    "start_date": "开始日期",
-    "end_date": "结束日期",
-    "start_time": "开始时间",
-    "end_time": "结束时间",
-    "validation": {
-      "required": "{{label}}为必填项",
-      "format_error": "{{label}}格式不正确"
     }
   }
 }

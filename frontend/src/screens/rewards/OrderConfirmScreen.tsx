@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import {
   View,
   Text,
@@ -18,10 +18,10 @@ import { OptimizedImage } from '../../components/common/OptimizedImage';
 import { useUser } from '../../context/UserContext';
 import { useTheme } from '../../context/ThemeContext';
 import { theme } from '../../theme';
-import { createOrder, getOrderList, cancelOrder } from '../../services/orderAPI';
+import { createOrder, getOrderList, cancelOrder, getUserPoints } from '../../services/orderAPI';
 import { Address, getDefaultAddress } from '../../services/addressAPI';
 import { useStripePayment } from '../../hooks/useStripePayment';
-import { OrderItem, productToOrderItem } from '../../types/order';
+import { OrderItem, productToOrderItem, convertCurrency, formatPrice } from '../../types/order';
 import pomeloXAPI from '../../services/PomeloXAPI';
 
 export const OrderConfirmScreen: React.FC = () => {
@@ -49,18 +49,28 @@ export const OrderConfirmScreen: React.FC = () => {
 
   const pvsaFormData = route.params?.pvsaFormData as Record<string, string> | undefined;
   const pvsaActivityId = route.params?.pvsaActivityId as number | undefined;
+  const registrationFormData = route.params?.registrationFormData as Record<string, string> | undefined;
+  const registrationActivityId = route.params?.registrationActivityId as number | undefined;
   const preselectedPayment = route.params?.preselectedPayment as 'stripe' | 'alipay' | undefined;
+  const isCertificateFlow = pvsaActivityId ? true : (route.params?.orderItem?.actType === 4 || route.params?.orderItem?.actType === '4');
 
   const paymentResultScreenName = route.name === 'OrderConfirmGlobal' ? 'PaymentResultGlobal' : 'PaymentResult';
 
   const isPointsMall = orderItem?.orderType === '1';
   const isMoneyOnly = orderItem?.orderType === '2' || orderItem?.orderType === '3';
+  const isPointsOnly = isPointsMall && orderItem?.currency !== 'USD' && !orderItem?.priceCNY;
 
   const [loading, setLoading] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<'points' | 'alipay' | 'stripe'>(
     preselectedPayment || (isMoneyOnly ? 'stripe' : 'points')
   );
   const [selectedAddress, setSelectedAddress] = useState<Address | null>(null);
+  const [userPoints, setUserPoints] = useState(0);
+
+  // Load user points from API
+  useEffect(() => {
+    getUserPoints().then(setUserPoints);
+  }, []);
 
   const loadAddress = useCallback(async () => {
     if (!isPointsMall) return;
@@ -86,23 +96,32 @@ export const OrderConfirmScreen: React.FC = () => {
   }, [navigation, selectedAddress]);
 
   const totalPoints = isPointsMall ? (orderItem?.pointsPrice || 0) * quantity : 0;
-  const totalAmount = orderItem?.price || 0;
-  const userPoints = user?.points || 0;
+  const totalAmount = (orderItem?.price || 0) * quantity;
   const hasEnoughPoints = userPoints >= totalPoints;
 
   const buildOrderParams = (payChannel?: '1' | '2') => {
     if (!orderItem) return null;
     let orderPrice: number;
+    let payMode: '1' | '2' | '3';
+
     if (paymentMethod === 'points') {
       orderPrice = totalPoints;
-    } else if (payChannel === '1') {
-      orderPrice = orderItem.priceCNY ? orderItem.priceCNY * quantity : totalAmount / 100;
+      payMode = '2';
+    } else if (paymentMethod === 'alipay') {
+      // Alipay = CNY, payMode=3
+      orderPrice = orderItem.priceCNY
+        ? orderItem.priceCNY * quantity
+        : convertCurrency(totalAmount / 100, 'USD', 'CNY');
+      payMode = '3';
     } else {
+      // Stripe = USD, payMode=1
       orderPrice = totalAmount / 100;
+      payMode = '1';
     }
+
     const params: any = {
       orderType: orderItem.orderType,
-      payMode: paymentMethod === 'points' ? '2' : '1',
+      payMode,
       price: String(orderPrice),
       addrId: selectedAddress ? String(selectedAddress.id) : '0',
       num: String(quantity),
@@ -161,8 +180,13 @@ export const OrderConfirmScreen: React.FC = () => {
           orderId: outTradeNo,
           productName: orderItem.name,
           paymentMethod: 'alipay',
+          orderType: orderItem.orderType,
+          activityId: orderItem.activityId,
+          isCertificateFlow,
           pvsaFormData,
           pvsaActivityId,
+          registrationFormData,
+          registrationActivityId,
         });
       } else {
         Alert.alert(
@@ -214,8 +238,13 @@ export const OrderConfirmScreen: React.FC = () => {
           productName: orderItem.name,
           paymentMethod: 'stripe',
           paymentStatus: 'paid',
+          orderType: orderItem.orderType,
+          activityId: orderItem.activityId,
+          isCertificateFlow,
           pvsaFormData,
           pvsaActivityId,
+          registrationFormData,
+          registrationActivityId,
         });
       } else if (result.error === 'cancelled') {
         Alert.alert(t('rewards.payment.cancelled'), t('rewards.payment.cancelled_desc'));
@@ -243,11 +272,13 @@ export const OrderConfirmScreen: React.FC = () => {
       const response = await createOrderWithRetry(buildOrderParams()!);
 
       if (response.code === 200) {
+        getUserPoints().then(setUserPoints);
         refreshUserInfo().catch((e) =>
           console.warn('[OrderConfirm] Failed to refresh user info:', e)
         );
         Alert.alert(t('common.success'), t('rewards.order.exchange_success'), [
-          { text: t('common.confirm'), onPress: () => navigation.navigate('PointsMallHome') },
+          { text: t('rewards.order.view_orders'), onPress: () => navigation.navigate('MyOrders') },
+          { text: t('common.confirm'), onPress: () => navigation.goBack() },
         ]);
       } else {
         Alert.alert(t('common.error'), response.msg || t('rewards.order.exchange_failed'));
@@ -271,14 +302,26 @@ export const OrderConfirmScreen: React.FC = () => {
     if (paymentMethod === 'points') {
       return `${totalPoints} ${t('rewards.order.points_unit')}`;
     }
-    return `$${(totalAmount / 100).toFixed(2)}`;
+    if (paymentMethod === 'alipay') {
+      const cnyAmount = orderItem?.priceCNY
+        ? orderItem.priceCNY * quantity
+        : convertCurrency(totalAmount / 100, 'USD', 'CNY');
+      return formatPrice(cnyAmount, 'CNY');
+    }
+    return formatPrice(totalAmount / 100, 'USD');
   };
 
   const getItemPriceText = () => {
-    if (isPointsMall) {
+    if (isPointsMall && paymentMethod === 'points') {
       return `${orderItem?.pointsPrice || 0} ${t('rewards.order.points_unit')}`;
     }
-    return `$${(totalAmount / 100).toFixed(2)}`;
+    if (paymentMethod === 'alipay') {
+      const cnyAmount = orderItem?.priceCNY
+        ? orderItem.priceCNY * quantity
+        : convertCurrency(totalAmount / 100, 'USD', 'CNY');
+      return formatPrice(cnyAmount, 'CNY');
+    }
+    return formatPrice(totalAmount / 100, 'USD');
   };
 
   // Dark mode helper
@@ -296,7 +339,7 @@ export const OrderConfirmScreen: React.FC = () => {
     <View style={[styles.container, dk && styles.containerDark, { paddingTop: insets.top }]}>
       {/* Header */}
       <View style={[styles.header, dk && styles.headerDark]}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+        <TouchableOpacity onPress={() => navigation.canGoBack() ? navigation.goBack() : navigation.navigate('Main')} style={styles.backButton}>
           <Ionicons name="chevron-back" size={24} color={dk ? '#fff' : '#000'} />
         </TouchableOpacity>
         <Text style={[styles.headerTitle, dk && styles.textWhite]}>{t('rewards.order.confirm_title')}</Text>
@@ -403,47 +446,52 @@ export const OrderConfirmScreen: React.FC = () => {
             </TouchableOpacity>
           )}
 
-          {/* Alipay */}
-          <TouchableOpacity
-            style={[
-              styles.paymentOption,
-              dk && styles.paymentOptionDark,
-              paymentMethod === 'alipay' && (dk ? styles.paymentOptionSelectedDark : styles.paymentOptionSelected),
-            ]}
-            onPress={() => setPaymentMethod('alipay')}
-            accessibilityRole="radio"
-            accessibilityState={{ checked: paymentMethod === 'alipay' }}
-          >
-            <View style={styles.paymentOptionLeft}>
-              <Ionicons name="logo-alipay" size={24} color="#1677FF" style={styles.paymentIcon} />
-              <View>
-                <Text style={[styles.paymentOptionTitle, dk && styles.textWhite]}>
-                  {t('rewards.order.alipay_payment')}
-                </Text>
-                <Text style={[styles.paymentOptionDesc, dk && styles.textSecondaryDark]}>
-                  {orderItem?.priceCNY
-                    ? `¥${orderItem.priceCNY * quantity}`
-                    : t('rewards.payment.price_at_checkout', { defaultValue: `$${(totalAmount / 100).toFixed(2)}` })
-                  }
-                </Text>
+          {/* Alipay - hidden for points-only products */}
+          {!isPointsOnly && (
+            <TouchableOpacity
+              style={[
+                styles.paymentOption,
+                dk && styles.paymentOptionDark,
+                paymentMethod === 'alipay' && (dk ? styles.paymentOptionSelectedDark : styles.paymentOptionSelected),
+              ]}
+              onPress={() => setPaymentMethod('alipay')}
+              accessibilityRole="radio"
+              accessibilityState={{ checked: paymentMethod === 'alipay' }}
+            >
+              <View style={styles.paymentOptionLeft}>
+                <Ionicons name="logo-alipay" size={24} color="#1677FF" style={styles.paymentIcon} />
+                <View>
+                  <Text style={[styles.paymentOptionTitle, dk && styles.textWhite]}>
+                    {t('rewards.order.alipay_payment')}
+                  </Text>
+                  <Text style={[styles.paymentOptionDesc, dk && styles.textSecondaryDark]}>
+                    {formatPrice(
+                      orderItem?.priceCNY
+                        ? orderItem.priceCNY * quantity
+                        : convertCurrency(totalAmount / 100, 'USD', 'CNY'),
+                      'CNY'
+                    )}
+                  </Text>
+                </View>
               </View>
-            </View>
-            <View style={[styles.radio, paymentMethod === 'alipay' && styles.radioSelected]}>
-              {paymentMethod === 'alipay' && <View style={styles.radioDot} />}
-            </View>
-          </TouchableOpacity>
+              <View style={[styles.radio, paymentMethod === 'alipay' && styles.radioSelected]}>
+                {paymentMethod === 'alipay' && <View style={styles.radioDot} />}
+              </View>
+            </TouchableOpacity>
+          )}
 
-          {/* Stripe */}
-          <TouchableOpacity
-            style={[
-              styles.paymentOption,
-              dk && styles.paymentOptionDark,
-              paymentMethod === 'stripe' && (dk ? styles.paymentOptionSelectedDark : styles.paymentOptionSelected),
-            ]}
-            onPress={() => setPaymentMethod('stripe')}
-            accessibilityRole="radio"
-            accessibilityState={{ checked: paymentMethod === 'stripe' }}
-          >
+          {/* Stripe - hidden for points-only products */}
+          {!isPointsOnly && (
+            <TouchableOpacity
+              style={[
+                styles.paymentOption,
+                dk && styles.paymentOptionDark,
+                paymentMethod === 'stripe' && (dk ? styles.paymentOptionSelectedDark : styles.paymentOptionSelected),
+              ]}
+              onPress={() => setPaymentMethod('stripe')}
+              accessibilityRole="radio"
+              accessibilityState={{ checked: paymentMethod === 'stripe' }}
+            >
             <View style={styles.paymentOptionLeft}>
               <Ionicons name="card-outline" size={24} color="#635BFF" style={styles.paymentIcon} />
               <View>
@@ -451,7 +499,10 @@ export const OrderConfirmScreen: React.FC = () => {
                   {t('rewards.order.stripe_payment')}
                 </Text>
                 <Text style={[styles.paymentOptionDesc, dk && styles.textSecondaryDark]}>
-                  {t('rewards.order.stripe_payment_desc')}
+                  {isPointsMall
+                    ? t('rewards.order.stripe_payment_desc')
+                    : formatPrice(totalAmount / 100, 'USD')
+                  }
                 </Text>
               </View>
             </View>
@@ -459,6 +510,7 @@ export const OrderConfirmScreen: React.FC = () => {
               {paymentMethod === 'stripe' && <View style={styles.radioDot} />}
             </View>
           </TouchableOpacity>
+          )}
 
           {!hasEnoughPoints && paymentMethod === 'points' && (
             <View style={[styles.warningBox, dk && { backgroundColor: 'rgba(255,149,0,0.15)' }]}>

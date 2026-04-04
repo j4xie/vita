@@ -61,7 +61,7 @@ export const VerificationScreen: React.FC = () => {
   const handleVerifyAndRegister = async () => {
     const code = verificationCode.join('');
     if (code.length !== 6) {
-      Alert.alert(t('common.error'), t('validation.errors.verification_code_format'));
+      Alert.alert(t('common.error'), t('auth.validation.errors.verification_code_format'));
       return;
     }
 

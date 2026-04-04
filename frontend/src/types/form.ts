@@ -50,7 +50,7 @@ export interface FormField {
  */
 export interface FormFieldSchema extends FormField {
   // 输入类型
-  tag: 'el-input' | 'el-textarea' | 'el-radio-group' | 'el-checkbox-group' | 'upload' | string;
+  tag: 'el-input' | 'el-textarea' | 'el-radio-group' | 'el-checkbox-group' | 'upload' | 'text-display' | 'price' | 'image-display' | string;
   type?: 'text' | 'textarea' | 'password' | 'email' | 'phone';
 
   // 输入限制

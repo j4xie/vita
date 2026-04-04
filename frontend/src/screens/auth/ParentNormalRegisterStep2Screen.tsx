@@ -225,33 +225,33 @@ export const ParentNormalRegisterStep2Screen: React.FC = () => {
     if (verifyMethod === 'phone') {
       // 手机验证路径：验证手机号和验证码
       if (!phoneNumber) {
-        newErrors.phoneNumber = t('validation.phone_required');
+        newErrors.phoneNumber = t('auth.validation.phone_required');
       } else if (!validatePhoneNumber(phoneNumber, areaCode)) {
         newErrors.phoneNumber = areaCode === '86'
-          ? t('validation.phone_china_invalid')
-          : t('validation.phone_us_invalid');
+          ? t('auth.validation.phone_china_invalid')
+          : t('auth.validation.phone_us_invalid');
       }
 
       if (!verificationCode.trim()) {
-        newErrors.verificationCode = t('validation.verification_code_required');
+        newErrors.verificationCode = t('auth.validation.verification_code_required');
       } else if (!/^\d{6}$/.test(verificationCode)) {
-        newErrors.verificationCode = t('validation.verification_code_format');
+        newErrors.verificationCode = t('auth.validation.verification_code_format');
       }
     } else {
       // 邮箱验证路径：验证邮箱验证码
       if (!emailVerificationCode.trim()) {
-        newErrors.verificationCode = t('validation.verification_code_required');
+        newErrors.verificationCode = t('auth.validation.verification_code_required');
       } else if (!/^\d{6}$/.test(emailVerificationCode)) {
-        newErrors.verificationCode = t('validation.verification_code_format');
+        newErrors.verificationCode = t('auth.validation.verification_code_format');
       }
     }
 
     // 验证条款同意
     if (!agreedToTerms) {
-      newErrors.terms = t('validation.must_agree_terms');
+      newErrors.terms = t('auth.validation.must_agree_terms');
     }
     if (!agreedToSMS) {
-      newErrors.sms = t('validation.must_agree_sms');
+      newErrors.sms = t('auth.validation.must_agree_sms');
     }
 
     setErrors(newErrors);
@@ -281,7 +281,7 @@ export const ParentNormalRegisterStep2Screen: React.FC = () => {
     // 验证手机号
     if (!phoneNumber) {
       console.log('❌ [sendVerificationCode] 手机号为空');
-      Alert.alert(t('common.error'), t('validation.phone_required'));
+      Alert.alert(t('common.error'), t('auth.validation.phone_required'));
       return;
     }
 
@@ -293,7 +293,7 @@ export const ParentNormalRegisterStep2Screen: React.FC = () => {
       console.log('❌ [sendVerificationCode] 前端验证失败');
       Alert.alert(
         t('common.error'),
-        areaCode === '86' ? t('validation.phone_china_invalid') : t('validation.phone_us_invalid')
+        areaCode === '86' ? t('auth.validation.phone_china_invalid') : t('auth.validation.phone_us_invalid')
       );
       return;
     }
@@ -376,7 +376,7 @@ export const ParentNormalRegisterStep2Screen: React.FC = () => {
 
     const email = step1Data.email;
     if (!email) {
-      Alert.alert(t('common.error'), t('validation.email_required'));
+      Alert.alert(t('common.error'), t('auth.validation.email_required'));
       return;
     }
 

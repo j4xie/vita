@@ -31,6 +31,7 @@ import { useRegisteredAvatars, getAvatarColor } from '../../hooks/useRegisteredA
 import { schoolService } from '../../services/schoolService';
 import { MapSelectorModal } from '../../components/modals/MapSelectorModal';
 import { activityToOrderItem } from '../../types/order';
+import ActivityTicketModal from '../../components/activities/ActivityTicketModal';
 import Svg, { Path } from 'react-native-svg';
 import ActivityShareModal from '../../components/modals/ActivityShareModal';
 import { adaptActivity } from '../../utils/activityAdapter';
@@ -74,6 +75,7 @@ export const ActivityDetailScreen: React.FC = () => {
   const route = useRoute<any>();
   const insets = useSafeAreaInsets();
   const { user, isAuthenticated } = useUser();
+  const isMerchant = user?.role?.roleKey === 'merchant' || user?.roles?.some((r: any) => (r.key || r.roleKey) === 'merchant');
 
   const [activity, setActivity] = useState(() => {
     const a = route.params?.activity || {};
@@ -91,6 +93,7 @@ export const ActivityDetailScreen: React.FC = () => {
       image: a.image ?? '',
       images: a.images ?? [],
       price: a.price ?? 0,
+      currency: a.currency ?? 'USD',
       category: a.category ?? '',
       status: a.status ?? '',
       detail: a.detail ?? '',
@@ -105,13 +108,15 @@ export const ActivityDetailScreen: React.FC = () => {
   });
   const shareUserId = route.params?.shareUserId as number | undefined;
   const deepLinkActivityId = route.params?.activityId as string | undefined;
-  const [isRegistered, setIsRegistered] = useState(false);
-  const [registrationStatus, setRegistrationStatus] = useState<'upcoming' | 'registered' | 'checked_in'>('upcoming');
+  const initialStatus = (activity.status === 'registered' || activity.status === 'checked_in') ? activity.status : 'upcoming';
+  const [isRegistered, setIsRegistered] = useState(initialStatus !== 'upcoming');
+  const [registrationStatus, setRegistrationStatus] = useState<'upcoming' | 'registered' | 'checked_in'>(initialStatus as any);
   const [loading, setLoading] = useState(false);
   const [weather, setWeather] = useState<any>(null);
   const [weatherLoading, setWeatherLoading] = useState(false);
   const [school, setSchool] = useState<any>(null);
   const [schoolLoading, setSchoolLoading] = useState(false);
+  const [showTicketModal, setShowTicketModal] = useState(false);
 
   // 获取报名用户真实头像
   const { users: registeredUsers } = useRegisteredAvatars(activity.id?.toString());
@@ -127,13 +132,16 @@ export const ActivityDetailScreen: React.FC = () => {
   // --- LOGIC SECTION (Preserved functionality) --- //
 
   // Deep link: fetch activity by ID if only activityId is provided (no full activity object)
+  // Also fetch if activity has id but no title (e.g. navigated from PaymentResult with only { id })
   useEffect(() => {
-    if (activity.id || !deepLinkActivityId) return;
+    const needsFetch = !activity.title && (deepLinkActivityId || activity.id);
+    const fetchId = deepLinkActivityId || activity.id;
+    if (!needsFetch || !fetchId) return;
     const fetchActivity = async () => {
       try {
         const userId = user?.id ? parseInt(user.id) : undefined;
         const backendActivity = await pomeloXAPI.getActivityById(
-          parseInt(deepLinkActivityId),
+          parseInt(String(fetchId)),
           userId,
         );
         if (backendActivity) {
@@ -164,8 +172,8 @@ export const ActivityDetailScreen: React.FC = () => {
       try {
         const signInfo = await pomeloXAPI.getSignInfo(parseInt(activityId), parseInt(String(userId)));
         if (signInfo.code === 200) {
-          const statusMap = { [-1]: 'registered', [1]: 'checked_in' };
-          const newStatus = statusMap[signInfo.data as keyof typeof statusMap] || 'upcoming';
+          const statusMap: Record<number, string> = { [-2]: 'registered', [-1]: 'registered', [1]: 'checked_in' };
+          const newStatus = statusMap[signInfo.data as number] || 'upcoming';
           setRegistrationStatus(newStatus as any);
           setIsRegistered(newStatus !== 'upcoming');
         }
@@ -277,8 +285,15 @@ export const ActivityDetailScreen: React.FC = () => {
       navigation.navigate('Login', { returnTo: 'ActivityDetail', activityId: activity.id });
       return;
     }
-    // 付费活动 → OrderConfirmGlobal (RootStack level)
+    // 付费活动
     if (activity.price && activity.price > 0) {
+      // If activity has a dynamic form with ticketQty, go to form first
+      const hasTicketForm = activity.modelContent && activity.modelContent.includes('ticketQty');
+      if (hasTicketForm) {
+        navigation.navigate('ActivityRegistrationForm', { activity, shareUserId, isPaidActivity: true });
+        return;
+      }
+      // No ticket form → go directly to OrderConfirm
       navigation.navigate('OrderConfirmGlobal', {
         orderItem: activityToOrderItem(activity),
         shareUserId,
@@ -466,7 +481,7 @@ export const ActivityDetailScreen: React.FC = () => {
             {/* Price */}
             <InfoRow
               IconComponent={PriceFilterIcon}
-              title={(!activity.price || activity.price == 0) ? "Free" : `$${activity.price}`}
+              title={(!activity.price || activity.price == 0) ? "Free" : `${activity.currency === 'CNY' ? '¥' : '$'}${activity.price}`}
               color="#FF6B35"
             />
             {/* Registered */}
@@ -598,18 +613,35 @@ export const ActivityDetailScreen: React.FC = () => {
         </TouchableOpacity>
       </View>
 
-      {/* Footer */}
-      <View style={[styles.footer, { paddingBottom: insets.bottom + 10 }]}>
-        <TouchableOpacity
-          style={[styles.bookButton, isActivityEnded() && styles.disabledButton, registrationStatus !== 'upcoming' && styles.registeredButton]}
-          onPress={handleRegister}
-          disabled={isActivityEnded()}
-        >
-          <Text style={styles.bookButtonText}>
-            {isActivityEnded() ? 'Ended' : (registrationStatus === 'upcoming' ? 'Book Event' : 'Registered')}
-          </Text>
-        </TouchableOpacity>
-      </View>
+      {/* Footer — 商户角色只能查看活动，不显示报名按钮 */}
+      {!isMerchant && (
+        <View style={[styles.footer, { paddingBottom: insets.bottom + 10 }]}>
+          {/* Show ticket button for paid registered activities */}
+          {registrationStatus !== 'upcoming' && activity.price > 0 && (
+            <TouchableOpacity
+              style={styles.ticketButton}
+              onPress={() => setShowTicketModal(true)}
+            >
+              <Ionicons name="qr-code-outline" size={20} color="#fff" />
+              <Text style={styles.ticketButtonText}>
+                {t('activities.ticket.my_ticket', 'My Ticket')}
+              </Text>
+            </TouchableOpacity>
+          )}
+          {/* Show register/registered button */}
+          {!(registrationStatus !== 'upcoming' && activity.price > 0) && (
+            <TouchableOpacity
+              style={[styles.bookButton, isActivityEnded() && styles.disabledButton, registrationStatus !== 'upcoming' && styles.registeredButton]}
+              onPress={handleRegister}
+              disabled={isActivityEnded()}
+            >
+              <Text style={styles.bookButtonText}>
+                {isActivityEnded() ? 'Ended' : (registrationStatus === 'upcoming' ? 'Book Event' : 'Registered')}
+              </Text>
+            </TouchableOpacity>
+          )}
+        </View>
+      )}
 
       {/* Modals */}
       <LiquidSuccessModal
@@ -641,6 +673,14 @@ export const ActivityDetailScreen: React.FC = () => {
         activityImage={activity.image}
         sharePoint={activity.sharePoint}
         userId={user?.id || ''}
+      />
+
+      <ActivityTicketModal
+        visible={showTicketModal}
+        onClose={() => setShowTicketModal(false)}
+        activityId={activity.id}
+        activityName={activity.title || activity.name || ''}
+        activity={activity}
       />
 
     </View>
@@ -992,6 +1032,20 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFF',
     borderTopWidth: 1,
     borderTopColor: '#F0F0F0',
+  },
+  ticketButton: {
+    backgroundColor: '#1C1C1E',
+    height: 50,
+    borderRadius: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+  },
+  ticketButtonText: {
+    color: '#FFF',
+    fontSize: 16,
+    fontWeight: '600',
   },
   bookButton: {
     backgroundColor: '#FF6B35',

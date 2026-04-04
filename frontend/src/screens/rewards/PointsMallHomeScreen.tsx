@@ -18,6 +18,7 @@ import { useTranslation } from 'react-i18next';
 import { useUser } from '../../context/UserContext';
 import { useMembershipLevel } from '../../hooks/useMembershipLevel';
 import { theme } from '../../theme';
+import PrivilegesServicesSection from '../../components/rewards/PrivilegesServicesSection';
 
 // Tier-based theme for membership card gradients
 const getTierTheme = (levelId?: number): { colors: [string, string, string]; textColor: string } => {
@@ -41,14 +42,6 @@ const BENEFITS = [
   { id: '2', titleKey: 'rewards.benefits.platform_coupon', icon: 'ticket-outline' },
   { id: '3', titleKey: 'rewards.benefits.points_mall', icon: 'storefront-outline' },
   { id: '4', titleKey: 'rewards.benefits.group_buy', icon: 'people-outline' },
-];
-
-// Services data with i18n keys
-const SERVICES = [
-  { id: '1', titleKey: 'rewards.menu.points_balance', subtitleKey: 'rewards.menu.points', icon: 'wallet-outline' },
-  { id: '2', titleKey: 'rewards.menu.my_coupons', subtitleKey: 'rewards.menu.earn_redeem', icon: 'pricetag-outline' },
-  { id: '3', titleKey: 'rewards.menu.refer_friends', subtitleKey: 'rewards.menu.earn_points', icon: 'share-social-outline' },
-  { id: '4', titleKey: 'rewards.menu.my_orders', subtitleKey: 'rewards.menu.view_orders', icon: 'receipt-outline' },
 ];
 
 // Login Prompt Perks Preview Data
@@ -276,30 +269,8 @@ export const PointsMallHomeScreen: React.FC = () => {
             </View>
           </TouchableOpacity>
 
-          {/* Services Row */}
-          <View style={styles.servicesRow}>
-            {SERVICES.map((item) => (
-              <TouchableOpacity
-                key={item.id}
-                style={styles.serviceCard}
-                onPress={() => {
-                  if (item.id === '2') {
-                    navigation.navigate('MyCoupons' as never);
-                  } else if (item.id === '4') {
-                    navigation.navigate('MyOrders' as never);
-                  } else {
-                    Alert.alert(t('alerts.feature_not_implemented'), t('alerts.feature_under_development'));
-                  }
-                }}
-              >
-                <View style={styles.serviceIconCircle}>
-                  <Ionicons name={item.icon as any} size={24} color="#8E8E93" />
-                </View>
-                <Text style={styles.serviceTitle}>{t(item.titleKey)}</Text>
-                {item.subtitleKey && <Text style={styles.serviceSubtitle}>{t(item.subtitleKey)}</Text>}
-              </TouchableOpacity>
-            ))}
-          </View>
+          {/* Services - reuse shared component */}
+          <PrivilegesServicesSection />
         </View>
           </>
         )}
@@ -514,41 +485,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
 
-  servicesRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    gap: 12,
-  },
-  serviceCard: {
-    flex: 1,
-    backgroundColor: '#FFF',
-    borderRadius: 20,
-    padding: 16,
-    alignItems: 'center',
-    minHeight: 140,
-    justifyContent: 'center',
-  },
-  serviceIconCircle: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: '#F5F5F5',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 12,
-  },
-  serviceTitle: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    color: '#000',
-    textAlign: 'center',
-    marginBottom: 4,
-  },
-  serviceSubtitle: {
-    fontSize: 11,
-    color: '#8E8E93',
-    textAlign: 'center',
-  },
 });
 
 // Login Prompt Styles

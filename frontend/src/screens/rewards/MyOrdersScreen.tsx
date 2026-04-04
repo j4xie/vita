@@ -99,6 +99,9 @@ const getPriceDisplay = (order: Order): string => {
   if (order.payMode === 2) {
     return `${order.price} pts`;
   }
+  if (order.payMode === 3) {
+    return `¥${order.price.toFixed(2)}`;
+  }
   return `$${order.price.toFixed(2)}`;
 };
 
@@ -217,7 +220,7 @@ export const MyOrdersScreen: React.FC = () => {
           setLoadingMore(true);
         }
 
-        const params: any = {};
+        const params: any = { orderType: '1' }; // Only show points mall orders
         if (activeTab !== 'all') {
           params.orderStatus = activeTab as OrderStatus;
         }

@@ -30,6 +30,7 @@ export interface BackendActivity {
   deptIds?: string | number; // 🔧 活动所属学校ID（正确的学校ID）
   deptName?: string; // 🔧 活动所属学校名称
   sharePoint?: number; // 分享活动对应的积分奖励
+  currency?: string; // 货币单位：USD/CNY
 }
 
 // 前端活动数据接口
@@ -63,6 +64,7 @@ export interface FrontendActivity {
   enabled?: boolean;
   timeZone?: string; // 活动时区
   price?: number; // 活动价格（0或undefined表示免费）
+  currency?: string; // 货币单位：USD/CNY
   modelContent?: string; // 动态表单模板内容
   // 🆕 学校信息
   deptId?: number; // 活动所属学校ID
@@ -389,11 +391,13 @@ export const adaptActivity = (
     enabled: backendActivity.enabled === 1,
     timeZone: backendActivity.timeZone,
     price: backendActivity.price,
+    currency: backendActivity.currency || 'USD',
     modelContent: backendActivity.modelContent,
     // 🔧 学校信息 - 优先使用deptIds（活动所属学校），fallback到deptId（创建者部门）
     deptId: backendActivity.deptIds ? parseInt(String(backendActivity.deptIds), 10) : backendActivity.deptId,
     deptName: backendActivity.deptName,
     sharePoint: backendActivity.sharePoint,
+    actType: backendActivity.actType,
   };
 };
 

@@ -1228,6 +1228,51 @@ export const AppNavigator = () => {
                   }}
                 />
 
+                {/* Global PointsMallDetail - for cross-tab navigation */}
+                <RootStack.Screen
+                  name="PointsMallDetail"
+                  component={PointsMallDetailScreen}
+                  options={{
+                    ...pageTransitions.slideFromRight,
+                  }}
+                />
+
+                {/* Global AddressList - for cross-tab navigation */}
+                <RootStack.Screen
+                  name="AddressList"
+                  component={AddressListScreen}
+                  options={{
+                    ...pageTransitions.slideFromRight,
+                  }}
+                />
+
+                {/* Global AddressSelect - for cross-tab navigation */}
+                <RootStack.Screen
+                  name="AddressSelect"
+                  component={AddressSelectScreen}
+                  options={{
+                    ...pageTransitions.slideFromRight,
+                  }}
+                />
+
+                {/* Global AddressEdit - for cross-tab navigation */}
+                <RootStack.Screen
+                  name="AddressEdit"
+                  component={AddressEditScreen}
+                  options={{
+                    ...pageTransitions.slideFromRight,
+                  }}
+                />
+
+                {/* Global MyOrders - for cross-tab navigation */}
+                <RootStack.Screen
+                  name="MyOrders"
+                  component={MyOrdersScreen}
+                  options={{
+                    ...pageTransitions.slideFromRight,
+                  }}
+                />
+
                 {/* Global MyCoupons - for cross-tab navigation (e.g. Community → MyCoupons) */}
                 <RootStack.Screen
                   name="MyCoupons"
