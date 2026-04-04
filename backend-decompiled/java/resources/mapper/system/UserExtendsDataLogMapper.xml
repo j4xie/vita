@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.UserExtendsDataLogMapper">
+    
+    <resultMap type="UserExtendsDataLog" id="UserExtendsDataLogResult">
+        <result property="userId"    column="user_id"    />
+        <result property="exPoint"    column="ex_point"    />
+        <result property="exType"    column="ex_type"    />
+        <result property="exRemark"    column="ex_remark"    />
+        <result property="createTime"    column="create_time"    />
+    </resultMap>
+
+    <sql id="selectUserExtendsDataLogVo">
+        select user_id, ex_point, ex_type, ex_remark, create_time from user_extends_data_log
+    </sql>
+
+    <select id="selectUserExtendsDataLogList" parameterType="UserExtendsDataLog" resultMap="UserExtendsDataLogResult">
+        <include refid="selectUserExtendsDataLogVo"/>
+        <where>  
+            <if test="userId != null "> and user_id = #{userId}</if>
+            <if test="exPoint != null "> and ex_point = #{exPoint}</if>
+            <if test="exType != null "> and ex_type = #{exType}</if>
+            <if test="exRemark != null "> and ex_remark = #{exRemark}</if>
+        </where>
+    </select>
+    
+    <select id="selectUserExtendsDataLogByUserId" parameterType="Long" resultMap="UserExtendsDataLogResult">
+        <include refid="selectUserExtendsDataLogVo"/>
+        where user_id = #{userId}
+        order by create_time desc
+    </select>
+
+    <insert id="insertUserExtendsDataLog" parameterType="UserExtendsDataLog">
+        insert into user_extends_data_log
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="userId != null">user_id,</if>
+            <if test="exPoint != null">ex_point,</if>
+            <if test="exType != null">ex_type,</if>
+            <if test="exRemark != null">ex_remark,</if>
+            <if test="createTime != null">create_time,</if>
+         </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="userId != null">#{userId},</if>
+            <if test="exPoint != null">#{exPoint},</if>
+            <if test="exType != null">#{exType},</if>
+            <if test="exRemark != null">#{exRemark},</if>
+            <if test="createTime != null">#{createTime},</if>
+         </trim>
+    </insert>
+
+    <update id="updateUserExtendsDataLog" parameterType="UserExtendsDataLog">
+        update user_extends_data_log
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="exPoint != null">ex_point = #{exPoint},</if>
+            <if test="exType != null">ex_type = #{exType},</if>
+            <if test="exRemark != null">ex_remark = #{exRemark},</if>
+            <if test="createTime != null">create_time = #{createTime},</if>
+        </trim>
+        where user_id = #{userId}
+    </update>
+
+    <delete id="deleteUserExtendsDataLogByUserId" parameterType="Long">
+        delete from user_extends_data_log where user_id = #{userId}
+    </delete>
+
+    <delete id="deleteUserExtendsDataLogByUserIds" parameterType="String">
+        delete from user_extends_data_log where user_id in 
+        <foreach item="userId" collection="array" open="(" separator="," close=")">
+            #{userId}
+        </foreach>
+    </delete>
+</mapper>

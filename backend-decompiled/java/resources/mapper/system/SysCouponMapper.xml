@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.SysCouponMapper">
+    
+    <resultMap type="SysCoupon" id="SysCouponResult">
+        <result property="id"    column="id"    />
+        <result property="couponName"    column="coupon_name"    />
+        <result property="couponType"    column="coupon_type"    />
+        <result property="couponPrice"    column="coupon_price"    />
+        <result property="couponNo"    column="coupon_no"    />
+        <result property="couponLimit"    column="coupon_limit"    />
+        <result property="couponRules"    column="coupon_rules"    />
+        <result property="validFrom"    column="valid_from"    />
+        <result property="validEnd"    column="valid_end"    />
+        <result property="quantity"    column="quantity"    />
+        <result property="status"    column="status"    />
+        <result property="remark"    column="remark"    />
+        <result property="sourceFrom"    column="source_from"    />
+        <result property="purpose"    column="purpose"    />
+        <result property="purposeMerchantUserId"    column="purpose_merchant_user_id"    />
+        <result property="purposeMerchantName"    column="purpose_merchant_name"    />
+        <result property="createTime"    column="create_time"    />
+        <result property="createByUserId"    column="create_by_user_id"    />
+        <result property="createByName"    column="create_by_name"    />
+    </resultMap>
+
+    <sql id="selectSysCouponVo">
+        select sc.id, sc.coupon_name, sc.coupon_type, sc.coupon_price, sc.coupon_no, sc.coupon_limit, sc.coupon_rules,
+               sc.valid_from, sc.valid_end, sc.quantity, sc.status, sc.remark, sc.source_from, sc.purpose, sc.purpose_merchant_user_id,
+               sc.create_time, sc.create_by_user_id, sc.create_by_name, GROUP_CONCAT(uem.merchant_name) as purpose_merchant_name
+        from sys_coupon sc
+        left join user_ex_merchant uem on FIND_IN_SET(uem.user_id, sc.purpose_merchant_user_id) > 0
+    </sql>
+
+    <select id="selectSysCouponList" parameterType="SysCoupon" resultMap="SysCouponResult">
+        <include refid="selectSysCouponVo"/>
+        <where>  
+            <if test="couponName != null  and couponName != ''"> and sc.coupon_name like concat('%', #{couponName}, '%')</if>
+            <if test="couponType != null "> and sc.coupon_type = #{couponType}</if>
+            <if test="couponPrice != null "> and sc.coupon_price = #{couponPrice}</if>
+            <if test="couponNo != null  and couponNo != ''"> and sc.coupon_no = #{couponNo}</if>
+            <if test="couponLimit != null "> and sc.coupon_limit = #{couponLimit}</if>
+            <if test="validFrom != null "> and sc.valid_from = #{validFrom}</if>
+            <if test="validEnd != null "> and sc.valid_end = #{validEnd}</if>
+            <if test="quantity != null "> and sc.quantity = #{quantity}</if>
+            <if test="status != null "> and sc.status = #{status}</if>
+            <if test="remark != null "> and sc.remark = #{remark}</if>
+            <if test="sourceFrom != null "> and sc.source_from = #{sourceFrom}</if>
+            <if test="purpose != null "> and sc.purpose = #{purpose}</if>
+            <if test="purposeMerchantUserId != null "> and sc.purpose_merchant_user_id = #{purposeMerchantUserId}</if>
+            <if test="createByUserId != null "> and sc.create_by_user_id = #{createByUserId}</if>
+            <if test="createByName != null  and createByName != ''"> and sc.create_by_name like concat('%', #{createByName}, '%')</if>
+        </where>
+        group by sc.id
+    </select>
+    
+    <select id="selectSysCouponById" parameterType="Long" resultMap="SysCouponResult">
+        <include refid="selectSysCouponVo"/>
+        where sc.id = #{id}
+        group by sc.id
+    </select>
+
+    <insert id="insertSysCoupon" parameterType="SysCoupon" useGeneratedKeys="true" keyProperty="id">
+        insert into sys_coupon
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="couponName != null and couponName != ''">coupon_name,</if>
+            <if test="couponType != null">coupon_type,</if>
+            <if test="couponPrice != null">coupon_price,</if>
+            <if test="couponNo != null">coupon_no,</if>
+            <if test="couponLimit != null">coupon_limit,</if>
+            <if test="couponRules != null">coupon_rules,</if>
+            <if test="validFrom != null">valid_from,</if>
+            <if test="validEnd != null">valid_end,</if>
+            <if test="quantity != null">quantity,</if>
+            <if test="status != null">status,</if>
+            <if test="remark != null">remark,</if>
+            <if test="sourceFrom != null">source_from,</if>
+            <if test="purpose != null">purpose,</if>
+            <if test="purposeMerchantUserId != null">purpose_merchant_user_id,</if>
+            <if test="createTime != null">create_time,</if>
+            <if test="createByUserId != null">create_by_user_id,</if>
+            <if test="createByName != null">create_by_name,</if>
+         </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="couponName != null and couponName != ''">#{couponName},</if>
+            <if test="couponType != null">#{couponType},</if>
+            <if test="couponPrice != null">#{couponPrice},</if>
+            <if test="couponNo != null">#{couponNo},</if>
+            <if test="couponLimit != null">#{couponLimit},</if>
+            <if test="couponRules != null">#{couponRules},</if>
+            <if test="validFrom != null">#{validFrom},</if>
+            <if test="validEnd != null">#{validEnd},</if>
+            <if test="quantity != null">#{quantity},</if>
+            <if test="status != null">#{status},</if>
+            <if test="remark != null">#{remark},</if>
+            <if test="sourceFrom != null">#{sourceFrom},</if>
+            <if test="purpose != null">#{purpose},</if>
+            <if test="purposeMerchantUserId != null">#{purposeMerchantUserId},</if>
+            <if test="createTime != null">#{createTime},</if>
+            <if test="createByUserId != null">#{createByUserId},</if>
+            <if test="createByName != null">#{createByName},</if>
+         </trim>
+    </insert>
+
+    <update id="updateSysCoupon" parameterType="SysCoupon">
+        update sys_coupon
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="couponName != null and couponName != ''">coupon_name = #{couponName},</if>
+            <if test="couponType != null">coupon_type = #{couponType},</if>
+            <if test="couponPrice != null">coupon_price = #{couponPrice},</if>
+            <if test="couponNo != null">coupon_no = #{couponNo},</if>
+            <if test="couponLimit != null">coupon_limit = #{couponLimit},</if>
+            <if test="couponRules != null">coupon_rules = #{couponRules},</if>
+            <if test="validFrom != null">valid_from = #{validFrom},</if>
+            <if test="validEnd != null">valid_end = #{validEnd},</if>
+            <if test="quantity != null">quantity = #{quantity},</if>
+            <if test="status != null">status = #{status},</if>
+            <if test="remark != null">remark = #{remark},</if>
+            <if test="sourceFrom != null">source_from = #{sourceFrom},</if>
+            <if test="purpose != null">purpose = #{purpose},</if>
+            <if test="purposeMerchantUserId != null">purpose_merchant_user_id = #{purposeMerchantUserId},</if>
+            <if test="createTime != null">create_time = #{createTime},</if>
+            <if test="createByUserId != null">create_by_user_id = #{createByUserId},</if>
+            <if test="createByName != null">create_by_name = #{createByName},</if>
+        </trim>
+        where id = #{id}
+    </update>
+
+    <delete id="deleteSysCouponById" parameterType="Long">
+        delete from sys_coupon where id = #{id}
+    </delete>
+
+    <delete id="deleteSysCouponByIds" parameterType="String">
+        delete from sys_coupon where id in 
+        <foreach item="id" collection="array" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+</mapper>

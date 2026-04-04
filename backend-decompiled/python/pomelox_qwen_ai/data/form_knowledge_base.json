@@ -1,0 +1,8900 @@
+[
+  {
+    "id": "200565060",
+    "name": "CU 2025年秋季新生接机服务报名-UCSD",
+    "group": "UCSD",
+    "submissions": 180,
+    "pages": 3,
+    "fields": [
+      {
+        "title": "您的身份",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "25年秋季入学新生",
+          "家长"
+        ],
+        "page": 1
+      },
+      {
+        "title": "交通工具默认为巴士...建议优先选择巴士",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "已了解"
+        ],
+        "page": 1
+      },
+      {
+        "title": "该表单仅开放于2025 Fall入学的学生...",
+        "type": "staticText",
+        "required": false,
+        "page": 1
+      },
+      {
+        "title": "请上传的入学offer用于验证新生身份",
+        "type": "pictureAttachment",
+        "required": true,
+        "desc": "截图即可",
+        "page": 2
+      },
+      {
+        "title": "姓名-legal name",
+        "type": "contactName",
+        "required": true,
+        "desc": "请填写法定名",
+        "placeholder": "姓",
+        "page": 2
+      },
+      {
+        "title": "航班类型",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "中国大陆直飞美国",
+          "港澳台直飞美国",
+          "经日韩转机",
+          "经加拿大/美国本土转机",
+          "其他（请备注）"
+        ],
+        "page": 2
+      },
+      {
+        "title": "航空公司（Airline）-大陆",
+        "type": "radio",
+        "required": false,
+        "options": [
+          "中国国际航空（Air China）CA",
+          "中国东方航空（China Eastern）MU",
+          "中国南方航空（China Southern）CZ",
+          "海南航空（Hainan Airlines）HU",
+          "厦门航空（Xiamen Airlines）MF",
+          "四川航空（Sichuan Airlines）3U",
+          "美国联合航空（United Airlines）UA",
+          "美国航空（American Airlines）AA",
+          "其他（请备注）"
+        ],
+        "page": 2
+      },
+      {
+        "title": "航空公司（Airline）-港澳台",
+        "type": "radio",
+        "required": false,
+        "options": [
+          "国泰航空（Cathay Pacific）CX",
+          "长荣航空（EVA Air）BR",
+          "其他（请备注）"
+        ],
+        "page": 2
+      },
+      {
+        "title": "航空公司（Airline）-日韩",
+        "type": "radio",
+        "required": false,
+        "options": [
+          "日本航空（Japan Airlines）JL",
+          "全日空航空（ANA）NH",
+          "大韩航空（Korean Air）KE",
+          "韩亚航空（Asiana Airlines）OZ",
+          "其他（请备注）"
+        ],
+        "page": 2
+      },
+      {
+        "title": "航空公司（Airline）-加美",
+        "type": "radio",
+        "required": false,
+        "options": [
+          "加拿大航空（Air Canada）AC",
+          "美联航（United Airlines）UA",
+          "达美航空（Delta Air Lines）DL",
+          "美国航空（American Airlines）AA",
+          "阿拉斯加航空（Alaska Airlines）AS",
+          "其他（请备注）"
+        ],
+        "page": 2
+      },
+      {
+        "title": "最终落地的航班号-flight number",
+        "type": "single",
+        "required": true,
+        "desc": "请填写最后一段航班，用于接机定位",
+        "placeholder": "例如：MU583、CA987、DL120",
+        "page": 2
+      },
+      {
+        "title": "请填写降落日期",
+        "type": "dateTime",
+        "required": true,
+        "page": 2
+      },
+      {
+        "title": "请手动填写航班落地时间",
+        "type": "single",
+        "required": true,
+        "desc": "精确到分钟",
+        "page": 2
+      },
+      {
+        "title": "请上传机票预定信息",
+        "type": "pictureAttachment",
+        "required": true,
+        "desc": "需要时间+航班号+地点",
+        "page": 2
+      },
+      {
+        "title": "确认航班信息无误声明",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "已了解"
+        ],
+        "page": 2
+      },
+      {
+        "title": "请上传微信个人二维码",
+        "type": "pictureAttachment",
+        "required": true,
+        "page": 2
+      },
+      {
+        "title": "请填写微信ID",
+        "type": "single",
+        "required": true,
+        "page": 2
+      },
+      {
+        "title": "邮箱-email",
+        "type": "contactEmail",
+        "required": true,
+        "desc": "请使用学生邮箱",
+        "placeholder": "xxx@uxx.edu",
+        "page": 2
+      },
+      {
+        "title": "手机号-phone number",
+        "type": "contactMobile",
+        "required": true,
+        "desc": "请填写可联系手机号（美国/中国均可）",
+        "placeholder": "请使用落地即可联系的号码",
+        "page": 2
+      },
+      {
+        "title": "紧急联系人手机号（可选）",
+        "type": "contactMobile",
+        "required": false,
+        "desc": "仅限父母、亲缘关系或法定监护人",
+        "page": 2
+      },
+      {
+        "title": "随行家长数量",
+        "type": "radio",
+        "required": true,
+        "desc": "每位学生最多同行2位，超出额外收费",
+        "options": [
+          "0",
+          "1",
+          "2",
+          "更多（请备注）"
+        ],
+        "page": 2
+      },
+      {
+        "title": "请填写随行人A姓名",
+        "type": "single",
+        "required": true,
+        "desc": "用于接机时信息核对",
+        "page": 2
+      },
+      {
+        "title": "请填写随行人B姓名",
+        "type": "single",
+        "required": true,
+        "desc": "用于接机时信息核对",
+        "page": 2
+      },
+      {
+        "title": "请填写所有随行人姓名",
+        "type": "single",
+        "required": true,
+        "placeholder": "xxx / xxx / xxx",
+        "page": 2
+      },
+      {
+        "title": "额外随行人员支付方式",
+        "type": "radio",
+        "required": true,
+        "desc": "$80/人或￥560",
+        "options": [
+          "美元",
+          "人民币"
+        ],
+        "page": 2
+      },
+      {
+        "title": "费用说明",
+        "type": "staticText",
+        "required": false,
+        "page": 2
+      },
+      {
+        "title": "额外随行人员收费确认",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "我明白"
+        ],
+        "page": 2
+      },
+      {
+        "title": "额外随行人员接机服务付费",
+        "type": "commodity",
+        "required": true,
+        "desc": "交通工具默认为巴士",
+        "page": 2
+      },
+      {
+        "title": "美元支付方式",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "Zelle/Venmo",
+          "Paypal"
+        ],
+        "page": 2
+      },
+      {
+        "title": "额外随行人员接机服务付费-Paypal",
+        "type": "commodity",
+        "required": true,
+        "page": 2
+      },
+      {
+        "title": "Zelle付款地址",
+        "type": "staticText",
+        "required": false,
+        "page": 2
+      },
+      {
+        "title": "额外随行人员上传付款凭证截图",
+        "type": "pictureAttachment",
+        "required": true,
+        "page": 2
+      },
+      {
+        "title": "请选择班车日期",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "9月14号",
+          "9月15号",
+          "9月16号",
+          "9月17号",
+          "9月18号"
+        ],
+        "page": 3
+      },
+      {
+        "title": "请选择班车时间",
+        "type": "radio",
+        "required": true,
+        "desc": "班车时间为发车时间，请选择航班到达后1-1.5小时",
+        "options": [
+          "12:30",
+          "17:30",
+          "22:30",
+          "其它时间请注明（专车接送）"
+        ],
+        "page": 3
+      },
+      {
+        "title": "大巴终点信息",
+        "type": "staticText",
+        "required": false,
+        "page": 3
+      },
+      {
+        "title": "大巴接送说明确认",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "已了解"
+        ],
+        "page": 3
+      },
+      {
+        "title": "专车接送说明确认",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "我接受"
+        ],
+        "page": 3
+      },
+      {
+        "title": "登机箱数量 carry-on bag number",
+        "type": "dropdown",
+        "required": true,
+        "desc": "小于56cm×36cm×23cm",
+        "page": 3
+      },
+      {
+        "title": "托运箱数量 luggage number",
+        "type": "dropdown",
+        "required": true,
+        "desc": "大于56cm×36cm×23cm",
+        "page": 3
+      },
+      {
+        "title": "行李额度限制确认",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "我了解，并且接受"
+        ],
+        "page": 3
+      },
+      {
+        "title": "免责声明标题",
+        "type": "staticText",
+        "required": false,
+        "page": 3
+      },
+      {
+        "title": "免责声明内容",
+        "type": "staticText",
+        "required": false,
+        "page": 3
+      },
+      {
+        "title": "确认信息无误并签署免责声明",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "已阅读并签署"
+        ],
+        "page": 3
+      },
+      {
+        "title": "电子签名",
+        "type": "signature",
+        "required": true,
+        "page": 3
+      },
+      {
+        "title": "负责人联系方式图片",
+        "type": "staticPicture",
+        "required": false,
+        "page": 3
+      },
+      {
+        "title": "确认已添加负责人联系方式",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "确认"
+        ],
+        "page": 3
+      }
+    ],
+    "hasPayment": true,
+    "hasSignature": true,
+    "hasLogic": true,
+    "account": "Chinese Union-主账套"
+  },
+  {
+    "id": "200564514",
+    "name": "Chinese Union 2023 SIngle Sanctuary Form 单身避难所报名表单",
+    "group": "UCSD",
+    "account": "Chinese Union-主账套",
+    "submissions": 51,
+    "fields": [
+      {
+        "title": "姓名 Name",
+        "type": "contactName",
+        "required": true
+      },
+      {
+        "title": "邮箱 Email",
+        "type": "contactEmail",
+        "required": true
+      },
+      {
+        "title": "手机 Phone Number",
+        "type": "contactMobile",
+        "required": true
+      },
+      {
+        "title": "微信 WeChat ID",
+        "type": "contactIMItem",
+        "required": true
+      },
+      {
+        "title": "性别 Gender",
+        "type": "contactGender",
+        "required": true,
+        "options": [
+          "男 Male",
+          "女 Female",
+          "保密 Other"
+        ]
+      },
+      {
+        "title": "星座~",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "白羊座",
+          "金牛座",
+          "双子座",
+          "巨蟹座",
+          "狮子座",
+          "处女座",
+          "天秤座",
+          "天蝎座",
+          "射手座",
+          "摩羯座",
+          "水瓶座",
+          "双鱼座"
+        ]
+      },
+      {
+        "title": "留言板~",
+        "type": "single",
+        "required": false
+      }
+    ],
+    "hasPayment": false,
+    "hasSignature": false,
+    "hasLogic": false,
+    "pages": 1
+  },
+  {
+    "id": "200564547",
+    "name": "CU找室友 宿舍/租房",
+    "group": "UCSD",
+    "account": "Chinese Union-主账套",
+    "submissions": 17,
+    "fields": [
+      {
+        "title": "1.",
+        "type": "contactName",
+        "required": true
+      },
+      {
+        "title": "2.",
+        "type": "contactGender",
+        "required": true,
+        "options": [
+          "男",
+          "女",
+          "(保密)"
+        ]
+      },
+      {
+        "title": "3.",
+        "type": "single",
+        "required": true
+      },
+      {
+        "title": "4.",
+        "type": "single",
+        "required": true
+      },
+      {
+        "title": "5.",
+        "type": "single",
+        "required": true
+      },
+      {
+        "title": "6.",
+        "type": "single",
+        "required": true
+      },
+      {
+        "title": "7.",
+        "type": "single",
+        "required": true
+      },
+      {
+        "title": "8.",
+        "type": "single",
+        "required": false
+      },
+      {
+        "title": "9.",
+        "type": "single",
+        "required": false
+      },
+      {
+        "title": "10.",
+        "type": "pictureAttachment",
+        "required": false
+      },
+      {
+        "title": "11.",
+        "type": "contactIMItem",
+        "required": true
+      },
+      {
+        "title": "12.",
+        "type": "contactEmail",
+        "required": true
+      }
+    ],
+    "hasPayment": false,
+    "hasSignature": false,
+    "hasLogic": false,
+    "pages": 1
+  },
+  {
+    "id": "200565191",
+    "name": "CU UCSD 2026 课友群补充",
+    "group": "UCSD",
+    "account": "Chinese Union-主账套",
+    "submissions": 35,
+    "fields": [
+      {
+        "title": "我已确认 Google Sheet 中没有此对应课程",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "我已确认"
+        ]
+      },
+      {
+        "title": "需要添加课友群的学科名称",
+        "type": "dropdown",
+        "required": true
+      },
+      {
+        "title": "其他学科名称",
+        "type": "single",
+        "required": true,
+        "placeholder": "请大写所有字母"
+      },
+      {
+        "title": "需要添加的课程编号",
+        "type": "single",
+        "required": true,
+        "placeholder": "请按照格式要求填写课程编号"
+      },
+      {
+        "title": "常用名",
+        "type": "contactName",
+        "required": false
+      },
+      {
+        "title": "邮箱",
+        "type": "contactEmail",
+        "required": false,
+        "placeholder": " 优先使用学校邮箱"
+      },
+      {
+        "title": "已确认课程填写格式无误",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "我已确认"
+        ]
+      }
+    ],
+    "hasPayment": false,
+    "hasSignature": false,
+    "hasLogic": false,
+    "pages": 1
+  },
+  {
+    "id": "200564377",
+    "name": "Chinese Union E-Board Member Election Application 2022-2023",
+    "group": "UCSD",
+    "account": "Chinese Union-主账套",
+    "submissions": 67,
+    "fields": [
+      {
+        "title": "中文护照姓名 Legal Chinese Name",
+        "type": "contactName",
+        "required": true
+      },
+      {
+        "title": "英文护照姓名 Legal English Name",
+        "type": "single",
+        "required": true
+      },
+      {
+        "title": "性别 Gender",
+        "type": "contactGender",
+        "required": true,
+        "options": [
+          "男",
+          "女"
+        ]
+      },
+      {
+        "title": "参选职位 No.1 (Position No.1)",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "Vice President (请在下方下拉表格中选择你想负责的部门）",
+          "Operation Specialist",
+          "Administration Director",
+          "Business Development Director",
+          "Branding Director",
+          "Public Relations Director",
+          "Project Management Director",
+          "Human Resources Director",
+          "Marketing Director"
+        ]
+      },
+      {
+        "title": "你想竞选哪个部门的Vice President",
+        "type": "dropdown",
+        "required": true
+      },
+      {
+        "title": "OP 竞选时间 Operation Presentation Time",
+        "type": "dropdown",
+        "required": true
+      },
+      {
+        "title": "AD 竞选时间 Administration Presentation Time",
+        "type": "dropdown",
+        "required": true
+      },
+      {
+        "title": "BD 竞选时间 Presentation Time",
+        "type": "dropdown",
+        "required": true
+      },
+      {
+        "title": "BR 竞选时间 Presentation Time",
+        "type": "dropdown",
+        "required": true
+      },
+      {
+        "title": "HR 竞选时间 Presentation Time",
+        "type": "dropdown",
+        "required": true
+      },
+      {
+        "title": "PR 竞选时间 Presentation Time",
+        "type": "dropdown",
+        "required": true
+      },
+      {
+        "title": "PM 竞选时间 Presentation Time",
+        "type": "dropdown",
+        "required": true
+      },
+      {
+        "title": "MKT 竞选时间 Presentation Time",
+        "type": "dropdown",
+        "required": true
+      },
+      {
+        "title": "副主席竞选时间 Presentation Time",
+        "type": "dropdown",
+        "required": true
+      },
+      {
+        "title": "微信 WeChat ID",
+        "type": "single",
+        "required": true
+      },
+      {
+        "title": "邮箱 Email (会收到报名成功确认邮件)",
+        "type": "contactEmail",
+        "required": true
+      },
+      {
+        "title": "年级 Class Level",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "Freshmen",
+          "Sophomore",
+          "Junior",
+          "Senior",
+          "Other"
+        ]
+      },
+      {
+        "title": "专业",
+        "type": "single",
+        "required": true
+      },
+      {
+        "title": "参选职位 No.2 (Position No.2)",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "Vice President (请在下方下拉表格中选择你想负责的部门）",
+          "Operation Specialist",
+          "Administration Director",
+          "Branding Director",
+          "Public Relations Director",
+          "Business Development Director",
+          "Project Management Director",
+          "Human Resources Director",
+          "Marketing Director"
+        ]
+      },
+      {
+        "title": "你想竞选哪个部门的Vice President",
+        "type": "dropdown",
+        "required": true
+      },
+      {
+        "title": "参选职位 No.3 (Position No.3 - Optional)",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "无 N/A",
+          "Vice President (请在下方下拉表格中选择你想负责的部门",
+          "Operation Specialist",
+          "Administration Director",
+          "Branding Director",
+          "Public Relations Director",
+          "Business Development Director",
+          "Project Management Director",
+          "Human Resources Director",
+          "Marketing Director"
+        ]
+      },
+      {
+        "title": "你想竞选哪个部门的Vice President",
+        "type": "dropdown",
+        "required": true
+      },
+      {
+        "title": "课业状况 (How many units are you planning to take each quarter if you become a E-Board member?)",
+        "type": "single",
+        "required": true,
+        "placeholder": "12以下 12-16 16-20 20以上"
+      },
+      {
+        "title": "有没有任何其他的工作或者社团计划？(Are you involved or planning to invove in any other works or clubs beside Chinese Union?)",
+        "type": "single",
+        "required": true
+      },
+      {
+        "title": "有无暑假回国计划",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "有",
+          "无"
+        ]
+      },
+      {
+        "title": "暑期计划离开及秋季计划返回美国日期 (Your plan for this coming summer)",
+        "type": "single",
+        "required": true
+      },
+      {
+        "title": "是否有车。如暂时没有是否会在新学年开始前买车。(Do you have a car or are you planning to have one before fall quarter?)",
+        "type": "single",
+        "required": true,
+        "placeholder": "是  计划购买 无计划购买"
+      },
+      {
+        "title": "在过去的一年里你作为观众参加过CU的哪些活动？(Which CU events did you attend as an audience in the past one year?)",
+        "type": "single",
+        "required": true,
+        "placeholder": "Ex. 见面会， 接机，一周情侣，新生狼人杀，春晚，年夜饭，etc."
+      },
+      {
+        "title": "在以上活动中，你以工作人员的身份出席过哪几次活动且担任什么职责? (Among the events you attended, which events did you participate as a staff, and what were your responsibilities?)",
+        "type": "single",
+        "required": true
+      },
+      {
+        "title": "个人经历 (Personal Experience 300-word limit) (300字以下)",
+        "type": "single",
+        "required": true
+      },
+      {
+        "title": "简历 Resume",
+        "type": "attachment",
+        "required": true
+      },
+      {
+        "title": "请在此分享你的个人Linkedln档案链接，并关注Chinese Union Linkedln: https://www.linkedin.com/company/chineseunion",
+        "type": "single",
+        "required": true
+      }
+    ],
+    "hasPayment": false,
+    "hasSignature": false,
+    "hasLogic": false,
+    "pages": 1
+  },
+  {
+    "id": "200565135",
+    "name": "CU UCSD 2025 秋季招新报名表",
+    "group": "UCSD",
+    "account": "Chinese Union-主账套",
+    "submissions": 29,
+    "fields": [
+      {
+        "title": "真实姓名（中文）",
+        "type": "contactName",
+        "required": true,
+        "placeholder": "姓"
+      },
+      {
+        "title": "常用名（如有）",
+        "type": "single",
+        "required": false
+      },
+      {
+        "title": "微信号",
+        "type": "single",
+        "required": true,
+        "placeholder": "不是微信名"
+      },
+      {
+        "title": "专业",
+        "type": "single",
+        "required": true
+      },
+      {
+        "title": "手机号",
+        "type": "contactMobile",
+        "required": true
+      },
+      {
+        "title": "邮箱",
+        "type": "contactEmail",
+        "required": true,
+        "placeholder": " 优先使用学校邮箱"
+      },
+      {
+        "title": "部门选择",
+        "type": "dropdown",
+        "required": true
+      },
+      {
+        "title": "简历上传",
+        "type": "attachment",
+        "required": true
+      },
+      {
+        "title": "个人简介（文件上传）",
+        "type": "attachment",
+        "required": false
+      },
+      {
+        "title": "个人简介（文字介绍）",
+        "type": "single",
+        "required": false,
+        "placeholder": "文件或文字二选一上传即可"
+      },
+      {
+        "title": "LinkedIn（如有）",
+        "type": "contactSNSItem",
+        "required": false
+      }
+    ],
+    "hasPayment": false,
+    "hasSignature": false,
+    "hasLogic": false,
+    "pages": 1
+  },
+  {
+    "id": "200565012",
+    "name": "SUMMER LEADERSHIP PROGRAM2025 暑期领导力计划报名表",
+    "group": "UCSD",
+    "account": "Chinese Union-主账套",
+    "submissions": 44,
+    "fields": [
+      {
+        "title": "真实姓名（中文）",
+        "type": "contactName",
+        "required": true,
+        "placeholder": "姓"
+      },
+      {
+        "title": "常用名（如有）",
+        "type": "single",
+        "required": false
+      },
+      {
+        "title": "微信",
+        "type": "single",
+        "required": true,
+        "placeholder": "不是微信名"
+      },
+      {
+        "title": "专业",
+        "type": "single",
+        "required": true
+      },
+      {
+        "title": "手机号",
+        "type": "contactMobile",
+        "required": true
+      },
+      {
+        "title": "邮箱",
+        "type": "contactEmail",
+        "required": true,
+        "placeholder": " 优先使用学校邮箱"
+      },
+      {
+        "title": "部门选择",
+        "type": "dropdown",
+        "required": true
+      },
+      {
+        "title": "简历上传",
+        "type": "attachment",
+        "required": true
+      },
+      {
+        "title": "个人简介（文件上传）",
+        "type": "attachment",
+        "required": false
+      },
+      {
+        "title": "个人简介（内容输入）",
+        "type": "single",
+        "required": false
+      },
+      {
+        "title": "LinkedIn（如有）",
+        "type": "contactSNSItem",
+        "required": false
+      }
+    ],
+    "hasPayment": false,
+    "hasSignature": false,
+    "hasLogic": false,
+    "pages": 1
+  },
+  {
+    "id": "200565058",
+    "name": "2025年秋季新生免费接机服务-UCI",
+    "group": "UCI",
+    "account": "Chinese Union-主账套",
+    "submissions": 290,
+    "fields": [
+      {
+        "title": "您的身份",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "25年秋季入学新生",
+          "家长"
+        ]
+      },
+      {
+        "title": "交通工具默认为巴士，如需专车请在后面班车时间问题填写自己的上车时间表明需要专车，专车需额外付费，建议优先选择巴士",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "已了解"
+        ]
+      },
+      {
+        "title": "学生姓名",
+        "type": "contactName",
+        "required": true,
+        "placeholder": "姓"
+      },
+      {
+        "title": "航班类型",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "中国大陆直飞美国",
+          "港澳台直飞美国",
+          "经日韩转机",
+          "经加拿大/美国本土转机",
+          "其他（请备注）"
+        ]
+      },
+      {
+        "title": "航空公司（Airline）",
+        "type": "radio",
+        "required": false,
+        "options": [
+          "中国国际航空（Air China）CA",
+          "中国东方航空（China Eastern）MU",
+          "中国南方航空（China Southern）CZ",
+          "海南航空（Hainan Airlines）HU",
+          "厦门航空（Xiamen Airlines）MF",
+          "四川航空（Sichuan Airlines）3U",
+          "美国联合航空（United Airlines）UA",
+          "美国航空（American Airlines）AA",
+          "其他（请备注）"
+        ]
+      },
+      {
+        "title": "航空公司（Airline）",
+        "type": "radio",
+        "required": false,
+        "options": [
+          "国泰航空（Cathay Pacific）CX",
+          "长荣航空（EVA Air，台湾）BR",
+          "其他（请备注）"
+        ]
+      },
+      {
+        "title": "航空公司（Airline）",
+        "type": "radio",
+        "required": false,
+        "options": [
+          "日本航空（Japan Airlines）JL",
+          "全日空航空（ANA, All Nippon Airways）NH",
+          "大韩航空（Korean Air）KE",
+          "韩亚航空（Asiana Airlines）OZ",
+          "其他（请备注）"
+        ]
+      },
+      {
+        "title": "航空公司（Airline）",
+        "type": "radio",
+        "required": false,
+        "options": [
+          "加拿大航空（Air Canada）AC",
+          "美国联合航空（United Airlines）UA",
+          "达美航空（Delta Air Lines）DL",
+          "美国航空（American Airlines）AA",
+          "阿拉斯加航空（Alaska Airlines）AS",
+          "其他（请备注）"
+        ]
+      },
+      {
+        "title": "最终落地的航班号-flight number",
+        "type": "single",
+        "required": true,
+        "placeholder": "例如：MU583、CA987、DL120"
+      },
+      {
+        "title": "请填写降落日期",
+        "type": "dateTime",
+        "required": false
+      },
+      {
+        "title": "请手动填写航班落地时间",
+        "type": "single",
+        "required": true
+      },
+      {
+        "title": "请上传你的机票预定信息",
+        "type": "pictureAttachment",
+        "required": true
+      },
+      {
+        "title": "请在确认您的航班信息后，如实填写报名表格，确保信息无误。如有变更或取消，请联系报名表尾部接机负责人。",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "已了解"
+        ]
+      },
+      {
+        "title": "请上传微信个人二维码方便联系",
+        "type": "pictureAttachment",
+        "required": true
+      },
+      {
+        "title": "请填写你的微信ID",
+        "type": "single",
+        "required": true
+      },
+      {
+        "title": "邮箱-email",
+        "type": "contactEmail",
+        "required": true,
+        "placeholder": "xxx@uci.edu"
+      },
+      {
+        "title": "手机号-phone number",
+        "type": "contactMobile",
+        "required": true,
+        "placeholder": "请使用落地即可联系的上的号码"
+      },
+      {
+        "title": "紧急联系人手机号（可选）-emergency contact(optional)",
+        "type": "contactMobile",
+        "required": false
+      },
+      {
+        "title": "随行家长数量",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "0",
+          "1",
+          "2",
+          "更多需付费（请备注）"
+        ]
+      },
+      {
+        "title": "请填写随行人A姓名",
+        "type": "single",
+        "required": true
+      },
+      {
+        "title": "请填写随行人B姓名",
+        "type": "single",
+        "required": true
+      },
+      {
+        "title": "请填写所有随行人姓名",
+        "type": "single",
+        "required": true,
+        "placeholder": "xxx / xxx / xxx"
+      },
+      {
+        "title": "额外随行人员支付方式",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "美元",
+          "人民币"
+        ]
+      },
+      {
+        "title": "！！请注意，此为额外随行人员！！每一个学生有2个免费随行人员的额度！！如有第三个（或以上）随行人员，会相应对第三位（或更多）收费！！",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "我明白"
+        ]
+      },
+      {
+        "title": "额外随行人员接机服务付费",
+        "type": "commodity",
+        "required": true
+      },
+      {
+        "title": "美元支付方式",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "Zelle/Venmo",
+          "Paypal"
+        ]
+      },
+      {
+        "title": "额外随行人员接机服务付费-Paypal",
+        "type": "commodity",
+        "required": true
+      },
+      {
+        "title": "额外随行人员上传付款凭证截图",
+        "type": "pictureAttachment",
+        "required": true
+      },
+      {
+        "title": "请选择你的班车日期",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "9月11号",
+          "9月12号",
+          "9月13号",
+          "9月14号",
+          "9月15号",
+          "9月16号",
+          "9月17号"
+        ]
+      },
+      {
+        "title": "请选择你的班车时间",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "12:30",
+          "17:30",
+          "22:30",
+          "其它时间请注明（专车接送）"
+        ]
+      },
+      {
+        "title": "大巴接送说明：",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "已了解"
+        ]
+      },
+      {
+        "title": "专车接送说明：",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "我接受"
+        ]
+      },
+      {
+        "title": "登机箱数量 carry-on bag number",
+        "type": "dropdown",
+        "required": true
+      },
+      {
+        "title": "托运箱数量 luggage number",
+        "type": "dropdown",
+        "required": true
+      },
+      {
+        "title": "注意事项：行李额度限制",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "我了解，并且接受"
+        ]
+      },
+      {
+        "title": "已确认所有信息无误并签署免责声明",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "已阅读并签署"
+        ]
+      },
+      {
+        "title": "电子签名",
+        "type": "signature",
+        "required": true
+      },
+      {
+        "title": "请确定添加了以上负责人之一的联系方式",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "确认"
+        ]
+      }
+    ],
+    "hasPayment": true,
+    "hasSignature": true,
+    "hasLogic": false,
+    "pages": 1
+  },
+  {
+    "id": "200565033",
+    "name": "2025年新生见面会报名表-UCI",
+    "group": "UCI",
+    "account": "Chinese Union-主账套",
+    "submissions": 584,
+    "fields": [
+      {
+        "title": "历年新生见面会图鉴",
+        "type": "separator",
+        "required": false
+      },
+      {
+        "title": "UCI｜加州大学尔湾分校新生见面会",
+        "type": "pictureCheckbox",
+        "required": true,
+        "options": [
+          "上海场｜6月21日 活动场地：上海白厦Pagoda君亭设计酒店\t  具体地址：上海普陀区桃浦路210号",
+          "北京场｜6月28日 场地名称：北京东直门亚朵S酒店  具体地址：北京市朝阳区香河园路左家庄15号",
+          "深圳场｜7月5日 活动场地：粤港澳大湾区国际人才驿站(河套) 具体地址：深圳市福田区市花路5号长富金茂大厦1号楼2层",
+          "成都场｜7月12日 活动场地：金开国际会议中心 具体地址：成都市青羊区北大街2号"
+        ]
+      },
+      {
+        "title": "真实姓名（中文）",
+        "type": "contactName",
+        "required": true,
+        "placeholder": "姓"
+      },
+      {
+        "title": "微信",
+        "type": "contactIMItem",
+        "required": true,
+        "placeholder": "不是微信名 "
+      },
+      {
+        "title": "内地手机号（建议填写）",
+        "type": "contactMobile",
+        "required": false,
+        "placeholder": "请填写大陆手机号码接收入场信息"
+      },
+      {
+        "title": "邮箱",
+        "type": "contactEmail",
+        "required": true,
+        "placeholder": " 优先使用学校邮箱"
+      },
+      {
+        "title": "专业",
+        "type": "single",
+        "required": true
+      },
+      {
+        "title": "是否携带朋友/家长",
+        "type": "dropdown",
+        "required": true
+      },
+      {
+        "title": "您期望有的其他地点国内线下见面会地点",
+        "type": "single",
+        "required": false
+      }
+    ],
+    "hasPayment": false,
+    "hasSignature": false,
+    "hasLogic": false,
+    "pages": 1
+  },
+  {
+    "id": "200564559",
+    "name": "尔湾·雀圣麻将争霸赛",
+    "group": "UCI",
+    "account": "Chinese Union-主账套",
+    "submissions": 30,
+    "fields": [
+      {
+        "title": "姓名",
+        "type": "contactName",
+        "required": true
+      },
+      {
+        "title": "邮箱",
+        "type": "contactEmail",
+        "required": true
+      },
+      {
+        "title": "手机",
+        "type": "contactMobile",
+        "required": true
+      },
+      {
+        "title": "性别",
+        "type": "contactGender",
+        "required": true,
+        "options": [
+          "男",
+          "女",
+          "(保密)"
+        ]
+      },
+      {
+        "title": "🎫尔湾雀圣麻将比赛报名",
+        "type": "commodity",
+        "required": true
+      },
+      {
+        "title": "请添加一位CU小助手进入活动群组",
+        "type": "pictureRadio",
+        "required": true,
+        "options": [
+          "选项1"
+        ]
+      },
+      {
+        "title": "免责声明",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "已知晓"
+        ]
+      },
+      {
+        "title": "购票须知",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "已知晓"
+        ]
+      }
+    ],
+    "hasPayment": true,
+    "hasSignature": false,
+    "hasLogic": false,
+    "pages": 1
+  },
+  {
+    "id": "200565179",
+    "name": "CU UCI 2025 非诚勿扰嘉宾报名",
+    "group": "UCI",
+    "account": "Chinese Union-主账套",
+    "submissions": 21,
+    "fields": [
+      {
+        "title": "真实姓名（中文）",
+        "type": "contactName",
+        "required": true,
+        "placeholder": "姓"
+      },
+      {
+        "title": "常用名（如有）",
+        "type": "single",
+        "required": false
+      },
+      {
+        "title": "年龄",
+        "type": "single",
+        "required": true
+      },
+      {
+        "title": "性别",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "男",
+          "女",
+          "其他"
+        ]
+      },
+      {
+        "title": "性取向",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "男",
+          "女",
+          "其他"
+        ]
+      },
+      {
+        "title": "专业",
+        "type": "single",
+        "required": true
+      },
+      {
+        "title": "手机号",
+        "type": "contactMobile",
+        "required": true
+      },
+      {
+        "title": "微信",
+        "type": "contactIMItem",
+        "required": true
+      },
+      {
+        "title": "学校邮箱",
+        "type": "contactEmail",
+        "required": true
+      },
+      {
+        "title": "UCI学生ID（8位数字）",
+        "type": "single",
+        "required": true
+      },
+      {
+        "title": "用一句话介绍自己",
+        "type": "single",
+        "required": true
+      },
+      {
+        "title": "请上传一张照片",
+        "type": "pictureAttachment",
+        "required": true
+      },
+      {
+        "title": "此表格必须为本人填写",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "已知悉"
+        ]
+      },
+      {
+        "title": "电子签名",
+        "type": "signature",
+        "required": true
+      }
+    ],
+    "hasPayment": false,
+    "hasSignature": true,
+    "hasLogic": false,
+    "pages": 1
+  },
+  {
+    "id": "200564528",
+    "name": "CHINESE UNION·中国同学联合会2023年新生相册",
+    "group": "UCI",
+    "account": "Chinese Union-主账套",
+    "submissions": 125,
+    "fields": [
+      {
+        "title": "Preferred Name",
+        "type": "contactName",
+        "required": true
+      },
+      {
+        "title": "专业",
+        "type": "single",
+        "required": true
+      },
+      {
+        "title": "社交账号",
+        "type": "checkbox",
+        "required": true,
+        "options": [
+          "Instagram",
+          "微信",
+          "Prefer not to say",
+          "其他"
+        ]
+      },
+      {
+        "title": "Ins 账号",
+        "type": "single",
+        "required": true
+      },
+      {
+        "title": "微信账号",
+        "type": "single",
+        "required": true
+      },
+      {
+        "title": "账号",
+        "type": "single",
+        "required": true
+      },
+      {
+        "title": "#Tag / 兴趣爱好",
+        "type": "single",
+        "required": true
+      },
+      {
+        "title": "请上传你的照片",
+        "type": "pictureAttachment",
+        "required": true
+      },
+      {
+        "title": "请上传你的第二张照片 (Optional)",
+        "type": "pictureAttachment",
+        "required": false
+      },
+      {
+        "title": "请上传你的第三张照片 (Optional)",
+        "type": "pictureAttachment",
+        "required": false
+      }
+    ],
+    "hasPayment": false,
+    "hasSignature": false,
+    "hasLogic": false,
+    "pages": 1
+  },
+  {
+    "id": "200565030",
+    "name": "CU职业发展资源意向问卷",
+    "group": "UCI",
+    "account": "Chinese Union-主账套",
+    "submissions": 53,
+    "fields": [
+      {
+        "title": "你最希望CU提供哪个领域的相关职业发展资源",
+        "type": "checkbox",
+        "required": true,
+        "options": [
+          "创业",
+          "生物健康",
+          "泛商科",
+          "工程",
+          "计算机",
+          "法律",
+          "NGO/国际组织",
+          "政府/公共服务",
+          "教育&研究",
+          "其他"
+        ]
+      },
+      {
+        "title": "你最想获得什么形式的职业发展资源",
+        "type": "checkbox",
+        "required": true,
+        "options": [
+          "线上活动（讲座，Penal讨论，1v1座谈 等）",
+          "线下活动（Career Fair，讲座 等）",
+          "推文信息（行业信息，专业人士洞见等）"
+        ]
+      },
+      {
+        "title": "你对于CU提供的职业发展资源有什么建议吗？",
+        "type": "single",
+        "required": false
+      }
+    ],
+    "hasPayment": false,
+    "hasSignature": false,
+    "hasLogic": false,
+    "pages": 1
+  },
+  {
+    "id": "200565066",
+    "name": "2025年秋季新生免费接机服务-UCD",
+    "group": "UCD",
+    "account": "Chinese Union-主账套",
+    "submissions": 194,
+    "fields": [
+      {
+        "title": "您的身份",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "25年秋季入学新生",
+          "家长"
+        ]
+      },
+      {
+        "title": "姓名-legal name",
+        "type": "contactName",
+        "required": true,
+        "placeholder": "姓"
+      },
+      {
+        "title": "航班类型",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "中国大陆直飞美国",
+          "港澳台直飞美国",
+          "经日韩转机",
+          "经加拿大/美国本土转机",
+          "其他（请备注）"
+        ]
+      },
+      {
+        "title": "航空公司（Airline）",
+        "type": "radio",
+        "required": false,
+        "options": [
+          "中国国际航空（Air China）CA",
+          "中国东方航空（China Eastern）MU",
+          "中国南方航空（China Southern）CZ",
+          "海南航空（Hainan Airlines）HU",
+          "厦门航空（Xiamen Airlines）MF",
+          "四川航空（Sichuan Airlines）3U",
+          "美国联合航空（United Airlines）UA",
+          "美国航空（American Airlines）AA",
+          "其他（请备注）"
+        ]
+      },
+      {
+        "title": "航空公司（Airline）",
+        "type": "radio",
+        "required": false,
+        "options": [
+          "国泰航空（Cathay Pacific）CX",
+          "长荣航空（EVA Air，台湾）BR",
+          "其他（请备注）"
+        ]
+      },
+      {
+        "title": "航空公司（Airline）",
+        "type": "radio",
+        "required": false,
+        "options": [
+          "日本航空（Japan Airlines）JL",
+          "全日空航空（ANA, All Nippon Airways）NH",
+          "大韩航空（Korean Air）KE",
+          "韩亚航空（Asiana Airlines）OZ",
+          "其他（请备注）"
+        ]
+      },
+      {
+        "title": "航空公司（Airline）",
+        "type": "radio",
+        "required": false,
+        "options": [
+          "加拿大航空（Air Canada）AC",
+          "美国联合航空（United Airlines）UA",
+          "达美航空（Delta Air Lines）DL",
+          "美国航空（American Airlines）AA",
+          "阿拉斯加航空（Alaska Airlines）AS",
+          "其他（请备注）"
+        ]
+      },
+      {
+        "title": "最终落地的航班号-flight number",
+        "type": "single",
+        "required": true,
+        "placeholder": "例如：MU583、CA987、DL120"
+      },
+      {
+        "title": "请上传你的机票预定信息",
+        "type": "pictureAttachment",
+        "required": true
+      },
+      {
+        "title": "请在确认您的航班信息后，如实填写报名表格，确保信息无误。如有变更或取消，请联系报名表尾部接机负责人。",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "已了解"
+        ]
+      },
+      {
+        "title": "请上传微信个人二维码方便联系",
+        "type": "pictureAttachment",
+        "required": true
+      },
+      {
+        "title": "请填写你的微信号",
+        "type": "single",
+        "required": false
+      },
+      {
+        "title": "邮箱-email",
+        "type": "contactEmail",
+        "required": true,
+        "placeholder": "xxx@ucdavis.edu"
+      },
+      {
+        "title": "手机号-phone number",
+        "type": "contactMobile",
+        "required": true,
+        "placeholder": "请使用落地即可联系的上的号码"
+      },
+      {
+        "title": "紧急联系人手机号（可选）- emergency contact(optional)",
+        "type": "contactMobile",
+        "required": false
+      },
+      {
+        "title": "随行家长数量",
+        "type": "radio",
+        "required": false,
+        "options": [
+          "1",
+          "更多（请备注）"
+        ]
+      },
+      {
+        "title": "！！请注意，此为额外随行人员！！每一个学生有1个免费随行人员的额度！！如有第2个（或以上）随行人员，会相应对第2位（或更多）收费！！",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "我明白"
+        ]
+      },
+      {
+        "title": "请填写随行人姓名",
+        "type": "single",
+        "required": false
+      },
+      {
+        "title": "额外随行人员支付方式",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "美元",
+          "人民币"
+        ]
+      },
+      {
+        "title": "额外随行人员接机服务付费",
+        "type": "commodity",
+        "required": true
+      },
+      {
+        "title": "美元支付方式",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "Zelle/Venmo",
+          "Paypal"
+        ]
+      },
+      {
+        "title": "额外随行人员接机服务付费-Paypal",
+        "type": "commodity",
+        "required": true
+      },
+      {
+        "title": "额外随行人员上传付款凭证截图",
+        "type": "pictureAttachment",
+        "required": true
+      },
+      {
+        "title": "请选择你的班车日期",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "9月15日",
+          "9月16日",
+          "9月17日",
+          "9月18日"
+        ]
+      },
+      {
+        "title": "请选择你的班车时间",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "下午1点",
+          "下午4点",
+          "晚上7点"
+        ]
+      },
+      {
+        "title": "目的地",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "校内宿舍（S区，T区，C区）",
+          "西村 West Village",
+          "Ryder on Olive",
+          "Sterling 5th Street",
+          "Tanglewood",
+          "其他"
+        ]
+      },
+      {
+        "title": "学生ID/Student ID",
+        "type": "single",
+        "required": true
+      },
+      {
+        "title": "如选择其他，请写下您的住宿区域",
+        "type": "single",
+        "required": true
+      },
+      {
+        "title": "登机箱数量 carry-on bag number",
+        "type": "dropdown",
+        "required": true
+      },
+      {
+        "title": "托运箱数量 luggage number",
+        "type": "dropdown",
+        "required": true
+      },
+      {
+        "title": "注意事项：行李额度限制",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "我了解，并且接受"
+        ]
+      },
+      {
+        "title": "已确认所有信息无误并签署免责声明",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "已阅读并签署"
+        ]
+      },
+      {
+        "title": "电子签名",
+        "type": "signature",
+        "required": true
+      }
+    ],
+    "hasPayment": true,
+    "hasSignature": true,
+    "hasLogic": false,
+    "pages": 1
+  },
+  {
+    "id": "200565052",
+    "name": "2025年秋季新生免费接机服务-USC",
+    "group": "USC",
+    "account": "Chinese Union-主账套",
+    "submissions": 31,
+    "fields": [
+      {
+        "title": "您的身份",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "25年秋季入学新生",
+          "家长"
+        ]
+      },
+      {
+        "title": "交通工具默认为巴士，如需专车请在后面班车时间问题填写自己的上车时间表明需要专车，专车需额外付费，建议优先选择巴士",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "已了解"
+        ]
+      },
+      {
+        "title": "返校生接机服务需付费，费用标准参考以往各校人均接送成本，CU 作为非营利组织，不以盈利为目的，仅以成本价收取。支付后请保留截图备用。",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "已了解"
+        ]
+      },
+      {
+        "title": "姓名-legal name",
+        "type": "contactName",
+        "required": true,
+        "placeholder": "姓"
+      },
+      {
+        "title": "航班类型",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "中国大陆直飞美国",
+          "港澳台直飞美国",
+          "经日韩转机",
+          "经加拿大/美国本土转机",
+          "其他（请备注）"
+        ]
+      },
+      {
+        "title": "航空公司（Airline）",
+        "type": "radio",
+        "required": false,
+        "options": [
+          "中国国际航空（Air China）CA",
+          "中国东方航空（China Eastern）MU",
+          "中国南方航空（China Southern）CZ",
+          "海南航空（Hainan Airlines）HU",
+          "厦门航空（Xiamen Airlines）MF",
+          "四川航空（Sichuan Airlines）3U",
+          "美国联合航空（United Airlines）UA",
+          "美国航空（American Airlines）AA",
+          "其他（请备注）"
+        ]
+      },
+      {
+        "title": "航空公司（Airline）",
+        "type": "radio",
+        "required": false,
+        "options": [
+          "国泰航空（Cathay Pacific）CX",
+          "长荣航空（EVA Air，台湾）BR",
+          "其他（请备注）"
+        ]
+      },
+      {
+        "title": "航空公司（Airline）",
+        "type": "radio",
+        "required": false,
+        "options": [
+          "日本航空（Japan Airlines）JL",
+          "全日空航空（ANA, All Nippon Airways）NH",
+          "大韩航空（Korean Air）KE",
+          "韩亚航空（Asiana Airlines）OZ",
+          "其他（请备注）"
+        ]
+      },
+      {
+        "title": "航空公司（Airline）",
+        "type": "radio",
+        "required": false,
+        "options": [
+          "加拿大航空（Air Canada）AC",
+          "美国联合航空（United Airlines）UA",
+          "达美航空（Delta Air Lines）DL",
+          "美国航空（American Airlines）AA",
+          "阿拉斯加航空（Alaska Airlines）AS",
+          "其他（请备注）"
+        ]
+      },
+      {
+        "title": "最终落地的航班号-flight number",
+        "type": "single",
+        "required": true,
+        "placeholder": "例如：MU583、CA987、DL120"
+      },
+      {
+        "title": "请填写降落日期",
+        "type": "dateTime",
+        "required": true
+      },
+      {
+        "title": "请填写降落时间，精确到分钟",
+        "type": "single",
+        "required": true
+      },
+      {
+        "title": "请上传你的机票预定信息",
+        "type": "pictureAttachment",
+        "required": true
+      },
+      {
+        "title": "请在确认您的航班信息后，如实填写报名表格，确保信息无误。如有变更或取消，请联系报名表尾部接机负责人。",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "已了解"
+        ]
+      },
+      {
+        "title": "请上传微信个人二维码方便联系",
+        "type": "pictureAttachment",
+        "required": true
+      },
+      {
+        "title": "请填写你的微信ID",
+        "type": "single",
+        "required": true
+      },
+      {
+        "title": "邮箱-email",
+        "type": "contactEmail",
+        "required": true,
+        "placeholder": "xxx@uxx.edu"
+      },
+      {
+        "title": "手机号-phone number",
+        "type": "contactMobile",
+        "required": true,
+        "placeholder": "请使用落地即可联系的上的号码"
+      },
+      {
+        "title": "紧急联系人手机号（可选）-emergency contact(optional)",
+        "type": "contactMobile",
+        "required": false
+      },
+      {
+        "title": "随行家长数量",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "0",
+          "1",
+          "2",
+          "更多（请备注）"
+        ]
+      },
+      {
+        "title": "请填写随行人A姓名",
+        "type": "single",
+        "required": true
+      },
+      {
+        "title": "请填写随行人B姓名",
+        "type": "single",
+        "required": true
+      },
+      {
+        "title": "额外随行人员支付方式",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "美元",
+          "人民币"
+        ]
+      },
+      {
+        "title": "！！请注意，此为额外随行人员！！每一个学生有2个免费随行人员的额度！！如有第三个（或以上）随行人员，会相应对第三位（或更多）收费！！",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "我明白"
+        ]
+      },
+      {
+        "title": "额外随行人员接机服务付费",
+        "type": "commodity",
+        "required": true
+      },
+      {
+        "title": "美元支付方式",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "Zelle/Venmo",
+          "Paypal"
+        ]
+      },
+      {
+        "title": "额外随行人员接机服务付费-Paypal",
+        "type": "commodity",
+        "required": true
+      },
+      {
+        "title": "额外随行人员上传付款凭证截图",
+        "type": "pictureAttachment",
+        "required": true
+      },
+      {
+        "title": "选择你的班车时间",
+        "type": "radio",
+        "required": false,
+        "options": [
+          "8月10号",
+          "8月11号",
+          "8月13号",
+          "8月12号",
+          "8月20号",
+          "8月21号"
+        ]
+      },
+      {
+        "title": "请选择你的班车时间",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "上午10 :30–12 :30",
+          "下午14 :30–16 :30",
+          "下午17 :30–18 :30",
+          "其它时间请注明（专车接送）"
+        ]
+      },
+      {
+        "title": "大巴接送说明：",
+        "type": "radio",
+        "required": false,
+        "options": [
+          "已了解"
+        ]
+      },
+      {
+        "title": "专车接送说明：",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "我接受"
+        ]
+      },
+      {
+        "title": "登机箱数量 carry-on bag number",
+        "type": "dropdown",
+        "required": true
+      },
+      {
+        "title": "托运箱数量 luggage number",
+        "type": "dropdown",
+        "required": true
+      },
+      {
+        "title": "注意事项：行李额度限制",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "我了解，并且接受"
+        ]
+      },
+      {
+        "title": "已确认所有信息无误并签署免责声明",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "已阅读并签署"
+        ]
+      },
+      {
+        "title": "电子签名",
+        "type": "signature",
+        "required": true
+      }
+    ],
+    "hasPayment": true,
+    "hasSignature": true,
+    "hasLogic": false,
+    "pages": 1
+  },
+  {
+    "id": "200565168",
+    "name": "CU USC x UCLA 万圣派对报名表",
+    "group": "USC",
+    "account": "Chinese Union-主账套",
+    "submissions": 128,
+    "fields": [
+      {
+        "title": "姓名",
+        "type": "contactName",
+        "required": true
+      },
+      {
+        "title": "微信",
+        "type": "contactIMItem",
+        "required": true
+      },
+      {
+        "title": "来自学校",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "USC",
+          "UCLA"
+        ]
+      },
+      {
+        "title": "是否需要大巴？",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "是",
+          "否（自行前往）"
+        ]
+      },
+      {
+        "title": "届（毕业年份）",
+        "type": "has-unit",
+        "required": true
+      },
+      {
+        "title": "学校邮箱",
+        "type": "contactEmail",
+        "required": true
+      },
+      {
+        "title": "支付方式",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "人民币（微信/支付宝）",
+          "美元（Paypal）"
+        ]
+      },
+      {
+        "title": "活动门票（限量）",
+        "type": "commodity",
+        "required": true
+      },
+      {
+        "title": "活动门票（限量）",
+        "type": "commodity",
+        "required": true
+      }
+    ],
+    "hasPayment": true,
+    "hasSignature": false,
+    "hasLogic": false,
+    "pages": 1
+  },
+  {
+    "id": "200565067",
+    "name": "2025年秋季新生免费接机服务-UCSB",
+    "group": "UCSB",
+    "account": "Chinese Union-主账套",
+    "submissions": 178,
+    "fields": [
+      {
+        "title": "您的身份",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "25年秋季入学新生",
+          "家长"
+        ]
+      },
+      {
+        "title": "交通工具默认为巴士，如需专车请在后面班车时间问题填写自己的上车时间表明需要专车，专车需额外付费，建议优先选择巴士",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "已了解"
+        ]
+      },
+      {
+        "title": "请上传的入学offer用于验证你的新生身份",
+        "type": "pictureAttachment",
+        "required": true
+      },
+      {
+        "title": "姓名-legal name",
+        "type": "contactName",
+        "required": true,
+        "placeholder": "姓"
+      },
+      {
+        "title": "航班类型",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "中国大陆直飞美国",
+          "港澳台直飞美国",
+          "经日韩转机",
+          "经加拿大/美国本土转机",
+          "其他（请备注）"
+        ]
+      },
+      {
+        "title": "航空公司（Airline）",
+        "type": "radio",
+        "required": false,
+        "options": [
+          "中国国际航空（Air China）CA",
+          "中国东方航空（China Eastern）MU",
+          "中国南方航空（China Southern）CZ",
+          "海南航空（Hainan Airlines）HU",
+          "厦门航空（Xiamen Airlines）MF",
+          "四川航空（Sichuan Airlines）3U",
+          "美国联合航空（United Airlines）UA",
+          "美国航空（American Airlines）AA",
+          "其他（请备注）"
+        ]
+      },
+      {
+        "title": "航空公司（Airline）",
+        "type": "radio",
+        "required": false,
+        "options": [
+          "国泰航空（Cathay Pacific）CX",
+          "长荣航空（EVA Air，台湾）BR",
+          "其他（请备注）"
+        ]
+      },
+      {
+        "title": "航空公司（Airline）",
+        "type": "radio",
+        "required": false,
+        "options": [
+          "日本航空（Japan Airlines）JL",
+          "全日空航空（ANA, All Nippon Airways）NH",
+          "大韩航空（Korean Air）KE",
+          "韩亚航空（Asiana Airlines）OZ",
+          "其他（请备注）"
+        ]
+      },
+      {
+        "title": "航空公司（Airline）",
+        "type": "radio",
+        "required": false,
+        "options": [
+          "加拿大航空（Air Canada）AC",
+          "美国联合航空（United Airlines）UA",
+          "达美航空（Delta Air Lines）DL",
+          "美国航空（American Airlines）AA",
+          "阿拉斯加航空（Alaska Airlines）AS",
+          "其他（请备注）"
+        ]
+      },
+      {
+        "title": "最终落地的航班号-flight number",
+        "type": "single",
+        "required": true,
+        "placeholder": "例如：MU583、CA987、DL120"
+      },
+      {
+        "title": "请填写降落日期",
+        "type": "dateTime",
+        "required": true
+      },
+      {
+        "title": "请手动填写航班落地时间",
+        "type": "single",
+        "required": true
+      },
+      {
+        "title": "请上传你的机票预定信息",
+        "type": "pictureAttachment",
+        "required": true
+      },
+      {
+        "title": "请在确认您的航班信息后，如实填写报名表格，确保信息无误。如有变更或取消，请联系报名表尾部接机负责人。",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "已了解"
+        ]
+      },
+      {
+        "title": "请上传微信个人二维码方便联系",
+        "type": "pictureAttachment",
+        "required": true
+      },
+      {
+        "title": "请填写你的微信ID",
+        "type": "single",
+        "required": true
+      },
+      {
+        "title": "邮箱-email",
+        "type": "contactEmail",
+        "required": true,
+        "placeholder": "xxx@uxx.edu"
+      },
+      {
+        "title": "手机号-phone number",
+        "type": "contactMobile",
+        "required": true,
+        "placeholder": "请使用落地即可联系的上的号码"
+      },
+      {
+        "title": "紧急联系人手机号（可选）-emergency contact(optional)",
+        "type": "contactMobile",
+        "required": false
+      },
+      {
+        "title": "随行家长数量",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "0",
+          "1",
+          "2",
+          "更多（请备注）"
+        ]
+      },
+      {
+        "title": "请填写随行人A姓名",
+        "type": "single",
+        "required": true
+      },
+      {
+        "title": "请填写随行人B姓名",
+        "type": "single",
+        "required": true
+      },
+      {
+        "title": "请填写所有随行人姓名",
+        "type": "single",
+        "required": true,
+        "placeholder": "xxx / xxx / xxx"
+      },
+      {
+        "title": "额外随行人员支付方式",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "美元",
+          "人民币"
+        ]
+      },
+      {
+        "title": "！！请注意，此为额外随行人员！！每一个学生有2个免费随行人员的额度！！如有第三个（或以上）随行人员，会相应对第三位（或更多）收费！！",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "我明白"
+        ]
+      },
+      {
+        "title": "额外随行人员接机服务付费",
+        "type": "commodity",
+        "required": true
+      },
+      {
+        "title": "美元支付方式",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "Zelle/Venmo",
+          "Paypal"
+        ]
+      },
+      {
+        "title": "额外随行人员接机服务付费-Paypal",
+        "type": "commodity",
+        "required": true
+      },
+      {
+        "title": "额外随行人员上传付款凭证截图",
+        "type": "pictureAttachment",
+        "required": true
+      },
+      {
+        "title": "请选择你的班车日期",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "9月18号",
+          "9月19号",
+          "9月20号",
+          "9月21日"
+        ]
+      },
+      {
+        "title": "请选择你的班车时间",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "12:00-13:00",
+          "16:30-17:30",
+          "其它时间请注明（专车接送）"
+        ]
+      },
+      {
+        "title": "是否入住学校宿舍",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "是",
+          "否"
+        ]
+      },
+      {
+        "title": "宿舍是校外还是校内宿舍？",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "校内",
+          "校外 santa catalina hall"
+        ]
+      },
+      {
+        "title": "巴士接送说明：",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "已了解"
+        ]
+      },
+      {
+        "title": "专车接送说明：",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "我接受"
+        ]
+      },
+      {
+        "title": "登机箱数量 carry-on bag number",
+        "type": "dropdown",
+        "required": true
+      },
+      {
+        "title": "托运箱数量 luggage number",
+        "type": "dropdown",
+        "required": true
+      },
+      {
+        "title": "注意事项：行李额度限制",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "我了解，并且接受"
+        ]
+      },
+      {
+        "title": "已确认所有信息无误并签署免责声明",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "已阅读并签署"
+        ]
+      },
+      {
+        "title": "电子签名",
+        "type": "signature",
+        "required": true
+      }
+    ],
+    "hasPayment": true,
+    "hasSignature": true,
+    "hasLogic": false,
+    "pages": 1
+  },
+  {
+    "id": "200565065",
+    "name": "2025年秋季新生免费接机服务-UMN",
+    "group": "UMN",
+    "account": "Chinese Union-主账套",
+    "submissions": 189,
+    "fields": [
+      {
+        "title": "您的身份",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "25年秋季入学新生",
+          "家长"
+        ]
+      },
+      {
+        "title": "学生姓名",
+        "type": "contactName",
+        "required": true,
+        "placeholder": "姓"
+      },
+      {
+        "title": "航班类型",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "中国大陆直飞美国",
+          "港澳台直飞美国",
+          "经日韩转机",
+          "经加拿大/美国本土转机",
+          "其他（请备注）"
+        ]
+      },
+      {
+        "title": "航空公司（Airline）",
+        "type": "radio",
+        "required": false,
+        "options": [
+          "中国国际航空（Air China）CA",
+          "中国东方航空（China Eastern）MU",
+          "中国南方航空（China Southern）CZ",
+          "海南航空（Hainan Airlines）HU",
+          "厦门航空（Xiamen Airlines）MF",
+          "四川航空（Sichuan Airlines）3U",
+          "美国联合航空（United Airlines）UA",
+          "美国航空（American Airlines）AA",
+          "其他（请备注）"
+        ]
+      },
+      {
+        "title": "航空公司（Airline）",
+        "type": "radio",
+        "required": false,
+        "options": [
+          "国泰航空（Cathay Pacific）CX",
+          "长荣航空（EVA Air，台湾）BR",
+          "其他（请备注）"
+        ]
+      },
+      {
+        "title": "航空公司（Airline）",
+        "type": "radio",
+        "required": false,
+        "options": [
+          "日本航空（Japan Airlines）JL",
+          "全日空航空（ANA, All Nippon Airways）NH",
+          "大韩航空（Korean Air）KE",
+          "韩亚航空（Asiana Airlines）OZ",
+          "其他（请备注）"
+        ]
+      },
+      {
+        "title": "航空公司（Airline）",
+        "type": "radio",
+        "required": false,
+        "options": [
+          "加拿大航空（Air Canada）AC",
+          "美国联合航空（United Airlines）UA",
+          "达美航空（Delta Air Lines）DL",
+          "美国航空（American Airlines）AA",
+          "阿拉斯加航空（Alaska Airlines）AS",
+          "其他（请备注）"
+        ]
+      },
+      {
+        "title": "最终落地的航班号-flight number",
+        "type": "single",
+        "required": true,
+        "placeholder": "例如：MU583、CA987、DL120"
+      },
+      {
+        "title": "落地日期",
+        "type": "dateTime",
+        "required": true
+      },
+      {
+        "title": "请手动填写航班落地时间",
+        "type": "single",
+        "required": true,
+        "placeholder": "19:30"
+      },
+      {
+        "title": "请上传你的机票预定信息",
+        "type": "pictureAttachment",
+        "required": true
+      },
+      {
+        "title": "请在确认您的航班信息后，如实填写报名表格，确保信息无误。如有变更或取消，请联系报名表尾部接机负责人。",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "已了解"
+        ]
+      },
+      {
+        "title": "请上传微信个人二维码方便联系",
+        "type": "pictureAttachment",
+        "required": true
+      },
+      {
+        "title": "请填写你的微信ID",
+        "type": "single",
+        "required": true
+      },
+      {
+        "title": "邮箱-email",
+        "type": "contactEmail",
+        "required": true,
+        "placeholder": "xxx@umn.edu"
+      },
+      {
+        "title": "手机号-phone number",
+        "type": "contactMobile",
+        "required": true,
+        "placeholder": "请使用落地即可联系的上的号码"
+      },
+      {
+        "title": "紧急联系人手机号（可选）-emergency contact(optional)",
+        "type": "contactMobile",
+        "required": false
+      },
+      {
+        "title": "随行家长数量",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "0",
+          "1",
+          "2",
+          "更多（请备注）"
+        ]
+      },
+      {
+        "title": "请填写随行人A姓名",
+        "type": "single",
+        "required": true
+      },
+      {
+        "title": "请填写随行人B姓名",
+        "type": "single",
+        "required": true
+      },
+      {
+        "title": "请填写所有随行人姓名",
+        "type": "single",
+        "required": true,
+        "placeholder": "xxx / xxx / xxx"
+      },
+      {
+        "title": "登机箱数量 carry-on bag number",
+        "type": "dropdown",
+        "required": true
+      },
+      {
+        "title": "托运箱数量 luggage number",
+        "type": "dropdown",
+        "required": true
+      },
+      {
+        "title": "已确认所有信息无误并签署免责声明",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "已阅读并签署"
+        ]
+      },
+      {
+        "title": "电子签名",
+        "type": "signature",
+        "required": true
+      }
+    ],
+    "hasPayment": false,
+    "hasSignature": true,
+    "hasLogic": false,
+    "pages": 1
+  },
+  {
+    "id": "200565084",
+    "name": "2025年秋季新生免费接机服务-UCB",
+    "group": "UCB",
+    "account": "Chinese Union-主账套",
+    "submissions": 46,
+    "fields": [
+      {
+        "title": "您的身份",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "25年秋季入学新生",
+          "家长"
+        ]
+      },
+      {
+        "title": "交通工具默认为巴士，如需专车请在后面班车时间问题填写自己的上车时间表明需要专车，专车需额外付费，建议优先选择巴士",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "已了解"
+        ]
+      },
+      {
+        "title": "请上传的入学offer用于验证你的新生身份",
+        "type": "pictureAttachment",
+        "required": true
+      },
+      {
+        "title": "姓名-legal name",
+        "type": "contactName",
+        "required": true,
+        "placeholder": "姓"
+      },
+      {
+        "title": "航班类型",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "中国大陆直飞美国",
+          "港澳台直飞美国",
+          "经日韩转机",
+          "经加拿大/美国本土转机",
+          "其他（请备注）"
+        ]
+      },
+      {
+        "title": "航空公司（Airline）",
+        "type": "radio",
+        "required": false,
+        "options": [
+          "中国国际航空（Air China）CA",
+          "中国东方航空（China Eastern）MU",
+          "中国南方航空（China Southern）CZ",
+          "海南航空（Hainan Airlines）HU",
+          "厦门航空（Xiamen Airlines）MF",
+          "四川航空（Sichuan Airlines）3U",
+          "美国联合航空（United Airlines）UA",
+          "美国航空（American Airlines）AA",
+          "其他（请备注）"
+        ]
+      },
+      {
+        "title": "航空公司（Airline）",
+        "type": "radio",
+        "required": false,
+        "options": [
+          "国泰航空（Cathay Pacific）CX",
+          "长荣航空（EVA Air，台湾）BR",
+          "其他（请备注）"
+        ]
+      },
+      {
+        "title": "航空公司（Airline）",
+        "type": "radio",
+        "required": false,
+        "options": [
+          "日本航空（Japan Airlines）JL",
+          "全日空航空（ANA, All Nippon Airways）NH",
+          "大韩航空（Korean Air）KE",
+          "韩亚航空（Asiana Airlines）OZ",
+          "其他（请备注）"
+        ]
+      },
+      {
+        "title": "航空公司（Airline）",
+        "type": "radio",
+        "required": false,
+        "options": [
+          "加拿大航空（Air Canada）AC",
+          "美国联合航空（United Airlines）UA",
+          "达美航空（Delta Air Lines）DL",
+          "美国航空（American Airlines）AA",
+          "阿拉斯加航空（Alaska Airlines）AS",
+          "其他（请备注）"
+        ]
+      },
+      {
+        "title": "最终落地的航班号-flight number",
+        "type": "single",
+        "required": true,
+        "placeholder": "例如：MU583、CA987、DL120"
+      },
+      {
+        "title": "请填写降落日期",
+        "type": "dateTime",
+        "required": true
+      },
+      {
+        "title": "请手动填写航班落地时间",
+        "type": "single",
+        "required": true
+      },
+      {
+        "title": "请上传你的机票预定信息",
+        "type": "pictureAttachment",
+        "required": true
+      },
+      {
+        "title": "请在确认您的航班信息后，如实填写报名表格，确保信息无误。如有变更或取消，请联系报名表尾部接机负责人。",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "已了解"
+        ]
+      },
+      {
+        "title": "请上传微信个人二维码方便联系",
+        "type": "pictureAttachment",
+        "required": true
+      },
+      {
+        "title": "请填写你的微信ID",
+        "type": "single",
+        "required": true
+      },
+      {
+        "title": "邮箱-email",
+        "type": "contactEmail",
+        "required": true,
+        "placeholder": "xxx@uxx.edu"
+      },
+      {
+        "title": "手机号-phone number",
+        "type": "contactMobile",
+        "required": true,
+        "placeholder": "请使用落地即可联系的上的号码"
+      },
+      {
+        "title": "紧急联系人手机号（可选）-emergency contact(optional)",
+        "type": "contactMobile",
+        "required": false
+      },
+      {
+        "title": "随行家长数量",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "0",
+          "1",
+          "2",
+          "更多（请备注）"
+        ]
+      },
+      {
+        "title": "请填写随行人A姓名",
+        "type": "single",
+        "required": true
+      },
+      {
+        "title": "请填写随行人B姓名",
+        "type": "single",
+        "required": true
+      },
+      {
+        "title": "请填写所有随行人姓名",
+        "type": "single",
+        "required": true,
+        "placeholder": "xxx / xxx / xxx"
+      },
+      {
+        "title": "额外随行人员支付方式",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "美元",
+          "人民币"
+        ]
+      },
+      {
+        "title": "！！请注意，此为额外随行人员！！每一个学生有2个免费随行人员的额度！！如有第三个（或以上）随行人员，会相应对第三位（或更多）收费！！",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "我明白"
+        ]
+      },
+      {
+        "title": "额外随行人员接机服务付费",
+        "type": "commodity",
+        "required": true
+      },
+      {
+        "title": "美元支付方式",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "Zelle/Venmo",
+          "Paypal"
+        ]
+      },
+      {
+        "title": "额外随行人员接机服务付费-Paypal",
+        "type": "commodity",
+        "required": true
+      },
+      {
+        "title": "额外随行人员上传付款凭证截图",
+        "type": "pictureAttachment",
+        "required": true
+      },
+      {
+        "title": "请选择你的班车日期",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "8月18号",
+          "8月19号",
+          "8月20号",
+          "8月21号"
+        ]
+      },
+      {
+        "title": "请选择你的班车时间",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "12:00",
+          "15:00",
+          "18:00",
+          "其它时间请注明（专车接送）"
+        ]
+      },
+      {
+        "title": "大巴接送说明：",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "已了解"
+        ]
+      },
+      {
+        "title": "专车接送说明：",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "我接受"
+        ]
+      },
+      {
+        "title": "登机箱数量 carry-on bag number",
+        "type": "dropdown",
+        "required": true
+      },
+      {
+        "title": "托运箱数量 luggage number",
+        "type": "dropdown",
+        "required": true
+      },
+      {
+        "title": "注意事项：行李额度限制",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "我了解，并且接受"
+        ]
+      },
+      {
+        "title": "已确认所有信息无误并签署免责声明",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "已阅读并签署"
+        ]
+      },
+      {
+        "title": "电子签名",
+        "type": "signature",
+        "required": true
+      },
+      {
+        "title": "请确定添加了以上负责人之一的联系方式",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "确认"
+        ]
+      }
+    ],
+    "hasPayment": true,
+    "hasSignature": true,
+    "hasLogic": false,
+    "pages": 1
+  },
+  {
+    "id": "200565069",
+    "name": "2025 秋季折扣酒店优惠计划",
+    "group": "UCSD",
+    "account": "Chinese Union-主账套",
+    "submissions": 144,
+    "fields": [
+      {
+        "title": "为了不影响售后，请勿分享预约链接给其它为提交该表单的同学！",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "已了解"
+        ]
+      },
+      {
+        "title": "注意：",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "确定"
+        ]
+      },
+      {
+        "title": "姓名",
+        "type": "contactName",
+        "required": true,
+        "placeholder": "姓"
+      },
+      {
+        "title": "手机",
+        "type": "contactMobile",
+        "required": true
+      },
+      {
+        "title": "邮箱",
+        "type": "contactEmail",
+        "required": true
+      },
+      {
+        "title": "请选择入住的日期（可多选）",
+        "type": "checkbox",
+        "required": true,
+        "options": [
+          "9/12",
+          "9/13",
+          "9/14",
+          "9/15",
+          "9/16",
+          "9/17",
+          "9/18",
+          "9/19",
+          "9/20",
+          "9/21"
+        ]
+      }
+    ],
+    "hasPayment": false,
+    "hasSignature": false,
+    "hasLogic": false,
+    "pages": 2
+  },
+  {
+    "id": "200565034",
+    "name": "2025年新生见面会报名表-UCSD",
+    "group": "UCSD",
+    "account": "Chinese Union-主账套",
+    "submissions": 292,
+    "fields": [
+      {
+        "title": "历年新生见面会图鉴",
+        "type": "separator",
+        "required": false
+      },
+      {
+        "title": "为方便统计报名，该表单仅开放于学生",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "已了解"
+        ]
+      },
+      {
+        "title": "UCSD｜加州大学圣地亚哥分校新生见面会",
+        "type": "pictureCheckbox",
+        "required": true,
+        "options": [
+          "上海场｜6月21日",
+          "北京场｜6月28日",
+          "深圳场｜7月5日",
+          "成都场｜7月12日"
+        ]
+      },
+      {
+        "title": "真实姓名（中文）",
+        "type": "contactName",
+        "required": true,
+        "desc": "Legal Name",
+        "placeholder": "姓"
+      },
+      {
+        "title": "微信",
+        "type": "contactIMItem",
+        "required": true,
+        "desc": "请填写ID方便联系",
+        "placeholder": "不是微信名"
+      },
+      {
+        "title": "内地手机号（建议填写）",
+        "type": "contactMobile",
+        "required": false,
+        "desc": "+86"
+      },
+      {
+        "title": "邮箱",
+        "type": "contactEmail",
+        "required": true,
+        "desc": "请填写常用联系邮箱",
+        "placeholder": "优先使用学校邮箱"
+      },
+      {
+        "title": "专业",
+        "type": "single",
+        "required": true,
+        "desc": "Major"
+      },
+      {
+        "title": "是否携带朋友/家长",
+        "type": "dropdown",
+        "required": true
+      },
+      {
+        "title": "请问你对after party感兴趣嘛",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "是",
+          "否"
+        ]
+      },
+      {
+        "title": "您期望有的其他地点国内线下见面会地点",
+        "type": "single",
+        "required": false
+      }
+    ],
+    "hasPayment": false,
+    "hasSignature": false,
+    "hasLogic": false,
+    "pages": 5
+  },
+  {
+    "id": "200564573",
+    "name": "暑期线下新生见面会报名表",
+    "group": "UCSD",
+    "account": "Chinese Union-主账套",
+    "submissions": 990,
+    "fields": [
+      {
+        "title": "历年新生见面会图鉴",
+        "type": "separator",
+        "required": false
+      },
+      {
+        "title": "选择学校",
+        "type": "dropdown",
+        "required": true,
+        "desc": "选择你录取的学校"
+      },
+      {
+        "title": "UCD｜加州大学戴维斯新生见面会",
+        "type": "pictureRadio",
+        "required": true,
+        "options": [
+          "上海场｜6月24日",
+          "北京场｜7月1日",
+          "广州场｜7月8日",
+          "深圳场｜7月9日"
+        ]
+      },
+      {
+        "title": "UCLA｜加州大学洛杉矶新生见面会",
+        "type": "pictureRadio",
+        "required": true,
+        "options": [
+          "上海场｜6月24日",
+          "北京场｜7月1日",
+          "广州场｜7月8日",
+          "深圳场｜7月9日"
+        ]
+      },
+      {
+        "title": "UCB｜加州大学伯克利新生见面会",
+        "type": "pictureRadio",
+        "required": true,
+        "options": [
+          "上海场｜6月24日",
+          "北京场｜7月1日",
+          "广州场｜7月8日",
+          "深圳场｜7月9日"
+        ]
+      },
+      {
+        "title": "UCI｜加州大学尔湾新生见面会",
+        "type": "pictureRadio",
+        "required": true,
+        "options": [
+          "上海场｜6月24日",
+          "北京场｜7月1日",
+          "广州场｜7月8日",
+          "深圳场｜7月9日"
+        ]
+      },
+      {
+        "title": "UCSD｜加州大学圣地亚哥新生见面会",
+        "type": "pictureRadio",
+        "required": true,
+        "options": [
+          "上海场｜6月24日",
+          "北京场｜7月1日",
+          "广州场｜7月8日",
+          "深圳场｜7月9日"
+        ]
+      },
+      {
+        "title": "真实姓名",
+        "type": "contactName",
+        "required": true,
+        "desc": "Legal Name"
+      },
+      {
+        "title": "微信",
+        "type": "contactIMItem",
+        "required": true,
+        "desc": "WeChat ID"
+      },
+      {
+        "title": "内地手机号（建议填写）",
+        "type": "contactMobile",
+        "required": false,
+        "desc": "+86"
+      },
+      {
+        "title": "学校邮箱",
+        "type": "contactEmail",
+        "required": true,
+        "desc": "@xxxx.edu ONLY"
+      },
+      {
+        "title": "专业",
+        "type": "single",
+        "required": true,
+        "desc": "Major"
+      },
+      {
+        "title": "是否携带朋友/家长",
+        "type": "dropdown",
+        "required": true
+      }
+    ],
+    "hasPayment": false,
+    "hasSignature": false,
+    "hasLogic": true,
+    "pages": 2
+  },
+  {
+    "id": "200564458",
+    "name": "2023 年度CHINESE UNION 招新申请表",
+    "group": "UCSD",
+    "account": "Chinese Union-主账套",
+    "submissions": 49,
+    "fields": [
+      {
+        "title": "护照姓名",
+        "type": "single",
+        "required": true
+      },
+      {
+        "title": "常用名",
+        "type": "single",
+        "required": true
+      },
+      {
+        "title": "性别",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "男",
+          "女",
+          "不回答"
+        ]
+      },
+      {
+        "title": "年级",
+        "type": "dropdown",
+        "required": true
+      },
+      {
+        "title": "专业",
+        "type": "single",
+        "required": true
+      },
+      {
+        "title": "手机",
+        "type": "single",
+        "required": true
+      },
+      {
+        "title": "微信",
+        "type": "single",
+        "required": true
+      },
+      {
+        "title": "邮箱",
+        "type": "single",
+        "required": true
+      },
+      {
+        "title": "对于CU的部门/Program有感兴趣的吗",
+        "type": "checkbox",
+        "required": true,
+        "options": [
+          "部门",
+          "Program",
+          "暂时没有",
+          "我有我自己想要实现的计划"
+        ]
+      },
+      {
+        "title": "部门",
+        "type": "checkbox",
+        "required": false,
+        "options": [
+          "Business Development",
+          "Public Relation",
+          "Human Resources",
+          "Project Manager",
+          "Marketing & Branding"
+        ]
+      },
+      {
+        "title": "Program",
+        "type": "checkbox",
+        "required": false,
+        "options": [
+          "Mentor mentee 计划",
+          "高中生计划",
+          "公益活动计划",
+          "聚星游轮计划",
+          "开学大典"
+        ]
+      },
+      {
+        "title": "有没有想通过CU的平台实现的一些愿望及目标",
+        "type": "single",
+        "required": false
+      },
+      {
+        "title": "对于CU的一些愿望及期待",
+        "type": "single",
+        "required": false
+      }
+    ],
+    "hasPayment": false,
+    "hasSignature": false,
+    "hasLogic": true,
+    "pages": 1
+  },
+  {
+    "id": "200565097",
+    "name": "2025 CU开学大典主持人竞选报名",
+    "group": "UCSD",
+    "account": "CU活动策划",
+    "submissions": 6,
+    "fields": [
+      {
+        "title": "请认真阅读以下活动信息",
+        "type": "checkbox",
+        "required": true,
+        "options": [
+          "已认真阅读，并知晓竞选相关要求"
+        ]
+      },
+      {
+        "title": "姓名 Name",
+        "type": "contactName",
+        "required": true
+      },
+      {
+        "title": "性别 Gender",
+        "type": "contactGender",
+        "required": true,
+        "options": [
+          "男",
+          "女"
+        ]
+      },
+      {
+        "title": "学校邮箱 Email Address",
+        "type": "contactEmail",
+        "required": true
+      },
+      {
+        "title": "微信账号（注意不是昵称）WeChat",
+        "type": "contactIMItem",
+        "required": true
+      },
+      {
+        "title": "竞选项",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "中文主持",
+          "英文主持"
+        ]
+      },
+      {
+        "title": "请认真阅读以下竞选要求",
+        "type": "checkbox",
+        "required": true,
+        "options": [
+          "已认真阅读，并知晓竞选相关要求"
+        ]
+      },
+      {
+        "title": "竞选时间及着装要求",
+        "type": "checkbox",
+        "required": true,
+        "options": [
+          "已知晓"
+        ]
+      }
+    ],
+    "hasPayment": false,
+    "hasSignature": false,
+    "hasLogic": false,
+    "pages": 1
+  },
+  {
+    "id": "200565046",
+    "name": "Chinese Union UCSD 中国区暑期新生见面会 Afterparty 报名表",
+    "group": "UCSD",
+    "account": "CU活动策划",
+    "submissions": 91,
+    "fields": [
+      {
+        "title": "如果您是家长，由于活动性质，after party主要开放给学生参加，感谢您的理解！",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "已了解"
+        ]
+      },
+      {
+        "title": "你是否已经报名新生见面会",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "是",
+          "否"
+        ]
+      },
+      {
+        "title": "你报名的新生见面会场次是？",
+        "type": "checkbox",
+        "required": true,
+        "options": [
+          "上海场 6月21日 12:30-16:00",
+          "北京场 6月28日 13:00-16:00",
+          "深圳场 7月5日 13:00-16:00",
+          "成都场 7月12日 13:00-16:00"
+        ]
+      },
+      {
+        "title": "你是否要参加上海场Afterparty？",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "是",
+          "否"
+        ]
+      },
+      {
+        "title": "你是否要参加北京场Afterparty？",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "是",
+          "否"
+        ]
+      },
+      {
+        "title": "你是否要参加深圳场Afterparty？",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "是",
+          "否"
+        ]
+      },
+      {
+        "title": "你是否要参加成都场Afterparty？",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "是",
+          "否"
+        ]
+      },
+      {
+        "title": "名字",
+        "type": "contactName",
+        "required": true
+      },
+      {
+        "title": "邮箱",
+        "type": "contactEmail",
+        "required": true
+      },
+      {
+        "title": "微信号",
+        "type": "single",
+        "required": true
+      },
+      {
+        "title": "新生见面会Afterparty将以AA形式收取大家一定活动费用，用于支付Afterparty活动内容成本。Afterparty具体时间、地点和收费将会在新生见面会开始前以群公告形式进行通知，请及时关注微信群信息。",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "我已知晓"
+        ]
+      },
+      {
+        "title": "如有问题或者任何想法请在此留言",
+        "type": "single",
+        "required": false
+      }
+    ],
+    "hasPayment": false,
+    "hasSignature": false,
+    "hasLogic": false,
+    "pages": 1
+  },
+  {
+    "id": "200564996",
+    "name": "CU @ UCSD 25-26 Chinese Union Triton Days “云逛校园” 报名表",
+    "group": "UCSD",
+    "account": "CU活动策划",
+    "submissions": 25,
+    "fields": [
+      {
+        "title": "名字",
+        "type": "contactName",
+        "required": true
+      },
+      {
+        "title": "身份",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "家长",
+          "学生"
+        ]
+      },
+      {
+        "title": "邮箱",
+        "type": "contactEmail",
+        "required": true
+      },
+      {
+        "title": "微信号",
+        "type": "single",
+        "required": true
+      },
+      {
+        "title": "性别",
+        "type": "contactGender",
+        "required": true,
+        "options": [
+          "男",
+          "女",
+          "其他/保密"
+        ]
+      },
+      {
+        "title": "如有问题或者任何想法请在此留言",
+        "type": "single",
+        "required": false
+      }
+    ],
+    "hasPayment": false,
+    "hasSignature": false,
+    "hasLogic": false,
+    "pages": 1
+  },
+  {
+    "id": "200564971",
+    "name": "University of California, San Diego2025年新生相册 报名通道",
+    "group": "UCSD",
+    "account": "CU活动策划",
+    "submissions": 57,
+    "fields": [
+      {
+        "title": "Preferred Name",
+        "type": "single",
+        "required": true
+      },
+      {
+        "title": "专业",
+        "type": "single",
+        "required": true
+      },
+      {
+        "title": "学院",
+        "type": "dropdown",
+        "required": true
+      },
+      {
+        "title": "社交账号",
+        "type": "checkbox",
+        "required": true,
+        "options": [
+          "微信",
+          "Instagram",
+          "Prefer not to say",
+          "其他"
+        ]
+      },
+      {
+        "title": "兴趣爱好/Tag#",
+        "type": "single",
+        "required": true
+      },
+      {
+        "title": "请上传你的照片",
+        "type": "pictureAttachment",
+        "required": true
+      },
+      {
+        "title": "请上传你的第二张照片",
+        "type": "pictureAttachment",
+        "required": false
+      },
+      {
+        "title": "请上传你的第三张照片",
+        "type": "pictureAttachment",
+        "required": false
+      },
+      {
+        "title": "是否同意将上述信息用于CHINESE UNION的媒体当中",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "同意"
+        ]
+      }
+    ],
+    "hasPayment": false,
+    "hasSignature": false,
+    "hasLogic": false,
+    "pages": 1
+  },
+  {
+    "id": "200565190",
+    "name": "Mentor-mentee Service Hour",
+    "group": "UCSD",
+    "account": "CU活动策划",
+    "submissions": 15,
+    "fields": [
+      {
+        "title": "是否已加入CU",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "是",
+          "否"
+        ]
+      },
+      {
+        "title": "姓名 Name",
+        "type": "single",
+        "required": true
+      },
+      {
+        "title": "总共Mentee数量",
+        "type": "single",
+        "required": true
+      },
+      {
+        "title": "Mentor-Mentee指导答疑方式（如选择线上线下，请填写次数）",
+        "type": "checkbox",
+        "required": true,
+        "options": [
+          "线上会议，电话沟通，线下交流，面谈",
+          "微信沟通：私信，每人的Mentor群聊",
+          "如有其他请填写"
+        ]
+      },
+      {
+        "title": "MKT-编写推文",
+        "type": "checkbox",
+        "required": false,
+        "options": [
+          "活动预告",
+          "报名推送",
+          "活动回馈总结",
+          "如有其他"
+        ]
+      },
+      {
+        "title": "是否参加HR/PM- Mentor Mentee匹配",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "是",
+          "否"
+        ]
+      },
+      {
+        "title": "PM-请填写个数",
+        "type": "checkbox",
+        "required": false,
+        "options": [
+          "Pitch文稿",
+          "制作报名表/二维码",
+          "其他表单",
+          "如有其他"
+        ]
+      },
+      {
+        "title": "其他",
+        "type": "single",
+        "required": false
+      }
+    ],
+    "hasPayment": false,
+    "hasSignature": false,
+    "hasLogic": false,
+    "pages": 1
+  },
+  {
+    "id": "200565094",
+    "name": "暑期Mentorship-Mentor/Mentee报名表",
+    "group": "UCSD",
+    "account": "CU活动策划",
+    "submissions": 173,
+    "fields": [
+      {
+        "title": "想成为的身份：",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "Mentor",
+          "Mentee"
+        ]
+      },
+      {
+        "title": "姓名",
+        "type": "single",
+        "required": true
+      },
+      {
+        "title": "入学年份",
+        "type": "dropdown",
+        "required": true
+      },
+      {
+        "title": "年级",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "Freshman",
+          "Sophomore",
+          "Junior",
+          "Senior"
+        ]
+      },
+      {
+        "title": "Major",
+        "type": "single",
+        "required": true
+      },
+      {
+        "title": "Major 2",
+        "type": "single",
+        "required": false
+      },
+      {
+        "title": "Minor",
+        "type": "single",
+        "required": false
+      },
+      {
+        "title": "College",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "Revelle",
+          "Muir",
+          "Marshall",
+          "Warren",
+          "ERC",
+          "Sixth",
+          "Seventh",
+          "Eighth",
+          "研究生/博士生"
+        ]
+      },
+      {
+        "title": "擅长领域",
+        "type": "checkbox",
+        "required": true,
+        "options": [
+          "学习规划&学术辅导",
+          "课程选择",
+          "社团活动",
+          "科研实习",
+          "其他"
+        ]
+      },
+      {
+        "title": "想要探索的学业或生活领域",
+        "type": "checkbox",
+        "required": true,
+        "options": [
+          "学习规划",
+          "课程选择",
+          "社团活动",
+          "科研实习"
+        ]
+      },
+      {
+        "title": "兴趣爱好（如运动、音乐、旅行、游戏等",
+        "type": "single",
+        "required": true
+      },
+      {
+        "title": "是否有目前心仪的Mentor？",
+        "type": "radio",
+        "required": false,
+        "options": [
+          "是",
+          "否"
+        ]
+      },
+      {
+        "title": "Intended Mentor名字",
+        "type": "single",
+        "required": false
+      },
+      {
+        "title": "Expected Mentor WorkingLoad",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "1-2人",
+          "2-4人",
+          ">5人"
+        ]
+      },
+      {
+        "title": "微信二维码",
+        "type": "pictureAttachment",
+        "required": true
+      }
+    ],
+    "hasPayment": false,
+    "hasSignature": false,
+    "hasLogic": false,
+    "pages": 1
+  },
+  {
+    "id": "200565078",
+    "name": "2025开学大典观众报名表 2025 Chinese Union Welcoming Ceremony",
+    "group": "UCSD",
+    "account": "CU活动策划",
+    "submissions": 425,
+    "fields": [
+      {
+        "title": "姓名 Name",
+        "type": "contactName",
+        "required": true
+      },
+      {
+        "title": "手机 Phone Number",
+        "type": "contactMobile",
+        "required": true
+      },
+      {
+        "title": "邮箱 Email",
+        "type": "contactEmail",
+        "required": true
+      },
+      {
+        "title": "请填写您的VITA注册邮箱（如有）",
+        "type": "single",
+        "required": false
+      },
+      {
+        "title": "届（毕业年份）",
+        "type": "has-unit",
+        "required": true
+      },
+      {
+        "title": "是否有微信号？Do you have a WeChat?",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "是 Yes",
+          "否 No"
+        ]
+      },
+      {
+        "title": "如果有请填写（注意是微信号不是昵称）",
+        "type": "single",
+        "required": false
+      },
+      {
+        "title": "可选择上传微信二维码 方便联系",
+        "type": "attachment",
+        "required": false
+      },
+      {
+        "title": "通过哪些平台了解到 Chinese Union？",
+        "type": "checkbox",
+        "required": true,
+        "options": [
+          "CU UCSD 公众号推文",
+          "Chinese Union官网",
+          "CU 官方小红书账号",
+          "CU 官方微博账号",
+          "CU 官方贴吧账号",
+          "CU Facebook / Instagram 账号",
+          "CU 热情的学长/学姐"
+        ]
+      },
+      {
+        "title": "通过哪些平台了解到本次活动？",
+        "type": "checkbox",
+        "required": true,
+        "options": [
+          "CU UCSD 公众号推文",
+          "Chinese Union 官网",
+          "CU 新生见面会",
+          "CU 官方小红书账号",
+          "CU 官方微博账号",
+          "CU 官方贴吧账号",
+          "CU 官方抖音账号",
+          "CU Facebook / Instagram 账号",
+          "CU 热情的学长/学姐"
+        ]
+      },
+      {
+        "title": "请仔细阅读观众报名须知，并选择同意，方可提交表单。",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "同意 I agree"
+        ]
+      }
+    ],
+    "hasPayment": false,
+    "hasSignature": false,
+    "hasLogic": false,
+    "pages": 1
+  },
+  {
+    "id": "200564935",
+    "name": "CU@UCSD 2025 VP换届选举报名表",
+    "group": "UCSD",
+    "account": "CU活动策划",
+    "submissions": 5,
+    "fields": [
+      {
+        "title": "选择",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "已知晓"
+        ]
+      },
+      {
+        "title": "通过报名本表，你知悉你正在申请本职部门VP",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "是"
+        ]
+      },
+      {
+        "title": "通过报名本表，你认为你了解全部门职责、有大局观、责任心和规划性。",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "是"
+        ]
+      },
+      {
+        "title": "通过报名本表，你认为你能够指导/分配本部门EB和成员完成部门内各类工作。未来一年需有一定时间并准备好为CU作出持续贡献。",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "是"
+        ]
+      },
+      {
+        "title": "通过报名本表，你保证将会尊重竞争对手（如有）、绝不会私下拉票或询问、暗示投票意向",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "是"
+        ]
+      },
+      {
+        "title": "通过报名本表，你认为你了解全部门职责、有大局观、责任心和规划性。",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "是"
+        ]
+      },
+      {
+        "title": "我理解以下为强制要求，如不满足这些要求无法竞选VP候选人：",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "是"
+        ]
+      },
+      {
+        "title": "请于本题补充上一题中所要求的工作信息",
+        "type": "single",
+        "required": true
+      },
+      {
+        "title": "姓名",
+        "type": "single",
+        "required": true
+      },
+      {
+        "title": "部门",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "Business Development 商务发展部门",
+          "Human Resources 人力资源部门",
+          "Marketing 市场营销部门",
+          "Project Management 活动策划部门",
+          "Public Relations 公共关系部门",
+          "President(本届采取双president制度)"
+        ]
+      },
+      {
+        "title": "请于本题称述未来的个人CU计划",
+        "type": "single",
+        "required": true
+      },
+      {
+        "title": "请于本题称述未来的部门计划",
+        "type": "single",
+        "required": true
+      },
+      {
+        "title": "请于本题称述未来的CU计划",
+        "type": "single",
+        "required": true
+      },
+      {
+        "title": "年级",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "大一",
+          "大二",
+          "大三",
+          "大四"
+        ]
+      },
+      {
+        "title": "入职CU年份",
+        "type": "dropdown",
+        "required": true
+      },
+      {
+        "title": "面试报名表提交后，Coco 将统一微信通知各位面试人员面试时间及相关安排。如因未及时查看通知而导致任何面试相关问题，CU将无法承担任何后果。非常感谢。",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "我已知悉"
+        ]
+      }
+    ],
+    "hasPayment": false,
+    "hasSignature": false,
+    "hasLogic": false,
+    "pages": 1
+  },
+  {
+    "id": "200564900",
+    "name": "Homecoming registration form",
+    "group": "UCSD",
+    "account": "CU活动策划",
+    "submissions": 61,
+    "fields": [
+      {
+        "title": "Name",
+        "type": "contactName",
+        "required": true
+      },
+      {
+        "title": "Email",
+        "type": "contactEmail",
+        "required": true
+      },
+      {
+        "title": "Gender",
+        "type": "contactGender",
+        "required": true,
+        "options": [
+          "Male",
+          "Female",
+          "Prefer not to answer"
+        ]
+      },
+      {
+        "title": "Graduating year",
+        "type": "has-unit",
+        "required": true
+      },
+      {
+        "title": "Phone number",
+        "type": "single",
+        "required": true
+      },
+      {
+        "title": "How will you dress?",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "Wear formal attire according to the dress code and get a drink pack coupon!",
+          "Wear themed clothing according to dress code to get food coupons!",
+          "其他"
+        ]
+      },
+      {
+        "title": "Song request",
+        "type": "single",
+        "required": false,
+        "placeholder": " (Enter the complete song title + creator)"
+      },
+      {
+        "title": "Signature",
+        "type": "signature",
+        "required": true
+      }
+    ],
+    "hasPayment": false,
+    "hasSignature": true,
+    "hasLogic": false,
+    "pages": 1
+  },
+  {
+    "id": "200564879",
+    "name": "CU成员个人信息表",
+    "group": "UCSD",
+    "account": "CU活动策划",
+    "submissions": 33,
+    "fields": [
+      {
+        "title": "姓名",
+        "type": "single",
+        "required": true
+      },
+      {
+        "title": "部门",
+        "type": "single",
+        "required": true
+      },
+      {
+        "title": "入学年份",
+        "type": "single",
+        "required": true
+      },
+      {
+        "title": "届（毕业年份）",
+        "type": "has-unit",
+        "required": true
+      },
+      {
+        "title": "专业",
+        "type": "single",
+        "required": true
+      },
+      {
+        "title": "生日",
+        "type": "dateTime",
+        "required": true
+      },
+      {
+        "title": "联系方式-电话",
+        "type": "single",
+        "required": true
+      },
+      {
+        "title": "联系方式-邮箱",
+        "type": "single",
+        "required": true
+      }
+    ],
+    "hasPayment": false,
+    "hasSignature": false,
+    "hasLogic": false,
+    "pages": 1
+  },
+  {
+    "id": "200564878",
+    "name": "2024 CU 夜市线上入场票售票 人民币支付",
+    "group": "UCSD",
+    "account": "CU活动策划",
+    "submissions": 16,
+    "fields": [
+      {
+        "title": "姓名",
+        "type": "contactName",
+        "required": true
+      },
+      {
+        "title": "手机",
+        "type": "contactMobile",
+        "required": true
+      },
+      {
+        "title": "邮箱",
+        "type": "contactEmail",
+        "required": true
+      },
+      {
+        "title": "票务一览",
+        "type": "commodity",
+        "required": true,
+        "options": [
+          "10.25 截止",
+          "活动当天线下也可购买"
+        ]
+      }
+    ],
+    "hasPayment": true,
+    "hasSignature": false,
+    "hasLogic": false,
+    "pages": 1
+  },
+  {
+    "id": "200564793",
+    "name": "2024开学大典观众报名表CHOOSE THIS2024 Chinese Union Welcoming Ceremony",
+    "group": "UCSD",
+    "account": "CU活动策划",
+    "submissions": 700,
+    "fields": [
+      {
+        "title": "姓名 Name",
+        "type": "contactName",
+        "required": true
+      },
+      {
+        "title": "商品",
+        "type": "commodity",
+        "required": false
+      },
+      {
+        "title": "邮箱 Email",
+        "type": "contactEmail",
+        "required": true
+      },
+      {
+        "title": "届（毕业年份）",
+        "type": "has-unit",
+        "required": true
+      },
+      {
+        "title": "请仔细阅读观众报名须知，并选择同意，方可提交表单。",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "同意 I agree"
+        ]
+      }
+    ],
+    "hasPayment": true,
+    "hasSignature": false,
+    "hasLogic": false,
+    "pages": 1
+  },
+  {
+    "id": "200564978",
+    "name": "【CU × 哈佛学术讲座】需求调研问卷",
+    "group": "UCSD",
+    "account": "CU活动策划",
+    "submissions": 19,
+    "fields": [
+      {
+        "title": "你的UCSD就读阶段",
+        "type": "radio",
+        "required": false,
+        "options": [
+          "本科大一",
+          "本科大二",
+          "本科大三",
+          "本科大四",
+          "研究生（Master/PhD/MD）",
+          "其他"
+        ]
+      },
+      {
+        "title": "你的专业领域",
+        "type": "single",
+        "required": true
+      },
+      {
+        "title": "你现阶段最迫切希望解决的问题是？（最多选3项）",
+        "type": "checkbox",
+        "required": false,
+        "options": [
+          "专业选择迷茫",
+          "GPA管理困难（选课/拿A技巧）",
+          "科研机会获取（如何联系教授/进实验室）",
+          "实习资源匮乏（CPT/校内岗位申请）",
+          "申研规划混乱（时间线/选校定位）",
+          "跨文化适应压力（社交/语言障碍）",
+          "时间管理崩溃（拖延/多任务处理）",
+          "职业方向不明确（行业选择/技能缺口）",
+          "其他"
+        ]
+      },
+      {
+        "title": "（开放题）请用一句话描述一个你希望嘉宾现场解答的具体困惑：",
+        "type": "single",
+        "required": false
+      },
+      {
+        "title": "你最希望听到哈佛的学长学姐分享哪类经验？（最多选2项）",
+        "type": "checkbox",
+        "required": false,
+        "options": [
+          "“逆袭案例”：低GPA/转专业申研成功路径",
+          "“资源挖掘”：UCSD科研/实习资源",
+          "“时间管理”：学期中兼顾学业+实习+社交的实操技巧",
+          "“推荐信攻略”：如何让教授主动为你写强推",
+          "“跨文化适应”：从课堂发言到职场社交的自信建立",
+          "其他"
+        ]
+      },
+      {
+        "title": "如果未来举办系列讲座，你优先想听什么主题？",
+        "type": "checkbox",
+        "required": false,
+        "options": [
+          "OPT/CPT申请与留美求职",
+          "硕士 vs 博士申请全解析",
+          "学术人脉搭建（学术会议/套磁信）",
+          "心理健康与压力管理",
+          "职业规划",
+          "其他"
+        ]
+      }
+    ],
+    "hasPayment": false,
+    "hasSignature": false,
+    "hasLogic": false,
+    "pages": 1
+  },
+  {
+    "id": "200564843",
+    "name": "接机菜品预订",
+    "group": "UCSD",
+    "account": "CU活动策划",
+    "submissions": 8,
+    "fields": [
+      {
+        "title": "1. 请注意，所有订单将于前一天晚上10点前截单，晚于晚上10点后的订单将不予受理。",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "我明白"
+        ]
+      },
+      {
+        "title": "订购时间（天）",
+        "type": "appointment",
+        "required": true
+      },
+      {
+        "title": "支付方式",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "美金支付（zelle）",
+          "人民币支付（支付宝）"
+        ]
+      },
+      {
+        "title": "单人套餐（美金）",
+        "type": "commodity",
+        "required": true,
+        "options": [
+          "农家小炒肉饭+冬瓜排骨汤 （中辣）",
+          "野山椒牛肉饭+冬瓜排骨汤 （中辣）",
+          "食神牛腩饭+冬瓜排骨汤 （小辣）",
+          "麻婆豆腐饭+冬瓜排骨汤（不辣）"
+        ]
+      },
+      {
+        "title": "单人套餐（人民币）",
+        "type": "commodity",
+        "required": true,
+        "options": [
+          "农家小炒肉饭+冬瓜排骨汤 （中辣）",
+          "野山椒牛肉饭+冬瓜排骨汤 （中辣）",
+          "食神牛腩饭+冬瓜排骨汤 （小辣）",
+          "麻婆豆腐饭+冬瓜排骨汤（不辣）"
+        ]
+      },
+      {
+        "title": "小食（人民币）",
+        "type": "commodity",
+        "required": false
+      },
+      {
+        "title": "小食（美金）",
+        "type": "commodity",
+        "required": false
+      },
+      {
+        "title": "额外",
+        "type": "single",
+        "required": false
+      },
+      {
+        "title": "姓名",
+        "type": "contactName",
+        "required": true
+      },
+      {
+        "title": "手机",
+        "type": "contactMobile",
+        "required": true,
+        "placeholder": "美国手机号码"
+      },
+      {
+        "title": "邮箱",
+        "type": "contactEmail",
+        "required": true
+      },
+      {
+        "title": "微信ID",
+        "type": "single",
+        "required": true,
+        "placeholder": "微信ID不是微信昵称"
+      },
+      {
+        "title": "送餐地址",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "酒店sherton la Jolla",
+          "学校price center loop"
+        ]
+      },
+      {
+        "title": "用餐时间",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "中午11点",
+          "晚上6点"
+        ]
+      },
+      {
+        "title": "选择酒店送餐请在小广场自取",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "我明白"
+        ]
+      },
+      {
+        "title": "选择学校送餐请提前抵达price center loop",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "我明白"
+        ]
+      },
+      {
+        "title": "订单备注",
+        "type": "single",
+        "required": false
+      },
+      {
+        "title": "支付图片上传",
+        "type": "pictureAttachment",
+        "required": true
+      }
+    ],
+    "hasPayment": true,
+    "hasSignature": false,
+    "hasLogic": false,
+    "pages": 1
+  },
+  {
+    "id": "200564790",
+    "name": "2024 CU开学大典节目报名",
+    "group": "UCSD",
+    "account": "CU活动策划",
+    "submissions": 13,
+    "fields": [
+      {
+        "title": "1.本次开学典礼节目报名选手需要通过CU审核，审核过后将会通知各位结果。",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "已仔细阅读并知晓"
+        ]
+      },
+      {
+        "title": "报名选择",
+        "type": "radio",
+        "required": false,
+        "options": [
+          "个人表演",
+          "团队表演"
+        ]
+      },
+      {
+        "title": "名 Contact Name",
+        "type": "contactName",
+        "required": true
+      },
+      {
+        "title": "英文姓名（选填） English Name (optional)",
+        "type": "single",
+        "required": false
+      },
+      {
+        "title": "性别 Gender",
+        "type": "contactGender",
+        "required": true,
+        "options": [
+          "男",
+          "女"
+        ]
+      },
+      {
+        "title": "年级 Class",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "Freshman",
+          "Sophomore",
+          "Junior",
+          "Senior",
+          "其他"
+        ]
+      },
+      {
+        "title": "学院 College",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "Revelle",
+          "Muir",
+          "Marshall",
+          "Warren",
+          "ERC",
+          "Sixth",
+          "Seventh",
+          "Eighth",
+          "其他"
+        ]
+      },
+      {
+        "title": "专业 Major",
+        "type": "single",
+        "required": true
+      },
+      {
+        "title": "微信账号（注意不是昵称）Wechat",
+        "type": "contactIMItem",
+        "required": true
+      },
+      {
+        "title": "美国手机号（若无，请填写中国手机号）Phone Number",
+        "type": "contactMobile",
+        "required": true
+      },
+      {
+        "title": "学校邮箱 UCSD email",
+        "type": "single",
+        "required": true,
+        "placeholder": "xxx@ucsd.edu"
+      },
+      {
+        "title": "节目名称 Title of Show",
+        "type": "single",
+        "required": true
+      },
+      {
+        "title": "节目类别 Genre",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "舞蹈",
+          "唱歌及说唱",
+          "乐器演奏",
+          "魔术",
+          "语言类（小品，短剧等）",
+          "其他"
+        ]
+      },
+      {
+        "title": "节目参与人数 Crew Size",
+        "type": "number",
+        "required": true
+      },
+      {
+        "title": "节目背景音乐 Background Music",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "有",
+          "无"
+        ]
+      }
+    ],
+    "hasPayment": false,
+    "hasSignature": false,
+    "hasLogic": false,
+    "pages": 1
+  },
+  {
+    "id": "200565205",
+    "name": "UCI CU 2026 Singing Competition Singer Registration Form",
+    "group": "UCI",
+    "account": "CU活动策划",
+    "submissions": 0,
+    "fields": [
+      {
+        "title": "Legal Name",
+        "type": "contactName",
+        "required": true
+      },
+      {
+        "title": "Age",
+        "type": "single",
+        "required": false
+      },
+      {
+        "title": "Graduation year",
+        "type": "has-unit",
+        "required": true
+      },
+      {
+        "title": "Email",
+        "type": "contactEmail",
+        "required": true
+      },
+      {
+        "title": "Phone number",
+        "type": "contactMobile",
+        "required": true
+      },
+      {
+        "title": "SCHOOL",
+        "type": "contactTitle",
+        "required": true
+      },
+      {
+        "title": "Singing Style",
+        "type": "single",
+        "required": true
+      },
+      {
+        "title": "Performance Format",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "Solo",
+          "Group (up to 6 people)"
+        ]
+      },
+      {
+        "title": "Combine the names of other members",
+        "type": "multiLevel",
+        "required": false
+      },
+      {
+        "title": "Video",
+        "type": "attachment",
+        "required": true
+      },
+      {
+        "title": "Final Round Song Selection",
+        "type": "single",
+        "required": false
+      }
+    ],
+    "hasPayment": false,
+    "hasSignature": false,
+    "hasLogic": false,
+    "pages": 1
+  },
+  {
+    "id": "200565189",
+    "name": "CU UCI 2025 遇见对的你·观众报名表",
+    "group": "UCI",
+    "account": "CU活动策划",
+    "submissions": 0,
+    "fields": [
+      {
+        "title": "真实姓名（中文）",
+        "type": "contactName",
+        "required": true,
+        "placeholder": "姓"
+      },
+      {
+        "title": "年龄",
+        "type": "single",
+        "required": false
+      },
+      {
+        "title": "Email",
+        "type": "contactEmail",
+        "required": true
+      },
+      {
+        "title": "学校",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "UCI",
+          "UCLA",
+          "UCSD",
+          "UCSB",
+          "UCB",
+          "UCD",
+          "其他"
+        ]
+      },
+      {
+        "title": "年级",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "大一",
+          "大二",
+          "大三",
+          "大四",
+          "研究生",
+          "其他"
+        ]
+      },
+      {
+        "title": "支付方式",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "人民币（微信，支付宝）",
+          "美元（Zelle， Paypal）",
+          "工作人员票-友好社团/CU成员折扣票"
+        ]
+      },
+      {
+        "title": "美元支付方式",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "Paypal",
+          "Zelle"
+        ]
+      },
+      {
+        "title": "Sale（售出不退不换）",
+        "type": "commodity",
+        "required": true
+      },
+      {
+        "title": "Sale PayPal（售出不退不换）",
+        "type": "commodity",
+        "required": true
+      },
+      {
+        "title": "Sale Zelle （售出不退不换）",
+        "type": "commodity",
+        "required": true
+      },
+      {
+        "title": "Zelle支付账户-chineseunion@outlook.com",
+        "type": "pictureAttachment",
+        "required": true
+      },
+      {
+        "title": "请输入密码",
+        "type": "single",
+        "required": true
+      },
+      {
+        "title": "工作人员票",
+        "type": "commodity",
+        "required": true,
+        "options": [
+          "请确认密码正确，否则票将自动作废",
+          "请确认密码正确，否则票将自动作废，且售出不退不换"
+        ]
+      }
+    ],
+    "hasPayment": true,
+    "hasSignature": false,
+    "hasLogic": false,
+    "pages": 1
+  },
+  {
+    "id": "200564566",
+    "name": "UCI 免费接机· Chinese Union｜中国同学联合会",
+    "group": "UCI",
+    "account": "CU活动策划",
+    "submissions": 0,
+    "fields": [
+      {
+        "title": "姓名 Name",
+        "type": "contactName",
+        "required": true
+      },
+      {
+        "title": "微信 WeChat ID",
+        "type": "contactIMItem",
+        "required": true
+      },
+      {
+        "title": "联系电话 Phone Number",
+        "type": "contactMobile",
+        "required": true
+      },
+      {
+        "title": "电子邮箱 Email",
+        "type": "contactEmail",
+        "required": true,
+        "placeholder": "请填写UCI E-mail"
+      },
+      {
+        "title": "携带行李数量 Luggage",
+        "type": "dropdown",
+        "required": true
+      },
+      {
+        "title": "目的地 Destination",
+        "type": "dropdown",
+        "required": true
+      },
+      {
+        "title": "航班号 Flight Number",
+        "type": "single",
+        "required": true
+      },
+      {
+        "title": "到达时间 Arrival Time",
+        "type": "appointment",
+        "required": true,
+        "options": [
+          "00:00-02:00 AM",
+          "02:01-04:00 AM",
+          "04:01-06:00 AM",
+          "06:01-08:00 AM",
+          "08:01-10:00 AM",
+          "10:01AM -12:00 PM",
+          "12:01-14:00 PM",
+          "14:01-16:00 PM",
+          "16:01-18:00 PM",
+          "18:01-20:00 PM",
+          "20:01-22:00 PM",
+          "22:00-23:59 PM"
+        ]
+      },
+      {
+        "title": "免责声明",
+        "type": "signature",
+        "required": true
+      },
+      {
+        "title": "已确定所有信息无误并且添加工作人员",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "已确认"
+        ]
+      }
+    ],
+    "hasPayment": false,
+    "hasSignature": true,
+    "hasLogic": false,
+    "pages": 1
+  },
+  {
+    "id": "200564476",
+    "name": "UCI CU 2022万圣节活动报名",
+    "group": "UCI",
+    "account": "CU活动策划",
+    "submissions": 0,
+    "fields": [
+      {
+        "title": "中文姓名",
+        "type": "contactName",
+        "required": true
+      },
+      {
+        "title": "英文姓名",
+        "type": "single",
+        "required": true
+      },
+      {
+        "title": "手机",
+        "type": "contactMobile",
+        "required": true
+      },
+      {
+        "title": "UCI 邮箱",
+        "type": "contactEmail",
+        "required": true
+      },
+      {
+        "title": "微信",
+        "type": "single",
+        "required": true,
+        "placeholder": "请填写你的微信号码"
+      },
+      {
+        "title": "免责声明",
+        "type": "single",
+        "required": true,
+        "placeholder": "签名（请输入你的全名）"
+      },
+      {
+        "title": "工作人员微信",
+        "type": "pictureRadio",
+        "required": true,
+        "options": [
+          "选项1",
+          "选项2",
+          "选项3"
+        ]
+      },
+      {
+        "title": "Ticket",
+        "type": "commodity",
+        "required": true
+      },
+      {
+        "title": "购票须知",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "我已知晓。I am informed."
+        ]
+      }
+    ],
+    "hasPayment": true,
+    "hasSignature": false,
+    "hasLogic": false,
+    "pages": 1
+  },
+  {
+    "id": "200564999",
+    "name": "CU UW万圣节舞会",
+    "group": "UW",
+    "account": "CU活动策划",
+    "submissions": 0,
+    "fields": [
+      {
+        "title": "2018年度优秀员工评选盛大开启！",
+        "type": "separator",
+        "required": false
+      },
+      {
+        "title": "候选人",
+        "type": "pictureCheckbox",
+        "required": true,
+        "options": [
+          "1. JY /BD",
+          "2. Faker /HR",
+          "3. Jack/行政",
+          "4. Coco/市场",
+          "5. Lucas /销售",
+          "6. Hward /研发"
+        ]
+      },
+      {
+        "title": "姓名",
+        "type": "contactName",
+        "required": true
+      },
+      {
+        "title": "手机",
+        "type": "contactMobile",
+        "required": true
+      },
+      {
+        "title": "学校",
+        "type": "contactTitle",
+        "required": true
+      },
+      {
+        "title": "邮箱",
+        "type": "contactEmail",
+        "required": true
+      },
+      {
+        "title": "微信",
+        "type": "contactIMItem",
+        "required": true
+      },
+      {
+        "title": "届（毕业年份）",
+        "type": "has-unit",
+        "required": true
+      },
+      {
+        "title": "下拉",
+        "type": "dropdown",
+        "required": false
+      },
+      {
+        "title": "选择",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "化妆",
+          "不化妆"
+        ]
+      },
+      {
+        "title": "所在部门",
+        "type": "dropdown",
+        "required": true
+      },
+      {
+        "title": "姓名",
+        "type": "single",
+        "required": false
+      },
+      {
+        "title": "所在地",
+        "type": "contactLocation",
+        "required": true
+      }
+    ],
+    "hasPayment": false,
+    "hasSignature": false,
+    "hasLogic": false,
+    "pages": 1
+  },
+  {
+    "id": "200564221",
+    "name": "接机工作人员报名表",
+    "group": "UW",
+    "account": "CU活动策划",
+    "submissions": 0,
+    "fields": [
+      {
+        "title": "姓名",
+        "type": "contactName",
+        "required": true
+      },
+      {
+        "title": "部门",
+        "type": "contactDepartment",
+        "required": true
+      },
+      {
+        "title": "在西雅图住址",
+        "type": "single",
+        "required": true
+      },
+      {
+        "title": "是否接种过疫苗",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "是",
+          "否"
+        ]
+      },
+      {
+        "title": "疫苗接种种类",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "美国",
+          "中国"
+        ]
+      },
+      {
+        "title": "在西雅图是否有车",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "是",
+          "否"
+        ]
+      },
+      {
+        "title": "车型",
+        "type": "single",
+        "required": true
+      },
+      {
+        "title": "可以承担接机工作时间",
+        "type": "checkbox",
+        "required": true,
+        "options": [
+          "7:30 - 12:30",
+          "11:00 - 15:30",
+          "20:00 - 23:00"
+        ]
+      },
+      {
+        "title": "可以承担接机工作日期",
+        "type": "checkbox",
+        "required": true,
+        "options": [
+          "9.15",
+          "9.16",
+          "9.17",
+          "9.18",
+          "9.19",
+          "9.20",
+          "9.21",
+          "9.22",
+          "9.23",
+          "9.24",
+          "9.25",
+          "9.26"
+        ]
+      }
+    ],
+    "hasPayment": false,
+    "hasSignature": false,
+    "hasLogic": false,
+    "pages": 1
+  },
+  {
+    "id": "200564216",
+    "name": "officer&eb留任表",
+    "group": "UW",
+    "account": "CU活动策划",
+    "submissions": 0,
+    "fields": [
+      {
+        "title": "姓名",
+        "type": "contactName",
+        "required": true
+      },
+      {
+        "title": "部门",
+        "type": "dropdown",
+        "required": true
+      },
+      {
+        "title": "当前职务",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "officer",
+          "eb"
+        ]
+      },
+      {
+        "title": "继续留任/退出CU",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "继续留任",
+          "不留任"
+        ]
+      },
+      {
+        "title": "为什么不留任",
+        "type": "single",
+        "required": false
+      },
+      {
+        "title": "秋季是否有意向申请eb",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "是",
+          "否",
+          "在考虑"
+        ]
+      },
+      {
+        "title": "对CU未来的发展有什么意见和建议",
+        "type": "single",
+        "required": false
+      }
+    ],
+    "hasPayment": false,
+    "hasSignature": false,
+    "hasLogic": false,
+    "pages": 1
+  },
+  {
+    "id": "200565188",
+    "name": "CU UCSB Glow Halloween 万圣节奇妙夜",
+    "group": "UCSB",
+    "account": "CU活动策划",
+    "submissions": 0,
+    "fields": [
+      {
+        "title": "中文全名",
+        "type": "contactName",
+        "required": true
+      },
+      {
+        "title": "微信号",
+        "type": "single",
+        "required": true
+      },
+      {
+        "title": "学生邮箱",
+        "type": "contactEmail",
+        "required": true
+      },
+      {
+        "title": "如果是“随机音乐随舞”环节，哪种音乐最能让您舞/嗨起来？",
+        "type": "single",
+        "required": true
+      }
+    ],
+    "hasPayment": false,
+    "hasSignature": false,
+    "hasLogic": false,
+    "pages": 1
+  },
+  {
+    "id": "200564938",
+    "name": "Rose Sale(Dollar)",
+    "group": "UCSB",
+    "account": "CU活动策划",
+    "submissions": 0,
+    "fields": [
+      {
+        "title": "Name",
+        "type": "contactName",
+        "required": true
+      },
+      {
+        "title": "E-mail",
+        "type": "contactEmail",
+        "required": true
+      },
+      {
+        "title": "Payment method：",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "Paypal",
+          "others: Zelle, Venmo"
+        ]
+      },
+      {
+        "title": "Rose number",
+        "type": "single",
+        "required": true
+      },
+      {
+        "title": "Payment ScreenShot",
+        "type": "pictureAttachment",
+        "required": true
+      },
+      {
+        "title": "Rose",
+        "type": "commodity",
+        "required": true
+      }
+    ],
+    "hasPayment": true,
+    "hasSignature": false,
+    "hasLogic": false,
+    "pages": 1
+  },
+  {
+    "id": "200564166",
+    "name": "UCSD-安心计划",
+    "group": "安心计划",
+    "account": "CU活动策划",
+    "submissions": 0,
+    "fields": [
+      {
+        "title": "初次填写、更新信息、报告失联",
+        "type": "dropdown",
+        "required": true
+      },
+      {
+        "title": "更新选项",
+        "type": "checkbox",
+        "required": true,
+        "options": [
+          "家长信息",
+          "学生信息",
+          "紧急联系人信息"
+        ]
+      },
+      {
+        "title": "身份确认",
+        "type": "separator",
+        "required": false
+      },
+      {
+        "title": "学生中文姓名",
+        "type": "contactName",
+        "required": true
+      },
+      {
+        "title": "拼音姓",
+        "type": "single",
+        "required": true
+      },
+      {
+        "title": "拼音名",
+        "type": "single",
+        "required": true
+      },
+      {
+        "title": "学生性别",
+        "type": "contactGender",
+        "required": true,
+        "options": [
+          "男",
+          "女",
+          "(保密)"
+        ]
+      },
+      {
+        "title": "学生入学年份",
+        "type": "dateTime",
+        "required": true
+      },
+      {
+        "title": "学生生日",
+        "type": "contactBirthDate",
+        "required": true
+      },
+      {
+        "title": "学生邮箱号",
+        "type": "contactEmail",
+        "required": true
+      },
+      {
+        "title": "家长信息",
+        "type": "separator",
+        "required": false
+      },
+      {
+        "title": "家长姓名",
+        "type": "single",
+        "required": true
+      },
+      {
+        "title": "家长手机号",
+        "type": "number",
+        "required": true
+      },
+      {
+        "title": "家长微信号",
+        "type": "single",
+        "required": true
+      },
+      {
+        "title": "家长邮箱",
+        "type": "single",
+        "required": true
+      },
+      {
+        "title": "家长其他联系方式",
+        "type": "single",
+        "required": false
+      },
+      {
+        "title": "与学生关系",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "父亲",
+          "母亲",
+          "其他"
+        ]
+      },
+      {
+        "title": "所在省市",
+        "type": "city",
+        "required": true
+      },
+      {
+        "title": "工作单位",
+        "type": "contactCompany",
+        "required": false
+      },
+      {
+        "title": "职位",
+        "type": "contactPosition",
+        "required": false
+      },
+      {
+        "title": "学生信息",
+        "type": "separator",
+        "required": false
+      },
+      {
+        "title": "学生头像",
+        "type": "contactAvatar",
+        "required": false
+      },
+      {
+        "title": "学生美国手机号",
+        "type": "contactMobile",
+        "required": true,
+        "placeholder": "+1 "
+      },
+      {
+        "title": "学生中国手机号",
+        "type": "contactMobile",
+        "required": true
+      },
+      {
+        "title": "学生微信号",
+        "type": "contactIMItem",
+        "required": true
+      },
+      {
+        "title": "学生在美地址",
+        "type": "contactAddress",
+        "required": true,
+        "placeholder": "Address Details"
+      },
+      {
+        "title": "学生专业",
+        "type": "single",
+        "required": false
+      },
+      {
+        "title": "学生学院",
+        "type": "dropdown",
+        "required": false
+      },
+      {
+        "title": "紧急联系人信息",
+        "type": "separator",
+        "required": false
+      },
+      {
+        "title": "学生有无在美紧急联系人",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "有",
+          "无"
+        ]
+      },
+      {
+        "title": "学生在美紧急联系人姓名",
+        "type": "single",
+        "required": true
+      },
+      {
+        "title": "学生与在美紧急联系人关系",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "父母或亲人",
+          "朋友或同学",
+          "其他"
+        ]
+      },
+      {
+        "title": "学生在美紧急联系人电话",
+        "type": "contactTelephone",
+        "required": true
+      },
+      {
+        "title": "紧急联系人其他联系方式",
+        "type": "single",
+        "required": false
+      },
+      {
+        "title": "期望&意见",
+        "type": "single",
+        "required": false
+      },
+      {
+        "title": "*",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "我同意"
+        ]
+      },
+      {
+        "title": "电子签名",
+        "type": "signature",
+        "required": true
+      }
+    ],
+    "hasPayment": false,
+    "hasSignature": true,
+    "hasLogic": false,
+    "pages": 1
+  },
+  {
+    "id": "200564167",
+    "name": "失联报告表-安心计划",
+    "group": "安心计划",
+    "account": "CU活动策划",
+    "submissions": 0,
+    "fields": [
+      {
+        "title": "学校",
+        "type": "contactDepartment",
+        "required": true
+      },
+      {
+        "title": "失联人信息",
+        "type": "separator",
+        "required": false
+      },
+      {
+        "title": "失联人中文姓名",
+        "type": "contactName",
+        "required": true
+      },
+      {
+        "title": "拼音姓",
+        "type": "single",
+        "required": true
+      },
+      {
+        "title": "拼音名",
+        "type": "single",
+        "required": true
+      },
+      {
+        "title": "性别",
+        "type": "contactGender",
+        "required": true,
+        "options": [
+          "男",
+          "女",
+          "(保密)"
+        ]
+      },
+      {
+        "title": "专业",
+        "type": "single",
+        "required": false
+      },
+      {
+        "title": "入学年份",
+        "type": "dateTime",
+        "required": true
+      },
+      {
+        "title": "生日",
+        "type": "contactBirthDate",
+        "required": false
+      },
+      {
+        "title": "邮箱号",
+        "type": "contactEmail",
+        "required": false
+      },
+      {
+        "title": "手机号",
+        "type": "contactMobile",
+        "required": true
+      },
+      {
+        "title": "微信",
+        "type": "contactIMItem",
+        "required": true
+      },
+      {
+        "title": "其他联系方式",
+        "type": "single",
+        "required": false
+      },
+      {
+        "title": "失联信息",
+        "type": "separator",
+        "required": false
+      },
+      {
+        "title": "失联日期",
+        "type": "dateTime",
+        "required": true
+      },
+      {
+        "title": "住址",
+        "type": "contactAddress",
+        "required": false,
+        "placeholder": "Address Details"
+      },
+      {
+        "title": "失联地点",
+        "type": "contactAddress",
+        "required": true,
+        "placeholder": "Address Details"
+      },
+      {
+        "title": "补充信息",
+        "type": "single",
+        "required": true
+      },
+      {
+        "title": "失联人照片",
+        "type": "contactAvatar",
+        "required": false
+      },
+      {
+        "title": "是否了解失联人的紧急联系人",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "是",
+          "否"
+        ]
+      },
+      {
+        "title": "紧急联系人信息",
+        "type": "separator",
+        "required": false
+      },
+      {
+        "title": "失联人紧急联系人姓名",
+        "type": "single",
+        "required": true
+      },
+      {
+        "title": "紧急联系人电话",
+        "type": "contactTelephone",
+        "required": true
+      },
+      {
+        "title": "紧急联系人其他联系方式",
+        "type": "single",
+        "required": false
+      },
+      {
+        "title": "是否了解失联人家长",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "是",
+          "否"
+        ]
+      },
+      {
+        "title": "失联人家长信息",
+        "type": "separator",
+        "required": false
+      },
+      {
+        "title": "失联人家长",
+        "type": "single",
+        "required": true
+      },
+      {
+        "title": "失联人家长电话",
+        "type": "number",
+        "required": true
+      },
+      {
+        "title": "失联人家长其他联系方式",
+        "type": "single",
+        "required": false
+      },
+      {
+        "title": "报告人信息",
+        "type": "separator",
+        "required": false
+      },
+      {
+        "title": "报告人是否是紧急联系人或家长",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "紧急联系人",
+          "家长",
+          "都不是"
+        ]
+      },
+      {
+        "title": "报告人姓名",
+        "type": "single",
+        "required": true
+      },
+      {
+        "title": "报告人手机号",
+        "type": "single",
+        "required": true
+      },
+      {
+        "title": "报告人其他联系方式",
+        "type": "single",
+        "required": false
+      },
+      {
+        "title": "报告人与失联人关系",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "父母亲戚",
+          "同学朋友",
+          "其他"
+        ]
+      },
+      {
+        "title": "*",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "我同意"
+        ]
+      }
+    ],
+    "hasPayment": false,
+    "hasSignature": false,
+    "hasLogic": false,
+    "pages": 1
+  },
+  {
+    "id": "200565087",
+    "name": "CU 2025年秋季新生接机服务报名-UWUW ",
+    "group": "活动策划",
+    "pages": 1,
+    "fields": [
+      {
+        "title": "您的身份",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "25年秋季入学新生",
+          "家长"
+        ]
+      },
+      {
+        "title": "姓名- Legal Name",
+        "type": "contactName",
+        "required": true,
+        "placeholder": "姓"
+      },
+      {
+        "title": "航班类型",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "中国大陆直飞美国",
+          "港澳台直飞美国",
+          "经日韩转机",
+          "经加拿大/美国本土转机",
+          "其他（请备注）"
+        ]
+      },
+      {
+        "title": "航空公司（Airline）",
+        "type": "radio",
+        "required": false,
+        "options": [
+          "中国国际航空（Air China）CA",
+          "中国东方航空（China Eastern）MU",
+          "中国南方航空（China Southern）CZ",
+          "海南航空（Hainan Airlines）HU",
+          "厦门航空（Xiamen Airlines）MF",
+          "四川航空（Sichuan Airlines）3U",
+          "美国联合航空（United Airlines）UA",
+          "美国航空（American Airlines）AA",
+          "其他（请备注）"
+        ]
+      },
+      {
+        "title": "航空公司（Airline）",
+        "type": "radio",
+        "required": false,
+        "options": [
+          "国泰航空（Cathay Pacific）CX",
+          "长荣航空（EVA Air，台湾）BR",
+          "其他（请备注）"
+        ]
+      },
+      {
+        "title": "航空公司（Airline）",
+        "type": "radio",
+        "required": false,
+        "options": [
+          "日本航空（Japan Airlines）JL",
+          "全日空航空（ANA, All Nippon Airways）NH",
+          "大韩航空（Korean Air）KE",
+          "韩亚航空（Asiana Airlines）OZ",
+          "其他（请备注）"
+        ]
+      },
+      {
+        "title": "航空公司（Airline）",
+        "type": "radio",
+        "required": false,
+        "options": [
+          "加拿大航空（Air Canada）AC",
+          "美国联合航空（United Airlines）UA",
+          "达美航空（Delta Air Lines）DL",
+          "美国航空（American Airlines）AA",
+          "阿拉斯加航空（Alaska Airlines）AS",
+          "其他（请备注）"
+        ]
+      },
+      {
+        "title": "最终落地的航班号-flight number",
+        "type": "single",
+        "required": true,
+        "placeholder": "例如：MU583、CA987、DL120"
+      },
+      {
+        "title": "请上传你的机票预定信息",
+        "type": "pictureAttachment",
+        "required": true
+      },
+      {
+        "title": "请在确认您的航班信息后，如实填写报名表格，确保信息无误。如有变更或取消，请联系报名表尾部接机负责人。",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "已了解"
+        ]
+      },
+      {
+        "title": "请上传微信个人二维码方便联系",
+        "type": "pictureAttachment",
+        "required": true
+      },
+      {
+        "title": "请填写微信号",
+        "type": "single",
+        "required": false
+      },
+      {
+        "title": "邮箱-email",
+        "type": "contactEmail",
+        "required": true,
+        "placeholder": "xxx@ucdavis.edu"
+      },
+      {
+        "title": "手机号-phone number",
+        "type": "contactMobile",
+        "required": true,
+        "placeholder": "请使用落地即可联系的上的号码"
+      },
+      {
+        "title": "紧急联系人手机号（可选）-emergency contact(optional)",
+        "type": "contactMobile",
+        "required": false
+      },
+      {
+        "title": "随行家长数量",
+        "type": "radio",
+        "required": false,
+        "options": [
+          "1",
+          "更多（请备注）"
+        ]
+      },
+      {
+        "title": "请填写随行人姓名",
+        "type": "single",
+        "required": false
+      },
+      {
+        "title": "请选择你的班车日期",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "9月15日",
+          "9月16日",
+          "9月17日",
+          "9月18日"
+        ]
+      },
+      {
+        "title": "请选择你的班车时间",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "中午12点",
+          "下午4点",
+          "晚上7点"
+        ]
+      },
+      {
+        "title": "目的地",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "校内宿舍（S区，T区，C区）",
+          "西村 West Village",
+          "Ryder on Olive",
+          "Sterling 5th Street",
+          "Tanglewood",
+          "其他"
+        ]
+      },
+      {
+        "title": "学生ID/Student ID",
+        "type": "single",
+        "required": true
+      },
+      {
+        "title": "如选择其他，请写下您的住宿区域",
+        "type": "single",
+        "required": true
+      },
+      {
+        "title": "登机箱数量 carry-on bag number",
+        "type": "dropdown",
+        "required": true
+      },
+      {
+        "title": "托运箱数量 luggage number",
+        "type": "dropdown",
+        "required": true
+      },
+      {
+        "title": "注意事项：行李额度限制",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "我了解，并且接受"
+        ]
+      },
+      {
+        "title": "已确认所有信息无误并签署免责声明",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "已阅读并签署"
+        ]
+      },
+      {
+        "title": "电子签名",
+        "type": "signature",
+        "required": true
+      }
+    ],
+    "hasPayment": false,
+    "hasSignature": true,
+    "account": "活动策划"
+  },
+  {
+    "id": "200565056",
+    "name": "CU 2025年秋季新生接机服务报名-UCD-",
+    "group": "活动策划",
+    "pages": 1,
+    "fields": [
+      {
+        "title": "您的身份",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "25年秋季入学新生",
+          "家长"
+        ]
+      },
+      {
+        "title": "姓名- Legal Name",
+        "type": "contactName",
+        "required": true,
+        "placeholder": "姓"
+      },
+      {
+        "title": "航班类型",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "中国大陆直飞美国",
+          "港澳台直飞美国",
+          "经日韩转机",
+          "经加拿大/美国本土转机",
+          "其他（请备注）"
+        ]
+      },
+      {
+        "title": "航空公司（Airline）",
+        "type": "radio",
+        "required": false,
+        "options": [
+          "中国国际航空（Air China）CA",
+          "中国东方航空（China Eastern）MU",
+          "中国南方航空（China Southern）CZ",
+          "海南航空（Hainan Airlines）HU",
+          "厦门航空（Xiamen Airlines）MF",
+          "四川航空（Sichuan Airlines）3U",
+          "美国联合航空（United Airlines）UA",
+          "美国航空（American Airlines）AA",
+          "其他（请备注）"
+        ]
+      },
+      {
+        "title": "航空公司（Airline）",
+        "type": "radio",
+        "required": false,
+        "options": [
+          "国泰航空（Cathay Pacific）CX",
+          "长荣航空（EVA Air，台湾）BR",
+          "其他（请备注）"
+        ]
+      },
+      {
+        "title": "航空公司（Airline）",
+        "type": "radio",
+        "required": false,
+        "options": [
+          "日本航空（Japan Airlines）JL",
+          "全日空航空（ANA, All Nippon Airways）NH",
+          "大韩航空（Korean Air）KE",
+          "韩亚航空（Asiana Airlines）OZ",
+          "其他（请备注）"
+        ]
+      },
+      {
+        "title": "航空公司（Airline）",
+        "type": "radio",
+        "required": false,
+        "options": [
+          "加拿大航空（Air Canada）AC",
+          "美国联合航空（United Airlines）UA",
+          "达美航空（Delta Air Lines）DL",
+          "美国航空（American Airlines）AA",
+          "阿拉斯加航空（Alaska Airlines）AS",
+          "其他（请备注）"
+        ]
+      },
+      {
+        "title": "最终落地的航班号-flight number",
+        "type": "single",
+        "required": true,
+        "placeholder": "例如：MU583、CA987、DL120"
+      },
+      {
+        "title": "请上传你的机票预定信息",
+        "type": "pictureAttachment",
+        "required": true
+      },
+      {
+        "title": "请在确认您的航班信息后，如实填写报名表格，确保信息无误。如有变更或取消，请联系报名表尾部接机负责人。",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "已了解"
+        ]
+      },
+      {
+        "title": "请上传微信个人二维码方便联系",
+        "type": "pictureAttachment",
+        "required": true
+      },
+      {
+        "title": "请填写微信号",
+        "type": "single",
+        "required": false
+      },
+      {
+        "title": "邮箱-email",
+        "type": "contactEmail",
+        "required": true,
+        "placeholder": "xxx@ucdavis.edu"
+      },
+      {
+        "title": "手机号-phone number",
+        "type": "contactMobile",
+        "required": true,
+        "placeholder": "请使用落地即可联系的上的号码"
+      },
+      {
+        "title": "紧急联系人手机号（可选）-emergency contact(optional)",
+        "type": "contactMobile",
+        "required": false
+      },
+      {
+        "title": "随行家长数量",
+        "type": "radio",
+        "required": false,
+        "options": [
+          "1",
+          "更多（请备注）"
+        ]
+      },
+      {
+        "title": "请填写随行人姓名",
+        "type": "single",
+        "required": false
+      },
+      {
+        "title": "额外随行人员支付方式",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "美元",
+          "人民币"
+        ]
+      },
+      {
+        "title": "额外随行人员接机服务付费",
+        "type": "commodity",
+        "required": true
+      },
+      {
+        "title": "美元支付方式",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "Zelle/Venmo",
+          "Paypal"
+        ]
+      },
+      {
+        "title": "额外随行人员接机服务付费-Paypal",
+        "type": "commodity",
+        "required": true
+      },
+      {
+        "title": "额外随行人员上传付款凭证截图",
+        "type": "pictureAttachment",
+        "required": true
+      },
+      {
+        "title": "请选择你的班车日期",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "9月15日",
+          "9月16日",
+          "9月17日",
+          "9月18日"
+        ]
+      },
+      {
+        "title": "请选择你的班车时间",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "中午12点",
+          "下午4点",
+          "晚上7点"
+        ]
+      },
+      {
+        "title": "目的地",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "校内宿舍（S区，T区，C区）",
+          "西村 West Village",
+          "Ryder on Olive",
+          "Sterling 5th Street",
+          "Tanglewood",
+          "其他"
+        ]
+      },
+      {
+        "title": "学生ID/Student ID",
+        "type": "single",
+        "required": true
+      },
+      {
+        "title": "如选择其他，请写下您的住宿区域",
+        "type": "single",
+        "required": true
+      },
+      {
+        "title": "登机箱数量 carry-on bag number",
+        "type": "dropdown",
+        "required": true
+      },
+      {
+        "title": "托运箱数量 luggage number",
+        "type": "dropdown",
+        "required": true
+      },
+      {
+        "title": "注意事项：行李额度限制",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "我了解，并且接受"
+        ]
+      },
+      {
+        "title": "已确认所有信息无误并签署免责声明",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "已阅读并签署"
+        ]
+      },
+      {
+        "title": "电子签名",
+        "type": "signature",
+        "required": true
+      }
+    ],
+    "hasPayment": true,
+    "hasSignature": true,
+    "account": "活动策划"
+  },
+  {
+    "id": "200564970",
+    "name": "CU 王者荣耀联校个人报名表",
+    "group": "活动策划",
+    "pages": 1,
+    "fields": [
+      {
+        "title": "学校",
+        "type": "dropdown",
+        "required": true
+      },
+      {
+        "title": "姓名",
+        "type": "contactName",
+        "required": true
+      },
+      {
+        "title": "性别",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "男",
+          "女",
+          "保密"
+        ]
+      },
+      {
+        "title": "微信号",
+        "type": "contactIMItem",
+        "required": true
+      },
+      {
+        "title": "美国手机号码",
+        "type": "contactMobile",
+        "required": true
+      },
+      {
+        "title": "邮箱",
+        "type": "contactEmail",
+        "required": true
+      },
+      {
+        "title": "赛事组队免责声明",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "确认了解"
+        ]
+      },
+      {
+        "title": "请上传所有队员的学生证正面照片（或含姓名照片的portal截图）",
+        "type": "pictureAttachment",
+        "required": true
+      },
+      {
+        "title": "游戏段位",
+        "type": "dropdown",
+        "required": true
+      },
+      {
+        "title": "擅长位置",
+        "type": "checkbox",
+        "required": true,
+        "options": [
+          "上单",
+          "中单",
+          "ADC",
+          "辅助",
+          "打野"
+        ]
+      },
+      {
+        "title": "请填写你的游戏ID",
+        "type": "single",
+        "required": true
+      },
+      {
+        "title": "请上传你的游戏ID截图",
+        "type": "pictureAttachment",
+        "required": true
+      },
+      {
+        "title": "擅长的英雄",
+        "type": "single",
+        "required": true
+      },
+      {
+        "title": "你可以在这里写下一段自我推荐，以便组队（选填）",
+        "type": "single",
+        "required": false
+      },
+      {
+        "title": "图片选择",
+        "type": "pictureRadio",
+        "required": false,
+        "options": [
+          "选项1",
+          "选项2",
+          "选项3"
+        ]
+      }
+    ],
+    "hasPayment": false,
+    "hasSignature": false,
+    "account": "活动策划"
+  },
+  {
+    "id": "200564969",
+    "name": "CU 王者荣耀联校团队报名表",
+    "group": "活动策划",
+    "pages": 1,
+    "fields": [
+      {
+        "title": "学校",
+        "type": "dropdown",
+        "required": true
+      },
+      {
+        "title": "队长信息",
+        "type": "separator",
+        "required": false
+      },
+      {
+        "title": "姓名",
+        "type": "contactName",
+        "required": true
+      },
+      {
+        "title": "性别",
+        "type": "radio",
+        "required": false,
+        "options": [
+          "男",
+          "女",
+          "保密"
+        ]
+      },
+      {
+        "title": "微信号",
+        "type": "contactIMItem",
+        "required": true
+      },
+      {
+        "title": "美国手机号码",
+        "type": "contactMobile",
+        "required": true
+      },
+      {
+        "title": "邮箱",
+        "type": "contactEmail",
+        "required": true
+      },
+      {
+        "title": "团队信息",
+        "type": "separator",
+        "required": false
+      },
+      {
+        "title": "目前队伍人数（包含队长）",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "3",
+          "4",
+          "5"
+        ]
+      },
+      {
+        "title": "赛事组队免责声明",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "确认了解"
+        ]
+      },
+      {
+        "title": "队伍名称",
+        "type": "single",
+        "required": true
+      },
+      {
+        "title": "请上传所有队员的学生证正面照片（或含姓名照片的portal截图）",
+        "type": "pictureAttachment",
+        "required": true
+      },
+      {
+        "title": "请上传所有队员的游戏ID截图",
+        "type": "pictureAttachment",
+        "required": true
+      }
+    ],
+    "hasPayment": false,
+    "hasSignature": false,
+    "account": "活动策划"
+  },
+  {
+    "id": "200564923",
+    "name": "USC学生意向反馈USC ",
+    "group": "活动策划",
+    "pages": 2,
+    "fields": [
+      {
+        "title": "姓名",
+        "type": "contactName",
+        "required": true
+      },
+      {
+        "title": "微信",
+        "type": "contactIMItem",
+        "required": true
+      },
+      {
+        "title": "邮箱",
+        "type": "contactEmail",
+        "required": true,
+        "placeholder": "@usc.edu"
+      },
+      {
+        "title": "届（毕业年份）",
+        "type": "unknown",
+        "required": true
+      },
+      {
+        "title": "专业",
+        "type": "single",
+        "required": true
+      },
+      {
+        "title": "申请部门",
+        "type": "dropdown",
+        "required": true
+      },
+      {
+        "title": "个人称述（PS）",
+        "type": "single",
+        "required": true,
+        "placeholder": "限额500字/词"
+      },
+      {
+        "title": "个人简历（CV）",
+        "type": "pictureAttachment",
+        "required": false
+      },
+      {
+        "title": "确定添加负责人微信",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "已确定"
+        ]
+      }
+    ],
+    "hasPayment": false,
+    "hasSignature": false,
+    "account": "活动策划"
+  },
+  {
+    "id": "200564857",
+    "name": "UCLA 新生会活动",
+    "group": "活动策划",
+    "pages": 1,
+    "fields": [
+      {
+        "title": "姓名",
+        "type": "contactName",
+        "required": true,
+        "placeholder": "姓"
+      },
+      {
+        "title": "手机",
+        "type": "contactMobile",
+        "required": true
+      },
+      {
+        "title": "邮箱",
+        "type": "contactEmail",
+        "required": true
+      },
+      {
+        "title": "届（毕业年份）",
+        "type": "has-unit",
+        "required": true
+      },
+      {
+        "title": "微信号（非名字）",
+        "type": "contactIMItem",
+        "required": true
+      }
+    ],
+    "hasPayment": false,
+    "hasSignature": false,
+    "account": "活动策划"
+  },
+  {
+    "id": "200564770",
+    "name": "CU 2024年秋季新生接机服务报名",
+    "group": "活动策划",
+    "pages": 1,
+    "fields": [
+      {
+        "title": "- 特别针对2024年秋季入学的新生开放，往届返校生请谅解并自行安排，我们对此安排深表歉意并恳请理解。",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "我明白"
+        ]
+      },
+      {
+        "title": "身份",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "新生本人（freshmen）",
+          "新生家长（parents）"
+        ]
+      },
+      {
+        "title": "新生姓名-name",
+        "type": "single",
+        "required": true
+      },
+      {
+        "title": "学校-school",
+        "type": "dropdown",
+        "required": true
+      },
+      {
+        "title": "姓名-legal name",
+        "type": "contactName",
+        "required": true
+      },
+      {
+        "title": "航班号-flight number",
+        "type": "single",
+        "required": true,
+        "placeholder": "MU583"
+      },
+      {
+        "title": "微信号-wechat id",
+        "type": "contactIMItem",
+        "required": true,
+        "placeholder": "不是微信名"
+      },
+      {
+        "title": "邮箱-email",
+        "type": "contactEmail",
+        "required": true,
+        "placeholder": "家长可使用学生邮箱"
+      },
+      {
+        "title": "手机号-phone number",
+        "type": "contactMobile",
+        "required": true,
+        "placeholder": "请使用落地即可联系的上的号码"
+      },
+      {
+        "title": "紧急联系人手机号（可选）-emergency contact(optional)",
+        "type": "contactMobile",
+        "required": false
+      },
+      {
+        "title": "UCSD目的地",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "CU合作酒店(圣地亚哥) -查看UCSD公众号推文-CU coperate hotel",
+          "UCSD 校园 - UCSD campus area"
+        ]
+      },
+      {
+        "title": "UCI目的地",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "CU合作酒店(尔湾) - CU coperate hotel",
+          "UCI校园（只限于9月18号）-uci campus area"
+        ]
+      },
+      {
+        "title": "UCLA目的地",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "UCLA校园-UCLA campus area"
+        ]
+      },
+      {
+        "title": "UCSB目的地",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "UCSB校园-UCSB campus area"
+        ]
+      },
+      {
+        "title": "UCB目的地",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "UCB校园（暂定）"
+        ]
+      },
+      {
+        "title": "UW目的地",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "UW西区",
+          "UW北区"
+        ]
+      },
+      {
+        "title": "UCD目的地",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "UCD校内住宿",
+          "西村West Village",
+          "Ryder on Live",
+          "Tanglewood",
+          "Sterling 5th Street",
+          "其他"
+        ]
+      },
+      {
+        "title": "Student ID",
+        "type": "single",
+        "required": true
+      },
+      {
+        "title": "到达时间(UCLA)- arrival time",
+        "type": "dateTime",
+        "required": true
+      },
+      {
+        "title": "到达时间(UCSB)-arrival time",
+        "type": "dateTime",
+        "required": true
+      },
+      {
+        "title": "到达时间(UCI)-arrival time",
+        "type": "dateTime",
+        "required": true
+      },
+      {
+        "title": "到达时间(UCSD)-arrival time",
+        "type": "dateTime",
+        "required": true
+      },
+      {
+        "title": "到达时间(UCB)",
+        "type": "dateTime",
+        "required": true
+      },
+      {
+        "title": "到达时间(UCD)",
+        "type": "dateTime",
+        "required": true
+      },
+      {
+        "title": "到达时间(UW)",
+        "type": "dateTime",
+        "required": true
+      },
+      {
+        "title": "行李箱数量 luggage number",
+        "type": "dropdown",
+        "required": true
+      },
+      {
+        "title": "登机箱数量 carry-on bag number",
+        "type": "dropdown",
+        "required": true
+      },
+      {
+        "title": "已确认所有信息无误并签署免责声明",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "已阅读并签署"
+        ]
+      },
+      {
+        "title": "电子签名",
+        "type": "signature",
+        "required": true
+      }
+    ],
+    "hasPayment": false,
+    "hasSignature": true,
+    "account": "活动策划"
+  },
+  {
+    "id": "200564759",
+    "name": "表单base template未分组 ",
+    "group": "活动策划",
+    "pages": 1,
+    "fields": [
+      {
+        "title": "姓名",
+        "type": "contactName",
+        "required": true,
+        "placeholder": "姓"
+      },
+      {
+        "title": "手机",
+        "type": "contactMobile",
+        "required": true
+      },
+      {
+        "title": "邮箱",
+        "type": "contactEmail",
+        "required": true
+      },
+      {
+        "title": "学校",
+        "type": "contactTitle",
+        "required": true
+      },
+      {
+        "title": "届（毕业年份）",
+        "type": "has-unit",
+        "required": true
+      },
+      {
+        "title": "微信",
+        "type": "contactIMItem",
+        "required": true
+      }
+    ],
+    "hasPayment": false,
+    "hasSignature": false,
+    "account": "活动策划"
+  },
+  {
+    "id": "200564734",
+    "name": "CU UCSD 24-25 新生意向survey",
+    "group": "活动策划",
+    "pages": 1,
+    "fields": [
+      {
+        "title": "感兴趣的部门",
+        "type": "checkbox",
+        "required": true,
+        "options": [
+          "Human Resources 人力资源部",
+          "Business Development 商务发展部门",
+          "Marketing 市场营销部门",
+          "Project Management 活动策划部门",
+          "Public Relations 公共关系部门"
+        ]
+      },
+      {
+        "title": "名字",
+        "type": "contactName",
+        "required": true
+      },
+      {
+        "title": "邮箱",
+        "type": "contactEmail",
+        "required": true
+      },
+      {
+        "title": "微信",
+        "type": "contactIMItem",
+        "required": true
+      },
+      {
+        "title": "性别",
+        "type": "contactGender",
+        "required": true,
+        "options": [
+          "男",
+          "女",
+          "(保密)"
+        ]
+      },
+      {
+        "title": "如有问题或者任何想法请在此留言",
+        "type": "single",
+        "required": false
+      },
+      {
+        "title": "任何你想要展示的文件请上传在这里",
+        "type": "attachment",
+        "required": false
+      }
+    ],
+    "hasPayment": false,
+    "hasSignature": false,
+    "account": "活动策划"
+  },
+  {
+    "id": "200564503",
+    "name": "CU VITA 支付表单美金-CU OFFICER ONLY-",
+    "group": "活动策划",
+    "pages": 1,
+    "fields": [
+      {
+        "title": "名字",
+        "type": "single",
+        "required": true
+      },
+      {
+        "title": "E-mail",
+        "type": "single",
+        "required": true
+      },
+      {
+        "title": "支付货币",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "USD 美金 原价$35 CU内部$25"
+        ]
+      },
+      {
+        "title": "CU VITA红卡-内部折扣 美金",
+        "type": "commodity",
+        "required": true
+      }
+    ],
+    "hasPayment": true,
+    "hasSignature": false,
+    "account": "活动策划"
+  },
+  {
+    "id": "200564502",
+    "name": "CU VITA 支付表单人民币-CU OFFICER ONLY",
+    "group": "活动策划",
+    "pages": 1,
+    "fields": [
+      {
+        "title": "名字",
+        "type": "single",
+        "required": true,
+        "placeholder": "NAME"
+      },
+      {
+        "title": "E-mail",
+        "type": "single",
+        "required": true,
+        "placeholder": "EMAIL"
+      },
+      {
+        "title": "支付货币",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "CNY 人民币 原价¥268 CU内部¥192"
+        ]
+      },
+      {
+        "title": "CU VITA红卡-内部折扣 人民币",
+        "type": "commodity",
+        "required": true
+      }
+    ],
+    "hasPayment": true,
+    "hasSignature": false,
+    "account": "活动策划"
+  },
+  {
+    "id": "200564501",
+    "name": "CU VITA会员入会申请表- CU OFFICER ONLY",
+    "group": "活动策划",
+    "pages": 1,
+    "fields": [
+      {
+        "title": "Name",
+        "type": "contactName",
+        "required": true
+      },
+      {
+        "title": "所在CU分部",
+        "type": "single",
+        "required": true,
+        "placeholder": "例如UCSD CU或者UCI CU"
+      },
+      {
+        "title": "Gender",
+        "type": "contactGender",
+        "required": true,
+        "options": [
+          "男",
+          "女",
+          "(保密)"
+        ]
+      },
+      {
+        "title": "Birthday",
+        "type": "contactBirthDate",
+        "required": true
+      },
+      {
+        "title": "Email",
+        "type": "contactEmail",
+        "required": true
+      },
+      {
+        "title": "Cellphone",
+        "type": "contactMobile",
+        "required": true
+      },
+      {
+        "title": "WeChat ID",
+        "type": "contactIMItem",
+        "required": true
+      },
+      {
+        "title": "Your current status",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "Undergraduate 本科生",
+          "Graduate 研究生/博士生",
+          "Employed 从业者",
+          "Not listed 其他"
+        ]
+      },
+      {
+        "title": "Your company",
+        "type": "contactCompany",
+        "required": true
+      },
+      {
+        "title": "School",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "UCSD",
+          "UCI",
+          "UCSC",
+          "UCRiverside",
+          "UCSB",
+          "UCLA",
+          "UCDavis",
+          "SDSU",
+          "ALI",
+          "OCC",
+          "ELAC",
+          "SMC",
+          "RCC",
+          "Mt. SAC",
+          "New York University",
+          "Other 其他"
+        ]
+      },
+      {
+        "title": "How did you know about us?",
+        "type": "checkbox",
+        "required": true,
+        "options": [
+          "Wechat 微信",
+          "Baidu Tieba 百度贴吧",
+          "Friends/Schoolmates 同学/朋友",
+          "Email 邮件",
+          "Instagram",
+          "Red 小红书",
+          "Other 其他"
+        ]
+      },
+      {
+        "title": "Select Membership",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "终身CU VITA红卡-CNY人民币-内部折扣",
+          "终身CU VITA红卡-USD美金-内部折扣"
+        ]
+      },
+      {
+        "title": "是否支付完成",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "确定支付"
+        ]
+      }
+    ],
+    "hasPayment": false,
+    "hasSignature": false,
+    "account": "活动策划"
+  },
+  {
+    "id": "200563989",
+    "name": "CU VITA会员入会申请表",
+    "group": "活动策划",
+    "pages": 1,
+    "fields": [
+      {
+        "title": "Name",
+        "type": "contactName",
+        "required": true
+      },
+      {
+        "title": "Gender",
+        "type": "contactGender",
+        "required": true,
+        "options": [
+          "男",
+          "女",
+          "(保密)"
+        ]
+      },
+      {
+        "title": "Birthday",
+        "type": "contactBirthDate",
+        "required": true
+      },
+      {
+        "title": "Email",
+        "type": "contactEmail",
+        "required": true
+      },
+      {
+        "title": "Cellphone",
+        "type": "contactMobile",
+        "required": true
+      },
+      {
+        "title": "WeChat ID",
+        "type": "contactIMItem",
+        "required": true
+      },
+      {
+        "title": "Your current status",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "Undergraduate 本科生",
+          "Graduate 研究生/博士生",
+          "Employed 从业者",
+          "Not listed 其他"
+        ]
+      },
+      {
+        "title": "Your company",
+        "type": "contactCompany",
+        "required": true
+      },
+      {
+        "title": "School",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "UCSD",
+          "UCI",
+          "UCSC",
+          "UCRiverside",
+          "UCSB",
+          "UCLA",
+          "UCDavis",
+          "SDSU",
+          "ALI",
+          "OCC",
+          "ELAC",
+          "SMC",
+          "RCC",
+          "Mt. SAC",
+          "New York University",
+          "Other 其他"
+        ]
+      },
+      {
+        "title": "How did you know about us?",
+        "type": "checkbox",
+        "required": true,
+        "options": [
+          "Wechat 微信",
+          "Baidu Tieba 百度贴吧",
+          "Friends/Schoolmates 同学/朋友",
+          "Email 邮件",
+          "Instagram",
+          "Red 小红书",
+          "Other 其他"
+        ]
+      },
+      {
+        "title": "Select Membership",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "终身CU VITA红卡-CNY人民币",
+          "终身CU VITA红卡-USD美金",
+          "会员CU VITA蓝卡-无需支付",
+          "CU Executive Member-专属黑卡",
+          "Promo Code 特别优惠码"
+        ]
+      },
+      {
+        "title": "CU Executive Board -专属黑卡",
+        "type": "pictureRadio",
+        "required": true,
+        "options": [
+          "CU E-Board专属黑卡"
+        ]
+      },
+      {
+        "title": "CU VITA会员蓝卡-免费",
+        "type": "pictureRadio",
+        "required": true,
+        "options": [
+          "CU VITA 蓝卡会员"
+        ]
+      },
+      {
+        "title": "CNY人民币",
+        "type": "commodity",
+        "required": true,
+        "options": [
+          "表格内电子支付"
+        ]
+      },
+      {
+        "title": "USD",
+        "type": "commodity",
+        "required": true,
+        "options": [
+          "表格内电子支付"
+        ]
+      },
+      {
+        "title": "Promo Code 特别优惠码",
+        "type": "single",
+        "required": true
+      },
+      {
+        "title": "Any Comments or Suggestions",
+        "type": "single",
+        "required": false
+      },
+      {
+        "title": "已完成支付并添加CU VITA小助手",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "已支付/已添加CU VITA小助手"
+        ]
+      }
+    ],
+    "hasPayment": true,
+    "hasSignature": false,
+    "account": "活动策划"
+  },
+  {
+    "id": "200563990",
+    "name": "CU VITA会员支付表单-美金",
+    "group": "活动策划",
+    "pages": 1,
+    "fields": [
+      {
+        "title": "Name",
+        "type": "contactName",
+        "required": true,
+        "placeholder": "姓"
+      },
+      {
+        "title": "Email Address",
+        "type": "contactEmail",
+        "required": true
+      },
+      {
+        "title": "支付方式",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "USD (Venmo/Zelle)",
+          "USD (PayPal)"
+        ]
+      },
+      {
+        "title": "USD PayPal",
+        "type": "commodity",
+        "required": false
+      },
+      {
+        "title": "支付截图",
+        "type": "pictureAttachment",
+        "required": true
+      }
+    ],
+    "hasPayment": true,
+    "hasSignature": false,
+    "account": "活动策划"
+  },
+  {
+    "id": "200563991",
+    "name": "CU VITA会员支付表单-人民币",
+    "group": "活动策划",
+    "pages": 1,
+    "fields": [
+      {
+        "title": "Name",
+        "type": "contactName",
+        "required": true,
+        "placeholder": "姓"
+      },
+      {
+        "title": "Email Address",
+        "type": "contactEmail",
+        "required": true
+      },
+      {
+        "title": "人民币支付",
+        "type": "commodity",
+        "required": true
+      }
+    ],
+    "hasPayment": true,
+    "hasSignature": false,
+    "account": "活动策划"
+  },
+  {
+    "id": "200565248",
+    "name": "CU UCD 2026-2027 VP竞选报名表",
+    "group": "活动策划",
+    "pages": 1,
+    "fields": [
+      {
+        "title": "提交报名后会显示入群二维码，请各位报名人员注意，记得扫码进群。后续面试时间、地点、以及结果将均于本群宣布，HR 将不会有工作人员主动联系各位面试人员。",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "已知晓"
+        ]
+      },
+      {
+        "title": "我理解以下为强制要求，如不满足这些要求无法竞选VP候选人：",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "已知晓"
+        ]
+      },
+      {
+        "title": "Name",
+        "type": "contactName",
+        "required": true
+      },
+      {
+        "title": "部门",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "Administration 办公行政部门",
+          "Business Development 商务发展部门",
+          "Human Resources 人力资源部门",
+          "Marketing 市场营销部门",
+          "Project Management 活动策划部门",
+          "Public Relations 公共关系部门"
+        ]
+      },
+      {
+        "title": "年级",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "大一",
+          "大二",
+          "大三",
+          "大四"
+        ]
+      },
+      {
+        "title": "入职 CU 年度 (转正时间)",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "2023年10月之前",
+          "2023 秋季",
+          "2024 冬季",
+          "2024 春季",
+          "2024 暑季",
+          "2024 秋季",
+          "2025 冬季",
+          "2025 春季",
+          "2025 暑季",
+          "2025 秋季",
+          "2025年10月之后"
+        ]
+      },
+      {
+        "title": "面试群二维码将在提交报名表后自动加载，请报名人员务必扫描二维码进入面试群，后续面试时间、链接以及结果将均于本群宣布，CU将不会有工作人员主动联系各位面试人员。如因个人原因未扫码进群而导致任何面试相关问题，CU将无法承担任何后果。非常感谢。（如果因设备问题未能加载出二维码图片，请立刻联系红豆Flora：微信号hongdoulia5002）",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "已知晓"
+        ]
+      }
+    ],
+    "hasPayment": false,
+    "hasSignature": false,
+    "account": "活动策划"
+  },
+  {
+    "id": "200565244",
+    "name": "CUUCD2030 Office Hour 线上答疑问题表单",
+    "group": "活动策划",
+    "pages": 1,
+    "fields": [
+      {
+        "title": "提问者身份",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "新生本人",
+          "新生家长",
+          "其他"
+        ]
+      },
+      {
+        "title": "问题类型",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "就是想和CU学长学姐唠唠嗑！",
+          "学术相关问题",
+          "校园相关问题",
+          "生活相关问题",
+          "住宿相关问题",
+          "签证相关问题",
+          "环境相关问题",
+          "其他类型问题"
+        ]
+      },
+      {
+        "title": "请填写你想询问的大致问题（可选）",
+        "type": "single",
+        "required": false
+      },
+      {
+        "title": "Office Hour线上答疑时间为",
+        "type": "radio",
+        "required": false,
+        "options": [
+          "我已知悉"
+        ]
+      },
+      {
+        "title": "如有问题可以添加官方工作人员CU官方小助手（微信号CUUCD2019）询问哦～",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "我已知悉"
+        ]
+      }
+    ],
+    "hasPayment": false,
+    "hasSignature": false,
+    "account": "活动策划"
+  },
+  {
+    "id": "200565236",
+    "name": "26春节活动报名",
+    "group": "活动策划",
+    "pages": 1,
+    "fields": [
+      {
+        "title": "中文姓名",
+        "type": "contactName",
+        "required": true
+      },
+      {
+        "title": "学生邮箱",
+        "type": "contactEmail",
+        "required": true
+      },
+      {
+        "title": "我确认报名",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "是"
+        ]
+      }
+    ],
+    "hasPayment": false,
+    "hasSignature": false,
+    "account": "活动策划"
+  },
+  {
+    "id": "200565221",
+    "name": "CU UCSB 2026元宵游园会报名表",
+    "group": "活动策划",
+    "pages": 1,
+    "fields": [
+      {
+        "title": "中文姓名",
+        "type": "single",
+        "required": true
+      },
+      {
+        "title": "年级",
+        "type": "dropdown",
+        "required": true
+      },
+      {
+        "title": "学生邮箱",
+        "type": "single",
+        "required": true,
+        "placeholder": "@ucsb.edu"
+      },
+      {
+        "title": "我确定报名元宵游园会！",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "Yesss！"
+        ]
+      },
+      {
+        "title": "以上信息是否填写正确",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "我确认！"
+        ]
+      }
+    ],
+    "hasPayment": false,
+    "hasSignature": false,
+    "account": "活动策划"
+  },
+  {
+    "id": "200565220",
+    "name": "UCI CU 2026 歌手大赛决赛观众报名表",
+    "group": "活动策划",
+    "pages": 1,
+    "fields": [
+      {
+        "title": "真实姓名（中文）",
+        "type": "contactName",
+        "required": true,
+        "placeholder": "姓"
+      },
+      {
+        "title": "Email",
+        "type": "contactEmail",
+        "required": true
+      },
+      {
+        "title": "学校",
+        "type": "contactTitle",
+        "required": true
+      },
+      {
+        "title": "年级",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "大一",
+          "大二",
+          "大三",
+          "大四",
+          "研究生",
+          "其他"
+        ]
+      }
+    ],
+    "hasPayment": false,
+    "hasSignature": false,
+    "account": "活动策划"
+  },
+  {
+    "id": "200565219",
+    "name": "2026 CU UCSB 马年喜乐·春来福至Tabling",
+    "group": "活动策划",
+    "pages": 1,
+    "fields": [
+      {
+        "title": "中文姓名",
+        "type": "contactName",
+        "required": true
+      },
+      {
+        "title": "常用名",
+        "type": "single",
+        "required": false,
+        "placeholder": "英文名"
+      },
+      {
+        "title": "学生邮箱",
+        "type": "contactEmail",
+        "required": true,
+        "placeholder": "@ucsb.edu"
+      },
+      {
+        "title": "届（毕业年份）",
+        "type": "has-unit",
+        "required": true
+      },
+      {
+        "title": "已参加",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "只参加互动了这场：2月17日（周二｜大年初一）11:30 – 17:30",
+          "只参加互动了这场：2月18日（周三｜大年初二）11:30 – 17:30",
+          "两场都参加互动了！"
+        ]
+      },
+      {
+        "title": "我确认以上信息完整正确",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "我确认！"
+        ]
+      }
+    ],
+    "hasPayment": false,
+    "hasSignature": false,
+    "account": "活动策划"
+  },
+  {
+    "id": "200565218",
+    "name": "2026线上年夜饭大赛活动报名",
+    "group": "活动策划",
+    "pages": 1,
+    "fields": [
+      {
+        "title": "知晓流程",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "我知晓"
+        ]
+      },
+      {
+        "title": "姓名",
+        "type": "contactName",
+        "required": true
+      },
+      {
+        "title": "学生邮箱",
+        "type": "contactEmail",
+        "required": true
+      },
+      {
+        "title": "参赛形式",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "个人",
+          "小组"
+        ]
+      },
+      {
+        "title": "个人/小组名字",
+        "type": "single",
+        "required": true
+      },
+      {
+        "title": "确保作品是自己亲手制作的，非购买成品",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "我确认"
+        ]
+      },
+      {
+        "title": "年夜饭成品照片上传",
+        "type": "pictureAttachment",
+        "required": true
+      },
+      {
+        "title": "同意提交的照片在CU UCSB微信公众号、Instagram、小红书等社交媒体平台上公布",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "我同意"
+        ]
+      }
+    ],
+    "hasPayment": false,
+    "hasSignature": false,
+    "account": "活动策划"
+  },
+  {
+    "id": "200564599",
+    "name": "CU 2023 FALL 新生接机报名（UC Berkeley）",
+    "group": "",
+    "pages": 1,
+    "fields": [
+      {
+        "title": "姓名 Name",
+        "type": "contactName",
+        "required": true
+      },
+      {
+        "title": "微信 WeChat ID",
+        "type": "single",
+        "required": true
+      },
+      {
+        "title": "联系电话 Phone Number",
+        "type": "contactMobile",
+        "required": true
+      },
+      {
+        "title": "电子邮箱 Email",
+        "type": "contactEmail",
+        "required": true
+      },
+      {
+        "title": "携带行李数量 Luggage",
+        "type": "dropdown",
+        "required": true
+      },
+      {
+        "title": "目的地 Destination",
+        "type": "single",
+        "required": true
+      },
+      {
+        "title": "航班号 Flight Number",
+        "type": "single",
+        "required": true
+      },
+      {
+        "title": "到达时间 Arrival Time",
+        "type": "dateTime",
+        "required": true
+      },
+      {
+        "title": "免责声明",
+        "type": "signature",
+        "required": true
+      },
+      {
+        "title": "已确定所有信息无误",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "已确认"
+        ]
+      }
+    ],
+    "hasPayment": false,
+    "hasSignature": true,
+    "account": "活动策划"
+  },
+  {
+    "id": "200564589",
+    "name": "2023开学大典主持人竞选",
+    "group": "",
+    "pages": 1,
+    "fields": [
+      {
+        "title": "姓名 Name",
+        "type": "contactName",
+        "required": true
+      },
+      {
+        "title": "性别 Gender",
+        "type": "contactGender",
+        "required": true,
+        "options": [
+          "男",
+          "女"
+        ]
+      },
+      {
+        "title": "学校邮箱 Email Address",
+        "type": "contactEmail",
+        "required": true
+      },
+      {
+        "title": "微信账号（注意不是昵称）WeChat",
+        "type": "contactIMItem",
+        "required": true
+      },
+      {
+        "title": "竞选项",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "中文主持",
+          "英文主持"
+        ]
+      },
+      {
+        "title": "请认真阅读以下竞选要求",
+        "type": "checkbox",
+        "required": true,
+        "options": [
+          "已认真阅读，并知晓竞选相关要求"
+        ]
+      },
+      {
+        "title": "竞选时间及着装要求",
+        "type": "checkbox",
+        "required": true,
+        "options": [
+          "已知晓"
+        ]
+      }
+    ],
+    "hasPayment": false,
+    "hasSignature": false,
+    "account": "活动策划"
+  },
+  {
+    "id": "200564588",
+    "name": "2023开学大典节目报名",
+    "group": "",
+    "pages": 1,
+    "fields": [
+      {
+        "title": "1.本次开学典礼节目报名选手需要通过CU审核，审核过后将会通知各位结果。",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "已仔细阅读并知晓"
+        ]
+      },
+      {
+        "title": "中文姓名 Chinese Name",
+        "type": "contactName",
+        "required": true
+      },
+      {
+        "title": "英文姓名（选填） English Name (optional)",
+        "type": "single",
+        "required": false
+      },
+      {
+        "title": "性别 Gender",
+        "type": "contactGender",
+        "required": true,
+        "options": [
+          "男",
+          "女"
+        ]
+      },
+      {
+        "title": "年级 Class",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "Freshman",
+          "Sophomore",
+          "Junior",
+          "Senior",
+          "其他"
+        ]
+      },
+      {
+        "title": "学院 College",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "Revelle",
+          "Muir",
+          "Marshall",
+          "Warren",
+          "ERC",
+          "Sixth",
+          "Seventh",
+          "Eighth"
+        ]
+      },
+      {
+        "title": "专业 Major",
+        "type": "single",
+        "required": true
+      },
+      {
+        "title": "微信账号（注意不是昵称）Wechat",
+        "type": "contactIMItem",
+        "required": true
+      },
+      {
+        "title": "美国手机号（若无，请填写中国手机号）Phone Number",
+        "type": "contactMobile",
+        "required": true
+      },
+      {
+        "title": "学校邮箱 UCSD email",
+        "type": "single",
+        "required": true,
+        "placeholder": "xxx@ucsd.edu"
+      },
+      {
+        "title": "节目名称 Title of Show",
+        "type": "single",
+        "required": true
+      },
+      {
+        "title": "节目类别 Genre",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "舞蹈",
+          "唱歌及说唱",
+          "乐器演奏",
+          "魔术",
+          "语言类（小品，短剧等）",
+          "其他"
+        ]
+      },
+      {
+        "title": "节目参与人数 Crew Size",
+        "type": "number",
+        "required": true
+      },
+      {
+        "title": "节目背景音乐 Background Music",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "有",
+          "无"
+        ]
+      }
+    ],
+    "hasPayment": false,
+    "hasSignature": false,
+    "account": "活动策划"
+  },
+  {
+    "id": "200564587",
+    "name": "2023开学大典观众报名表-VITA会员",
+    "group": "",
+    "pages": 1,
+    "fields": [
+      {
+        "title": "姓名 Name",
+        "type": "contactName",
+        "required": true
+      },
+      {
+        "title": "手机 Phone Number",
+        "type": "contactMobile",
+        "required": true
+      },
+      {
+        "title": "邮箱 Email",
+        "type": "contactEmail",
+        "required": true
+      },
+      {
+        "title": "请填写您的VITA注册邮箱",
+        "type": "single",
+        "required": true
+      },
+      {
+        "title": "毕业年份 GRADUATE YEAR",
+        "type": "single",
+        "required": true
+      },
+      {
+        "title": "是否有微信号？Do you have a WeChat?",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "是 Yes",
+          "否 No"
+        ]
+      },
+      {
+        "title": "如果有请填写（注意是微信号不是昵称）",
+        "type": "single",
+        "required": true
+      },
+      {
+        "title": "通过哪些平台了解到 Chinese Union？",
+        "type": "checkbox",
+        "required": true,
+        "options": [
+          "CU UCSD 公众号推文",
+          "Chinese Union官网",
+          "CU 官方小红书账号",
+          "CU 官方微博账号",
+          "CU 官方贴吧账号",
+          "CU Facebook / Instagram 账号",
+          "CU 热情的学长/学姐"
+        ]
+      },
+      {
+        "title": "通过哪些平台了解到本次活动？",
+        "type": "checkbox",
+        "required": true,
+        "options": [
+          "CU UCSD 公众号推文",
+          "Chinese Union 官网",
+          "CU 新生见面会",
+          "CU 官方小红书账号",
+          "CU 官方微博账号",
+          "CU 官方贴吧账号",
+          "CU 官方抖音账号",
+          "CU Facebook / Instagram 账号",
+          "CU 热情的学长/学姐"
+        ]
+      },
+      {
+        "title": "请仔细阅读观众报名须知，并选择同意，方可提交表单。",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "同意 I agree"
+        ]
+      }
+    ],
+    "hasPayment": false,
+    "hasSignature": false,
+    "account": "活动策划"
+  },
+  {
+    "id": "200564586",
+    "name": "2023开学大典观众报名表-非VITA会员",
+    "group": "",
+    "pages": 1,
+    "fields": [
+      {
+        "title": "姓名 Name",
+        "type": "contactName",
+        "required": true
+      },
+      {
+        "title": "手机 Phone Number",
+        "type": "contactMobile",
+        "required": true
+      },
+      {
+        "title": "邮箱 Email",
+        "type": "contactEmail",
+        "required": true
+      },
+      {
+        "title": "毕业年份 GRADUATE YEAR",
+        "type": "single",
+        "required": true
+      },
+      {
+        "title": "是否有微信号？Do you have a WeChat?",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "是 Yes",
+          "否 No"
+        ]
+      },
+      {
+        "title": "如果有请填写（注意是微信号不是昵称）",
+        "type": "single",
+        "required": true
+      },
+      {
+        "title": "通过哪些平台了解到 Chinese Union？",
+        "type": "checkbox",
+        "required": true,
+        "options": [
+          "CU UCSD 公众号推文",
+          "Chinese Union官网",
+          "CU 官方小红书账号",
+          "CU 官方微博账号",
+          "CU 官方贴吧账号",
+          "CU Facebook / Instagram 账号",
+          "CU 热情的学长/学姐"
+        ]
+      },
+      {
+        "title": "通过哪些平台了解到本次活动？",
+        "type": "checkbox",
+        "required": true,
+        "options": [
+          "CU UCSD 公众号推文",
+          "Chinese Union 官网",
+          "CU 新生见面会",
+          "CU 官方小红书账号",
+          "CU 官方微博账号",
+          "CU 官方贴吧账号",
+          "CU 官方抖音账号",
+          "CU Facebook / Instagram 账号",
+          "CU 热情的学长/学姐"
+        ]
+      },
+      {
+        "title": "请仔细阅读观众报名须知，并选择同意，方可提交表单。",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "同意 I agree"
+        ]
+      }
+    ],
+    "hasPayment": false,
+    "hasSignature": false,
+    "account": "活动策划"
+  },
+  {
+    "id": "200564563",
+    "name": "CU UCSD荣耀争霸赛 2023",
+    "group": "",
+    "pages": 1,
+    "fields": [
+      {
+        "title": "请填写你的学校名称（e.g UCSD、上海复旦大学)",
+        "type": "single",
+        "required": true
+      },
+      {
+        "title": "姓名",
+        "type": "contactName",
+        "required": true
+      },
+      {
+        "title": "性别",
+        "type": "contactGender",
+        "required": true,
+        "options": [
+          "男",
+          "女",
+          "(保密)"
+        ]
+      },
+      {
+        "title": "年龄",
+        "type": "single",
+        "required": true
+      },
+      {
+        "title": "微信",
+        "type": "contactIMItem",
+        "required": true
+      },
+      {
+        "title": "邮箱",
+        "type": "contactEmail",
+        "required": true
+      },
+      {
+        "title": "请上传你的学生证正面照片（或新生录取通知书）",
+        "type": "pictureAttachment",
+        "required": true
+      },
+      {
+        "title": "游戏段位",
+        "type": "single",
+        "required": true
+      },
+      {
+        "title": "擅长的位置",
+        "type": "checkbox",
+        "required": true,
+        "options": [
+          "上单",
+          "中单",
+          "ADC",
+          "辅助",
+          "打野"
+        ]
+      },
+      {
+        "title": "是否拥有队伍",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "是",
+          "否（小于5人请选择）"
+        ]
+      },
+      {
+        "title": "请填写你的小队名称+队长姓名+队员名字",
+        "type": "single",
+        "required": true
+      },
+      {
+        "title": "擅长的英雄",
+        "type": "single",
+        "required": true
+      },
+      {
+        "title": "队伍缺少人数及已有队员名字",
+        "type": "single",
+        "required": true
+      },
+      {
+        "title": "你可以在这里写下一段自我推荐，以便组队（optional）",
+        "type": "single",
+        "required": false
+      }
+    ],
+    "hasPayment": false,
+    "hasSignature": false,
+    "account": "活动策划"
+  },
+  {
+    "id": "200564531",
+    "name": "UCSD 春季23招新",
+    "group": "",
+    "pages": 1,
+    "fields": [
+      {
+        "title": "姓名",
+        "type": "single",
+        "required": true
+      },
+      {
+        "title": "性别",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "男",
+          "女",
+          "其他"
+        ]
+      },
+      {
+        "title": "年级",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "1st",
+          "2nd",
+          "3rd",
+          "4th",
+          "其他"
+        ]
+      },
+      {
+        "title": "专业",
+        "type": "single",
+        "required": true
+      },
+      {
+        "title": "微信号",
+        "type": "single",
+        "required": true
+      },
+      {
+        "title": "UCI Email",
+        "type": "single",
+        "required": true
+      },
+      {
+        "title": "第一志愿部门",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "Promotion",
+          "Media",
+          "Business Development"
+        ]
+      },
+      {
+        "title": "第二志愿部门 (Optional)",
+        "type": "radio",
+        "required": false,
+        "options": [
+          "Promotion",
+          "Media",
+          "Business Development"
+        ]
+      },
+      {
+        "title": "是否接受部门调配",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "是",
+          "否"
+        ]
+      },
+      {
+        "title": "通过什么方式了解到我们的招新",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "微信公众号",
+          "朋友圈",
+          "其他"
+        ]
+      },
+      {
+        "title": "为什么想要加入CU",
+        "type": "single",
+        "required": true
+      },
+      {
+        "title": "特长/相关经历",
+        "type": "single",
+        "required": true
+      },
+      {
+        "title": "你能为CU带来什么",
+        "type": "single",
+        "required": true
+      }
+    ],
+    "hasPayment": false,
+    "hasSignature": false,
+    "account": "活动策划"
+  },
+  {
+    "id": "200564522",
+    "name": "UCI CHINESE UNION Non-Disclosure Agreement",
+    "group": "",
+    "pages": 1,
+    "fields": [
+      {
+        "title": "姓名 Legal Name",
+        "type": "contactName",
+        "required": true
+      },
+      {
+        "title": "邮箱 E-Mail",
+        "type": "contactEmail",
+        "required": true
+      },
+      {
+        "title": "电子签名 Signature",
+        "type": "signature",
+        "required": true
+      }
+    ],
+    "hasPayment": false,
+    "hasSignature": true,
+    "account": "活动策划"
+  },
+  {
+    "id": "200564512",
+    "name": "UCI CU 镀金时代假面舞会-内部票",
+    "group": "",
+    "pages": 1,
+    "fields": [
+      {
+        "title": "隶属社团",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "CU成员",
+          "M.A.D",
+          "妖风舞团",
+          "热音社"
+        ]
+      },
+      {
+        "title": "姓名",
+        "type": "contactName",
+        "required": true
+      },
+      {
+        "title": "邮箱",
+        "type": "contactEmail",
+        "required": true
+      },
+      {
+        "title": "手机",
+        "type": "contactMobile",
+        "required": true
+      },
+      {
+        "title": "性别",
+        "type": "contactGender",
+        "required": true,
+        "options": [
+          "男",
+          "女",
+          "(保密)"
+        ]
+      },
+      {
+        "title": "🎫镀金时代假面舞会入场券*",
+        "type": "commodity",
+        "required": true
+      },
+      {
+        "title": "请添加一位CU小助手进入活动群组",
+        "type": "pictureRadio",
+        "required": true,
+        "options": [
+          "选项1",
+          "选项2",
+          "选项3",
+          "选项4"
+        ]
+      },
+      {
+        "title": "免责声明",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "已知晓"
+        ]
+      },
+      {
+        "title": "购票须知",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "已知晓"
+        ]
+      }
+    ],
+    "hasPayment": true,
+    "hasSignature": false,
+    "account": "活动策划"
+  },
+  {
+    "id": "200564492",
+    "name": "2022感恩节信息登记表",
+    "group": "",
+    "pages": 1,
+    "fields": [
+      {
+        "title": "中文名",
+        "type": "contactName",
+        "required": true
+      },
+      {
+        "title": "英文名",
+        "type": "single",
+        "required": true
+      },
+      {
+        "title": "手机号码",
+        "type": "contactMobile",
+        "required": true
+      },
+      {
+        "title": "UCI邮箱",
+        "type": "contactEmail",
+        "required": true
+      },
+      {
+        "title": "为了安全考虑，你带来的礼物是什么?",
+        "type": "single",
+        "required": true
+      },
+      {
+        "title": "免责声明",
+        "type": "single",
+        "required": true
+      },
+      {
+        "title": "希望我们联系你吗? Do you want us to contact you?",
+        "type": "radio",
+        "required": false,
+        "options": [
+          "联系我 / Contact Me",
+          "不联系 / Do NOT Contact Me"
+        ]
+      }
+    ],
+    "hasPayment": false,
+    "hasSignature": false,
+    "account": "活动策划"
+  },
+  {
+    "id": "200564484",
+    "name": "UCI CU 2022万圣节报名-staff",
+    "group": "",
+    "pages": 1,
+    "fields": [
+      {
+        "title": "中文姓名",
+        "type": "contactName",
+        "required": true
+      },
+      {
+        "title": "英文姓名",
+        "type": "single",
+        "required": true
+      },
+      {
+        "title": "手机",
+        "type": "contactMobile",
+        "required": true
+      },
+      {
+        "title": "UCI 邮箱",
+        "type": "contactEmail",
+        "required": true
+      },
+      {
+        "title": "微信",
+        "type": "single",
+        "required": true,
+        "placeholder": "请填写你的微信号码"
+      },
+      {
+        "title": "是否需要接送",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "不需要接送",
+          "我有车可以帮忙接送同学"
+        ]
+      },
+      {
+        "title": "免责声明",
+        "type": "single",
+        "required": true,
+        "placeholder": "签名（请输入你的全名）"
+      },
+      {
+        "title": "工作人员微信",
+        "type": "pictureRadio",
+        "required": true,
+        "options": [
+          "选项3"
+        ]
+      },
+      {
+        "title": "Ticket张数",
+        "type": "dropdown",
+        "required": true
+      },
+      {
+        "title": "购票须知",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "我已知晓。I am informed."
+        ]
+      }
+    ],
+    "hasPayment": false,
+    "hasSignature": false,
+    "account": "活动策划"
+  },
+  {
+    "id": "200564482",
+    "name": "CU 2022 新生入群表单-副本",
+    "group": "",
+    "pages": 1,
+    "fields": [
+      {
+        "title": "中文姓名/Chinese Name",
+        "type": "contactName",
+        "required": true
+      },
+      {
+        "title": "英文姓名/English Name",
+        "type": "single",
+        "required": true
+      },
+      {
+        "title": "微信/Wechat",
+        "type": "single",
+        "required": true
+      },
+      {
+        "title": "学院/College",
+        "type": "dropdown",
+        "required": true
+      },
+      {
+        "title": "专业/Major",
+        "type": "single",
+        "required": true,
+        "placeholder": "专业请打全拼哦～"
+      },
+      {
+        "title": "高中/High School",
+        "type": "dropdown",
+        "required": false
+      },
+      {
+        "title": "目前所在地",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "国内",
+          "美国",
+          "其他"
+        ]
+      },
+      {
+        "title": "有无暑期回国计划",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "有的！",
+          "没有诶...",
+          "考虑中~"
+        ]
+      },
+      {
+        "title": "你在中国的常驻城市",
+        "type": "contactLocation",
+        "required": true
+      },
+      {
+        "title": "从哪个渠道了解到CU？",
+        "type": "dropdown",
+        "required": true
+      }
+    ],
+    "hasPayment": false,
+    "hasSignature": false,
+    "account": "活动策划"
+  },
+  {
+    "id": "200564480",
+    "name": "UCI CU 2022万圣节活动报名-微信支付宝-15",
+    "group": "",
+    "pages": 1,
+    "fields": [
+      {
+        "title": "中文姓名",
+        "type": "contactName",
+        "required": true
+      },
+      {
+        "title": "英文姓名",
+        "type": "single",
+        "required": true
+      },
+      {
+        "title": "手机",
+        "type": "contactMobile",
+        "required": true
+      },
+      {
+        "title": "UCI 邮箱",
+        "type": "contactEmail",
+        "required": true
+      },
+      {
+        "title": "微信",
+        "type": "single",
+        "required": true,
+        "placeholder": "请填写你的微信号码"
+      },
+      {
+        "title": "是否需要接送",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "需要接送",
+          "不需要接送",
+          "我有车可以帮忙接送同学"
+        ]
+      },
+      {
+        "title": "免责声明",
+        "type": "single",
+        "required": true,
+        "placeholder": "签名（请输入你的全名）"
+      },
+      {
+        "title": "Ticket",
+        "type": "commodity",
+        "required": true
+      },
+      {
+        "title": "购票须知",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "我已知晓。I am informed."
+        ]
+      }
+    ],
+    "hasPayment": true,
+    "hasSignature": false,
+    "account": "活动策划"
+  },
+  {
+    "id": "200564442",
+    "name": "回国流程讲解会",
+    "group": "",
+    "pages": 1,
+    "fields": [
+      {
+        "title": "姓名",
+        "type": "single",
+        "required": true
+      },
+      {
+        "title": "性别",
+        "type": "radio",
+        "required": false,
+        "options": [
+          "男",
+          "女"
+        ]
+      },
+      {
+        "title": "年级",
+        "type": "radio",
+        "required": false,
+        "options": [
+          "大一",
+          "大二",
+          "大三",
+          "大四",
+          "研究生"
+        ]
+      },
+      {
+        "title": "微信号",
+        "type": "single",
+        "required": true
+      },
+      {
+        "title": "回国航班号",
+        "type": "single",
+        "required": true
+      },
+      {
+        "title": "起飞时间",
+        "type": "dateTime",
+        "required": true
+      },
+      {
+        "title": "对于回国流程你有哪些疑问？",
+        "type": "single",
+        "required": true
+      }
+    ],
+    "hasPayment": false,
+    "hasSignature": false,
+    "account": "活动策划"
+  },
+  {
+    "id": "200564435",
+    "name": "Feefing San Diego volunteer时间 问卷",
+    "group": "",
+    "pages": 1,
+    "fields": [
+      {
+        "title": "姓名",
+        "type": "contactName",
+        "required": true
+      },
+      {
+        "title": "Preferred Name",
+        "type": "single",
+        "required": true
+      },
+      {
+        "title": "Available Weeks (志愿者活动最终会定在某一周,但烦请勾选 all available weeks)",
+        "type": "checkbox",
+        "required": false,
+        "options": [
+          "Week 4",
+          "Week 5",
+          "Week 6",
+          "Week 7",
+          "Week 8",
+          "Week 9",
+          "其他"
+        ]
+      },
+      {
+        "title": "Preferred Day",
+        "type": "checkbox",
+        "required": false,
+        "options": [
+          "周一",
+          "周二",
+          "周三",
+          "周四",
+          "周五",
+          "周六"
+        ]
+      },
+      {
+        "title": "Preferred Time Period",
+        "type": "checkbox",
+        "required": false,
+        "options": [
+          "8:30 am - 10:30 am (for 周一-周五)",
+          "12:00pm - 2pm  (for 周一-周五)",
+          "3:30pm - 5:30pm  (for 周一-周五)",
+          "6:00pm - 8:00pm  (for 周一-周五)",
+          "Only In Saturday：9:00am - 11:00am",
+          "Only in Saturday: 1:00pm - 3:00pm"
+        ]
+      },
+      {
+        "title": "微信",
+        "type": "contactIMItem",
+        "required": false
+      },
+      {
+        "title": "邮箱",
+        "type": "contactEmail",
+        "required": false
+      },
+      {
+        "title": "希望您参与此次活动为San Diego社区解决饥饿问题做出贡献！",
+        "type": "separator",
+        "required": false
+      }
+    ],
+    "hasPayment": false,
+    "hasSignature": false,
+    "account": "活动策划"
+  },
+  {
+    "id": "200564433",
+    "name": "2022毕业季活动报名表",
+    "group": "",
+    "pages": 1,
+    "fields": [
+      {
+        "title": "在线登记报名",
+        "type": "separator",
+        "required": false
+      },
+      {
+        "title": "中文姓名",
+        "type": "contactName",
+        "required": true
+      },
+      {
+        "title": "Preferred Name",
+        "type": "single",
+        "required": true
+      },
+      {
+        "title": "性别",
+        "type": "contactGender",
+        "required": true,
+        "options": [
+          "男",
+          "女",
+          "(保密)"
+        ]
+      },
+      {
+        "title": "毕业时间",
+        "type": "contactBirthDate",
+        "required": false
+      },
+      {
+        "title": "学院",
+        "type": "contactCompany",
+        "required": true
+      },
+      {
+        "title": "手机号码",
+        "type": "contactMobile",
+        "required": false,
+        "placeholder": "用于接受消息提醒，请务必填写正确"
+      },
+      {
+        "title": "微信",
+        "type": "contactIMItem",
+        "required": true,
+        "placeholder": "用于和工作人员联系"
+      },
+      {
+        "title": "邮箱",
+        "type": "contactEmail",
+        "required": true,
+        "placeholder": "用于消息接收"
+      },
+      {
+        "title": "上传 Student ID Card (可接受电子版)",
+        "type": "pictureAttachment",
+        "required": true
+      },
+      {
+        "title": "毕业证明(当年的offer/degree audit/任何可证明今年毕业的材料)",
+        "type": "pictureAttachment",
+        "required": false
+      }
+    ],
+    "hasPayment": false,
+    "hasSignature": false,
+    "account": "活动策划"
+  },
+  {
+    "id": "200564432",
+    "name": "CU / 夜色观众报名",
+    "group": "",
+    "pages": 1,
+    "fields": [
+      {
+        "title": "姓名",
+        "type": "single",
+        "required": true
+      },
+      {
+        "title": "微信号（不是微信昵称）",
+        "type": "single",
+        "required": true
+      },
+      {
+        "title": "UCI Email",
+        "type": "single",
+        "required": true
+      },
+      {
+        "title": "线上or线下购买活动门票",
+        "type": "radio",
+        "required": true,
+        "options": [
+          "线下早鸟票购买10$",
+          "线上购买15$"
+        ]
+      },
+      {
+        "title": "如果已经支付完成，记得截图上传",
+        "type": "pictureAttachment",
+        "required": false
+      }
+    ],
+    "hasPayment": false,
+    "hasSignature": false,
+    "account": "活动策划"
+  }
+]

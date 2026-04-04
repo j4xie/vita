@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.VolunteerRecordMapper">
+    
+    <resultMap type="VolunteerRecord" id="VolunteerRecordResult">
+        <result property="id"    column="id"    />
+        <result property="userId"    column="user_id"    />
+        <result property="startTime"    column="start_time"    />
+        <result property="endTime"    column="end_time"    />
+        <result property="type"    column="type"    />
+        <result property="status"    column="status"    />
+        <result property="remark"    column="remark"    />
+        <result property="operateUserId"    column="operate_user_id"    />
+        <result property="operateLegalName"    column="operate_legal_name"    />
+        <result property="timeOffset"    column="time_offset"    />
+        <result property="legalName"    column="legal_name"    />
+        <result property="createTime"    column="create_time"    />
+        <result property="auditLegalName"    column="audit_legal_name"    />
+        <result property="auditTime"    column="audit_time"    />
+    </resultMap>
+
+    <sql id="selectVolunteerRecordVo">
+        select id, user_id, start_time, end_time, type, status, remark, operate_user_id, operate_legal_name, time_offset, create_time, audit_legal_name, audit_time from volunteer_record
+    </sql>
+
+    <select id="selectVolunteerRecordList" parameterType="VolunteerRecord" resultMap="VolunteerRecordResult">
+        select vr.id, vr.user_id, vr.start_time, vr.end_time, vr.type, vr.status, vr.remark, vr.operate_user_id, vr.operate_legal_name, vr.time_offset, su.legal_name, vr.create_time, vr.audit_legal_name, vr.audit_time from volunteer_record vr
+        left join sys_user su on vr.user_id = su.user_id
+        left join sys_dept d on su.dept_id = d.dept_id
+        <where>
+            <if test="legalName != null and legalName != ''">
+                AND su.legal_name like concat('%', #{legalName}, '%')
+            </if>
+            <if test="userId != null "> and vr.user_id = #{userId}</if>
+            <if test="startTime != null "> and vr.start_time = #{startTime}</if>
+            <if test="endTime != null "> and vr.end_time = #{endTime}</if>
+            <if test="type != null "> and vr.type = #{type}</if>
+            <if test="status != null "> and vr.status = #{status}</if>
+            <if test="operateUserId != null "> and vr.operate_user_id = #{operateUserId}</if>
+            <if test="operateLegalName != null  and operateLegalName != ''"> and vr.operate_legal_name like concat('%', #{operateLegalName}, '%')</if>
+            <!-- 数据范围过滤 -->
+            ${params.dataScope}
+        </where>
+        order by vr.create_time desc
+    </select>
+
+    <select id="selectVolunteerRecordListFroApp" parameterType="VolunteerRecord" resultMap="VolunteerRecordResult">
+        select vr.id, vr.user_id, vr.start_time, vr.end_time, vr.type, vr.status, vr.remark, vr.operate_user_id, vr.operate_legal_name, vr.time_offset, su.legal_name, vr.create_time, vr.audit_legal_name, vr.audit_time from volunteer_record vr
+        left join sys_user su on vr.user_id = su.user_id
+        left join sys_dept d on su.dept_id = d.dept_id
+        <where>
+            <if test="legalName != null and legalName != ''">
+                AND su.legal_name like concat('%', #{legalName}, '%')
+            </if>
+            <if test="id != null "> and vr.id = #{id}</if>
+            <if test="userId != null "> and vr.user_id = #{userId}</if>
+            <if test="startTime != null "> and vr.start_time = #{startTime}</if>
+            <if test="endTime != null "> and vr.end_time = #{endTime}</if>
+            <if test="type != null "> and vr.type = #{type}</if>
+            <if test="status != null "> and vr.status = #{status}</if>
+            <if test="operateUserId != null "> and vr.operate_user_id = #{operateUserId}</if>
+            <if test="operateLegalName != null  and operateLegalName != ''"> and vr.operate_legal_name like concat('%', #{operateLegalName}, '%')</if>
+        </where>
+        order by vr.create_time desc
+    </select>
+
+    <select id="selectVolunteerLastRecordFroApp" parameterType="VolunteerRecord" resultMap="VolunteerRecordResult">
+        select vr.id, vr.user_id, vr.start_time, vr.end_time, vr.type, vr.status, vr.remark, vr.operate_user_id, vr.operate_legal_name, vr.time_offset, su.legal_name, vr.create_time, vr.audit_legal_name, vr.audit_time from volunteer_record vr
+        left join sys_user su on vr.user_id = su.user_id
+        left join sys_dept d on su.dept_id = d.dept_id
+        <where>
+            <if test="legalName != null and legalName != ''">
+                AND su.legal_name like concat('%', #{legalName}, '%')
+            </if>
+            <if test="id != null "> and vr.id = #{id}</if>
+            <if test="userId != null "> and vr.user_id = #{userId}</if>
+            <if test="startTime != null "> and vr.start_time = #{startTime}</if>
+            <if test="endTime != null "> and vr.end_time = #{endTime}</if>
+            <if test="type != null "> and vr.type = #{type}</if>
+            <if test="status != null "> and vr.status = #{status}</if>
+            <if test="operateUserId != null "> and vr.operate_user_id = #{operateUserId}</if>
+            <if test="operateLegalName != null  and operateLegalName != ''"> and vr.operate_legal_name like concat('%', #{operateLegalName}, '%')</if>
+        </where>
+        order by vr.create_time desc LIMIT 1
+    </select>
+    
+    <select id="selectVolunteerRecordById" parameterType="Long" resultMap="VolunteerRecordResult">
+        <include refid="selectVolunteerRecordVo"/>
+        where id = #{id}
+    </select>
+
+    <insert id="insertVolunteerRecord" parameterType="VolunteerRecord" useGeneratedKeys="true" keyProperty="id">
+        insert into volunteer_record
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="userId != null">user_id,</if>
+            <if test="startTime != null">start_time,</if>
+            <if test="endTime != null">end_time,</if>
+            <if test="type != null">type,</if>
+            <if test="status != null">status,</if>
+            <if test="operateUserId != null">operate_user_id,</if>
+            <if test="operateLegalName != null">operate_legal_name,</if>
+            <if test="timeOffset != null">time_offset,</if>
+            create_time
+         </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="userId != null">#{userId},</if>
+            <if test="startTime != null">#{startTime},</if>
+            <if test="endTime != null">#{endTime},</if>
+            <if test="type != null">#{type},</if>
+            <if test="status != null">#{status},</if>
+            <if test="operateUserId != null">#{operateUserId},</if>
+            <if test="operateLegalName != null">#{operateLegalName},</if>
+            <if test="timeOffset != null">#{timeOffset},</if>
+            sysdate()
+         </trim>
+    </insert>
+
+    <update id="updateVolunteerRecord" parameterType="VolunteerRecord">
+        update volunteer_record
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="userId != null">user_id = #{userId},</if>
+            <if test="startTime != null">start_time = #{startTime},</if>
+            <if test="endTime != null">end_time = #{endTime},</if>
+            <if test="type != null">type = #{type},</if>
+            <if test="status != null">status = #{status},</if>
+            <if test="remark != null">remark = #{remark},</if>
+            <if test="timeOffset != null">time_offset = #{timeOffset},</if>
+            <if test="auditLegalName != null">audit_legal_name = #{auditLegalName},</if>
+            audit_time = sysdate()
+        </trim>
+        where id = #{id}
+    </update>
+
+    <delete id="deleteVolunteerRecordById" parameterType="Long">
+        delete from volunteer_record where id = #{id}
+    </delete>
+
+    <delete id="deleteVolunteerRecordByIds" parameterType="String">
+        delete from volunteer_record where id in 
+        <foreach item="id" collection="array" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+</mapper>

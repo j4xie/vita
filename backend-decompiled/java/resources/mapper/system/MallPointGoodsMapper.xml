@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.MallPointGoodsMapper">
+    
+    <resultMap type="MallPointGoods" id="MallPointGoodsResult">
+        <result property="id"    column="id"    />
+        <result property="goodName"    column="good_name"    />
+        <result property="goodIcon"    column="good_icon"    />
+        <result property="classifyId"    column="classify_id"    />
+        <result property="goodDesc"    column="good_desc"    />
+        <result property="price"    column="price"    />
+        <result property="quantity"    column="quantity"    />
+        <result property="unit"    column="unit"    />
+        <result property="goodDetail"    column="good_detail"    />
+        <result property="createTime"    column="create_time"    />
+        <result property="createBy"    column="create_by"    />
+        <result property="createUserId"    column="create_user_id"    />
+        <result property="updateTime"    column="update_time"    />
+        <result property="updateBy"    column="update_by"    />
+        <result property="classifyName"    column="cat_name"    />
+    </resultMap>
+
+    <sql id="selectMallPointGoodsVo">
+        select mpg.id, mpg.good_name, mpg.good_icon, mpg.classify_id, mpg.good_desc, mpg.price, mpg.quantity, mpg.unit, mpg.good_detail,
+               mpg.create_time, mpg.create_by, mpg.create_user_id, mpg.update_time, mpg.update_by, mc.cat_name
+        from mall_point_goods mpg
+        left join mall_classify mc on mc.id = mpg.classify_id
+    </sql>
+
+    <select id="selectMallPointGoodsList" parameterType="MallPointGoods" resultMap="MallPointGoodsResult">
+        <include refid="selectMallPointGoodsVo"/>
+        <where>  
+            <if test="goodName != null  and goodName != ''"> and mpg.good_name like concat('%', #{goodName}, '%')</if>
+            <if test="classifyId != null  and classifyId != ''"> and mpg.classify_id = #{classifyId}</if>
+            <if test="goodDesc != null  and goodDesc != ''"> and mpg.good_desc = #{goodDesc}</if>
+            <if test="price != null "> and mpg.price = #{price}</if>
+            <if test="quantity != null "> and mpg.quantity = #{quantity}</if>
+            <if test="unit != null "> and mpg.unit = #{unit}</if>
+            <if test="goodDetail != null  and goodDetail != ''"> and mpg.good_detail = #{goodDetail}</if>
+        </where>
+    </select>
+    
+    <select id="selectMallPointGoodsById" parameterType="Long" resultMap="MallPointGoodsResult">
+        <include refid="selectMallPointGoodsVo"/>
+        where mpg.id = #{id}
+    </select>
+
+    <insert id="insertMallPointGoods" parameterType="MallPointGoods" useGeneratedKeys="true" keyProperty="id">
+        insert into mall_point_goods
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="goodName != null">good_name,</if>
+            <if test="goodIcon != null">good_icon,</if>
+            <if test="classifyId != null">classify_id,</if>
+            <if test="goodDesc != null">good_desc,</if>
+            <if test="price != null">price,</if>
+            <if test="quantity != null">quantity,</if>
+            <if test="unit != null">unit,</if>
+            <if test="goodDetail != null">good_detail,</if>
+            <if test="createTime != null">create_time,</if>
+            <if test="createBy != null">create_by,</if>
+            <if test="createUserId != null">create_user_id,</if>
+            <if test="updateTime != null">update_time,</if>
+            <if test="updateBy != null">update_by,</if>
+         </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="goodName != null">#{goodName},</if>
+            <if test="goodIcon != null">#{goodIcon},</if>
+            <if test="classifyId != null">#{classifyId},</if>
+            <if test="goodDesc != null">#{goodDesc},</if>
+            <if test="price != null">#{price},</if>
+            <if test="quantity != null">#{quantity},</if>
+            <if test="unit != null">#{unit},</if>
+            <if test="goodDetail != null">#{goodDetail},</if>
+            <if test="createTime != null">#{createTime},</if>
+            <if test="createBy != null">#{createBy},</if>
+            <if test="createUserId != null">#{createUserId},</if>
+            <if test="updateTime != null">#{updateTime},</if>
+            <if test="updateBy != null">#{updateBy},</if>
+         </trim>
+    </insert>
+
+    <update id="updateMallPointGoods" parameterType="MallPointGoods">
+        update mall_point_goods
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="goodName != null">good_name = #{goodName},</if>
+            <if test="goodIcon != null">good_icon = #{goodIcon},</if>
+            <if test="classifyId != null">classify_id = #{classifyId},</if>
+            <if test="goodDesc != null">good_desc = #{goodDesc},</if>
+            <if test="price != null">price = #{price},</if>
+            <if test="quantity != null">quantity = #{quantity},</if>
+            <if test="unit != null">unit = #{unit},</if>
+            <if test="goodDetail != null">good_detail = #{goodDetail},</if>
+            <if test="createTime != null">create_time = #{createTime},</if>
+            <if test="createBy != null">create_by = #{createBy},</if>
+            <if test="createUserId != null">create_user_id = #{createUserId},</if>
+            <if test="updateTime != null">update_time = #{updateTime},</if>
+            <if test="updateBy != null">update_by = #{updateBy},</if>
+        </trim>
+        where id = #{id}
+    </update>
+
+    <update id="refundGoodsQuantity" parameterType="MallPointGoods">
+        update mall_point_goods set quantity = quantity + #{quantity}
+        where id = #{id}
+    </update>
+
+    <delete id="deleteMallPointGoodsById" parameterType="Long">
+        delete from mall_point_goods where id = #{id}
+    </delete>
+
+    <delete id="deleteMallPointGoodsByIds" parameterType="String">
+        delete from mall_point_goods where id in 
+        <foreach item="id" collection="array" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+</mapper>

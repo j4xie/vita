@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.EquityDataMapper">
+    
+    <resultMap type="EquityData" id="EquityDataResult">
+        <result property="id"    column="id"    />
+        <result property="equName"    column="equ_name"    />
+        <result property="equTag"    column="equ_tag"    />
+        <result property="equStatus"    column="equ_status"    />
+        <result property="equSort"    column="equ_sort"    />
+        <result property="createTime"    column="create_time"    />
+        <result property="updateTime"    column="update_time"    />
+    </resultMap>
+
+    <sql id="selectEquityDataVo">
+        select id, equ_name, equ_tag, equ_status, equ_sort, create_time, update_time from equity_data
+    </sql>
+
+    <select id="selectEquityDataList" parameterType="EquityData" resultMap="EquityDataResult">
+        <include refid="selectEquityDataVo"/>
+        <where>
+            <if test="id != null "> and id = #{id}</if>
+            <if test="equName != null  and equName != ''"> and equ_name like concat('%', #{equName}, '%')</if>
+            <if test="equTag != null  and equTag != ''"> and equ_tag = #{equTag}</if>
+            <if test="equStatus != null "> and equ_status = #{equStatus}</if>
+            <if test="equSort != null "> and equ_sort = #{equSort}</if>
+        </where>
+        order by equ_sort asc
+    </select>
+    
+    <select id="selectEquityDataById" parameterType="Long" resultMap="EquityDataResult">
+        <include refid="selectEquityDataVo"/>
+        where id = #{id}
+    </select>
+
+    <select id="selectEquityDataByTag" resultMap="EquityDataResult">
+        <include refid="selectEquityDataVo"/>
+        where equ_tag = #{equTag}
+    </select>
+
+    <insert id="insertEquityData" parameterType="EquityData" useGeneratedKeys="true" keyProperty="id">
+        insert into equity_data
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="equName != null">equ_name,</if>
+            <if test="equTag != null">equ_tag,</if>
+            <if test="equStatus != null">equ_status,</if>
+            <if test="equSort != null">equ_sort,</if>
+            <if test="createTime != null">create_time,</if>
+            <if test="updateTime != null">update_time,</if>
+         </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="equName != null">#{equName},</if>
+            <if test="equTag != null">#{equTag},</if>
+            <if test="equStatus != null">#{equStatus},</if>
+            <if test="equSort != null">#{equSort},</if>
+            <if test="createTime != null">#{createTime},</if>
+            <if test="updateTime != null">#{updateTime},</if>
+         </trim>
+    </insert>
+
+    <update id="updateEquityData" parameterType="EquityData">
+        update equity_data
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="equName != null">equ_name = #{equName},</if>
+            <if test="equTag != null">equ_tag = #{equTag},</if>
+            <if test="equStatus != null">equ_status = #{equStatus},</if>
+            <if test="equSort != null">equ_sort = #{equSort},</if>
+            <if test="createTime != null">create_time = #{createTime},</if>
+            <if test="updateTime != null">update_time = #{updateTime},</if>
+        </trim>
+        where id = #{id}
+    </update>
+
+    <delete id="deleteEquityDataById" parameterType="Long">
+        delete from equity_data where id = #{id}
+    </delete>
+
+    <delete id="deleteEquityDataByIds" parameterType="String">
+        delete from equity_data where id in 
+        <foreach item="id" collection="array" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+</mapper>

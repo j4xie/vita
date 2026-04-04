@@ -1,0 +1,1753 @@
+{
+  "version": "1.0",
+  "generated": "2026-03-12",
+  "source": "MikeX 生产表单人工研究整理（8种核心类型）",
+  "templateCount": 11,
+  "templates": [
+    {
+      "id": "free_gala",
+      "name": "免费晚会/派对报名",
+      "nameEn": "Free Gala/Party Registration",
+      "keywords": [
+        "春节",
+        "感恩节",
+        "中秋",
+        "晚会",
+        "派对",
+        "gala",
+        "party",
+        "新年",
+        "圣诞",
+        "万圣节",
+        "元旦"
+      ],
+      "complexity": "simple",
+      "fieldCount": "5-6",
+      "sampleCount": 8,
+      "totalSubmissions": 3000,
+      "fields": [
+        {
+          "title": "姓名 Name",
+          "titleEn": "Name",
+          "type": "input",
+          "required": true,
+          "desc": "请填写您的真实姓名 / Please enter your legal name",
+          "category": "contact",
+          "props": {
+            "placeholder": "请输入姓名 / Your Name",
+            "vModel": "name",
+            "maxlength": 30,
+            "required": true
+          }
+        },
+        {
+          "title": "邮箱 Email",
+          "titleEn": "Email",
+          "type": "input",
+          "required": true,
+          "desc": "用于接收活动确认邮件",
+          "category": "contact",
+          "props": {
+            "placeholder": "your_email@example.com",
+            "vModel": "email",
+            "required": true,
+            "regexValidation": "/^[\\w.-]+@[\\w.-]+\\.\\w+$/",
+            "regexMessage": "请输入正确的邮箱格式"
+          }
+        },
+        {
+          "title": "手机号 Phone Number",
+          "titleEn": "Phone Number",
+          "type": "input",
+          "required": true,
+          "desc": "中国手机号或美国手机号均可",
+          "category": "contact",
+          "props": {
+            "placeholder": "请输入手机号",
+            "vModel": "phone",
+            "maxlength": 15,
+            "required": true
+          }
+        },
+        {
+          "title": "微信号 WeChat ID",
+          "titleEn": "WeChat ID",
+          "type": "input",
+          "required": true,
+          "desc": "用于添加活动群",
+          "category": "contact",
+          "props": {
+            "placeholder": "请输入您的微信号",
+            "vModel": "wechatId",
+            "required": true
+          }
+        },
+        {
+          "title": "性别 Gender",
+          "titleEn": "Gender",
+          "type": "radio",
+          "required": true,
+          "desc": "",
+          "category": "personal",
+          "props": {
+            "vModel": "gender",
+            "required": true,
+            "options": [
+              "男 Male",
+              "女 Female",
+              "保密 Prefer not to say"
+            ]
+          }
+        }
+      ],
+      "features": [
+        "bilingual_titles",
+        "lottery",
+        "ticket",
+        "one_submission_per_person"
+      ]
+    },
+    {
+      "id": "photo_collection",
+      "name": "素材/照片收集",
+      "nameEn": "Photo/Material Collection",
+      "keywords": [
+        "照片",
+        "素材",
+        "收集",
+        "投稿",
+        "photo",
+        "图片",
+        "视频",
+        "作品",
+        "相册"
+      ],
+      "complexity": "simple",
+      "fieldCount": "4-6",
+      "sampleCount": 5,
+      "totalSubmissions": 500,
+      "fields": [
+        {
+          "title": "姓名 Name",
+          "titleEn": "Name",
+          "type": "input",
+          "required": true,
+          "desc": "",
+          "category": "contact",
+          "props": {
+            "placeholder": "请输入姓名",
+            "vModel": "name",
+            "required": true
+          }
+        },
+        {
+          "title": "联系方式（微信/手机）",
+          "titleEn": "Contact (WeChat/Phone)",
+          "type": "input",
+          "required": true,
+          "desc": "方便联系沟通",
+          "category": "contact",
+          "props": {
+            "placeholder": "微信号或手机号",
+            "vModel": "contact",
+            "required": true
+          }
+        },
+        {
+          "title": "上传照片/作品",
+          "titleEn": "Upload Photos/Works",
+          "type": "upload",
+          "required": true,
+          "desc": "支持jpg/png格式，单张不超过10MB",
+          "category": "content",
+          "props": {
+            "vModel": "files",
+            "required": true
+          }
+        },
+        {
+          "title": "作品说明",
+          "titleEn": "Description",
+          "type": "textarea",
+          "required": false,
+          "desc": "简单描述一下您的作品",
+          "category": "content",
+          "props": {
+            "placeholder": "请简要描述作品内容、拍摄时间等",
+            "vModel": "description",
+            "maxlength": 500
+          }
+        }
+      ],
+      "features": [
+        "file_upload",
+        "multiple_uploads"
+      ]
+    },
+    {
+      "id": "social_event",
+      "name": "社交活动报名（单身派对/交友聚会等）",
+      "nameEn": "Social Event Registration",
+      "keywords": [
+        "单身",
+        "交友",
+        "相亲",
+        "dating",
+        "social",
+        "脱单",
+        "联谊",
+        "匹配"
+      ],
+      "complexity": "medium",
+      "fieldCount": "7-9",
+      "sampleCount": 6,
+      "totalSubmissions": 800,
+      "fields": [
+        {
+          "title": "姓名 Name",
+          "titleEn": "Name",
+          "type": "input",
+          "required": true,
+          "desc": "",
+          "category": "contact",
+          "props": {
+            "placeholder": "请输入姓名",
+            "vModel": "name",
+            "required": true
+          }
+        },
+        {
+          "title": "邮箱 Email",
+          "titleEn": "Email",
+          "type": "input",
+          "required": true,
+          "desc": "",
+          "category": "contact",
+          "props": {
+            "placeholder": "your_email@example.com",
+            "vModel": "email",
+            "required": true,
+            "regexValidation": "/^[\\w.-]+@[\\w.-]+\\.\\w+$/",
+            "regexMessage": "请输入正确的邮箱格式"
+          }
+        },
+        {
+          "title": "手机号 Phone Number",
+          "titleEn": "Phone Number",
+          "type": "input",
+          "required": true,
+          "desc": "",
+          "category": "contact",
+          "props": {
+            "placeholder": "请输入手机号",
+            "vModel": "phone",
+            "required": true
+          }
+        },
+        {
+          "title": "微信号 WeChat ID",
+          "titleEn": "WeChat ID",
+          "type": "input",
+          "required": true,
+          "desc": "",
+          "category": "contact",
+          "props": {
+            "placeholder": "请输入微信号",
+            "vModel": "wechatId",
+            "required": true
+          }
+        },
+        {
+          "title": "性别 Gender",
+          "titleEn": "Gender",
+          "type": "radio",
+          "required": true,
+          "desc": "",
+          "category": "personal",
+          "props": {
+            "vModel": "gender",
+            "required": true,
+            "options": [
+              "男 Male",
+              "女 Female",
+              "保密 Prefer not to say"
+            ]
+          }
+        },
+        {
+          "title": "星座",
+          "titleEn": "Zodiac Sign",
+          "type": "radio",
+          "required": true,
+          "desc": "社交活动特色字段，有助于互动破冰",
+          "category": "social",
+          "props": {
+            "vModel": "zodiac",
+            "required": true,
+            "options": [
+              "白羊座♈",
+              "金牛座♉",
+              "双子座♊",
+              "巨蟹座♋",
+              "狮子座♌",
+              "处女座♍",
+              "天秤座♎",
+              "天蝎座♏",
+              "射手座♐",
+              "摩羯座♑",
+              "水瓶座♒",
+              "双鱼座♓"
+            ]
+          }
+        },
+        {
+          "title": "自我介绍/留言板",
+          "titleEn": "Self Introduction / Message Board",
+          "type": "textarea",
+          "required": false,
+          "desc": "写点什么让大家认识你吧~",
+          "category": "social",
+          "props": {
+            "placeholder": "介绍一下自己，爱好、专业、想说的话~",
+            "vModel": "intro",
+            "maxlength": 300
+          }
+        }
+      ],
+      "features": [
+        "image_selection",
+        "interactive_fields",
+        "bilingual_titles"
+      ]
+    },
+    {
+      "id": "paid_activity",
+      "name": "付费活动报名（篝火/烧烤/聚餐等）",
+      "nameEn": "Paid Activity Registration",
+      "keywords": [
+        "篝火",
+        "烧烤",
+        "BBQ",
+        "聚餐",
+        "晚餐",
+        "午餐",
+        "dinner",
+        "火锅",
+        "旅行",
+        "出游",
+        "露营",
+        "camping",
+        "付费"
+      ],
+      "complexity": "medium",
+      "fieldCount": "8-10",
+      "sampleCount": 10,
+      "totalSubmissions": 1500,
+      "fields": [
+        {
+          "title": "姓名 Name",
+          "titleEn": "Name",
+          "type": "input",
+          "required": true,
+          "desc": "",
+          "category": "contact",
+          "props": {
+            "placeholder": "请输入姓名",
+            "vModel": "name",
+            "required": true
+          }
+        },
+        {
+          "title": "性别 Gender",
+          "titleEn": "Gender",
+          "type": "radio",
+          "required": true,
+          "desc": "",
+          "category": "personal",
+          "props": {
+            "vModel": "gender",
+            "required": true,
+            "options": [
+              "男 Male",
+              "女 Female",
+              "保密 Prefer not to say"
+            ]
+          }
+        },
+        {
+          "title": "手机号 Phone Number",
+          "titleEn": "Phone Number",
+          "type": "input",
+          "required": true,
+          "desc": "中国手机号请加86，美国手机号请加1",
+          "category": "contact",
+          "props": {
+            "placeholder": "请输入手机号（如：+1 xxx-xxx-xxxx）",
+            "vModel": "phone",
+            "required": true
+          }
+        },
+        {
+          "title": "微信号 WeChat ID",
+          "titleEn": "WeChat ID",
+          "type": "input",
+          "required": true,
+          "desc": "方便拉群通知",
+          "category": "contact",
+          "props": {
+            "placeholder": "请输入微信号",
+            "vModel": "wechatId",
+            "required": true
+          }
+        },
+        {
+          "title": "邮箱 Email",
+          "titleEn": "Email",
+          "type": "input",
+          "required": true,
+          "desc": "尽量使用学校.edu邮箱",
+          "category": "contact",
+          "props": {
+            "placeholder": "xxx@ucsd.edu",
+            "vModel": "email",
+            "required": true,
+            "regexValidation": "/^[\\w.-]+@[\\w.-]+\\.\\w+$/",
+            "regexMessage": "请输入正确的邮箱格式"
+          }
+        },
+        {
+          "title": "饮食偏好/忌口",
+          "titleEn": "Dietary Preferences",
+          "type": "textarea",
+          "required": false,
+          "desc": "有什么想吃的或忌口的请告诉我们~",
+          "category": "preference",
+          "props": {
+            "placeholder": "如：不吃辣、素食、海鲜过敏等",
+            "vModel": "dietaryPreference",
+            "maxlength": 200
+          }
+        },
+        {
+          "title": "想问学长学姐的问题",
+          "titleEn": "Questions for Seniors",
+          "type": "textarea",
+          "required": false,
+          "desc": "有什么感兴趣的问题希望得到学长学姐们的回答呢？",
+          "category": "interactive",
+          "props": {
+            "placeholder": "关于选课、生活、实习等任何问题~",
+            "vModel": "questions",
+            "maxlength": 300
+          }
+        },
+        {
+          "title": "备注 Remarks",
+          "titleEn": "Remarks",
+          "type": "textarea",
+          "required": false,
+          "desc": "",
+          "category": "other",
+          "props": {
+            "placeholder": "其他需要说明的事项",
+            "vModel": "remarks",
+            "maxlength": 200
+          }
+        }
+      ],
+      "features": [
+        "payment",
+        "dietary_preference",
+        "interactive_qa",
+        "bilingual_titles"
+      ]
+    },
+    {
+      "id": "hotel_booking",
+      "name": "折扣酒店/住宿预订",
+      "nameEn": "Discounted Hotel/Accommodation Booking",
+      "keywords": [
+        "酒店",
+        "住宿",
+        "预订",
+        "hotel",
+        "booking",
+        "公寓",
+        "apartment",
+        "折扣"
+      ],
+      "complexity": "medium",
+      "fieldCount": "8-10",
+      "sampleCount": 4,
+      "totalSubmissions": 400,
+      "fields": [
+        {
+          "title": "重要声明",
+          "titleEn": "Important Notice",
+          "type": "textarea",
+          "required": false,
+          "desc": "售后声明及注意事项（纯展示文本）",
+          "category": "notice",
+          "props": {
+            "vModel": "notice_display",
+            "placeholder": ""
+          }
+        },
+        {
+          "title": "我已阅读并同意以上声明",
+          "titleEn": "I have read and agree to the above",
+          "type": "radio",
+          "required": true,
+          "desc": "",
+          "category": "confirmation",
+          "props": {
+            "vModel": "agreeTerms",
+            "required": true,
+            "options": [
+              "是的，我已了解"
+            ]
+          }
+        },
+        {
+          "title": "姓名（酒店预订使用）",
+          "titleEn": "Name (for hotel booking)",
+          "type": "input",
+          "required": true,
+          "desc": "请使用与证件一致的姓名",
+          "category": "contact",
+          "props": {
+            "placeholder": "姓 Last Name / 名 First Name",
+            "vModel": "name",
+            "required": true
+          }
+        },
+        {
+          "title": "手机号（酒店预订使用）",
+          "titleEn": "Phone (for hotel booking)",
+          "type": "input",
+          "required": true,
+          "desc": "酒店可能会电话联系",
+          "category": "contact",
+          "props": {
+            "placeholder": "请输入手机号",
+            "vModel": "phone",
+            "required": true
+          }
+        },
+        {
+          "title": "邮箱（酒店预订使用）",
+          "titleEn": "Email (for hotel booking)",
+          "type": "input",
+          "required": true,
+          "desc": "酒店确认邮件将发送至此邮箱",
+          "category": "contact",
+          "props": {
+            "placeholder": "your_email@example.com",
+            "vModel": "email",
+            "required": true,
+            "regexValidation": "/^[\\w.-]+@[\\w.-]+\\.\\w+$/",
+            "regexMessage": "请输入正确的邮箱格式"
+          }
+        },
+        {
+          "title": "入住日期",
+          "titleEn": "Check-in Dates",
+          "type": "checkbox",
+          "required": true,
+          "desc": "请选择您的入住日期（可多选连续日期）",
+          "category": "booking",
+          "props": {
+            "vModel": "checkInDates",
+            "required": true,
+            "options": [
+              "9/12 (周四)",
+              "9/13 (周五)",
+              "9/14 (周六)",
+              "9/15 (周日)",
+              "9/16 (周一)",
+              "9/17 (周二)",
+              "9/18 (周三)",
+              "9/19 (周四)",
+              "9/20 (周五)",
+              "9/21 (周六)"
+            ]
+          }
+        },
+        {
+          "title": "参考时间信息",
+          "titleEn": "Reference Dates",
+          "type": "textarea",
+          "required": false,
+          "desc": "纯展示：开学日期、Orientation日期、Move-in日期等参考信息",
+          "category": "notice",
+          "props": {
+            "vModel": "reference_info"
+          }
+        }
+      ],
+      "features": [
+        "date_selection",
+        "external_links",
+        "confirmation",
+        "notice_text"
+      ]
+    },
+    {
+      "id": "recruitment",
+      "name": "社团/部门招新",
+      "nameEn": "Club/Department Recruitment",
+      "keywords": [
+        "招新",
+        "招募",
+        "加入",
+        "recruit",
+        "join",
+        "纳新",
+        "面试",
+        "申请",
+        "application",
+        "部门"
+      ],
+      "complexity": "high",
+      "fieldCount": "12-18",
+      "sampleCount": 15,
+      "totalSubmissions": 2000,
+      "fields": [
+        {
+          "title": "姓名（Last Name + First Name）",
+          "titleEn": "Name (Last + First)",
+          "type": "input",
+          "required": true,
+          "desc": "Legal Name，请填写真实姓名",
+          "category": "contact",
+          "props": {
+            "placeholder": "如：Zhang San",
+            "vModel": "name",
+            "required": true
+          }
+        },
+        {
+          "title": "微信号 WeChat ID",
+          "titleEn": "WeChat ID",
+          "type": "input",
+          "required": true,
+          "desc": "",
+          "category": "contact",
+          "props": {
+            "placeholder": "请输入微信号",
+            "vModel": "wechatId",
+            "required": true
+          }
+        },
+        {
+          "title": "手机号（中国）",
+          "titleEn": "Phone (China)",
+          "type": "input",
+          "required": true,
+          "desc": "",
+          "category": "contact",
+          "props": {
+            "placeholder": "中国手机号",
+            "vModel": "phoneCN",
+            "required": true
+          }
+        },
+        {
+          "title": "手机号（美国）",
+          "titleEn": "Phone (US)",
+          "type": "input",
+          "required": false,
+          "desc": "如有美国号码请填写",
+          "category": "contact",
+          "props": {
+            "placeholder": "美国手机号（选填）",
+            "vModel": "phoneUS"
+          }
+        },
+        {
+          "title": "邮箱 Email",
+          "titleEn": "Email",
+          "type": "input",
+          "required": true,
+          "desc": "优先使用.edu学校邮箱",
+          "category": "contact",
+          "props": {
+            "placeholder": "xxx@ucsd.edu",
+            "vModel": "email",
+            "required": true,
+            "regexValidation": "/^[\\w.-]+@[\\w.-]+\\.\\w+$/",
+            "regexMessage": "请输入正确的邮箱格式"
+          }
+        },
+        {
+          "title": "学校 University",
+          "titleEn": "University",
+          "type": "select",
+          "required": true,
+          "desc": "",
+          "category": "academic",
+          "props": {
+            "vModel": "university",
+            "required": true,
+            "placeholder": "请选择学校",
+            "options": [
+              "UCSD",
+              "UCLA",
+              "UC Berkeley",
+              "UCSB",
+              "UCI",
+              "USC",
+              "Stanford",
+              "UMN",
+              "其他 Other"
+            ]
+          }
+        },
+        {
+          "title": "年级 Grade",
+          "titleEn": "Grade/Year",
+          "type": "select",
+          "required": true,
+          "desc": "",
+          "category": "academic",
+          "props": {
+            "vModel": "grade",
+            "required": true,
+            "placeholder": "请选择年级",
+            "options": [
+              "大一 Freshman",
+              "大二 Sophomore",
+              "大三 Junior",
+              "大四 Senior",
+              "研一 Master Year 1",
+              "研二 Master Year 2",
+              "PhD",
+              "其他 Other"
+            ]
+          }
+        },
+        {
+          "title": "专业 Major",
+          "titleEn": "Major",
+          "type": "input",
+          "required": true,
+          "desc": "",
+          "category": "academic",
+          "props": {
+            "placeholder": "如：Computer Science",
+            "vModel": "major",
+            "required": true
+          }
+        },
+        {
+          "title": "申请部门 Department",
+          "titleEn": "Department Applied",
+          "type": "select",
+          "required": true,
+          "desc": "请选择你最想加入的部门",
+          "category": "application",
+          "props": {
+            "vModel": "department",
+            "required": true,
+            "placeholder": "请选择部门",
+            "options": [
+              "运营部 Operations",
+              "媒体部 Media",
+              "策划部 Planning",
+              "设计部 Design",
+              "财务部 Finance",
+              "技术部 Tech"
+            ]
+          }
+        },
+        {
+          "title": "LinkedIn（选填）",
+          "titleEn": "LinkedIn",
+          "type": "input",
+          "required": false,
+          "desc": "",
+          "category": "contact",
+          "props": {
+            "placeholder": "LinkedIn 个人主页链接",
+            "vModel": "linkedin"
+          }
+        },
+        {
+          "title": "简历上传 Resume",
+          "titleEn": "Resume Upload",
+          "type": "upload",
+          "required": false,
+          "desc": "支持PDF/Word格式",
+          "category": "application",
+          "props": {
+            "vModel": "resume"
+          }
+        },
+        {
+          "title": "个人陈述 Personal Statement",
+          "titleEn": "Personal Statement",
+          "type": "textarea",
+          "required": true,
+          "desc": "请简单介绍自己，以及为什么想加入我们（200-500字）",
+          "category": "application",
+          "props": {
+            "placeholder": "请介绍你的经历、技能以及加入的动机...",
+            "vModel": "personalStatement",
+            "required": true,
+            "maxlength": 500,
+            "showWordLimit": true
+          }
+        },
+        {
+          "title": "特长/相关经验",
+          "titleEn": "Skills/Experience",
+          "type": "textarea",
+          "required": false,
+          "desc": "列举你的特长或相关经验",
+          "category": "application",
+          "props": {
+            "placeholder": "如：Photoshop熟练、有公众号运营经验...",
+            "vModel": "skills",
+            "maxlength": 300
+          }
+        }
+      ],
+      "features": [
+        "department_selection",
+        "resume_upload",
+        "personal_statement",
+        "bilingual_titles"
+      ]
+    },
+    {
+      "id": "quiz_survey",
+      "name": "领导力/知识测验问卷",
+      "nameEn": "Leadership/Knowledge Quiz",
+      "keywords": [
+        "测验",
+        "问答",
+        "问卷",
+        "quiz",
+        "survey",
+        "调查",
+        "反馈",
+        "领导力",
+        "培训"
+      ],
+      "complexity": "high",
+      "fieldCount": "15-30",
+      "sampleCount": 5,
+      "totalSubmissions": 600,
+      "fields": [
+        {
+          "title": "学校 University",
+          "titleEn": "University",
+          "type": "select",
+          "required": true,
+          "desc": "",
+          "category": "identity",
+          "props": {
+            "vModel": "university",
+            "required": true,
+            "placeholder": "请选择学校",
+            "options": [
+              "UCSD",
+              "UCLA",
+              "UCSB",
+              "UCI",
+              "USC",
+              "其他"
+            ]
+          }
+        },
+        {
+          "title": "姓名 Name",
+          "titleEn": "Name",
+          "type": "input",
+          "required": true,
+          "desc": "",
+          "category": "contact",
+          "props": {
+            "placeholder": "请输入姓名",
+            "vModel": "name",
+            "required": true
+          }
+        },
+        {
+          "title": "手机号 Phone",
+          "titleEn": "Phone",
+          "type": "input",
+          "required": true,
+          "desc": "",
+          "category": "contact",
+          "props": {
+            "placeholder": "请输入手机号",
+            "vModel": "phone",
+            "required": true
+          }
+        },
+        {
+          "title": "邮箱 Email",
+          "titleEn": "Email",
+          "type": "input",
+          "required": true,
+          "desc": "",
+          "category": "contact",
+          "props": {
+            "placeholder": "请输入邮箱",
+            "vModel": "email",
+            "required": true
+          }
+        },
+        {
+          "title": "确认声明",
+          "titleEn": "Confirmation",
+          "type": "radio",
+          "required": true,
+          "desc": "请确认已观看完所有培训视频",
+          "category": "confirmation",
+          "props": {
+            "vModel": "confirmWatched",
+            "required": true,
+            "options": [
+              "是的，我已观看完所有录播内容"
+            ]
+          }
+        },
+        {
+          "title": "测验题1（单选示例）",
+          "titleEn": "Quiz Q1 (Single Choice)",
+          "type": "radio",
+          "required": true,
+          "desc": "关于XX的描述，以下哪项是正确的？",
+          "category": "quiz",
+          "props": {
+            "vModel": "q1",
+            "required": true,
+            "options": [
+              "选项A：...",
+              "选项B：...",
+              "选项C：...",
+              "选项D：..."
+            ]
+          }
+        },
+        {
+          "title": "测验题2（多选示例）",
+          "titleEn": "Quiz Q2 (Multiple Choice)",
+          "type": "checkbox",
+          "required": true,
+          "desc": "请选择所有正确答案（选择2项）",
+          "category": "quiz",
+          "props": {
+            "vModel": "q2",
+            "required": true,
+            "options": [
+              "选项A",
+              "选项B",
+              "选项C",
+              "选项D",
+              "选项E"
+            ]
+          }
+        },
+        {
+          "title": "测验题3（文字回答示例）",
+          "titleEn": "Quiz Q3 (Text Answer)",
+          "type": "textarea",
+          "required": true,
+          "desc": "请简述你对XX的理解",
+          "category": "quiz",
+          "props": {
+            "vModel": "q3",
+            "required": true,
+            "placeholder": "请输入你的答案...",
+            "maxlength": 500
+          }
+        }
+      ],
+      "features": [
+        "multi_page",
+        "scoring",
+        "mixed_types",
+        "no_back_navigation",
+        "confirmation"
+      ]
+    },
+    {
+      "id": "volunteer_signup",
+      "name": "志愿者活动报名",
+      "nameEn": "Volunteer Activity Signup",
+      "keywords": [
+        "志愿",
+        "义工",
+        "volunteer",
+        "服务",
+        "公益",
+        "志愿者"
+      ],
+      "complexity": "medium",
+      "fieldCount": "8-12",
+      "sampleCount": 8,
+      "totalSubmissions": 1000,
+      "fields": [
+        {
+          "title": "姓名 Name",
+          "titleEn": "Name",
+          "type": "input",
+          "required": true,
+          "desc": "",
+          "category": "contact",
+          "props": {
+            "placeholder": "请输入姓名",
+            "vModel": "name",
+            "required": true
+          }
+        },
+        {
+          "title": "手机号 Phone",
+          "titleEn": "Phone",
+          "type": "input",
+          "required": true,
+          "desc": "",
+          "category": "contact",
+          "props": {
+            "placeholder": "请输入手机号",
+            "vModel": "phone",
+            "required": true
+          }
+        },
+        {
+          "title": "邮箱 Email",
+          "titleEn": "Email",
+          "type": "input",
+          "required": true,
+          "desc": "",
+          "category": "contact",
+          "props": {
+            "placeholder": "请输入邮箱",
+            "vModel": "email",
+            "required": true,
+            "regexValidation": "/^[\\w.-]+@[\\w.-]+\\.\\w+$/",
+            "regexMessage": "请输入正确的邮箱格式"
+          }
+        },
+        {
+          "title": "微信号 WeChat ID",
+          "titleEn": "WeChat ID",
+          "type": "input",
+          "required": true,
+          "desc": "",
+          "category": "contact",
+          "props": {
+            "placeholder": "请输入微信号",
+            "vModel": "wechatId",
+            "required": true
+          }
+        },
+        {
+          "title": "学校 University",
+          "titleEn": "University",
+          "type": "select",
+          "required": true,
+          "desc": "",
+          "category": "academic",
+          "props": {
+            "vModel": "university",
+            "required": true,
+            "placeholder": "请选择学校",
+            "options": [
+              "UCSD",
+              "UCLA",
+              "UCSB",
+              "UCI",
+              "USC",
+              "UMN",
+              "其他"
+            ]
+          }
+        },
+        {
+          "title": "可用时间段",
+          "titleEn": "Available Time Slots",
+          "type": "checkbox",
+          "required": true,
+          "desc": "请选择你可以参加的时间段",
+          "category": "availability",
+          "props": {
+            "vModel": "availableSlots",
+            "required": true,
+            "options": [
+              "周一上午",
+              "周一下午",
+              "周二上午",
+              "周二下午",
+              "周三上午",
+              "周三下午",
+              "周四上午",
+              "周四下午",
+              "周五上午",
+              "周五下午",
+              "周六全天",
+              "周日全天"
+            ]
+          }
+        },
+        {
+          "title": "相关技能/经验",
+          "titleEn": "Skills/Experience",
+          "type": "checkbox",
+          "required": false,
+          "desc": "有助于分配合适的志愿岗位",
+          "category": "skills",
+          "props": {
+            "vModel": "skills",
+            "options": [
+              "中英翻译",
+              "驾驶（有车）",
+              "摄影/摄像",
+              "急救/医疗",
+              "活动策划",
+              "设计/美工",
+              "其他"
+            ]
+          }
+        },
+        {
+          "title": "备注",
+          "titleEn": "Remarks",
+          "type": "textarea",
+          "required": false,
+          "desc": "",
+          "category": "other",
+          "props": {
+            "placeholder": "其他需要说明的事项",
+            "vModel": "remarks",
+            "maxlength": 200
+          }
+        }
+      ],
+      "features": [
+        "time_selection",
+        "skill_selection",
+        "bilingual_titles"
+      ]
+    },
+    {
+      "id": "lecture_seminar",
+      "name": "讲座/研讨会/分享会报名",
+      "nameEn": "Lecture/Seminar/Workshop Registration",
+      "keywords": [
+        "讲座",
+        "研讨",
+        "分享",
+        "沙龙",
+        "lecture",
+        "seminar",
+        "workshop",
+        "工作坊",
+        "培训",
+        "课程"
+      ],
+      "complexity": "medium",
+      "fieldCount": "7-10",
+      "sampleCount": 10,
+      "totalSubmissions": 1200,
+      "fields": [
+        {
+          "title": "姓名 Name",
+          "titleEn": "Name",
+          "type": "input",
+          "required": true,
+          "desc": "",
+          "category": "contact",
+          "props": {
+            "placeholder": "请输入姓名",
+            "vModel": "name",
+            "required": true
+          }
+        },
+        {
+          "title": "邮箱 Email",
+          "titleEn": "Email",
+          "type": "input",
+          "required": true,
+          "desc": "讲座资料将发送至此邮箱",
+          "category": "contact",
+          "props": {
+            "placeholder": "xxx@ucsd.edu",
+            "vModel": "email",
+            "required": true,
+            "regexValidation": "/^[\\w.-]+@[\\w.-]+\\.\\w+$/",
+            "regexMessage": "请输入正确的邮箱格式"
+          }
+        },
+        {
+          "title": "手机号 Phone",
+          "titleEn": "Phone",
+          "type": "input",
+          "required": true,
+          "desc": "",
+          "category": "contact",
+          "props": {
+            "placeholder": "请输入手机号",
+            "vModel": "phone",
+            "required": true
+          }
+        },
+        {
+          "title": "微信号 WeChat ID",
+          "titleEn": "WeChat ID",
+          "type": "input",
+          "required": false,
+          "desc": "",
+          "category": "contact",
+          "props": {
+            "placeholder": "请输入微信号",
+            "vModel": "wechatId"
+          }
+        },
+        {
+          "title": "学校/专业",
+          "titleEn": "University/Major",
+          "type": "input",
+          "required": true,
+          "desc": "",
+          "category": "academic",
+          "props": {
+            "placeholder": "如：UCSD / Computer Science",
+            "vModel": "universityMajor",
+            "required": true
+          }
+        },
+        {
+          "title": "感兴趣的话题",
+          "titleEn": "Topics of Interest",
+          "type": "checkbox",
+          "required": false,
+          "desc": "帮助讲师调整内容侧重",
+          "category": "preference",
+          "props": {
+            "vModel": "interestedTopics",
+            "options": [
+              "选课指南",
+              "实习/求职",
+              "研究生申请",
+              "生活适应",
+              "学术研究",
+              "其他"
+            ]
+          }
+        },
+        {
+          "title": "想提前问的问题",
+          "titleEn": "Questions for the Speaker",
+          "type": "textarea",
+          "required": false,
+          "desc": "如有问题可以提前提交，讲座中会优先解答",
+          "category": "interactive",
+          "props": {
+            "placeholder": "请输入你想问的问题...",
+            "vModel": "questions",
+            "maxlength": 300
+          }
+        }
+      ],
+      "features": [
+        "topic_selection",
+        "question_collection",
+        "bilingual_titles"
+      ]
+    },
+    {
+      "id": "airport_pickup",
+      "name": "新生接机/接送服务报名",
+      "nameEn": "Airport Pickup/Transfer Service Registration",
+      "keywords": [
+        "接机",
+        "接送",
+        "airport",
+        "pickup",
+        "新生接",
+        "落地",
+        "航班"
+      ],
+      "complexity": "very_high",
+      "fieldCount": "25-40",
+      "sampleCount": 12,
+      "totalSubmissions": 1200,
+      "fields": [
+        {
+          "title": "您的身份",
+          "titleEn": "Your Identity",
+          "type": "radio",
+          "required": true,
+          "desc": "用于区分新生和家长，后续字段根据身份不同显示",
+          "category": "identity",
+          "props": {
+            "vModel": "identity",
+            "required": true,
+            "options": [
+              "25年秋季入学新生",
+              "家长/陪同人员"
+            ]
+          }
+        },
+        {
+          "title": "入学Offer截图",
+          "titleEn": "Admission Offer Screenshot",
+          "type": "upload",
+          "required": true,
+          "desc": "用于验证新生身份",
+          "category": "identity",
+          "props": {
+            "vModel": "offerScreenshot",
+            "required": true
+          }
+        },
+        {
+          "title": "姓名 Legal Name",
+          "titleEn": "Legal Name",
+          "type": "input",
+          "required": true,
+          "desc": "请填写与护照一致的法定姓名（姓+名）",
+          "category": "contact",
+          "props": {
+            "placeholder": "如：Zhang San",
+            "vModel": "legalName",
+            "required": true,
+            "maxlength": 50
+          }
+        },
+        {
+          "title": "航班类型",
+          "titleEn": "Flight Type",
+          "type": "radio",
+          "required": true,
+          "desc": "选择后将显示对应的航空公司列表",
+          "category": "flight",
+          "props": {
+            "vModel": "flightType",
+            "required": true,
+            "options": [
+              "大陆直飞",
+              "港澳台出发",
+              "日韩转机",
+              "加拿大/美国境内转机",
+              "其他"
+            ]
+          }
+        },
+        {
+          "title": "航空公司",
+          "titleEn": "Airline",
+          "type": "select",
+          "required": true,
+          "desc": "根据航班类型动态显示对应航空公司",
+          "category": "flight",
+          "props": {
+            "vModel": "airline",
+            "required": true,
+            "placeholder": "请选择航空公司",
+            "options": [
+              "中国国航 Air China",
+              "中国东航 China Eastern",
+              "中国南航 China Southern",
+              "厦门航空 Xiamen Air",
+              "海南航空 Hainan Airlines",
+              "四川航空 Sichuan Airlines",
+              "国泰航空 Cathay Pacific",
+              "达美航空 Delta",
+              "美联航 United",
+              "其他 Other"
+            ]
+          }
+        },
+        {
+          "title": "最终落地航班号",
+          "titleEn": "Final Landing Flight Number",
+          "type": "input",
+          "required": true,
+          "desc": "请填写最终降落在目的地机场的航班号",
+          "category": "flight",
+          "props": {
+            "placeholder": "如：MU583 或 CA987",
+            "vModel": "flightNumber",
+            "required": true,
+            "maxlength": 10
+          }
+        },
+        {
+          "title": "降落日期",
+          "titleEn": "Landing Date",
+          "type": "date",
+          "required": true,
+          "desc": "",
+          "category": "flight",
+          "props": {
+            "vModel": "landingDate",
+            "required": true,
+            "placeholder": "请选择降落日期"
+          }
+        },
+        {
+          "title": "航班落地时间",
+          "titleEn": "Landing Time",
+          "type": "input",
+          "required": true,
+          "desc": "请精确到分钟",
+          "category": "flight",
+          "props": {
+            "placeholder": "如：14:30",
+            "vModel": "landingTime",
+            "required": true
+          }
+        },
+        {
+          "title": "机票预定截图",
+          "titleEn": "Ticket Booking Screenshot",
+          "type": "upload",
+          "required": true,
+          "desc": "需要包含时间、航班号和目的地信息",
+          "category": "flight",
+          "props": {
+            "vModel": "ticketScreenshot",
+            "required": true
+          }
+        },
+        {
+          "title": "微信二维码",
+          "titleEn": "WeChat QR Code",
+          "type": "upload",
+          "required": true,
+          "desc": "用于添加到接机服务群",
+          "category": "contact",
+          "props": {
+            "vModel": "wechatQR",
+            "required": true
+          }
+        },
+        {
+          "title": "微信号 WeChat ID",
+          "titleEn": "WeChat ID",
+          "type": "input",
+          "required": true,
+          "desc": "",
+          "category": "contact",
+          "props": {
+            "placeholder": "请输入微信号",
+            "vModel": "wechatId",
+            "required": true
+          }
+        },
+        {
+          "title": "邮箱 Email",
+          "titleEn": "Email",
+          "type": "input",
+          "required": true,
+          "desc": "请使用学校.edu邮箱",
+          "category": "contact",
+          "props": {
+            "placeholder": "xxx@ucsd.edu",
+            "vModel": "email",
+            "required": true,
+            "regexValidation": "/^[\\w.-]+@[\\w.-]+\\.\\w+$/",
+            "regexMessage": "请输入正确的邮箱格式"
+          }
+        },
+        {
+          "title": "手机号 Phone",
+          "titleEn": "Phone",
+          "type": "input",
+          "required": true,
+          "desc": "美国或中国手机号均可",
+          "category": "contact",
+          "props": {
+            "placeholder": "请输入手机号",
+            "vModel": "phone",
+            "required": true
+          }
+        },
+        {
+          "title": "紧急联系人手机号",
+          "titleEn": "Emergency Contact Phone",
+          "type": "input",
+          "required": false,
+          "desc": "限父母/亲缘关系/监护人",
+          "category": "contact",
+          "props": {
+            "placeholder": "紧急联系人手机号（选填）",
+            "vModel": "emergencyPhone"
+          }
+        },
+        {
+          "title": "随行家长数量",
+          "titleEn": "Number of Accompanying Parents",
+          "type": "radio",
+          "required": true,
+          "desc": "选择1人或2人以上将显示额外的姓名填写字段",
+          "category": "companion",
+          "props": {
+            "vModel": "parentCount",
+            "required": true,
+            "options": [
+              "0人（独自前往）",
+              "1人",
+              "2人",
+              "更多"
+            ]
+          }
+        },
+        {
+          "title": "随行人A姓名",
+          "titleEn": "Companion A Name",
+          "type": "input",
+          "required": false,
+          "desc": "条件显示：随行家长≥1人时显示",
+          "category": "companion",
+          "props": {
+            "placeholder": "随行人A姓名",
+            "vModel": "companionAName"
+          }
+        },
+        {
+          "title": "随行人B姓名",
+          "titleEn": "Companion B Name",
+          "type": "input",
+          "required": false,
+          "desc": "条件显示：随行家长≥2人时显示",
+          "category": "companion",
+          "props": {
+            "placeholder": "随行人B姓名",
+            "vModel": "companionBName"
+          }
+        },
+        {
+          "title": "班车日期",
+          "titleEn": "Shuttle Date",
+          "type": "radio",
+          "required": true,
+          "desc": "请选择需要搭乘班车的日期",
+          "category": "logistics",
+          "props": {
+            "vModel": "shuttleDate",
+            "required": true,
+            "options": [
+              "9月14日",
+              "9月15日",
+              "9月16日",
+              "9月17日",
+              "9月18日"
+            ]
+          }
+        },
+        {
+          "title": "班车时间",
+          "titleEn": "Shuttle Time",
+          "type": "radio",
+          "required": true,
+          "desc": "",
+          "category": "logistics",
+          "props": {
+            "vModel": "shuttleTime",
+            "required": true,
+            "options": [
+              "12:30 班次",
+              "17:30 班次",
+              "22:30 班次",
+              "其它时间（需安排专车）"
+            ]
+          }
+        },
+        {
+          "title": "登机箱数量",
+          "titleEn": "Carry-on Luggage Count",
+          "type": "select",
+          "required": true,
+          "desc": "",
+          "category": "luggage",
+          "props": {
+            "vModel": "carryOnCount",
+            "required": true,
+            "placeholder": "请选择",
+            "options": [
+              "0个",
+              "1个",
+              "2个",
+              "3个及以上"
+            ]
+          }
+        },
+        {
+          "title": "托运箱数量",
+          "titleEn": "Checked Luggage Count",
+          "type": "select",
+          "required": true,
+          "desc": "",
+          "category": "luggage",
+          "props": {
+            "vModel": "checkedCount",
+            "required": true,
+            "placeholder": "请选择",
+            "options": [
+              "0个",
+              "1个",
+              "2个",
+              "3个",
+              "4个及以上"
+            ]
+          }
+        },
+        {
+          "title": "我已阅读并了解接机服务须知",
+          "titleEn": "I have read the service terms",
+          "type": "radio",
+          "required": true,
+          "desc": "确认已了解服务内容、收费标准和注意事项",
+          "category": "confirmation",
+          "props": {
+            "vModel": "agreeServiceTerms",
+            "required": true,
+            "options": [
+              "是的，我已了解并同意"
+            ]
+          }
+        },
+        {
+          "title": "免责声明",
+          "titleEn": "Disclaimer",
+          "type": "textarea",
+          "required": false,
+          "desc": "纯展示：法律免责声明文本",
+          "category": "legal",
+          "props": {
+            "vModel": "disclaimer_display"
+          }
+        }
+      ],
+      "features": [
+        "payment",
+        "signature",
+        "conditional_logic",
+        "multi_page",
+        "identity_verification",
+        "luggage_tracking",
+        "bilingual_titles"
+      ]
+    },
+    {
+      "id": "general_registration",
+      "name": "通用活动报名",
+      "nameEn": "General Activity Registration",
+      "keywords": [
+        "报名",
+        "注册",
+        "活动",
+        "register",
+        "sign up",
+        "event",
+        "参加"
+      ],
+      "complexity": "medium",
+      "fieldCount": "6-10",
+      "sampleCount": 50,
+      "totalSubmissions": 5000,
+      "fields": [
+        {
+          "title": "姓名 Name",
+          "titleEn": "Name",
+          "type": "input",
+          "required": true,
+          "desc": "",
+          "category": "contact",
+          "props": {
+            "placeholder": "请输入姓名",
+            "vModel": "name",
+            "required": true
+          }
+        },
+        {
+          "title": "手机号 Phone",
+          "titleEn": "Phone",
+          "type": "input",
+          "required": true,
+          "desc": "",
+          "category": "contact",
+          "props": {
+            "placeholder": "请输入手机号",
+            "vModel": "phone",
+            "required": true
+          }
+        },
+        {
+          "title": "邮箱 Email",
+          "titleEn": "Email",
+          "type": "input",
+          "required": true,
+          "desc": "",
+          "category": "contact",
+          "props": {
+            "placeholder": "请输入邮箱",
+            "vModel": "email",
+            "required": true,
+            "regexValidation": "/^[\\w.-]+@[\\w.-]+\\.\\w+$/",
+            "regexMessage": "请输入正确的邮箱格式"
+          }
+        },
+        {
+          "title": "微信号 WeChat ID",
+          "titleEn": "WeChat ID",
+          "type": "input",
+          "required": true,
+          "desc": "",
+          "category": "contact",
+          "props": {
+            "placeholder": "请输入微信号",
+            "vModel": "wechatId",
+            "required": true
+          }
+        },
+        {
+          "title": "学校 University",
+          "titleEn": "University",
+          "type": "select",
+          "required": false,
+          "desc": "",
+          "category": "academic",
+          "props": {
+            "vModel": "university",
+            "placeholder": "请选择学校",
+            "options": [
+              "UCSD",
+              "UCLA",
+              "UCSB",
+              "UCI",
+              "USC",
+              "UMN",
+              "Stanford",
+              "其他 Other"
+            ]
+          }
+        },
+        {
+          "title": "备注 Remarks",
+          "titleEn": "Remarks",
+          "type": "textarea",
+          "required": false,
+          "desc": "",
+          "category": "other",
+          "props": {
+            "placeholder": "其他需要说明的事项",
+            "vModel": "remarks",
+            "maxlength": 200
+          }
+        }
+      ],
+      "features": [
+        "contact_info",
+        "basic_fields",
+        "bilingual_titles"
+      ]
+    }
+  ]
+}

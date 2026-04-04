@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.MallClassifyMapper">
+    
+    <resultMap type="MallClassify" id="MallClassifyResult">
+        <result property="id"    column="id"    />
+        <result property="catName"    column="cat_name"    />
+        <result property="catImg"    column="cat_img"    />
+        <result property="createTime"    column="create_time"    />
+        <result property="createBy"    column="create_by"    />
+        <result property="updateTime"    column="update_time"    />
+        <result property="updateBy"    column="update_by"    />
+    </resultMap>
+
+    <sql id="selectMallClassifyVo">
+        select id, cat_name, cat_img, create_time, create_by, update_time, update_by from mall_classify
+    </sql>
+
+    <select id="selectMallClassifyList" parameterType="MallClassify" resultMap="MallClassifyResult">
+        <include refid="selectMallClassifyVo"/>
+        <where>  
+            <if test="catName != null  and catName != ''"> and cat_name like concat('%', #{catName}, '%')</if>
+            <if test="catImg != null  and catImg != ''"> and cat_img = #{catImg}</if>
+        </where>
+    </select>
+    
+    <select id="selectMallClassifyById" parameterType="Long" resultMap="MallClassifyResult">
+        <include refid="selectMallClassifyVo"/>
+        where id = #{id}
+    </select>
+
+    <insert id="insertMallClassify" parameterType="MallClassify" useGeneratedKeys="true" keyProperty="id">
+        insert into mall_classify
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="catName != null">cat_name,</if>
+            <if test="catImg != null">cat_img,</if>
+            <if test="createTime != null">create_time,</if>
+            <if test="createBy != null">create_by,</if>
+            <if test="updateTime != null">update_time,</if>
+            <if test="updateBy != null">update_by,</if>
+         </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="catName != null">#{catName},</if>
+            <if test="catImg != null">#{catImg},</if>
+            <if test="createTime != null">#{createTime},</if>
+            <if test="createBy != null">#{createBy},</if>
+            <if test="updateTime != null">#{updateTime},</if>
+            <if test="updateBy != null">#{updateBy},</if>
+         </trim>
+    </insert>
+
+    <update id="updateMallClassify" parameterType="MallClassify">
+        update mall_classify
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="catName != null">cat_name = #{catName},</if>
+            <if test="catImg != null">cat_img = #{catImg},</if>
+            <if test="createTime != null">create_time = #{createTime},</if>
+            <if test="createBy != null">create_by = #{createBy},</if>
+            <if test="updateTime != null">update_time = #{updateTime},</if>
+            <if test="updateBy != null">update_by = #{updateBy},</if>
+        </trim>
+        where id = #{id}
+    </update>
+
+    <delete id="deleteMallClassifyById" parameterType="Long">
+        delete from mall_classify where id = #{id}
+    </delete>
+
+    <delete id="deleteMallClassifyByIds" parameterType="String">
+        delete from mall_classify where id in 
+        <foreach item="id" collection="array" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+</mapper>

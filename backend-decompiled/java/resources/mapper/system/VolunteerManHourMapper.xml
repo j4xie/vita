@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.VolunteerManHourMapper">
+    
+    <resultMap type="VolunteerManHour" id="VolunteerManHourResult">
+        <result property="userId"    column="user_id"    />
+        <result property="totalMinutes"    column="total_minutes"    />
+        <result property="legalName"    column="legal_name"    />
+    </resultMap>
+
+    <sql id="selectVolunteerManHourVo">
+        select user_id, total_minutes from volunteer_man_hour
+    </sql>
+
+    <select id="selectVolunteerManHourList" parameterType="VolunteerManHour" resultMap="VolunteerManHourResult">
+        select vmh.user_id, vmh.total_minutes, su.legal_name from volunteer_man_hour vmh
+        left join sys_user su on vmh.user_id = su.user_id
+        left join sys_dept d on su.dept_id = d.dept_id
+        <where>
+            <if test="legalName != null and legalName != ''">
+                AND su.legal_name like concat('%', #{legalName}, '%')
+            </if>
+            <if test="userId != null "> and user_id = #{userId}</if>
+            <if test="totalMinutes != null "> and total_minutes = #{totalMinutes}</if>
+            <!-- 数据范围过滤 -->
+            ${params.dataScope}
+        </where>
+        order by vmh.total_minutes desc
+    </select>
+
+    <select id="selectVolunteerManHourListForApp" parameterType="VolunteerManHour" resultMap="VolunteerManHourResult">
+        select vmh.user_id, vmh.total_minutes, su.legal_name from volunteer_man_hour vmh
+        left join sys_user su on vmh.user_id = su.user_id
+        left join sys_dept d on su.dept_id = d.dept_id
+        <where>
+            <if test="legalName != null and legalName != ''">
+                AND su.legal_name like concat('%', #{legalName}, '%')
+            </if>
+            <if test="userId != null "> and vmh.user_id = #{userId}</if>
+        </where>
+        order by vmh.total_minutes desc
+    </select>
+    
+    <select id="selectVolunteerManHourByUserId" parameterType="VolunteerManHour" resultMap="VolunteerManHourResult">
+        <include refid="selectVolunteerManHourVo"/>
+        where user_id = #{userId}
+    </select>
+
+    <insert id="insertVolunteerManHour" parameterType="VolunteerManHour">
+        insert into volunteer_man_hour
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="userId != null">user_id,</if>
+            <if test="totalMinutes != null">total_minutes,</if>
+         </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="userId != null">#{userId},</if>
+            <if test="totalMinutes != null">#{totalMinutes},</if>
+         </trim>
+    </insert>
+
+    <update id="updateVolunteerManHour" parameterType="VolunteerManHour">
+        update volunteer_man_hour
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="totalMinutes != null">total_minutes = #{totalMinutes},</if>
+        </trim>
+        where user_id = #{userId}
+    </update>
+
+    <delete id="deleteVolunteerManHourByUserId" parameterType="Long">
+        delete from volunteer_man_hour where user_id = #{userId}
+    </delete>
+
+    <delete id="deleteVolunteerManHourByUserIds" parameterType="String">
+        delete from volunteer_man_hour where user_id in 
+        <foreach item="userId" collection="array" open="(" separator="," close=")">
+            #{userId}
+        </foreach>
+    </delete>
+</mapper>
