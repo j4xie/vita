@@ -1,7 +1,8 @@
-# AI 审批流程配置助手 — 设计文档
+# AI 审批流程配置助手 — 设计文档 (v2)
 
 > 日期: 2026-04-04
-> 状态: 设计完成，待实施
+> 状态: 设计完成，已通过 review 修复
+> Review 修复: C1-C4 数据结构对齐、I1-I6 补充
 
 ## 1. 目标
 
@@ -17,26 +18,60 @@
 - **修改已有流程**: 感知当前画布上的节点和字段，支持增量修改（添加、删除、调整节点）
 - **模板推断**: 内置 5 个常用模板，用户说"活动审批"时基于模板生成并按需调整
 
-### 2.2 审批人指定方式（6种）
+### 2.2 审批人指定方式（7种，对齐 manage/index.vue 实际选项）
 
-| 方式 | AI 理解示例 |
-|------|-----------|
-| 指定人员 | "让张三和李四审批" |
-| 按角色 | "让分管理员审批" |
-| 按部门 | "让财务部审批" |
-| 主管 | "让发起人的主管审批" |
-| 多级主管 | "逐级审批到顶级" |
-| 发起人自选 | "让发起人自己选审批人" |
+| config 值 | 含义 | AI 理解示例 |
+|-----------|------|-----------|
+| `specified` | 指定人员 | "让张三和李四审批" |
+| `role` | 按角色 | "让分管理员审批" |
+| `manager` | 主管 | "让发起人的主管审批" |
+| `multiLevel` | 多级主管 | "逐级审批到顶级" |
+| `selfSelect` | 发起人自选 | "让发起人自己选审批人" |
+| `initiator` | 发起人自己 | "发起人自动通过" |
+| `department` | 按部门 | "让财务部审批" (**需扩展 UI**) |
 
-### 2.3 权限控制（完整模式）
+> **注意**: `department` 在现有 UI 中不存在，需在实施时扩展 `manage/index.vue` 的审批人选项。
+
+### 2.3 审批模式
+
+| mode | 含义 | AI 理解示例 |
+|------|------|-----------|
+| `or` | 或签（一人通过即可） | "任意一个审批人通过就行" |
+| `and` | 会签（需所有人通过） | "需要所有人都通过" |
+
+### 2.4 权限控制（完整模式）
 
 每个模板配置三类权限，每类支持部门/角色/指定人员三种粒度：
 
-| 权限类型 | 说明 | 示例 |
-|---------|------|------|
-| 发起权限 | 谁能使用此模板发起审批 | "只有 UMN 的 staff 以上能发起" |
-| 管理权限 | 谁能编辑此模板 | "只有总管理员能编辑" |
-| 查看导出权限 | 谁能查看审批数据和导出 | "总管看所有，分管只看本校" |
+| 权限类型 | settings 字段 | 说明 |
+|---------|-------------|------|
+| 发起权限 | `commiter` | 谁能使用此模板发起审批 |
+| 管理权限 | `admin` | 谁能编辑此模板 |
+| 查看导出权限 | `viewer` | 谁能查看审批数据和导出 |
+
+**权限值结构** (需扩展现有 UI):
+```javascript
+// 现有 UI: commiter 存的是粒度类型 ["department", "role", "user"]
+// 扩展后: 存具体的值
+settings: {
+  commiter: {
+    type: "role",                    // department | role | specified
+    roles: ["staff", "part_manage"], // 当 type=role 时
+    deptIds: [],                     // 当 type=department 时
+    userIds: []                      // 当 type=specified 时
+  },
+  admin: {
+    type: "role",
+    roles: ["manage"]
+  },
+  viewer: {
+    type: "role",
+    roles: ["manage", "part_manage"]
+  }
+}
+```
+
+> **注意**: 现有 `manage/index.vue` 的 settings.commiter 只存 `["department","role","user"]` 粒度类型，不存具体值。需在实施时扩展 settings 结构和对应 UI。
 
 ## 3. UI 设计
 
@@ -63,7 +98,7 @@
 │  │ 🔄 流程: 发起人 → 分管(或签)         │              │
 │  │        → [预算>5000 → 总管]         │              │
 │  │        → 行政(抄送)                 │              │
-│  │ 🔐 权限: UMN staff以上可发起         │              │
+│  │ 🔐 权限: staff以上可发起            │              │
 │  │                                    │              │
 │  │      [✅ 应用到画布]  [🔄 重新生成]   │              │
 │  └────────────────────────────────────┘              │
@@ -89,24 +124,25 @@
 ```
 ai-approval-assistant.js (前端注入)
         │
-        ├─ 检测流程设计器页面
+        ├─ 检测流程设计器 dialog (vm.flowNodes 存在)
         ├─ 在 dialog 底部注入 AI 面板 DOM
         ├─ 获取 Vue 实例 (vm.flowNodes, vm.form.formItems 等)
         ├─ 构建 designer_context (当前状态)
         │
         ▼
-/ai/approval/designer/chat/stream (Python 后端)
+/api/ai/approval-designer/chat/stream (Python 后端)
         │
         ├─ system prompt (节点规范 + 内置模板 + 当前状态)
         ├─ DashScope qwen-plus 流式生成
-        ├─ 解析 AI 输出为 actions JSON
+        ├─ 返回 preview + actions JSON
         │
         ▼
 前端 Action 执行引擎
         │
-        ├─ 预览模式: 渲染文字预览
-        ├─ 用户确认后: 逐步执行 actions
-        └─ 调用 vm.addNode(), vm.addConditionBranch() 等
+        ├─ 预览模式: 渲染文字预览 + 确认按钮
+        ├─ 用户确认后: 批量执行 actions
+        ├─ 操作前快照 (用于撤销)
+        └─ 直接操作 vm.flowNodes / vm.form.formItems
 ```
 
 ### 4.2 前端 (`ai-approval-assistant.js`)
@@ -114,133 +150,192 @@ ai-approval-assistant.js (前端注入)
 **核心文件**: `frontend/scripts/ai-approval-assistant.js`
 
 **复用 ai-form-assistant.js 的基础设施**:
-- Auth token 获取
+- `getAuthToken()` / `buildAuthHeaders()` — Auth
 - SSE 流式响应解析
-- 对话历史管理 (localStorage)
-- 历史压缩机制
-- Vue 实例检测模式
+- 对话历史管理 (localStorage, 最多30个, 自动压缩)
+- 历史压缩机制 (40条消息触发)
 
-**新增逻辑**:
-- 检测标志: `vm.flowNodes` 和 `vm.form.formItems` (而非 `vm.drawingList`)
-- UI 注入位置: 设计器 dialog 底部 (而非页面右下角 FAB)
-- Action 类型: 流程节点操作 (addNode, addCondition 等)
-- 预览渲染: 文字描述 + 确认按钮
+**Vue 实例检测**:
+- 检测标志: dialog 内的 Vue 组件含有 `vm.flowNodes` 属性
+- dialog 是 `append-to-body` 的，需要从 `document.querySelector('.process-design-dialog')` 开始查找
+- 缓存 Vue 实例引用，dialog 关闭时清除
 
-**Action 格式**:
+**designer_context 构建**:
+```javascript
+{
+  currentFormItems: vm.form.formItems,        // 当前表单字段
+  currentFlowNodes: vm.flowNodes,             // 当前流程节点
+  startNodeConfig: vm.startNodeConfig,        // 发起人配置
+  currentSettings: vm.form.settings,          // 当前权限设置
+  availableUsers: [...],   // 从 /system/user/list 获取
+  availableDepts: [...],   // 从 /system/dept/list 获取
+  availableRoles: [...]    // 从 /system/role/list 获取
+}
+```
+
+### 4.3 Action 格式（严格对齐 Vue 数据模型）
+
+**Vue 实际节点结构**:
+```javascript
+// 审批人节点
+{ id: Date.now(), type: 'approver', config: { approver: 'specified', mode: 'or', emptyAction: 'pass', operateUsers: 252 } }
+
+// 抄送人节点
+{ id: Date.now(), type: 'cc', config: { cc: 'specified', operateUsers: 105 } }
+
+// 条件分支节点
+{ id: Date.now(), type: 'conditionBranch', conditions: [
+    { id: Date.now(), name: '条件1', condition: '预算金额 > 5000', priority: 1, nodes: [] },
+    { id: Date.now()+1, name: '其他情况', condition: '', priority: 2, nodes: [] }
+]}
+
+// 并行分支节点
+{ id: Date.now(), type: 'parallelBranch', branches: [
+    { id: Date.now(), name: '分支1', content: '', nodes: [] },
+    { id: Date.now()+1, name: '分支2', content: '', nodes: [] }
+]}
+
+// 延迟节点
+{ id: Date.now(), type: 'delay', config: { time: 1, unit: 'minute' } }
+
+// 触发器节点
+{ id: Date.now(), type: 'trigger', config: { type: 'webhook', url: '' } }
+```
+
+**Action 定义**:
+
 ```json
 {
-  "preview": {
-    "formFields": [
-      {"type": "text", "label": "活动名称", "required": true},
-      {"type": "datetime", "label": "活动日期"},
-      {"type": "money", "label": "预算金额", "required": true}
-    ],
-    "flowNodes": [
-      {"type": "approver", "name": "分管理员", "mode": "or", "assignType": "role", "assign": "part_manage"},
-      {"type": "condition", "field": "预算金额", "op": ">", "value": 5000, "children": [
-        {"type": "approver", "name": "总管理员", "assignType": "specified", "assign": [249]}
-      ]},
-      {"type": "cc", "name": "行政组", "assignType": "department", "assign": [223]}
-    ],
-    "permissions": {
-      "initiator": {"type": "role", "value": ["staff", "part_manage", "manage"]},
-      "admin": {"type": "role", "value": ["manage"]},
-      "viewer": {"type": "role", "value": ["manage", "part_manage"]}
-    }
-  },
+  "preview": { ... },
   "actions": [
+    // === 清空操作 ===
     {"a": "clearForm"},
     {"a": "clearFlow"},
-    {"a": "addFormField", "t": "text", "label": "活动名称", "required": true},
-    {"a": "addFormField", "t": "datetime", "label": "活动日期"},
-    {"a": "addFormField", "t": "money", "label": "预算金额", "required": true},
-    {"a": "addNode", "t": "approver", "name": "分管理员", "mode": "or"},
-    {"a": "addConditionBranch"},
-    {"a": "setCondition", "i": 0, "field": "预算金额", "op": ">", "value": 5000},
-    {"a": "addNodeToCondition", "i": 0, "t": "approver", "name": "总管理员"},
-    {"a": "addNode", "t": "cc", "name": "行政组"},
-    {"a": "setPermission", "k": "commiter", "v": ["staff", "part_manage", "manage"]},
-    {"a": "setPermission", "k": "admin", "v": ["manage"]},
-    {"a": "setPermission", "k": "viewer", "v": ["manage", "part_manage"]}
+
+    // === 表单字段操作 ===
+    {"a": "addFormField", "type": "text", "label": "活动名称", "required": true},
+    {"a": "addFormField", "type": "money", "label": "预算金额", "required": true},
+    {"a": "removeFormField", "index": 2},
+
+    // === 流程节点操作 (主流程) ===
+    {"a": "addApprover", "approver": "role", "mode": "or", "emptyAction": "pass",
+     "operateUsers": null, "name": "分管理员审批"},
+    {"a": "addCc", "cc": "specified", "operateUsers": 105, "name": "行政组"},
+    {"a": "addDelay", "time": 1, "unit": "hour"},
+    {"a": "addTrigger", "type": "webhook", "url": "https://..."},
+    {"a": "removeNode", "index": 2},
+
+    // === 条件分支操作 ===
+    {"a": "addConditionBranch", "conditions": [
+      {"name": "金额>5000", "condition": "预算金额 > 5000", "priority": 1},
+      {"name": "其他情况", "condition": "", "priority": 2}
+    ]},
+    {"a": "addNodeToCondition", "branchIndex": 0, "conditionIndex": 0,
+     "node": {"type": "approver", "config": {"approver": "specified", "mode": "or", "operateUsers": 249}}},
+
+    // === 并行分支操作 ===
+    {"a": "addParallelBranch", "branches": [
+      {"name": "财务审批", "content": ""},
+      {"name": "技术审批", "content": ""}
+    ]},
+    {"a": "addNodeToParallel", "branchIndex": 0, "parallelIndex": 0,
+     "node": {"type": "approver", "config": {"approver": "role", "mode": "or"}}},
+
+    // === 权限操作 ===
+    {"a": "setPermission", "key": "commiter", "value": {"type": "role", "roles": ["staff","part_manage","manage"]}},
+    {"a": "setPermission", "key": "admin", "value": {"type": "role", "roles": ["manage"]}},
+    {"a": "setPermission", "key": "viewer", "value": {"type": "role", "roles": ["manage","part_manage"]}},
+
+    // === 基础设置 ===
+    {"a": "setName", "value": "活动审批"},
+    {"a": "setStartNode", "initiator": "all"}
   ]
 }
 ```
 
-### 4.3 后端 (`/ai/approval/designer/chat/stream`)
+### 4.4 Action 执行引擎
+
+**执行方式**: 批量执行，操作前保存快照用于撤销
+
+```javascript
+// 执行前快照
+const snapshot = {
+  formItems: JSON.parse(JSON.stringify(vm.form.formItems)),
+  flowNodes: JSON.parse(JSON.stringify(vm.flowNodes)),
+  settings: JSON.parse(JSON.stringify(vm.form.settings))
+}
+
+// 批量执行所有 actions
+for (const action of actions) {
+  executeAction(vm, action)
+}
+
+// Vue 强制刷新
+vm.$forceUpdate()
+```
+
+**各 Action 的 Vue 操作映射**:
+
+| Action | 执行方式 |
+|--------|---------|
+| `clearForm` | `vm.$set(vm.form, 'formItems', [])` |
+| `clearFlow` | `vm.$set(vm, 'flowNodes', [])` |
+| `addFormField` | `vm.form.formItems.push({id:Date.now(), type, label, ...})` |
+| `removeFormField` | `vm.form.formItems.splice(index, 1)` |
+| `addApprover` | `vm.flowNodes.push({id:Date.now(), type:'approver', config:{...}})` |
+| `addCc` | `vm.flowNodes.push({id:Date.now(), type:'cc', config:{...}})` |
+| `addConditionBranch` | `vm.flowNodes.push({id:Date.now(), type:'conditionBranch', conditions:[...]})` |
+| `addNodeToCondition` | `vm.flowNodes[branchIndex].conditions[conditionIndex].nodes.push(node)` |
+| `addParallelBranch` | `vm.flowNodes.push({id:Date.now(), type:'parallelBranch', branches:[...]})` |
+| `addNodeToParallel` | `vm.flowNodes[branchIndex].branches[parallelIndex].nodes.push(node)` |
+| `removeNode` | `vm.flowNodes.splice(index, 1)` |
+| `setPermission` | `vm.$set(vm.form.settings, key, value)` |
+| `setName` | `vm.form.name = value` |
+| `setStartNode` | `vm.startNodeConfig.initiator = value` |
+
+**撤销功能**: 执行后在 AI 面板显示"撤销"按钮，点击恢复快照。
+
+### 4.5 后端 (`/api/ai/approval-designer/chat/stream`)
 
 **新建文件**: `pomelox_qwen_ai/core/approval_designer_routes.py`
 
-**System Prompt 核心内容**:
-
-```
-你是审批流程设计助手。根据用户描述生成审批模板配置。
-
-## 输出格式
-返回 JSON，包含 preview (预览) 和 actions (操作指令) 两部分。
-
-## 可用的表单字段类型
-text(单行文本), textarea(多行文本), number(数字), money(金额),
-radio(单选), checkbox(多选), select(下拉), datetime(日期时间),
-daterange(日期区间), upload(上传), user(人员选择),
-department(部门选择), description(说明文字)
-
-## 可用的流程节点类型
-approver(审批人), cc(抄送人), conditionBranch(条件分支),
-parallelBranch(并行分支), delay(延迟), trigger(触发器)
-
-## 审批人指定方式
-specified(指定人员), role(角色), department(部门),
-manager(主管), multiLevel(多级主管), selfSelect(自选)
-
-## 权限粒度
-role(按角色), department(按部门), specified(指定人员)
-
-## 内置模板
-[5个模板的完整 JSON 示例]
-
-## 当前设计器状态
-[由前端动态注入: 现有的 formItems 和 flowNodes]
-
-## 规则
-1. 如果用户提到条件判断（如"金额超过5000"），自动确保表单中有对应字段
-2. 如果用户说"修改"或"添加"，只生成增量 actions，不清空现有内容
-3. 权限默认: 发起=所有内部人员, 管理=总管理员, 查看=管理员
-```
+**API 路径**: `/api/ai/approval-designer/chat/stream` (与表单助手 `/api/ai/form-designer/chat/stream` 命名风格一致)
 
 **请求体**:
 ```json
 {
   "message": "创建活动审批...",
   "session_id": "uuid",
+  "model": "qwen-plus",
   "designer_context": {
     "currentFormItems": [...],
     "currentFlowNodes": [...],
-    "currentPermissions": {...},
-    "availableUsers": [...],
-    "availableDepts": [...],
-    "availableRoles": [...]
-  }
+    "startNodeConfig": {...},
+    "currentSettings": {...},
+    "availableUsers": [{"id":249,"name":"张三"}, ...],
+    "availableDepts": [{"id":223,"name":"PomeloX HQ"}, ...],
+    "availableRoles": [{"id":2,"name":"总管理员","key":"manage"}, ...]
+  },
+  "history": [...]
 }
 ```
 
-### 4.4 Action 执行引擎
+**System Prompt 核心规则**:
+1. 输出必须是合法 JSON，包含 `preview` 和 `actions` 两部分
+2. 条件表达式 (`condition` 字段) 是纯文本字符串（如 `"预算金额 > 5000"`），不是结构化对象
+3. 如果用户提到条件判断（如"金额超过5000"），自动在表单字段中确保有对应字段
+4. 如果是修改操作（designer_context 中已有节点），只生成增量 actions，不包含 clearForm/clearFlow
+5. 审批人/抄送人的 `operateUsers` 用实际用户 ID（从 availableUsers 中匹配）
+6. 权限默认: 发起=所有内部人员(staff+), 管理=总管理员, 查看=管理员+分管
+7. 审批模式: `or`=或签(一人通过), `and`=会签(全部通过)
 
-**执行顺序**: clearForm → clearFlow → addFormField (逐个) → addNode (逐个) → setPermission
-
-**每步操作**:
-
-| Action | 调用的 Vue 方法 | 延迟 |
-|--------|---------------|------|
-| `clearForm` | `vm.form.formItems = []` | 200ms |
-| `clearFlow` | `vm.flowNodes = []` | 200ms |
-| `addFormField` | `vm.form.formItems.push({...})` + `vm.addFormComponent()` | 300ms |
-| `addNode` | `vm.flowNodes.push({...})` 或 `vm.addNode(type)` | 400ms |
-| `addConditionBranch` | `vm.addConditionBranch()` | 400ms |
-| `setCondition` | 修改条件分支的 condition 对象 | 200ms |
-| `addNodeToCondition` | 条件分支内的 nodes.push | 400ms |
-| `setPermission` | 修改 `vm.form.settings` | 200ms |
-
-**预览渲染**: 将 `preview` 对象转换为可读的中文描述，包含表单字段列表、流程图文字表示、权限说明。
+**响应格式 (SSE)**:
+```
+data: {"type": "start", "session_id": "..."}
+data: {"type": "chunk", "content": "正在分析..."}
+data: {"type": "result", "preview": {...}, "actions": [...]}
+data: {"type": "done", "session_id": "..."}
+```
 
 ## 5. 内置模板
 
@@ -256,12 +351,20 @@ role(按角色), department(按部门), specified(指定人员)
     {"type": "textarea", "label": "活动描述"}
   ],
   "flowNodes": [
-    {"type": "approver", "assignType": "role", "assign": "part_manage", "mode": "or"},
-    {"type": "condition", "field": "预算金额", "op": ">", "value": 5000, "children": [
-      {"type": "approver", "assignType": "role", "assign": "manage"}
+    {"type": "approver", "config": {"approver": "role", "mode": "or", "emptyAction": "pass"}, "name": "分管审批"},
+    {"type": "conditionBranch", "conditions": [
+      {"name": "大额预算", "condition": "预算金额 > 5000", "priority": 1, "nodes": [
+        {"type": "approver", "config": {"approver": "role", "mode": "or"}, "name": "总管审批"}
+      ]},
+      {"name": "其他", "condition": "", "priority": 2, "nodes": []}
     ]},
-    {"type": "cc", "assignType": "role", "assign": "part_manage"}
-  ]
+    {"type": "cc", "config": {"cc": "role"}, "name": "行政抄送"}
+  ],
+  "permissions": {
+    "commiter": {"type": "role", "roles": ["staff", "part_manage", "manage"]},
+    "admin": {"type": "role", "roles": ["manage"]},
+    "viewer": {"type": "role", "roles": ["manage", "part_manage"]}
+  }
 }
 ```
 
@@ -276,13 +379,21 @@ role(按角色), department(按部门), specified(指定人员)
     {"type": "upload", "label": "凭证上传", "required": true}
   ],
   "flowNodes": [
-    {"type": "approver", "assignType": "role", "assign": "part_manage", "mode": "or"},
-    {"type": "approver", "assignType": "department", "assign": "财务部", "mode": "or"},
-    {"type": "condition", "field": "报销金额", "op": ">", "value": 5000, "children": [
-      {"type": "approver", "assignType": "role", "assign": "manage"}
+    {"type": "approver", "config": {"approver": "role", "mode": "or"}, "name": "分管审批"},
+    {"type": "approver", "config": {"approver": "specified", "mode": "or"}, "name": "财务审批"},
+    {"type": "conditionBranch", "conditions": [
+      {"name": "大额报销", "condition": "报销金额 > 5000", "priority": 1, "nodes": [
+        {"type": "approver", "config": {"approver": "role", "mode": "or"}, "name": "总管审批"}
+      ]},
+      {"name": "其他", "condition": "", "priority": 2, "nodes": []}
     ]},
-    {"type": "cc", "assignType": "role", "assign": "part_manage"}
-  ]
+    {"type": "cc", "config": {"cc": "role"}, "name": "行政抄送"}
+  ],
+  "permissions": {
+    "commiter": {"type": "role", "roles": ["staff", "part_manage", "manage"]},
+    "admin": {"type": "role", "roles": ["manage"]},
+    "viewer": {"type": "role", "roles": ["manage", "part_manage"]}
+  }
 }
 ```
 
@@ -293,14 +404,23 @@ role(按角色), department(按部门), specified(指定人员)
   "formFields": [
     {"type": "radio", "label": "请假类型", "options": ["事假","病假","年假","调休"], "required": true},
     {"type": "daterange", "label": "请假日期", "required": true},
+    {"type": "number", "label": "请假天数", "required": true},
     {"type": "textarea", "label": "请假原因", "required": true}
   ],
   "flowNodes": [
-    {"type": "approver", "assignType": "manager", "level": 1, "mode": "or"},
-    {"type": "condition", "field": "请假天数", "op": ">", "value": 3, "children": [
-      {"type": "approver", "assignType": "role", "assign": "manage"}
+    {"type": "approver", "config": {"approver": "manager", "mode": "or"}, "name": "直属主管审批"},
+    {"type": "conditionBranch", "conditions": [
+      {"name": "长假", "condition": "请假天数 > 3", "priority": 1, "nodes": [
+        {"type": "approver", "config": {"approver": "role", "mode": "or"}, "name": "总管审批"}
+      ]},
+      {"name": "其他", "condition": "", "priority": 2, "nodes": []}
     ]}
-  ]
+  ],
+  "permissions": {
+    "commiter": {"type": "role", "roles": ["staff", "part_manage", "manage"]},
+    "admin": {"type": "role", "roles": ["manage"]},
+    "viewer": {"type": "role", "roles": ["manage"]}
+  }
 }
 ```
 
@@ -316,12 +436,20 @@ role(按角色), department(按部门), specified(指定人员)
     {"type": "textarea", "label": "用途说明"}
   ],
   "flowNodes": [
-    {"type": "approver", "assignType": "role", "assign": "part_manage", "mode": "or"},
-    {"type": "condition", "field": "总价", "op": ">", "value": 2000, "children": [
-      {"type": "approver", "assignType": "role", "assign": "manage"}
+    {"type": "approver", "config": {"approver": "role", "mode": "or"}, "name": "分管审批"},
+    {"type": "conditionBranch", "conditions": [
+      {"name": "大额采购", "condition": "总价 > 2000", "priority": 1, "nodes": [
+        {"type": "approver", "config": {"approver": "role", "mode": "or"}, "name": "总管审批"}
+      ]},
+      {"name": "其他", "condition": "", "priority": 2, "nodes": []}
     ]},
-    {"type": "cc", "assignType": "department", "assign": "财务部"}
-  ]
+    {"type": "cc", "config": {"cc": "specified"}, "name": "财务抄送"}
+  ],
+  "permissions": {
+    "commiter": {"type": "role", "roles": ["staff", "part_manage", "manage"]},
+    "admin": {"type": "role", "roles": ["manage"]},
+    "viewer": {"type": "role", "roles": ["manage", "part_manage"]}
+  }
 }
 ```
 
@@ -335,23 +463,36 @@ role(按角色), department(按部门), specified(指定人员)
     {"type": "upload", "label": "附件"}
   ],
   "flowNodes": [
-    {"type": "approver", "assignType": "selfSelect", "mode": "or"}
-  ]
+    {"type": "approver", "config": {"approver": "selfSelect", "mode": "or"}, "name": "自选审批人"}
+  ],
+  "permissions": {
+    "commiter": {"type": "role", "roles": ["staff", "part_manage", "manage"]},
+    "admin": {"type": "role", "roles": ["manage"]},
+    "viewer": {"type": "role", "roles": ["manage"]}
+  }
 }
 ```
 
-## 6. 文件清单
+## 6. 实施前置条件
+
+在开发 AI 助手之前，需要先扩展 `manage/index.vue`:
+
+1. **审批人增加 `department` 选项** — 在审批人/抄送人的 select 中增加"按部门"选项
+2. **权限 settings 结构扩展** — 从简单的粒度类型列表改为 `{type, roles, deptIds, userIds}` 结构
+3. **权限 UI 扩展** — 每个权限项支持选择具体的角色/部门/人员（对接 `/system/user/list`、`/system/dept/list`、`/system/role/list`）
+
+## 7. 文件清单
 
 | 文件 | 类型 | 说明 |
 |------|------|------|
 | `frontend/scripts/ai-approval-assistant.js` | 新建 | 前端 AI 助手核心 |
 | `pomelox_qwen_ai/core/approval_designer_routes.py` | 新建 | 后端 AI 生成接口 |
-| `ruoyi-ui/src/views/system/manage/index.vue` | 修改 | 注入 AI 面板的 hook 点 |
+| `ruoyi-ui/src/views/system/manage/index.vue` | 修改 | 扩展 department 选项 + 权限 settings 结构 + AI 面板注入 hook |
 
-## 7. 部署方式
+## 8. 部署方式
 
 与现有 `ai-form-assistant.js` 一致：
 1. 本地开发 JS 文件
 2. `jar uf` 注入到 JAR 包的 `BOOT-INF/classes/static/js/` 目录
 3. 在 admin-web 的 `index.html` 中添加 `<script>` 标签
-4. Python 后端接口部署到 AI 服务 (端口 8087)
+4. Python 后端接口部署到 AI 服务 (端口 8087)，Nginx `/ai/` 路由自动转发
