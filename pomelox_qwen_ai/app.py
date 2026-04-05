@@ -20,6 +20,7 @@ from core.form_knowledge_service import match_forms, build_form_designer_prompt,
 from database import get_database
 from core.approval_routes import approval_bp
 from core.exchange_rate_routes import exchange_rate_bp, start_rate_scheduler
+from core.approval_designer_routes import approval_designer_bp
 
 # Initialize Flask application
 app = Flask(__name__)
@@ -28,6 +29,7 @@ CORS(app)  # Enable CORS for cross-origin requests
 # Register blueprints for new features
 app.register_blueprint(approval_bp)
 app.register_blueprint(exchange_rate_bp)
+app.register_blueprint(approval_designer_bp)
 
 # Set Qwen API key (from Config if available, otherwise from env)
 if dashscope is not None:
