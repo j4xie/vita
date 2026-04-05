@@ -18,10 +18,16 @@ from core.cache_service import get_cached_response, set_cached_response, get_cac
 from core.scope_filter import is_off_topic, get_off_topic_reply, classify_simple_chat, get_simple_reply
 from core.form_knowledge_service import match_forms, build_form_designer_prompt, get_kb_stats, format_form_examples
 from database import get_database
+from core.approval_routes import approval_bp
+from core.exchange_rate_routes import exchange_rate_bp, start_rate_scheduler
 
 # Initialize Flask application
 app = Flask(__name__)
 CORS(app)  # Enable CORS for cross-origin requests
+
+# Register blueprints for new features
+app.register_blueprint(approval_bp)
+app.register_blueprint(exchange_rate_bp)
 
 # Set Qwen API key (from Config if available, otherwise from env)
 if dashscope is not None:
@@ -1136,4 +1142,6 @@ register_feedback_routes(app)
 
 
 if __name__ == '__main__':
+    # Start exchange rate auto-update scheduler (every 6 hours)
+    start_rate_scheduler(interval_hours=6)
     app.run(host=Config.HOST, port=Config.PORT, debug=Config.DEBUG)
