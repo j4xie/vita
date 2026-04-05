@@ -173,9 +173,9 @@ ai-approval-assistant.js (前端注入)
 }
 ```
 
-### 4.3 Action 格式（严格对齐 Vue 数据模型）
+### 4.3 Action 格式（深度验证后，严格对齐 Vue 数据模型）
 
-**Vue 实际节点结构**:
+**Vue 实际节点结构** (来源: manage/index.vue addNode() 第1116-1218行):
 ```javascript
 // 审批人节点
 { id: Date.now(), type: 'approver', config: { approver: 'specified', mode: 'or', emptyAction: 'pass', operateUsers: 252 } }
@@ -183,16 +183,16 @@ ai-approval-assistant.js (前端注入)
 // 抄送人节点
 { id: Date.now(), type: 'cc', config: { cc: 'specified', operateUsers: 105 } }
 
-// 条件分支节点
+// 条件分支节点 (来源: addConditionBranch() 第1221-1247行)
 { id: Date.now(), type: 'conditionBranch', conditions: [
     { id: Date.now(), name: '条件1', condition: '预算金额 > 5000', priority: 1, nodes: [] },
     { id: Date.now()+1, name: '其他情况', condition: '', priority: 2, nodes: [] }
 ]}
 
-// 并行分支节点
+// 并行分支节点 (来源: addParallelBranch() 第1298-1324行)
 { id: Date.now(), type: 'parallelBranch', branches: [
-    { id: Date.now(), name: '分支1', content: '', nodes: [] },
-    { id: Date.now()+1, name: '分支2', content: '', nodes: [] }
+    { id: Date.now(), name: '分支1', content: '并行任务', nodes: [] },
+    { id: Date.now()+1, name: '分支2', content: '并行任务', nodes: [] }
 ]}
 
 // 延迟节点
@@ -200,6 +200,23 @@ ai-approval-assistant.js (前端注入)
 
 // 触发器节点
 { id: Date.now(), type: 'trigger', config: { type: 'webhook', url: '' } }
+```
+
+**表单字段实际结构** (来源: addFormComponent() 第1428-1456行):
+```javascript
+{
+  id: Date.now(),
+  type: 'text',              // 组件类型
+  label: '活动名称',          // 显示标签
+  field: 'activity_name',    // 字段标识 (由label生成)  ← 必需
+  required: false,
+  placeholder: '请输入活动名称', // ← 必需
+  options: [],               // 选项列表 ← 必需
+  // 类型特定字段:
+  // money: precision=2
+  // datetime/daterange: format='yyyy-MM-dd'
+  // description: description='', style='normal'
+}
 ```
 
 **Action 定义**:
@@ -213,38 +230,53 @@ ai-approval-assistant.js (前端注入)
     {"a": "clearFlow"},
 
     // === 表单字段操作 ===
+    // 执行引擎自动补充: field, placeholder, options, 类型特定默认值
     {"a": "addFormField", "type": "text", "label": "活动名称", "required": true},
     {"a": "addFormField", "type": "money", "label": "预算金额", "required": true},
+    {"a": "addFormField", "type": "radio", "label": "请假类型",
+     "options": [{"label":"事假","value":"1"},{"label":"病假","value":"2"}]},
     {"a": "removeFormField", "index": 2},
 
     // === 流程节点操作 (主流程) ===
+    // afterIndex: 可选，指定插入位置(flowNodes索引)。省略则追加到末尾
     {"a": "addApprover", "approver": "role", "mode": "or", "emptyAction": "pass",
-     "operateUsers": null, "name": "分管理员审批"},
-    {"a": "addCc", "cc": "specified", "operateUsers": 105, "name": "行政组"},
+     "operateUsers": null, "afterIndex": null},
+    {"a": "addApprover", "approver": "specified", "mode": "and",
+     "operateUsers": 249, "afterIndex": 0},
+    {"a": "addCc", "cc": "specified", "operateUsers": 105},
     {"a": "addDelay", "time": 1, "unit": "hour"},
     {"a": "addTrigger", "type": "webhook", "url": "https://..."},
     {"a": "removeNode", "index": 2},
 
     // === 条件分支操作 ===
+    // conditions 中的每个条件: condition 是纯文本字符串(不是结构化对象)
+    // 执行引擎自动补充: 每个condition的 id 和 nodes 字段
     {"a": "addConditionBranch", "conditions": [
-      {"name": "金额>5000", "condition": "预算金额 > 5000", "priority": 1},
+      {"name": "大额预算", "condition": "预算金额 > 5000", "priority": 1},
       {"name": "其他情况", "condition": "", "priority": 2}
     ]},
-    {"a": "addNodeToCondition", "branchIndex": 0, "conditionIndex": 0,
+    // groupIndex: conditionBranch 节点在 flowNodes 中的索引
+    // conditionIndex: conditions 数组中的索引
+    // 执行引擎自动给 node 补充 id
+    {"a": "addNodeToCondition", "groupIndex": 1, "conditionIndex": 0,
      "node": {"type": "approver", "config": {"approver": "specified", "mode": "or", "operateUsers": 249}}},
 
     // === 并行分支操作 ===
+    // 执行引擎自动补充: 每个branch的 id 和 nodes 字段
     {"a": "addParallelBranch", "branches": [
       {"name": "财务审批", "content": ""},
       {"name": "技术审批", "content": ""}
     ]},
-    {"a": "addNodeToParallel", "branchIndex": 0, "parallelIndex": 0,
+    // nodeIndex: parallelBranch 节点在 flowNodes 中的索引
+    // branchIndex: branches 数组中的索引
+    {"a": "addNodeToParallel", "nodeIndex": 2, "branchIndex": 0,
      "node": {"type": "approver", "config": {"approver": "role", "mode": "or"}}},
 
     // === 权限操作 ===
-    {"a": "setPermission", "key": "commiter", "value": {"type": "role", "roles": ["staff","part_manage","manage"]}},
-    {"a": "setPermission", "key": "admin", "value": {"type": "role", "roles": ["manage"]}},
-    {"a": "setPermission", "key": "viewer", "value": {"type": "role", "roles": ["manage","part_manage"]}},
+    // 短期兼容: 写入数组格式匹配现有UI。长期: 扩展UI后改为对象格式
+    {"a": "setPermission", "key": "commiter", "value": ["role"]},
+    {"a": "setPermission", "key": "admin", "value": ["role"]},
+    {"a": "setPermission", "key": "viewer", "value": ["role"]},
 
     // === 基础设置 ===
     {"a": "setName", "value": "活动审批"},
@@ -255,45 +287,108 @@ ai-approval-assistant.js (前端注入)
 
 ### 4.4 Action 执行引擎
 
-**执行方式**: 批量执行，操作前保存快照用于撤销
+**执行方式**: 逐步延迟执行（与 ai-form-assistant.js 一致），操作前保存快照用于撤销
 
 ```javascript
-// 执行前快照
+// 1. 执行前快照
 const snapshot = {
   formItems: JSON.parse(JSON.stringify(vm.form.formItems)),
   flowNodes: JSON.parse(JSON.stringify(vm.flowNodes)),
-  settings: JSON.parse(JSON.stringify(vm.form.settings))
+  settings: JSON.parse(JSON.stringify(vm.form.settings)),
+  startNodeConfig: JSON.parse(JSON.stringify(vm.startNodeConfig))
 }
 
-// 批量执行所有 actions
-for (const action of actions) {
-  executeAction(vm, action)
+// 2. 逐步执行 actions (每步200-400ms延迟)
+function runStep(index) {
+  if (index >= actions.length) {
+    vm.$forceUpdate()  // 全部完成后强制刷新
+    return
+  }
+  executeAction(vm, actions[index])
+  setTimeout(() => runStep(index + 1), 200)
 }
-
-// Vue 强制刷新
-vm.$forceUpdate()
+runStep(0)
 ```
 
-**各 Action 的 Vue 操作映射**:
+**各 Action 的执行逻辑**:
 
-| Action | 执行方式 |
-|--------|---------|
-| `clearForm` | `vm.$set(vm.form, 'formItems', [])` |
-| `clearFlow` | `vm.$set(vm, 'flowNodes', [])` |
-| `addFormField` | `vm.form.formItems.push({id:Date.now(), type, label, ...})` |
-| `removeFormField` | `vm.form.formItems.splice(index, 1)` |
-| `addApprover` | `vm.flowNodes.push({id:Date.now(), type:'approver', config:{...}})` |
-| `addCc` | `vm.flowNodes.push({id:Date.now(), type:'cc', config:{...}})` |
-| `addConditionBranch` | `vm.flowNodes.push({id:Date.now(), type:'conditionBranch', conditions:[...]})` |
-| `addNodeToCondition` | `vm.flowNodes[branchIndex].conditions[conditionIndex].nodes.push(node)` |
-| `addParallelBranch` | `vm.flowNodes.push({id:Date.now(), type:'parallelBranch', branches:[...]})` |
-| `addNodeToParallel` | `vm.flowNodes[branchIndex].branches[parallelIndex].nodes.push(node)` |
-| `removeNode` | `vm.flowNodes.splice(index, 1)` |
-| `setPermission` | `vm.$set(vm.form.settings, key, value)` |
-| `setName` | `vm.form.name = value` |
-| `setStartNode` | `vm.startNodeConfig.initiator = value` |
+| Action | 执行代码 | 说明 |
+|--------|---------|------|
+| `clearForm` | `vm.form.formItems = []` | data属性直接赋值即可响应 |
+| `clearFlow` | `vm.flowNodes = []` | 同上 |
+| `addFormField` | 见下方详细逻辑 | 自动补充 field/placeholder/options |
+| `removeFormField` | `vm.form.formItems.splice(index, 1)` | |
+| `addApprover` | `insertNode(vm, afterIndex, {id:Date.now(), type:'approver', config:{approver, mode, emptyAction, operateUsers}})` | |
+| `addCc` | `insertNode(vm, afterIndex, {id:Date.now(), type:'cc', config:{cc, operateUsers}})` | |
+| `addDelay` | `insertNode(vm, null, {id:Date.now(), type:'delay', config:{time, unit}})` | |
+| `addTrigger` | `insertNode(vm, null, {id:Date.now(), type:'trigger', config:{type, url}})` | |
+| `removeNode` | `vm.flowNodes.splice(index, 1)` | 多个删除时倒序执行 |
+| `addConditionBranch` | 见下方 | 自动补充每个condition的id和nodes |
+| `addNodeToCondition` | `vm.flowNodes[groupIndex].conditions[conditionIndex].nodes.push({id:Date.now(), ...node})` | |
+| `addParallelBranch` | 见下方 | 自动补充每个branch的id和nodes |
+| `addNodeToParallel` | `vm.flowNodes[nodeIndex].branches[branchIndex].nodes.push({id:Date.now(), ...node})` | |
+| `setPermission` | `vm.form.settings[key] = value` | 短期: 数组格式 |
+| `setName` | `vm.form.name = value` | |
+| `setStartNode` | `vm.startNodeConfig.initiator = value` | |
 
-**撤销功能**: 执行后在 AI 面板显示"撤销"按钮，点击恢复快照。
+**addFormField 详细逻辑**:
+```javascript
+function execAddFormField(vm, action) {
+  const item = {
+    id: Date.now() + Math.random(),
+    type: action.type,
+    label: action.label,
+    field: (action.label || '').replace(/\s+/g, '_').toLowerCase(),
+    required: action.required || false,
+    placeholder: action.placeholder || `请输入${action.label}`,
+    options: action.options || []
+  }
+  if (action.type === 'money') item.precision = 2
+  if (['datetime','daterange'].includes(action.type)) item.format = 'yyyy-MM-dd'
+  if (action.type === 'description') { item.description = ''; item.style = 'normal' }
+  if (['select','radio','checkbox'].includes(action.type) && item.options.length === 0) {
+    item.options = [{label:'选项1',value:'1'},{label:'选项2',value:'2'}]
+  }
+  vm.form.formItems.push(item)
+}
+```
+
+**insertNode 通用插入函数**:
+```javascript
+function insertNode(vm, afterIndex, node) {
+  if (afterIndex !== null && afterIndex !== undefined && afterIndex >= 0) {
+    vm.flowNodes.splice(afterIndex + 1, 0, node)
+  } else {
+    vm.flowNodes.push(node)
+  }
+}
+```
+
+**addConditionBranch 详细逻辑**:
+```javascript
+function execAddConditionBranch(vm, action) {
+  const conditions = (action.conditions || []).map((c, i) => ({
+    id: Date.now() + i,
+    name: c.name || `条件${i+1}`,
+    condition: c.condition || '',  // 纯文本字符串
+    priority: c.priority || (i+1),
+    nodes: []  // 自动补充
+  }))
+  if (conditions.length < 2) {
+    conditions.push({id: Date.now()+99, name:'其他', condition:'', priority:conditions.length+1, nodes:[]})
+  }
+  vm.flowNodes.push({id: Date.now(), type: 'conditionBranch', conditions})
+}
+```
+
+**撤销功能**: 执行后在 AI 面板显示"撤销"按钮，点击恢复快照:
+```javascript
+vm.form.formItems = snapshot.formItems
+vm.flowNodes = snapshot.flowNodes
+Object.assign(vm.form.settings, snapshot.settings)
+Object.assign(vm.startNodeConfig, snapshot.startNodeConfig)
+vm.$forceUpdate()
+```
 
 ### 4.5 后端 (`/api/ai/approval-designer/chat/stream`)
 
@@ -329,13 +424,15 @@ vm.$forceUpdate()
 6. 权限默认: 发起=所有内部人员(staff+), 管理=总管理员, 查看=管理员+分管
 7. 审批模式: `or`=或签(一人通过), `and`=会签(全部通过)
 
-**响应格式 (SSE)**:
+**响应格式 (SSE)** — 与现有 form-designer 端点一致:
 ```
 data: {"type": "start", "session_id": "..."}
-data: {"type": "chunk", "content": "正在分析..."}
-data: {"type": "result", "preview": {...}, "actions": [...]}
-data: {"type": "done", "session_id": "..."}
+data: {"type": "chunk", "content": "正在分析您的需求..."}
+data: {"type": "chunk", "content": "```json\n{\"preview\":..."}
+data: {"type": "done", "session_id": "...", "full_content": "完整回复文本"}
 ```
+
+**前端解析**: 从 `done` 消息的 `full_content` 中提取 JSON 代码块（```json...```），解析为 `{preview, actions}` 对象。与现有 ai-form-assistant.js 的解析方式一致。
 
 ## 5. 内置模板
 
@@ -496,3 +593,94 @@ data: {"type": "done", "session_id": "..."}
 2. `jar uf` 注入到 JAR 包的 `BOOT-INF/classes/static/js/` 目录
 3. 在 admin-web 的 `index.html` 中添加 `<script>` 标签
 4. Python 后端接口部署到 AI 服务 (端口 8087)，Nginx `/ai/` 路由自动转发
+
+## 9. E2E 验证（Playwright）
+
+使用 Playwright 对审批全流程进行端到端测试。
+
+### 9.1 测试环境
+
+- Web 管理后台: `http://localhost:8099` (本地开发) 或 `http://106.14.165.234:8086` (测试服务器)
+- 后端 API: `http://106.14.165.234:8085` (测试服务器)
+- 登录账号: `admin` / `admin123`
+
+### 9.2 测试场景
+
+#### E2E-1: AI 创建审批模板
+
+```
+1. 登录管理后台
+2. 导航到 流程管理 → 流程模板
+3. 点击 "新建表单" 或 "+ 创建新表单"
+4. 在 AI 面板输入: "创建一个活动审批模板，需要活动名称、日期、预算字段，
+   先分管审批，预算超过5000需要总管审批，最后抄送行政"
+5. 验证 AI 返回预览内容:
+   - 表单字段: 活动名称(text) + 日期(datetime) + 预算(money)
+   - 流程: 审批人(分管) → 条件(>5000 → 总管) → 抄送(行政)
+6. 点击 "应用到画布"
+7. 验证设计器:
+   - 审批表单 Tab: 3 个组件已添加
+   - 审批流程 Tab: 节点已渲染 (审批人 + 条件分支 + 抄送人)
+8. 点击 "确定" 保存
+9. 验证列表页出现新模板
+```
+
+#### E2E-2: AI 修改已有模板
+
+```
+1. 在流程模板列表点击 "修改" (已有报销模板)
+2. 在 AI 面板输入: "在第一个审批人后面加一个财务审批节点"
+3. 验证预览: 只显示增量变更 (新增1个审批人节点)
+4. 点击 "应用到画布"
+5. 验证审批流程 Tab: 新节点已插入到正确位置
+6. 在 AI 面板输入: "撤销"
+7. 验证节点恢复到修改前状态
+```
+
+#### E2E-3: 条件分支 + 字段自动推断
+
+```
+1. 新建模板
+2. 在 AI 面板输入: "请假审批，请假超过3天需要总管审批"
+3. 验证:
+   - 表单自动包含 "请假天数" 字段 (AI 自动推断)
+   - 流程包含条件分支 "请假天数 > 3"
+```
+
+#### E2E-4: 审批全流程 (Web管理后台 + 后端API)
+
+```
+1. 在管理后台创建审批模板并保存
+2. 调用后端 API 发起审批:
+   POST /app/progress/submit
+   Body: { templateId, title, formData, urgency }
+3. 调用查询接口验证审批已创建:
+   GET /app/progress/list?userId=xxx
+4. 调用审批操作接口:
+   POST /app/progress/approve { instanceId, action: 'approve' }
+5. 验证审批状态变更为已通过
+6. 调用统计接口验证:
+   GET /ai/approval/stats
+```
+
+#### E2E-5: 权限控制验证
+
+```
+1. 用 manage 角色登录 → 能看到流程管理菜单
+2. 用 staff 角色登录 → 能看到流程管理菜单
+3. 用 common 角色登录 → 不能看到流程管理菜单
+4. 用 part_manage 登录 → 只能查看本校审批数据
+```
+
+### 9.3 测试文件
+
+```
+frontend/tests/
+└── e2e/
+    └── approval/
+        ├── ai-create-template.spec.ts    # E2E-1
+        ├── ai-modify-template.spec.ts    # E2E-2
+        ├── ai-condition-infer.spec.ts    # E2E-3
+        ├── approval-full-flow.spec.ts    # E2E-4
+        └── approval-permissions.spec.ts  # E2E-5
+```
