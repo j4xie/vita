@@ -175,19 +175,41 @@
             
             <div class="setting-section">
               <div class="section-title">谁可以发起提交</div>
-              <el-select v-model="form.settings.commiter" multiple placeholder="请选择" style="width: 300px">
-                <el-option label="部门" value="department" />
-                <el-option label="角色" value="role" />
-                <el-option label="用户" value="user" />
+              <el-radio-group v-model="form.settings.commiter.type" size="small" style="margin-bottom: 10px">
+                <el-radio-button label="all">所有人</el-radio-button>
+                <el-radio-button label="role">按角色</el-radio-button>
+                <el-radio-button label="department">按部门</el-radio-button>
+                <el-radio-button label="specified">指定人员</el-radio-button>
+              </el-radio-group>
+              <br/>
+              <el-select v-if="form.settings.commiter.type === 'role'" v-model="form.settings.commiter.roles" multiple filterable placeholder="请选择角色" style="width: 400px">
+                <el-option v-for="r in roleList" :key="r.id" :label="r.name" :value="r.key" />
+              </el-select>
+              <el-select v-if="form.settings.commiter.type === 'department'" v-model="form.settings.commiter.deptIds" multiple filterable placeholder="请选择部门" style="width: 400px">
+                <el-option v-for="d in deptList" :key="d.id" :label="d.name" :value="d.id" />
+              </el-select>
+              <el-select v-if="form.settings.commiter.type === 'specified'" v-model="form.settings.commiter.userIds" multiple filterable placeholder="请选择人员" style="width: 400px">
+                <el-option v-for="u in userList" :key="u.id" :label="u.name" :value="u.id" />
               </el-select>
             </div>
             
             <div class="setting-section">
               <div class="section-title">谁可以编辑此流程</div>
-              <el-select v-model="form.settings.admin" multiple placeholder="请选择" style="width: 300px">
-                <el-option label="部门" value="department" />
-                <el-option label="角色" value="role" />
-                <el-option label="用户" value="user" />
+              <el-radio-group v-model="form.settings.admin.type" size="small" style="margin-bottom: 10px">
+                <el-radio-button label="all">所有人</el-radio-button>
+                <el-radio-button label="role">按角色</el-radio-button>
+                <el-radio-button label="department">按部门</el-radio-button>
+                <el-radio-button label="specified">指定人员</el-radio-button>
+              </el-radio-group>
+              <br/>
+              <el-select v-if="form.settings.admin.type === 'role'" v-model="form.settings.admin.roles" multiple filterable placeholder="请选择角色" style="width: 400px">
+                <el-option v-for="r in roleList" :key="r.id" :label="r.name" :value="r.key" />
+              </el-select>
+              <el-select v-if="form.settings.admin.type === 'department'" v-model="form.settings.admin.deptIds" multiple filterable placeholder="请选择部门" style="width: 400px">
+                <el-option v-for="d in deptList" :key="d.id" :label="d.name" :value="d.id" />
+              </el-select>
+              <el-select v-if="form.settings.admin.type === 'specified'" v-model="form.settings.admin.userIds" multiple filterable placeholder="请选择人员" style="width: 400px">
+                <el-option v-for="u in userList" :key="u.id" :label="u.name" :value="u.id" />
               </el-select>
             </div>
           </div>
@@ -448,7 +470,7 @@
                       </span>
                     </div>
                     <div class="node-content">
-                      <span class="node-text">{{ node.content || getDefaultNodeContent(node.type) }}</span>
+                      <span class="node-text">{{ getNodeContentDesc(node) }}</span>
                       <i class="el-icon-arrow-right"></i>
                     </div>
                   </div>
@@ -488,7 +510,7 @@
                                 </span>
                               </div>
                               <div class="node-content">
-                                <span class="node-text">{{ subNode.content || getDefaultNodeContent(subNode.type) }}</span>
+                                <span class="node-text">{{ getNodeContentDesc(subNode) }}</span>
                                 <i class="el-icon-arrow-right"></i>
                               </div>
                             </div>
@@ -540,7 +562,7 @@
                                 </span>
                               </div>
                               <div class="node-content">
-                                <span class="node-text">{{ subNode.content || getDefaultNodeContent(subNode.type) }}</span>
+                                <span class="node-text">{{ getNodeContentDesc(subNode) }}</span>
                                 <i class="el-icon-arrow-right"></i>
                               </div>
                             </div>
@@ -605,6 +627,7 @@
                         <el-option label="主管" value="manager"></el-option>
                         <el-option label="角色" value="role"></el-option>
                         <el-option label="发起人自己" value="initiator"></el-option>
+                        <el-option label="部门" value="department"></el-option>
                       </el-select>
                     </el-form-item>
                     <el-form-item label="审批方式">
@@ -620,6 +643,21 @@
                         <el-option label="转交管理员" value="transfer"></el-option>
                       </el-select>
                     </el-form-item>
+                    <el-form-item v-if="selectedNode.config.approver === 'specified'" label="选择人员">
+                      <el-select v-model="selectedNode.config.operateUsers" multiple filterable placeholder="请选择审批人员" style="width: 100%">
+                        <el-option v-for="u in userList" :key="u.id" :label="u.name" :value="u.id" />
+                      </el-select>
+                    </el-form-item>
+                    <el-form-item v-if="selectedNode.config.approver === 'department'" label="选择部门">
+                      <el-select v-model="selectedNode.config.operateDepts" multiple filterable placeholder="请选择部门" style="width: 100%">
+                        <el-option v-for="d in deptList" :key="d.id" :label="d.name" :value="d.id" />
+                      </el-select>
+                    </el-form-item>
+                    <el-form-item v-if="selectedNode.config.approver === 'role'" label="选择角色">
+                      <el-select v-model="selectedNode.config.operateRoles" multiple filterable placeholder="请选择角色" style="width: 100%">
+                        <el-option v-for="r in roleList" :key="r.id" :label="r.name" :value="r.key" />
+                      </el-select>
+                    </el-form-item>
                   </el-form>
                 </template>
                 
@@ -632,11 +670,27 @@
                         <el-option label="发起人自选" value="selfSelect"></el-option>
                         <el-option label="主管" value="manager"></el-option>
                         <el-option label="角色" value="role"></el-option>
+                        <el-option label="部门" value="department"></el-option>
+                      </el-select>
+                    </el-form-item>
+                    <el-form-item v-if="selectedNode.config.cc === 'specified'" label="选择人员">
+                      <el-select v-model="selectedNode.config.operateUsers" multiple filterable placeholder="请选择抄送人员" style="width: 100%">
+                        <el-option v-for="u in userList" :key="u.id" :label="u.name" :value="u.id" />
+                      </el-select>
+                    </el-form-item>
+                    <el-form-item v-if="selectedNode.config.cc === 'department'" label="选择部门">
+                      <el-select v-model="selectedNode.config.operateDepts" multiple filterable placeholder="请选择部门" style="width: 100%">
+                        <el-option v-for="d in deptList" :key="d.id" :label="d.name" :value="d.id" />
+                      </el-select>
+                    </el-form-item>
+                    <el-form-item v-if="selectedNode.config.cc === 'role'" label="选择角色">
+                      <el-select v-model="selectedNode.config.operateRoles" multiple filterable placeholder="请选择角色" style="width: 100%">
+                        <el-option v-for="r in roleList" :key="r.id" :label="r.name" :value="r.key" />
                       </el-select>
                     </el-form-item>
                   </el-form>
                 </template>
-                
+
                 <!-- 条件节点配置 -->
                 <template v-if="selectedNode.type === 'condition'">
                   <el-form label-width="80px">
@@ -776,10 +830,21 @@
       <el-dialog title="设置表单权限" :visible.sync="permissionDialogVisible" width="600px">
         <el-form label-width="80px">
           <el-form-item label="谁可以查看并导出数据">
-            <el-select v-model="form.settings.viewer" multiple placeholder="请选择" style="width: 100%">
-              <el-option label="部门" value="department" />
-              <el-option label="角色" value="role" />
-              <el-option label="用户" value="user" />
+            <el-radio-group v-model="form.settings.viewer.type" size="small" style="margin-bottom: 10px">
+              <el-radio-button label="all">所有人</el-radio-button>
+              <el-radio-button label="role">按角色</el-radio-button>
+              <el-radio-button label="department">按部门</el-radio-button>
+              <el-radio-button label="specified">指定人员</el-radio-button>
+            </el-radio-group>
+            <br/>
+            <el-select v-if="form.settings.viewer.type === 'role'" v-model="form.settings.viewer.roles" multiple filterable placeholder="请选择角色" style="width: 100%">
+              <el-option v-for="r in roleList" :key="r.id" :label="r.name" :value="r.key" />
+            </el-select>
+            <el-select v-if="form.settings.viewer.type === 'department'" v-model="form.settings.viewer.deptIds" multiple filterable placeholder="请选择部门" style="width: 100%">
+              <el-option v-for="d in deptList" :key="d.id" :label="d.name" :value="d.id" />
+            </el-select>
+            <el-select v-if="form.settings.viewer.type === 'specified'" v-model="form.settings.viewer.userIds" multiple filterable placeholder="请选择人员" style="width: 100%">
+              <el-option v-for="u in userList" :key="u.id" :label="u.name" :value="u.id" />
             </el-select>
           </el-form-item>
         </el-form>
@@ -799,6 +864,9 @@
 
 <script>
 import { listManage, getManage, delManage, addManage, updateManage } from "@/api/system/manage"
+import { listDept } from "@/api/system/dept"
+import { listUser } from "@/api/system/user"
+import { listRole } from "@/api/system/role"
 import LogicFlow from '@logicflow/core'
 import '@logicflow/core/lib/style/index.css'
 import { Selection, Dnd, Transform, AdjustLine, Snapline } from '@logicflow/extension'
@@ -864,18 +932,37 @@ export default {
           background: '#409EFF'
         },
         settings: {
-          commiter: [],
-          admin: [],
+          commiter: {
+            type: 'all',
+            roles: [],
+            deptIds: [],
+            userIds: []
+          },
+          admin: {
+            type: 'role',
+            roles: ['manage'],
+            deptIds: [],
+            userIds: []
+          },
           sign: false,
           notify: {
             type: 'APP',
             title: '流程通知'
           },
-          viewer: []
+          viewer: {
+            type: 'role',
+            roles: ['manage'],
+            deptIds: [],
+            userIds: []
+          }
         },
         formItems: [],
         processNodes: []
       },
+      // 可选人员/部门/角色列表（从后端加载）
+      deptList: [],
+      userList: [],
+      roleList: [],
       // 流程类型列表（从后端动态加载）
       processTypeList: [
         { id: 1, name: '财务' },
@@ -991,6 +1078,7 @@ export default {
   created() {
     this.getList()
     this.loadProcessTypes()
+    this.loadOrgData()
   },
   mounted() {
     // 当流程设计标签页激活时初始化 LogicFlow
@@ -1125,11 +1213,17 @@ export default {
         newNode.config = {
           approver: 'specified',
           mode: 'or',
-          emptyAction: 'pass'
+          emptyAction: 'pass',
+          operateUsers: [],
+          operateDepts: [],
+          operateRoles: []
         }
       } else if (type === 'cc') {
         newNode.config = {
-          cc: 'specified'
+          cc: 'specified',
+          operateUsers: [],
+          operateDepts: [],
+          operateRoles: []
         }
       } else if (type === 'delay') {
         newNode.config = {
@@ -1564,9 +1658,27 @@ export default {
           this.form.formItems = (content.approvalForm && content.approvalForm.formItems) || []
           this.flowNodes = (content.approvalProcess && content.approvalProcess.flowNodes) || []
           this.startNodeConfig = (content.approvalProcess && content.approvalProcess.startNodeConfig) || { initiator: 'all' }
-          // 恢复设置
+          // 恢复设置（兼容旧格式：数组 → 结构化对象）
           if (content.settings) {
-            this.form.settings = Object.assign({}, this.form.settings, content.settings)
+            const s = content.settings
+            // 兼容旧格式（commiter 是数组）
+            if (Array.isArray(s.commiter)) {
+              this.form.settings.commiter = { type: 'role', roles: s.commiter, deptIds: [], userIds: [] }
+            } else if (s.commiter && typeof s.commiter === 'object') {
+              this.form.settings.commiter = Object.assign({ type: 'all', roles: [], deptIds: [], userIds: [] }, s.commiter)
+            }
+            if (Array.isArray(s.admin)) {
+              this.form.settings.admin = { type: 'role', roles: s.admin, deptIds: [], userIds: [] }
+            } else if (s.admin && typeof s.admin === 'object') {
+              this.form.settings.admin = Object.assign({ type: 'role', roles: ['manage'], deptIds: [], userIds: [] }, s.admin)
+            }
+            if (Array.isArray(s.viewer)) {
+              this.form.settings.viewer = { type: 'role', roles: s.viewer, deptIds: [], userIds: [] }
+            } else if (s.viewer && typeof s.viewer === 'object') {
+              this.form.settings.viewer = Object.assign({ type: 'role', roles: ['manage'], deptIds: [], userIds: [] }, s.viewer)
+            }
+            if (s.sign !== undefined) this.form.settings.sign = s.sign
+            if (s.notify) this.form.settings.notify = Object.assign({}, this.form.settings.notify, s.notify)
           }
         } catch (e) {
           console.warn('解析 progressContent 失败:', e)
@@ -1608,8 +1720,11 @@ export default {
         enabled: this.form.active ? 1 : 0,
         notifyType: this.form.settings.notify.type,
         notifyTitle: this.form.settings.notify.title,
-        accessFlag: this.form.settings.commiter && this.form.settings.commiter.length > 0 ? 1 : null,
-        accessIds: this.form.settings.commiter ? this.form.settings.commiter.join(',') : null
+        accessFlag: (this.form.settings.commiter.type !== 'all') ? 1 : null,
+        accessIds: this.form.settings.commiter.type === 'role' ? this.form.settings.commiter.roles.join(',')
+          : this.form.settings.commiter.type === 'department' ? this.form.settings.commiter.deptIds.join(',')
+          : this.form.settings.commiter.type === 'specified' ? this.form.settings.commiter.userIds.join(',')
+          : null
       }
     },
 
@@ -1656,14 +1771,29 @@ export default {
           background: '#409EFF'
         },
         settings: {
-          commiter: [],
-          admin: [],
+          commiter: {
+            type: 'all',
+            roles: [],
+            deptIds: [],
+            userIds: []
+          },
+          admin: {
+            type: 'role',
+            roles: ['manage'],
+            deptIds: [],
+            userIds: []
+          },
           sign: false,
           notify: {
             type: 'APP',
             title: '流程通知'
           },
-          viewer: []
+          viewer: {
+            type: 'role',
+            roles: ['manage'],
+            deptIds: [],
+            userIds: []
+          }
         },
         formItems: [],
         processNodes: []
@@ -1671,6 +1801,49 @@ export default {
       this.resetForm("form")
     },
     
+    /** 获取节点的内容描述（显示具体名称） */
+    getNodeContentDesc(node) {
+      if (!node || !node.config) return '请设置'
+      const config = node.config
+      const assignType = config.approver || config.cc
+
+      if (assignType === 'specified') {
+        const users = Array.isArray(config.operateUsers) ? config.operateUsers : (config.operateUsers ? [config.operateUsers] : [])
+        if (users.length === 0) return '请指定人员'
+        const names = users.map(id => {
+          const u = this.userList.find(u => u.id === id)
+          return u ? u.name : '用户' + id
+        })
+        return names.join('、')
+      }
+      if (assignType === 'department') {
+        const depts = Array.isArray(config.operateDepts) ? config.operateDepts : []
+        if (depts.length === 0) return '请选择部门'
+        const names = depts.map(id => {
+          const d = this.deptList.find(d => d.id === id)
+          return d ? d.name : '部门' + id
+        })
+        return names.join('、')
+      }
+      if (assignType === 'role') {
+        const roles = Array.isArray(config.operateRoles) ? config.operateRoles : []
+        if (roles.length === 0) return '请选择角色'
+        const names = roles.map(key => {
+          const r = this.roleList.find(r => r.key === key)
+          return r ? r.name : key
+        })
+        return names.join('、')
+      }
+
+      const descMap = {
+        'selfSelect': '发起人自选',
+        'manager': '直属主管',
+        'multiLevel': '逐级主管',
+        'initiator': '发起人自己'
+      }
+      return descMap[assignType] || '请设置'
+    },
+
     /** 获取流程类型标签 */
     getProcessTypeLabel(typeId) {
       // 先从动态加载的类型列表中查找
@@ -1705,7 +1878,22 @@ export default {
         })
       })
     },
-    
+
+    /** 加载组织架构数据 */
+    loadOrgData() {
+      listDept().then(res => {
+        this.deptList = (res.data || []).map(d => ({ id: d.deptId, name: d.deptName }))
+      }).catch(() => { this.deptList = [] })
+
+      listUser({ pageNum: 1, pageSize: 500 }).then(res => {
+        this.userList = (res.rows || []).map(u => ({ id: u.userId, name: u.nickName || u.userName }))
+      }).catch(() => { this.userList = [] })
+
+      listRole({ pageNum: 1, pageSize: 100 }).then(res => {
+        this.roleList = (res.rows || []).map(r => ({ id: r.roleId, name: r.roleName, key: r.roleKey }))
+      }).catch(() => { this.roleList = [] })
+    },
+
     /** 多选框选中数据 */
     handleSelectionChange(selection) {
       this.ids = selection.map(item => item.id)
