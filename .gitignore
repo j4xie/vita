@@ -91,9 +91,3 @@ ios/Pods/
 # pomelox_qwen_ai
 pomelox_qwen_ai/data/
 pomelox_qwen_ai/.env
-
-# Sensitive backend config files
-backend-decompiled/java/resources/application.yml
-backend-decompiled/java/resources/application-druid.yml
-backend-decompiled/config/service-commands.md
-backend-decompiled/config/nginx/all-sites.conf
